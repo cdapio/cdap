@@ -733,7 +733,6 @@
     <description>
       Time in seconds used to pad transaction maximum lifetime while pruning
     </description>
-    <final>true</final>
   </property>
 
   <property>

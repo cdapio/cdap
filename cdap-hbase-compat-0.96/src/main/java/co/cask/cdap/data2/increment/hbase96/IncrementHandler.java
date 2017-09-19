@@ -169,6 +169,9 @@ public class IncrementHandler extends BaseRegionObserver {
       Result result = region.get(get);
 
       Put put = new Put(increment.getRow());
+      put.setAttribute(HBaseTable.TX_MAX_LIFETIME_MILLIS_KEY,
+                       increment.getAttribute(HBaseTable.TX_MAX_LIFETIME_MILLIS_KEY));
+      put.setAttribute(HBaseTable.TX_ID, increment.getAttribute(HBaseTable.TX_ID));
       for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs().entrySet()) {
         byte[] family = entry.getKey();
         for (Map.Entry<byte[], Long> colEntry: entry.getValue().entrySet()) {
