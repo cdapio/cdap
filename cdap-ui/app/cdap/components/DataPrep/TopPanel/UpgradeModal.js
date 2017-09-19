@@ -15,12 +15,15 @@
  */
 
 import React, { Component, PropTypes } from 'react';
+import T from 'i18n-react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
 import CardActionFeedback from 'components/CardActionFeedback';
 import ee from 'event-emitter';
 import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
 import MyDataPrepApi from 'api/dataprep';
+
+const PREFIX = `features.DataPrep.TopPanel.UpgradeModal`;
 
 export default class UpgradeModal extends Component {
   constructor(props) {
@@ -91,24 +94,22 @@ export default class UpgradeModal extends Component {
       content = (
         <div>
           <div className="message">
-            Are you sure you want to upgrade Data Preparation?
+            {T.translate(`${PREFIX}.confirmation`)}
           </div>
 
           <div className="action-buttons">
-            <div className="action-buttons">
-              <button
-                className="btn btn-secondary"
-                onClick={this.upgradeClick}
-              >
-                Yes
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={this.attemptClose}
-              >
-                No
-              </button>
-            </div>
+            <button
+              className="btn btn-secondary"
+              onClick={this.upgradeClick}
+            >
+              {T.translate('commons.yesLabel')}
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={this.attemptClose}
+            >
+              {T.translate('commons.noLabel')}
+            </button>
           </div>
         </div>
       );
@@ -123,7 +124,7 @@ export default class UpgradeModal extends Component {
       >
         <ModalHeader>
           <span>
-            Upgrade Data Preparation
+            {T.translate(`${PREFIX}.modalHeader`)}
           </span>
           {
             this.state.loading ? null : (

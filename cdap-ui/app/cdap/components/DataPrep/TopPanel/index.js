@@ -28,7 +28,6 @@ import T from 'i18n-react';
 import isNil from 'lodash/isNil';
 import CreateDatasetBtn from 'components/DataPrep/TopPanel/CreateDatasetBtn';
 import {Switch} from 'components/DataPrep/DataPrepContentWrapper';
-import classnames from 'classnames';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
@@ -178,7 +177,7 @@ export default class DataPrepTopPanel extends Component {
     if (info) {
       if (info.properties.connection === 'file') {
         return (
-          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+          <div className="data-prep-name">
             <div className="connection-type">
               {T.translate(`${PREFIX}.file`)}
             </div>
@@ -192,7 +191,7 @@ export default class DataPrepTopPanel extends Component {
         );
       } else if (info.properties.connection === 'database') {
         return (
-          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+          <div className="data-prep-name">
             <div className="connection-type">
               {T.translate(`${PREFIX}.database`)}
               <span className="connection-name">{info.properties.connectionid}</span>
@@ -207,7 +206,7 @@ export default class DataPrepTopPanel extends Component {
         );
       } else if (info.properties.connection === 'upload') {
         return (
-          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+          <div className="data-prep-name">
             <div className="connection-type">
               {T.translate(`${PREFIX}.upload`)}
               <span className="connection-name">{info.properties.connectionid}</span>
@@ -222,7 +221,7 @@ export default class DataPrepTopPanel extends Component {
         );
       } else if (info.properties.connection === 'kafka') {
         return (
-          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+          <div className="data-prep-name">
             <div className="connection-type">
               {T.translate(`${PREFIX}.kafka`)}
             </div>
@@ -320,27 +319,27 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
+  renderUpgradeBtn() {
+    return (
+      <div className="upgrade-button">
+        <button
+          className="btn btn-info"
+          onClick={this.toggleUpgradeModal}
+        >
+          <span className="fa fa-wrench fa-fw" />
+          {T.translate(`${PREFIX}.upgradeBtnLabel`)}
+        </button>
+        {this.renderUpgradeModal()}
+      </div>
+    );
+  }
+
   render() {
     return (
       <div className="row top-panel clearfix">
         <div className="left-title">
           <div className="upper-section">
             {this.renderTopPanelDisplay()}
-
-            <div className="upgrade-button">
-              {
-                this.state.higherVersion ? (
-                  <button
-                    className="btn btn-info btn-sm"
-                    onClick={this.toggleUpgradeModal}
-                  >
-                    <span className="fa fa-wrench fa-fw" />
-                    {T.translate(`${PREFIX}.upgradeBtnLabel`)}
-                  </button>
-                ) : null
-              }
-              {this.renderUpgradeModal()}
-            </div>
           </div>
         </div>
         {
@@ -354,6 +353,12 @@ export default class DataPrepTopPanel extends Component {
           {
             this.state.onSubmitError ?
               <span className="text-danger">{this.state.onSubmitError}</span>
+            :
+              null
+          }
+          {
+            this.state.higherVersion ?
+              this.renderUpgradeBtn()
             :
               null
           }
