@@ -129,8 +129,12 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       int failureCount = 0;
       long startTime = -1L;
       boolean done = false;
+      boolean interrupted = false;
       while (!done) {
         try {
+          // Clear the thread interrupt flag when doing the actual publish.
+          // Otherwise publish might get interrupted during shutdown, which has the thread interrupted
+          interrupted = Thread.interrupted();
           messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads.iterator()).build());
           payloads.clear();
           done = true;
@@ -141,18 +145,27 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           }
           long retryMillis = getRetryStrategy().nextRetry(++failureCount, startTime);
           if (retryMillis < 0) {
-            throw new IOException("Failed to publish messages to TMS and exceeded retry limit.", e);
+            throw new IOException("Failed to publish metrics to TMS and exceeded retry limit.", e);
           }
-          LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
+          LOG.debug("Failed to publish metrics to TMS due to {}. Will be retried in {} ms.",
                     e.getMessage(), retryMillis);
-          try {
-            TimeUnit.MILLISECONDS.sleep(retryMillis);
-          } catch (InterruptedException e1) {
-            // Something explicitly stopping this thread. Simply just break and reset the interrupt flag.
-            Thread.currentThread().interrupt();
+          if (interrupted) {
+            LOG.warn("Retry of publish metrics interrupted. There will be loss of metrics.");
             done = true;
+          } else {
+            try {
+              TimeUnit.MILLISECONDS.sleep(retryMillis);
+            } catch (InterruptedException e1) {
+              // Something explicitly stopping this thread. Simply just break and reset the interrupt flag.
+              Thread.currentThread().interrupt();
+              done = true;
+            }
           }
         }
+      }
+
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
     }
 
