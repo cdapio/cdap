@@ -245,7 +245,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return new CLIService(null);
   }
 
-  private HiveConf getHiveConf() {
+  private HiveConf createHiveConf() {
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
     if (UserGroupInformation.isSecurityEnabled()) {
@@ -282,7 +282,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private IMetaStoreClient getMetaStoreClient() throws ExploreException {
     if (metastoreClientLocal.get() == null) {
       try {
-        IMetaStoreClient client = new HiveMetaStoreClient(getHiveConf());
+        IMetaStoreClient client = new HiveMetaStoreClient(createHiveConf());
         Supplier<IMetaStoreClient> supplier = Suppliers.ofInstance(client);
         metastoreClientLocal.set(supplier);
 
@@ -313,10 +313,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
 
-    HiveConf hiveConf = getHiveConf();
     setupSparkConf();
 
-    cliService.init(hiveConf);
+    cliService.init(createHiveConf());
     cliService.start();
 
     metastoreClientsExecutorService.scheduleWithFixedDelay(
@@ -1312,8 +1311,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
 
-
-    HiveConf hiveConf = getHiveConf();
+    HiveConf hiveConf = createHiveConf();
     if (ExploreServiceUtils.isSparkEngine(hiveConf, additionalSessionConf)) {
       sessionConf.putAll(sparkConf);
     }

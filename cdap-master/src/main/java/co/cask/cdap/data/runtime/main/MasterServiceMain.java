@@ -932,8 +932,8 @@ public class MasterServiceMain extends DaemonMain {
             prepareExploreContainer(preparer);
           }
 
-          // Set the container to use MainClassLoader for class rewriting
-          preparer.setClassLoader(MainClassLoader.class.getName());
+          // Set the container to use MasterServiceMainClassLoader for class rewriting
+          preparer.setClassLoader(MasterServiceMainClassLoader.class.getName());
 
           // Set per service configurations
           prepareServiceConfig(preparer, masterTwillApp.getRunnableConfigPrefixes());
