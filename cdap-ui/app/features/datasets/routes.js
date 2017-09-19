@@ -151,13 +151,13 @@ angular.module(PKG.name + '.feature.datasets')
                     let tables = exploreTables.map(tb => {
                       let tableIndex = tb.table.indexOf('_');
                       let dbIndex = tb.database.indexOf('_');
-                      let matchingSpec = datasetsSpec.find(dspec => {
+                      let matchingSpec = datasetSpecs.find(dspec => {
                         let isSameTable = (dspec.table || '').toLowerCase() === (tableIndex !== -1 ? tb.table.slice(tableIndex) : tb.table);
                         let isSameDB = (dspec.database || '').toLowerCase() === (dbIndex !== -1 ? tb.database.slice(dbIndex) : tb.database);
                         return isSameTable || isSameDB;
                       });
                       if (matchingSpec) {
-                        let matchingSpecIndex = findIndex(datasetsSpec, matchingSpec);
+                        let matchingSpecIndex = _.findIndex(datasetSpecs, matchingSpec);
                         datasetSpecs.splice(matchingSpecIndex, 1);
                         return {
                           table: matchingSpec.table || tb.table,

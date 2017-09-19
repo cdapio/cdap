@@ -55,7 +55,7 @@ angular.module(PKG.name + '.feature.explore')
             return isSameTable || isSameDB;
           });
           if (matchingSpec) {
-            let matchingSpecIndex = findIndex(datasetsSpec, matchingSpec);
+            let matchingSpecIndex = _.findIndex(datasetsSpec, matchingSpec);
             datasetsSpec.splice(matchingSpecIndex, 1);
             return {
               table: matchingSpec.table || tb.table,
