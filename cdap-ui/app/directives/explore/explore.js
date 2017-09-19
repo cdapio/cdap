@@ -48,7 +48,9 @@ angular.module(PKG.name + '.commons')
         vm.setDbAndTableNames = function() {
           let defer = $q.defer();
           if (!$scope.type || !$scope.datasetName) {
-            defer.reject();
+            vm.databaseName = $scope.databaseName;
+            vm.tableName = $scope.tableName;
+            defer.resolve();
             return defer.promise;
           }
 
@@ -60,25 +62,28 @@ angular.module(PKG.name + '.commons')
             myDatasetApi
               .get( Object.assign({}, params, { datasetId: $scope.datasetName }) )
               .$promise
-              .then(datasetSpec => {
-                datasetSpec = datasetSpec.spec;
-                if (datasetSpec.properties['explore.database.name']) {
-                  vm.databaseName = datasetSpec.properties['explore.database.name'];
-                } else {
-                  vm.databaseName = $scope.databaseName;
-                }
-                if (datasetSpec.properties['explore.table.name']) {
-                  vm.tableName = datasetSpec.properties['explore.table.name'];
-                } else {
-                  vm.tableName = $scope.tableName;
-                }
-                defer.resolve();
-              });
+              .then(
+                datasetSpec => {
+                  datasetSpec = datasetSpec.spec;
+                  if (datasetSpec.properties['explore.database.name']) {
+                    vm.databaseName = datasetSpec.properties['explore.database.name'];
+                  } else {
+                    vm.databaseName = $scope.databaseName;
+                  }
+                  if (datasetSpec.properties['explore.table.name']) {
+                    vm.tableName = datasetSpec.properties['explore.table.name'];
+                  } else {
+                    vm.tableName = $scope.tableName;
+                  }
+                  defer.resolve();
+                },
+                (err) => defer.resolve()
+              );
           }
           return defer.promise;
         };
 
-        $scope.$watch('datasetName', function() {
+        $scope.$watch('tableName', function() {
           vm.setDbAndTableNames()
             .then(
               function success() {

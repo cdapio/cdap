@@ -34,34 +34,50 @@ angular.module(PKG.name + '.feature.explore')
     $q.all([myDatasetApi.list(params).$promise, myExploreApi.list(params).$promise])
       .then(function (res) {
         var exploreTables = res[1];
-        var datasetSpecs = res[0];
-        angular.forEach(exploreTables, function(v) {
-          if (v.table.indexOf('_') === -1) {
-            v.name = v.table;
-            v.type = 'dataset';
-          } else {
-            var split = v.table.split('_');
-            v.type = split[0];
-            split.splice(0,1); // removing the data type from the array
-            v.name = split.join('_');
-          }
+        var datasetsSpec = res[0];
+        datasetsSpec = datasetsSpec
+        .filter(dSpec => dSpec.properties['explore.database.name'] || dSpec.properties['explore.table.name'])
+        .map(dSpec => {
+          return {
+            datasetName: dSpec.name,
+            database: dSpec.properties['explore.database.name'] || 'default',
+            table: dSpec.properties['explore.table.name'] || '',
+            type: dSpec.type
+          };
         });
 
-        exploreTables = exploreTables.map(tb => {
-          var tablename = tb.name;
-          var match = datasetSpecs.find(dSpec => dSpec.name.toLowerCase() === tablename);
-          if (match) {
-            return Object.assign({}, tb, {
-              datasetName: match.name
-            });
+        let tables = exploreTables.map(tb => {
+          let tableIndex = tb.table.indexOf('_');
+          let dbIndex = tb.database.indexOf('_');
+          let matchingSpec = datasetsSpec.find(dspec => {
+            let isSameTable = (dspec.table || '').toLowerCase() === (tableIndex !== -1 ? tb.table.slice(tableIndex) : tb.table);
+            let isSameDB = (dspec.database || '').toLowerCase() === (dbIndex !== -1 ? tb.database.slice(dbIndex) : tb.database);
+            return isSameTable || isSameDB;
+          });
+          if (matchingSpec) {
+            let matchingSpecIndex = findIndex(datasetsSpec, matchingSpec);
+            datasetsSpec.splice(matchingSpecIndex, 1);
+            return {
+              table: matchingSpec.table || tb.table,
+              database: matchingSpec.database || tb.database,
+              type: matchingSpec.type || '',
+              datasetName: matchingSpec.datasetName
+            };
+          }
+          if (tableIndex === -1) {
+            tb.type = 'dataset';
+          } else {
+            var split = tb.table.split('_');
+            tb.type = split[0];
           }
           return tb;
         });
-
-        this.dataList = exploreTables;
+        if (datasetsSpec.length) {
+          tables = tables.concat(datasetsSpec);
+        }
+        this.dataList = tables;
         this.selectTable(this.dataList[0]);
       }.bind(this));
-
     EventPipe.on('explore.newQuery', function() {
       if (this.activePanel.indexOf(1) === -1) {
         this.activePanel = [0,1];
