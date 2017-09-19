@@ -181,7 +181,7 @@ class CustomActionExecutor {
                                              customAction, "initialize")
         : Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class,
                                              customAction, "initialize", CustomActionContext.class);
-      customActionContext.initializeProgram(customAction, customActionContext, txControl, false);
+      customActionContext.initializeProgram(customAction, txControl, false);
 
       customActionContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
       customActionContext.executeChecked(new AbstractContext.ThrowingRunnable() {
@@ -198,9 +198,9 @@ class CustomActionExecutor {
       throw Throwables.propagate(t);
 
     } finally {
-      TransactionControl txControl =
-        Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class, customAction, "destroy");
-      customActionContext.destroyProgram(customAction, customActionContext, txControl, false);
+      TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+                                                                        CustomAction.class, customAction, "destroy");
+      customActionContext.destroyProgram(customAction, txControl, false);
     }
   }
 }

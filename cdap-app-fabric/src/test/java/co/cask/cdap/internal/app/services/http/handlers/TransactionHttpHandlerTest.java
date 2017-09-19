@@ -64,7 +64,13 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doPost("/v3/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
-  
+
+  @Test
+  public void testPruneNow() throws Exception {
+    HttpResponse response = doPost("/v3/transactions/prune/now");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
   @Test
   public void testTruncateInvalidTx() throws Exception {
     TransactionSystemClient txClient = getTxClient();

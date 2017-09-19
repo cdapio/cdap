@@ -59,7 +59,7 @@ export default class LogModal extends Component {
       format = this.state.customFormat;
     }
 
-    this.props.onApply('LOG', format);
+    this.props.onApply('LOG', `'${format}'`);
     this.props.toggle();
   }
 

@@ -64,7 +64,6 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
@@ -231,7 +230,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                          workflow, "initialize", WorkflowContext.class);
     basicWorkflowToken.setCurrentNode(workflowSpec.getName());
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-    basicWorkflowContext.initializeProgram((ProgramLifecycle) workflow, basicWorkflowContext, txControl, false);
+    basicWorkflowContext.initializeProgram((ProgramLifecycle) workflow, txControl, false);
     runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     return workflow;
   }
@@ -294,14 +293,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (!(workflow instanceof ProgramLifecycle)) {
       return;
     }
-    final TransactionControl txControl =
-      Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class, workflow, "destroy");
+    final TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+                                                                            Workflow.class, workflow, "destroy");
+    basicWorkflowToken.setCurrentNode(workflowSpec.getName());
+    basicWorkflowContext.destroyProgram((ProgramLifecycle) workflow, txControl, false);
     try {
-      basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-      basicWorkflowContext.destroyProgram((ProgramLifecycle) workflow, basicWorkflowContext, txControl, false);
       runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     } catch (Throwable t) {
-      LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
+      LOG.error("Failed to store the final workflow token of Workflow {}", workflowRunId, t);
     }
   }
 
@@ -516,7 +515,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           : Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class,
                                                workflowCondition, "initialize", WorkflowContext.class);
 
-        context.initializeProgram(workflowCondition, context, txControl, false);
+        context.initializeProgram(workflowCondition, txControl, false);
         boolean result = context.executeChecked(new Callable<Boolean>() {
           @Override
           public Boolean call() throws Exception {
@@ -525,10 +524,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         });
         iterator = result ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
       } finally {
-        TransactionControl txControl =
-          Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class, workflowCondition,
-                                             "destroy");
-        context.destroyProgram(workflowCondition, context, txControl, false);
+        TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class,
+                                                                          workflowCondition, "destroy");
+        context.destroyProgram(workflowCondition, txControl, false);
       }
     }
 
@@ -549,13 +547,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
-    String appPrincipalExists = programOptions.getArguments().getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
-    KerberosPrincipalId principalId = null;
-    if (appPrincipalExists != null && Boolean.parseBoolean(appPrincipalExists)) {
-      principalId = new KerberosPrincipalId(programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL));
-    }
+    final KerberosPrincipalId principalId = ProgramRunners.getApplicationPrincipal(programOptions);
 
-    final KerberosPrincipalId finalPrincipalId = principalId;
     for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
       final String localInstanceName = entry.getValue();
       final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
@@ -568,8 +561,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           public Void call() throws Exception {
             DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties());
             // we have to do this check since addInstance method can only be used when app impersonation is enabled
-            if (finalPrincipalId != null) {
-              datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, finalPrincipalId);
+            if (principalId != null) {
+              datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, principalId);
             } else {
               datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties);
             }

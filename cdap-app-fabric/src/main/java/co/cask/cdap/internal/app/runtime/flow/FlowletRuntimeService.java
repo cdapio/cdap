@@ -23,10 +23,8 @@ import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
-import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,36 +105,21 @@ final class FlowletRuntimeService extends AbstractIdleService {
     flowletProcessDriver.startAndWait();
   }
 
-  private void initFlowlet() throws InterruptedException {
+  private void initFlowlet() throws Exception {
     LOG.debug("Initializing flowlet: {}", flowletContext);
-    try {
-      try {
-        flowletContext.initializeProgram(flowlet, flowletContext, Transactions.getTransactionControl(
-          TransactionControl.IMPLICIT, Flowlet.class, flowlet, "initialize", FlowletContext.class), false);
-        LOG.debug("Flowlet initialized: {}", flowletContext);
-      } catch (TransactionFailureException e) {
-        throw e.getCause() == null ? e : e.getCause();
-      }
-    } catch (Throwable cause) {
-      LOG.error("Flowlet threw exception during flowlet initialization: {}", flowletContext, cause);
-      throw Throwables.propagate(cause);
-    }
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+                                                                       Flowlet.class, flowlet, "initialize",
+                                                                       FlowletContext.class);
+    flowletContext.initializeProgram(flowlet, txControl, false);
+    LOG.debug("Flowlet initialized: {}", flowletContext);
   }
 
   private void destroyFlowlet() {
     LOG.debug("Destroying flowlet: {}", flowletContext);
-    try {
-      try {
-        flowletContext.destroyProgram(flowlet, flowletContext, Transactions.getTransactionControl(
-          TransactionControl.IMPLICIT, Flowlet.class, flowlet, "destroy"), false);
-        LOG.debug("Flowlet destroyed: {}", flowletContext);
-      } catch (TransactionFailureException e) {
-        throw e.getCause() == null ? e : e.getCause();
-      }
-    } catch (Throwable cause) {
-      LOG.error("Flowlet threw exception during flowlet destruction: {}", flowletContext, cause);
-      throw Throwables.propagate(cause);
-    }
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+                                                                      Flowlet.class, flowlet, "destroy");
+    flowletContext.destroyProgram(flowlet, txControl, false);
+    LOG.debug("Flowlet destroyed: {}", flowletContext);
   }
 
   /**

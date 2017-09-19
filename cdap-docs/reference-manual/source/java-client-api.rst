@@ -234,13 +234,13 @@ PreferencesClient
   preferencesClient.deleteInstancePreferences();
 
   // Set preferences of MyApp application which is deployed in the Dev namespace
-  preferencesClient.setApplicationPreferences(Ids.namespace("Dev").app("MyApp"), propMap);
+  preferencesClient.setApplicationPreferences(new NamespaceId("Dev").app("MyApp"), propMap);
 
   // Get only the preferences of MyApp application which is deployed in the Dev namespace
-  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(Ids.namespace("Dev").app("MyApp"), false);
+  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(new NamespaceId("Dev").app("MyApp"), false);
 
   // Get the resolved preferences (collapsed with higher level(s) of preferences)
-  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(Ids.namespace("Dev").app("MyApp"), true);
+  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(new NamespaceId("Dev").app("MyApp"), true);
 
 .. _program-client:
 

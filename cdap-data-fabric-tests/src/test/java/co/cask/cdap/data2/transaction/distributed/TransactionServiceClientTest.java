@@ -62,6 +62,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * HBase queue tests.
@@ -92,8 +93,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     hBaseTestingUtility.startMiniDFSCluster(1);
     Configuration hConf = hBaseTestingUtility.getConfiguration();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
-    hConf = getCommonConfiguration(hConf);
-    
+
     zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
 
@@ -106,8 +106,17 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     // we want persisting for this test
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
 
+    // getCommonConfiguration() sets up an hConf with tx service configuration.
+    // however, createTxService() will override these with defaults from the CConf.
+    // hence, we must pass in these settings when creating the tx service.
+    Configuration extraCConf = new Configuration();
+    extraCConf.clear();
+    extraCConf = getCommonConfiguration(extraCConf);
+    for (Map.Entry<String, String> entry : extraCConf) {
+      cConf.set(entry.getKey(), entry.getValue());
+    }
     server = TransactionServiceTest.createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
-                                                    hConf, tmpFolder.newFolder());
+                                                    hConf, tmpFolder.newFolder(), cConf);
     server.startAndWait();
 
     injector = Guice.createInjector(

@@ -58,7 +58,8 @@ public class SparkClassLoader extends CombineClassLoader {
    * Creates a new SparkClassLoader from the execution context. It should only be called in distributed mode.
    */
   public static SparkClassLoader create() {
-    return new SparkClassLoader(SparkRuntimeContextProvider.get());
+    return ClassLoaders.find(SparkRuntimeContextProvider.get().getProgramInvocationClassLoader(),
+                             SparkClassLoader.class);
   }
 
   /**

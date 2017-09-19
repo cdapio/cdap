@@ -241,9 +241,8 @@ public class MasterTwillApplication implements TwillApplication {
                                                                      Constants.Explore.CONTAINER_MEMORY_MB,
                                                                      Constants.Service.EXPLORE_HTTP_USER_SERVICE);
     return addResources(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                        builder.add(new ExploreCustomClassLoaderTwillRunnable(
-                          new ExploreServiceTwillRunnable(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                                          CCONF_NAME, HCONF_NAME).configure()), resourceSpec));
+                        builder.add(new ExploreServiceTwillRunnable(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
+                                                                    CCONF_NAME, HCONF_NAME), resourceSpec));
   }
 
   private Builder.RunnableSetter addMessaging(Builder.MoreRunnable builder) {

@@ -47,10 +47,8 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRConfig;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionSystemClient;
@@ -79,6 +77,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   private final LoadingCache<ContextCacheKey, BasicMapReduceTaskContext> taskContexts;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final MapReduceClassLoader mapReduceClassLoader;
 
   /**
    * Helper method to tell if the MR is running in local mode or not. This method doesn't really belongs to this
@@ -92,11 +91,12 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   /**
    * Creates an instance with the given {@link Injector} that will be used for getting service instances.
    */
-  protected MapReduceTaskContextProvider(Injector injector) {
+  protected MapReduceTaskContextProvider(Injector injector, MapReduceClassLoader mapReduceClassLoader) {
     this.injector = injector;
     this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
     this.authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
     this.authenticationContext = injector.getInstance(AuthenticationContext.class);
+    this.mapReduceClassLoader = mapReduceClassLoader;
   }
 
   protected Injector getInjector() {
@@ -239,7 +239,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           tx, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
-          authorizationEnforcer, authenticationContext, messagingService
+          authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader
         );
       }
     };

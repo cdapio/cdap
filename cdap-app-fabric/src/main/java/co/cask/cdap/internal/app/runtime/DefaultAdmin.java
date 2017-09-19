@@ -54,7 +54,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
    */
   public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace,
                       SecureStoreManager secureStoreManager, @Nullable MessagingAdmin messagingAdmin,
-                      RetryStrategy retryStrategy, KerberosPrincipalId principalId) {
+                      RetryStrategy retryStrategy, @Nullable KerberosPrincipalId principalId) {
     super(dsFramework, namespace, retryStrategy, principalId);
     this.secureStoreManager = secureStoreManager;
     this.messagingAdmin = messagingAdmin;

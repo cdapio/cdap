@@ -68,6 +68,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Testing HA for {@link TransactionService}.
@@ -228,9 +229,15 @@ public class TransactionServiceTest {
     InMemoryTableService.drop(tableName);
   }
 
+  private static TransactionService createTxService(String zkConnectionString, int txServicePort,
+                                                    Configuration hConf, final File outPath) {
+    return createTxService(zkConnectionString, txServicePort, hConf, outPath, null);
+  }
+
   static TransactionService createTxService(String zkConnectionString, int txServicePort,
-                                             Configuration hConf, final File outPath) {
-    final CConfiguration cConf = CConfiguration.create();
+                                            Configuration hConf, final File outPath,
+                                            @Nullable CConfiguration cConfig) {
+    final CConfiguration cConf = cConfig == null ? CConfiguration.create() : cConfig;
     // tests should use the current user for HDFS
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);

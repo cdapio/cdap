@@ -22,7 +22,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.ConfigurationReader;
+import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -35,7 +36,6 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -77,8 +77,7 @@ public class HBaseMessageTableTestRun extends MessageTableTest {
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     tableFactory = new HBaseTableFactory(cConf, hConf, tableUtil, locationFactory);
 
-    ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+    new ConfigurationWriter(hConf, cConf).write(ConfigurationReader.Type.DEFAULT, cConf);
   }
 
   @AfterClass

@@ -76,8 +76,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
                                                                  info.getPrincipal(), info.getKeytabURI());
       return isCache ? ugiCache.get(new UGICacheKey(newRequest)) : createUGI(newRequest);
     } catch (ExecutionException e) {
-      // Get the root cause of the failure
-      Throwable cause = Throwables.getRootCause(e);
+      Throwable cause = e.getCause();
       // Propagate if the cause is an IOException or RuntimeException
       Throwables.propagateIfPossible(cause, IOException.class);
       // Otherwise always wrap it with IOException

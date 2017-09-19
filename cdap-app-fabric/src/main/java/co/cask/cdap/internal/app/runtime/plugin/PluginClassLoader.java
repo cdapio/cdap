@@ -24,7 +24,6 @@ import co.cask.cdap.common.lang.PackageFilterClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 
 import java.io.File;
 import java.util.Set;
@@ -75,7 +74,7 @@ public class PluginClassLoader extends DirectoryClassLoader {
     // In this way, parent ClassLoader of the plugin ClassLoader will load class from the parent of the
     // template program class loader (which is a filtered CDAP classloader),
     // followed by template export-packages, then by a plugin lib jars.
-    return new CombineClassLoader(programClassLoader.getParent(), ImmutableList.of(filteredTemplateClassLoader));
+    return new CombineClassLoader(programClassLoader.getParent(), filteredTemplateClassLoader);
   }
 
   PluginClassLoader(ArtifactId artifactId, File directory, ClassLoader parent) {

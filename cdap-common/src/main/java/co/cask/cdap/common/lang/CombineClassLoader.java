@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -42,6 +43,16 @@ public class CombineClassLoader extends URLClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(CombineClassLoader.class);
   private final List<ClassLoader> delegates;
+
+  /**
+   * Creates a CombineClassLoader with the given parent and a list of ClassLoaders for delegation.
+   *
+   * @param parent parent ClassLoader. If null, bootstrap ClassLoader will be the parent.
+   * @param delegates list of ClassLoaders for delegation
+   */
+  public CombineClassLoader(@Nullable ClassLoader parent, ClassLoader...delegates) {
+    this(parent, Arrays.asList(delegates));
+  }
 
   /**
    * Creates a CombineClassLoader with the given parent and a list of ClassLoaders for delegation.

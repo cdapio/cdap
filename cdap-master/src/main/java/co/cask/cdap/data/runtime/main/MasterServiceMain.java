@@ -50,7 +50,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.ConfigurationReader;
+import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -482,7 +483,7 @@ public class MasterServiceMain extends DaemonMain {
    */
   private void updateConfigurationTable() {
     try {
-      new ConfigurationTable(hConf).write(ConfigurationTable.Type.DEFAULT, cConf);
+      new ConfigurationWriter(hConf, cConf).write(ConfigurationReader.Type.DEFAULT, cConf);
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }
@@ -931,8 +932,8 @@ public class MasterServiceMain extends DaemonMain {
             prepareExploreContainer(preparer);
           }
 
-          // Set the container to use MainClassLoader for class rewriting
-          preparer.setClassLoader(MainClassLoader.class.getName());
+          // Set the container to use MasterServiceMainClassLoader for class rewriting
+          preparer.setClassLoader(MasterServiceMainClassLoader.class.getName());
 
           // Set per service configurations
           prepareServiceConfig(preparer, masterTwillApp.getRunnableConfigPrefixes());

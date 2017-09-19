@@ -19,9 +19,7 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
@@ -42,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
@@ -62,15 +61,16 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnable;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,11 +139,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final AtomicReference<ListenableFuture<RunId>> completion;
   private final BasicSparkClientContext context;
+  private final ProgramLifecycle<SparkRuntimeContext> programLifecycle;
 
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
 
-  SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
+  SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
                       LocationFactory locationFactory) {
     this.cConf = cConf;
@@ -154,6 +155,30 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.locationFactory = locationFactory;
     this.completion = new AtomicReference<>();
     this.context = new BasicSparkClientContext(runtimeContext);
+    this.programLifecycle = new ProgramLifecycle<SparkRuntimeContext>() {
+      @Override
+      public void initialize(SparkRuntimeContext runtimeContext) throws Exception {
+        // Use the BasicSparkClientContext to call user method.
+        if (spark instanceof ProgramLifecycle) {
+          ((ProgramLifecycle) spark).initialize(context);
+        } else {
+          spark.beforeSubmit(context);
+        }
+      }
+
+      @Override
+      public void destroy() {
+        if (spark instanceof ProgramLifecycle) {
+          ((ProgramLifecycle) spark).destroy();
+        } else {
+          try {
+            spark.onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
+          } catch (Exception e) {
+            throw new UncheckedExecutionException(e);
+          }
+        }
+      }
+    };
   }
 
   @Override
@@ -395,6 +420,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   @SuppressWarnings("unchecked")
   private void initialize() throws Exception {
+    context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+
     // AbstractSpark implements final initialize(context) and requires subclass to
     // implement initialize(), whereas programs that directly implement Spark have
     // the option to override initialize(context) (if they implement ProgramLifeCycle)
@@ -405,58 +432,20 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                            spark, "initialize", SparkClientContext.class)
       : TransactionControl.IMPLICIT;
 
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext ctxt) throws Exception {
-        Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
-        try {
-          context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-          if (spark instanceof ProgramLifecycle) {
-            ((ProgramLifecycle) spark).initialize(context);
-          } else {
-            spark.beforeSubmit(context);
-          }
-        } finally {
-          cancellable.cancel();
-        }
-      }
-    };
-    if (TransactionControl.IMPLICIT == txControl) {
-      context.execute(runnable);
-    } else {
-      runnable.run(context);
-    }
+    runtimeContext.initializeProgram(programLifecycle, txControl, false);;
   }
 
   /**
    * Calls the destroy or onFinish method of {@link ProgramLifecycle}.
    */
-  private void destroy(final ProgramState state) throws Exception {
-    final TransactionControl txControl = spark instanceof ProgramLifecycle
+  private void destroy(final ProgramState state) {
+    context.setState(state);
+
+    TransactionControl txControl = spark instanceof ProgramLifecycle
       ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, Spark.class, spark, "destroy")
       : TransactionControl.IMPLICIT;
 
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext ctxt) throws Exception {
-        Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
-        try {
-          context.setState(state);
-          if (spark instanceof ProgramLifecycle) {
-            ((ProgramLifecycle) spark).destroy();
-          } else {
-            spark.onFinish(state.getStatus() == ProgramStatus.COMPLETED, context);
-          }
-        } finally {
-          cancellable.cancel();
-        }
-      }
-    };
-    if (TransactionControl.IMPLICIT == txControl) {
-      context.execute(runnable);
-    } else {
-      runnable.run(context);
-    }
+    runtimeContext.destroyProgram(programLifecycle, txControl, false);
   }
 
   /**
@@ -480,16 +469,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                                   Map<String, LocalizeResource> localizedResources,
                                                   boolean localMode,
                                                   Iterable<URI> pyFiles) throws Exception {
-    Map<String, String> configs = new HashMap<>();
+
+    // Setup configs from the default spark conf
+    Map<String, String> configs = new HashMap<>(Maps.fromProperties(SparkPackageUtils.getSparkDefaultConf()));
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
     // of the next port if 4040 is already occupied. However, during the process, it unnecessarily logs big stacktrace
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     configs.put("spark.ui.port", "0");
-
-    // Setup configs from the default spark conf
-    Properties sparkDefaultConf = SparkPackageUtils.getSparkDefaultConf();
-    configs.putAll(Maps.fromProperties(sparkDefaultConf));
 
     // Setup app.id and executor.id for Metric System
     configs.put("spark.app.id", context.getApplicationSpecification().getName());
@@ -500,6 +487,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     configs.put("spark.driver.cores", String.valueOf(context.getDriverResources().getVirtualCores()));
     configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
     configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
+
+    // Setup the memory overhead.
+    setMemoryOverhead(context.getDriverRuntimeArguments(), "driver",
+                      context.getDriverResources().getMemoryMB(), configs);
+    setMemoryOverhead(context.getExecutorRuntimeArguments(), "executor",
+                      context.getExecutorResources().getMemoryMB(), configs);
 
     // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
     SparkConf sparkConf = context.getSparkConf();
@@ -554,6 +547,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     return configs;
+  }
+
+  /**
+   * Sets the Spark memory overhead setting based on the runtime arguments of the given type.
+   *
+   * @param runtimeArgs the runtime arguments
+   * @param type either {@code driver} or {@code executor}
+   * @param containerSize the memory size in MB of the container
+   * @param configs the configuration to be updated
+   */
+  private void setMemoryOverhead(Map<String, String> runtimeArgs, String type,
+                                 int containerSize, Map<String, String> configs) {
+    Map<String, String> memoryConfigs = SystemArguments.getTwillContainerConfigs(runtimeArgs, containerSize);
+    if (!memoryConfigs.containsKey(Configs.Keys.JAVA_RESERVED_MEMORY_MB)) {
+      return;
+    }
+    configs.put("spark.yarn." + type + ".memoryOverhead", memoryConfigs.get(Configs.Keys.JAVA_RESERVED_MEMORY_MB));
   }
 
   /**

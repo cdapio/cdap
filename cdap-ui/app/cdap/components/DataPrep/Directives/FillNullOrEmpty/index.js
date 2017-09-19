@@ -68,7 +68,7 @@ export default class FillNullOrEmptyDirective extends Component {
     let column = this.props.column;
     let value = this.state.input;
 
-    let directive = `fill-null-or-empty ${column} ${value}`;
+    let directive = `fill-null-or-empty :${column} '${value}'`;
 
     execute([directive])
       .subscribe(() => {

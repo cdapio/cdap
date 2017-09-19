@@ -91,15 +91,11 @@ $col_type_font_color: gray;
             width: 100%;
             cursor: initial;
             margin-right: 5px;
+            white-space: nowrap;
 
             span {
               margin-left: 3px;
             }
-          }
-
-          .directives-dropdown-button,
-          .column-header-checkbox {
-            visibility: hidden;
           }
 
           .directives-dropdown-button {
@@ -159,15 +155,6 @@ $col_type_font_color: gray;
 
         &:first-child { border-left: 0; }
         &:last-child { border-right: 0; }
-
-        &.selected,
-        &.dropdownOpened,
-        &:hover {
-          .directives-dropdown-button,
-          .column-header-checkbox {
-            visibility: visible;
-          }
-        }
 
         &:hover {
           .header-text {

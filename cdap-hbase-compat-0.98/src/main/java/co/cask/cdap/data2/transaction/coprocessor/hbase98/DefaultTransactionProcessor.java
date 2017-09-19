@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.data2.increment.hbase98.IncrementTxFilter;
 import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCache;
 import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -62,17 +61,15 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
 
   private CConfigurationCacheSupplier cConfCacheSupplier;
   private CConfigurationCache cConfCache;
-  private String sysConfigTablePrefix;
+  private String tablePrefix;
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
-      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
-
-      this.sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      this.cConfCacheSupplier = new CConfigurationCacheSupplier(env.getConfiguration(), sysConfigTablePrefix,
+      this.tablePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      this.cConfCacheSupplier = new CConfigurationCacheSupplier(env, tablePrefix,
                                                                 TxConstants.Manager.CFG_TX_MAX_LIFETIME,
                                                                 TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME);
       this.cConfCache = cConfCacheSupplier.get();
@@ -181,7 +178,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
 
   @Override
   protected CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
-    return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
+    return new DefaultTransactionStateCacheSupplier(tablePrefix, env);
   }
 
   @Override

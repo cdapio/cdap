@@ -98,7 +98,7 @@ export default class ParseDirective extends Component {
     let column = this.props.column;
     let condition = DIRECTIVE_MAP[parseOption];
 
-    let directive = `${condition} ${column}`;
+    let directive = `${condition} :${column}`;
 
     if (configuration) {
       directive = `${directive} ${configuration}`;

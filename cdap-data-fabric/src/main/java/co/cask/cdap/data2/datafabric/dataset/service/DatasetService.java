@@ -89,14 +89,10 @@ public class DatasetService extends AbstractExecutionThreadService {
 
     builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
 
-    builder.setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS,
-                                              Constants.Dataset.Manager.DEFAULT_BACKLOG));
-    builder.setExecThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.EXEC_THREADS,
-                                               Constants.Dataset.Manager.DEFAULT_EXEC_THREADS));
-    builder.setBossThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.BOSS_THREADS,
-                                               Constants.Dataset.Manager.DEFAULT_BOSS_THREADS));
-    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.WORKER_THREADS,
-                                                 Constants.Dataset.Manager.DEFAULT_WORKER_THREADS));
+    builder.setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS));
+    builder.setExecThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.EXEC_THREADS));
+    builder.setBossThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.BOSS_THREADS));
+    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.WORKER_THREADS));
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;

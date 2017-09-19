@@ -19,15 +19,14 @@ package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase11;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
 import co.cask.cdap.data2.util.hbase.HBase11ScanBuilder;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
 import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HConstants;
@@ -92,17 +91,15 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
-      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
-      String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      CConfigurationReader cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
-
-      txStateCacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix, env.getConfiguration());
+      String tablePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      CConfigurationReader cConfReader = new CoprocessorCConfigurationReader(env, tablePrefix);
+      txStateCacheSupplier = new DefaultTransactionStateCacheSupplier(tablePrefix, env);
       txStateCache = txStateCacheSupplier.get();
-      topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(env, cConfReader, hbaseNamespacePrefix,
-                                                                  metadataTableNamespace, new HBase11ScanBuilder());
+      topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(
+        env, cConfReader, tablePrefix, metadataTableNamespace, new HBase11ScanBuilder());
       topicMetadataCache = topicMetadataCacheSupplier.get();
     }
   }
@@ -230,11 +227,6 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       compactionState.stop();
       compactionState = null;
     }
-  }
-
-  private TransactionStateCacheSupplier getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
-    String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
-    return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 
   private static final class LoggingInternalScanner implements InternalScanner {

@@ -130,7 +130,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     // Collection for draining the processQueue for invoking process methods
     List<FlowletProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processQueue.size() * 2);
     Runnable processRunner = createProcessRunner(processQueue, processList,
-                                                 flowletContext.getProgram().getClassLoader());
+                                                 flowletContext.getProgramInvocationClassLoader());
     while (isRunning()) {
       try {
         // If the queue head need to wait, we had to wait.

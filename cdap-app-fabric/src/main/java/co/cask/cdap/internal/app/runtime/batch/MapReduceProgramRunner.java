@@ -170,6 +170,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
                                   messagingService);
+      closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

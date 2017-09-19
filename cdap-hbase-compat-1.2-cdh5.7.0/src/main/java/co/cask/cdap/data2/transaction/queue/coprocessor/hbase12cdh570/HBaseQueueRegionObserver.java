@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,13 +23,14 @@ import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.SaltedHBaseQueueStrategy;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.TableNameAwareCacheSupplier;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.base.Supplier;
 import com.google.common.io.InputSupplier;
@@ -116,9 +117,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
       Configuration conf = env.getConfiguration();
-      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
-      final String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      txStateCacheSupplier = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
+      String tablePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      txStateCacheSupplier = new DefaultTransactionStateCacheSupplier(tablePrefix, env);
       txStateCache = txStateCacheSupplier.get();
       txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
@@ -127,9 +127,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         }
       };
       String queueConfigTableId = HBaseQueueAdmin.getConfigTableName();
-      configTableName = HTableNameConverter.toTableName(hbaseNamespacePrefix,
-                                                        TableId.from(namespaceId, queueConfigTableId));
-      cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
+      configTableName = HTableNameConverter.toTableName(tablePrefix, TableId.from(namespaceId, queueConfigTableId));
+      cConfReader = new CoprocessorCConfigurationReader(env, tablePrefix);
       configCacheSupplier = createConfigCache(env);
       configCache = configCacheSupplier.get();
     }

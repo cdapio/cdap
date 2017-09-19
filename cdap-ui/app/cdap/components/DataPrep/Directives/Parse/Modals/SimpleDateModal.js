@@ -66,7 +66,7 @@ export default class SimpleDateModal extends Component {
       format = this.state.customFormat;
     }
 
-    this.props.onApply('SIMPLEDATE', format);
+    this.props.onApply('SIMPLEDATE', `'${format}'`);
     this.props.toggle();
   }
 

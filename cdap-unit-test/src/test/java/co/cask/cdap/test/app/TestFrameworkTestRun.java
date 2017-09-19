@@ -203,49 +203,39 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(AppWithExceptionThrowingWorker.class);
     final WorkerManager workerManager = appManager.getWorkerManager(AppWithExceptionThrowingWorker.WORKER_NAME);
 
-    // Only one instance of the worker and it throws an exception. ProgramRunStatus should go to FAILED state.
-    testExceptionWorker(workerManager, 0);
-    Tasks.waitFor(3, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.FAILED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    // Only one instance of the worker and it throws an exception.
+    // ProgramRunStatus should go to FAILED state, except the one that throws in the destroy() method.
+    testExceptionWorker(workerManager, 0, 0);
 
     // Test a case where worker completes without an exception.
+    // There should be in total two completed runs.
+    // One from the one that throws in destroy() in testExceptionWorker(), one from the next line.
     workerManager.start();
-    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.SECONDS);
 
     // Few of the instances of the worker will throw an exception, while others complete normally. Still the
-    // ProgramRunStatus should go to FAILED state.
+    // ProgramRunStatus should go to FAILED state, , except for those that throws in the destroy() method.
     workerManager.setInstances(9);
-    testExceptionWorker(workerManager, 3);
-    Tasks.waitFor(6, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.FAILED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
-
-    Tasks.waitFor(7, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory().size();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    testExceptionWorker(workerManager, 2, 2);
 
     // Test a case where worker completes without an exception.
+    // There should be four completed runs.
+    // Two from throws that throws in destroy() in testExceptionWorker(),
+    // one from the previous normal run, and one from next line.
     workerManager.start();
-    workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 10, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 4, 10, TimeUnit.SECONDS);
   }
 
-  private void testExceptionWorker(WorkerManager workerManager, int failedCountSoFar) throws Exception {
+  private void testExceptionWorker(WorkerManager workerManager, int completedCountSoFar,
+                                   int failedCountSoFar) throws Exception {
     workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.INITIALIZE, ""));
     workerManager.waitForRuns(ProgramRunStatus.FAILED, 1 + failedCountSoFar, 3, TimeUnit.SECONDS);
     workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.RUN, ""));
     workerManager.waitForRuns(ProgramRunStatus.FAILED, 2 + failedCountSoFar, 3, TimeUnit.SECONDS);
+
+    // Throwing exception on the destroy() method won't fail the program execution.
     workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.DESTROY, ""));
-    workerManager.waitForRuns(ProgramRunStatus.FAILED, 3 + failedCountSoFar, 3, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 1 + completedCountSoFar, 3, TimeUnit.SECONDS);
   }
 
   @Test

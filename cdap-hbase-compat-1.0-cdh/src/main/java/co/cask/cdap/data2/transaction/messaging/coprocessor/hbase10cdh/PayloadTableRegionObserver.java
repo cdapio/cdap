@@ -17,9 +17,9 @@
 package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10cdh;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
 import co.cask.cdap.data2.util.hbase.DefaultScanBuilder;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
 import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
@@ -73,14 +73,13 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
-      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      String tablePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
-      String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      CConfigurationReader cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
-      topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(env, cConfReader, hbaseNamespacePrefix,
-                                                                  metadataTableNamespace, new DefaultScanBuilder());
+      CConfigurationReader cConfReader = new CoprocessorCConfigurationReader(env, tablePrefix);
+      topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(
+        env, cConfReader, tablePrefix, metadataTableNamespace, new DefaultScanBuilder());
       topicMetadataCache = topicMetadataCacheSupplier.get();
     }
   }

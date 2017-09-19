@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,6 +88,13 @@ public final class HTableNameConverter {
    */
   public static String getSysConfigTablePrefix(String prefix) {
     return prefix + "_" + NamespaceId.SYSTEM.getNamespace() + ":";
+  }
+
+  /**
+   * @return the hbase namespace representing the CDAP system namespace.
+   */
+  public static String getSystemNamespace(String prefix) {
+    return prefix + "_" + NamespaceId.SYSTEM.getNamespace();
   }
 
   /**

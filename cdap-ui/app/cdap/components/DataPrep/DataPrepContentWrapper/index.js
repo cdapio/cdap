@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 import React, { Component, PropTypes } from 'react';
 import DataPrepTable from 'components/DataPrep/DataPrepTable';
@@ -22,6 +22,13 @@ import {createStore, combineReducers} from 'redux';
 import {connect} from 'react-redux';
 import {defaultAction} from 'services/helpers';
 import {Provider} from 'react-redux';
+import DataPrepVisualization from 'components/DataPrep/DataPrepVisualization';
+import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
+import classnames from 'classnames';
+import T from 'i18n-react';
+require('./DataPrepContentWrapper.scss');
+
+const PREFIX = 'features.DataPrep.TopPanel';
 
 const DEFAULTSTORESTATE = {view: 'data'};
 const view = (state = 'data', action = defaultAction) => {
@@ -39,24 +46,37 @@ const ViewStore = createStore(
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 
-function ContentSwitch({onSwitchChange}) {
+function ContentSwitch({onSwitchChange, activeTab}) {
   return (
-    <div className="btn-group">
-      <div className="btn btn-secondary" onClick={onSwitchChange.bind(null, 'data')}>
-        Data
+    <div className="content-switch">
+      <div
+        className={classnames("switch", {
+          'active': activeTab === 'data'
+        })}
+        onClick={onSwitchChange.bind(null, 'data')}
+      >
+        {T.translate(`${PREFIX}.Tabs.dataprep`)}
       </div>
-      <div className="btn btn-secondary" onClick={onSwitchChange.bind(null, 'viz')}>
-        Visualization
+      <div
+        className={classnames("switch", {
+          'active': activeTab === 'viz'
+        })}
+        onClick={onSwitchChange.bind(null, 'viz')}
+      >
+      {T.translate(`${PREFIX}.Tabs.dataviz`)}
       </div>
     </div>
   );
 }
 ContentSwitch.propTypes = {
-  onSwitchChange: PropTypes.func.isRequired
+  onSwitchChange: PropTypes.func.isRequired,
+  activeTab: PropTypes.string
 };
 
-const mapStateToProps = () => {
-  return {};
+const mapStateToProps = (state) => {
+  return {
+    activeTab: state.view
+  };
 };
 const mapDispatchToProps = (dispatch) => {
   return {
@@ -107,20 +127,34 @@ export default class DataPrepContentWrapper extends Component {
     view: 'data'
   };
   render() {
-    if (this.state.view === 'data') {
-      return (
-        <span>
+    const dataPart = (
+      <div className="row">
+        <div className="dataprep-main col-xs-9">
           <DataPrepTable />
           <DataPrepCLI />
-        </span>
-      );
+        </div>
+        <DataPrepSidePanel />
+      </div>
+    );
+    const vizPart = (
+      <div className="row">
+        <div className="col-xs-12">
+          <DataPrepVisualization />
+        </div>
+      </div>
+    );
+    let content = null;
+    if (this.state.view === 'data') {
+      content = dataPart;
     }
     if (this.state.view === 'viz') {
-      return (
-        <h1> Visualization Coming Soon </h1>
-      );
+      content = vizPart;
     }
-    return null;
+    return (
+      <div className="dataprep-content-wrapper">
+        {content}
+      </div>
+    );
   }
 }
 

@@ -399,7 +399,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // if the principal is not same as cdap master principal do the authorization check. Otherwise, skip the auth check
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
-      AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
+      ensureAccess(namespaceId);
     }
 
     NamespaceMeta namespaceMeta;
@@ -426,7 +426,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public boolean exists(NamespaceId namespaceId) throws Exception {
     try {
-      AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
+      ensureAccess(namespaceId);
       // here we are not calling get(Id.Namespace namespaceId) method as we don't want authorization enforcement for
       // exists
       namespaceMetaCache.get(namespaceId);
@@ -456,15 +456,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     return !store.getActiveRuns(namespaceId).isEmpty();
   }
 
-  private InstanceId createInstanceId(CConfiguration cConf) {
-    String instanceName = cConf.get(Constants.INSTANCE_NAME);
-    Preconditions.checkArgument(NAMESPACE_PATTERN.matcher(instanceName).matches(),
-                                "CDAP instance name specified by '%s' in cdap-site.xml should be alphanumeric " +
-                                  "(underscores allowed). Its current invalid value is '%s'",
-                                Constants.INSTANCE_NAME, instanceName);
-    return new InstanceId(instanceName);
-  }
-
   /**
    * Deletes the namespace meta and also invalidates the cache
    * @param namespaceId of namespace whose meta needs to be deleted
@@ -472,5 +463,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
+  }
+
+  private void ensureAccess(NamespaceId namespaceId) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    try {
+      AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
+    } catch (UnauthorizedException e) {
+      throw new UnauthorizedException(
+        String.format("Namespace %s is not visible to principal %s since the principal does not have any " +
+                        "privilege on this namespace or any entity in this namespace.", namespaceId, principal));
+    }
   }
 }

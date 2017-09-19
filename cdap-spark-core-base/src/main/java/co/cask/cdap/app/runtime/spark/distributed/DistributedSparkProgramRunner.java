@@ -146,7 +146,8 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
     Resources resources = SystemArguments.getResources(clientArgs, spec.getClientResources());
 
     // Add runnable. Only one instance for the spark client
-    launchConfig.addRunnable(spec.getName(), new SparkTwillRunnable(spec.getName()), resources, 1, 0);
+    launchConfig.addRunnable(spec.getName(), new SparkTwillRunnable(spec.getName()), 1,
+                             clientArgs, spec.getClientResources(), 0);
 
     // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
     Map<String, LocalizeResource> localizeResources = new HashMap<>();

@@ -43,6 +43,10 @@ var loaders = [
     loader: 'style-loader!css-loader!sass-loader'
   },
   {
+    test: /\.json$/,
+    loader: 'json-loader'
+  },
+  {
     test: /\.js$/,
     loader: 'babel',
     exclude: /node_modules/
@@ -56,7 +60,7 @@ var loaders = [
     loader: 'file-loader'
   },
   {
-    test: /\.svg$/,
+    test: /\.svg/,
     loader: 'svg-sprite?'+ JSON.stringify({
       prefixize: false
     })

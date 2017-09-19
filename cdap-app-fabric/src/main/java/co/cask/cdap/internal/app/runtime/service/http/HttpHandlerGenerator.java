@@ -543,7 +543,7 @@ final class HttpHandlerGenerator {
      *       TransactionContext txContext = startTransactionContext();
      *       // only generate this try catch block if transaction control is IMPLICIT
      *       try {
-     *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
+     *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(getHandlerContextClassLoader());
      *         try {
      *           // Only do assignment if handler method returns HttpContentConsumer
      *           [contentConsumer = ]handler.handle(wrapRequest(request), wrappedResponder, ...);
@@ -794,10 +794,10 @@ final class HttpHandlerGenerator {
 
       int throwable = mg.newLocal(Type.getType(Throwable.class));
 
-      // ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
+      // ClassLoader classLoader = ClassLoaders.setContextClassLoader(getHandlerContextClassLoader());
       int classLoader = mg.newLocal(classLoaderType);
       mg.loadThis();
-      mg.invokeVirtual(classType, Methods.getMethod(ClassLoader.class, "createHandlerContextClassLoader"));
+      mg.invokeVirtual(classType, Methods.getMethod(ClassLoader.class, "getHandlerContextClassLoader"));
       mg.invokeStatic(Type.getType(ClassLoaders.class),
                       Methods.getMethod(ClassLoader.class, "setContextClassLoader", ClassLoader.class));
       mg.storeLocal(classLoader, classLoaderType);

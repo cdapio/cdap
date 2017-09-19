@@ -25,6 +25,7 @@ const PREFIX = 'features.DataPrep.Directives.Parse';
 const OPTIONS_MAP = {
   'COMMA': ',',
   'TAB': '\\t',
+  'SPACE': ' ',
   'PIPE': '\\|',
   'CONTROL_A': '\\u0001',
   'CONTROL_D': '\\u0004',
@@ -61,7 +62,7 @@ export default class CSVModal extends Component {
       delimiter = this.state.customDelimiter;
     }
 
-    let configuration = `${delimiter} ${this.state.firstRowHeader}`;
+    let configuration = `'${delimiter}' ${this.state.firstRowHeader}`;
 
     this.props.onApply('CSV', configuration);
     this.props.toggle();

@@ -300,7 +300,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId) {
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
+    throws DatasetManagementException {
+    return getInstances(namespaceId, new HashMap<String, String>());
+  }
+
+  @Override
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
+    throws DatasetManagementException {
     readLock.lock();
     try {
       // don't expect this to be called a lot.
@@ -308,7 +315,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       Collection<DatasetSpecification> specs = instances.row(namespaceId).values();
       ImmutableList.Builder<DatasetSpecificationSummary> specSummaries = ImmutableList.builder();
       for (DatasetSpecification spec : specs) {
-        specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+        if (properties.isEmpty() || Maps.difference(properties, spec.getProperties()).entriesOnlyOnLeft().isEmpty()) {
+          specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+        }
       }
       return specSummaries.build();
     } finally {

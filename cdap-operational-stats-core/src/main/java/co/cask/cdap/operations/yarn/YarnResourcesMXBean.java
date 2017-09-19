@@ -25,17 +25,17 @@ public interface YarnResourcesMXBean {
   /**
    * Returns the total memory in YARN.
    */
-  int getTotalMemory();
+  long getTotalMemory();
 
   /**
    * Returns the used memory in YARN.
    */
-  int getUsedMemory();
+  long getUsedMemory();
 
   /**
    * Returns the free memory in YARN.
    */
-  int getFreeMemory();
+  long getFreeMemory();
 
   /**
    * Returns the total virtual cores in YARN.

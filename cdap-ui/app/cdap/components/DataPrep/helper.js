@@ -29,7 +29,7 @@ export function directiveRequestBodyCreator(directivesArray, wsId) {
     version: 1.0,
     workspace: {
       name: workspaceId,
-      results: 100
+      results: 1000
     },
     recipe: {
       directives: directivesArray
