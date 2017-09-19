@@ -16,7 +16,7 @@
         <a href="" class="list-group-item" ng-repeat="data in GlobalExploreController.dataList" ng-click="GlobalExploreController.selectTable(data)" ng-class="{'selected': data.name === GlobalExploreController.name }">
           <span class="icon-streams" ng-if="data.type === 'stream'"></span>
           <span class="icon-datasets" ng-if="data.type === 'dataset'"></span>
-          <span>{{ ::data.name }}</span>
+          <span>{{ ::data.table }}</span>
         </a>
       </div>
     </div>
