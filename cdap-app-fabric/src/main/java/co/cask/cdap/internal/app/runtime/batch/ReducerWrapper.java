@@ -64,9 +64,13 @@ public class ReducerWrapper extends Reducer {
     ClassLoader weakReferenceClassLoader = new WeakReferenceDelegatorClassLoader(classLoader);
 
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
+    long metricsReportInterval = basicMapReduceContext.getMetricsReportIntervalMillis();
+    final ReduceTaskMetricsWriter reduceTaskMetricsWriter = new ReduceTaskMetricsWriter(
+      basicMapReduceContext.getProgramMetrics(), context);
 
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-    WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
+    WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext,
+                                                                       reduceTaskMetricsWriter);
     basicMapReduceContext.setHadoopContext(flushingContext);
 
     String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
@@ -127,17 +131,22 @@ public class ReducerWrapper extends Reducer {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     }
+
+    reduceTaskMetricsWriter.reportMetrics();
   }
 
   private WrappedReducer.Context createAutoFlushingContext(final Context context,
-                                                           final BasicMapReduceTaskContext basicMapReduceContext) {
+                                                           final BasicMapReduceTaskContext basicMapReduceContext,
+                                                           final ReduceTaskMetricsWriter metricsWriter) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.reducer.flush.freq", 10000);
+    final long reportIntervalInMillis = basicMapReduceContext.getMetricsReportIntervalMillis();
 
     @SuppressWarnings("unchecked")
     WrappedReducer.Context flushingContext = new WrappedReducer().new Context(context) {
       private int processedRecords = 0;
+      private long nextTimeToReportMetrics = 0L;
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
@@ -151,6 +160,11 @@ public class ReducerWrapper extends Reducer {
             throw Throwables.propagate(e);
           }
           processedRecords = 0;
+        }
+
+        if (System.currentTimeMillis() >= nextTimeToReportMetrics) {
+          metricsWriter.reportMetrics();
+          nextTimeToReportMetrics = System.currentTimeMillis() + reportIntervalInMillis;
         }
         return result;
       }

@@ -196,6 +196,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     }
   }
 
+  public long getMetricsReportIntervalMillis() {
+    return MapReduceMetricsUtil.getReportIntervalMillis(cConf, getRuntimeArguments());
+  }
+
   @Override
   public void close() {
     super.close();

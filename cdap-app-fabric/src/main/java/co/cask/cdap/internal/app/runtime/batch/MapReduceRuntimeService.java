@@ -379,24 +379,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(job, context);
+    long reportIntervalMillis = MapReduceMetricsUtil.getReportIntervalMillis(cConf, context.getRuntimeArguments());
+    LOG.debug("Interval for reporting MapReduce stats is {} seconds.",
+              TimeUnit.MILLISECONDS.toSeconds(reportIntervalMillis));
 
-    int reportInterval = cConf.getInt(Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS);
-    String val = context.getRuntimeArguments().get(Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS);
-    if (val != null) {
-      try {
-        int interval = Integer.parseInt(val);
-        if (interval < 1) {
-          // note: this will be caught right below, to produce a similar message as an exception thrown by parseInt()
-          throw new NumberFormatException("Must be at least 1");
-        }
-        reportInterval = interval;
-      } catch (NumberFormatException e) {
-        LOG.warn("Invalid value '{}' for '{}' given in runtime arguments: {}. Using default of {} seconds.",
-                 val, Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS, e.getMessage(), reportInterval);
-      }
-    }
-    LOG.debug("Interval for reporting MapReduce stats is {} seconds.", reportInterval);
-    long reportIntervalMillis = TimeUnit.SECONDS.toMillis(reportInterval);
     long nextTimeToReport = 0L;
 
     // until job is complete report stats
