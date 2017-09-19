@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.coprocessor;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.hbase.CConfigurationReader;
 import co.cask.cdap.data2.util.hbase.ConfigurationReader;
 import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
@@ -61,6 +62,9 @@ public class DefaultTransactionStateCache extends TransactionStateCache {
     CConfiguration cConf = configReader.read();
     Configuration txConf = HBaseConfiguration.create(getConf());
     CConfigurationUtil.copyTxProperties(cConf, txConf);
+
+    // Set the instance id so that it gets logged
+    setId(cConf.get(Constants.INSTANCE_NAME));
     return txConf;
   }
 }
