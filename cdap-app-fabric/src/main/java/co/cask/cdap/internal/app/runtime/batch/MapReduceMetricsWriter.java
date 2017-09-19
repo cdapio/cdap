@@ -45,7 +45,6 @@ public class MapReduceMetricsWriter {
   private final MetricsContext reducerMetrics;
   private final LoadingCache<String, MetricsContext> mapTaskMetricsCollectors;
   private final LoadingCache<String, MetricsContext> reduceTaskMetricsCollectors;
-  private final boolean emitTaskLevelMetrics;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context, CConfiguration cConf) {
     this.jobConf = jobConf;
@@ -67,7 +66,6 @@ public class MapReduceMetricsWriter {
           return reducerMetrics.childContext(Constants.Metrics.Tag.INSTANCE_ID, taskId);
         }
       });
-    this.emitTaskLevelMetrics = MapreduceMetricsUtil.isTaskLevelMetricsEnabled(context.getRuntimeArguments(), cConf);
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -83,16 +81,12 @@ public class MapReduceMetricsWriter {
     int runningMappers = 0;
     int runningReducers = 0;
     for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
-      if (emitTaskLevelMetrics) {
-        reportMapTaskMetrics(tr);
-      }
+      reportMapTaskMetrics(tr);
       runningMappers += tr.getRunningTaskAttemptIds().size();
-
     }
+
     for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
-      if (emitTaskLevelMetrics) {
-        reportReduceTaskMetrics(tr);
-      }
+      reportReduceTaskMetrics(tr);
       runningReducers += tr.getRunningTaskAttemptIds().size();
     }
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);

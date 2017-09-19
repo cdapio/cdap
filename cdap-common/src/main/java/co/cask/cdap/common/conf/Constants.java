@@ -611,6 +611,7 @@ public final class Constants {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
 
+    public static final String EMIT_PROGRAM_CONTAINER_METRICS_PREFERENCE = "system.enable.metrics";
     public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
     public static final String EMIT_MR_TASKL_LEVEL_METRICS = "mapreduce.task.metrics.enabled";
 

@@ -78,7 +78,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -137,7 +136,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader) {
     super(program, programOptions, cConf, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
-          true, metricsCollectionService, createMetricsTags(programOptions, cConf, taskId, type, workflowProgramInfo),
+          true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
@@ -297,17 +296,13 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     };
   }
 
-  private static Map<String, String> createMetricsTags(ProgramOptions programOptions, CConfiguration cConf,
-                                                       @Nullable String taskId,
+  private static Map<String, String> createMetricsTags(@Nullable String taskId,
                                                        @Nullable MapReduceMetrics.TaskType type,
                                                        @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
-    if (type != null) {
-      Map<String, String> runtimeArgs = Collections.unmodifiableMap(programOptions.getUserArguments().asMap());
+    if (type != null && taskId != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
-      if (taskId != null && MapreduceMetricsUtil.isTaskLevelMetricsEnabled(runtimeArgs, cConf)) {
-        tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-      }
+      tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
     }
 
     if (workflowProgramInfo != null) {
