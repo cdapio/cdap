@@ -171,6 +171,12 @@ public class PreviewDatasetFramework implements DatasetFramework {
     return localDatasetFramework.getInstances(namespaceId);
   }
 
+  @Override
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
+    throws DatasetManagementException {
+    return localDatasetFramework.getInstances(namespaceId, properties);
+  }
+
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {

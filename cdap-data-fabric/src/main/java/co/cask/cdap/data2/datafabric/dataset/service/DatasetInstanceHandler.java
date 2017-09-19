@@ -29,10 +29,20 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
+import com.google.common.io.Closeables;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -51,6 +61,7 @@ import javax.ws.rs.QueryParam;
 public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private final DatasetInstanceService instanceService;
+  private static final Gson GSON = new Gson();
 
   @Inject
   public DatasetInstanceHandler(DatasetInstanceService instanceService) {
@@ -63,6 +74,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                    @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK, ConversionHelpers.spec2Summary(
       instanceService.list(ConversionHelpers.toNamespaceId(namespaceId))));
+  }
+
+  @PUT
+  @Path("/data/datasets/")
+  public void listWithSpecifiedProperties(HttpRequest request, HttpResponder responder,
+                                          @PathParam("namespace-id") String namespaceId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, ConversionHelpers.spec2Summary(
+      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId), getDatasetProperties(request))));
   }
 
   /**
@@ -200,5 +219,20 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                             @PathParam("name") String name, @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+  }
+
+  private Map<String, String> getDatasetProperties(HttpRequest request) {
+    Map<String, String> properties = new HashMap<>();
+    ChannelBuffer content = request.getContent();
+    if (content == ChannelBuffers.EMPTY_BUFFER) {
+      return properties;
+    }
+
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+    } catch (IOException e) {
+      // no-op since is happens during closing of the reader
+    }
+    return properties;
   }
 }
