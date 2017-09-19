@@ -18,10 +18,10 @@ package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.app.runtime.spark.SparkCompat;
 import co.cask.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
+import co.cask.cdap.internal.app.spark.SparkCompat;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Injector;
 import org.apache.twill.api.TwillRunnable;

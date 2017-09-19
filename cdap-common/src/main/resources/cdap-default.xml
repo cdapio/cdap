@@ -315,7 +315,7 @@
 
   <property>
     <name>app.artifact.dir</name>
-    <value>/opt/cdap/master/artifacts;/opt/cdap/master/artifacts/${app.program.spark.compat}</value>
+    <value>/opt/cdap/master/artifacts</value>
     <description>
       Semicolon-separated list of local directories scanned for system
       artifacts to add to the artifact repository
