@@ -116,16 +116,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         return fetchNamespaceMeta(namespaceId);
       }
     });
-    String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    try {
-      if (AuthorizationUtil.isSecurityAuthorizationEnabled(cConf)) {
-        this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
-      } else {
-        this.masterShortUserName = null;
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
   }
 
   /**

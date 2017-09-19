@@ -28,6 +28,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,21 +56,8 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
     super(cConf);
     this.authorizerInstantiator = authorizerInstantiator;
-    if (isSecurityAuthorizationEnabled()) {
-      String masterPrincipal = SecurityUtil.getMasterPrincipal(cConf);
-      if (masterPrincipal == null) {
-        throw new RuntimeException("Kerberos master principal is null. Authorization can only be used when kerberos" +
-                                     " is used");
-      }
-      try {
-        this.masterUser = new Principal(new KerberosName(masterPrincipal).getShortName(), Principal.PrincipalType.USER);
-      } catch (IOException e) {
-        throw new RuntimeException(String.format("Failed to translate the principal name %s to an operating system " +
-                                                   "user name.", masterPrincipal), e);
-      }
-    } else {
-      masterUser = null;
-    }
+    String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
+    this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
   }
 
   @Override
