@@ -23,7 +23,6 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
@@ -73,8 +72,7 @@ public final class DistributedWebappProgramRunner extends DistributedProgramRunn
   protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
     String serviceName = WebappProgramRunner.getServiceName(program.getId());
-    Resources resources = SystemArguments.getResources(options.getUserArguments().asMap(), null);
-
-    launchConfig.addRunnable(serviceName, new WebappTwillRunnable(serviceName), resources, 1);
+    launchConfig.addRunnable(serviceName, new WebappTwillRunnable(serviceName), 1,
+                             options.getUserArguments().asMap(), new Resources());
   }
 }

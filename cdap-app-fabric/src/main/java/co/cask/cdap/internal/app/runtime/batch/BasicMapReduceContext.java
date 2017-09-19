@@ -115,10 +115,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.spec = spec;
-    this.mapperResources = SystemArguments.getResources(
-      RuntimeArguments.extractScope("task", "mapper", getRuntimeArguments()), spec.getMapperResources());
-    this.reducerResources = SystemArguments.getResources(
-      RuntimeArguments.extractScope("task", "reducer", getRuntimeArguments()), spec.getReducerResources());
+    this.mapperResources = SystemArguments.getResources(getMapperRuntimeArguments(), spec.getMapperResources());
+    this.reducerResources = SystemArguments.getResources(getReducerRuntimeArguments(), spec.getReducerResources());
     this.streamAdmin = streamAdmin;
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
@@ -322,6 +320,21 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   Map<String, LocalizeResource> getResourcesToLocalize() {
     return resourcesToLocalize;
+  }
+
+
+  /**
+   * Extracts the runtime arguments for the mapper scope.
+   */
+  Map<String, String> getMapperRuntimeArguments() {
+    return RuntimeArguments.extractScope("task", "mapper", getRuntimeArguments());
+  }
+
+  /**
+   * Extracts the runtime arguments for the reducer scope.
+   */
+  Map<String, String> getReducerRuntimeArguments() {
+    return RuntimeArguments.extractScope("task", "reducer", getRuntimeArguments());
   }
 
 

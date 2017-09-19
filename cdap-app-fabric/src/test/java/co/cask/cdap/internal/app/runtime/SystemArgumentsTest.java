@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -23,8 +24,10 @@ import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.api.Configs;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.Map;
@@ -43,41 +46,57 @@ public class SystemArgumentsTest {
     Assert.assertEquals(defaultResources, resources);
 
     // Specify memory
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "10"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10"), defaultResources);
     Assert.assertEquals(new Resources(10), resources);
 
     // Specify cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.cores", "8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.CORES_KEY, "8"), defaultResources);
     Assert.assertEquals(new Resources(defaultResources.getMemoryMB(), 8), resources);
 
     // Specify both memory and cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "10",
-                                                             "system.resources.cores", "8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10",
+                                                             SystemArguments.CORES_KEY, "8"), defaultResources);
     Assert.assertEquals(new Resources(10, 8), resources);
 
     // Specify invalid memory
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "-10"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "-10"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
     // Specify invalid cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.cores", "abc"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.CORES_KEY, "abc"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
     // Specify invalid memory and value cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "xyz",
-                                                             "system.resources.cores", "8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "xyz",
+                                                             SystemArguments.CORES_KEY, "8"), defaultResources);
     Assert.assertEquals(new Resources(defaultResources.getMemoryMB(), 8), resources);
 
     // Specify valid memory and invalid cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "10",
-                                                             "system.resources.cores", "-8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10",
+                                                             SystemArguments.CORES_KEY, "-8"), defaultResources);
     Assert.assertEquals(new Resources(10, defaultResources.getVirtualCores()), resources);
 
     // Specify invalid memory and invalid cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "-1",
-                                                             "system.resources.cores", "-8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "-1",
+                                                             SystemArguments.CORES_KEY, "-8"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
+    // Specify reserved memory size
+    Map<String, String> configs = SystemArguments.getTwillContainerConfigs(
+      ImmutableMap.of(SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE, "200"), 300);
+    Assert.assertEquals(ImmutableMap.of(Configs.Keys.JAVA_RESERVED_MEMORY_MB, "200",
+                                        Configs.Keys.HEAP_RESERVED_MIN_RATIO, "0.33"),
+                        configs);
+
+    // Specify invalid reserved memory size
+    configs = SystemArguments.getTwillContainerConfigs(
+      ImmutableMap.of(SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE, "-1"), 300);
+    Assert.assertTrue(configs.isEmpty());
+
+    // Specify >= container memory size
+    configs = SystemArguments.getTwillContainerConfigs(
+      ImmutableMap.of(SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE, "300"), 300);
+    Assert.assertTrue(configs.isEmpty());
   }
 
   @Test
@@ -113,5 +132,24 @@ public class SystemArgumentsTest {
 
     // Should give up (returning -1) after passing the max retry time
     Assert.assertEquals(-1L, strategy.nextRetry(1, startTime - 6000));
+  }
+
+  @Test
+  public void testLogLevels() {
+    Assert.assertTrue(SystemArguments.getLogLevels(Collections.<String, String>emptyMap()).isEmpty());
+
+    Map<String, String> args = ImmutableMap.of(
+      "system.log.level", "DEBUG",
+      "system.log.level.logger.info", "INFO",
+      "system.log.level.logger.warn", "WARN",
+      "system.log.leveldummyKey", "ERROR"     // <-- This should get picked
+    );
+
+    Map<String, Level> expected = ImmutableMap.of(
+      Logger.ROOT_LOGGER_NAME, Level.DEBUG,
+      "logger.info", Level.INFO,
+      "logger.warn", Level.WARN);
+
+    Assert.assertEquals(expected, SystemArguments.getLogLevels(args));
   }
 }

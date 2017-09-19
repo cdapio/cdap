@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
@@ -67,6 +68,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.filesystem.LocationFactory;
@@ -467,16 +469,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                                   Map<String, LocalizeResource> localizedResources,
                                                   boolean localMode,
                                                   Iterable<URI> pyFiles) throws Exception {
-    Map<String, String> configs = new HashMap<>();
+
+    // Setup configs from the default spark conf
+    Map<String, String> configs = new HashMap<>(Maps.fromProperties(SparkPackageUtils.getSparkDefaultConf()));
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
     // of the next port if 4040 is already occupied. However, during the process, it unnecessarily logs big stacktrace
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     configs.put("spark.ui.port", "0");
-
-    // Setup configs from the default spark conf
-    Properties sparkDefaultConf = SparkPackageUtils.getSparkDefaultConf();
-    configs.putAll(Maps.fromProperties(sparkDefaultConf));
 
     // Setup app.id and executor.id for Metric System
     configs.put("spark.app.id", context.getApplicationSpecification().getName());
@@ -487,6 +487,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     configs.put("spark.driver.cores", String.valueOf(context.getDriverResources().getVirtualCores()));
     configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
     configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
+
+    // Setup the memory overhead.
+    setMemoryOverhead(context.getDriverRuntimeArguments(), "driver",
+                      context.getDriverResources().getMemoryMB(), configs);
+    setMemoryOverhead(context.getExecutorRuntimeArguments(), "executor",
+                      context.getExecutorResources().getMemoryMB(), configs);
 
     // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
     SparkConf sparkConf = context.getSparkConf();
@@ -541,6 +547,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     return configs;
+  }
+
+  /**
+   * Sets the Spark memory overhead setting based on the runtime arguments of the given type.
+   *
+   * @param runtimeArgs the runtime arguments
+   * @param type either {@code driver} or {@code executor}
+   * @param containerSize the memory size in MB of the container
+   * @param configs the configuration to be updated
+   */
+  private void setMemoryOverhead(Map<String, String> runtimeArgs, String type,
+                                 int containerSize, Map<String, String> configs) {
+    Map<String, String> memoryConfigs = SystemArguments.getTwillContainerConfigs(runtimeArgs, containerSize);
+    if (!memoryConfigs.containsKey(Configs.Keys.JAVA_RESERVED_MEMORY_MB)) {
+      return;
+    }
+    configs.put("spark.yarn." + type + ".memoryOverhead", memoryConfigs.get(Configs.Keys.JAVA_RESERVED_MEMORY_MB));
   }
 
   /**

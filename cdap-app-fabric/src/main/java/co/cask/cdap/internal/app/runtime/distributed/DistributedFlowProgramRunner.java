@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.flow.Flow;
@@ -55,7 +54,6 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,10 +122,9 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
 
       String flowletName = entry.getKey();
       Map<String, String> flowletArgs = RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowletName, args);
-      Resources resources = SystemArguments.getResources(flowletArgs, flowletSpec.getResources());
 
-      launchConfig.addRunnable(entry.getKey(), new FlowletTwillRunnable(flowletName),
-                               resources, flowletDefinition.getInstances());
+      launchConfig.addRunnable(flowletName, new FlowletTwillRunnable(flowletName),
+                               flowletDefinition.getInstances(), flowletArgs, flowletSpec.getResources());
     }
   }
 
@@ -141,19 +138,6 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
   protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
     return new TwillAppLifecycleEventHandler(
       cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true, options);
-  }
-
-  @Override
-  protected TwillPreparer setLogLevels(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
-    FlowSpecification spec = program.getApplicationSpecification().getFlows().get(program.getName());
-    for (String flowlet : spec.getFlowlets().keySet()) {
-      Map<String, String> logLevels = SystemArguments.getLogLevels(
-        RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowlet, options.getUserArguments().asMap()));
-      if (!logLevels.isEmpty()) {
-        twillPreparer.setLogLevels(flowlet, transformLogLevels(logLevels));
-      }
-    }
-    return twillPreparer;
   }
 
   private FlowSpecification getFlowSpecification(Program program) {

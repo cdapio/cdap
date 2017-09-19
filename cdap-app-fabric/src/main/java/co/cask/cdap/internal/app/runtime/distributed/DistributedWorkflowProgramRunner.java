@@ -148,11 +148,11 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
 
     // Clear and set the runnable for the workflow driver
     launchConfig.clearRunnables();
-    Resources resources = findDriverResources(program.getApplicationSpecification().getSpark(),
-                                              program.getApplicationSpecification().getMapReduce(), spec);
+    Resources defaultResources = findDriverResources(program.getApplicationSpecification().getSpark(),
+                                                     program.getApplicationSpecification().getMapReduce(), spec);
 
-    resources = SystemArguments.getResources(options.getUserArguments(), resources);
-    launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), resources, 1, 0);
+    launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), 1,
+                             options.getArguments().asMap(), defaultResources, 0);
   }
 
   /**

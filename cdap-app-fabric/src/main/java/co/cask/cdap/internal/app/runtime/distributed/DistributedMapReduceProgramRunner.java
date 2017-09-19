@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -25,7 +24,6 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
@@ -90,10 +88,10 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
     // Get the resource for the container that runs the mapred client that will launch the actual mapred job.
     Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
                                                                    options.getUserArguments().asMap());
-    Resources resources = SystemArguments.getResources(clientArgs, spec.getDriverResources());
-
     // Add runnable. Only one instance for the MR driver
-    launchConfig.addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()), resources, 1, 0)
+    launchConfig
+      .addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()),
+                   1, clientArgs, spec.getDriverResources(), 0)
     // Add extra resources, classpath and dependencies
       .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<String, LocalizeResource>()))
       .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))

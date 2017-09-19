@@ -73,15 +73,15 @@ public class LogAppenderInitializer implements Closeable {
     }
   }
 
-  public void setLogLevels(Map<String, String> logPairs) {
+  public void setLogLevels(Map<String, Level> logPairs) {
     LoggerContext loggerContext = getLoggerContext();
     if (loggerContext != null) {
-      for (Map.Entry<String, String> entry : logPairs.entrySet()) {
+      for (Map.Entry<String, Level> entry : logPairs.entrySet()) {
         String loggerName = entry.getKey();
-        String logLevel = entry.getValue();
+        Level logLevel = entry.getValue();
         Logger logger = loggerContext.getLogger(loggerName);
         LOG.info("Log level of {} changed from {} to {}", loggerName, logger.getLevel(), logLevel);
-        logger.setLevel(Level.toLevel(logLevel));
+        logger.setLevel(logLevel);
       }
     }
   }

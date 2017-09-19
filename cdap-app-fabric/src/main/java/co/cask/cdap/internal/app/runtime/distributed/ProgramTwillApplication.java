@@ -20,9 +20,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
 import org.slf4j.Logger;
@@ -31,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * The {@link TwillApplication} for running programs in distributed mode.
@@ -44,7 +41,7 @@ public final class ProgramTwillApplication implements TwillApplication {
   private final TwillSpecification twillSpec;
 
   ProgramTwillApplication(ProgramId programId,
-                          Map<String, RunnableResource> runnables,
+                          Map<String, RunnableDefinition> runnables,
                           Iterable<Set<String>> launchOrder,
                           Map<String, LocalizeResource> localizeResources,
                           EventHandler eventHandler) {
@@ -57,7 +54,7 @@ public final class ProgramTwillApplication implements TwillApplication {
 
     // Add runnable and resources for each of them
     Builder.RunnableSetter runnableSetter = null;
-    for (Map.Entry<String, RunnableResource> entry : runnables.entrySet()) {
+    for (Map.Entry<String, RunnableDefinition> entry : runnables.entrySet()) {
       Builder.RuntimeSpecificationAdder runtimeSpecAdder = moreRunnable.add(entry.getKey(),
                                                                             entry.getValue().getRunnable(),
                                                                             entry.getValue().getResources());
@@ -118,35 +115,4 @@ public final class ProgramTwillApplication implements TwillApplication {
     return moreFile == null ? builder.noLocalFiles() : moreFile.apply();
   }
 
-  /**
-   * Container class for holding TwillRunnable and ResourceSpecification together.
-   */
-  public static final class RunnableResource {
-    private final TwillRunnable runnable;
-    private final ResourceSpecification resources;
-    private final Integer maxRetries;
-
-    public RunnableResource(TwillRunnable runnable, ResourceSpecification resources) {
-      this(runnable, resources, null);
-    }
-
-    public RunnableResource(TwillRunnable runnable, ResourceSpecification resources, @Nullable Integer maxRetries) {
-      this.runnable = runnable;
-      this.resources = resources;
-      this.maxRetries = maxRetries;
-    }
-
-    public TwillRunnable getRunnable() {
-      return runnable;
-    }
-
-    public ResourceSpecification getResources() {
-      return resources;
-    }
-
-    @Nullable
-    public Integer getMaxRetries() {
-      return maxRetries;
-    }
-  }
 }
