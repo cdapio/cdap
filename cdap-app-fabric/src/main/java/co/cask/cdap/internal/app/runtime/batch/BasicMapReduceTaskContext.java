@@ -136,8 +136,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader) {
     super(program, programOptions, cConf, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
-          true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
+          secureStoreManager, messagingService, pluginInstantiator);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;

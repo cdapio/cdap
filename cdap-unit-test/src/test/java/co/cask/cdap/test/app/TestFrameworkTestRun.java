@@ -462,12 +462,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
     Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
-                                                    DatasetWithMRApp.OUTPUT_KEY, "table2",
-                                                    Constants.Metrics.EMIT_MR_TASKL_LEVEL_METRICS, "false");
+                                                    DatasetWithMRApp.OUTPUT_KEY, "table2");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
-
     appManager.stopAll();
+
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
     verifyMapperJobOutput(DatasetWithMRApp.class, outTableManager);
   }

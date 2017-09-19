@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -46,7 +45,7 @@ public class MapReduceMetricsWriter {
   private final LoadingCache<String, MetricsContext> mapTaskMetricsCollectors;
   private final LoadingCache<String, MetricsContext> reduceTaskMetricsCollectors;
 
-  public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context, CConfiguration cConf) {
+  public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.mapperMetrics = context.getProgramMetrics().childContext(Constants.Metrics.Tag.MR_TASK_TYPE,
                                                                   MapReduceMetrics.TaskType.Mapper.getId());
@@ -84,7 +83,6 @@ public class MapReduceMetricsWriter {
       reportMapTaskMetrics(tr);
       runningMappers += tr.getRunningTaskAttemptIds().size();
     }
-
     for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
       reportReduceTaskMetrics(tr);
       runningReducers += tr.getRunningTaskAttemptIds().size();

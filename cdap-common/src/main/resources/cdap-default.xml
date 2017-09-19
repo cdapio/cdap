@@ -2193,14 +2193,6 @@
   </property>
 
   <property>
-    <name>mapreduce.task.metrics.enabled</name>
-    <value>true</value>
-    <description>
-      Determines if task level metrics have to emitted for map-reduce programs.
-    </description>
-  </property>
-
-  <property>
     <name>metrics.hbase.max.scan.threads</name>
     <value>96</value>
     <description>
