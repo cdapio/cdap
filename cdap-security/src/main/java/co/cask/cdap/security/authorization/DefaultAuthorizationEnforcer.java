@@ -23,17 +23,14 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authentication.util.KerberosName;
+import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -83,8 +80,19 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     }
 
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
-    LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
-    Set<? extends EntityId> moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
+    LOG.trace("==> Checking visibility of {} for principal {}.", difference, principal);
+    // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
+    // singleton we don't want the stopwatch instance to get re-used across multiple calls.
+    StopWatch watch = new StopWatch();
+    watch.start();
+    Set<? extends EntityId> moreVisibleEntities;
+    try {
+      moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
+    } finally {
+      watch.stop();
+      LOG.trace("<== Checked visibility of {} for principal {}. Time spent in visibility check {} milliseconds.",
+               difference, principal, watch.getTime());
+    }
     visibleEntities.addAll(moreVisibleEntities);
     LOG.trace("Getting {} as visible entities", visibleEntities);
     return Collections.unmodifiableSet(visibleEntities);
@@ -95,8 +103,18 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
-    LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
-    authorizerInstantiator.get().enforce(entity, principal, actions);
+    LOG.trace("==> Enforcing actions {} on {} for principal {}.", actions, entity, principal);
+    // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
+    // singleton we don't want the stopwatch instance to get re-used across multiple calls.
+    StopWatch watch = new StopWatch();
+    watch.start();
+    try {
+      authorizerInstantiator.get().enforce(entity, principal, actions);
+    } finally {
+      watch.stop();
+      LOG.trace("<== Enforced actions {} on {} for principal {}. Time spent in enforcement {} milliseconds.", actions,
+               entity, principal, watch.getTime());
+    }
   }
 
   private boolean isAccessingSystemNSAsMasterUser(EntityId entityId, Principal principal) {
