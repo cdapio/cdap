@@ -2257,6 +2257,15 @@
     </description>
   </property>
 
+  <property>
+    <name>metrics.table.hbase.split.policy</name>
+    <value>org.apache.hadoop.hbase.regionserver.DisabledRegionSplitPolicy</value>
+    <description>
+      The class name that controls the HBase table region split policy.
+      Ideally, auto-splitting should be disabled for HBase tables used by the metrics system.
+    </description>
+  </property>
+
   <!-- Monitor Handler Configuration -->
 
   <property>
