@@ -190,9 +190,11 @@ public class Authorizable {
     switch (entityType) {
       case INSTANCE:
       case NAMESPACE:
-        entityParts.put(entityType, parts.get(index));
-        break;
       case KERBEROSPRINCIPAL:
+        if (parts.size() != 1 && index == (parts.size() - 1)) {
+          throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
+                                               "Expected: <entity-name>, given entity: " + parts);
+        }
         entityParts.put(entityType, parts.get(index));
         break;
       case ARTIFACT:
@@ -205,6 +207,10 @@ public class Authorizable {
                                                     "If you are including version please remove it. Given entity: " +
                                                     parts);
         }
+        if (parts.size() < 2 && index == (parts.size() - 1)) {
+          throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
+                                               "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
+        }
         checkParts(EntityType.NAMESPACE, parts, index - 1, entityParts);
         entityParts.put(entityType, parts.get(index));
         break;
@@ -213,6 +219,10 @@ public class Authorizable {
       case DATASET_TYPE:
       case STREAM:
       case SECUREKEY:
+        if (parts.size() != 2 && index == (parts.size() - 1)) {
+          throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
+                                               "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
+        }
         checkParts(EntityType.NAMESPACE, parts, index - 1, entityParts);
         entityParts.put(entityType, parts.get(index));
         break;
@@ -224,6 +234,12 @@ public class Authorizable {
           throw new UnsupportedOperationException("Privilege can only be granted at the artifact/application level. " +
                                                     "If you are including version please remove it. Given entity: " +
                                                     parts);
+        }
+        if (parts.size() < 3 && index == (parts.size() - 1)) {
+          throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
+                                               "Expected: <namespace-name>.<app-name>.* or " +
+                                               "<namespace-name>.<app-name>.<program-type>.<program-name>, " +
+                                               "given entity: " + parts);
         }
 
         if (parts.size() == 3 && index == (parts.size() - 1)) {
