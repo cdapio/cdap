@@ -26,6 +26,8 @@ const SCHEDULERUNTIMEARGSACTIONS = {
   SETCONFIGSTAGES: 'SETCONFIGSTAGES',
   SETARGSKEY: 'SETARGSKEY',
   SETARGSVALUE: 'SETARGSVALUE',
+  BULKSETARGSVALUE: 'BULKSETARGSVALUE',
+  SETDISABLED: 'SETDISABLED',
   RESET: 'RESET'
 };
 
@@ -53,7 +55,8 @@ const DEFAULTARGS = {
     unMappedMacros: DEFAULTMACROS,
     id: null
   },
-  argsMapping: DEFAULTARGSMAPPING
+  argsMapping: DEFAULTARGSMAPPING,
+  disabled: false
 };
 
 const isDefaultMessage = (input) => [DEFAULTRUNTIMEARGSMESSAGE, DEFAULTSTAGEMESSAGE, DEFAULTPROPERTYMESSAGE, DEFAULTTRIGGEREDMACROMESSAGE].indexOf(input) !== -1;
@@ -77,7 +80,7 @@ const arrayToMap = (stages) => {
   return map;
 };
 
-const getUpdatedMapping = (state, {key, value}, oldValue) => {
+const getUpdatedMapping = (state, {key, value, type}, oldValue) => {
   let argsMapping = [...state.argsMapping];
   let existingMap = {};
 
@@ -97,7 +100,8 @@ const getUpdatedMapping = (state, {key, value}, oldValue) => {
   } else {
     existingMap = {
       key: handleDefaultMessage(key),
-      value: handleDefaultMessage(value)
+      value: handleDefaultMessage(value),
+      type
     };
     argsMapping.push(existingMap);
   }
@@ -121,13 +125,13 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
           macros: action.payload.macros,
           unMappedMacros: action.payload.macros,
           id: action.payload.id
-        },
-        argsMapping: []
+        }
       });
     case SCHEDULERUNTIMEARGSACTIONS.SETARGSVALUE: {
       let argsMapping = getUpdatedMapping(state, {
         key: action.payload.mappingKey,
-        value: action.payload.mappingValue
+        value: action.payload.mappingValue,
+        type: action.payload.type
       }, action.payload.oldMappedValue);
 
       let returnObj = Object.assign({}, state, {
@@ -142,6 +146,15 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
 
       return returnObj;
     }
+    case SCHEDULERUNTIMEARGSACTIONS.BULKSETARGSVALUE:
+      return {
+        ...state,
+        argsMapping: action.payload.argsArray
+      };
+    case SCHEDULERUNTIMEARGSACTIONS.SETDISABLED:
+      return Object.assign({}, state, {
+        disabled: true
+      });
     case SCHEDULERUNTIMEARGSACTIONS.RESET:
       return DEFAULTARGS;
     default:

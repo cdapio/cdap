@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
@@ -45,8 +44,6 @@ public class AuthorizationTestBase {
     CCONF.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     CCONF.setBoolean(Constants.Security.ENABLED, true);
     CCONF.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-    CCONF.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
     locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
   }
 }

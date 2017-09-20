@@ -92,7 +92,6 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
@@ -188,9 +187,6 @@ public class BaseHiveExploreServiceTest {
       cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
       cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
       cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
-      // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-      cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL,
-                UserGroupInformation.getLoginUser().getShortUserName());
     }
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);

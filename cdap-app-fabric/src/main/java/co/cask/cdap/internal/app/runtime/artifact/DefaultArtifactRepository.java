@@ -39,6 +39,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.internal.app.spark.SparkCompat;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
@@ -84,7 +85,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactStore artifactStore;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ArtifactInspector artifactInspector;
-  private final List<File> systemArtifactDirs;
+  private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
@@ -97,9 +98,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
-    this.systemArtifactDirs = new ArrayList<>();
+    this.systemArtifactDirs = new HashSet<>();
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
+      String sparkDirStr = SparkCompat.get(cConf).getCompat();
+
       for (String dir : systemArtifactsDir.split(";")) {
         File file = new File(dir);
         if (!file.isDirectory()) {
@@ -107,6 +110,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
           continue;
         }
         systemArtifactDirs.add(file);
+        // Also look in the relevant spark compat directory for spark version specific artifacts.
+        File sparkDir = new File(file, sparkDirStr);
+        if (file.isDirectory()) {
+          systemArtifactDirs.add(sparkDir);
+        }
       }
     }
     this.configReader = new ArtifactConfigReader();

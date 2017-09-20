@@ -315,7 +315,7 @@
 
   <property>
     <name>app.artifact.dir</name>
-    <value>/opt/cdap/master/artifacts;/opt/cdap/master/artifacts/${app.program.spark.compat}</value>
+    <value>/opt/cdap/master/artifacts</value>
     <description>
       Semicolon-separated list of local directories scanned for system
       artifacts to add to the artifact repository
@@ -733,7 +733,6 @@
     <description>
       Time in seconds used to pad transaction maximum lifetime while pruning
     </description>
-    <final>true</final>
   </property>
 
   <property>
@@ -2239,6 +2238,15 @@
     <description>
       Number of splits for all metrics tables. This property can only be changed before CDAP starts up for the first
       time and creates the metrics tables. Once all metrics tables are created, this property will not take any effect.
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.table.hbase.split.policy</name>
+    <value>org.apache.hadoop.hbase.regionserver.DisabledRegionSplitPolicy</value>
+    <description>
+      The class name that controls the HBase table region split policy.
+      Ideally, auto-splitting should be disabled for HBase tables used by the metrics system.
     </description>
   </property>
 

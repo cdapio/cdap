@@ -139,8 +139,7 @@ export default class DatabaseDetail extends Component {
   handleChange(key, e) {
     this.setState({
       [key]: e.target.value,
-      connectionResult: null,
-      databaseList: ['', this.state.customId]
+      connectionResult: null
     });
   }
 
@@ -345,7 +344,7 @@ export default class DatabaseDetail extends Component {
             onClick={this.testConnection}
             disabled={disabled}
           >
-            Test Connection
+            {T.translate(`${PREFIX}.testConnection`)}
           </button>
 
           {

@@ -78,6 +78,15 @@ To add a gauge metric to the flowlet *WordProcessor*::
 
 An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`Purchase example. <examples-purchase>`
 
+Under high load, metrics system may overload HBase. To mitigate the effect, Metrics system also provides an option to
+enable/disable metrics using `app.program.metrics.enabled` parameter which can have values as `true` or `false`.
+By default, program metrics are enabled, so the default value for this parameter is `true`.
+This option can be configured at 3 different levels:
+
+- **System wide** In cdap-site.xml (system wide) to control whether app containers emit metrics
+- **Per Run** As a program argument to override the system-wide setting per program run,
+- **Program Preference** permanently for a program by setting a preference.
+
 Using Metrics Explorer
 ----------------------
 The *Metrics Explorer* of the :ref:`CDAP UI <cdap-ui>`

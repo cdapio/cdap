@@ -63,14 +63,24 @@ function resetStore() {
   });
 }
 
-function setArgMapping(key, value, oldValue) {
+function setArgMapping(key, value, type, oldValue) {
   ScheduleRuntimeArgsStore.dispatch({
     type: SCHEDULERUNTIMEARGSACTIONS.SETARGSVALUE,
     payload: {
       mappingKey: key,
       mappingValue: value,
+      type,
       oldMappedValue: oldValue
     }
   });
 }
-export {fetchPipelineMacroDetails, setArgMapping, resetStore};
+
+function bulkSetArgMapping(argsArray) {
+  ScheduleRuntimeArgsStore.dispatch({
+    type: SCHEDULERUNTIMEARGSACTIONS.BULKSETARGSVALUE,
+    payload: {
+      argsArray
+    }
+  });
+}
+export {fetchPipelineMacroDetails, setArgMapping, resetStore, bulkSetArgMapping};

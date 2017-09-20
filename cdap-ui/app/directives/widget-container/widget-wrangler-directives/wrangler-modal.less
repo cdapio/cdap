@@ -77,6 +77,7 @@ body.state-hydrator-create.state-hydrator {
             min-width: auto;
             padding: 12px 20px 10px 10px;
             display: flex;
+            flex: 0.6;
             align-items: center;
             > span.text-danger {
               margin-right: 10px;
@@ -86,6 +87,15 @@ body.state-hydrator-create.state-hydrator {
                 > button,
                 &:focus {
                   outline: none;
+                }
+              }
+            }
+            .upgrade-button {
+              .btn-info {
+                background-color: @btn-info;
+
+                &:hover {
+                  background-color: darken(@btn-info, 12%);
                 }
               }
             }

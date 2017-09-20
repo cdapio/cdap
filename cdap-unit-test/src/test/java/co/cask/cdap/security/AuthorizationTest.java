@@ -170,8 +170,6 @@ public class AuthorizationTest extends TestBase {
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
         Constants.Security.KERBEROS_ENABLED, "false",
-        // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-        Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName()
       };
     }
   }

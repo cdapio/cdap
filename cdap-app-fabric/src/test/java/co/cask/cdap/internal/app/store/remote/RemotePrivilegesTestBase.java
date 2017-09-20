@@ -41,7 +41,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -91,8 +90,6 @@ public abstract class RemotePrivilegesTestBase {
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setInt(Constants.Security.Authorization.CACHE_TTL_SECS, CACHE_TIMEOUT);
-    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAuthorizer.class.getName());
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());

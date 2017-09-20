@@ -84,6 +84,7 @@ commons:
   market: Cask Market
   milliSecondsShortLabel: ms
   nameLabel: Name
+  noLabel: No
   notAvailable: 'N/A'
   please: Please
   resource-center: Add Entity
@@ -96,6 +97,7 @@ commons:
   typeLabel: Type
   when: When
   wrangler: Cask Wrangler
+  yesLabel: Yes
 features:
   AboutPage:
     copyright:
@@ -143,6 +145,8 @@ features:
         delete-datasets: Delete All Datasets
         delete-ns: Delete Namespace
         instance-preference: Instance Preference
+        MakeRESTCalls:
+          label: Make HTTP Calls
         manage-ns: Manage Namespaces
         manage-roles: Manage Roles
         ReloadSystemArtifacts:
@@ -789,38 +793,17 @@ features:
       collapse: Collapse the side panel
       expand: Expand the side panel
     TopPanel:
-      applyBtnLabel: Apply
       addToPipelineBtnLabel: Create a Pipeline
-      database: Database
-      databaseTitle: "Table: {name}"
-      file: File System
-      invalidFieldNameMessage: Invalid column name "{fieldName}"
-      invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
-      invalidFieldNameRemedies2: "You can try to "
+      applyBtnLabel: Apply
       cleanseLinkLabel: "cleanse "
-      invalidFieldNameRemedies3: column names.
-      kafka: Kafka
-      SchemaModal:
-        defaultErrorMessage: Error generating schema.
-      PipelineModal:
-        defaultErrorMessage: Error adding to pipeline
-      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
-      Tabs:
-        dataprep: Data
-        dataviz: Insights
-      title: Data Preparation
-      upgradeBtnLabel: Upgrade
-      upload: Local File Upload
-      viewSchemaBtnLabel: View Schema
       copyToCDAPDatasetBtn:
-        uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
         btnLabel: Ingest Data
-        createBtnLabel: Ingest Data
         copyingSteps:
           Step1: 'Preparing to copy...'
           Step1Error: 'Unable to copy data.'
           Step2: 'Submitting copy task...'
           Step2Error: 'Unable to submit copy task.'
+        createBtnLabel: Ingest Data
         description: You are creating a new Dataset, select a type and enter information about this new entity
         Form:
           datasetNameLabel: Dataset Name
@@ -839,6 +822,30 @@ features:
           parquet: Parquet
         modalTitle: Ingest Data
         monitorBtnLabel: Explore Data
+        uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
+      database: Database
+      databaseTitle: "Table: {name}"
+      file: File System
+      invalidFieldNameMessage: Invalid column name "{fieldName}"
+      invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
+      invalidFieldNameRemedies2: "You can try to "
+      invalidFieldNameRemedies3: column names.
+      kafka: Kafka
+      PipelineModal:
+        defaultErrorMessage: Error adding to pipeline
+      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      SchemaModal:
+        defaultErrorMessage: Error generating schema.
+      Tabs:
+        dataprep: Data
+        dataviz: Insights
+      title: Data Preparation
+      upgradeBtnLabel: Upgrade
+      UpgradeModal:
+        confirmation: Are you sure you want to upgrade Data Preparation?
+        modalHeader: Upgrade Data Preparation
+      upload: Local File Upload
+      viewSchemaBtnLabel: View Schema
       WorkspaceModal:
         create: Create
         createModalTitle: Create Workspace
@@ -882,6 +889,7 @@ features:
           password: Password
           port: Port
           required: Required
+          testConnection: Test Connection
           username: Username
         DatabaseOptions:
           install: "Install Driver: "
@@ -1320,28 +1328,31 @@ features:
     ScheduleRuntimeArgs:
       configure_enable_btn: Configure and Enable Trigger
       DefaultMessages:
-        choose_runtime_arg: Choose a Runtime Argument
-        choose_plugin: Choose a Plugin
-        choose_plugin_property: Choose a Plugin Property
-        choose_runtime_arg_map: Choose a Runtime Argument to map
+        choose_runtime_arg: Pick Runtime Argument
+        choose_plugin: Pick Plugin
+        choose_plugin_property: Pick Plugin Property
+        choose_runtime_arg_map: Pick Runtime Argument
       PayloadConfigModal:
         title: Payload Configuration
         configPayloadBtn: Configure Payload
+        configPayloadBtnDisabled: View Payload
       Tabs:
         RuntimeArgs:
+          disabledNoRuntimeArgsMessage: No Runtime Arguments configured for "{triggeredPipelineid}"
           noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
           TableHeaders:
-            runtimeargs: Runtime Arguments
+            runtimeargs: Runtime Arguments to map
             t_runtimeargs: Trigger Runtime Arguments
           tab_message: Select how Runtime Arguments for trigger "{triggeringPipelineid}" map to Runtime Arguments for "{triggeredPipelineid}"
           tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
           title: Runtime Arguments
         StageProps:
+          disabledNoStageConfigMessage: No Plugin Config configured for "{triggeredPipelineid}"
           noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
           TableHeaders:
             pluginName: Plugin Name
             pluginProperty: Plugin Property
-            runtimeArg: Runtime Argument
+            runtimeArg: Runtime Arguments to map
           tab_message: Set which of the plugin properties in trigger "{triggeringPipelineid}" map to "{triggeredPipelineid}" Runtime Arguments.
           tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
           title: Plugin Config

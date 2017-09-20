@@ -23,14 +23,14 @@ import {updateWorkspaceProperties} from 'components/DataPrep/store/DataPrepActio
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
 import debounce from 'lodash/debounce';
+import isEmpty from 'lodash/isEmpty';
+import differenceWith from 'lodash/differenceWith';
 
 require('./DataPrepVisualization.scss');
 
 const PLOT_VEGA_LITE_CONFIG = {
-  "config": {
-    "mark": {
-      "color": "#ff6600"
-    }
+  "mark": {
+    "color": "#ff6600"
   }
 };
 
@@ -95,20 +95,24 @@ export default class DataPrepVisualization extends Component {
     window.removeEventListener('beforeunload', this.updateVizProperties);
   };
 
+  isArrayEqual = (x, y) => {
+    return isEmpty(differenceWith(x, y, isEqual));
+  };
+
   componentDidMount() {
     window.addEventListener('beforeunload', this.updateVizProperties);
-    let localData = DataPrepStore.getState().dataprep.data;
+    let localData = [...DataPrepStore.getState().dataprep.data];
     this.datapreSubscription = DataPrepStore.subscribe(() => {
       let {dataprep} = DataPrepStore.getState();
       let properties = dataprep.properties || {};
       let visualization = properties.visualization || {};
-      if (!localData || !isEqual(dataprep.data, localData)) {
+      if (!localData || !this.isArrayEqual(dataprep.data, localData)) {
         if (!Object.keys(visualization).length) {
           this.voyagerInstance.updateData({
             values: dataprep.data
           });
         } else {
-          this.voyagerInstance.setApplicationState(this.addDatasetToVoyagerState(visualization, dataprep.data));
+          this.voyagerInstance.setApplicationState(this.addDatasetToVoyagerState(visualization, cloneDeep(dataprep.data)));
         }
         localData = cloneDeep(dataprep.data);
       }

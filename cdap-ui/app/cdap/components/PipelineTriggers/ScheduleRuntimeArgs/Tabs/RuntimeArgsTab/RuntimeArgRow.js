@@ -46,7 +46,7 @@ export default class RuntimeArgRow extends Component {
 
   updateStore = (oldValue) => {
     if (this.state.value && this.state.key) {
-      setArgMapping(this.state.key, this.state.value, oldValue);
+      setArgMapping(this.state.key, this.state.value, 'runtime', oldValue);
     }
   };
   getDisplayValueForTriggeringPipelineMacro = (triggeringPipelineInfo, key = this.state.key) => {
