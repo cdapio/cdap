@@ -31,7 +31,9 @@ export default class PayloadConfigModal extends Component {
     triggeringPipelineInfo: PropTypes.object,
     triggeredPipelineInfo: PropTypes.string,
     onClose: PropTypes.func,
-    onEnableSchedule: PropTypes.func
+    onEnableSchedule: PropTypes.func,
+    disabled: PropTypes.bool,
+    scheduleInfo: PropTypes.object
   };
 
   state = {
@@ -51,6 +53,7 @@ export default class PayloadConfigModal extends Component {
     if (!this.state.isOpen) {
       return null;
     }
+
     return (
       <HydratorModal
         isOpen={this.state.isOpen}
@@ -80,6 +83,8 @@ export default class PayloadConfigModal extends Component {
             triggeringPipelineInfo={this.props.triggeringPipelineInfo}
             triggeredPipelineInfo={this.props.triggeredPipelineInfo}
             onEnableSchedule={this.props.onEnableSchedule}
+            disabled={this.props.disabled}
+            scheduleInfo={this.props.scheduleInfo}
           />
         </ModalBody>
       </HydratorModal>
@@ -87,13 +92,15 @@ export default class PayloadConfigModal extends Component {
   };
 
   render() {
+    let label = this.props.disabled ? T.translate(`${PREFIX}.configPayloadBtnDisabled`) : T.translate(`${PREFIX}.configPayloadBtn`);
+
     return (
       <div className="payload-config-modal">
         <button
           className="btn btn-link"
           onClick={this.toggle}
         >
-          {T.translate(`${PREFIX}.configPayloadBtn`)}
+          {label}
         </button>
         {this.renderModal()}
       </div>

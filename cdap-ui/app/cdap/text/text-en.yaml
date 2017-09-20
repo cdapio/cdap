@@ -1326,28 +1326,31 @@ features:
     ScheduleRuntimeArgs:
       configure_enable_btn: Configure and Enable Trigger
       DefaultMessages:
-        choose_runtime_arg: Choose a Runtime Argument
-        choose_plugin: Choose a Plugin
-        choose_plugin_property: Choose a Plugin Property
-        choose_runtime_arg_map: Choose a Runtime Argument to map
+        choose_runtime_arg: Pick Runtime Argument
+        choose_plugin: Pick Plugin
+        choose_plugin_property: Pick Plugin Property
+        choose_runtime_arg_map: Pick Runtime Argument
       PayloadConfigModal:
         title: Payload Configuration
         configPayloadBtn: Configure Payload
+        configPayloadBtnDisabled: View Payload
       Tabs:
         RuntimeArgs:
+          disabledNoRuntimeArgsMessage: No Runtime Arguments configured for "{triggeredPipelineid}"
           noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
           TableHeaders:
-            runtimeargs: Runtime Arguments
+            runtimeargs: Runtime Arguments to map
             t_runtimeargs: Trigger Runtime Arguments
           tab_message: Select how Runtime Arguments for trigger "{triggeringPipelineid}" map to Runtime Arguments for "{triggeredPipelineid}"
           tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
           title: Runtime Arguments
         StageProps:
+          disabledNoStageConfigMessage: No Plugin Config configured for "{triggeredPipelineid}"
           noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
           TableHeaders:
             pluginName: Plugin Name
             pluginProperty: Plugin Property
-            runtimeArg: Runtime Argument
+            runtimeArg: Runtime Arguments to map
           tab_message: Set which of the plugin properties in trigger "{triggeringPipelineid}" map to "{triggeredPipelineid}" Runtime Arguments.
           tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
           title: Plugin Config

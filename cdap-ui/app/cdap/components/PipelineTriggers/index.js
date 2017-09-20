@@ -36,10 +36,14 @@ export default class PipelineTriggers extends Component {
 
     let initState = PipelineTriggersStore.getState().triggers;
 
+    let count = initState.enabledTriggersCount || 0;
+
+    let updateOnce = false;
+
     this.state = {
-      activeTab: 0,
+      activeTab: count === 0 ? 1 : 0,
       tabText: `${PREFIX}.collapsedTabLabel`,
-      enabledTriggersCount: initState.enabledTriggersCount || 0
+      enabledTriggersCount: count
     };
 
     this.onToggleSidebar = this.onToggleSidebar.bind(this);
@@ -47,6 +51,18 @@ export default class PipelineTriggers extends Component {
     this.sub = PipelineTriggersStore.subscribe(() => {
       let state = PipelineTriggersStore.getState().triggers;
       if (state.enabledTriggers.length === this.state.enabledTriggersCount) { return; }
+
+      // This is to set the default tab. During initial construction, the store
+      // has not been updated with data, therefore the count is not accurate.
+      if (!updateOnce) {
+        this.setState({
+          enabledTriggersCount: state.enabledTriggers.length,
+          activeTab: state.enabledTriggers.length === 0 ? 1 : 0
+        });
+
+        updateOnce = true;
+        return;
+      }
 
       this.setState({
         enabledTriggersCount: state.enabledTriggers.length
