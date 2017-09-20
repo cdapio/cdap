@@ -181,8 +181,8 @@ export function updateWorkspaceProperties() {
     );
 }
 function checkAndUpdateExistingWorkspaceProperties() {
-  let {workspaceId} = DataPrepStore.getState().dataprep;
-  if (!workspaceId) {
+  let {workspaceId, workspaceInfo} = DataPrepStore.getState().dataprep;
+  if (!workspaceId || !workspaceInfo) {
     return;
   }
   updateWorkspaceProperties();
