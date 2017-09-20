@@ -16,6 +16,7 @@
 
 import React from 'react';
 import {Link} from 'react-router-dom';
+import T from 'i18n-react';
 
 export default function HttpExecutorLink() {
   return (
@@ -25,7 +26,7 @@ export default function HttpExecutorLink() {
           <i className="fa fa-terminal" />
         </div>
         <div className="configure-button-text">
-          <span className="btn-text">Make REST Call</span>
+          <span className="btn-text">{T.translate(`features.Administration.Configure.buttons.MakeRESTCalls.label`)}</span>
         </div>
       </div>
     </Link>

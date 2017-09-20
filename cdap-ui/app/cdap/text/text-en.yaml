@@ -145,6 +145,8 @@ features:
         delete-datasets: Delete All Datasets
         delete-ns: Delete Namespace
         instance-preference: Instance Preference
+        MakeRESTCalls:
+          label: Make HTTP Calls
         manage-ns: Manage Namespaces
         manage-roles: Manage Roles
         ReloadSystemArtifacts:
