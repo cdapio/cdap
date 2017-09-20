@@ -42,8 +42,6 @@ public class MapReduceMetricsWriter {
   private final Job jobConf;
   private final MetricsContext mapperMetrics;
   private final MetricsContext reducerMetrics;
-  private final LoadingCache<String, MetricsContext> mapTaskMetricsCollectors;
-  private final LoadingCache<String, MetricsContext> reduceTaskMetricsCollectors;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
@@ -51,20 +49,6 @@ public class MapReduceMetricsWriter {
                                                                   MapReduceMetrics.TaskType.Mapper.getId());
     this.reducerMetrics = context.getProgramMetrics().childContext(Constants.Metrics.Tag.MR_TASK_TYPE,
                                                                    MapReduceMetrics.TaskType.Reducer.getId());
-    this.mapTaskMetricsCollectors = CacheBuilder.newBuilder()
-      .build(new CacheLoader<String, MetricsContext>() {
-        @Override
-        public MetricsContext load(String taskId) {
-          return mapperMetrics.childContext(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-        }
-      });
-    this.reduceTaskMetricsCollectors = CacheBuilder.newBuilder()
-      .build(new CacheLoader<String, MetricsContext>() {
-        @Override
-        public MetricsContext load(String taskId) {
-          return reducerMetrics.childContext(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-        }
-      });
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -80,11 +64,9 @@ public class MapReduceMetricsWriter {
     int runningMappers = 0;
     int runningReducers = 0;
     for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
-      reportMapTaskMetrics(tr);
       runningMappers += tr.getRunningTaskAttemptIds().size();
     }
     for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
-      reportReduceTaskMetrics(tr);
       runningReducers += tr.getRunningTaskAttemptIds().size();
     }
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
@@ -120,29 +102,7 @@ public class MapReduceMetricsWriter {
               (int) (reduceProgress * 100), runningReducers, runningReducers * memoryPerReducer);
   }
 
-  private void reportMapTaskMetrics(TaskReport taskReport) {
-    Counters counters = taskReport.getTaskCounters();
-    MetricsContext metricsContext = mapTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS,
-                           getTaskCounter(counters, TaskCounter.MAP_INPUT_RECORDS));
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS,
-                           getTaskCounter(counters, TaskCounter.MAP_OUTPUT_RECORDS));
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_BYTES, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES));
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_COMPLETION, (long) (taskReport.getProgress() * 100));
-  }
-
-  private void reportReduceTaskMetrics(TaskReport taskReport) {
-    Counters counters = taskReport.getTaskCounters();
-    MetricsContext metricsContext = reduceTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS,
-                           getTaskCounter(counters, TaskCounter.REDUCE_INPUT_RECORDS));
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS,
-                           getTaskCounter(counters, TaskCounter.REDUCE_OUTPUT_RECORDS));
-    metricsContext.gauge(MapReduceMetrics.METRIC_TASK_COMPLETION, (long) (taskReport.getProgress() * 100));
-  }
-
   private long getTaskCounter(Counters jobCounters, TaskCounter taskCounter) {
     return jobCounters.findCounter(TaskCounter.class.getName(), taskCounter.name()).getValue();
   }
-
 }

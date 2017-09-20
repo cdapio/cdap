@@ -86,8 +86,11 @@ public class MapperWrapper extends Mapper {
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
     String program = basicMapReduceContext.getProgramName();
 
+    final MapTaskMetricsWriter mapTaskMetricsWriter = new MapTaskMetricsWriter(
+      basicMapReduceContext.getProgramMetrics(), context);
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-    WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
+    WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext,
+                                                                      mapTaskMetricsWriter);
 
     basicMapReduceContext.setHadoopContext(flushingContext);
     InputSplit inputSplit = context.getInputSplit();
@@ -156,17 +159,23 @@ public class MapperWrapper extends Mapper {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     }
+
+    // Emit metrics one final time
+    mapTaskMetricsWriter.reportMetrics();
   }
 
   private WrappedMapper.Context createAutoFlushingContext(final Context context,
-                                                          final BasicMapReduceTaskContext basicMapReduceContext) {
+                                                          final BasicMapReduceTaskContext basicMapReduceContext,
+                                                          final MapTaskMetricsWriter metricsWriter) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.mapper.flush.freq", 10000);
+    final long reportIntervalInMillis = basicMapReduceContext.getMetricsReportIntervalMillis();
 
     @SuppressWarnings("unchecked")
     WrappedMapper.Context flushingContext = new WrappedMapper().new Context(context) {
       private int processedRecords = 0;
+      private long nextTimeToReportMetrics = 0L;
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
@@ -180,6 +189,11 @@ public class MapperWrapper extends Mapper {
             throw Throwables.propagate(e);
           }
           processedRecords = 0;
+        }
+
+        if (System.currentTimeMillis() >= nextTimeToReportMetrics) {
+          metricsWriter.reportMetrics();
+          nextTimeToReportMetrics = System.currentTimeMillis() + reportIntervalInMillis;
         }
         return result;
       }
