@@ -564,6 +564,118 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     Assert.assertEquals(4, encodeCount.get());
   }
 
+  @Test
+  public void testEnforceTxLifetime() throws Exception {
+    String tableName = "enforce-tx-lifetime";
+    DatasetProperties datasetProperties = TableProperties.builder()
+      .setReadlessIncrementSupport(true)
+      .setConflictDetection(ConflictDetection.COLUMN)
+      .build();
+
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, datasetProperties);
+    admin.create();
+
+    DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
+    DatasetSpecification spec =
+      DatasetSpecification.builder(tableName, HBaseTable.class.getName())
+        .properties(datasetProperties.getProperties())
+        .build();
+    try {
+      final HBaseTable table = new HBaseTable(CONTEXT1, spec, Collections.<String, String>emptyMap(),
+                                              cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
+      Transaction tx = txSystemClient.startShort();
+      table.startTx(tx);
+      table.put(b("row1"), b("col1"), b("val1"));
+      table.put(b("inc1"), b("col1"), Bytes.toBytes(10L));
+      table.commitTx();
+      table.postTxCommit();
+      table.close();
+
+      CConfiguration testCConf = CConfiguration.copy(cConf);
+      // No mutations on tables using testCConf will succeed.
+      testCConf.setInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME, 0);
+      try (final HBaseTable failTable = new HBaseTable(CONTEXT1, spec, Collections.<String, String>emptyMap(),
+                                                       testCConf, TEST_HBASE.getConfiguration(), hBaseTableUtil)) {
+        // A put should fail
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.put(b("row2"), b("col1"), b("val1"));
+          }
+        });
+
+        // A delete should also fail
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.delete(b("row1"));
+          }
+        });
+
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.delete(b("row1"), b("col1"));
+          }
+        });
+
+        // So should an increment
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.increment(b("inc1"), b("col1"), 10);
+          }
+        });
+
+        // incrementAndGet gets converted to a put internally
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.incrementAndGet(b("inc1"), b("col1"), 10);
+          }
+        });
+      }
+
+      // Even safe increments should fail (this happens when readless increment is done from a mapreduce job)
+      try (final HBaseTable failTable =
+             new HBaseTable(CONTEXT1, spec, ImmutableMap.of(HBaseTable.SAFE_INCREMENTS, "true"),
+                            testCConf, TEST_HBASE.getConfiguration(), hBaseTableUtil)) {
+        // So should an increment
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.increment(b("inc1"), b("col1"), 10);
+          }
+        });
+
+        // incrementAndGet gets converted to a put internally
+        assertTxFail(txSystemClient, failTable, new Runnable() {
+          @Override
+          public void run() {
+            failTable.incrementAndGet(b("inc1"), b("col1"), 10);
+          }
+        });
+      }
+    } finally {
+      admin.drop();
+      admin.close();
+    }
+  }
+
+  private void assertTxFail(TransactionSystemClient txSystemClient, HBaseTable table, Runnable op)
+    throws Exception {
+    Transaction tx = txSystemClient.startShort();
+    table.startTx(tx);
+    op.run();
+    try {
+      table.commitTx();
+      Assert.fail("Expected the mutation to fail due to tx max lifetime check");
+    } catch (IOException e) {
+      // Expected to fail due to tx max lifetime check
+      table.rollbackTx();
+    }
+  }
+
   /**
    * Only overrides (and delegates) the methods used by HTable.
    */

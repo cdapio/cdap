@@ -55,12 +55,14 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.util.TxUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +91,7 @@ public class HBaseTable extends BufferingTable {
   public static final String DELTA_WRITE = "d";
   public static final String WRITE_POINTER = "wp";
   public static final String TX_MAX_LIFETIME_MILLIS_KEY = "cdap.tx.max.lifetime.millis";
+  public static final String TX_ID = "txid";
 
   public static final String SAFE_INCREMENTS = "dataset.table.safe.readless.increments";
 
@@ -251,6 +254,9 @@ public class HBaseTable extends BufferingTable {
     if (updates.isEmpty()) {
       return;
     }
+
+    byte [] txId = tx == null ? null : Bytes.toBytes(tx.getTransactionId());
+    byte [] txWritePointer = tx == null ? null : Bytes.toBytes(tx.getWritePointer());
     List<Mutation> mutations = new ArrayList<>();
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : updates.entrySet()) {
       // create these only when they are needed
@@ -265,27 +271,27 @@ public class HBaseTable extends BufferingTable {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
             if (safeReadlessIncrements) {
-              increment = getIncrement(increment, row.getKey(), true);
+              increment = getIncrement(increment, row.getKey(), txId, txWritePointer);
               increment.add(columnFamily, column.getKey(), tx.getWritePointer(),
                             ((IncrementValue) val).getValue());
             } else {
-              incrementPut = getPutForIncrement(incrementPut, row.getKey());
+              incrementPut = getPutForIncrement(incrementPut, row.getKey(), txId);
               incrementPut.add(columnFamily, column.getKey(), tx.getWritePointer(),
                                Bytes.toBytes(((IncrementValue) val).getValue()));
             }
           } else if (val instanceof PutValue) {
-            put = getPut(put, row.getKey());
+            put = getPut(put, row.getKey(), txId);
             put.add(columnFamily, column.getKey(), tx.getWritePointer(),
                     wrapDeleteIfNeeded(((PutValue) val).getValue()));
           }
         } else {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
-            incrementPut = getPutForIncrement(incrementPut, row.getKey());
+            incrementPut = getPutForIncrement(incrementPut, row.getKey(), txId);
             incrementPut.add(columnFamily, column.getKey(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
-            put = getPut(put, row.getKey());
+            put = getPut(put, row.getKey(), txId);
             put.add(columnFamily, column.getKey(), ((PutValue) val).getValue());
           }
         }
@@ -317,36 +323,68 @@ public class HBaseTable extends BufferingTable {
     return false;
   }
 
-  private PutBuilder getPut(PutBuilder existing, byte[] row) {
+  private PutBuilder getPut(PutBuilder existing, byte[] row, @Nullable byte[] txId) {
     if (existing != null) {
       return existing;
     }
-    return tableUtil.buildPut(row)
-      .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
+    PutBuilder putBuilder = tableUtil.buildPut(row);
+    if (txId != null) {
+      putBuilder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis)
+        .setAttribute(TX_ID, txId);
+    }
+     return putBuilder;
   }
 
-  private PutBuilder getPutForIncrement(PutBuilder existing, byte[] row) {
+  private PutBuilder getPutForIncrement(PutBuilder existing, byte[] row, @Nullable byte[] txId) {
     if (existing != null) {
       return existing;
     }
     return tableUtil.buildPut(row)
       .setAttribute(DELTA_WRITE, Bytes.toBytes(true))
-      .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
+      .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis)
+      .setAttribute(TX_ID, txId);
   }
 
-  private IncrementBuilder getIncrement(IncrementBuilder existing, byte[] row, boolean transactional)
+  private IncrementBuilder getIncrement(IncrementBuilder existing, byte[] row, @Nullable byte[] txId,
+                                        @Nullable byte[] txWritePointer)
     throws IOException {
     if (existing != null) {
       return existing;
     }
     IncrementBuilder builder = tableUtil.buildIncrement(row).setAttribute(DELTA_WRITE, Bytes.toBytes(true));
-    builder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
-    if (transactional) {
-      builder.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
+    if (txId != null) {
+      builder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
+      builder.setAttribute(WRITE_POINTER, txWritePointer);
+      builder.setAttribute(TX_ID, txId);
       builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
     }
     return builder;
   }
+
+  /**
+   * Returns the transaction id for an operation.
+   *
+   * @return transaction id or -1 if not a transactional operation
+   */
+  public static long getTransactionId(OperationWithAttributes op, @Nullable Transaction tx) {
+    // CDAP does not encode the transaction into a Put, a Delete or an Increment
+    // Instead sets the transaction id of the transaction as HBaseTable.TX_ID attribute
+    long txId;
+    if (tx == null) {
+      byte[] txIdBytes = op.getAttribute(HBaseTable.TX_ID);
+      if (txIdBytes == null) {
+        return  -1;
+      }
+      txId = Bytes.toLong(txIdBytes);
+      if (TxUtils.isPreExistingVersion(txId)) {
+        return  -1;
+      }
+    } else {
+      txId = tx.getTransactionId();
+    }
+    return txId;
+  }
+
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
@@ -470,7 +508,7 @@ public class HBaseTable extends BufferingTable {
     Preconditions.checkArgument(columns == null || columns.length != 0);
     GetBuilder get = tableUtil.buildGet(row);
     get.addFamily(columnFamily);
-    if (columns != null && columns.length > 0) {
+    if (columns != null) {
       for (byte[] column : columns) {
         get.addColumn(columnFamily, column);
       }
@@ -566,6 +604,7 @@ public class HBaseTable extends BufferingTable {
         scanner.close();
       }
 
+      @SuppressWarnings("NullableProblems")
       @Override
       public Iterator<Result> iterator() {
         final Iterator<Result> iterator = scanner.iterator();

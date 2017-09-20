@@ -103,19 +103,21 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   @Override
   protected void ensureValidTxLifetime(RegionCoprocessorEnvironment env, OperationWithAttributes op,
                                        @Nullable Transaction tx) throws IOException {
-    if (tx == null) {
+    // Enforce the valid lifetime check on the transaction id as write pointer can change on checkpointing.
+    long txId = HBaseTable.getTransactionId(op, tx);
+    if (txId == -1) {
       return;
     }
 
+    long opTimestamp = TxUtils.getTimestamp(txId);
     long currMaxLifetimeinMillis = getCurrMaxLifetime(env, op, cConfCache.getTxMaxLifetimeMillis());
     // Since we don't always set the txMaxLifetimeMillis variable (in case when we get the info from the client)
     // we need to compute whether the transaction is within the validLifetime boundary here instead of
     // relying on the parent
-    boolean validLifetime =
-      (TxUtils.getTimestamp(tx.getTransactionId()) + currMaxLifetimeinMillis) > System.currentTimeMillis();
+    boolean validLifetime = (opTimestamp + currMaxLifetimeinMillis) > System.currentTimeMillis();
     if (!validLifetime) {
       throw new DoNotRetryIOException(String.format("Transaction %s has exceeded max lifetime %s ms",
-                                                    tx.getTransactionId(), currMaxLifetimeinMillis));
+                                                    txId, currMaxLifetimeinMillis));
     }
   }
 
@@ -125,11 +127,6 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
     if (maxLifetimeFromConf != null) {
       txMaxLifetimeMillis = maxLifetimeFromConf;
       return maxLifetimeFromConf;
-    }
-
-    // This case shouldn't happen but in case current value from conf is null but it was set earlier, return that
-    if (txMaxLifetimeMillis != null) {
-      return txMaxLifetimeMillis;
     }
 
     // If value from conf is null, derive it from the attribute set by the client
