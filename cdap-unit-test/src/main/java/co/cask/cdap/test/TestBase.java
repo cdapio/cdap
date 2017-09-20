@@ -90,6 +90,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -1104,6 +1105,16 @@ public class TestBase {
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     return getDataset(NamespaceId.DEFAULT.dataset(datasetInstanceName));
+  }
+
+  /**
+   * Gets the app detail of an application
+   *
+   * @param applicationId the app id of the application
+   * @return ApplicationDetail of the app
+   */
+  protected final ApplicationDetail getAppDetail(ApplicationId applicationId) throws Exception {
+    return getTestManager().getApplicationDetail(applicationId);
   }
 
   /**
