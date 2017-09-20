@@ -30,6 +30,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,8 +53,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Singleton
 public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService {
-
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionService.class);
+  private static final Joiner.MapJoiner MAP_JOINER = Joiner.on(',').withKeyValueSeparator("=");
 
   private final MessagingService messagingService;
   private final DatumWriter<MetricValues> recordWriter;
@@ -89,10 +91,11 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       MetricValues metricValues = metrics.next();
       // Encode MetricValues into bytes
       recordWriter.encode(metricValues, encoder);
+      TopicPayload topicPayload = topicPayloads.get(Math.abs(metricValues.getTags().hashCode() % size));
       // Calculate the topic number with the hashcode of MetricValues' tags and store the encoded payload in the
       // corresponding list of the topic number
-      topicPayloads.get(Math.abs(metricValues.getTags().hashCode() % size))
-        .addPayload(encoderOutputStream.toByteArray());
+      topicPayload.addPayload(encoderOutputStream.toByteArray(), metricValues.getTags(),
+                              metricValues.getMetrics().size());
     }
     publishMetric(topicPayloads.values());
   }
@@ -110,14 +113,25 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
     private final TopicId topicId;
     private final List<byte[]> payloads;
     private final RetryStrategy retryStrategy;
+    private int payloadSize;
+    private int metricsCount;
+    private Map<String, String> metricsTags;
+
 
     private TopicPayload(TopicId topicId, RetryStrategy retryStrategy) {
       this.topicId = topicId;
       this.retryStrategy = retryStrategy;
       this.payloads = new ArrayList<>();
+      this.payloadSize = 0;
+      this.metricsCount = 0;
     }
 
-    void addPayload(byte[] payload) {
+    void addPayload(byte[] payload, Map<String, String> metricsTags, int metricsCount) {
+      payloadSize += payload.length;
+      if (this.metricsTags == null) {
+        this.metricsTags = metricsTags;
+      }
+      this.metricsCount += metricsCount;
       payloads.add(payload);
     }
 
@@ -136,7 +150,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           // Otherwise publish might get interrupted during shutdown, which has the thread interrupted
           interrupted = Thread.interrupted();
           messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads.iterator()).build());
-          payloads.clear();
+          reset();
           done = true;
         } catch (TopicNotFoundException | ServiceUnavailableException e) {
           // These exceptions are retryable due to TMS not completely started
@@ -161,12 +175,27 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
               done = true;
             }
           }
+        } catch (IOException ioe) {
+          String exceptionMessage =
+            String.format("Exception while publishing metrics for tags: [%s] to topic '%s' " +
+                            "with %s metrics and %s bytes payload",
+                          MAP_JOINER.join(metricsTags == null ? Collections.emptyMap() : metricsTags),
+                          topicId.getTopic(), metricsCount, payloadSize);
+          throw new IOException(exceptionMessage, ioe);
         }
       }
 
       if (interrupted) {
         Thread.currentThread().interrupt();
       }
+    }
+
+    private void reset() {
+      // clear payloads and reset stats
+      payloads.clear();
+      payloadSize = 0;
+      metricsCount = 0;
+      metricsTags = null;
     }
 
     private RetryStrategy getRetryStrategy() {
