@@ -310,8 +310,9 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       // Copy over both cConf and hConf into the pruning configuration
       Configuration configuration = new Configuration();
       configuration.clear();
-      copyConf(configuration, cConf);
+      // First copy hConf and then cConf so that we retain the values from cConf for any parameters defined in both
       copyConf(configuration, hConf);
+      copyConf(configuration, cConf);
 
       try {
         @SuppressWarnings("unchecked")

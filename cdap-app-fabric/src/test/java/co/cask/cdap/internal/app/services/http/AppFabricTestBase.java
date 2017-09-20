@@ -111,6 +111,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -283,6 +284,7 @@ public abstract class AppFabricTestBase {
     // Use a shorter delay to speedup tests
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
     cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
+    cConf.setBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE, true);
     return cConf;
   }
 
