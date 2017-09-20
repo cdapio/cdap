@@ -196,9 +196,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
     String splitsPolicy = spec.getProperty(SPLIT_POLICY);
     // override using provided split policy
-    if (!Strings.isNullOrEmpty(splitsPolicy) &&
-      (tableDescriptor.getRegionSplitPolicyClassName() == null ||
-        !tableDescriptor.getRegionSplitPolicyClassName().equalsIgnoreCase(splitsPolicy))) {
+    if (!Strings.isNullOrEmpty(splitsPolicy) && !splitsPolicy.equals(tableDescriptor.getRegionSplitPolicyClassName())) {
       descriptorBuilder.setValue(HTableDescriptor.SPLIT_POLICY, splitsPolicy);
       needUpgrade = true;
     }

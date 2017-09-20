@@ -232,6 +232,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
    * Modifies the table descriptor for update, if an update is needed due to a dataset properties change,
    * that is, if the current table descriptor does not reflect the current dataset specification.
    *
+   * @param tableDescriptor Table descriptor to read values of a table
+   * @param descriptorBuilder Table descriptor builder to modify description properties of a table
    * @return true if the table descriptor is modified, that is, whether update is needed.
    */
   protected abstract boolean needsUpdate(HTableDescriptor tableDescriptor, HTableDescriptorBuilder descriptorBuilder);
