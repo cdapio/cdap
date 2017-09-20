@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.DatasetContext;
@@ -48,7 +49,6 @@ import co.cask.cdap.etl.batch.StageFailureException;
 import co.cask.cdap.etl.batch.connector.MultiConnectorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
-import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
@@ -185,7 +185,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void initialize() throws Exception {
-    MapReduceContext context = getContext();
+    final MapReduceContext context = getContext();
     Map<String, String> properties = context.getSpecification().getProperties();
     if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
@@ -211,7 +211,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       hConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
     }
 
-    PipelinePhase phase = phaseSpec.getPhase();
+    final PipelinePhase phase = phaseSpec.getPhase();
     PipelinePluginInstantiator pluginInstantiator =
       new PipelinePluginInstantiator(context, mrMetrics, phaseSpec, new MultiConnectorFactory());
 
@@ -356,17 +356,13 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
     finisher = new CompositeFinisher(finishers);
 
-    // setup time partition for each error dataset
-    for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
-                                          phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
-      if (stageInfo.getErrorDatasetName() != null) {
-        Map<String, String> args = new HashMap<>();
-        args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
-                 Constants.ERROR_SCHEMA.toString());
-        TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
-        context.addOutput(Output.ofDataset(stageInfo.getErrorDatasetName(), args));
+    // we should be able to remove this explicit transaction once CDAP-12634 is resolved
+    context.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetContext) throws Exception {
+        addErrorDatasets(context, phase);
       }
-    }
+    });
     job.setMapperClass(ETLMapper.class);
 
     WorkflowToken token = context.getWorkflowToken();
@@ -378,6 +374,20 @@ public class ETLMapReduce extends AbstractMapReduce {
     // token is null when just the mapreduce job is run but not the entire workflow
     // we still want things to work in that case.
     hConf.set(RUNTIME_ARGS_KEY, GSON.toJson(pipelineRuntime.getArguments().asMap()));
+  }
+
+  private void addErrorDatasets(MapReduceContext context, PipelinePhase phase) {
+    // setup time partition for each error dataset
+    for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
+                                          phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
+      if (stageInfo.getErrorDatasetName() != null) {
+        Map<String, String> args = new HashMap<>();
+        args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
+                 Constants.ERROR_SCHEMA.toString());
+        TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
+        context.addOutput(Output.ofDataset(stageInfo.getErrorDatasetName(), args));
+      }
+    }
   }
 
   private Class<?> getOutputKeyClass(String reducerName, Class<?> outputKeyClass) {
