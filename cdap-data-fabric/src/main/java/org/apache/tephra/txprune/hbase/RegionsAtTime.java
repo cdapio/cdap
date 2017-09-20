@@ -17,11 +17,13 @@
 package org.apache.tephra.txprune.hbase;
 
 import java.text.DateFormat;
+import java.util.Objects;
 import java.util.SortedSet;
 
 /**
  * Represents the regions recorded at give time.
  */
+@SuppressWarnings("WeakerAccess")
 public class RegionsAtTime {
   private final long time;
   private final String timeAsString;
@@ -46,11 +48,30 @@ public class RegionsAtTime {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RegionsAtTime that = (RegionsAtTime) o;
+    return time == that.time &&
+      Objects.equals(timeAsString, that.timeAsString) &&
+      Objects.equals(regions, that.regions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(time, timeAsString, regions);
+  }
+
+  @Override
   public String toString() {
     return "RegionsAtTime{" +
       "time=" + time +
       ", timeAsString='" + getTimeAsString() + '\'' +
-      ", regions=" + regions +
+      ", regions=" + getRegions() +
       '}';
   }
 }
