@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
+import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -61,15 +62,18 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
   private ExecutorService taskExecutorService;
+  private ProgramNotificationSubscriberService programNotificationSubscriberService;
 
   @Inject
   ScheduleNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                        MetricsCollectionService metricsCollectionService) {
+                                        MetricsCollectionService metricsCollectionService,
+                                        ProgramNotificationSubscriberService programNotificationSubscriberService) {
     super(messagingService, cConf, datasetFramework, txClient, metricsCollectionService);
 
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
+    this.programNotificationSubscriberService = programNotificationSubscriberService;
   }
 
   @Override
@@ -85,6 +89,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       cConf.getInt(Constants.Scheduler.STREAM_SIZE_EVENT_FETCH_SIZE)));
     taskExecutorService.submit(new DataEventSubscriberRunnable());
     taskExecutorService.submit(new ProgramStatusEventSubscriberRunnable());
+    programNotificationSubscriberService.startAndWait();
   }
 
   @Override
@@ -100,6 +105,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
         taskExecutorService.shutdownNow();
       }
     }
+    programNotificationSubscriberService.stopAndWait();
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 

@@ -67,6 +67,7 @@ import javax.annotation.Nullable;
  */
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
+  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
 
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
