@@ -59,19 +59,23 @@ individual extensions for configuring properties specific to that extension:
 :ref:`Security extension properties <appendix-cdap-default-security>`, which are specified
 in ``cdap-site.xml``, begin with the prefix ``security.authorization.extension.config``.
 
+When CDAP is first started with authorization enabled, no users are granted privileges on
+any CDAP entities. Without any privileges, CDAP will not be able to create the default namespace.
+To create the default namespace, grant *ADMIN* on default namespace to the CDAP master user.
+The default namespace will get created in several minutes automatically.
+
 
 .. _security-authorization-policies:
 
 Authorization Policies
 ======================
 Currently, CDAP allows users to enforce authorization for *READ*, *WRITE*, *EXECUTE*, and
-*ADMIN* operations. The authorization model requires pre-granted privileges on entities for all
-operations.
+*ADMIN* operations.
 
 In general, this summarizes the authorization policies in CDAP:
 
-- A **create** operation on an entity requires *ADMIN* on the entity. Privileges need to be pre-granted to
-  create the entity. For example, creating a namespace requires *ADMIN* on the namespace itself.
+- A **create** operation on an entity requires *ADMIN* on the entity. The *ADMIN* privilege needs to be granted before
+  the entity can be created. For example, creating a namespace requires *ADMIN* on the namespace.
 - A **read** operation (such as reading from a dataset or a stream) on an entity requires
   *READ* on the entity.
 - A **write** operation (such as writing to a dataset or a stream) on an entity requires
@@ -80,8 +84,8 @@ In general, this summarizes the authorization policies in CDAP:
   the entity.
 - A **delete** operation on an entity requires *ADMIN* on the entity. Note that if the deletion operation will delete
   multiple entities, *ADMIN* is required on all the entities. For example, delete on a namespace requires *ADMIN* on
-  all entities in the namespace.
-- A **execute** operation on a program requires *EXECUTE* on the program.
+  all entities in the namespace, and the namespace itself.
+- An **execute** operation on a program requires *EXECUTE* on the program.
 - A **list** or **view** operation (such as listing or searching applications, datasets, streams,
   artifacts) only returns those entities that the logged-in user has at least one (*READ*,
   *WRITE*, *EXECUTE*, *ADMIN*) privilege on or on any of its descendants.
@@ -93,25 +97,12 @@ Additionally:
 
 - Upon successful creation/deletion of an entity, the privileges remain unaffected.
   It is the responsibility of the administrator to delete privileges from the authorization backend on entity deletion.
-  If the privileges are not deleted and the entity is recreated the privileges will affect the enforcement on the entity.
-- More privileges are needed for the following operations in the following cases:
-    - Deploying an application with new artifact requires *ADMIN* on the artifact.
-    - Deploying an application with existing artifact requires *READ, WRITE, EXECUTE,* or *ADMIN* on the artifact.
-    - Deploying an application requires *ADMIN* privilege on all the datasets and streams that will be created
-      along with the app, and *ADMIN* privilege on the dataset module and types if there are custom datasets.
-    - Creating a dataset needs *ADMIN* privilege on the dataset module and types if it is a custom dataset.
-    - If no impersonation is involved, correct privileges on the streams and datasets needs to be given to *cdap* to allow
-      *cdap* accessing these entities.
-    - If impersonation is involved, *admin* privilege on the principal is required to create a namespace, deploy an app
-      create dataset or streams.
+  If the privileges are not deleted and the entity is recreated, the old privileges will be retained for the new entity
+- CDAP does **not** support hierarchical authorization enforcement, which means that privileges on each entity
+  are evaluated independently.
 
-CDAP does **not** support hierarchical authorization enforcement, which means that privileges on each entity
-are evaluated independently. CDAP has the concept of visibility, which means user will be able to view the entity if
-the user has any of the privilege on the entity or any of its descendants. For example, user can see the application if the user has
-*ADMIN* on the program. Note that visibility should not be confused with enforcement. In this case the user will not be
-able to to perform *ADMIN* action on the application itself.
-
-Authorization policies for various CDAP operations are listed in these tables:
+Authorization policies for various CDAP operations are listed in the following tables. Policies for more complex operations
+can be checked :ref:`below <security-authorization-deploying-app>`.
 
 .. _security-authorization-policies-namespaces:
 
@@ -210,7 +201,9 @@ Programs
    * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - Resume/Suspend schedule
-     - *EXECUTE*
+     - *EXECUTE* on the program
+   * - Add/Delete/Update schedule
+     - *ADMIN* on the application
 
 .. _security-authorization-policies-datasets:
 
@@ -354,97 +347,105 @@ Kerberos Principal
 
 .. _security-pre-grant-wildcard-privilege:
 
-Pre-grant and Wildcard Privileges
-=================================
-The new authorization model requires pre-granted privilege on all entity for any operation.
-When CDAP is first started with authorization enabled, no users are granted privileges on
-any CDAP entities. Without any privileges, CDAP will not be able to create the default namespace.
-To create the default namespace, grant *ADMIN* on default namespace to the CDAP master user.
-The default namespace will get created in several minutes automatically.
+Wildcard Privileges
+===================
+Wildcard privileges can be used to simplify granting privileges on multiple entities.
+Wildcards can be used in the entity name to grant or revoke actions on multiple entities.
 
-To pre-grant the privilege, wildcard can be used to minimize the burden of granting privileges on all entities.
-Detailed ways of granting privileges can be found in the following sections for different authorization backends.
+- ``*`` matches zero or more characters
+- ``?`` matches a single character
+
+The following sections provide examples on granting wildcard privileges.
 
 .. _security-sentry-integration:
 
 Sentry Integration
 ------------------
 :ref:`CDAP CLI <cdap-cli>` can be used to grant or revoke the privileges for :ref:`Integrations: Apache Sentry <apache-sentry>`.
+Full list of commands are documented at :ref:`security commands <cli-available-commands-security>`.
 
-You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands <cli-available-commands-security>`.
-Wildcard can be used to grant or revoke actions on multiple entities by including ``*`` and ``?`` in the entity name:
-
-- To grant a principal privileges to perform certain actions on an entity, use::
-
-    > grant actions <actions> on entity <entity-id> to <principal-type> <principal-name>
-    > revoke actions <actions> on entity <entity-id> from <principal-type> <principal-name>
-
-  where:
-
-  - ``<actions>`` is a comma-separated list of privileges, any of *READ, WRITE, EXECUTE,* or *ADMIN*.
-
-  - ``<entity>`` is of the form ``<entity-type>:<entity-id>``, where ``<entity-type>`` is
-    one of ``namespace``, ``artifact``, ``application``, ``dataset``, ``program``, ``stream``, ``dataset_type`` or
-    ``dataset_module``.
-
-  - For namespaces, ``<entity-id>`` is composed from the namespace, such as
-    ``namespace:<namespace-name>``.
-
-  - For datasets, streams, artifacts and apps, ``<entity-id>`` is the namespace and entity names, such as
-    ``<namespace-name>.<dataset-name>``, ``<namespace-name>.<stream-name>``, ``<namespace-name>.<artifact-name>``,
-    and ``<namespace-name>.<app-name>``.
-
-  - For programs, ``<entity-id>`` includes the application name and the program type:
-    ``<namespace-name>.<app-name>.<program-type>.<program-name>``. ``<program-type>`` is
-    one of flow, mapreduce, service, spark, worker, or workflow.
-
-  - For datasets, streams, artifacts and apps, ``<entity-id>`` is the namespace and entity names, such as
-    ``<namespace-name>.<dataset-name>``, ``<namespace-name>.<stream-name>``, ``<namespace-name>.<artifact-name>``,
-    and ``<namespace-name>.<app-name>``.
-
-  - ``<principal-type>`` can **only** be ``role`` since Sentry only supports granting privileges to roles.
-
-  - Wildcard can be used in each entity name to grant privileges to multiple entities. For example,
-    ``namespace:ns*`` represents all namespaces that starts with ``ns``.
-    ``namespace:ns?`` represents all namespaces that starts with ``ns`` and follows by a single character.
-    ``program:ns1.app1.*`` represents all types of programs in application app1 in namespace ns1.
-
-- To add the role to other principal, use::
-
-    > add role <role-name> to <principal-type> <principal-name>
-
-  where:
-
-  - ``<role-name>`` is the role name that adds to the principal.
-
-  - ``<principal-type>`` can **only** be ``group``.
+Sentry only allows granting privileges to roles. Roles can then be assigned to groups.
 
 - To create a new role, use::
 
     > create role <role-name>
 
+- To grant/revoke privileges on an entity to a role, use::
+
+    > grant actions <actions> on entity <entity> to role <role-name>
+    > revoke actions <actions> on entity <entity> from role <role-name>
+
+  where:
+
+  - ``<actions>`` is a comma-separated list of privileges, any of *READ, WRITE, EXECUTE,* or *ADMIN*.
+
+  - ``<entity>`` is of the form ``<entity-type>:<entity-id>``
+
+    =====================  =============================================
+        Entity Type                 Entity Id
+    =====================  =============================================
+    ``namespace``          ``<namespace>:<namespace-id>``
+    ``application``        ``<namespace-id>.<app-id>``
+    ``program``            ``<namespace-id>.<app-id>.<program-type>.<program-id>``
+    ``dataset``            ``<namespace-id>.<dataset-id>``
+    ``stream``             ``<namespace-id>.<stream-id>``
+    ``artifact``           ``<namespace-id>.<artifact-id>``
+    ``dataset_type``       ``<namespace-id>.<dataset-type-id>``
+    ``dataset_module``     ``<namespace-id>.<dataset-module-id>``
+    ``securekey``          ``<namespace-id>.<secure-key-id>``
+    ``kerberosprincipal``  ``<kerberos-principal-id>``
+    =====================  =============================================
+
+  - ``program-type`` is one of:
+    ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``.
+
+  - Wildcards can be used in the entity name to grant privileges on multiple entities. For example,
+
+    - ``namespace:ns*`` represents all the namespaces that start with ``ns``.
+    - ``namespace:ns?`` represents all the namespaces that start with ``ns`` and followed by a single character.
+    - ``program:ns1.app1.*`` represents all the programs in the application ``app1``, in the namespace ``ns1``.
+
+- To add the role to a group, use::
+
+    > add role <role-name> to group <group-name>
+
 - To check the results, list the privileges for a principal::
 
     > list privileges for <principal-type> <principal-name>
 
-For example,
-to make ``alice``, in group ``admin``, as the administrator on a namespace ``ns1`` in a new environment,
-do the following steps:
+  where ``<principal-type>`` can be ``user``, ``group`` or ``role``.
+
+**Example**
+
+To give ``alice`` (who belongs to group ``admin``), *ADMIN* privilege on namespace ``ns1``, and all the
+entities in the namespace, do the following:
 
 - create a new role ``ns1_administrator``
 
-- use the commands to grant *ADMIN* on these entities: ``namespace:ns1``, ``application:ns1.*``, ``program:ns1.*.*``,
-  ``artifact:ns1.*``, ``dataset:ns1.*``, ``stream: ns1.*``, ``dataset_type:ns1.*``, ``dataset_module:ns1.*``,
-  ``securekey:ns1.*`` and ``kerberosprincipal.*`` to the role ``ns1_administrator``
+- grant the role ``ns1_administrator`` *ADMIN* on these entities:
 
-- add ``ns1_administrator`` to group ``admin``
+  - ``namespace:ns1``
+  - ``application:ns1.*``
+  - ``program:ns1.*.*``
+  - ``artifact:ns1.*``
+  - ``dataset:ns1.*``
+  - ``stream:ns1.*``
+  - ``dataset_type:ns1.*``
+  - ``dataset_module:ns1.*``
+  - ``securekey:ns1.*``
 
-Note that:
+- add role ``ns1_administrator`` to group ``admin``
 
-- Only users in sentry admin group can be used to grant/revoke the privileges, this property can be set or updated by
-  changing property ``sentry.service.admin.group`` in sentry.
-- Any update to privileges will take some time to take effect based on the cache timeout. By default, the maximum
-  time will be 10 minutes.
+**Note:**
+
+- Only users in Sentry admin group can grant/revoke the privileges. Groups can be added to or removed from the Sentry
+  admin group by updating the property ``sentry.service.admin.group`` in the Sentry configuration.
+- CDAP fetches roles/privileges from Sentry to enforce the authorization policy. Since only users in Sentry admin group
+  can fetch roles from Sentry, CDAP will need to be added as a Sentry admin. CDAP can be configured to use a different
+  group to fetch roles by changing ``security.authorization.extension.config.sentry.admin.group`` in CDAP configuration.
+- CDAP caches privileges fetched from Sentry to improve performance. Any update to the privileges will be reflected
+  in CDAP after the cache timeout. By default, the cache timeout is 10 minutes. This value can be changed by
+  modifying the value of ``security.authorization.cache.ttl.secs`` in CDAP configuration.
 
 .. _security-ranger-integration:
 
@@ -462,7 +463,142 @@ on ``namespace:default``. Notice that the value for ``application`` and
 ``program`` are ``*`` and they are marked as ``exclude``.
 
 .. image:: _images/policy_management.png
-  :align: center
+   :align: center
+
+
+.. _security-authorization-policies-complex-operations:
+
+Operations that require multiple privileges
+===========================================
+Some operations will require multiple privileges. For example, deploying an application can create streams and datasets
+during the application deployment. In this case, privileges are required for all the entities that will get created.
+Wildcard policies will be helpful to manage the privileges in these cases. Detailed authorization policies for some
+operations that require multiple privileges are listed below.
+
+Typically, admins use namespace level privileges to manage authorization. Users granted access to a namespace will be
+granted all privileges to all entities in the namespace. In such a case the following granular policies for deploying
+an application and creating various entities are not required.
+
+.. _security-authorization-deploying-app:
+
+Deploy Application
+------------------
+The privileges required to deploy an application can vary based on various conditions, like whether the application
+has impersonation enabled, etc. In general, the user deploying the application (the requesting user) always needs
+*ADMIN* privilege on the application. In addition, the requesting user and the impersonating user may need additional
+privileges. The following table lists the privileges needed to deploy an application under various conditions.
+
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+|   Action                                     |    Privilege Required                                                                                                                                                                                                                             |
++                                              +-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+|                                              |    Requesting User                                                                                                      |    Impersonating User                                                                                                   |
++==============================================+=========================================================================================================================+=========================================================================================================================+
+|                                              | *ADMIN* on the application                                                                                              |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Deploying the app with a jar                 | *ADMIN* on the artifact (use the jar name as the artifact id)                                                           |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Deploying the app using an existing artifact | Any privilege of *READ, WRITE, EXECUTE,* or *ADMIN* on the artifact                                                     |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+|   **No impersonation**                                                                                                                                                                                                                                                                           |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a dataset                           | *ADMIN* on the dataset                                                                                                  |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a stream                            | *ADMIN* on the stream                                                                                                   |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a custom dataset during deployment  | *ADMIN* on the new dataset module and type (use the full class name of the custom dataset as the module id and type id) |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a custom dataset                    | *ADMIN* on the existing dataset module and type                                                                         |                                                                                                                         |
+| using an existing custom dataset type        |                                                                                                                         |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+|   **With impersonation**                                                                                                                                                                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+|                                              | *ADMIN* on the kerberos principal of the impersonated user                                                              |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a dataset                           |                                                                                                                         | *ADMIN* on the dataset                                                                                                  |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a stream                            |                                                                                                                         | *ADMIN* on the stream                                                                                                   |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a custom dataset during deployment  |                                                                                                                         | *ADMIN* on the new dataset module and type (use the full class name of the custom dataset as the module id and type id) |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+| Creating a custom dataset                    |                                                                                                                         | *ADMIN* on the existing dataset module and type                                                                         |
+| using an existing custom dataset type        |                                                                                                                         |                                                                                                                         |
++----------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------+
+
+.. _security-authorization-executing-programs:
+
+Execute Programs/Hydrator Pipelines
+-----------------------------------
+To execute a program or a pipeline, the requesting user will need *EXECUTE* privilege on it. If there is no impersonation,
+the program will run (the executing user) as the CDAP master user. If impersonation is involved, the program will run
+as the impersonated user.
+
+Privileges required by the requesting user:
+
+.. list-table::
+   :widths: 40 80
+   :header-rows: 1
+
+   * - Condition
+     - Privilege Required
+   * - Execute a program
+     - *EXECUTE* on the program
+   * - Execute a hydrator pipeline
+     - *EXECUTE* on the pipeline (application) name |---| ``program:<namespace-id>.<pipeline-name>.*``
+
+Privileges required by the executing user:
+
+.. list-table::
+   :widths: 40 80
+   :header-rows: 1
+
+   * - Condition
+     - Privilege Required
+   * - READ from existing streams and datasets
+     - *READ* on the streams and datasets
+   * - WRITE to existing streams and datasets
+     - *WRITE* on the streams and datasets
+   * - Creating datasets
+     - *ADMIN* on the datasets
+   * - Creating local datasets, READ/WRITE on local datasets
+     - *ADMIN*, *READ*/*WRITE* on local dataset name |---| ``dataset:<namespace-id>.<local-dataset-id>*``
+   * - Accessing external source/sink, i.e, accessing datasets outside CDAP (only for hydrator pipelines)
+     - *ADMIN*, *READ* and *WRITE* on the external datasets. The name of the external dataset will be same
+       as the reference name of the source/sink |---| ``dataset:<namespace-id>.<reference-name>``
+
+.. _security-authorization-enable-dataprep:
+
+Enable DataPrep Service
+-----------------------
+To enable the DataPrep service, the following privileges are needed:
+
+   - Requesting user: *EXECUTE* on entity ``program:<namespace-id>.dataprep.service.service``
+   - Without impersonation:
+       - Requesting user: *ADMIN* on entities
+
+         - ``dataset:<namespace-id>.workspace``
+         - ``dataset:<namespace-id>.dataprep``
+         - ``dataset:<namespace-id>.dataprepfs``
+         - ``dataset_type:<namespace-id>.*WorkspaceDataset``
+         - ``dataset_module:<namespace-id>.*WorkspaceDataset``
+
+       - CDAP master user: *READ*, *WRITE* on entities
+
+         - ``dataset:<namespace-id>.workspace``
+         - ``dataset:<namespace-id>.dataprep``
+         - ``dataset:<namespace-id>.dataprepfs``
+
+   - With impersonation:
+       - Impersonating user: *ADMIN*, *READ* and *WRITE* on entities
+
+         - ``dataset:<namespace-id>.workspace``
+         - ``dataset:<namespace-id>.dataprep``
+         - ``dataset:<namespace-id>.dataprepfs``
+
+       - Impersonating user: *ADMIN* on entities
+
+         - ``dataset_type:<namespace-id>.*WorkspaceDataset``
+         - ``dataset_module:<namespace-id>.*WorkspaceDataset``
+
 
 .. _security-differences-between-new-and-old-model:
 
