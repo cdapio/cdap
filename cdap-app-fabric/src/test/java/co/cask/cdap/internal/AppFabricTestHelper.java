@@ -53,7 +53,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.MessageId;
@@ -136,7 +135,6 @@ public class AppFabricTestHelper {
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
       injector.getInstance(NotificationService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
-      injector.getInstance(ProgramNotificationSubscriberService.class).startAndWait();
       Scheduler programScheduler = injector.getInstance(Scheduler.class);
       if (programScheduler instanceof Service) {
         ((Service) programScheduler).startAndWait();
