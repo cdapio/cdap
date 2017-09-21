@@ -93,6 +93,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -100,6 +101,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -1115,6 +1117,35 @@ public class TestBase {
    */
   protected final ApplicationDetail getAppDetail(ApplicationId applicationId) throws Exception {
     return getTestManager().getApplicationDetail(applicationId);
+  }
+
+  /**
+   * Add a new schedule to an existing application
+   *
+   * @param scheduleId the ID of the schedule to add
+   * @param scheduleDetail the {@link ScheduleDetail} describing the new schedule.
+   */
+  protected final void addSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    getTestManager().addSchedule(scheduleId, scheduleDetail);
+  }
+
+  /**
+   * Delete an existing schedule.
+   *
+   * @param scheduleId the ID of the schedule to be deleted
+   */
+  protected final void deleteSchedule(ScheduleId scheduleId) throws Exception {
+    getTestManager().deleteSchedule(scheduleId);
+  }
+
+  /**
+   * Update an existing schedule.
+   *
+   * @param scheduleId the ID of the schedule to add
+   * @param scheduleDetail the {@link ScheduleDetail} describing the updated schedule.
+   */
+  protected final void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    getTestManager().updateSchedule(scheduleId, scheduleDetail);
   }
 
   /**

@@ -91,7 +91,10 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.scheduler.Scheduler;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -189,7 +192,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  protected final Scheduler programScheduler;
+  private final Scheduler programScheduler;
+  private final AuthenticationContext authenticationContext;
+  private final AuthorizationEnforcer authorizationEnforcer;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -208,7 +213,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin,
                               MRJobInfoFetcher mrJobInfoFetcher,
                               MetricStore metricStore,
-                              NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler) {
+                              NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler,
+                              AuthenticationContext authenticationContext,
+                              AuthorizationEnforcer authorizationEnforcer) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -218,6 +225,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.programScheduler = programScheduler;
+    this.authenticationContext = authenticationContext;
+    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   /**
@@ -846,6 +855,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              String appVersion, String scheduleName) throws Exception {
 
     final ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
+    authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
     ScheduleDetail scheduleFromRequest = readScheduleDetailBody(
       request, scheduleName, false, new Function<JsonElement, ScheduleDetail>() {
         @Override
@@ -892,8 +902,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateSchedule(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
-                             @PathParam("schedule-name") String scheduleName)
-    throws NotFoundException, BadRequestException, IOException {
+                             @PathParam("schedule-name") String scheduleName) throws Exception {
     doUpdateSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
   }
 
@@ -904,16 +913,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("app-version") String appVersion,
-                             @PathParam("schedule-name") String scheduleName)
-    throws NotFoundException, BadRequestException, IOException {
+                             @PathParam("schedule-name") String scheduleName) throws Exception {
     doUpdateSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
   }
 
   private void doUpdateSchedule(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
-                                String appVersion, String scheduleName)
-    throws BadRequestException, IOException, NotFoundException {
+                                String appVersion, String scheduleName) throws Exception {
 
     ScheduleId scheduleId = new ApplicationId(namespaceId, appId, appVersion).schedule(scheduleName);
+    authorizationEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), Action.ADMIN);
     final ProgramSchedule existingSchedule = programScheduler.getSchedule(scheduleId);
     ScheduleDetail scheduleDetail = readScheduleDetailBody(
       request, scheduleName, true, new Function<JsonElement, ScheduleDetail>() {
@@ -1070,8 +1078,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteSchedule(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
-                             @PathParam("schedule-name") String scheduleName)
-    throws NotFoundException, SchedulerException {
+                             @PathParam("schedule-name") String scheduleName) throws Exception {
     doDeleteSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
   }
 
@@ -1081,15 +1088,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("app-version") String appVersion,
-                             @PathParam("schedule-name") String scheduleName)
-    throws NotFoundException, SchedulerException {
+                             @PathParam("schedule-name") String scheduleName) throws Exception {
     doDeleteSchedule(responder, namespaceId, appName, appVersion, scheduleName);
   }
 
   private void doDeleteSchedule(HttpResponder responder, String namespaceId, String appName,
-                                String appVersion, String scheduleName)
-    throws NotFoundException, SchedulerException {
+                                String appVersion, String scheduleName) throws Exception {
     ScheduleId scheduleId = new ApplicationId(namespaceId, appName, appVersion).schedule(scheduleName);
+    authorizationEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), Action.ADMIN);
     programScheduler.deleteSchedule(scheduleId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

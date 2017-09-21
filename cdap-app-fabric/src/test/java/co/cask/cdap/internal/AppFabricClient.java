@@ -640,7 +640,7 @@ public class AppFabricClient {
   public void addSchedule(ApplicationId application, ScheduleDetail scheduleDetail) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/versions/%s/schedules/%s", getNamespacePath(application.getNamespace()),
-                               application.getVersion(), application.getApplication(), scheduleDetail.getName());
+                               application.getApplication(), application.getVersion(), scheduleDetail.getName());
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(scheduleDetail).getBytes()));
     programLifecycleHttpHandler.addSchedule(request, responder, application.getNamespace(),
@@ -659,5 +659,31 @@ public class AppFabricClient {
                                               scheduleId.getApplication(), scheduleId.getVersion(),
                                               "schedules", scheduleId.getSchedule(), "enable");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Enable schedule failed");
+  }
+
+  public void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    MockResponder responder = new MockResponder();
+    ApplicationId application = scheduleId.getParent();
+    String uri = String.format("%s/apps/%s/versions/%s/schedules/%s/update",
+                               getNamespacePath(application.getNamespace()), application.getApplication(),
+                               application.getVersion(), scheduleId.getSchedule());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(scheduleDetail).getBytes()));
+    programLifecycleHttpHandler.updateSchedule(request, responder, application.getNamespace(),
+                                               application.getApplication(), application.getVersion(),
+                                               scheduleId.getSchedule());
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Update schedule failed");
+  }
+
+  public void deleteSchedule(ScheduleId scheduleId) throws Exception {
+    MockResponder responder = new MockResponder();
+    ApplicationId application = scheduleId.getParent();
+    String uri = String.format("%s/apps/%s/versions/%s/schedules/%s", getNamespacePath(application.getNamespace()),
+                               application.getApplication(), application.getVersion(), scheduleId.getSchedule());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri);
+    programLifecycleHttpHandler.deleteSchedule(request, responder, application.getNamespace(),
+                                               application.getApplication(), application.getVersion(),
+                                               scheduleId.getSchedule());
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Delete schedule failed");
   }
 }
