@@ -612,8 +612,7 @@ public final class Constants {
     public static final Map<String, String> TRANSACTION_MANAGER_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
-
-    public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
+    public static final String PROGRAM_METRICS_ENABLED = "app.program.metrics.enabled";
 
     public static final String METRICS_MIGRATION_SLEEP_MILLIS = "metrics.table.migration.sleep.millis";
 

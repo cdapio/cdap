@@ -39,6 +39,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
@@ -209,14 +210,14 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     runtimeArguments.put("stopTs", "3");
     runtimeArguments.put("tag", "tag1");
     // Do not emit metrics for mapreduce
-    runtimeArguments.put(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS, "false");
+    runtimeArguments.put(SystemArguments.METRICS_ENABLED, "false");
     runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, new BasicArguments(runtimeArguments));
     Collection<MetricTimeSeries> metrics = getMetricTimeSeries();
 
     Assert.assertEquals(0, metrics.size());
 
     // emit metrics for mapreduce
-    runtimeArguments.put(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS, "true");
+    runtimeArguments.put(SystemArguments.METRICS_ENABLED, "true");
     runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, new BasicArguments(runtimeArguments));
     metrics = getMetricTimeSeries();
 
