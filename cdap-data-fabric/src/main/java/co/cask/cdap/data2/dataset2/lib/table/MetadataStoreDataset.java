@@ -72,7 +72,17 @@ public class MetadataStoreDataset extends AbstractDataset {
     return Bytes.toBytes(gson.toJson(value));
   }
 
-  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+  /**
+   * Deserialize the given serialized value of a given type.
+   * Default implementation is to use {@link Gson} to deserialize.
+   *
+   * @param key the key used to fetch the given value
+   * @param serialized the serialized value
+   * @param typeOfT type of the value
+   * @param <T> type of the value object
+   * @return the deserialized value
+   */
+  protected <T> T deserialize(MDSKey key, byte[] serialized, Type typeOfT) {
     return gson.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
@@ -102,7 +112,7 @@ public class MetadataStoreDataset extends AbstractDataset {
       return null;
     }
 
-    return deserialize(value, typeOfT);
+    return deserialize(id, value, typeOfT);
   }
 
   // returns first that matches
@@ -121,7 +131,7 @@ public class MetadataStoreDataset extends AbstractDataset {
           return null;
         }
 
-        return deserialize(value, typeOfT);
+        return deserialize(id, value, typeOfT);
       } finally {
         scan.close();
       }
@@ -139,6 +149,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
     List<Row> rowList = table.get(getList);
     for (Row row : rowList) {
+      // This shouldn't fail, otherwise table is breaking contract.
       if (row.isEmpty()) {
         continue;
       }
@@ -147,7 +158,7 @@ public class MetadataStoreDataset extends AbstractDataset {
       if (value == null) {
         continue;
       }
-      T result = deserialize(value, typeOfT);
+      T result = deserialize(new MDSKey(row.getRow()), value, typeOfT);
       resultList.add(result);
     }
     return resultList;
@@ -206,7 +217,7 @@ public class MetadataStoreDataset extends AbstractDataset {
           if (columnValue == null) {
             continue;
           }
-          T value = deserialize(columnValue, typeOfT);
+          T value = deserialize(key, columnValue, typeOfT);
 
           KeyValue<T> kv = new KeyValue<>(key, value);
           // Combined Filter doesn't pass
@@ -236,7 +247,7 @@ public class MetadataStoreDataset extends AbstractDataset {
           if (columnValue == null) {
             continue;
           }
-          T value = deserialize(columnValue, typeOfT);
+          T value = deserialize(key, columnValue, typeOfT);
 
           // Key Filter doesn't pass
           if (keyFilter != null && !keyFilter.apply(key)) {
@@ -323,9 +334,9 @@ public class MetadataStoreDataset extends AbstractDataset {
         if (columnValue == null) {
           continue;
         }
-        T value = deserialize(columnValue, typeOfT);
-
         MDSKey key = new MDSKey(next.getRow());
+        T value = deserialize(key, columnValue, typeOfT);
+
         //noinspection ConstantConditions
         if (!function.apply(new KeyValue<>(key, value))) {
           break;

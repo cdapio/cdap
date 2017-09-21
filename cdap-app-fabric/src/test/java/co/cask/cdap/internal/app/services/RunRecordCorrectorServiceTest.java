@@ -15,35 +15,37 @@
  */
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.WordCountApp;
-import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
+import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.NotRunningProgramLiveInfo;
+import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
-import org.apache.http.HttpResponse;
+import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -52,94 +54,141 @@ import java.util.concurrent.TimeUnit;
 public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   private static Store store;
-  private static ProgramStateWriter programStateWriter;
-  private static ProgramLifecycleService programLifecycleService;
-  private static ProgramRuntimeService runtimeService;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void setup() throws Exception {
     store = getInjector().getInstance(DefaultStore.class);
-    programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
-    runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
-    programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    cConf = getInjector().getInstance(CConfiguration.class);
   }
 
   @Test
-  public void testInvalidFlowRunRecord() throws Exception {
-    // Create App with Flow and the deploy
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  public void testFixProgram() {
+    final AtomicInteger sourceId = new AtomicInteger(0);
 
-    final Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    // Write 10 services with starting state
+    // Write 10 workers with running state
+    Map<ProgramRunId, ProgramRunStatus> expectedStates = new HashMap<>();
 
-    // flow is stopped initially
-    Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1));
+    for (int i = 0; i < 10; i++) {
+      ProgramRunId serviceId = NamespaceId.DEFAULT.app("test").service("service" + i).run(RunIds.generate());
+      store.setStart(serviceId.getParent(), serviceId.getRun(), RunIds.getTime(serviceId.getRun(), TimeUnit.SECONDS),
+                     null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+                     Bytes.toBytes(sourceId.getAndIncrement()));
+      expectedStates.put(serviceId, ProgramRunStatus.FAILED);
 
-    // start a flow and check the status
-    startProgram(wordcountFlow1);
-    waitState(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
+      ProgramRunId workerId = new NamespaceId("ns").app("test").service("worker" + i).run(RunIds.generate());
+      store.setStart(workerId.getParent(), workerId.getRun(), RunIds.getTime(workerId.getRun(), TimeUnit.SECONDS),
+                     null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+                     Bytes.toBytes(sourceId.getAndIncrement()));
+      store.setRunning(workerId.getParent(), workerId.getRun(), System.currentTimeMillis(),
+                       null, Bytes.toBytes(sourceId.getAndIncrement()));
+      expectedStates.put(workerId, ProgramRunStatus.FAILED);
+    }
 
-    // Wait until we have a run record
-    Tasks.waitFor(1, new Callable<Integer>() {
+    // Write a flow with suspend state
+    ProgramRunId flowId = new NamespaceId("ns").app("test").service("flow").run(RunIds.generate());
+    store.setStart(flowId.getParent(), flowId.getRun(), RunIds.getTime(flowId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+                   Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(flowId.getParent(), flowId.getRun(), System.currentTimeMillis(),
+                     null, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setSuspend(flowId.getParent(), flowId.getRun(), Bytes.toBytes(sourceId.getAndIncrement()));
+    expectedStates.put(flowId, ProgramRunStatus.SUSPENDED);
+
+    // Write two MR in starting state. One with workflow information, one without.
+    ProgramRunId mrId = NamespaceId.DEFAULT.app("app").mr("mr").run(RunIds.generate());
+    store.setStart(mrId.getParent(), mrId.getRun(), RunIds.getTime(mrId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+                   Bytes.toBytes(sourceId.getAndIncrement()));
+    expectedStates.put(mrId, ProgramRunStatus.FAILED);
+
+    ProgramRunId workflowId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    ProgramRunId mrInWorkflowId = workflowId.getParent().getParent().mr("mrInWorkflow").run(RunIds.generate());
+    store.setStart(mrInWorkflowId.getParent(), mrInWorkflowId.getRun(),
+                   RunIds.getTime(mrInWorkflowId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.<String, String>emptyMap(),
+                   ImmutableMap.of(
+                     ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
+                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowId.getRun(),
+                     ProgramOptionConstants.WORKFLOW_NODE_ID, "mr"
+                   ),
+                   Bytes.toBytes(sourceId.getAndIncrement()));
+    expectedStates.put(workflowId, ProgramRunStatus.STARTING);
+
+    // Write the workflow in RUNNING state.
+    store.setStart(workflowId.getParent(), workflowId.getRun(), RunIds.getTime(workflowId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+                   Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(workflowId.getParent(), workflowId.getRun(), System.currentTimeMillis(),
+                     null, Bytes.toBytes(sourceId.getAndIncrement()));
+    expectedStates.put(workflowId, ProgramRunStatus.RUNNING);
+
+    // Use a ProgramRuntimeService that only reports running state based on a set of know ids
+    final Map<ProgramId, RunId> runningSet = new HashMap<>();
+    ProgramRuntimeService programRuntimeService = new AbstractProgramRuntimeService(cConf, null, null, null) {
+
       @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING).size();
+      public ProgramLiveInfo getLiveInfo(ProgramId programId) {
+        return new NotRunningProgramLiveInfo(programId);
       }
-    }, 5, TimeUnit.SECONDS);
 
-    // Get the RunRecord
-    List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
-    Assert.assertEquals(1, runRecords.size());
-    final RunRecord rr = runRecords.get(0);
-
-    // Check the RunRecords status
-    Assert.assertEquals(ProgramRunStatus.RUNNING, rr.getStatus());
-
-    // Lets set the runtime info to off
-    RuntimeInfo runtimeInfo = runtimeService.lookup(wordcountFlow1.toEntityId(), RunIds.fromString(rr.getPid()));
-    ProgramController programController = runtimeInfo.getController();
-    programController.stop();
-
-    // Verify that the status of that run is KILLED
-    Tasks.waitFor(ProgramRunStatus.KILLED, new Callable<ProgramRunStatus>() {
       @Override
-      public ProgramRunStatus call() throws Exception {
-        RunRecordMeta runRecord = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
-        return runRecord == null ? null : runRecord.getStatus();
+      public Map<RunId, RuntimeInfo> list(ProgramId program) {
+        RunId runId = runningSet.get(program);
+        if (runId != null) {
+          RuntimeInfo runtimeInfo = new SimpleRuntimeInfo(null, program);
+          return Collections.singletonMap(runId, runtimeInfo);
+        }
+        return Collections.emptyMap();
       }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    };
 
-    // Use the store manipulate state to be RUNNING
-    // subtract one second so that the run corrector threshold will not filter it out
-    long now = System.currentTimeMillis() - 1000L;
-    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs, null, ImmutableMap.<String, String>of(),
-                   ImmutableMap.<String, String>of(), ByteBuffer.allocate(0).array());
-    store.setRunning(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs + 1, null, ByteBuffer.allocate(1).array());
+    // Have both flow and workflow running
+    runningSet.put(flowId.getParent(), RunIds.fromString(flowId.getRun()));
+    runningSet.put(workflowId.getParent(), RunIds.fromString(workflowId.getRun()));
 
-    // Now check again via Store to assume data store is wrong.
-    RunRecord runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
-    Assert.assertNotNull(runRecordMeta);
-    Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
+    ProgramStateWriter programStateWriter = new NoOpProgramStateWriter() {
+      @Override
+      public void error(ProgramRunId programRunId, Throwable failureCause) {
+        store.setStop(programRunId.getParent(), programRunId.getRun(), System.currentTimeMillis(),
+                      ProgramRunStatus.FAILED, new BasicThrowable(failureCause),
+                      Bytes.toBytes(sourceId.getAndIncrement()));
+      }
+    };
 
-    // Verify there is NO FAILED run record for the application
-    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED);
-    Assert.assertEquals(0, runRecords.size());
+    // Create a run record fixer.
+    // Set the start buffer time to -1 so that it fixes right away.
+    // Also use a small tx batch size to validate the batching logic.
+    RunRecordCorrectorService fixer = new RunRecordCorrectorService(store, programStateWriter,
+                                                                    programRuntimeService, -1L, 5) { };
+    fixer.fixRunRecords();
 
-    // Start the RunRecordCorrectorService, which will fix the run record
-    CConfiguration testConf = CConfiguration.create();
-    // set threshold to 0 so that it will actually correct the record
-    testConf.set(Constants.AppFabric.PROGRAM_MAX_START_SECONDS, "0");
-    new LocalRunRecordCorrectorService(testConf, store, programStateWriter, programLifecycleService,
-                                       runtimeService).startUp();
+    // Validates all expected states
+    for (Map.Entry<ProgramRunId, ProgramRunStatus> entry : expectedStates.entrySet()) {
+      validateExpectedState(entry.getKey(), entry.getValue());
+    }
 
-    // Wait for the FAILED run record for the application
-    Tasks.waitFor(1, new Callable<Integer>() {
-                    @Override
-                    public Integer call() throws Exception {
-                      return getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED).size();
-                    }
-                  }, 30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+    // Remove the workflow from the running set and mark it as completed
+    runningSet.remove(workflowId.getParent());
+    store.setStop(workflowId.getParent(), workflowId.getRun(), System.currentTimeMillis(),
+                  ProgramRunStatus.COMPLETED, Bytes.toBytes(sourceId.getAndIncrement()));
+
+    fixer.fixRunRecords();
+
+    // Both the workflow and the MR in workflow should be changed to failed state
+    expectedStates.put(workflowId, ProgramRunStatus.COMPLETED);
+    expectedStates.put(mrInWorkflowId, ProgramRunStatus.FAILED);
+
+    // Validates all expected states again
+    for (Map.Entry<ProgramRunId, ProgramRunStatus> entry : expectedStates.entrySet()) {
+      validateExpectedState(entry.getKey(), entry.getValue());
+    }
+  }
+
+  private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) {
+    RunRecordMeta runRecord = store.getRun(programRunId.getParent(), programRunId.getRun());
+    Assert.assertNotNull(runRecord);
+    Assert.assertEquals(expectedStatus, runRecord.getStatus());
   }
 }

@@ -377,10 +377,17 @@ public class DefaultStore implements Store {
   @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramRunStatus status,
                                                   final Predicate<RunRecordMeta> filter) {
+    return getRuns(status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramRunStatus status, final long startTime,
+                                                  final long endTime, final int limit,
+                                                  final Predicate<RunRecordMeta> filter) {
     return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
       @Override
       public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
-        return getAppMetadataStore(context).getRuns(status, filter);
+        return getAppMetadataStore(context).getRuns(null, status, startTime, endTime, limit, filter);
       }
     });
   }

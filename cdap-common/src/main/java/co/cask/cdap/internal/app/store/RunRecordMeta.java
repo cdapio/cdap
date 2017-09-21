@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
@@ -32,6 +33,10 @@ import javax.annotation.Nullable;
  * to users, so everything else like the Twill runid should go here.
  */
 public final class RunRecordMeta extends RunRecord {
+
+  // carries the ProgramRunId, but we don't need to serialize it as it is already in the key of the meta data store
+  private final transient ProgramRunId programRunId;
+
   @SerializedName("twillrunid")
   private final String twillRunId;
 
@@ -42,23 +47,24 @@ public final class RunRecordMeta extends RunRecord {
   @Nullable
   private final byte[] sourceId;
 
-  public RunRecordMeta(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, ProgramRunStatus status,
-                       @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
-                       @Nullable String twillRunId, byte[] sourceId) {
-    super(pid, startTs, runTs, stopTs, status, properties);
+  public RunRecordMeta(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
+                       ProgramRunStatus status, @Nullable Map<String, String> properties,
+                       @Nullable Map<String, String> systemArgs, @Nullable String twillRunId, byte[] sourceId) {
+    super(programRunId.getRun(), startTs, runTs, stopTs, status, properties);
+    this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
     this.sourceId = sourceId;
   }
 
   public RunRecordMeta(RunRecordMeta started, @Nullable Long stopTs, ProgramRunStatus status, byte[] sourceId) {
-    this(started.getPid(), started.getStartTs(), started.getRunTs(), stopTs, status, started.getProperties(),
+    this(started.getProgramRunId(), started.getStartTs(), started.getRunTs(), stopTs, status, started.getProperties(),
          started.getSystemArgs(), started.getTwillRunId(), sourceId);
   }
 
   public RunRecordMeta(RunRecordMeta existing, Map<String, String> updatedProperties, byte[] sourceId) {
-    this(existing.getPid(), existing.getStartTs(), existing.getRunTs(), existing.getStopTs(), existing.getStatus(),
-         updatedProperties, existing.getSystemArgs(), existing.getTwillRunId(), sourceId);
+    this(existing.getProgramRunId(), existing.getStartTs(), existing.getRunTs(), existing.getStopTs(),
+         existing.getStatus(), updatedProperties, existing.getSystemArgs(), existing.getTwillRunId(), sourceId);
   }
 
   @Nullable
@@ -76,6 +82,10 @@ public final class RunRecordMeta extends RunRecord {
     return sourceId;
   }
 
+  public ProgramRunId getProgramRunId() {
+    return programRunId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -86,7 +96,7 @@ public final class RunRecordMeta extends RunRecord {
     }
 
     RunRecordMeta that = (RunRecordMeta) o;
-    return Objects.equal(this.getPid(), that.getPid()) &&
+    return Objects.equal(this.getProgramRunId(), that.getProgramRunId()) &&
       Objects.equal(this.getStartTs(), that.getStartTs()) &&
       Objects.equal(this.getRunTs(), that.getRunTs()) &&
       Objects.equal(this.getStopTs(), that.getStopTs()) &&
@@ -98,14 +108,14 @@ public final class RunRecordMeta extends RunRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getRunTs(), getStopTs(), getStatus(), getProperties(),
-                            Arrays.hashCode(getSourceId()));
+    return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(),
+                            getStatus(), getProperties(), getTwillRunId(), Arrays.hashCode(getSourceId()));
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("pid", getPid())
+      .add("programRunId", getProgramRunId())
       .add("startTs", getStartTs())
       .add("runTs", getRunTs())
       .add("stopTs", getStopTs())
