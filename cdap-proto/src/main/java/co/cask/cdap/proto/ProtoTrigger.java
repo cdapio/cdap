@@ -143,10 +143,10 @@ public abstract class ProtoTrigger implements Trigger {
   /**
    * Abstract base class for composite trigger in REST requests/responses.
    */
-  public abstract static class AbstractCompositeTrigger extends ProtoTrigger {
+  public abstract static class AbstractCompositeProtoTrigger extends ProtoTrigger {
     private final List<Trigger> triggers;
 
-    public AbstractCompositeTrigger(Type type, Trigger... triggers) {
+    public AbstractCompositeProtoTrigger(Type type, Trigger... triggers) {
       super(type);
       this.triggers = Collections.unmodifiableList(new ArrayList<>(Arrays.asList(triggers)));
       validate();
@@ -183,7 +183,7 @@ public abstract class ProtoTrigger implements Trigger {
         return false;
       }
 
-      AbstractCompositeTrigger that = (AbstractCompositeTrigger) o;
+      AbstractCompositeProtoTrigger that = (AbstractCompositeProtoTrigger) o;
       return triggers.equals(that.getTriggers());
     }
 
@@ -201,24 +201,24 @@ public abstract class ProtoTrigger implements Trigger {
   }
 
   /**
-   * Shorthand helper method to create an instance of {@link AndTrigger}
+   * Shorthand helper method to create an instance of {@link AndProtoTrigger}
    */
-  public static AndTrigger and(Trigger... triggers) {
-    return new AndTrigger(triggers);
+  public static AndProtoTrigger and(Trigger... triggers) {
+    return new AndProtoTrigger(triggers);
   }
 
   /**
-   * Shorthand helper method to create an instance of {@link OrTrigger}
+   * Shorthand helper method to create an instance of {@link OrProtoTrigger}
    */
-  public static OrTrigger or(Trigger... triggers) {
-    return new OrTrigger(triggers);
+  public static OrProtoTrigger or(Trigger... triggers) {
+    return new OrProtoTrigger(triggers);
   }
 
   /**
    * Represents an AND trigger in REST requests/responses.
    */
-  public static class AndTrigger extends AbstractCompositeTrigger {
-    public AndTrigger(Trigger... triggers) {
+  public static class AndProtoTrigger extends AbstractCompositeProtoTrigger {
+    public AndProtoTrigger(Trigger... triggers) {
       super(Type.AND, triggers);
     }
   }
@@ -226,8 +226,8 @@ public abstract class ProtoTrigger implements Trigger {
   /**
    * Represents an OR trigger in REST requests/responses.
    */
-  public static class OrTrigger extends AbstractCompositeTrigger {
-    public OrTrigger(Trigger... triggers) {
+  public static class OrProtoTrigger extends AbstractCompositeProtoTrigger {
+    public OrProtoTrigger(Trigger... triggers) {
       super(Type.OR, triggers);
     }
   }

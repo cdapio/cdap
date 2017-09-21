@@ -103,14 +103,15 @@ public class TriggerCodecTest {
                              ImmutableSet.of(ProgramStatus.COMPLETED));
     testSerDeserYieldsTrigger(protoProgramStatus, programStatusTrigger);
 
-    ProtoTrigger.OrTrigger protoOr =
-      new ProtoTrigger.OrTrigger(protoPartition, new ProtoTrigger.AndTrigger(protoTime, protoProgramStatus));
+    ProtoTrigger.OrProtoTrigger protoOr =
+      new ProtoTrigger.OrProtoTrigger(protoPartition, new ProtoTrigger.AndProtoTrigger(protoTime, protoProgramStatus));
     OrTrigger orTrigger =
       new OrTrigger(partitionTrigger, new AndTrigger(timeTrigger, programStatusTrigger));
     testSerDeserYieldsTrigger(protoOr, orTrigger);
 
-    ProtoTrigger.AndTrigger protoAnd =
-      new ProtoTrigger.AndTrigger(protoOr, protoTime, new ProtoTrigger.OrTrigger(protoPartition, protoProgramStatus));
+    ProtoTrigger.AndProtoTrigger protoAnd =
+      new ProtoTrigger.AndProtoTrigger(protoOr, protoTime, new ProtoTrigger.OrProtoTrigger(protoPartition,
+                                                                                           protoProgramStatus));
     AndTrigger andTrigger =
       new AndTrigger(orTrigger, timeTrigger, new OrTrigger(partitionTrigger, programStatusTrigger));
     testSerDeserYieldsTrigger(protoAnd, andTrigger);

@@ -52,7 +52,7 @@ public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTr
 
   @Nullable
   @Override
-  public Trigger updateTriggerWithDeletedProgram(ProgramId programId) {
+  public AbstractCompositeTrigger getTriggerWithDeletedProgram(ProgramId programId) {
     List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
     for (Trigger trigger : getTriggers()) {
       if (trigger instanceof ProgramStatusTrigger &&
@@ -60,9 +60,9 @@ public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTr
         // this program status trigger will never be satisfied, skip adding it to updatedTriggers
         continue;
       }
-      if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
-        Trigger updatedTrigger = ((co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) trigger)
-          .updateTriggerWithDeletedProgram(programId);
+      if (trigger instanceof AbstractCompositeTrigger) {
+        Trigger updatedTrigger = ((AbstractCompositeTrigger) trigger)
+          .getTriggerWithDeletedProgram(programId);
         if (updatedTrigger == null) {
           // the updated composite trigger will never be satisfied, skip adding it to updatedTriggers
           continue;
@@ -79,7 +79,6 @@ public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTr
       return null;
     }
     // return a new OR trigger constructed from the updated triggers
-    return new co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger(
-      updatedTriggers.toArray(new SatisfiableTrigger[updatedTriggers.size()]));
+    return new OrTrigger(updatedTriggers.toArray(new SatisfiableTrigger[updatedTriggers.size()]));
   }
 }

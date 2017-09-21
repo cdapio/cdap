@@ -405,7 +405,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       if (schedule.getTrigger() instanceof AbstractCompositeTrigger) {
         // get the updated composite trigger by removing the program status trigger of the given program
         Trigger updatedTrigger = ((AbstractCompositeTrigger) schedule.getTrigger())
-          .updateTriggerWithDeletedProgram(programId);
+          .getTriggerWithDeletedProgram(programId);
         if (updatedTrigger == null) {
           deleted.add(schedule.getScheduleId());
           continue;
