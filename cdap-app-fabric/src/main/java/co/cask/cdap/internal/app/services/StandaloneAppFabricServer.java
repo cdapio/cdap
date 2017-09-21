@@ -59,7 +59,6 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    @Nullable MetricsCollectionService metricsCollectionService,
                                    ProgramRuntimeService programRuntimeService,
                                    ApplicationLifecycleService applicationLifecycleService,
-                                   ProgramNotificationSubscriberService programNotificationSubscriberService,
                                    ProgramLifecycleService programLifecycleService,
                                    RunRecordCorrectorService runRecordCorrectorService,
                                    StreamCoordinatorClient streamCoordinatorClient,
@@ -73,9 +72,8 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    CoreSchedulerService coreSchedulerService) {
     super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
-          programNotificationSubscriberService, programLifecycleService, streamCoordinatorClient, servicesNames,
-          handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, null, routeStore,
-          coreSchedulerService);
+          programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin,
+          systemArtifactLoader, pluginService, null, routeStore, coreSchedulerService);
     this.metricStore = metricStore;
   }
 
