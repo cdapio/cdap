@@ -395,7 +395,7 @@ public class DefaultStoreTest {
     setStartAndRunning(programId, run5.getId(), startTimeSecs - 8);
     store.setStop(programId, run5.getId(), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRecord5 = new RunRecordMeta(run5.getId(), startTimeSecs - 8,
+    RunRecordMeta expectedRecord5 = new RunRecordMeta(programId.run(run5), startTimeSecs - 8,
                                                       startTimeSecs - 8 + startTimeDelaySecs, startTimeSecs - 4,
                                                       ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null, null,
                                                       AppFabricTestHelper.createSourceId(sourceId));
@@ -403,7 +403,7 @@ public class DefaultStoreTest {
     // record not finished flow
     RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
     setStartAndRunning(programId, run6.getId(), startTimeSecs - 2);
-    RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), startTimeSecs - 2,
+    RunRecordMeta expectedRecord6 = new RunRecordMeta(programId.run(run6), startTimeSecs - 2,
                                                       startTimeSecs - 2 + startTimeDelaySecs, null,
                                                       ProgramRunStatus.RUNNING, noRuntimeArgsProps, null, null,
                                                       AppFabricTestHelper.createSourceId(sourceId));
@@ -424,7 +424,7 @@ public class DefaultStoreTest {
                    AppFabricTestHelper.createSourceId(++sourceId));
     store.setStop(programId, run7.getId(), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRunRecord7 = new RunRecordMeta(run7.getId(), startTimeSecs, null, startTimeSecs + 1,
+    RunRecordMeta expectedRunRecord7 = new RunRecordMeta(programId.run(run7), startTimeSecs, null, startTimeSecs + 1,
                                                          ProgramRunStatus.FAILED, noRuntimeArgsProps, null, null,
                                                          AppFabricTestHelper.createSourceId(sourceId));
     RunRecordMeta actualRecord7 = store.getRun(programId, run7.getId());
@@ -435,7 +435,7 @@ public class DefaultStoreTest {
     store.setStart(programId, run8.getId(), startTimeSecs, null, emptyArgs, null,
                    AppFabricTestHelper.createSourceId(++sourceId));
     store.setSuspend(programId, run8.getId(), AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRunRecord8 = new RunRecordMeta(run8.getId(), startTimeSecs, null, null,
+    RunRecordMeta expectedRunRecord8 = new RunRecordMeta(programId.run(run8), startTimeSecs, null, null,
                                                          ProgramRunStatus.SUSPENDED, noRuntimeArgsProps, null, null,
                                                          AppFabricTestHelper.createSourceId(sourceId));
     RunRecordMeta actualRecord8 = store.getRun(programId, run8.getId());
@@ -448,7 +448,7 @@ public class DefaultStoreTest {
     store.setStop(programId, run9.getId(), startTimeSecs + 5, ProgramRunStatus.KILLED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    RunRecordMeta expectedRunRecord9 = new RunRecordMeta(run9.getId(), startTimeSecs, startTimeSecs + 1,
+    RunRecordMeta expectedRunRecord9 = new RunRecordMeta(programId.run(run9), startTimeSecs, startTimeSecs + 1,
                                                          startTimeSecs + 5, ProgramRunStatus.KILLED,
                                                          noRuntimeArgsProps, null, null,
                                                          AppFabricTestHelper.createSourceId(sourceId));

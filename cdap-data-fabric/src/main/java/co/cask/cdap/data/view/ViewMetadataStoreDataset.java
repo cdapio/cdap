@@ -19,6 +19,7 @@ package co.cask.cdap.data.view;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.Gson;
@@ -44,7 +45,7 @@ public class ViewMetadataStoreDataset extends MetadataStoreDataset {
   }
 
   @Override
-  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+  protected <T> T deserialize(MDSKey key, byte[] serialized, Type typeOfT) {
     return GSON.fromJson(Bytes.toString(serialized), typeOfT);
   }
 }

@@ -42,14 +42,11 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -729,130 +726,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
                                                             "oldInstances", String.valueOf(oldInstances))).get();
       }
     }
-  }
-
-  /**
-   * Helper method to get {@link ProgramId} for a RunRecord for type of program
-   *
-   * @param programType Type of program to search
-   * @param runId The target id of the {@link RunRecord} to find
-   * @return the program id of the run record or {@code null} if does not exist.
-   */
-  @Nullable
-  protected ProgramId retrieveProgramIdForRunRecord(ProgramType programType, String runId) {
-
-    // Get list of namespaces (borrow logic from AbstractAppFabricHttpHandler#listPrograms)
-    List<NamespaceMeta> namespaceMetas = nsStore.list();
-
-    // For each, get all programs under it
-    ProgramId targetProgramId = null;
-    for (NamespaceMeta nm : namespaceMetas) {
-      NamespaceId namespace = Ids.namespace(nm.getName());
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespace);
-
-      // For each application get the programs checked against run records
-      for (ApplicationSpecification appSpec : appSpecs) {
-        switch (programType) {
-          case FLOW:
-            for (String programName : appSpec.getFlows().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
-                                                                appSpec.getAppVersion(), programType,
-                                                                programName, runId);
-              if (programId != null) {
-                targetProgramId = programId;
-                break;
-              }
-            }
-            break;
-          case MAPREDUCE:
-            for (String programName : appSpec.getMapReduce().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
-                                                                appSpec.getAppVersion(), programType,
-                                                                programName, runId);
-              if (programId != null) {
-                targetProgramId = programId;
-                break;
-              }
-            }
-            break;
-          case SPARK:
-            for (String programName : appSpec.getSpark().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
-                                                                appSpec.getAppVersion(), programType,
-                                                                programName, runId);
-              if (programId != null) {
-                targetProgramId = programId;
-                break;
-              }
-            }
-            break;
-          case SERVICE:
-            for (String programName : appSpec.getServices().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
-                                                                appSpec.getAppVersion(), programType,
-                                                                programName, runId);
-              if (programId != null) {
-                targetProgramId = programId;
-                break;
-              }
-            }
-            break;
-          case WORKER:
-            for (String programName : appSpec.getWorkers().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
-                                                                appSpec.getAppVersion(), programType,
-                                                                programName, runId);
-              if (programId != null) {
-                targetProgramId = programId;
-                break;
-              }
-            }
-            break;
-          case WORKFLOW:
-            for (String programName : appSpec.getWorkflows().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
-                                                                appSpec.getAppVersion(), programType,
-                                                                programName, runId);
-              if (programId != null) {
-                targetProgramId = programId;
-                break;
-              }
-            }
-            break;
-          case CUSTOM_ACTION:
-          case WEBAPP:
-            // no-op
-            break;
-          default:
-            LOG.debug("Unknown program type: " + programType.name());
-            break;
-        }
-        if (targetProgramId != null) {
-          break;
-        }
-      }
-      if (targetProgramId != null) {
-        break;
-      }
-    }
-
-    return targetProgramId;
-  }
-
-  /**
-   * Helper method to get program id for a run record if it exists in the store.
-   *
-   * @return instance of {@link ProgramId} if exist for the runId or null if does not
-   */
-  @Nullable
-  private ProgramId validateProgramForRunRecord(String namespaceName, String appName, String appVersion,
-                                                ProgramType programType, String programName, String runId) {
-    ProgramId programId = Ids.namespace(namespaceName).app(appName, appVersion).program(programType, programName);
-    RunRecordMeta runRecord = store.getRun(programId, runId);
-    if (runRecord == null) {
-      return null;
-    }
-    return programId;
   }
 
   /**

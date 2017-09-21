@@ -166,13 +166,24 @@ public interface Store extends RuntimeStore {
                                            int limit, Predicate<RunRecordMeta> filter);
 
   /**
-   * Fetches the run records for the particular status.
-   *
-   * @param status  status of the program to filter the records
-   * @param filter  predicate to be passed to filter the records
-   * @return        map of logged runs
+   * Fetches the run records for the particular status. Same as calling
+   * {@link #getRuns(ProgramRunStatus, long, long, int, Predicate)
+   * getRuns(status, 0, Long.MAX_VALUE, Integer.MAX_VALUE, filter)}
    */
   Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter);
+
+  /**
+   * Fetches run records for the particular status.
+   *
+   * @param status status of the program to filter the records
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime fetch run history that has started before the endTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @param filter predicate to be passed to filter the records
+   * @return a map from {@link ProgramRunId} to the corresponding {@link RunRecordMeta}.
+   */
+  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, long startTime,
+                                           long endTime, int limit, Predicate<RunRecordMeta> filter);
 
 
   /**
