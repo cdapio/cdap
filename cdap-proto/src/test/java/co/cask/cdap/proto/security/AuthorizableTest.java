@@ -33,6 +33,8 @@ import org.junit.Test;
  * Tests {@link Authorizable}
  */
 public class AuthorizableTest {
+  private static final String ILLEGAL_MSG = "Entity value is missing some parts or containing more parts";
+  private static final String UNSUPPORTED_MSG = "Privilege can only be granted at the artifact/application level.";
 
   @Test
   public void testArtifact() {
@@ -45,6 +47,9 @@ public class AuthorizableTest {
 
     String widcardId = artifactIdNoVer.replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+
+    verifyInvalidString("artifact:art");
+    verifyInvalidString("artifact:ns.art.1.0-SNAPSHOT");
   }
 
   @Test
@@ -64,6 +69,8 @@ public class AuthorizableTest {
 
     String widcardId = namespaceId.toString().replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+
+    verifyInvalidString("namespace:ns.ns1");
   }
 
   @Test
@@ -75,12 +82,7 @@ public class AuthorizableTest {
 
     // test fromString with version should throw exception
     String wildCardProgramId = programId.toString() + "*";
-    try {
-      Authorizable.fromString(wildCardProgramId);
-      Assert.fail();
-    } catch (UnsupportedOperationException e) {
-      // expected
-    }
+    verifyInvalidString(wildCardProgramId);
 
     ApplicationId appId = new ApplicationId("ns", "app", "1.0-SNAPSHOT");
     programId = appId.program(ProgramType.MAPREDUCE, "prog");
@@ -94,6 +96,9 @@ public class AuthorizableTest {
 
     String allProgs = "program:ns.app.*";
     Assert.assertEquals(allProgs, Authorizable.fromString(allProgs).toString());
+
+    verifyInvalidString("program:ns.app");
+    verifyInvalidString("program:test:*.*");
   }
 
   @Test
@@ -104,15 +109,12 @@ public class AuthorizableTest {
     String appIdNoVer = appId.toString().replace(".1.0-SNAPSHOT", "");
     Assert.assertEquals(appIdNoVer, authorizable.toString());
 
-    try {
-      Authorizable.fromString(appId.toString());
-      Assert.fail();
-    } catch (UnsupportedOperationException e) {
-      // expected
-    }
+    verifyInvalidString(appId.toString());
 
     String widcardId = appIdNoVer.replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+
+    verifyInvalidString("application:app");
   }
 
   @Test
@@ -133,6 +135,10 @@ public class AuthorizableTest {
 
     String widcardId = streamId.toString().replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+
+    verifyInvalidString("stream:ns");
+    verifyInvalidString("stream:ns.stream1.invalid");
+    verifyInvalidString("stream:ns:stream1");
   }
 
   @Test
@@ -143,6 +149,9 @@ public class AuthorizableTest {
 
     String widcardId = datasetId.toString().replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+
+    verifyInvalidString("dataset:test");
+    verifyInvalidString("dataset:ns:test");
   }
 
   @Test
@@ -173,5 +182,16 @@ public class AuthorizableTest {
 
     String widcardId = datasetModuleId.toString().replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+  }
+
+  private void verifyInvalidString(String invalidString) {
+    try {
+      Authorizable.fromString(invalidString);
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains(ILLEGAL_MSG));
+    } catch (UnsupportedOperationException e) {
+      Assert.assertTrue(e.getMessage().contains(UNSUPPORTED_MSG));
+    }
   }
 }

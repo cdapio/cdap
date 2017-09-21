@@ -18,6 +18,7 @@ package co.cask.cdap.common.twill;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.EventHandlerContext;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,8 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
 
   private long abortTime;
   private boolean abortIfNotFull;
+  private String applicationName;
+  private RunId runId;
 
   /**
    * Constructs an instance of AbortOnTimeoutEventHandler that abort the application if some runnable has no
@@ -71,6 +74,8 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
     super.initialize(context);
     this.abortTime = Long.parseLong(context.getSpecification().getConfigs().get("abortTime"));
     this.abortIfNotFull = Boolean.parseBoolean(context.getSpecification().getConfigs().get("abortIfNotFull"));
+    this.applicationName = context.getApplicationName();
+    this.runId = context.getRunId();
   }
 
 
@@ -78,14 +83,16 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
   public TimeoutAction launchTimeout(Iterable<TimeoutEvent> timeoutEvents) {
     long now = System.currentTimeMillis();
     for (TimeoutEvent event : timeoutEvents) {
-      LOG.info("Requested {} containers for runnable {}, only got {} after {} ms.",
-               event.getExpectedInstances(), event.getRunnableName(),
+      LOG.warn("Requested {} containers for runnable {} when running application {} with run id {}," +
+                 " only got {} after {} ms.",
+               event.getExpectedInstances(), event.getRunnableName(), applicationName, runId,
                event.getActualInstances(), System.currentTimeMillis() - event.getRequestTime());
 
       boolean pass = abortIfNotFull ? event.getActualInstances() == event.getExpectedInstances()
                                     : event.getActualInstances() != 0;
       if (!pass && (now - event.getRequestTime()) > abortTime) {
-        LOG.info("No containers for {}. Abort the application.", event.getRunnableName());
+        LOG.error("No containers for runnable {} when running application {} with run id {}. Abort the application.",
+                  event.getRunnableName(), applicationName, runId);
         return TimeoutAction.abort();
       }
     }

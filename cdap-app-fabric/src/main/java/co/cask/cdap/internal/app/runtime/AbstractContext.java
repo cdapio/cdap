@@ -217,11 +217,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
                                                      Map<String, String> runtimeArgs) {
-    String emitMetricsPreference = runtimeArgs.get(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS);
-
-    // Get the option for emitting metrics from preferences or as a fall back from cConf
-    boolean emitMetrics = emitMetricsPreference != null ? Boolean.valueOf(emitMetricsPreference) :
-      cConf.getBoolean(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS);
+    boolean  emitMetrics =
+      SystemArguments.isProgramMetricsEnabled(runtimeArgs,
+                                              cConf.getBoolean(Constants.Metrics.PROGRAM_METRICS_ENABLED));
     return emitMetrics ? metricsService : new NoOpMetricsCollectionService();
   }
 

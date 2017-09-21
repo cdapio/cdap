@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -159,8 +160,17 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   @Override
-  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
-    return GSON.fromJson(Bytes.toString(serialized), typeOfT);
+  protected <T> T deserialize(MDSKey key, byte[] serialized, Type typeOfT) {
+    if (RunRecordMeta.class.equals(typeOfT)) {
+      RunRecordMeta meta = GSON.fromJson(Bytes.toString(serialized), RunRecordMeta.class);
+      meta = new RunRecordMeta(getProgramID(key).run(meta.getPid()), meta.getStartTs(), meta.getRunTs(),
+                               meta.getStopTs(), meta.getStatus(), meta.getProperties(), meta.getSystemArgs(),
+                               meta.getTwillRunId(), meta.getSourceId());
+      //noinspection unchecked
+      return (T) meta;
+    } else {
+      return GSON.fromJson(Bytes.toString(serialized), typeOfT);
+    }
   }
 
   @Nullable
@@ -322,7 +332,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record != null) {
       // Update the parent Workflow run record by adding node id and program run id in the properties
-      Map<String, String> properties = record.getProperties();
+      Map<String, String> properties = new HashMap<>(record.getProperties());
       properties.put(workflowNodeId, pid);
       write(key, new RunRecordMeta(record, properties, sourceId));
     }
@@ -394,9 +404,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     MDSKey key = keyBuilder.add(pid).build();
-    RunRecordMeta meta =
-      new RunRecordMeta(pid, startTs, null, null, ProgramRunStatus.STARTING, builder.build(), systemArgs,
-                        twillRunId, sourceId);
+    RunRecordMeta meta = new RunRecordMeta(programId.run(pid), startTs, null, null, ProgramRunStatus.STARTING,
+                                           builder.build(), systemArgs, twillRunId, sourceId);
     write(key, meta);
   }
 
@@ -424,8 +433,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     // Build the key for TYPE_RUN_RECORD_STARTED
     key = keyBuilder.add(pid).build();
     // The existing record's properties already contains the workflowRunId
-    RunRecordMeta meta = new RunRecordMeta(pid, existing.getStartTs(), runTs, null, ProgramRunStatus.RUNNING,
-                                           existing.getProperties(), systemArgs, twillRunId, sourceId);
+    RunRecordMeta meta = new RunRecordMeta(programId.run(pid), existing.getStartTs(), runTs, null,
+                                           ProgramRunStatus.RUNNING, existing.getProperties(),
+                                           systemArgs, twillRunId, sourceId);
     write(key, meta);
   }
 
@@ -637,10 +647,6 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     return false;
   }
 
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
-    return getRuns(null, status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
-  }
-
   public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) {
     return getRuns(programRunIds, Integer.MAX_VALUE);
   }
@@ -674,9 +680,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
   private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
     Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
-    resultMap.putAll(getActiveRuns(programRunIds, limit));
-    resultMap.putAll(getSuspendedRuns(programRunIds, limit - resultMap.size()));
-    resultMap.putAll(getHistoricalRuns(programRunIds, limit - resultMap.size()));
+    for (String type : Arrays.asList(TYPE_RUN_RECORD_STARTING, TYPE_RUN_RECORD_STARTED,
+                                     TYPE_RUN_RECORD_SUSPENDED, TYPE_RUN_RECORD_COMPLETED)) {
+      resultMap.putAll(getRunsForRunIds(programRunIds, type, limit - resultMap.size()));
+    }
     return resultMap;
   }
 
@@ -686,8 +693,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     switch (status) {
       case ALL:
         Map<ProgramRunId, RunRecordMeta> runRecords = new LinkedHashMap<>();
-        runRecords.putAll(getActiveRuns(programId, startTime, endTime, limit, filter));
-        runRecords.putAll(getSuspendedRuns(programId, startTime, endTime, limit - runRecords.size(), filter));
+        for (String type : Arrays.asList(TYPE_RUN_RECORD_STARTING,
+                                         TYPE_RUN_RECORD_STARTED, TYPE_RUN_RECORD_SUSPENDED)) {
+          runRecords.putAll(getNonCompleteRuns(programId, type, startTime, endTime, limit - runRecords.size(), filter));
+        }
         runRecords.putAll(getHistoricalRuns(programId, status, startTime, endTime, limit - runRecords.size(), filter));
         return runRecords;
       case STARTING:
@@ -695,7 +704,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       case RUNNING:
         return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, filter);
       case SUSPENDED:
-        return getSuspendedRuns(programId, startTime, endTime, limit, filter);
+        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, filter);
       default:
         return getHistoricalRuns(programId, status, startTime, endTime, limit, filter);
     }
@@ -787,20 +796,6 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getSuspendedRuns(@Nullable ProgramId programId, long startTime, long endTime,
-                                                            int limit, @Nullable Predicate<RunRecordMeta> filter) {
-    return getNonCompleteRuns(programId, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, filter);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getActiveRuns(@Nullable ProgramId programId, final long startTime,
-                                                         final long endTime, int limit,
-                                                         @Nullable Predicate<RunRecordMeta> filter) {
-    Map<ProgramRunId, RunRecordMeta> activeRunRecords =
-      getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTING, startTime, endTime, limit, filter);
-    activeRunRecords.putAll(getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, filter));
-    return activeRunRecords;
-  }
-
   private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(@Nullable ProgramId programId, String recordType,
                                                               final long startTime, final long endTime, int limit,
                                                               Predicate<RunRecordMeta> filter) {
@@ -824,21 +819,6 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       newRecords.putAll(oldRecords);
     }
     return getProgramRunIdMap(newRecords);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getSuspendedRuns(Set<ProgramRunId> programRunIds, int limit) {
-    return getRunsForRunIds(programRunIds, TYPE_RUN_RECORD_SUSPENDED, limit);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<ProgramRunId> programRunIds, int limit) {
-    Map<ProgramRunId, RunRecordMeta> activeRunRecords =
-      getRunsForRunIds(programRunIds, TYPE_RUN_RECORD_STARTING, limit);
-    activeRunRecords.putAll(getRunsForRunIds(programRunIds, TYPE_RUN_RECORD_STARTED, limit));
-    return activeRunRecords;
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<ProgramRunId> programRunIds, int limit) {
-    return getRunsForRunIds(programRunIds, TYPE_RUN_RECORD_COMPLETED, limit);
   }
 
   private Map<ProgramRunId, RunRecordMeta> getRunsForRunIds(final Set<ProgramRunId> runIds, String recordType,

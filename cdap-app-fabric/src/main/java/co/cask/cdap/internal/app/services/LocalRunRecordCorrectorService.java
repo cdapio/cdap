@@ -25,13 +25,12 @@ import com.google.inject.Inject;
 /**
  * A local-mode only run record corrector that corrects run records once upon app fabric server startup.
  */
-public class LocalRunRecordCorrectorService extends AbstractRunRecordCorrectorService {
+public class LocalRunRecordCorrectorService extends RunRecordCorrectorService {
 
   @Inject
-  public LocalRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                        ProgramLifecycleService programLifecycleService,
-                                        ProgramRuntimeService runtimeService) {
-    super(cConf, store, programStateWriter, programLifecycleService, runtimeService);
+  LocalRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                                 ProgramRuntimeService runtimeService) {
+    super(cConf, store, programStateWriter, runtimeService);
   }
 
   @Override
@@ -39,6 +38,6 @@ public class LocalRunRecordCorrectorService extends AbstractRunRecordCorrectorSe
     super.startUp();
 
     // In local mode, correct running records just once, on startup
-    validateAndCorrectRunningRunRecords();
+    fixRunRecords();
   }
 }

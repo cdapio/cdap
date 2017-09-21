@@ -402,6 +402,15 @@
   </property>
 
   <property>
+    <name>app.program.runid.corrector.tx.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of run records being fetched per transaction for checking if needed for correction.
+      This value is directly proportional to the ${data.tx.timeout} setting.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.extensions.dir</name>
     <value>/opt/cdap/master/ext/runtimes</value>
     <description>

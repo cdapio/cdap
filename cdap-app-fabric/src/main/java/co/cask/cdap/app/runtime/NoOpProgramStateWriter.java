@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 /**
  * A no-op {@link ProgramStateWriter}
  */
-public final class NoOpProgramStateWriter implements ProgramStateWriter {
+public class NoOpProgramStateWriter implements ProgramStateWriter {
   @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId) {
     // no-op

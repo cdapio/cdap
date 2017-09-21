@@ -230,13 +230,14 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
   }
 
   @Override
-  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+  protected <T> T deserialize(@Nullable MDSKey key, byte[] serialized, Type typeOfT) {
     return BACKWARD_COMPAT_GSON.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
   @VisibleForTesting
   <T> T deserializeProxy(byte[] serialized, Type typeOfT) {
-    return deserialize(serialized, typeOfT);
+    // We never use the key, hence just pass in null.
+    return deserialize(null, serialized, typeOfT);
   }
 
   /**

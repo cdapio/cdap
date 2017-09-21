@@ -104,7 +104,14 @@ public final class RunIds {
    * @return time from the UUID if it is a time-based UUID, -1 otherwise.
    */
   public static long getTime(RunId runId, TimeUnit timeUnit) {
-    UUID uuid = UUID.fromString(runId.getId());
+    return getTime(runId.getId(), timeUnit);
+  }
+
+  /**
+   * @return time from the UUID if it is a time-based UUID, -1 otherwise.
+   */
+  public static long getTime(String runId, TimeUnit timeUnit) {
+    UUID uuid = UUID.fromString(runId);
     if (uuid.version() == 1 && uuid.variant() == 2) {
       long timeInMilliseconds = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
       return timeUnit.convert(timeInMilliseconds, TimeUnit.MILLISECONDS);

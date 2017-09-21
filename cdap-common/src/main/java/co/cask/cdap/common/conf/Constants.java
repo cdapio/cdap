@@ -179,6 +179,7 @@ public final class Constants {
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS = "mapreduce.status.report.interval.seconds";
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
+    public static final String PROGRAM_RUNID_CORRECTOR_TX_BATCH_SIZE = "app.program.runid.corrector.tx.batch.size";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
@@ -608,8 +609,7 @@ public final class Constants {
     public static final Map<String, String> TRANSACTION_MANAGER_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
-
-    public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
+    public static final String PROGRAM_METRICS_ENABLED = "app.program.metrics.enabled";
 
     public static final String METRICS_MIGRATION_SLEEP_MILLIS = "metrics.table.migration.sleep.millis";
 

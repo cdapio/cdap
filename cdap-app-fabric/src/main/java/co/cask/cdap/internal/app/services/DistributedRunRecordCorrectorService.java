@@ -33,17 +33,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * A distributed-mode only run record corrector service that corrects run records at a scheduled, configurable rate.
  */
-public class DistributedRunRecordCorrectorService extends AbstractRunRecordCorrectorService {
+public class DistributedRunRecordCorrectorService extends RunRecordCorrectorService {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedRunRecordCorrectorService.class);
 
   private final CConfiguration cConf;
   private ScheduledExecutorService scheduledExecutorService;
 
   @Inject
-  public DistributedRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                              ProgramLifecycleService programLifecycleService,
-                                              ProgramRuntimeService runtimeService) {
-    super(cConf, store, programStateWriter, programLifecycleService, runtimeService);
+  DistributedRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                                       ProgramRuntimeService runtimeService) {
+    super(cConf, store, programStateWriter, runtimeService);
     this.cConf = cConf;
   }
 
@@ -87,7 +86,7 @@ public class DistributedRunRecordCorrectorService extends AbstractRunRecordCorre
         LOG.trace("Start correcting invalid run records ...");
 
         // Lets update the running programs run records
-        validateAndCorrectRunningRunRecords();
+        fixRunRecords();
 
         LOG.trace("End correcting invalid run records.");
       } catch (Throwable t) {

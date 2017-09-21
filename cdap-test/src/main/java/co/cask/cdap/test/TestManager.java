@@ -26,14 +26,17 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 
 import java.io.File;
@@ -573,4 +576,34 @@ public interface TestManager {
    * @param namespaceId the namespace from which to remove all apps
    */
   void deleteAllApplications(NamespaceId namespaceId) throws Exception;
+
+  /**
+   * Get the app detail of an application
+   *
+   * @param applicationId the app id of the application
+   */
+  ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception;
+
+  /**
+   * Add a new schedule to an existing application
+   *
+   * @param scheduleId the ID of the schedule to add
+   * @param scheduleDetail the {@link ScheduleDetail} describing the new schedule.
+   */
+  void addSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception;
+
+  /**
+   * Update an existing schedule.
+   *
+   * @param scheduleId the ID of the schedule to add
+   * @param scheduleDetail the {@link ScheduleDetail} describing the updated schedule.
+   */
+  void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception;
+
+  /**
+   * Delete an existing schedule.
+   *
+   * @param scheduleId the ID of the schedule to be deleted
+   */
+  void deleteSchedule(ScheduleId scheduleId) throws Exception;
 }

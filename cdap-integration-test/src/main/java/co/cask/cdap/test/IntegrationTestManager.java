@@ -34,6 +34,7 @@ import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -45,9 +46,11 @@ import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.explore.jdbc.ExploreConnectionParams;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -55,6 +58,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
@@ -122,6 +126,7 @@ public class IntegrationTestManager extends AbstractTestManager {
   private final DatasetModuleClient datasetModuleClient;
   private final NamespaceClient namespaceClient;
   private final ProgramClient programClient;
+  private final ScheduleClient scheduleClient;
 
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
@@ -141,6 +146,7 @@ public class IntegrationTestManager extends AbstractTestManager {
     this.datasetModuleClient = new DatasetModuleClient(clientConfig, restClient);
     this.namespaceClient = new NamespaceClient(clientConfig, restClient);
     this.programClient = new ProgramClient(clientConfig, restClient);
+    this.scheduleClient = new ScheduleClient(clientConfig, restClient);
   }
 
   @Override
@@ -391,6 +397,26 @@ public class IntegrationTestManager extends AbstractTestManager {
   @Override
   public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
     applicationClient.deleteAll(namespaceId);
+  }
+
+  @Override
+  public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
+    return applicationClient.get(applicationId);
+  }
+
+  @Override
+  public void addSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    scheduleClient.add(scheduleId, scheduleDetail);
+  }
+
+  @Override
+  public void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    scheduleClient.update(scheduleId, scheduleDetail);
+  }
+
+  @Override
+  public void deleteSchedule(ScheduleId scheduleId) throws Exception {
+    scheduleClient.delete(scheduleId);
   }
 
   /**
