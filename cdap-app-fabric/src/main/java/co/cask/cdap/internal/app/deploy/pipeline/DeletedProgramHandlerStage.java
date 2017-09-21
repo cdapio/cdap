@@ -32,6 +32,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -57,11 +58,13 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final MetricStore metricStore;
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
+  private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
                                     QueueAdmin queueAdmin, MetricStore metricStore,
-                                    MetadataStore metadataStore, Impersonator impersonator) {
+                                    MetadataStore metadataStore, Impersonator impersonator,
+                                    Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
@@ -70,6 +73,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     this.metricStore = metricStore;
     this.metadataStore = metadataStore;
     this.impersonator = impersonator;
+    this.programScheduler = programScheduler;
   }
 
   @Override
@@ -85,6 +89,8 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       ProgramType type = ProgramTypes.fromSpecification(spec);
       final ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
       programTerminator.stop(programId);
+      programScheduler.deleteSchedules(programId);
+      programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
 
       // drop all queues and stream states of a deleted flow
       if (ProgramType.FLOW.equals(type)) {
