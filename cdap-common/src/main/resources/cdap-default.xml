@@ -3105,6 +3105,16 @@
   </property>
 
   <property>
+    <name>security.authorization.extension.operation.time.warn.threshold.ms</name>
+    <value>30000</value>
+    <description>
+      Time taken by an authorization extension to perform an enforce operation is recorded and
+      logged at TRACE level. This property sets the upper limit for the time taken by the extension in milliseconds
+      after which it is logged at WARN level rather than TRACE.
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
