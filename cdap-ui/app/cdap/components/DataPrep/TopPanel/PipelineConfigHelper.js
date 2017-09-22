@@ -338,11 +338,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
         sourceConfigs = constructFileSource(res[0], res[2]);
       } else if (state.workspaceInfo.properties.connection === 'database') {
         sourceConfigs = constructDatabaseSource(res[0], res[2]);
-        sourceConfigs.batchSource.plugin.properties.schema = JSON.stringify({
-          name: 'avroSchema',
-          type: 'record',
-          fields: res[3]
-        });
+        delete sourceConfigs.batchSource.plugin.properties.schema;
       } else if (state.workspaceInfo.properties.connection === 'kafka') {
         sourceConfigs = constructKafkaSource(res[0], res[2]);
       }
