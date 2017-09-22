@@ -27,6 +27,7 @@ export default function PipelineTriggersSidebars({pipelineName, namespace}) {
       />
       <TriggeredPipelines
         pipelineName={pipelineName}
+        namespace={namespace}
       />
     </div>
   );
