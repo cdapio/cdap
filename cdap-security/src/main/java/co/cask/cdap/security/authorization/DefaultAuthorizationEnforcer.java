@@ -57,7 +57,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     this.authorizerInstantiator = authorizerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
-    this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.LOG_EXTENSION_ENFORCEMENT_TIME_AS_WARN);
+    this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     }
 
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
-    LOG.trace("==> Checking visibility of {} for principal {}.", difference, principal);
+    LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
     // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
     // singleton we don't want the stopwatch instance to get re-used across multiple calls.
     StopWatch watch = new StopWatch();
@@ -94,12 +94,11 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     } finally {
       watch.stop();
       long timeTaken = watch.getTime();
-      String logLine = String.format("<== Checked visibility of %s for principal %s. Time spent in visibility check " +
-                                       "%s milliseconds.", difference, principal, timeTaken);
+      String logLine = "Checked visibility of {} for principal {}. Time spent in visibility check was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine);
+        LOG.warn(logLine,  difference, principal, timeTaken);
       } else {
-        LOG.trace(logLine);
+        LOG.trace(logLine,  difference, principal, timeTaken);
       }
     }
     visibleEntities.addAll(moreVisibleEntities);
@@ -112,7 +111,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
-    LOG.trace("==> Enforcing actions {} on {} for principal {}.", actions, entity, principal);
+    LOG.trace("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
     // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
     // singleton we don't want the stopwatch instance to get re-used across multiple calls.
     StopWatch watch = new StopWatch();
@@ -122,12 +121,11 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     } finally {
       watch.stop();
       long timeTaken = watch.getTime();
-      String logLine = String.format("<== Enforced actions %s on %s for principal %s. Time spent in enforcement %s " +
-                                       "milliseconds.", actions, entity, principal, watch.getTime());
+      String logLine = "Enforced actions {} on {} for principal {}. Time spent in enforcement was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine);
+        LOG.warn(logLine, actions, entity, principal, watch.getTime());
       } else {
-        LOG.trace(logLine);
+        LOG.trace(logLine, actions, entity, principal, watch.getTime());
       }
     }
   }
