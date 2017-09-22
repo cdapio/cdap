@@ -190,6 +190,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
 
+      LOG.trace("Processing program status notification: {}", notification);
       String runId = programRunId.getRun();
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);

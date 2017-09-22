@@ -197,9 +197,9 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
             public String call(DatasetContext context) throws Exception {
               return initialize(context);
             }
-          });
+          }, RetryableException.class);
         }
-      }, retryStrategy);
+      }, retryStrategy, Retries.ALWAYS_TRUE); // retry on any exceptions thrown
     }
 
     /**
