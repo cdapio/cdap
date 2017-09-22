@@ -21,7 +21,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl-archetypes</artifactId>
-    <version>4.3.1-SNAPSHOT</version>
+    <version>4.3.1</version>
   </parent>
 
   <artifactId>cdap-data-pipeline-plugins-archetype</artifactId>
