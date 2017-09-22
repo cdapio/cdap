@@ -946,6 +946,8 @@ public final class Constants {
       public static final String CACHE_MAX_ENTRIES = "security.authorization.cache.max.entries";
       /** Batch size for query for the visibility of entities */
       public static final int VISIBLE_BATCH_SIZE = 500;
+      public static final String LOG_EXTENSION_ENFORCEMENT_TIME_AS_WARN =
+        "security.authorization.extension.enforce.time.log.as.warn";
     }
 
     /**

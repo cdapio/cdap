@@ -17,6 +17,7 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -48,6 +49,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   private final AuthorizerInstantiator authorizerInstantiator;
   @Nullable
   private final Principal masterUser;
+  private final int logTimeTakenAsWarn;
 
   @Inject
   DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
@@ -55,6 +57,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     this.authorizerInstantiator = authorizerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
+    this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.LOG_EXTENSION_ENFORCEMENT_TIME_AS_WARN);
   }
 
   @Override
@@ -90,8 +93,14 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
       moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
     } finally {
       watch.stop();
-      LOG.trace("<== Checked visibility of {} for principal {}. Time spent in visibility check {} milliseconds.",
-               difference, principal, watch.getTime());
+      long timeTaken = watch.getTime();
+      String logLine = String.format("<== Checked visibility of %s for principal %s. Time spent in visibility check " +
+                                       "%s milliseconds.", difference, principal, timeTaken);
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine);
+      } else {
+        LOG.trace(logLine);
+      }
     }
     visibleEntities.addAll(moreVisibleEntities);
     LOG.trace("Getting {} as visible entities", visibleEntities);
@@ -112,8 +121,14 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
       authorizerInstantiator.get().enforce(entity, principal, actions);
     } finally {
       watch.stop();
-      LOG.trace("<== Enforced actions {} on {} for principal {}. Time spent in enforcement {} milliseconds.", actions,
-               entity, principal, watch.getTime());
+      long timeTaken = watch.getTime();
+      String logLine = String.format("<== Enforced actions %s on %s for principal %s. Time spent in enforcement %s " +
+                                       "milliseconds.", actions, entity, principal, watch.getTime());
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine);
+      } else {
+        LOG.trace(logLine);
+      }
     }
   }
 
