@@ -284,7 +284,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      */
     private List<Message> doFetchMessages(@Nullable String messageId) throws TopicNotFoundException, IOException {
       List<Message> messages = new ArrayList<>();
-      LOG.trace("Fetching system topic '{}' with messageId '{}'", messageId);
+      LOG.trace("Fetching system topic '{}' with messageId '{}'", topic, messageId);
       MessageFetcher messageFetcher = messagingContext.getMessageFetcher();
       try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
                                                                       topic, fetchSize, messageId)) {

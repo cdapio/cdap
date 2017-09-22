@@ -133,10 +133,50 @@ class ConstraintCheckerService extends AbstractIdleService {
     LOG.info("Stopped ConstraintCheckerService.");
   }
 
+  private static class FailedJob {
+    private final Job job;
+    private final long startTime;
+    private int failureCount;
+    private long nextRetryTime;
+
+    FailedJob(Job job, long startTime, long nextRetryTime) {
+      this.job = job;
+      this.startTime = startTime;
+      this.nextRetryTime = nextRetryTime;
+      failureCount = 1;
+    }
+
+    public Job getJob() {
+      return job;
+    }
+
+    public long getStartTime() {
+      return startTime;
+    }
+
+    public long getNextRetryTime() {
+      return nextRetryTime;
+    }
+
+    public int getFailureCount() {
+      return failureCount;
+    }
+
+    public void incrementFailureCount() {
+      failureCount++;
+    }
+
+    public void setNextRetryTime(long nextRetryTime) {
+      this.nextRetryTime = nextRetryTime;
+    }
+  }
+
   private class ConstraintCheckerThread implements Runnable {
     private final RetryStrategy scheduleStrategy;
+    private final RetryStrategy retryFailedJobStartegy;
     private final int partition;
     private final Deque<Job> readyJobs = new ArrayDeque<>();
+    private final Deque<FailedJob> failedJobs = new ArrayDeque<>();
     private JobQueueDataset jobQueue;
     private Job lastConsumed;
     private int failureCount;
@@ -145,6 +185,10 @@ class ConstraintCheckerService extends AbstractIdleService {
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       scheduleStrategy =
         co.cask.cdap.common.service.RetryStrategies.exponentialDelay(100, 30000, TimeUnit.MILLISECONDS);
+      // Limit only 10 retries of failed jobs with delay ranging from 10s to 120s
+      retryFailedJobStartegy =
+        co.cask.cdap.common.service.RetryStrategies.limit(
+          10, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(10, 120, TimeUnit.SECONDS));
       this.partition = partition;
     }
 
@@ -183,6 +227,7 @@ class ConstraintCheckerService extends AbstractIdleService {
 
         // run any ready jobs
         runReadyJobs();
+        rerunFailedJobs();
         failureCount = 0;
       } catch (Exception e) {
         LOG.warn("Failed to check Job constraints. Will retry in next run", e);
@@ -270,11 +315,55 @@ class ConstraintCheckerService extends AbstractIdleService {
               return null;
             }
           });
-
         } catch (TransactionFailureException e) {
-          LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
-                   job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
-          // don't delete the job or remove it from 'readyJobs', as it will be retried in some later iteration
+          readyJobsIter.remove();
+          long current = System.currentTimeMillis();
+          long nextRetryWaitMillis = retryFailedJobStartegy.nextRetry(1, current);
+          if (nextRetryWaitMillis < 0) {
+            LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
+                     job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
+            continue;
+          }
+          LOG.warn("Failed to run program {} in schedule {}. Will retry in {}ms.",
+                   job.getSchedule().getProgramId(), job.getSchedule().getName(), nextRetryWaitMillis, e);
+          // add the failed job to the queue to wait for retry
+          failedJobs.add(new FailedJob(job, current, current + nextRetryWaitMillis));
+        }
+      }
+    }
+
+    private void rerunFailedJobs() {
+      final Iterator<FailedJob> failedJobsIter = failedJobs.iterator();
+      while (failedJobsIter.hasNext() && !stopping) {
+        final FailedJob failedJob = failedJobsIter.next();
+        long current = System.currentTimeMillis();
+        if (failedJob.getNextRetryTime() > current) {
+          continue;
+        }
+        try {
+          Transactions.execute(transactional, new TxCallable<Void>() {
+            @Override
+            public Void call(DatasetContext context) throws Exception {
+              if (runReadyJob(failedJob.getJob())) {
+                failedJobsIter.remove();
+              }
+              return null;
+            }
+          });
+        } catch (TransactionFailureException e) {
+          failedJob.incrementFailureCount();
+          long nextRetryWaitMillis = retryFailedJobStartegy.nextRetry(failedJob.getFailureCount(),
+                                                                      failedJob.getStartTime());
+          if (nextRetryWaitMillis < 0) {
+            failedJobsIter.remove();
+            LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
+                     failedJob.getJob().getSchedule().getProgramId(), failedJob.getJob().getSchedule().getName(), e);
+            continue;
+          }
+          failedJob.setNextRetryTime(current + nextRetryWaitMillis);
+          LOG.warn("Failed to run program {} in schedule {}. Will retry in {} millis.",
+                   failedJob.getJob().getSchedule().getProgramId(), failedJob.getJob().getSchedule().getName(),
+                   nextRetryWaitMillis, e);
         }
       }
     }
