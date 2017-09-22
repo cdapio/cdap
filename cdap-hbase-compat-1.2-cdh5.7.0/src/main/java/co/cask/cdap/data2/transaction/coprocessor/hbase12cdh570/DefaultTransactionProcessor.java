@@ -180,7 +180,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
 
   @Override
   protected Filter getTransactionFilter(Transaction tx, ScanType scanType, Filter filter) {
-    IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues, scanType, filter);
+    IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues, readNonTxnData,
+                                                                scanType, filter);
     return new CellSkipFilter(incrementTxFilter);
   }
 }

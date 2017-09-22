@@ -37,14 +37,16 @@ public class IncrementTxFilter extends TransactionVisibilityFilter {
    * @param ttlByFamily map of time-to-live (TTL) (in milliseconds) by column family name
    * @param allowEmptyValues if {@code true} cells with empty {@code byte[]} values will be returned, if {@code false}
    *                         these will be interpreted as "delete" markers and the column will be filtered out
+   * @param readNonTxnData whether data written before Tephra was enabled on a table should be readable
    * @param scanType the type of scan operation being performed
    * @param cellFilter if non-null, this filter will be applied to all cells visible to the current transaction, by
    *                   calling {@link Filter#filterKeyValue(org.apache.hadoop.hbase.Cell)}.  If null, then
    *                   {@link ReturnCode#INCLUDE_AND_NEXT_COL} will be returned instead.
    */
-  public IncrementTxFilter(Transaction tx, Map<byte[], Long> ttlByFamily, boolean allowEmptyValues, ScanType scanType,
-                           Filter cellFilter) {
-    super(tx, ttlByFamily, allowEmptyValues, scanType, Filters.combine(new IncrementFilter(), cellFilter));
+  public IncrementTxFilter(Transaction tx, Map<byte[], Long> ttlByFamily, boolean allowEmptyValues,
+                           boolean readNonTxnData, ScanType scanType, Filter cellFilter) {
+    super(tx, ttlByFamily, allowEmptyValues, readNonTxnData, scanType,
+          Filters.combine(new IncrementFilter(), cellFilter));
   }
 
   @Override
