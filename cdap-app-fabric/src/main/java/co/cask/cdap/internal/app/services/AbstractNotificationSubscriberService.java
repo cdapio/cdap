@@ -199,7 +199,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
             }
           });
         }
-      }, retryStrategy);
+      }, retryStrategy, Retries.ALWAYS_TRUE); // retry on any exceptions thrown
     }
 
     /**

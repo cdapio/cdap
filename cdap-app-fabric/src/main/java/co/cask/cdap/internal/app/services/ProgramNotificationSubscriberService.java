@@ -67,7 +67,6 @@ import javax.annotation.Nullable;
  */
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
-  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
 
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
@@ -191,6 +190,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
 
+      LOG.trace("Processing program status notification: {}", notification);
       String runId = programRunId.getRun();
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
