@@ -40,7 +40,11 @@ public class InvalidListPruningDebugTool implements InvalidListPruningDebug {
     new Comparator<RegionPruneInfo>() {
       @Override
       public int compare(RegionPruneInfo o1, RegionPruneInfo o2) {
-        return Long.compare(o1.getPruneUpperBound(), o2.getPruneUpperBound());
+        int result = Long.compare(o1.getPruneUpperBound(), o2.getPruneUpperBound());
+        if (result == 0) {
+          return o1.getRegionNameAsString().compareTo(o2.getRegionNameAsString());
+        }
+        return result;
       }
     };
 
