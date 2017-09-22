@@ -106,7 +106,7 @@ export default class DataPrepVisualization extends Component {
       let {dataprep} = DataPrepStore.getState();
       let properties = dataprep.properties || {};
       let visualization = properties.visualization || {};
-      if (!localData || !this.isArrayEqual(dataprep.data, localData)) {
+      if (!localData || dataprep.data.length !== localData.length || !this.isArrayEqual(localData, dataprep.data)) {
         if (!Object.keys(visualization).length) {
           this.voyagerInstance.updateData({
             values: dataprep.data

@@ -29,12 +29,14 @@ import T from 'i18n-react';
 require('./DataPrepContentWrapper.scss');
 
 const PREFIX = 'features.DataPrep.TopPanel';
-
-const DEFAULTSTORESTATE = {view: 'data'};
-const view = (state = 'data', action = defaultAction) => {
+const DEFAULTVIEW = 'data';
+const DEFAULTSTORESTATE = {view: DEFAULTVIEW};
+const view = (state = DEFAULTVIEW, action = defaultAction) => {
   switch (action.type) {
     case 'SETVIEW':
       return action.payload.view || state;
+    case 'RESET':
+      return DEFAULTVIEW;
     default:
       return state;
   }
@@ -111,6 +113,9 @@ export default class DataPrepContentWrapper extends Component {
 
   componentWillUnmount() {
     if (this.viewStoreSubscription) {
+      ViewStore.dispatch({
+        type: 'RESET'
+      });
       this.viewStoreSubscription();
     }
   }
