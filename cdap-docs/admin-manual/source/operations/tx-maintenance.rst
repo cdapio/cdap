@@ -22,21 +22,27 @@ HBase compactions of the transactional tables.
 
 To prune the invalid list manually, follow these steps:
 
-1. Find the minimum transaction state cache reload time across all region servers,
-   by finding the last occurrence of ``Transaction state reloaded with snapshot`` in the
-   HBase region server logs. This can be done by running the following command on each
-   region server::
+1. Find the minimum transaction state cache reload time across all HBase region servers,
+   by finding the last occurrence of the following line in the HBase region server logs::
+
+     [<instance.name>] Transaction state reloaded with snapshot
+
+   ``<instance.name>`` is the unique identifier for the CDAP instance being pruned as defined in
+   :ref:`cdap-site.xml <appendix-cdap-site.xml>`. The default value for it is ``cdap``.
+
+   Run the following command on each region server to get the transaction cache state reload time
+   after replacing the ``<instance.name>`` with the right value::
  
-     grep "Transaction state reloaded with snapshot" <region-server-log-file> | tail -1
+     grep -F "[<instance.name>] Transaction state reloaded with snapshot" <region-server-log-file> | tail -1
    
    This should give lines as shown below. Each line below represents one line from each
    region server::
  
-     15/08/22 00:22:34 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202895873
-     15/08/22 00:22:42 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
-     15/08/22 00:22:44 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
-     15/08/22 00:22:47 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
-     15/08/22 00:23:34 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:22:34 INFO coprocessor.TransactionStateCache: [cdap] Transaction state reloaded with snapshot from 1440202895873
+     15/08/22 00:22:42 INFO coprocessor.TransactionStateCache: [cdap] Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:22:44 INFO coprocessor.TransactionStateCache: [cdap] Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:22:47 INFO coprocessor.TransactionStateCache: [cdap] Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:23:34 INFO coprocessor.TransactionStateCache: [cdap] Transaction state reloaded with snapshot from 1440202956306
  
    Pick the minimum time across all region servers. In this case, ``1440202895873``.
  
