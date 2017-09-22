@@ -21,6 +21,8 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -41,8 +43,9 @@ public class DistributedRunRecordCorrectorService extends RunRecordCorrectorServ
 
   @Inject
   DistributedRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                       ProgramRuntimeService runtimeService) {
-    super(cConf, store, programStateWriter, runtimeService);
+                                       ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                                       DatasetFramework datasetFramework) {
+    super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework);
     this.cConf = cConf;
   }
 
