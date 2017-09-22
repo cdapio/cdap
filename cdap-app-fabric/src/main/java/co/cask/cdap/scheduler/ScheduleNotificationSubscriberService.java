@@ -221,10 +221,8 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   private final class ProgramStatusEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
 
     ProgramStatusEventSubscriberRunnable() {
-      // Currently program status are published non-transactionally
-      // However, after refactoring to have it publish from AppMetaStore update, then it should be transactional.
-      // Hence for future proof, just fetch transactionally.
-      super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+      // Fetch transactionally since publishing from AppMetadataStore is transactional.
+      super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
             cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true);
     }
 

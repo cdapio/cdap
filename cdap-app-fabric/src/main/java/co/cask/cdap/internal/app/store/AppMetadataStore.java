@@ -348,47 +348,17 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param systemArgs the system arguments for this program run
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached, e.g. a message id from TMS
+   * @return {@link ProgramRunStatus#STARTING} if it is successfully persisted, {@code null} otherwise.
    */
-  public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
-                                 Map<String, String> runtimeArgs, Map<String, String> systemArgs, byte[] sourceId) {
-    MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
-    recordProgramStart(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder, sourceId);
-  }
-
-  /**
-   * Logs start of program run and persists program status to {@link ProgramRunStatus#STARTING}.
-   * @param programId id of the program
-   * @param pid run id
-   * @param stateChangeTime start timestamp in seconds
-   * @param twillRunId Twill run id
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached, e.g. a message id from TMS
-   */
-  public void recordProgramRunning(ProgramId programId, String pid, long stateChangeTime, String twillRunId,
-                                   byte[] sourceId) {
-    MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramRunning(programId, pid, stateChangeTime, twillRunId, builder, sourceId);
-  }
-
-  /**
-   * Logs start of program run and persists program status to {@link ProgramRunStatus#STARTING} with version-less key.
-   * See {@link #recordProgramRunning(ProgramId, String, long, String, byte[])}
-   */
-  @VisibleForTesting
-  void recordProgramRunningOldFormat(ProgramId programId, String pid, long stateChangeTime, String twillRunId,
-                                     byte[] sourceId) {
-    MDSKey.Builder builder = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramRunning(programId, pid, stateChangeTime, twillRunId, builder, sourceId);
-  }
-
-  private void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
-                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs,
-                                  MDSKey.Builder keyBuilder, byte[] sourceId) {
+  public ProgramRunStatus recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
+                                             Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+                                             byte[] sourceId) {
+    MDSKey.Builder keyBuilder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
     boolean isValid = validateExistingRecords(getRuns(programId, pid), programId, pid, sourceId,
                                               "start", ProgramRunStatus.STARTING);
     if (!isValid) {
       // Skip recording start if the existing records are not valid
-      return;
+      return null;
     }
     String workflowRunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
@@ -407,16 +377,44 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     RunRecordMeta meta = new RunRecordMeta(programId.run(pid), startTs, null, null, ProgramRunStatus.STARTING,
                                            builder.build(), systemArgs, twillRunId, sourceId);
     write(key, meta);
+    return ProgramRunStatus.STARTING;
   }
 
-  private void recordProgramRunning(ProgramId programId, String pid, long runTs, String twillRunId,
-                                    MDSKey.Builder keyBuilder, byte[] sourceId) {
+  /**
+   * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
+   * @param programId id of the program
+   * @param pid run id
+   * @param stateChangeTime start timestamp in seconds
+   * @param twillRunId Twill run id
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached, e.g. a message id from TMS
+   * @return {@link ProgramRunStatus#RUNNING} if it is successfully persisted, {@code null} otherwise.
+   */
+  public ProgramRunStatus recordProgramRunning(ProgramId programId, String pid, long stateChangeTime, String twillRunId,
+                                   byte[] sourceId) {
+    MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
+    return recordProgramRunning(programId, pid, stateChangeTime, twillRunId, builder, sourceId);
+  }
+
+  /**
+   * Logs start of program run and persists program status to {@link ProgramRunStatus#STARTING} with version-less key.
+   * See {@link #recordProgramRunning(ProgramId, String, long, String, byte[])}
+   */
+  @VisibleForTesting
+  void recordProgramRunningOldFormat(ProgramId programId, String pid, long stateChangeTime, String twillRunId,
+                                     byte[] sourceId) {
+    MDSKey.Builder builder = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
+    recordProgramRunning(programId, pid, stateChangeTime, twillRunId, builder, sourceId);
+  }
+
+  private ProgramRunStatus recordProgramRunning(ProgramId programId, String pid, long runTs, String twillRunId,
+                                                MDSKey.Builder keyBuilder, byte[] sourceId) {
     List<RunRecordMeta> existingRecords = getRuns(programId, pid);
     boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
                                               "running", ProgramRunStatus.RUNNING);
     if (!isValid) {
       // Skip recording running if the existing records are not valid
-      return;
+      return null;
     }
     // Only one record in the valid existing records
     RunRecordMeta existing = existingRecords.get(0);
@@ -437,6 +435,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                            ProgramRunStatus.RUNNING, existing.getProperties(),
                                            systemArgs, twillRunId, sourceId);
     write(key, meta);
+    return ProgramRunStatus.RUNNING;
   }
 
   /**
@@ -445,18 +444,21 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param pid run id
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached, e.g. a message id from TMS
+   * @return {@link ProgramRunStatus#SUSPENDED} if it is successfully persisted, {@code null} otherwise.
    */
-  public void recordProgramSuspend(ProgramId programId, String pid, byte[] sourceId) {
+  @Nullable
+  public ProgramRunStatus recordProgramSuspend(ProgramId programId, String pid, byte[] sourceId) {
     List<RunRecordMeta> existingRecords = getRuns(programId, pid);
     boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
                                               "suspend", ProgramRunStatus.SUSPENDED);
     if (!isValid) {
       // Skip recording suspend if the existing records are not valid
-      return;
+      return null;
     }
     // Only one record in the valid existing records
     RunRecordMeta existing = existingRecords.get(0);
     recordProgramSuspendResume(programId, pid, sourceId, existing, "suspend");
+    return ProgramRunStatus.SUSPENDED;
   }
 
   /**
@@ -465,8 +467,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param pid run id
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached, e.g. a message id from TMS
+   * @return {@link ProgramRunStatus#RUNNING} if it is successfully persisted, {@code null} otherwise.
    */
-  public void recordProgramResumed(ProgramId programId, String pid, byte[] sourceId) {
+  @Nullable
+  public ProgramRunStatus recordProgramResumed(ProgramId programId, String pid, byte[] sourceId) {
     List<RunRecordMeta> existingRecords = getRuns(programId, pid);
     // ProgramRunStatus.RUNNING will actually be persisted but ProgramRunStatus.RESUMING is used here to distinguish
     // recordProgramResumed from recordProgramRunning, since the two methods have different sets of allowed statuses
@@ -475,7 +479,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                               "resume", ProgramRunStatus.RESUMING);
     if (!isValid && !existingRecords.isEmpty()) {
       // Skip recording resumed if the existing records are not valid
-      return;
+      return null;
     }
     RunRecordMeta existing = null;
     // Only if existingRecords is empty & upgrade is not complete & the version is default version,
@@ -490,13 +494,14 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       if (existing == null) {
         LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program suspend.",
                   programId, pid);
-        return;
+        return null;
       }
     } else {
       // Only one record in the valid existing records
       existing = existingRecords.get(0);
     }
     recordProgramSuspendResume(programId, pid, sourceId, existing, "resume");
+    return ProgramRunStatus.RUNNING;
   }
 
   private void recordProgramSuspendResume(ProgramId programId, String pid, byte[] sourceId,
@@ -518,7 +523,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   /**
-   * Logs end of program run and sets the run status to {@link ProgramRunStatus#FAILED} with a failure cause.
+   * Logs end of program run and sets the run status to the given run status with a failure cause.
    * @param programId id of the program
    * @param pid run id
    * @param stopTs stop timestamp in seconds
@@ -526,11 +531,12 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param failureCause failure cause if the program failed to execute
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached, e.g. a message id from TMS
+   * @return the program run status that is successfully persisted, {@code null} otherwise.
    */
-  public void recordProgramStop(ProgramId programId, String pid, long stopTs, ProgramRunStatus runStatus,
-                                @Nullable BasicThrowable failureCause, byte[] sourceId) {
+  public ProgramRunStatus recordProgramStop(ProgramId programId, String pid, long stopTs, ProgramRunStatus runStatus,
+                                            @Nullable BasicThrowable failureCause, byte[] sourceId) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId);
-    recordProgramStop(programId, pid, stopTs, runStatus, failureCause, builder, sourceId);
+    return recordProgramStop(programId, pid, stopTs, runStatus, failureCause, builder, sourceId);
   }
 
   @VisibleForTesting
@@ -540,14 +546,15 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     recordProgramStop(programId, pid, stopTs, runStatus, failureCause, builder, sourceId);
   }
 
-  private void recordProgramStop(ProgramId programId, String pid, long stopTs, ProgramRunStatus runStatus,
-                                 @Nullable BasicThrowable failureCause, MDSKey.Builder builder, byte[] sourceId) {
+  private ProgramRunStatus recordProgramStop(ProgramId programId, String pid, long stopTs, ProgramRunStatus runStatus,
+                                             @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
+                                             byte[] sourceId) {
     List<RunRecordMeta> existingRecords = getRuns(programId, pid);
     boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
                                               runStatus.name().toLowerCase(), runStatus);
     if (!isValid) {
       // Skip recording stop if the existing records are not valid
-      return;
+      return null;
     }
     // Only one record in the valid existing records
     RunRecordMeta existing = existingRecords.get(0);
@@ -563,6 +570,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
     key = builder.add(getInvertedTsKeyPart(existing.getStartTs())).add(pid).build();
     write(key, new RunRecordMeta(existing, stopTs, runStatus, sourceId));
+    return runStatus;
   }
 
   private List<RunRecordMeta> getRuns(ProgramId programId, String pid) {
