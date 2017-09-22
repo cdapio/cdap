@@ -86,6 +86,7 @@ export default class DataPrepConnections extends Component {
       backendDown: false,
       databaseList: [],
       kafkaList: [],
+      s3List: [],
       activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
       activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
       showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
@@ -203,7 +204,8 @@ export default class DataPrepConnections extends Component {
       // need to group by connection type
 
       let databaseList = [],
-          kafkaList = [];
+          kafkaList = [],
+          s3List = [];
 
       let state = {};
       if (action === 'delete' && this.state.activeConnectionid === targetId) {
@@ -217,11 +219,14 @@ export default class DataPrepConnections extends Component {
           databaseList.push(connection);
         } else if (connection.type === 'KAFKA') {
           kafkaList.push(connection);
+        } else if (connection.type === 'S3') {
+          s3List.push(connection);
         }
       });
 
       state.databaseList = databaseList;
       state.kafkaList = kafkaList;
+      state.s3List = s3List;
       this.setState(state);
     });
   }
@@ -300,6 +305,40 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={kafka}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderS3Detail() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.s3List.map((s3) => {
+          return (
+            <div
+              key={s3.id}
+              title={s3.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/s3/${s3.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, s3)}
+                singleWorkspaceMode={this.props.singleWorkspaceMode}
+              >
+                {s3.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={s3}
                 onAction={this.fetchConnectionsList}
               />
             </div>
@@ -389,6 +428,18 @@ export default class DataPrepConnections extends Component {
               </span>
             </div>
             {this.renderKafkaDetail()}
+          </ExpandableMenu>
+
+          <ExpandableMenu>
+            <div>
+              <span className="fa fa-fw">
+                <IconSVG name="icon-s3" />
+              </span>
+              <span>
+              {T.translate(`${PREFIX}.s3`, {count: this.state.s3List.length})}
+              </span>
+            </div>
+            {this.renderS3Detail()}
           </ExpandableMenu>
         </div>
 

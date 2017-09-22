@@ -928,6 +928,27 @@ features:
       label: Add Connection
       Popover:
         title: Select a source to connect
+      S3:
+        accessKeyId: Access ID
+        accessSecretKey: Access Key
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to S3
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add Connection: S3"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+        name: Name
+        region: Region
+        required: Required
+        testConnection: Test Connection
+
     ConnectionManagement:
       Confirmations:
         DatabaseDelete:
@@ -942,6 +963,7 @@ features:
     database: Database ({count})
     hdfs: File System
     kafka: Kafka ({count})
+    s3: S3 ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:
