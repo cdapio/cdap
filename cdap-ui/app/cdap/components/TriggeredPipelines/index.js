@@ -16,32 +16,25 @@
 
 import React, { Component, PropTypes } from 'react';
 import CollapsibleSidebar from 'components/CollapsibleSidebar';
+import {MyScheduleApi} from 'api/schedule';
 import NamespaceStore from 'services/NamespaceStore';
 import TriggeredPipelineRow from 'components/TriggeredPipelines/TriggeredPipelineRow';
-import {setTriggeredPipelines, togglePipeline} from 'components/TriggeredPipelines/store/TriggeredPipelineActionCreator';
-import {Provider, connect} from 'react-redux';
-import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
-
+import {MyAppApi} from 'api/app';
 import T from 'i18n-react';
 
 const PREFIX = `features.TriggeredPipelines`;
 
 require('./TriggeredPipelines.scss');
 
-const mapStateToProps = (state) => {
-  return {
-    triggeredPipelines: state.triggered.triggeredPipelines,
-    expanded: state.triggered.expandedPipeline,
-    pipelineInfo: state.triggered.expandedPipelineInfo,
-    pipelineInfoLoading: state.triggered.pipelineInfoLoading
-  };
-};
-
-class TriggeredPipelinesView extends Component {
+export default class TriggeredPipelines extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      triggeredPipelines: [],
+      expanded: null,
+      loading: false,
+      pipelineInfo: null,
       tabText: `${PREFIX}.collapsedTabLabel`
     };
 
@@ -51,7 +44,19 @@ class TriggeredPipelinesView extends Component {
 
   componentWillMount() {
     let namespace = NamespaceStore.getState().selectedNamespace;
-    setTriggeredPipelines(namespace, this.props.pipelineName);
+    let params = {
+      namespace,
+      'trigger-namespace-id': namespace,
+      'trigger-program-type': 'workflows',
+      'trigger-app-name': this.props.pipelineName,
+      'trigger-program-name': 'DataPipelineWorkflow',
+      'schedule-status': 'SCHEDULED'
+    };
+
+    MyScheduleApi.getTriggeredList(params)
+      .subscribe((res) => {
+        this.setState({triggeredPipelines: res});
+      });
   }
 
   onToggleSidebar(isExpanded) {
@@ -61,11 +66,32 @@ class TriggeredPipelinesView extends Component {
   }
 
   onToggle(pipeline) {
-    togglePipeline(pipeline);
+    if (!pipeline) {
+      this.setState({expanded: null});
+      return;
+    }
+
+    this.setState({
+      loading: true,
+      expanded: `${pipeline.namespace}_${pipeline.application}`
+    });
+
+    let params = {
+      namespace: pipeline.namespace,
+      appId: pipeline.application
+    };
+
+    MyAppApi.get(params)
+      .subscribe((res) => {
+        this.setState({
+          loading: false,
+          pipelineInfo: res
+        });
+      });
   }
 
   render() {
-    let count = this.props.triggeredPipelines.length;
+    let count = this.state.triggeredPipelines.length;
     let pipelineName = this.props.pipelineName;
 
     return (
@@ -91,7 +117,7 @@ class TriggeredPipelinesView extends Component {
           </div>
 
           {
-            this.props.triggeredPipelines.length === 0 ?
+            this.state.triggeredPipelines.length === 0 ?
               null
             :
               (
@@ -106,14 +132,14 @@ class TriggeredPipelinesView extends Component {
                     </div>
                   </div>
                   {
-                    this.props.triggeredPipelines.map((pipeline) => {
+                    this.state.triggeredPipelines.map((pipeline) => {
                       return (
                         <TriggeredPipelineRow
-                          isExpanded={`${pipeline.namespace}_${pipeline.application}` === this.props.expanded}
+                          isExpanded={`${pipeline.namespace}_${pipeline.application}` === this.state.expanded}
                           pipeline={pipeline}
                           onToggle={this.onToggle}
-                          loading={this.props.pipelineInfoLoading}
-                          pipelineInfo={this.props.pipelineInfo}
+                          loading={this.state.loading}
+                          pipelineInfo={this.state.pipelineInfo}
                           sourcePipeline={this.props.pipelineName}
                         />
                       );
@@ -128,28 +154,7 @@ class TriggeredPipelinesView extends Component {
   }
 }
 
-TriggeredPipelinesView.propTypes = {
-  pipelineName: PropTypes.string.isRequired,
-  triggeredPipelines: PropTypes.array,
-  expanded: PropTypes.string,
-  pipelineInfo: PropTypes.object,
-  pipelineInfoLoading: PropTypes.bool
-};
-
-const TriggeredPipelinesConnect = connect(
-  mapStateToProps
-)(TriggeredPipelinesView);
-
-export default function TriggeredPipelines({pipelineName}) {
-  return (
-    <Provider store={TriggeredPipelineStore}>
-      <TriggeredPipelinesConnect
-        pipelineName={pipelineName}
-      />
-    </Provider>
-  );
-}
-
 TriggeredPipelines.propTypes = {
-  pipelineName: PropTypes.string.isRequired
+  pipelineName: PropTypes.string.isRequired,
+  namespace: PropTypes.string.isRequired
 };

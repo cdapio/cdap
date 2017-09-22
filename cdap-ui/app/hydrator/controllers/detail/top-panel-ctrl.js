@@ -283,21 +283,6 @@ class HydratorDetailTopPanelController {
     delete exportConfig.__ui__;
     this.myPipelineExportModalService.show(exportConfig, exportConfig);
   }
-  getDeleteMessage() {
-    let triggeredPipelines = window.CaskCommon.TriggeredPipelineStore.getState().triggered.triggeredPipelines;
-    let count = triggeredPipelines.length;
-
-    if (count > 0) {
-      let triggersText = triggeredPipelines.map((pipeline) => pipeline.application).join(', ');
-
-      let triggerPluralCheck = count > 1 ? 'pipelines' : 'pipeline';
-
-      return `Pipeline <strong>'${this.app.name}'</strong> is configured to trigger ${triggerPluralCheck} <em>${triggersText}</em>. Triggers will be deleted if pipeline <strong>'${this.app.name}'</strong> is deleted. Are you sure you want to proceed?`;
-    }
-
-    return `Are you sure you want to delete the pipeline <strong>'${this.app.name}'</strong>?`;
-  }
-
   do(action) {
     switch (action) {
       case 'Run':
