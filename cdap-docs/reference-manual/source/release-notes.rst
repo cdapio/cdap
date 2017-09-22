@@ -29,7 +29,96 @@ Cask Data Application Platform Release Notes
    :class: faq
    :backlinks: none
    :depth: 2
-   
+
+`Release 4.3.1 <http://docs.cask.co/cdap/4.3.1/index.html>`__
+=============================================================
+
+New Features
+------------
+
+- :cask-issue:`CDAP-12592` - Adds new visualization tool to give insights about data prepped up in data preparation tool.
+
+- :cask-issue:`CDAP-12620` - Adds a way to trigger invalid transaction pruning via a REST endpoint.
+
+- :cask-issue:`CDAP-12595` - Adds UI to make HTTP request in CDAP.
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-12598` - Added a downgrade command to the pipeline upgrade tool, allowing users to downgrade pipelines to a previous version.
+
+- :cask-issue:`CDAP-12541` - Improved memory usage of data pipeline with joiner in mapreduce execution engine.
+
+- :cask-issue:`CDAP-12176` - Added ability to select/clear all the checkboxes for Provided runtime arguments
+
+- :cask-issue:`CDAP-12646` - Fixed a performance issue with the run record corrector
+
+- :cask-issue:`CDAP-12380` - Added a capability to configure program containers memory settings through runtime arguments and preferences
+
+- :cask-issue:`CDAP-8499` - Applies the extra jvm options configuration to all task containers in MapReduce
+
+- :cask-issue:`CDAP-12546` - Fixed a classloader leakage issue when PySpark is used in local sandbox
+
+- :cask-issue:`CDAP-12593` - Ability to list the datasets based on the set of dataset properties
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-12645` - MapReduce Task-related metrics will be emitted from individual tasks instead of MapReduce driver.
+
+- :cask-issue:`CDAP-12628` - Fixed the filter if missing flow in the UI to also apply on null values in addition to empty values.
+
+- :cask-issue:`CDAP-12612` - Fixed the fill-null-or-empty directive to allow spaces in the default value
+
+- :cask-issue:`CDAP-12588` - Fixed a bug that authorization cannot be turned on if kerberos is disabled
+
+- :cask-issue:`CDAP-12578` - Fixed an issue that caused the pipeline upgrade tool to upgrade pipelines in a way that would cause UI failures when the upgraded pipeline is viewed.
+
+- :cask-issue:`CDAP-12577` - Spark compat directories in the system artifact directory will now be automatically checked, regardless of whether they are explicitly set in app.artifacts.dir.
+
+- :cask-issue:`CDAP-12570` - Added option to enable/disable emitting program metrics and option to include or skip task level information in metrics  context. This option can be used with scoping at program and program-type level similar to setting system resources with scoping.
+
+- :cask-issue:`CDAP-12569` - Improved error messaging when there is an error while in publishing metrics in MetricsCollection service.
+
+- :cask-issue:`CDAP-12567` - Fixed a bug that CDAP is not able to clean up and aggregate on streams in an authorization enabled environment
+
+- :cask-issue:`CDAP-12559` - Fixed log message format to include class name and line number when logged in master log
+
+- :cask-issue:`CDAP-12526` - Adds various improvements to the transaction system, including the ability to limit the size of a transaction's change set; better insights into the cause of transaction conflicts; improved concurrency when writing to the transaction log;  better handling of border conditions during invalid transaction pruning; and ease of use for the transaction pruning diagnostic tool.
+
+- :cask-issue:`CDAP-12495` - Fix the units for YARN memory stats on Administration UI page.
+
+- :cask-issue:`CDAP-12482` - Fixed a bug where the app detail contains entity information that the user does not have any privilege on
+
+- :cask-issue:`CDAP-12476` - Fixed preview results for pipelines with condition stages
+
+- :cask-issue:`CDAP-12457` - Fixed a bug that caused failures for Hive queries using MR execution engine in CM 5.12 clusters.
+
+- :cask-issue:`CDAP-12454` - Fixes an issue where transaction coprocessors could sometimes not access their configuration.
+
+- :cask-issue:`CDAP-12451` - UI: Add ability to view payload configuration of pipeline triggers
+
+- :cask-issue:`CDAP-12441` - Fixed a bug that the cache timeout was not changed with the value of ``security.authorization.cache.ttl.secs``
+
+- :cask-issue:`CDAP-12415` - Fixed an issue with not able to use HiveContext in Spark
+
+- :cask-issue:`CDAP-12387` - Added the authorization policy for adding/deleting schedules
+
+- :cask-issue:`CDAP-12377` - Fixes an issue where the transaction service could hang during shutdown.
+
+- :cask-issue:`CDAP-12333` - Fixed issue where loaded data was not consistently rendering when navigating to Data Preparation from other parts of CDAP.
+
+- :cask-issue:`CDAP-12314` - Improves the performance of HBase operations when there are many invalid transactions.
+
+- :cask-issue:`CDAP-12240` - Improves a previously misleading log message.
+
+- :cask-issue:`CDAP-7651` - Fixed an issue that hive query may failed if the configuration has too many variables substitution.
+
+- :cask-issue:`CDAP-7243` - Added mechanism to clean up local dataset if the workflows creating them are killed
+
+- :cask-issue:`CDAP-7049` - Improved the error message in the case that a kerberos principal is deleted or keytab is invalid, during impersonation.
+
+
 `Release 4.3.0 <http://docs.cask.co/cdap/4.3.0/index.html>`__
 =============================================================
 
@@ -45,11 +134,11 @@ Summary
 	- Operational insights into pipelines
 
 2. **Data Preparation:**
-	- Support for User Defined Directives (UDD), so users can write their own custom directives for cleansing/preparing data. 
+	- Support for User Defined Directives (UDD), so users can write their own custom directives for cleansing/preparing data.
 	- Restricting Directive Usage and ability to alias Directives for your IT Administrators to control directive access
 
 3. **Governance & Security:**
-	- Standardized authorization model 
+	- Standardized authorization model
 	- Apache Ranger Integration for authorization of CDAP entities
 
 4. **Enhanced support for Apache Spark:**
@@ -242,7 +331,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-12284` - Fixed a packaging bug that caused debian packages to include the wrong cdap-data-pipeline and cdap-data-streams artifacts for spark2.
 
-- :cask-issue:`CDAP-12351` - Fixes an issue where truncating a file set did not preserve its base directory's ownership and permissions. 
+- :cask-issue:`CDAP-12351` - Fixes an issue where truncating a file set did not preserve its base directory's ownership and permissions.
 
 - :cask-issue:`CDAP-12360` - Fixed an issue where certain excessive logging could cause a deadlock in CDAP master.
 
