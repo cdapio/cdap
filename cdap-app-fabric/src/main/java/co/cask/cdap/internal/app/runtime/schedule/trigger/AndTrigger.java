@@ -20,8 +20,11 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.id.ProgramId;
 
+import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when all internal triggers are satisfied.
@@ -45,5 +48,33 @@ public class AndTrigger extends AbstractCompositeTrigger implements SatisfiableT
   @Override
   public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
     return getUnitTriggerInfosAddRuntimeArgs(context);
+  }
+
+  @Nullable
+  @Override
+  public AbstractCompositeTrigger getTriggerWithDeletedProgram(ProgramId programId) {
+    List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
+    for (SatisfiableTrigger trigger : getSatisfiableTriggers()) {
+      if (trigger instanceof ProgramStatusTrigger &&
+        programId.equals(((ProgramStatusTrigger) trigger).getProgramId())) {
+        // this program status trigger will never be satisfied, so the current AND trigger will never be satisfied
+        return null;
+      }
+      if (trigger instanceof AbstractCompositeTrigger) {
+        SatisfiableTrigger updatedTrigger = ((AbstractCompositeTrigger) trigger)
+          .getTriggerWithDeletedProgram(programId);
+        if (updatedTrigger == null) {
+          // the updated composite trigger will never be satisfied, so the AND trigger will never be satisfied
+          return null;
+        }
+        // add the updated composite trigger into updatedTriggers
+        updatedTriggers.add(updatedTrigger);
+      } else {
+        // the trigger is not a composite trigger, add it to updatedTriggers directly
+        updatedTriggers.add(trigger);
+      }
+    }
+    // return a new AND trigger constructed from the updated triggers
+    return new AndTrigger(updatedTriggers.toArray(new SatisfiableTrigger[updatedTriggers.size()]));
   }
 }

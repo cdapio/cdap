@@ -653,7 +653,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       : new ApplicationId(triggerNamespaceId, triggerAppName, triggerAppVersion);
     final ProgramId triggerProgramId = appId.program(ProgramType.valueOfCategoryName(triggerProgramType),
                                                      triggerProgramName);
-    programScheduler.findSchedules(triggerProgramId.toString());
     Collection<ProgramScheduleRecord> schedules = new HashSet<>();
     final Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
     if (triggerProgramStatuses != null) {
@@ -798,7 +797,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Iterator<ProgramScheduleRecord> iterator = schedules.iterator();
       while (iterator.hasNext()) {
         // Remove the schedule if its trigger type does not match the given type
-        if (!((ProtoTrigger) iterator.next().getSchedule().getTrigger()).getType().equals(type)) {
+        if (!iterator.next().getSchedule().getTrigger().getType().equals(type)) {
           iterator.remove();
         }
       }

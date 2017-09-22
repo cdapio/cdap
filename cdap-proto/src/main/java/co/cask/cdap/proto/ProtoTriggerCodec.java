@@ -45,8 +45,8 @@ public class ProtoTriggerCodec implements JsonSerializer<Trigger>, JsonDeseriali
     map.put(ProtoTrigger.Type.PARTITION, ProtoTrigger.PartitionTrigger.class);
     map.put(ProtoTrigger.Type.STREAM_SIZE, ProtoTrigger.StreamSizeTrigger.class);
     map.put(ProtoTrigger.Type.PROGRAM_STATUS, ProtoTrigger.ProgramStatusTrigger.class);
-    map.put(ProtoTrigger.Type.AND, ProtoTrigger.AndTrigger.class);
-    map.put(ProtoTrigger.Type.OR, ProtoTrigger.OrTrigger.class);
+    map.put(ProtoTrigger.Type.AND, ProtoTrigger.AndProtoTrigger.class);
+    map.put(ProtoTrigger.Type.OR, ProtoTrigger.OrProtoTrigger.class);
     return map;
   }
 

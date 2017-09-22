@@ -1343,7 +1343,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ProtoTrigger.TimeTrigger protoTime = new ProtoTrigger.TimeTrigger("0 * * * ?");
     ProtoTrigger.PartitionTrigger protoPartition =
       new ProtoTrigger.PartitionTrigger(NamespaceId.DEFAULT.dataset("data"), 5);
-    ProtoTrigger.OrTrigger protoOr = new ProtoTrigger.OrTrigger(protoTime, protoPartition);
+    ProtoTrigger.OrProtoTrigger protoOr = new ProtoTrigger.OrProtoTrigger(protoTime, protoPartition);
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
                                                               AppWithSchedule.WORKFLOW_NAME);
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");

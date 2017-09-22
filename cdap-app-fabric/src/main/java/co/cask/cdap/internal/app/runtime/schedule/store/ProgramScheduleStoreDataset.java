@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -40,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -60,6 +62,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -369,6 +372,57 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
             deleted.add(schedule.getScheduleId());
           }
         }
+      }
+    }
+    return deleted;
+  }
+
+  /**
+   * Update all schedules that can be triggered by the given deleted program. Schedules will be removed if they
+   * contain single {@link co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger}. Schedules with
+   * composite triggers will be updated if the composite trigger can still be satisfied after the program is deleted,
+   * otherwise the schedules will be deleted.
+   *
+   * @param programId the program id for which to delete the schedules
+   * @return the IDs of the schedules that were deleted
+   */
+  public List<ScheduleId> modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
+    List<ScheduleId> deleted = new ArrayList<>();
+    Set<ProgramScheduleRecord> scheduleRecords = new HashSet<>();
+    for (ProgramStatus status : ProgramStatus.values()) {
+      scheduleRecords.addAll(findSchedules(Schedulers.triggerKeyForProgramStatus(programId, status)));
+    }
+    for (ProgramScheduleRecord scheduleRecord : scheduleRecords) {
+      ProgramSchedule schedule = scheduleRecord.getSchedule();
+      try {
+        deleteSchedule(schedule.getScheduleId());
+      } catch (NotFoundException e) {
+        // this should never happen
+        LOG.warn("Failed to delete the schedule '{}' triggered by '{}', skip this schedule.",
+                 schedule.getScheduleId(), programId, e);
+        continue;
+      }
+      if (schedule.getTrigger() instanceof AbstractCompositeTrigger) {
+        // get the updated composite trigger by removing the program status trigger of the given program
+        Trigger updatedTrigger = ((AbstractCompositeTrigger) schedule.getTrigger())
+          .getTriggerWithDeletedProgram(programId);
+        if (updatedTrigger == null) {
+          deleted.add(schedule.getScheduleId());
+          continue;
+        }
+        // if the updated composite trigger is not null, add the schedule back with updated composite trigger
+        try {
+          addScheduleWithStatus(new ProgramSchedule(schedule.getName(), schedule.getDescription(),
+                                                    schedule.getProgramId(), schedule.getProperties(), updatedTrigger,
+                                                    schedule.getConstraints(), schedule.getTimeoutMillis()),
+                                scheduleRecord.getMeta().getStatus(), System.currentTimeMillis());
+        } catch (AlreadyExistsException e) {
+          // this should never happen
+          LOG.warn("Failed to add the schedule '{}' triggered by '{}' with updated trigger '{}', " +
+                     "skip adding this schedule.", schedule.getScheduleId(), programId, updatedTrigger, e);
+        }
+      } else {
+        deleted.add(schedule.getScheduleId());
       }
     }
     return deleted;

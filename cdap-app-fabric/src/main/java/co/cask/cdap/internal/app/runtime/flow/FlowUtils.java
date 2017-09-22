@@ -22,6 +22,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.RoundRobin;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -37,17 +38,18 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
@@ -79,6 +81,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -89,16 +92,6 @@ public final class FlowUtils {
   public static final String FLOWLET_SCOPE = "flowlet";
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowUtils.class);
-
-  /**
-   * Generates a queue consumer groupId for the given flowlet in the given program id.
-   *
-   * @deprecated Use {@link #generateConsumerGroupId(ProgramId, String)} instead.
-   */
-  @Deprecated
-  public static long generateConsumerGroupId(Id.Program program, String flowletId) {
-    return generateConsumerGroupId(program.toEntityId(), flowletId);
-  }
 
   /**
    * Generates a queue consumer groupId for the given flowlet in the given program id.
@@ -114,6 +107,39 @@ public final class FlowUtils {
       .putString(programId.getApplication())
       .putString(programId.getProgram())
       .putString(flowletId).hash().asLong();
+  }
+
+  /**
+   * Drop all queues and stream states of a deleted flow
+   * @param programId program id of the deleted flow
+   * @param flowSpecification flow specification of the deleted flow
+   */
+  public static void clearDeletedFlow(Impersonator impersonator, final QueueAdmin queueAdmin,
+                                      final StreamConsumerFactory streamConsumerFactory,
+                                      final ProgramId programId, FlowSpecification flowSpecification) throws Exception {
+    // Collects stream name to all group ids consuming that stream
+    final Multimap<String, Long> streamGroups = HashMultimap.create();
+    for (FlowletConnection connection : flowSpecification.getConnections()) {
+      if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
+        long groupId = FlowUtils.generateConsumerGroupId(programId, connection.getTargetName());
+        streamGroups.put(connection.getSourceName(), groupId);
+      }
+    }
+    // Remove all process states and group states for each stream
+    final String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
+
+    final NamespaceId namespaceId = programId.getNamespaceId();
+    impersonator.doAs(programId.getParent(), new Callable<Void>() {
+
+      @Override
+      public Void call() throws Exception {
+        for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+          streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()), namespace, entry.getValue());
+        }
+        queueAdmin.dropAllForFlow(programId.getParent().flow(programId.getEntityName()));
+        return null;
+      }
+    });
   }
 
   /**
