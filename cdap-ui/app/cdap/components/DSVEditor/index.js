@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {connect , Provider} from 'react-redux';
 import DSVActions from 'components/DSVEditor/DSVActions';
 import {createDSVStore} from 'components/DSVEditor/DSVStore';

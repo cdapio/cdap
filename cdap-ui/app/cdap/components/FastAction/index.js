@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import DeleteAction from 'components/FastAction/DeleteAction';
 import TruncateAction from 'components/FastAction/TruncateAction';
 import StartStopAction from 'components/FastAction/StartStopAction';

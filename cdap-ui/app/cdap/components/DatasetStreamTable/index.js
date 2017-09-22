@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import SortableTable from 'components/SortableTable';
 import {Link} from 'react-router-dom';

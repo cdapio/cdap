@@ -20,7 +20,9 @@
   3. Make a batch and realtime config with yare in its stage.
   4. Show the modal.
 */
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {MyArtifactApi} from 'api/artifact';
 import NamespaceStore from 'services/NamespaceStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';

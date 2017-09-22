@@ -22,7 +22,9 @@
       extendedMessage='stack trace message that will get rendered in <pre>'
     />
 */
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 require('./CardActionFeedback.scss');
 import isObject from 'lodash/isObject';
 

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import EntityCard from 'components/EntityCard';
 import classnames from 'classnames';
 import JustAddedSection from 'components/EntityListView/JustAddedSection';

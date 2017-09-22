@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { Nav, NavItem, TabPane, TabContent, NavLink} from 'reactstrap';
 import classnames from 'classnames';
 import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';

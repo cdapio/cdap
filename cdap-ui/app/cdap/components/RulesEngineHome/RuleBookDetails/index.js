@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import isNil from 'lodash/isNil';
 import MyRulesEngine from 'api/rulesengine';

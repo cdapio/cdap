@@ -14,7 +14,8 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+import React, {Component} from 'react';
 import SearchStore from 'components/EntityListView/SearchStore';
 import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
 import HomeListView from 'components/EntityListView/ListView';
@@ -389,5 +390,6 @@ EntityListView.propTypes = {
   match: PropTypes.object,
   location: PropTypes.object,
   history: PropTypes.object,
-  pathname: PropTypes.string
+  pathname: PropTypes.string,
+  currentPage: PropTypes.string
 };

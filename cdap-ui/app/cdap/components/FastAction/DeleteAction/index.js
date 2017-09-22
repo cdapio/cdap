@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyAppApi} from 'api/app';
 import {MyArtifactApi} from 'api/artifact';

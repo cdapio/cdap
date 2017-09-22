@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import UploadFile from 'services/upload-file';

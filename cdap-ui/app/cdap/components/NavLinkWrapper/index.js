@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import {NavLink} from 'react-router-dom';
 
 const NavLinkWrapper = ({children, to, isNativeLink, ...attributes}) => {

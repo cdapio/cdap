@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import PlusButtonModal from 'components/PlusButtonModal';
 import PlusButtonStore from 'services/PlusButtonStore';
 import classnames from 'classnames';

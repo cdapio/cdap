@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import IconSVG from 'components/IconSVG';
 
 export default function FastActionButton({icon, action, disabled, id, iconClasses}) {

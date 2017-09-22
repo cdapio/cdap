@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { ModalHeader, ModalBody } from 'reactstrap';
 import HydratorModal from 'components/HydratorModal';
 import ScheduleRuntimeArgs from 'components/PipelineTriggers/ScheduleRuntimeArgs';

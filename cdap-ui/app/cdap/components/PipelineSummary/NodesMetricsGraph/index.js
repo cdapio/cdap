@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import NodesRecordsGraph from 'components/PipelineSummary/NodesRecordsGraph';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import {DropdownToggle, DropdownItem} from 'reactstrap';

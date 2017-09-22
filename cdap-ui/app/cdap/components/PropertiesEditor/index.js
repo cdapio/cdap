@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {MyMetadataApi} from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
 import map from 'lodash/map';

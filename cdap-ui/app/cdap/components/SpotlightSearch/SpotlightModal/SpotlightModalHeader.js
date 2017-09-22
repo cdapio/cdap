@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import T from 'i18n-react';
 import PaginationDropdown from 'components/Pagination/PaginationDropdown';
 import {
@@ -23,69 +25,69 @@ import {
 
 require('./SpotlightModal.scss');
 
- export default class SpotlightModalHeader extends Component {
-   constructor(props) {
-     super(props);
-     this.state = {
-       isDropdownExpanded : false
-     };
-     this.toggleExpansion = this.toggleExpansion.bind(this);
-   }
+export default class SpotlightModalHeader extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isDropdownExpanded : false
+    };
+    this.toggleExpansion = this.toggleExpansion.bind(this);
+  }
 
-   toggleExpansion() {
-     this.setState({
-       isDropdownExpanded : !this.state.isDropdownExpanded
-     });
-   }
+  toggleExpansion() {
+    this.setState({
+      isDropdownExpanded : !this.state.isDropdownExpanded
+    });
+  }
 
-   render() {
-     return (
-       <ModalHeader>
-         <span className="float-xs-left">
-           {
-             T.translate('features.SpotlightSearch.SpotlightModal.headerTagResults', {
-               tag: this.props.tag
-             })
-           }
-         </span>
-         <div
-           className="close-section float-xs-right text-xs-right"
-         >
-           <span className="search-results-total">
-             {
-              this.props.total === 1 ?
-                T.translate('features.SpotlightSearch.SpotlightModal.numResult', {
-                 total: this.props.total
-                })
-              :
-                T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
-                 total: this.props.total
-                })
-             }
-           </span>
-           <span>
-           <PaginationDropdown
-            numberOfPages={this.props.numPages}
-            currentPage={this.props.currentPage}
-            onPageChange={this.props.handleSearch.bind(this)}
-           />
-           </span>
-           <span
-             className="fa fa-times"
-             onClick={this.props.toggle}
-           />
-         </div>
-       </ModalHeader>
-     );
+  render() {
+    return (
+      <ModalHeader>
+        <span className="float-xs-left">
+          {
+            T.translate('features.SpotlightSearch.SpotlightModal.headerTagResults', {
+              tag: this.props.tag
+            })
+          }
+        </span>
+        <div
+          className="close-section float-xs-right text-xs-right"
+        >
+          <span className="search-results-total">
+            {
+             this.props.total === 1 ?
+               T.translate('features.SpotlightSearch.SpotlightModal.numResult', {
+                total: this.props.total
+               })
+             :
+               T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
+                total: this.props.total
+               })
+            }
+          </span>
+          <span>
+          <PaginationDropdown
+           numberOfPages={this.props.numPages}
+           currentPage={this.props.currentPage}
+           onPageChange={this.props.handleSearch.bind(this)}
+          />
+          </span>
+          <span
+            className="fa fa-times"
+            onClick={this.props.toggle}
+          />
+        </div>
+      </ModalHeader>
+    );
 
-   }
- }
+  }
+}
 
- SpotlightModalHeader.propTypes = {
-   toggle: PropTypes.func,
-   handleSearch: PropTypes.func,
-   currentPage: PropTypes.number,
-   tag: PropTypes.string,
-   numPages: PropTypes.number,
-   total: PropTypes.number
- };
+SpotlightModalHeader.propTypes = {
+  toggle: PropTypes.func,
+  handleSearch: PropTypes.func,
+  currentPage: PropTypes.number,
+  tag: PropTypes.string,
+  numPages: PropTypes.number,
+  total: PropTypes.number
+};

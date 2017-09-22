@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {getRuleBooks, resetStore, getRules, setActiveRulebook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';

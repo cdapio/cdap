@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
 

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import UploadDataWizard from 'components/CaskWizards/UploadData';
 
 export default function UploadDataUsecaseWizard({input, onClose, isOpen}) {

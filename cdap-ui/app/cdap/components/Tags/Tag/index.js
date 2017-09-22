@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import SpotlightModal from 'components/SpotlightSearch/SpotlightModal';
 import classnames from 'classnames';
 

@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import {connect, Provider} from 'react-redux';
 import {Input, FormGroup, Form} from 'reactstrap';
 import T from 'i18n-react';

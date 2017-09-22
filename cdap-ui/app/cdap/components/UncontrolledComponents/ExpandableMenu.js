@@ -20,7 +20,9 @@
   now and we can't make that change at this point in the release. So this artifact stays here until we have
   upgraded reactstrap.
 */
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 require('./ExpandableMenu.scss');

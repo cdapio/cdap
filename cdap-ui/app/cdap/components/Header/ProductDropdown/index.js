@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {Dropdown, DropdownToggle, DropdownItem} from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';

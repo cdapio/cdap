@@ -14,8 +14,10 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
-  import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
+import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 // import {Input} from 'reactstrap';
@@ -97,7 +99,7 @@ export default class ArraySchemaRow extends Component {
       this.setState({error});
       return;
     }
-    this.parsedType = this.state.displayType.nullable ? [cloneDeep(itemsState): 'null'] : cloneDeep(itemsState);
+    this.parsedType = this.state.displayType.nullable ? [cloneDeep(itemsState), 'null'] : cloneDeep(itemsState);
     this.updateParent();
   }
   updateParent() {

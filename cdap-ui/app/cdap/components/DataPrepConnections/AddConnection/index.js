@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';

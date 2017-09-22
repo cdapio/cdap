@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import T from 'i18n-react';
 

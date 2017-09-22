@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import OneStepDeployAppConfig from 'services/WizardConfigs/OneStepDeployAppConfig';
 import OneStepDeployPluginConfig from 'services/WizardConfigs/OneStepDeployPluginConfig';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';

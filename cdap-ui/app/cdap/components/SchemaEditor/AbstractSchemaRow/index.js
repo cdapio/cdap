@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import ArraySchemaRow from 'components/SchemaEditor/ArraySchemaRow';
 import MapSchemaRow from 'components/SchemaEditor/MapSchemaRow';
 import UnionSchemaRow from 'components/SchemaEditor/UnionSchemaRow';

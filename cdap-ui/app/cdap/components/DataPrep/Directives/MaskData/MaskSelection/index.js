@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import ColumnTextSelection from 'components/DataPrep/ColumnTextSelection';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import T from 'i18n-react';

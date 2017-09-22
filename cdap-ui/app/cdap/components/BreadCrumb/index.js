@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
 require('./BreadCrumb.scss');

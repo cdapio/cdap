@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import SchemaEditor from 'components/SchemaEditor';
 import {Tooltip} from 'reactstrap';

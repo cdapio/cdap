@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import Dropzone from 'react-dropzone';
 require('./FileDnD.scss');
 import T from 'i18n-react';

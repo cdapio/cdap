@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {isDescendant} from 'services/helpers';
 import {Popover, PopoverContent} from 'reactstrap';
 import Rx from 'rx';
