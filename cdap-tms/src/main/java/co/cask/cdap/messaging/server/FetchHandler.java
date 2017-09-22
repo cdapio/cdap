@@ -23,6 +23,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.ByteBuffers;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.Schemas;
@@ -33,6 +35,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -58,8 +61,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -72,7 +77,13 @@ import javax.ws.rs.PathParam;
 public final class FetchHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(FetchHandler.class);
+  // Log at most once per minute.
+  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();
+  private static final Set<String> KNOWN_IO_EXCEPTION_MESSAGES = ImmutableSet.of(
+    "Connection reset by peer",
+    "Broken pipe"
+  );
 
   private final MessagingService messagingService;
   private int messageChunkSize;
@@ -240,11 +251,16 @@ public final class FetchHandler extends AbstractHttpHandler {
     public void handleError(@Nullable Throwable cause) {
       iterator.close();
       // Since response header is already sent, there is nothing we can send back to client. Simply log the failure
-      if (cause instanceof SocketException) {
+      if (cause instanceof SocketException
+        || cause instanceof ClosedChannelException
+        || (cause instanceof IOException && KNOWN_IO_EXCEPTION_MESSAGES.contains(cause.getMessage()))) {
         // This can easily caused by client close connection prematurely. Don't want to flood the log.
-        LOG.debug("Socket exception raised when sending messages back to client", cause);
+        LOG.trace("Connection closed by client prematurely while sending messages back to client", cause);
       } else {
-        LOG.warn("Exception raised when sending messages back to client", cause);
+        // Use sampling logger to log to avoid flooding the log if there is any systematic failure
+        SAMPLING_LOG.warn("Exception raised when sending messages back to client", cause);
+        // Also log a trace to provide a way to see every error if needed
+        LOG.trace("Exception raised when sending messages back to client", cause);
       }
     }
   }
