@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,8 @@ public final class StreamFileJanitor {
   private final Impersonator impersonator;
 
   @Inject
-  public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin,
+  public StreamFileJanitor(CConfiguration cConf,
+                           @Named(StreamAdminModules.NOAUTH_STREAM_ADMIN) StreamAdmin streamAdmin,
                            NamespacedLocationFactory namespacedLocationFactory,
                            NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     this.streamAdmin = streamAdmin;

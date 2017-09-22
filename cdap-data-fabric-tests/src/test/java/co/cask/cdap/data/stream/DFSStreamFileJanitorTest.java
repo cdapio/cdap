@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -26,7 +27,6 @@ import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -45,12 +45,14 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.InMemoryOwnerStore;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.InMemoryNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
@@ -80,16 +82,20 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static NamespaceStore namespaceStore;
   private static NamespaceAdmin namespaceAdmin;
+  private static Authorizer authorizer;
+  private static StreamFileJanitor janitor;
 
   @BeforeClass
   public static void init() throws IOException {
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    setupAuthzConfig();
 
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
-    namespaceAdmin = new InMemoryNamespaceClient();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
+    namespaceAdmin = new InMemoryNamespaceClient();
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf, namespaceAdmin);
 
     Injector injector = Guice.createInjector(
@@ -101,7 +107,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(LocationFactory.class).toInstance(lf);
           bind(NamespacedLocationFactory.class).toInstance(nlf);
           bind(NamespaceAdmin.class).toInstance(namespaceAdmin);
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          bind(NamespaceQueryAdmin.class).toInstance(namespaceAdmin);
           bind(UGIProvider.class).to(RemoteUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
@@ -145,8 +151,10 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
+    janitor = injector.getInstance(StreamFileJanitor.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     streamCoordinatorClient.startAndWait();
   }
 
@@ -184,6 +192,16 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected CConfiguration getCConfiguration() {
     return cConf;
+  }
+
+  @Override
+  protected Authorizer getAuthorizer() {
+    return authorizer;
+  }
+
+  @Override
+  protected StreamFileJanitor getJanitor() {
+    return janitor;
   }
 
   @Override

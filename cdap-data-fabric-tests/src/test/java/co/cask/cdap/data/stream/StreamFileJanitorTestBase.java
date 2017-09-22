@@ -21,16 +21,22 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.security.impersonation.DefaultImpersonator;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.NamespaceStore;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -39,7 +45,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.Properties;
 
 /**
@@ -51,6 +59,10 @@ public abstract class StreamFileJanitorTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected static CConfiguration cConf = CConfiguration.create();
+
+  private static final Principal ALICE = new Principal("ALICE", Principal.PrincipalType.USER);
+
+  private static final Principal BOB = new Principal("BOB", Principal.PrincipalType.USER);
 
   protected abstract LocationFactory getLocationFactory();
 
@@ -64,9 +76,15 @@ public abstract class StreamFileJanitorTestBase {
 
   protected abstract CConfiguration getCConfiguration();
 
+  protected abstract Authorizer getAuthorizer();
+
+  protected abstract StreamFileJanitor getJanitor();
+
   protected abstract FileWriter<StreamEvent> createWriter(StreamId streamId) throws IOException;
 
-  private Impersonator impersonator;
+  private Authorizer authorizer;
+
+  private StreamFileJanitor janitor;
 
   @Before
   public void setup() throws Exception {
@@ -74,21 +92,25 @@ public abstract class StreamFileJanitorTestBase {
     // Simulate namespace create, since its an inmemory-namespace admin
     getNamespaceAdmin().create(NamespaceMeta.DEFAULT);
     getNamespacedLocationFactory().get(NamespaceId.DEFAULT).mkdirs();
-    impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider());
+    janitor = getJanitor();
+    authorizer = getAuthorizer();
+    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
+  /**
+   * Test the clean up of the janitor, also checks that user without privilege on the stream is also able to clean up
+   * the stream.
+   */
   @Test
   public void testCleanupGeneration() throws Exception {
     // Create a stream and performs couple truncate
     String streamName = "testCleanupGeneration";
     StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
+    authorizer.grant(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.ADMIN));
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
-                                                      getNamespacedLocationFactory(), getNamespaceAdmin(),
-                                                      impersonator);
 
     for (int i = 0; i < 5; i++) {
       FileWriter<StreamEvent> writer = createWriter(streamId);
@@ -101,6 +123,8 @@ public abstract class StreamFileJanitorTestBase {
 
       streamAdmin.truncate(streamId);
     }
+
+    SecurityRequestContext.setUserId(BOB.getName());
 
     int generation = StreamUtils.getGeneration(streamConfig);
     Assert.assertEquals(5, generation);
@@ -120,11 +144,9 @@ public abstract class StreamFileJanitorTestBase {
     // Create a stream with 5 seconds TTL, partition duration of 2 seconds
     String streamName = "testCleanupTTL";
     StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
+    authorizer.grant(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.ADMIN));
 
     StreamAdmin streamAdmin = getStreamAdmin();
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
-                                                      getNamespacedLocationFactory(), getNamespaceAdmin(),
-                                                      impersonator);
 
     Properties properties = new Properties();
     properties.setProperty(Constants.Stream.PARTITION_DURATION, "2000");
@@ -135,6 +157,8 @@ public abstract class StreamFileJanitorTestBase {
     // Truncate to increment generation to 1. This make verification condition easier (won't affect correctness).
     streamAdmin.truncate(streamId);
     StreamConfig config = streamAdmin.getConfig(streamId);
+
+    SecurityRequestContext.setUserId(BOB.getName());
 
     // Write data with different timestamps that spans across 5 partitions
     FileWriter<StreamEvent> writer = createWriter(streamId);
@@ -159,12 +183,14 @@ public abstract class StreamFileJanitorTestBase {
     Assert.assertTrue(generationLocation.list().isEmpty());
   }
 
+  /**
+   * Test clean up for all streams and verify user who does not have privileges on the streams is able to clean up.
+   */
   @Test
   public void testCleanupDeletedStream() throws Exception {
     StreamId streamId = NamespaceId.DEFAULT.stream("cleanupDelete");
     StreamAdmin streamAdmin = getStreamAdmin();
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory(),
-                                                      getNamespaceAdmin(), impersonator);
+    authorizer.grant(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.ADMIN));
     streamAdmin.create(streamId);
 
     // Write some data
@@ -176,8 +202,10 @@ public abstract class StreamFileJanitorTestBase {
 
     // Delete the stream
     streamAdmin.drop(streamId);
+    SecurityRequestContext.setUserId(BOB.getName());
 
     // Run janitor. Should be running fine without exception.
+    // Even Bob does not have privilege on the stream, he should be able to clean up the streams
     janitor.cleanAll();
   }
 
@@ -193,5 +221,19 @@ public abstract class StreamFileJanitorTestBase {
     }
 
     throw new IOException("Not a valid generation directory");
+  }
+
+  static CConfiguration setupAuthzConfig() throws IOException {
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
+    cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
+    LocationFactory locationFactory = new LocalLocationFactory(new File(tmpFolder.newFolder().toURI()));
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
+    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
+    return cConf;
   }
 }
