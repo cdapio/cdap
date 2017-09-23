@@ -1,22 +1,23 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package co.cask.cdap.data2.util;
+package org.apache.tephra.coprocessor;
 
-import co.cask.cdap.data2.transaction.coprocessor.CacheSupplier;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.Service;
 import org.apache.commons.logging.Log;
@@ -26,8 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Implementation of {@link CacheSupplier} that reference counts the {@link Service} and manages the lifecycle of
- * the {@link Service} instance.
+ * Reference counts the {@link Service} and manages the lifecycle of the {@link Service} instance.
  *
  * @param <T> type of {@link Service} that is reference counted
  */
@@ -45,12 +45,12 @@ public class ReferenceCountedSupplier<T extends Service> {
   }
 
   public T getOrCreate(Supplier<T> instanceSupplier) {
-    // Fix the pessimistic locking here
     synchronized (lock) {
       if (instance.get() == null) {
         if (LOG.isDebugEnabled()) {
           LOG.debug(String.format("Creating and starting Service %s.", instanceName));
         }
+
         // Instance has not been instantiated
         T serviceInstance = instanceSupplier.get();
         serviceInstance.startAndWait();
@@ -65,7 +65,6 @@ public class ReferenceCountedSupplier<T extends Service> {
   }
 
   public void release() {
-    // Fix the pessimistic locking here
     synchronized (lock) {
       if (refCount.get() <= 0) {
         LOG.warn(String.format("Reference Count for Service %s is already zero.", instanceName));
@@ -80,7 +79,7 @@ public class ReferenceCountedSupplier<T extends Service> {
       if (newCount == 0) {
         try {
           if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Reference Count for Service is 0. Stopping Service : %s", instanceName));
+            LOG.debug(String.format("Reference Count for Service is 0. Stopping Service %s.", instanceName));
           }
 
           Service serviceInstance = instance.get();
