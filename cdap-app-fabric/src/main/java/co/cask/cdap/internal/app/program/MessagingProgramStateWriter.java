@@ -151,6 +151,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
         messagingService.publish(StoreRequestBuilder.of(topicId)
                                    .addPayloads(GSON.toJson(programStatusNotification))
                                    .build());
+        LOG.trace("Published program status notification: {}", programStatusNotification);
         done = true;
       } catch (IOException e) {
         Throwables.propagate(e);

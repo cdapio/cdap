@@ -375,7 +375,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     deploy(AppWithMultipleSchedules.class);
 
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
-    TopicId programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    TopicId programEventTopic =
+      NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC));
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
 
     // These notifications should not trigger the program

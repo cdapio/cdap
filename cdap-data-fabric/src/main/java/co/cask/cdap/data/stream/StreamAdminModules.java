@@ -24,6 +24,7 @@ import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumerFactory;
+import co.cask.cdap.data2.transaction.stream.AuthorizationStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -40,18 +41,24 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 
 /**
  * Guice modules to have access to a {@link StreamAdmin} implementation.
  */
 public class StreamAdminModules extends RuntimeModule {
+  public static final String NOAUTH_STREAM_ADMIN = "noAuthStreamAdmin";
 
   @Override
   public Module getInMemoryModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class).to(AuthorizationStreamAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class)
+          .annotatedWith(Names.named(NOAUTH_STREAM_ADMIN))
+          .to(FileStreamAdmin.class)
+          .in(Singleton.class);
         bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
@@ -71,7 +78,11 @@ public class StreamAdminModules extends RuntimeModule {
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class)
           .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-        bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class).to(AuthorizationStreamAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class)
+          .annotatedWith(Names.named(NOAUTH_STREAM_ADMIN))
+          .to(FileStreamAdmin.class)
+          .in(Singleton.class);
         bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
         bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
       }
@@ -115,7 +126,11 @@ public class StreamAdminModules extends RuntimeModule {
         bind(StreamCoordinatorClient.class).to(DistributedStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
-        bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class).to(AuthorizationStreamAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class)
+          .annotatedWith(Names.named(NOAUTH_STREAM_ADMIN))
+          .to(FileStreamAdmin.class)
+          .in(Singleton.class);
         bind(StreamConsumerFactory.class).toProvider(StreamConsumerFactoryProvider.class).in(Singleton.class);
         bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
       }

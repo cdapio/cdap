@@ -450,8 +450,19 @@ Note that:
 
 Ranger Integration
 ------------------
-To use Apache Ranger as the authorization backend, please refer to `CDAP Ranger Extension <https://github.com/caskdata/cdap-security-extn/wiki/CDAP-Ranger-Extension>`_
+CDAP Policies can be managed for :ref:`Integrations: Apache Ranger <apache-ranger>` just like other Ranger service
+policies. Please read the `Ranger
+documentation <https://cwiki.apache.org/confluence/display/RANGER/Apache+Ranger+0.5+-+User+Guide>`__
+on Policy management to learn more.
 
+CDAP Ranger Plugin allows to grant policies on mid-level entities in
+CDAP entity hierarchy by specifying ``*`` for lower level and marking
+them as ``exclude``. For example the below screenshot shows the policy
+on ``namespace:default``. Notice that the value for ``application`` and
+``program`` are ``*`` and they are marked as ``exclude``.
+
+.. image:: _images/policy_management.png
+  :align: center
 
 .. _security-differences-between-new-and-old-model:
 

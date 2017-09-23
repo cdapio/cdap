@@ -13,6 +13,7 @@ CDAP Integrations Table of Contents
     Cask Market <cask-market>
     Cloudera <partners/cloudera/index>
     Apache Sentry <apache-sentry>
+    Apache Ranger <apache-ranger>
     Apache Hadoop KMS <hadoop-kms>
     CDAP JDBC Driver <jdbc>
     CDAP ODBC Driver <odbc>

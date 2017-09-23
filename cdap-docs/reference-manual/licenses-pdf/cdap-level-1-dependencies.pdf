@@ -17,7 +17,7 @@ endobj
 endobj
 4 0 obj
 <<
-/Contents 299 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+/Contents 271 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 /Trans <<
 
@@ -294,7 +294,7 @@ endobj
 /Annots [ 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R 
   16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R 22 0 R 23 0 R 24 0 R 25 0 R 
   26 0 R 27 0 R 28 0 R 29 0 R 30 0 R 31 0 R 32 0 R 33 0 R 34 0 R 35 0 R 
-  36 0 R 37 0 R 38 0 R 39 0 R 40 0 R 41 0 R 42 0 R ] /Contents 300 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+  36 0 R 37 0 R 38 0 R 39 0 R 40 0 R 41 0 R 42 0 R ] /Contents 272 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 
   /Trans <<
@@ -587,7 +587,7 @@ endobj
 /Annots [ 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 
   54 0 R 55 0 R 56 0 R 57 0 R 58 0 R 59 0 R 60 0 R 61 0 R 62 0 R 63 0 R 
   64 0 R 65 0 R 66 0 R 67 0 R 68 0 R 69 0 R 70 0 R 71 0 R 72 0 R 73 0 R 
-  74 0 R 75 0 R 76 0 R 77 0 R 78 0 R 79 0 R 80 0 R 81 0 R 82 0 R 83 0 R ] /Contents 301 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+  74 0 R 75 0 R 76 0 R 77 0 R 78 0 R 79 0 R 80 0 R 81 0 R 82 0 R 83 0 R ] /Contents 273 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 
   /Trans <<
@@ -895,7 +895,7 @@ endobj
   95 0 R 96 0 R 97 0 R 98 0 R 99 0 R 100 0 R 101 0 R 102 0 R 103 0 R 104 0 R 
   105 0 R 106 0 R 107 0 R 108 0 R 109 0 R 110 0 R 111 0 R 112 0 R 113 0 R 114 0 R 
   115 0 R 116 0 R 117 0 R 118 0 R 119 0 R 120 0 R 121 0 R 122 0 R 123 0 R 124 0 R 
-  125 0 R 126 0 R ] /Contents 302 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+  125 0 R 126 0 R ] /Contents 274 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 
   /Trans <<
@@ -1203,7 +1203,7 @@ endobj
   138 0 R 139 0 R 140 0 R 141 0 R 142 0 R 143 0 R 144 0 R 145 0 R 146 0 R 147 0 R 
   148 0 R 149 0 R 150 0 R 151 0 R 152 0 R 153 0 R 154 0 R 155 0 R 156 0 R 157 0 R 
   158 0 R 159 0 R 160 0 R 161 0 R 162 0 R 163 0 R 164 0 R 165 0 R 166 0 R 167 0 R 
-  168 0 R 169 0 R ] /Contents 303 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+  168 0 R 169 0 R ] /Contents 275 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 
   /Trans <<
@@ -1511,7 +1511,7 @@ endobj
   181 0 R 182 0 R 183 0 R 184 0 R 185 0 R 186 0 R 187 0 R 188 0 R 189 0 R 190 0 R 
   191 0 R 192 0 R 193 0 R 194 0 R 195 0 R 196 0 R 197 0 R 198 0 R 199 0 R 200 0 R 
   201 0 R 202 0 R 203 0 R 204 0 R 205 0 R 206 0 R 207 0 R 208 0 R 209 0 R 210 0 R 
-  211 0 R 212 0 R ] /Contents 304 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+  211 0 R 212 0 R ] /Contents 276 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 
   /Trans <<
@@ -1649,456 +1649,257 @@ endobj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 441.75 549.69 453.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 255.75 549.69 267.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 233 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 429.75 397.97 441.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 243.75 397.97 255.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 234 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 411.75 549.69 423.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 99.75 549.69 111.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 235 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 399.75 397.97 411.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 87.75 397.97 99.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 236 0 obj
 <<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 381.75 549.69 393.75 ] /Subtype /Link /Type /Annot
+/Annots [ 214 0 R 215 0 R 216 0 R 217 0 R 218 0 R 219 0 R 220 0 R 221 0 R 222 0 R 223 0 R 
+  224 0 R 225 0 R 226 0 R 227 0 R 228 0 R 229 0 R 230 0 R 231 0 R 232 0 R 233 0 R 
+  234 0 R 235 0 R ] /Contents 277 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 
+  /Trans <<
+
+>> /Type /Page
 >>
 endobj
 237 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 369.75 397.97 381.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 711.75 549.69 723.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 238 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 351.75 549.69 363.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 699.75 397.97 711.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 239 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 339.75 397.97 351.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 681.75 549.69 693.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 240 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 321.75 549.69 333.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 669.75 397.97 681.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 241 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 309.75 397.97 321.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 651.75 549.69 663.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 242 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 291.75 549.69 303.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 639.75 397.97 651.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 243 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 279.75 397.97 291.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 621.75 549.69 633.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 244 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 261.75 549.69 273.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 609.75 397.97 621.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 245 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 249.75 397.97 261.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 591.75 549.69 603.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 246 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 231.75 549.69 243.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 579.75 397.97 591.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 247 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 219.75 397.97 231.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 561.75 549.69 573.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 248 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 201.75 549.69 213.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 549.75 397.97 561.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 249 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 189.75 397.97 201.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 531.75 549.69 543.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 250 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 171.75 549.69 183.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 519.75 397.97 531.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 251 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 159.75 397.97 171.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://asm.ow2.org/license.html)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 501.75 500.23 513.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 252 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 141.75 549.69 153.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 471.75 549.69 483.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 253 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 129.75 397.97 141.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 459.75 397.97 471.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 254 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 111.75 549.69 123.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 441.75 549.69 453.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 255 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 99.75 397.97 111.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 429.75 397.97 441.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 256 0 obj
 <<
-/Annots [ 214 0 R 215 0 R 216 0 R 217 0 R 218 0 R 219 0 R 220 0 R 221 0 R 222 0 R 223 0 R 
-  224 0 R 225 0 R 226 0 R 227 0 R 228 0 R 229 0 R 230 0 R 231 0 R 232 0 R 233 0 R 
-  234 0 R 235 0 R 236 0 R 237 0 R 238 0 R 239 0 R 240 0 R 241 0 R 242 0 R 243 0 R 
-  244 0 R 245 0 R 246 0 R 247 0 R 248 0 R 249 0 R 250 0 R 251 0 R 252 0 R 253 0 R 
-  254 0 R 255 0 R ] /Contents 305 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 
-  /Trans <<
-
->> /Type /Page
+/A <<
+/S /URI /Type /Action /URI (http://www.scala-lang.org/license.html)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 411.75 530.23 423.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 257 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 711.75 549.69 723.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://www.scala-lang.org/license.html)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 381.75 530.23 393.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 258 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 699.75 397.97 711.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 351.75 549.12 363.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 259 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 681.75 549.69 693.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 339.75 403.54 351.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 260 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 669.75 397.97 681.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 321.75 549.12 333.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 261 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 651.75 549.69 663.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 309.75 403.54 321.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 262 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 639.75 397.97 651.75 ] /Subtype /Link /Type /Annot
+/S /URI /Type /Action /URI (http://www.slf4j.org/license.html)
+>> /Border [ 0 0 0 ] /Rect [ 362.4 291.75 502.44 303.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 263 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 621.75 549.69 633.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 273.75 549.69 285.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 264 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 609.75 397.97 621.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 261.75 397.97 273.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 265 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 591.75 549.69 603.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 243.75 549.69 255.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 266 0 obj
 <<
 /A <<
 /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 579.75 397.97 591.75 ] /Subtype /Link /Type /Annot
+>> /Border [ 0 0 0 ] /Rect [ 362.4 231.75 397.97 243.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 267 0 obj
 <<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 561.75 549.69 573.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-268 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 549.75 397.97 561.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-269 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 531.75 549.69 543.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-270 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 519.75 397.97 531.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-271 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 501.75 549.69 513.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-272 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 489.75 397.97 501.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-273 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 471.75 549.69 483.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-274 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 459.75 397.97 471.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-275 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 441.75 549.69 453.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-276 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 429.75 397.97 441.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-277 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 411.75 549.69 423.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-278 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 399.75 397.97 411.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-279 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://asm.ow2.org/license.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 381.75 500.23 393.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-280 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 351.75 549.69 363.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-281 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 339.75 397.97 351.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-282 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 321.75 549.69 333.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-283 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 309.75 397.97 321.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-284 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.scala-lang.org/license.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 291.75 530.23 303.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-285 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.scala-lang.org/license.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 261.75 530.23 273.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-286 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
->> /Border [ 0 0 0 ] /Rect [ 362.4 231.75 549.12 243.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-287 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
->> /Border [ 0 0 0 ] /Rect [ 362.4 219.75 403.54 231.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-288 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
->> /Border [ 0 0 0 ] /Rect [ 362.4 201.75 549.12 213.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-289 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.opensource.org/licenses/mit-license.php)
->> /Border [ 0 0 0 ] /Rect [ 362.4 189.75 403.54 201.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-290 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.slf4j.org/license.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 171.75 502.44 183.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-291 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 153.75 549.69 165.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-292 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 141.75 397.97 153.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-293 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 123.75 549.69 135.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-294 0 obj
-<<
-/A <<
-/S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html)
->> /Border [ 0 0 0 ] /Rect [ 362.4 111.75 397.97 123.75 ] /Subtype /Link /Type /Annot
->>
-endobj
-295 0 obj
-<<
-/Annots [ 257 0 R 258 0 R 259 0 R 260 0 R 261 0 R 262 0 R 263 0 R 264 0 R 265 0 R 266 0 R 
-  267 0 R 268 0 R 269 0 R 270 0 R 271 0 R 272 0 R 273 0 R 274 0 R 275 0 R 276 0 R 
-  277 0 R 278 0 R 279 0 R 280 0 R 281 0 R 282 0 R 283 0 R 284 0 R 285 0 R 286 0 R 
-  287 0 R 288 0 R 289 0 R 290 0 R 291 0 R 292 0 R 293 0 R 294 0 R ] /Contents 306 0 R /MediaBox [ 0 0 612 792 ] /Parent 298 0 R /Resources <<
+/Annots [ 237 0 R 238 0 R 239 0 R 240 0 R 241 0 R 242 0 R 243 0 R 244 0 R 245 0 R 246 0 R 
+  247 0 R 248 0 R 249 0 R 250 0 R 251 0 R 252 0 R 253 0 R 254 0 R 255 0 R 256 0 R 
+  257 0 R 258 0 R 259 0 R 260 0 R 261 0 R 262 0 R 263 0 R 264 0 R 265 0 R 266 0 R ] /Contents 278 0 R /MediaBox [ 0 0 612 792 ] /Parent 270 0 R /Resources <<
 /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >> /Rotate 0 
   /Trans <<
@@ -2106,23 +1907,23 @@ endobj
 >> /Type /Page
 >>
 endobj
-296 0 obj
+268 0 obj
 <<
-/Outlines 307 0 R /PageLabels 308 0 R /PageMode /UseNone /Pages 298 0 R /Type /Catalog
+/Outlines 279 0 R /PageLabels 280 0 R /PageMode /UseNone /Pages 270 0 R /Type /Catalog
 >>
 endobj
-297 0 obj
+269 0 obj
 <<
-/Author () /CreationDate (D:20170828165531+08'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20170828165531+08'00') /Producer (ReportLab PDF Library - www.reportlab.com) 
-  /Subject (\(unspecified\)) /Title (Cask Data Application Platform 4.3.0) /Trapped /False
+/Author () /CreationDate (D:20170922154740+08'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20170922154740+08'00') /Producer (ReportLab PDF Library - www.reportlab.com) 
+  /Subject (\(unspecified\)) /Title (Cask Data Application Platform 4.3.1) /Trapped /False
 >>
 endobj
-298 0 obj
+270 0 obj
 <<
-/Count 8 /Kids [ 4 0 R 43 0 R 84 0 R 127 0 R 170 0 R 213 0 R 256 0 R 295 0 R ] /Type /Pages
+/Count 8 /Kids [ 4 0 R 43 0 R 84 0 R 127 0 R 170 0 R 213 0 R 236 0 R 267 0 R ] /Type /Pages
 >>
 endobj
-299 0 obj
+271 0 obj
 <<
 /Length 557
 >>
@@ -2132,7 +1933,7 @@ q
 1 0 0 1 54 702 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 4 Tm /F2 20 Tf 24 TL 78.06 0 Td (Cask Data Application Platform 4.3.0) Tj T* -78.06 0 Td ET
+BT 1 0 0 1 0 4 Tm /F2 20 Tf 24 TL 78.06 0 Td (Cask Data Application Platform 4.3.1) Tj T* -78.06 0 Td ET
 Q
 Q
 q
@@ -2149,13 +1950,13 @@ q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 1) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 1) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-300 0 obj
+272 0 obj
 <<
 /Length 12243
 >>
@@ -2881,13 +2682,13 @@ q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 2) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 2) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-301 0 obj
+273 0 obj
 <<
 /Length 11110
 >>
@@ -3554,13 +3355,13 @@ q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 3) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 3) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-302 0 obj
+274 0 obj
 <<
 /Length 11963
 >>
@@ -4259,13 +4060,13 @@ q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 4) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 4) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-303 0 obj
+275 0 obj
 <<
 /Length 11751
 >>
@@ -4964,13 +4765,13 @@ q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 5) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 5) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-304 0 obj
+276 0 obj
 <<
 /Length 11709
 >>
@@ -5669,87 +5470,95 @@ q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 6) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 6) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-305 0 obj
+277 0 obj
 <<
-/Length 11845
+/Length 10049
 >>
 stream
 1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
 q
-1 0 0 1 54 96 cm
+1 0 0 1 54 84 cm
 1 1 1 rg
-n 0 630 504 -30 re f*
+n 0 642 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 600 504 -30 re f*
+n 0 612 504 -30 re f*
 1 1 1 rg
-n 0 570 504 -30 re f*
+n 0 582 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 540 504 -30 re f*
+n 0 552 504 -30 re f*
 1 1 1 rg
-n 0 510 504 -30 re f*
+n 0 522 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 480 504 -30 re f*
+n 0 492 504 -30 re f*
 1 1 1 rg
-n 0 450 504 -30 re f*
+n 0 462 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 420 504 -30 re f*
+n 0 432 504 -30 re f*
 1 1 1 rg
-n 0 390 504 -30 re f*
+n 0 402 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 360 504 -30 re f*
+n 0 372 504 -18 re f*
 1 1 1 rg
-n 0 330 504 -30 re f*
+n 0 354 504 -18 re f*
 .909804 .913725 .933333 rg
-n 0 300 504 -30 re f*
+n 0 336 504 -30 re f*
 1 1 1 rg
-n 0 270 504 -30 re f*
+n 0 306 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 240 504 -30 re f*
+n 0 276 504 -30 re f*
 1 1 1 rg
-n 0 210 504 -30 re f*
+n 0 246 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 180 504 -30 re f*
+n 0 216 504 -30 re f*
 1 1 1 rg
-n 0 150 504 -30 re f*
+n 0 186 504 -30 re f*
 .909804 .913725 .933333 rg
-n 0 120 504 -30 re f*
+n 0 156 504 -18 re f*
 1 1 1 rg
-n 0 90 504 -30 re f*
+n 0 138 504 -18 re f*
 .909804 .913725 .933333 rg
-n 0 60 504 -30 re f*
+n 0 120 504 -18 re f*
+1 1 1 rg
+n 0 102 504 -18 re f*
+.909804 .913725 .933333 rg
+n 0 84 504 -18 re f*
+1 1 1 rg
+n 0 66 504 -18 re f*
+.909804 .913725 .933333 rg
+n 0 48 504 -18 re f*
 1 1 1 rg
 n 0 30 504 -30 re f*
 0 0 0 rg
 BT /F1 10 Tf 12 TL ET
 q
-1 0 0 1 6 615 cm
+1 0 0 1 6 627 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 615 cm
+1 0 0 1 106.8 627 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-core_2.11) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 603 cm
+1 0 0 1 207.6 615 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 603 cm
+1 0 0 1 308.4 615 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5757,28 +5566,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 585 cm
+1 0 0 1 6 597 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 585 cm
+1 0 0 1 106.8 597 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-mllib_2.10) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 573 cm
+1 0 0 1 207.6 585 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 573 cm
+1 0 0 1 308.4 585 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5786,28 +5595,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 555 cm
+1 0 0 1 6 567 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 555 cm
+1 0 0 1 106.8 567 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-mllib_2.11) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 543 cm
+1 0 0 1 207.6 555 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 543 cm
+1 0 0 1 308.4 555 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5815,28 +5624,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 525 cm
+1 0 0 1 6 537 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 525 cm
+1 0 0 1 106.8 537 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-repl_2.10) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 513 cm
+1 0 0 1 207.6 525 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 513 cm
+1 0 0 1 308.4 525 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5844,28 +5653,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 495 cm
+1 0 0 1 6 507 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 495 cm
+1 0 0 1 106.8 507 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-repl_2.11) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 483 cm
+1 0 0 1 207.6 495 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 483 cm
+1 0 0 1 308.4 495 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5873,28 +5682,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 465 cm
+1 0 0 1 6 477 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 465 cm
+1 0 0 1 106.8 477 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-sql_2.10) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 453 cm
+1 0 0 1 207.6 465 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 453 cm
+1 0 0 1 308.4 465 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5902,28 +5711,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 435 cm
+1 0 0 1 6 447 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 435 cm
+1 0 0 1 106.8 447 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (spark-sql_2.11) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 423 cm
+1 0 0 1 207.6 435 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 423 cm
+1 0 0 1 308.4 435 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5931,28 +5740,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 405 cm
+1 0 0 1 6 417 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 393 cm
+1 0 0 1 106.8 405 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (spark-streaming_2.) Tj T* (10) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 393 cm
+1 0 0 1 207.6 405 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 393 cm
+1 0 0 1 308.4 405 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5960,28 +5769,28 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 375 cm
+1 0 0 1 6 387 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.spark) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 363 cm
+1 0 0 1 106.8 375 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (spark-streaming_2.) Tj T* (11) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 363 cm
+1 0 0 1 207.6 375 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 363 cm
+1 0 0 1 308.4 375 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
@@ -5989,235 +5798,158 @@ BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj 
 Q
 Q
 q
-1 0 0 1 6 345 cm
+1 0 0 1 6 357 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 345 cm
+1 0 0 1 106.8 357 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (tephra-api) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 333 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 333 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 315 cm
+1 0 0 1 6 339 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 315 cm
+1 0 0 1 106.8 339 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (tephra-core) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 303 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 303 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 285 cm
+1 0 0 1 6 321 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 273 cm
+1 0 0 1 106.8 309 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (tephra-hbase-comp) Tj T* (at-0.96) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 273 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 273 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 255 cm
+1 0 0 1 6 291 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 243 cm
+1 0 0 1 106.8 279 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (tephra-hbase-comp) Tj T* (at-0.98) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 243 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 243 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 225 cm
+1 0 0 1 6 261 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 213 cm
+1 0 0 1 106.8 249 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (tephra-hbase-comp) Tj T* (at-1.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 213 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 213 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 195 cm
+1 0 0 1 6 231 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 183 cm
+1 0 0 1 106.8 219 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (tephra-hbase-comp) Tj T* (at-1.0-cdh) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 183 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 183 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 165 cm
+1 0 0 1 6 201 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.tephra) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 153 cm
+1 0 0 1 106.8 189 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (tephra-hbase-comp) Tj T* (at-1.1) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 153 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 153 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 135 cm
+1 0 0 1 6 171 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.thrift) Tj T* ET
 Q
 Q
 q
-1 0 0 1 106.8 135 cm
+1 0 0 1 106.8 171 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (libthrift) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 123 cm
+1 0 0 1 207.6 159 cm
 q
 0 0 0 rg
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 123 cm
+1 0 0 1 308.4 159 cm
 q
 0 0 .501961 rg
 0 0 .501961 RG
 BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 141 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 141 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-common) Tj T* ET
 Q
 Q
 q
@@ -6231,94 +5963,77 @@ q
 1 0 0 1 106.8 105 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-api) Tj T* ET
-Q
-Q
-q
-1 0 0 1 207.6 93 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 93 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 75 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
-Q
-Q
-q
-1 0 0 1 106.8 75 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-common) Tj T* ET
-Q
-Q
-q
-1 0 0 1 207.6 63 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 63 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 45 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
-Q
-Q
-q
-1 0 0 1 106.8 45 cm
-q
-0 0 0 rg
 BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-core) Tj T* ET
 Q
 Q
 q
-1 0 0 1 207.6 33 cm
+1 0 0 1 6 87 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
 Q
 Q
 q
-1 0 0 1 308.4 33 cm
+1 0 0 1 106.8 87 cm
 q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-discovery-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 69 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 69 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-discovery-core) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 51 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 51 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-yarn) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-zookeeper) Tj T* ET
 Q
 Q
 q
 1 0 0 1 6 15 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
 Q
 Q
 q
 1 0 0 1 106.8 15 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-discovery-api) Tj T* ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (jetty-jaspi) Tj T* ET
 Q
 Q
 q
@@ -6341,61 +6056,57 @@ q
 1 j
 0 0 0 RG
 .25 w
-n 0 630 m 504 630 l S
+n 0 642 m 504 642 l S
 n 0 0 m 504 0 l S
-n 0 600 m 504 600 l S
-n 0 570 m 504 570 l S
-n 0 540 m 504 540 l S
-n 0 510 m 504 510 l S
-n 0 480 m 504 480 l S
-n 0 450 m 504 450 l S
-n 0 420 m 504 420 l S
-n 0 390 m 504 390 l S
-n 0 360 m 504 360 l S
-n 0 330 m 504 330 l S
-n 0 300 m 504 300 l S
-n 0 270 m 504 270 l S
-n 0 240 m 504 240 l S
-n 0 210 m 504 210 l S
-n 0 180 m 504 180 l S
-n 0 150 m 504 150 l S
+n 0 612 m 504 612 l S
+n 0 582 m 504 582 l S
+n 0 552 m 504 552 l S
+n 0 522 m 504 522 l S
+n 0 492 m 504 492 l S
+n 0 462 m 504 462 l S
+n 0 432 m 504 432 l S
+n 0 402 m 504 402 l S
+n 0 372 m 504 372 l S
+n 0 354 m 504 354 l S
+n 0 336 m 504 336 l S
+n 0 306 m 504 306 l S
+n 0 276 m 504 276 l S
+n 0 246 m 504 246 l S
+n 0 216 m 504 216 l S
+n 0 186 m 504 186 l S
+n 0 156 m 504 156 l S
+n 0 138 m 504 138 l S
 n 0 120 m 504 120 l S
-n 0 90 m 504 90 l S
-n 0 60 m 504 60 l S
+n 0 102 m 504 102 l S
+n 0 84 m 504 84 l S
+n 0 66 m 504 66 l S
+n 0 48 m 504 48 l S
 n 0 30 m 504 30 l S
-n 100.8 0 m 100.8 630 l S
-n 201.6 0 m 201.6 630 l S
-n 302.4 0 m 302.4 630 l S
-n 0 0 m 0 630 l S
-n 504 0 m 504 630 l S
+n 100.8 0 m 100.8 642 l S
+n 201.6 0 m 201.6 642 l S
+n 302.4 0 m 302.4 642 l S
+n 0 0 m 0 642 l S
+n 504 0 m 504 642 l S
 Q
 Q
 q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 7) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 7) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-306 0 obj
+278 0 obj
 <<
-/Length 11549
+/Length 9396
 >>
 stream
 1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
 q
-1 0 0 1 54 108 cm
-1 1 1 rg
-n 0 618 504 -30 re f*
-.909804 .913725 .933333 rg
-n 0 588 504 -30 re f*
-1 1 1 rg
-n 0 558 504 -30 re f*
-.909804 .913725 .933333 rg
-n 0 528 504 -30 re f*
+1 0 0 1 54 228 cm
 1 1 1 rg
 n 0 498 504 -30 re f*
 .909804 .913725 .933333 rg
@@ -6432,122 +6143,6 @@ n 0 60 504 -30 re f*
 n 0 30 504 -30 re f*
 0 0 0 rg
 BT /F1 10 Tf 12 TL ET
-q
-1 0 0 1 6 603 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
-Q
-Q
-q
-1 0 0 1 106.8 603 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-discovery-core) Tj T* ET
-Q
-Q
-q
-1 0 0 1 207.6 591 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 591 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 573 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
-Q
-Q
-q
-1 0 0 1 106.8 573 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-yarn) Tj T* ET
-Q
-Q
-q
-1 0 0 1 207.6 561 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 561 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 543 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.apache.twill) Tj T* ET
-Q
-Q
-q
-1 0 0 1 106.8 543 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (twill-zookeeper) Tj T* ET
-Q
-Q
-q
-1 0 0 1 207.6 531 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 531 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
-q
-1 0 0 1 6 513 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
-Q
-Q
-q
-1 0 0 1 106.8 513 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (jetty-jaspi) Tj T* ET
-Q
-Q
-q
-1 0 0 1 207.6 501 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
-Q
-Q
-q
-1 0 0 1 308.4 501 cm
-q
-0 0 .501961 rg
-0 0 .501961 RG
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-) Tj T* (2.0.html) Tj T* ET
-Q
-Q
 q
 1 0 0 1 6 483 cm
 q
@@ -7046,10 +6641,6 @@ q
 1 j
 0 0 0 RG
 .25 w
-n 0 618 m 504 618 l S
-n 0 588 m 504 588 l S
-n 0 558 m 504 558 l S
-n 0 528 m 504 528 l S
 n 0 498 m 504 498 l S
 n 0 468 m 504 468 l S
 n 0 438 m 504 438 l S
@@ -7067,80 +6658,80 @@ n 0 108 m 504 108 l S
 n 0 78 m 504 78 l S
 n 0 60 m 504 60 l S
 n 0 30 m 504 30 l S
-n 100.8 0 m 100.8 618 l S
-n 201.6 0 m 201.6 618 l S
-n 302.4 0 m 302.4 618 l S
-n 0 0 m 0 618 l S
-n 504 0 m 504 618 l S
+n 100.8 0 m 100.8 498 l S
+n 201.6 0 m 201.6 498 l S
+n 302.4 0 m 302.4 498 l S
+n 0 0 m 0 498 l S
+n 504 0 m 504 498 l S
 n 0 0 m 504 0 l S
 Q
 Q
 q
-1 0 0 1 54 108 cm
+1 0 0 1 54 228 cm
 Q
 q
 1 0 0 1 48 48 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.0 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 8) Tj T* -153.69 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 153.69 0 Td (Cask Data Application Platform 4.3.1 \177 Copyright \251 2017 Cask Data, Inc. \177 Page 8) Tj T* -153.69 0 Td ET
 Q
 Q
  
 endstream
 endobj
-307 0 obj
+279 0 obj
 <<
 /Count 0 /Type /Outlines
 >>
 endobj
-308 0 obj
+280 0 obj
 <<
-/Nums [ 0 309 0 R 1 310 0 R 2 311 0 R 3 312 0 R 4 313 0 R 
-  5 314 0 R 6 315 0 R 7 316 0 R ]
+/Nums [ 0 281 0 R 1 282 0 R 2 283 0 R 3 284 0 R 4 285 0 R 
+  5 286 0 R 6 287 0 R 7 288 0 R ]
 >>
 endobj
-309 0 obj
+281 0 obj
 <<
 /S /D /St 1
 >>
 endobj
-310 0 obj
+282 0 obj
 <<
 /S /D /St 2
 >>
 endobj
-311 0 obj
+283 0 obj
 <<
 /S /D /St 3
 >>
 endobj
-312 0 obj
+284 0 obj
 <<
 /S /D /St 4
 >>
 endobj
-313 0 obj
+285 0 obj
 <<
 /S /D /St 5
 >>
 endobj
-314 0 obj
+286 0 obj
 <<
 /S /D /St 6
 >>
 endobj
-315 0 obj
+287 0 obj
 <<
 /S /D /St 7
 >>
 endobj
-316 0 obj
+288 0 obj
 <<
 /S /D /St 8
 >>
 endobj
 xref
-0 317
+0 289
 0000000000 65535 f 
 0000000073 00000 n 
 0000000124 00000 n 
@@ -7376,98 +6967,70 @@ xref
 0000045644 00000 n 
 0000045836 00000 n 
 0000046028 00000 n 
-0000046220 00000 n 
-0000046412 00000 n 
-0000046604 00000 n 
-0000046796 00000 n 
-0000046988 00000 n 
-0000047180 00000 n 
-0000047372 00000 n 
-0000047564 00000 n 
-0000047756 00000 n 
-0000047948 00000 n 
-0000048140 00000 n 
-0000048332 00000 n 
-0000048524 00000 n 
-0000048716 00000 n 
-0000048908 00000 n 
-0000049100 00000 n 
-0000049292 00000 n 
-0000049484 00000 n 
-0000049676 00000 n 
-0000049868 00000 n 
-0000050060 00000 n 
-0000050251 00000 n 
-0000050810 00000 n 
-0000051002 00000 n 
-0000051194 00000 n 
-0000051386 00000 n 
-0000051578 00000 n 
-0000051770 00000 n 
-0000051962 00000 n 
-0000052154 00000 n 
-0000052346 00000 n 
-0000052538 00000 n 
-0000052730 00000 n 
-0000052922 00000 n 
-0000053114 00000 n 
-0000053306 00000 n 
-0000053498 00000 n 
-0000053690 00000 n 
-0000053882 00000 n 
-0000054074 00000 n 
-0000054266 00000 n 
-0000054458 00000 n 
-0000054650 00000 n 
-0000054842 00000 n 
-0000055034 00000 n 
-0000055210 00000 n 
-0000055402 00000 n 
-0000055594 00000 n 
-0000055786 00000 n 
-0000055978 00000 n 
-0000056161 00000 n 
-0000056344 00000 n 
-0000056539 00000 n 
-0000056734 00000 n 
-0000056929 00000 n 
-0000057124 00000 n 
-0000057302 00000 n 
-0000057494 00000 n 
-0000057686 00000 n 
-0000057878 00000 n 
-0000058070 00000 n 
-0000058594 00000 n 
-0000058704 00000 n 
-0000058999 00000 n 
-0000059114 00000 n 
-0000059723 00000 n 
-0000072020 00000 n 
-0000083184 00000 n 
-0000095201 00000 n 
-0000107006 00000 n 
-0000118769 00000 n 
-0000130668 00000 n 
-0000142271 00000 n 
-0000142319 00000 n 
-0000142435 00000 n 
-0000142470 00000 n 
-0000142505 00000 n 
-0000142540 00000 n 
-0000142575 00000 n 
-0000142610 00000 n 
-0000142645 00000 n 
-0000142680 00000 n 
+0000046219 00000 n 
+0000046409 00000 n 
+0000046802 00000 n 
+0000046994 00000 n 
+0000047186 00000 n 
+0000047378 00000 n 
+0000047570 00000 n 
+0000047762 00000 n 
+0000047954 00000 n 
+0000048146 00000 n 
+0000048338 00000 n 
+0000048530 00000 n 
+0000048722 00000 n 
+0000048914 00000 n 
+0000049106 00000 n 
+0000049298 00000 n 
+0000049490 00000 n 
+0000049666 00000 n 
+0000049858 00000 n 
+0000050050 00000 n 
+0000050242 00000 n 
+0000050434 00000 n 
+0000050617 00000 n 
+0000050800 00000 n 
+0000050995 00000 n 
+0000051190 00000 n 
+0000051385 00000 n 
+0000051580 00000 n 
+0000051758 00000 n 
+0000051950 00000 n 
+0000052142 00000 n 
+0000052334 00000 n 
+0000052526 00000 n 
+0000052983 00000 n 
+0000053093 00000 n 
+0000053388 00000 n 
+0000053503 00000 n 
+0000054112 00000 n 
+0000066409 00000 n 
+0000077573 00000 n 
+0000089590 00000 n 
+0000101395 00000 n 
+0000113158 00000 n 
+0000123261 00000 n 
+0000132710 00000 n 
+0000132758 00000 n 
+0000132874 00000 n 
+0000132909 00000 n 
+0000132944 00000 n 
+0000132979 00000 n 
+0000133014 00000 n 
+0000133049 00000 n 
+0000133084 00000 n 
+0000133119 00000 n 
 trailer
 <<
 /ID 
-[<11b32e9db0dd656e6e0185f0c3444db4><11b32e9db0dd656e6e0185f0c3444db4>]
+[<eeb7cf36dd255c036c2769a0973fb0f1><eeb7cf36dd255c036c2769a0973fb0f1>]
 % ReportLab generated PDF document -- digest (http://www.reportlab.com)
 
-/Info 297 0 R
-/Root 296 0 R
-/Size 317
+/Info 269 0 R
+/Root 268 0 R
+/Size 289
 >>
 startxref
-142715
+133154
 %%EOF

@@ -30,6 +30,12 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Retries {
   private static final Logger LOG = LoggerFactory.getLogger(Retries.class);
+  public static final Predicate<Throwable> ALWAYS_TRUE = new Predicate<Throwable>() {
+    @Override
+    public boolean apply(Throwable throwable) {
+      return true;
+    }
+  };
   private static final Predicate<Throwable> DEFAULT_PREDICATE = new Predicate<Throwable>() {
     @Override
     public boolean apply(Throwable throwable) {

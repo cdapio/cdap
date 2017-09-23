@@ -15,7 +15,9 @@
  */
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.WorkflowAppWithLocalDataset;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -23,27 +25,38 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;
+import org.apache.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -55,11 +68,19 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   private static Store store;
   private static CConfiguration cConf;
+  private static ProgramStateWriter programStateWriter;
+  private static ProgramRuntimeService runtimeService;
+  private static NamespaceAdmin namespaceAdmin;
+  private static DatasetFramework datasetFramework;
 
   @BeforeClass
   public static void setup() throws Exception {
     store = getInjector().getInstance(DefaultStore.class);
     cConf = getInjector().getInstance(CConfiguration.class);
+    programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
+    runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
+    namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    datasetFramework = getInjector().getInstance(DatasetFramework.class);
   }
 
   @Test
@@ -160,8 +181,10 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     // Create a run record fixer.
     // Set the start buffer time to -1 so that it fixes right away.
     // Also use a small tx batch size to validate the batching logic.
-    RunRecordCorrectorService fixer = new RunRecordCorrectorService(store, programStateWriter,
-                                                                    programRuntimeService, -1L, 5) { };
+    RunRecordCorrectorService fixer = new RunRecordCorrectorService(cConf, store, programStateWriter,
+                                                                    programRuntimeService,
+                                                                    namespaceAdmin, datasetFramework,
+                                                                    -1L, 5) { };
     fixer.fixRunRecords();
 
     // Validates all expected states
@@ -190,5 +213,66 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     RunRecordMeta runRecord = store.getRun(programRunId.getParent(), programRunId.getRun());
     Assert.assertNotNull(runRecord);
     Assert.assertEquals(expectedStatus, runRecord.getStatus());
+  }
+
+  @Test
+  public void testLocalDatasetDeleteion() throws Exception {
+    // Create App with Flow and the deploy
+    HttpResponse response = deploy(WorkflowAppWithLocalDataset.class,
+                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    final ProgramId workflow = new NamespaceId(TEST_NAMESPACE1)
+      .app(WorkflowAppWithLocalDataset.APP_NAME)
+      .workflow(WorkflowAppWithLocalDataset.WORKFLOW_NAME);
+
+    startProgram(workflow.toId(), ImmutableMap.of("dataset.*.keep.local", "true"));
+
+    // Wait until we have a COMPLETED run record
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(workflow.toId(), ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
+    // Get the RunRecord
+    List<RunRecord> runRecords = getProgramRuns(workflow.toId(), ProgramRunStatus.COMPLETED);
+
+    Assert.assertEquals(1, runRecords.size());
+
+    String pid = runRecords.get(0).getPid();
+
+    // Get the local dataset specifications
+    final Map<String, String> properties = ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
+    Collection<DatasetSpecificationSummary> instances = datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1),
+                                                                                      properties);
+
+    Assert.assertEquals(1, instances.size());
+    DatasetSpecificationSummary summary = instances.iterator().next();
+    Assert.assertTrue(summary.getName().endsWith(pid));
+
+    // Update the dataset properties to remove keep.local so that local dataset deleter can delete it
+    Map<String, String> updatedProperties = new HashMap<>();
+    updatedProperties.putAll(summary.getProperties());
+    updatedProperties.remove(Constants.AppFabric.WORKFLOW_KEEP_LOCAL);
+    datasetFramework.updateInstance(new DatasetId(TEST_NAMESPACE1, summary.getName()),
+                                    DatasetProperties.of(updatedProperties));
+
+    // Start the local dataset deletion service now
+    CConfiguration testConf = CConfiguration.create();
+    // set threshold to 0 so that it will actually correct the record
+    testConf.set(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS, "1");
+    testConf.set(Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS, "1");
+    new LocalRunRecordCorrectorService(testConf, store, programStateWriter,
+                                       runtimeService, namespaceAdmin, datasetFramework).startUp();
+//
+    // Wait for the deletion of the local dataset
+    Tasks.waitFor(0, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1), properties).size();
+      }
+    }, 30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
   }
 }
