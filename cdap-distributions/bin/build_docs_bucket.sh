@@ -44,7 +44,7 @@ TARGET_DIR=${DOCS_HOME}/target
 
 S3_BUCKET=${S3_BUCKET:-docs.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-cdap} # No leading or trailing slashes
-VERSION=${VERSION:-4.3.1-SNAPSHOT}
+VERSION=${VERSION:-4.3.1}
 
 function die() { __code=${2:-1}; echo "[ERROR] ${1}" >&2; exit ${__code}; };
 
