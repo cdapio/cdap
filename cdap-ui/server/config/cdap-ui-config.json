@@ -2,7 +2,7 @@
   "tracker": {
     "artifact": {
       "name": "tracker",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "scope": "SYSTEM"
     },
     "appId": "_Tracker",
@@ -12,7 +12,7 @@
   "navigator": {
     "artifact": {
       "name": "navigator",
-      "version": "0.5.0",
+      "version": "0.5.2",
       "scope": "SYSTEM"
     },
     "appId": "_ClouderaNavigator",
