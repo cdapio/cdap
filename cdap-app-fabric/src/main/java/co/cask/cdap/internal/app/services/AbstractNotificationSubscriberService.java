@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -92,7 +93,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
   }
@@ -100,6 +101,13 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   @Override
   protected void shutDown() {
     stopping = true;
+  }
+
+  /**
+   * Returns the messaging context.
+   */
+  protected MessagingContext getMessagingContext() {
+    return messagingContext;
   }
 
   /**
@@ -152,10 +160,11 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     /**
      * Processes a set of notifications.
-     *  @param context the dataset context
+     * @param context the dataset context
      * @param notifications an {@link Iterator} of {@link Notification} to be processed.
      */
-    protected abstract void processNotifications(DatasetContext context, NotificationIterator notifications);
+    protected abstract void processNotifications(DatasetContext context, NotificationIterator notifications)
+      throws Exception;
 
     /**
      * Persists the message id to storage. Note that this method is already executed inside a transaction.
@@ -199,7 +208,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
             }
           });
         }
-      }, retryStrategy);
+      }, retryStrategy, Retries.ALWAYS_TRUE); // retry on any exceptions thrown
     }
 
     /**

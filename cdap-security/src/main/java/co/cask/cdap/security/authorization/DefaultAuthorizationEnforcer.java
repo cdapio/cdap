@@ -17,23 +17,21 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authentication.util.KerberosName;
+import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +49,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   private final AuthorizerInstantiator authorizerInstantiator;
   @Nullable
   private final Principal masterUser;
+  private final int logTimeTakenAsWarn;
 
   @Inject
   DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
@@ -58,6 +57,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     this.authorizerInstantiator = authorizerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
+    this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
   }
 
   @Override
@@ -84,7 +84,23 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
 
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
     LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
-    Set<? extends EntityId> moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
+    // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
+    // singleton we don't want the stopwatch instance to get re-used across multiple calls.
+    StopWatch watch = new StopWatch();
+    watch.start();
+    Set<? extends EntityId> moreVisibleEntities;
+    try {
+      moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
+    } finally {
+      watch.stop();
+      long timeTaken = watch.getTime();
+      String logLine = "Checked visibility of {} for principal {}. Time spent in visibility check was {} ms.";
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine,  difference, principal, timeTaken);
+      } else {
+        LOG.trace(logLine,  difference, principal, timeTaken);
+      }
+    }
     visibleEntities.addAll(moreVisibleEntities);
     LOG.trace("Getting {} as visible entities", visibleEntities);
     return Collections.unmodifiableSet(visibleEntities);
@@ -95,8 +111,23 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
-    LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
-    authorizerInstantiator.get().enforce(entity, principal, actions);
+    LOG.trace("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
+    // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
+    // singleton we don't want the stopwatch instance to get re-used across multiple calls.
+    StopWatch watch = new StopWatch();
+    watch.start();
+    try {
+      authorizerInstantiator.get().enforce(entity, principal, actions);
+    } finally {
+      watch.stop();
+      long timeTaken = watch.getTime();
+      String logLine = "Enforced actions {} on {} for principal {}. Time spent in enforcement was {} ms.";
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine, actions, entity, principal, watch.getTime());
+      } else {
+        LOG.trace(logLine, actions, entity, principal, watch.getTime());
+      }
+    }
   }
 
   private boolean isAccessingSystemNSAsMasterUser(EntityId entityId, Principal principal) {

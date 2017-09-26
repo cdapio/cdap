@@ -42,12 +42,14 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.InMemoryOwnerStore;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.InMemoryNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
@@ -73,10 +75,13 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static NamespaceStore namespaceStore;
   private static NamespaceAdmin namespaceAdmin;
+  private static Authorizer authorizer;
+  private static StreamFileJanitor janitor;
 
   @BeforeClass
   public static void init() throws IOException {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    setupAuthzConfig();
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -98,7 +103,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new ViewAdminModules().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getNoOpModule(),
+      new AuthenticationContextModules().getMasterModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
@@ -122,8 +127,11 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
+    janitor = injector.getInstance(StreamFileJanitor.class);
+
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     streamCoordinatorClient.startAndWait();
   }
 
@@ -160,6 +168,16 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected CConfiguration getCConfiguration() {
     return cConf;
+  }
+
+  @Override
+  protected Authorizer getAuthorizer() {
+    return authorizer;
+  }
+
+  @Override
+  protected StreamFileJanitor getJanitor() {
+    return janitor;
   }
 
   @Override

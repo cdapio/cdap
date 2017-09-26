@@ -31,6 +31,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.StreamPropertyListener;
@@ -59,6 +60,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
@@ -120,7 +122,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Inject
   public DistributedStreamService(CConfiguration cConf,
-                                  StreamAdmin streamAdmin,
+                                  @Named(StreamAdminModules.NOAUTH_STREAM_ADMIN) StreamAdmin streamAdmin,
                                   StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
                                   ZKClient zkClient,

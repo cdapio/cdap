@@ -355,6 +355,39 @@ These metrics are available for the CDAP transaction service:
    * - ``system.{invalid, committing, committed, inprogress}.size``
      - Number of transactions of a specified type that are active
 
+These metrics are available for the CDAP transactional messaging service:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Transactional Messaging System Metric
+     - Description
+   * - ``system.persist.requested``
+     - Number of message persist requests
+   * - ``system.persist.success``
+     - Number of message persist requests succeeded
+   * - ``system.persist.failure``
+     - Number of message persist requests failed
+   * - ``system.persist.queue.size``
+     - Number of messages in the queue that are persisted in one batch
+   * - ``system.cache.add.requests``
+     - Number of entries requested to add to the messaging cache
+   * - ``system.cache.entries.added``
+     - Number of entries added to the messaging cache
+   * - ``system.cache.entries.removed``
+     - Number of entries removed from the messaging cache
+   * - ``system.cache.add.reduce.weight``
+     - Number of times that the cache reduce weight logic was executed while adding entries to the cache.
+       This number ideally should be very small for the cache to have good performance.
+   * - ``system.cache.scan.reduce.weight``
+     - Number of times that the cache reduce weight logic was executed while scanning the cache.
+       This number ideally should be relative small and steady over time.
+   * - ``system.cache.scan.requests``
+     - Number of scan requests on the messaging cache
+   * - ``system.cache.weight``
+     - The current weight of the cache, measured in bytes
+
 These metrics are available for the YARN cluster resources:
 
 .. list-table::

@@ -48,6 +48,12 @@
   <logger name="org.apache.twill" level="INFO"/>
   <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
   <logger name="co.cask.cdap" level="INFO"/>
+  <!--
+    The netty http library logs an ERROR always if it is raised
+    not from user handler, which usually is due to network error.
+    Disabling the log to avoid flooding.
+  -->
+  <logger name="co.cask.http.HttpDispatcher" level="OFF"/>
 
   <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
   <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>

@@ -30,7 +30,6 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
-import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -62,18 +61,15 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
   private ExecutorService taskExecutorService;
-  private ProgramNotificationSubscriberService programNotificationSubscriberService;
 
   @Inject
   ScheduleNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                        MetricsCollectionService metricsCollectionService,
-                                        ProgramNotificationSubscriberService programNotificationSubscriberService) {
+                                        MetricsCollectionService metricsCollectionService) {
     super(messagingService, cConf, datasetFramework, txClient, metricsCollectionService);
 
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
-    this.programNotificationSubscriberService = programNotificationSubscriberService;
   }
 
   @Override
@@ -89,7 +85,6 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       cConf.getInt(Constants.Scheduler.STREAM_SIZE_EVENT_FETCH_SIZE)));
     taskExecutorService.submit(new DataEventSubscriberRunnable());
     taskExecutorService.submit(new ProgramStatusEventSubscriberRunnable());
-    programNotificationSubscriberService.startAndWait();
   }
 
   @Override
@@ -105,7 +100,6 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
         taskExecutorService.shutdownNow();
       }
     }
-    programNotificationSubscriberService.stopAndWait();
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
@@ -227,10 +221,8 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   private final class ProgramStatusEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
 
     ProgramStatusEventSubscriberRunnable() {
-      // Currently program status are published non-transactionally
-      // However, after refactoring to have it publish from AppMetaStore update, then it should be transactional.
-      // Hence for future proof, just fetch transactionally.
-      super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+      // Fetch transactionally since publishing from AppMetadataStore is transactional.
+      super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
             cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true);
     }
 

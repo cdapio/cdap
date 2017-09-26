@@ -32,6 +32,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -52,6 +53,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -95,6 +97,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private final Store store;
   private final ProgramResourceReporter resourceReporter;
   private final Impersonator impersonator;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner, Store store,
@@ -111,13 +114,31 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     this.store = store;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
     this.impersonator = impersonator;
+    this.programStateWriter = programStateWriter;
   }
 
   @Nullable
   @Override
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId) {
+  protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId) {
     if (controller instanceof AbstractTwillProgramController) {
       RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
+
+      // Add a listener that publishes KILLED status notification when the YARN application is killed in case that
+      // the KILLED status notification is not published from the YARN application container, so we don't need to wait
+      // for the run record corrector to mark the status as KILLED.
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+          if (currentState == ProgramController.State.KILLED) {
+            killed();
+          }
+        }
+
+        @Override
+        public void killed() {
+          programStateWriter.killed(programId.run(controller.getRunId()));
+        }
+      }, MoreExecutors.sameThreadExecutor());
       return new SimpleRuntimeInfo(controller, programId, twillRunId);
     }
     return null;

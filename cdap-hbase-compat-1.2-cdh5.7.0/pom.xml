@@ -36,6 +36,11 @@
   </repositories>
 
   <dependencies>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-hbase-compat-base</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   <dependency>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-common</artifactId>
@@ -47,11 +52,6 @@
     <version>${project.version}</version>
     <type>test-jar</type>
     <scope>test</scope>
-  </dependency>
-  <dependency>
-    <groupId>co.cask.cdap</groupId>
-    <artifactId>cdap-hbase-compat-base</artifactId>
-    <version>${project.version}</version>
   </dependency>
   <dependency>
     <groupId>co.cask.cdap</groupId>

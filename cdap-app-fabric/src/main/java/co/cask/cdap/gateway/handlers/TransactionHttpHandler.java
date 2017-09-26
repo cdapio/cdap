@@ -37,6 +37,8 @@ import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.txprune.RegionPruneInfo;
+import org.apache.tephra.txprune.hbase.InvalidListPruningDebug;
+import org.apache.tephra.txprune.hbase.RegionsAtTime;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -45,12 +47,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.ws.rs.DefaultValue;
@@ -68,13 +67,13 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionHttpHandler.class);
   private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
   private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
+  private static final String PRUNING_TOOL_CLASS_NAME = "org.apache.tephra.hbase.txprune.InvalidListPruningDebugTool";
 
   private final Configuration hConf;
   private final CConfiguration cConf;
   private final TransactionSystemClient txClient;
   private final boolean pruneEnable;
-  private Class<?> debugClazz;
-  private Object debugObject;
+  private volatile InvalidListPruningDebug pruningDebug;
 
   @Inject
   public TransactionHttpHandler(Configuration hConf, CConfiguration cConf, TransactionSystemClient txClient) {
@@ -226,20 +225,17 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/regions/{region-name}")
   @GET
   public void getPruneInfo(HttpRequest request, HttpResponder responder, @PathParam("region-name") String regionName) {
-    if (!initializePruningDebug(responder)) {
-      return;
-    }
-
     try {
-      Method method = debugClazz.getMethod("getRegionPruneInfo", String.class);
-      method.setAccessible(true);
-      Object response = method.invoke(debugObject, regionName);
-      if (response == null) {
+      if (!initializePruningDebug(responder)) {
+        return;
+      }
+
+      RegionPruneInfo pruneInfo = pruningDebug.getRegionPruneInfo(regionName);
+      if (pruneInfo == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              "No prune upper bound has been registered for this region yet.");
         return;
       }
-      RegionPruneInfo pruneInfo = (RegionPruneInfo) response;
       responder.sendJson(HttpResponseStatus.OK, pruneInfo);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -250,21 +246,13 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/regions")
   @GET
   public void getTimeRegions(HttpRequest request, HttpResponder responder,
-                             @QueryParam("time") @DefaultValue("9223372036854775807") long time) {
-    if (!initializePruningDebug(responder)) {
-      return;
-    }
-
+                             @QueryParam("time") @DefaultValue("now") String time) {
     try {
-      Method method = debugClazz.getMethod("getRegionsOnOrBeforeTime", Long.class);
-      method.setAccessible(true);
-      Object response = method.invoke(debugObject, time);
-      if (response == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("No regions have been registered on or before time %d", time));
+      if (!initializePruningDebug(responder)) {
         return;
       }
-      Map<Long, SortedSet<String>> timeRegionInfo = (Map<Long, SortedSet<String>>) response;
+
+      RegionsAtTime timeRegionInfo = pruningDebug.getRegionsOnOrBeforeTime(time);
       responder.sendJson(HttpResponseStatus.OK, timeRegionInfo);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -275,16 +263,14 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/regions/idle")
   @GET
   public void getIdleRegions(HttpRequest request, HttpResponder responder,
-                             @QueryParam("limit") @DefaultValue("-1") int numRegions) {
-    if (!initializePruningDebug(responder)) {
-      return;
-    }
-
+                             @QueryParam("limit") @DefaultValue("-1") int numRegions,
+                             @QueryParam("time") @DefaultValue("now") String time) {
     try {
-      Method method = debugClazz.getMethod("getIdleRegions", Integer.class);
-      method.setAccessible(true);
-      Object response = method.invoke(debugObject, numRegions);
-      Queue<RegionPruneInfo> pruneInfos = (Queue<RegionPruneInfo>) response;
+      if (!initializePruningDebug(responder)) {
+        return;
+      }
+
+      SortedSet<? extends RegionPruneInfo> pruneInfos = pruningDebug.getIdleRegions(numRegions, time);
       responder.sendJson(HttpResponseStatus.OK, pruneInfos);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -295,16 +281,14 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/regions/block")
   @GET
   public void getRegionsToBeCompacted(HttpRequest request, HttpResponder responder,
-                                      @QueryParam("limit") @DefaultValue("-1") int numRegions) {
-    if (!initializePruningDebug(responder)) {
-      return;
-    }
-
+                                      @QueryParam("limit") @DefaultValue("-1") int numRegions,
+                                      @QueryParam("time") @DefaultValue("now") String time) {
     try {
-      Method method = debugClazz.getMethod("getRegionsToBeCompacted", Integer.class);
-      method.setAccessible(true);
-      Object response = method.invoke(debugObject, numRegions);
-      Set<String> regionNames = (Set<String>) response;
+      if (!initializePruningDebug(responder)) {
+        return;
+      }
+
+      Set<String> regionNames = pruningDebug.getRegionsToBeCompacted(numRegions, time);
       responder.sendJson(HttpResponseStatus.OK, regionNames);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -319,45 +303,51 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     synchronized (this) {
-      if (debugClazz == null || debugObject == null) {
-        try {
-          this.debugClazz = getClass().getClassLoader()
-            .loadClass("org.apache.tephra.hbase.txprune.InvalidListPruningDebug");
-          this.debugObject = debugClazz.newInstance();
-          for (Map.Entry<String, String> entry : cConf) {
-            hConf.set(entry.getKey(), entry.getValue());
-          }
-          Method initMethod = debugClazz.getMethod("initialize", Configuration.class);
-          initMethod.setAccessible(true);
-          initMethod.invoke(debugObject, hConf);
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
-          LOG.debug("InvalidListPruningDebug class not found. Pruning Debug endpoints will not work.", ex);
-          this.debugClazz = null;
-        } catch (NoSuchMethodException | InvocationTargetException ex) {
-          LOG.debug("Initialize method was not found in InvalidListPruningDebug. Debug endpoints will not work.", ex);
-          this.debugClazz = null;
-        }
+      if (pruningDebug != null) {
+        return true;
       }
+
+      // Copy over both cConf and hConf into the pruning configuration
+      Configuration configuration = new Configuration();
+      configuration.clear();
+      // First copy hConf and then cConf so that we retain the values from cConf for any parameters defined in both
+      copyConf(configuration, hConf);
+      copyConf(configuration, cConf);
+
+      try {
+        @SuppressWarnings("unchecked")
+        Class<? extends InvalidListPruningDebug> clazz =
+          (Class<? extends InvalidListPruningDebug>) getClass().getClassLoader().loadClass(PRUNING_TOOL_CLASS_NAME);
+        this.pruningDebug = clazz.newInstance();
+        pruningDebug.initialize(configuration);
+      } catch (Exception e) {
+        LOG.error("Not able to instantiate pruning debug class", e);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                             "Cannot instantiate the pruning debug tool: " + e.getMessage());
+        pruningDebug = null;
+        return false;
+      }
+      return true;
     }
-    return true;
   }
 
   @Override
   public void destroy(HandlerContext context) {
     super.destroy(context);
     synchronized (this) {
-      if (debugClazz != null && debugObject != null) {
+      if (pruningDebug != null) {
         try {
-          Method destroyMethod = debugClazz.getMethod("destroy");
-          destroyMethod.setAccessible(true);
-          destroyMethod.invoke(debugObject);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-          LOG.debug("Destroy method was not found in InvalidListPruningDebug.", e);
-        } finally {
-          debugClazz = null;
-          debugObject = null;
+          pruningDebug.destroy();
+        } catch (IOException e) {
+          LOG.error("Error destroying pruning debug instance", e);
         }
       }
+    }
+  }
+
+  private void copyConf(Configuration to, Iterable<Map.Entry<String, String>> from) {
+    for (Map.Entry<String, String> entry : from) {
+      to.set(entry.getKey(), entry.getValue());
     }
   }
 }

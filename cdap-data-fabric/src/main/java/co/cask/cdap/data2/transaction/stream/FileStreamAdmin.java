@@ -118,8 +118,6 @@ public class FileStreamAdmin implements StreamAdmin {
   private final ViewAdmin viewAdmin;
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
-  private final AuthorizationEnforcer authorizationEnforcer;
-  private final AuthenticationContext authenticationContext;
 
   private ExploreFacade exploreFacade;
   private AuditPublisher auditPublisher;
@@ -137,9 +135,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          ExploreTableNaming tableNaming,
                          MetadataStore metadataStore,
                          ViewAdmin viewAdmin,
-                         Impersonator impersonator,
-                         AuthenticationContext authenticationContext,
-                         AuthorizationEnforcer authorizationEnforcer) {
+                         Impersonator impersonator) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -154,8 +150,6 @@ public class FileStreamAdmin implements StreamAdmin {
     this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
     this.impersonator = impersonator;
-    this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   @SuppressWarnings("unused")
@@ -185,16 +179,9 @@ public class FileStreamAdmin implements StreamAdmin {
       }
     });
 
-    Map<StreamId, Location> streams = new HashMap<>();
     for (Location location : locations) {
       StreamId streamId = namespace.stream(StreamUtils.getStreamNameFromLocation(location));
-      ensureAccess(streamId, Action.ADMIN);
-      streams.put(streamId, location);
-    }
-
-    // authorization passed, we can do the drop
-    for (StreamId streamId : streams.keySet()) {
-      doDrop(streamId, streams.get(streamId));
+      doDrop(streamId, location);
     }
 
     // Also drop the state table if all the streams are deleted
@@ -287,15 +274,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public List<StreamSpecification> listStreams(final NamespaceId namespaceId) throws Exception {
-    List<StreamSpecification> streamSpecifications = streamMetaStore.listStreams(namespaceId);
-    return AuthorizationUtil.isVisible(streamSpecifications, authorizationEnforcer,
-                                       authenticationContext.getPrincipal(),
-                                       new Function<StreamSpecification, EntityId>() {
-                                         @Override
-                                         public EntityId apply(StreamSpecification input) {
-                                           return namespaceId.stream(input.getName());
-                                         }
-                                       }, null);
+    return streamMetaStore.listStreams(namespaceId);
   }
 
   @Override
@@ -332,9 +311,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamProperties getProperties(StreamId streamId) throws Exception {
-    // User should have at least one privilege to read stream properties
-    AuthorizationUtil.ensureOnePrivilege(streamId, EnumSet.allOf(Action.class), authorizationEnforcer,
-                                         authenticationContext.getPrincipal());
     // get the principal which will be used for impersonation to display as owner
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
@@ -346,8 +322,6 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public void updateConfig(final StreamId streamId, final StreamProperties properties) throws Exception {
     Location streamLocation;
-    // User should have admin access on the stream to update its configuration
-    ensureAccess(streamId, Action.ADMIN);
     streamLocation = impersonator.doAs(streamId.getParent(), new Callable<Location>() {
       @Override
       public Location call() throws Exception {
@@ -387,7 +361,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public boolean exists(final StreamId streamId) throws Exception {
-    AuthorizationUtil.ensureAccess(streamId, authorizationEnforcer, authenticationContext.getPrincipal());
     try {
       boolean metaExists = streamMetaStore.streamExists(streamId);
       if (!metaExists) {
@@ -425,15 +398,6 @@ public class FileStreamAdmin implements StreamAdmin {
       // stream create is an idempotent operation as of now so just return null and don't do anything
       return null;
     }
-
-    // need to enforce on the principal id if impersonation is involved
-    KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, streamId.getNamespaceId(),
-                                                                        specifiedOwnerPrincipal);
-    Principal requestingUser = authenticationContext.getPrincipal();
-    if (effectiveOwner != null) {
-      authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
-    }
-    ensureAccess(streamId, Action.ADMIN);
 
     // if the stream didn't exist then add the owner information
     if (specifiedOwnerPrincipal != null) {
@@ -484,8 +448,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void truncate(final StreamId streamId) throws Exception {
-    // User should have ADMIN access to truncate the stream
-    ensureAccess(streamId, Action.ADMIN);
     impersonator.doAs(streamId, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -497,8 +459,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void drop(final StreamId streamId) throws Exception {
-    // User should have ADMIN access to drop the stream
-    ensureAccess(streamId, Action.ADMIN);
     Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
       @Override
       public Location call() throws Exception {
@@ -843,10 +803,5 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private void publishAudit(StreamId stream, AuditType auditType) {
     AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
-  }
-
-  private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(entityId, principal, action);
   }
 }

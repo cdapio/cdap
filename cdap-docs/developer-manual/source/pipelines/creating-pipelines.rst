@@ -181,12 +181,12 @@ section on :ref:`developing pipelines: creating a batch pipeline
 
 Scheduling
 ----------
-From with the CDAP Studio, you can set a schedule for a batch pipeline that
+With the CDAP Studio, you can set a schedule for a batch pipeline that
 will be used to run it. Note that as a schedule is set as part of the pipeline
 configuration, a physical pipeline's schedule cannot be altered except by creating a new
 pipeline with a new schedule.
 
-Two interfaces are available: 
+Two interfaces are available to create a schedule by time:
 
 - A *basic* interface, where you select the time increment (every minute, hour, day, week,
   month, year) and the amount after the increment, as appropriate:
@@ -211,6 +211,94 @@ Two interfaces are available:
 - An *advanced* interface, which provides you access to the same interface as used in the
   underlying ``cron`` program. The details of that program will depend on the operating
   system used by the host of the CDAP Master process.
+
+With the CDAP Studio, you can also create a schedule that launches a pipeline when another pipeline is completed,
+failed, or killed. Arguments and plugin properties from the triggering pipeline
+can be passed to the triggered pipeline as arguments.
+
+:ref:`HTTP request <http-restful-api-lifecycle-schedule-add>` can also be used to create such schedule.
+Arguments and plugin properties from the triggering pipeline can be passed to the triggered pipeline by setting
+a special schedule property. Set the 'triggering.properties.mapping' property to the stringified value of
+the following JSON object::
+
+    {
+      "arguments": [
+        {
+          "source": <runtime argument key in the triggering pipeline>,
+          "target": <runtime argument key in the current pipeline>
+        },
+        ...
+      ],
+      "pluginProperties": [
+        {
+          "stageName": <stage name in the triggering pipeline>,
+          "source": <plugin property key in the given stage in the triggering pipeline>,
+          "target": <runtime argument key in the current pipeline>
+        },
+        ...
+      ]
+    }
+
+For example, suppose you have pipeline 'X' in namespace 'nsX' and pipeline 'Y' in namespace 'nsY'.
+Pipeline 'X' is configured to write to a table set by the 'output' argument, and pipeline 'Y' is configured to read
+from a table set by the 'input' argument. You want to create a schedule so that pipeline 'Y' is run whenever
+pipeline 'X' completes, with pipeline 'Y' configured to read from the output table of pipeline 'X'. In other words,
+if pipeline 'X' completes with argument 'output'='xyTable', you want pipeline 'Y' to run with argument
+'input'='xyTable'. To do this, the 'triggering.properties.mapping' schedule property should contain
+the 'arguments' field::
+
+    "arguments": [
+      {
+        "source": "output",
+        "target": "input"
+      }
+    ]
+
+In addition, you also want pipeline 'Y' to use the value set by the 'row' argument as the row key field of
+the input table, and this row key field should be same as in the output table of pipeline 'X'. In other words,
+if the row key field defined in the plugin property 'schema.row.field' at stage 'TableSink' of pipeline 'X' is 'id',
+you want pipeline 'Y' to run with argument 'row'='id'. To do this, the 'triggering.properties.mapping'
+schedule property should contain the 'pluginProperties' field::
+
+    "pluginProperties": [
+      {
+        "stageName": "TableSink"
+        "source": "schema.row.field",
+        "target": "row"
+      }
+    ]
+
+and the full HTTP PUT request body will be::
+
+    {
+      "name": "SampleSchedule",
+      "description": "A schedule that launches pipeline Y when pipeline X completes",
+      "namespace": "nsY",
+      "application": "Y",
+      "applicationVersion": "-SNAPSHOT",
+      "program": {
+        "programName": "SmartWorkflow",
+        "programType": "WORKFLOW"
+      },
+      "properties": {
+        "triggering.properties.mapping": "{\"arguments\":[{\"source\":\"output\",\"target\":\"input\"}],\"pluginProperties\":[{\"stageName\":\"TableSink\",\"source\":\"schema.row.field\",\"target\":\"row\"}]}",
+        ...
+      },
+      "constraints": [],
+      "trigger": {
+        "programId": {
+            "namespace": "nsX",
+            "application": "X",
+            "version": "-SNAPSHOT",
+            "type": "WORKFLOW",
+            "entity": "PROGRAM",
+            "program": "SmartWorkflow"
+        },
+        "programStatuses": ["COMPLETED"],
+        "type": "PROGRAM_STATUS"
+      },
+      "timeoutMillis": 86400000
+    }
 
 Engine
 ------

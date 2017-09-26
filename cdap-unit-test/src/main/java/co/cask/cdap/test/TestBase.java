@@ -80,6 +80,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
+import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -189,6 +190,7 @@ public class TestBase {
   private static boolean firstInit = true;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
+  private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static Scheduler scheduler;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
@@ -308,6 +310,8 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
+    programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
+    programNotificationSubscriberService.startAndWait();
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
@@ -447,7 +451,6 @@ public class TestBase {
         protected void configure() {
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
           // we inject a TxSystemClient that creates transaction objects with additional fields for validation
@@ -488,6 +491,7 @@ public class TestBase {
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
+    programNotificationSubscriberService.stopAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }

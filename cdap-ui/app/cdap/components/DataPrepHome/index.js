@@ -177,6 +177,9 @@ export default class DataPrepHome extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     this.workspaceListRetries = 0;
+    DataPrepStore.dispatch({
+      type: DataPrepActions.reset
+    });
     this.updateWorkspaceListRetry(namespace);
   }
 

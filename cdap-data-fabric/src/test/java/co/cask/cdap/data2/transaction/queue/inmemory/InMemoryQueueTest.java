@@ -37,6 +37,7 @@ import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionManager;
@@ -72,6 +73,9 @@ public class InMemoryQueueTest extends QueueTest {
           protected void configure() {
             // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
             bind(StreamAdmin.class).to(InMemoryStreamAdmin.class);
+            bind(StreamAdmin.class)
+              .annotatedWith(Names.named(StreamAdminModules.NOAUTH_STREAM_ADMIN))
+              .to(InMemoryStreamAdmin.class);
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
           }
         }));

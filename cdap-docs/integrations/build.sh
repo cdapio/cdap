@@ -25,10 +25,10 @@ function download_includes() {
   local target_includes_dir=${1}
   local branch
   if [ "x${LOCAL_INCLUDES}" == "x${TRUE}" ]; then
-    echo_red_bold "Copying local copy of Apache Sentry File..."
+    echo_red_bold "Copying local copy of Apache Sentry and Ranger File..."
     local base_source="file://${PROJECT_PATH}/../cdap-security-extn/"
   else
-    echo_red_bold "Downloading Apache Sentry File from GitHub repo caskdata/cdap-security-extn..."
+    echo_red_bold "Downloading Apache Sentry and Ranger File from GitHub repo caskdata/cdap-security-extn..."
     local base_source="https://raw.githubusercontent.com/caskdata/cdap-security-extn/"
     if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
       local branch="develop/"
@@ -39,6 +39,9 @@ function download_includes() {
   local file_source="${base_source}${branch}cdap-sentry/cdap-sentry-extension/"
   # Download Apache Sentry File
   download_file ${target_includes_dir} ${file_source} README.rst bcf5148f45a778a7bc9f842ba84cbc10 cdap-sentry-extension-readme.txt
+  # Download Apache Ranger File
+  local file_source="${base_source}${branch}cdap-ranger/"
+  download_file ${target_includes_dir} ${file_source} README.rst e3b2b66c8f54b1909282234dd53d63e2 cdap-ranger-extension-readme.txt
 }
 
 run_command ${1}

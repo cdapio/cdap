@@ -34,6 +34,11 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-hbase-compat-base</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -47,11 +52,6 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-hbase-compat-base</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

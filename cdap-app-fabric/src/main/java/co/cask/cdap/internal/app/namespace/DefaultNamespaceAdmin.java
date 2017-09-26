@@ -33,7 +33,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -48,6 +47,7 @@ import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -67,7 +67,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -366,14 +365,20 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public List<NamespaceMeta> list() throws Exception {
     List<NamespaceMeta> namespaces = nsStore.list();
+    final Principal principal = authenticationContext.getPrincipal();
 
-    return AuthorizationUtil.isVisible(namespaces, authorizationEnforcer, authenticationContext.getPrincipal(),
+    return AuthorizationUtil.isVisible(namespaces, authorizationEnforcer, principal,
                                        new Function<NamespaceMeta, EntityId>() {
                                          @Override
                                          public EntityId apply(NamespaceMeta input) {
                                            return input.getNamespaceId();
                                          }
-                                       }, null);
+                                       }, new Predicate<NamespaceMeta>() {
+                                         @Override
+                                         public boolean apply(NamespaceMeta input) {
+                                           return principal.getName().equals(input.getConfig().getPrincipal());
+                                         }
+                                       });
   }
 
   /**
@@ -387,24 +392,42 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
+
+    boolean isAuthorzied = true;
     // if the principal is not same as cdap master principal do the authorization check. Otherwise, skip the auth check
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
-      ensureAccess(namespaceId);
+      try {
+        AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
+      } catch (UnauthorizedException e) {
+        isAuthorzied = false;
+      }
     }
 
-    NamespaceMeta namespaceMeta;
+    NamespaceMeta namespaceMeta = null;
     try {
       namespaceMeta = namespaceMetaCache.get(namespaceId);
-    } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
-        cause instanceof UnauthorizedException) {
-        throw (Exception) cause;
+    } catch (Exception e) {
+      if (isAuthorzied) {
+        Throwable cause = e.getCause();
+        if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
+          cause instanceof UnauthorizedException) {
+          throw (Exception) cause;
+        }
+        throw e;
       }
-      throw e;
     }
 
+    // If the requesting user is same as namespace owner, we do not care about if the user is authorized or not
+    if (namespaceMeta != null && principal.getName().equals(namespaceMeta.getConfig().getPrincipal())) {
+      return namespaceMeta;
+    }
+
+    if (!isAuthorzied) {
+      throw new UnauthorizedException(
+        String.format("Namespace %s is not visible to principal %s since the principal does not have any " +
+                        "privilege on this namespace or any entity in this namespace.", namespaceId, principal));
+    }
     return namespaceMeta;
   }
 
@@ -417,16 +440,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public boolean exists(NamespaceId namespaceId) throws Exception {
     try {
-      ensureAccess(namespaceId);
       // here we are not calling get(Id.Namespace namespaceId) method as we don't want authorization enforcement for
       // exists
-      namespaceMetaCache.get(namespaceId);
+      get(namespaceId);
       return true;
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof NamespaceNotFoundException) {
-        return false;
-      }
-      throw e;
+    } catch (NamespaceNotFoundException e) {
+      return false;
     }
   }
 
@@ -454,16 +473,5 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
-  }
-
-  private void ensureAccess(NamespaceId namespaceId) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    try {
-      AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
-    } catch (UnauthorizedException e) {
-      throw new UnauthorizedException(
-        String.format("Namespace %s is not visible to principal %s since the principal does not have any " +
-                        "privilege on this namespace or any entity in this namespace.", namespaceId, principal));
-    }
   }
 }
