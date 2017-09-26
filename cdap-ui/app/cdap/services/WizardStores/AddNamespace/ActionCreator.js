@@ -50,10 +50,6 @@ const PublishNamespace = () => {
     putParams["config"]["principal"] = state.security.principal;
   }
 
-  if (state.preferences.schedulerQueueName) {
-    putParams["config"]["scheduluer.queue.name"] = state.preferences.schedulerQueueName;
-  }
-
   return MyNamespaceApi
     .create(urlParams, putParams);
 };
