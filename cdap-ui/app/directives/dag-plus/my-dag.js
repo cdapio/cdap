@@ -32,7 +32,7 @@ commonModule.directive('myDagPlus', function() {
       showMetrics: '=',
       disableMetricsClick: '=',
       metricsData: '=',
-      nodePopoverTemplate: '@',
+      metricsPopoverTemplate: '@',
       disableNodeClick: '=',
       separation: '=?',
       previewMode: '=?'

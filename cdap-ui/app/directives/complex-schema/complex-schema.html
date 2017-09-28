@@ -17,7 +17,7 @@
 <div class="complex-schema-container" ng-class="{ 'disabled': ComplexSchema.isDisabled }">
   <div ng-if="!ComplexSchema.emptySchema || !ComplexSchema.isDisabled">
     <div class="clearfix"
-         ng-if="::!ComplexSchema.hideHeader">
+         ng-if="::!ComplexSchema.isRecordSchema">
       <div class="input-column header">
         <h4>Name</h4>
       </div>

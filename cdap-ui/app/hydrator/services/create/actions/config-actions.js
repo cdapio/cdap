@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,18 +15,8 @@
  */
 
 class HydratorPlusPlusConfigActions {
-  constructor(HydratorPlusPlusConfigDispatcher, myPipelineApi, $state, HydratorPlusPlusConfigStore, mySettings, HydratorPlusPlusConsoleActions, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
-    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
-    this.mySettings = mySettings;
-    this.$state = $state;
-    this.myPipelineApi = myPipelineApi;
-    this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
-    this.EventPipe = EventPipe;
-    this.myAppsApi = myAppsApi;
-    this.GLOBALS = GLOBALS;
-    this.myHelpers = myHelpers;
-    this.$stateParams = $stateParams;
-
+  constructor(HydratorPlusPlusConfigDispatcher) {
+    'ngInject';
     this.dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
   }
   initializeConfigStore(config) {
@@ -93,86 +83,9 @@ class HydratorPlusPlusConfigActions {
     this.dispatcher.dispatch('onSetMaxConcurrentRuns', num);
   }
   publishPipeline() {
-    this.HydratorPlusPlusConsoleActions.resetMessages();
-    let error = this.HydratorPlusPlusConfigStore.validateState(true);
-
-    if (!error) { return; }
-    this.EventPipe.emit('showLoadingIcon', 'Deploying Pipeline...');
-
-    let removeFromUserDrafts = (adapterName) => {
-      let draftId = this.HydratorPlusPlusConfigStore.getState().__ui__.draftId;
-      this.mySettings
-        .get('hydratorDrafts', true)
-        .then(
-          (res) => {
-            var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, draftId);
-            if (savedDraft) {
-              delete res[this.$stateParams.namespace][draftId];
-              return this.mySettings.set('hydratorDrafts', res);
-            }
-          },
-          (err) => {
-            this.HydratorPlusPlusConsoleActions.addMessage([{
-              type: 'error',
-              content: err
-            }]);
-            return this.$q.reject(false);
-          }
-        )
-        .then(
-          () => {
-            this.EventPipe.emit('hideLoadingIcon.immediate');
-            this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
-            this.$state.go('hydrator.detail', { pipelineId: adapterName });
-          }
-        );
-    };
-
-    let publish = (pipelineName) => {
-      this.myPipelineApi.save(
-        {
-          namespace: this.$state.params.namespace,
-          pipeline: pipelineName
-        },
-        config
-      )
-      .$promise
-      .then(
-        removeFromUserDrafts.bind(this, pipelineName),
-        (err) => {
-          this.EventPipe.emit('hideLoadingIcon.immediate');
-          this.HydratorPlusPlusConsoleActions.addMessage([{
-            type: 'error',
-            content: angular.isObject(err) ? err.data : err
-          }]);
-        }
-      );
-    };
-
-
-    var config = this.HydratorPlusPlusConfigStore.getConfigForExport();
-
-    // Checking if Pipeline name already exist
-    this.myAppsApi
-      .list({ namespace: this.$state.params.namespace })
-      .$promise
-      .then( (apps) => {
-        var appNames = apps.map( (app) => { return app.name; } );
-
-        if (appNames.indexOf(config.name) !== -1) {
-          this.HydratorPlusPlusConsoleActions.addMessage([{
-            type: 'error',
-            content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
-          }]);
-          this.EventPipe.emit('hideLoadingIcon.immediate');
-        } else {
-          publish(config.name);
-        }
-      });
-
+    this.dispatcher.dispatch('onPublishPipeline');
   }
 }
 
-HydratorPlusPlusConfigActions.$inject = ['HydratorPlusPlusConfigDispatcher', 'myPipelineApi', '$state', 'HydratorPlusPlusConfigStore', 'mySettings', 'HydratorPlusPlusConsoleActions', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorPlusPlusConfigActions', HydratorPlusPlusConfigActions);

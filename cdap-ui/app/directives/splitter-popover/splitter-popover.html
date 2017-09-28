@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015-2017 Cask Data, Inc.
+  Copyright © 2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,13 @@
   the License.
 -->
 
-<my-dag-plus ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"
-  nodes="CanvasCtrl.nodes"
-  connections="CanvasCtrl.connections"
-  context="CanvasCtrl"
-  node-delete="CanvasCtrl.deleteNode",
-  separation="200"
-  preview-mode="CanvasCtrl.previewMode"
-></my-dag-plus>
+<div class="arrow"></div>
+<div class="popover-content">
+  <div ng-repeat="port in SplitterPopoverCtrl.ports">
+    <span class="port-name">{{ port.name | caskCapitalizeFilter }}</span>
+    <div class="endpoint-circle"
+          ng-class="['{{nodeName}}_port_{{port.name}}', {'disabled': isDisabled}]">
+      <div class="endpoint-caret" ng-if="!isDisabled"></div>
+    </div>
+  </div>
+</div>

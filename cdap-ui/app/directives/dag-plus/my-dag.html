@@ -111,14 +111,32 @@
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
             <div class="endpoint-circle"
+                  ng-if="node.type !== 'splittertransform'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'endpoint-circle-right': node.type === 'condition'}"
+                  ng-attr-id="{{node.type === 'condition' ? node.name + '_condition_true' : ''}}"
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
+            </div>
+            <div class="endpoint-circle node-splitter-endpoint"
+                  ng-if="node.type === 'splittertransform'"
+                  ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}">
+              <div class="node-spitter-num-ports"
+                    ng-if="node.outputSchema.length && node.outputSchema[0].name !== 'etlSchemaBody'"
+                    ng-bind="node.outputSchema.length">
+              </div>
+              <div class="node-splitter-popover"
+                    ng-if="node.outputSchema.length && node.outputSchema[0].name !== 'etlSchemaBody'"
+                    my-splitter-popover
+                    node-name="node.name"
+                    ports="node.outputSchema"
+                    is-disabled="DAGPlusPlusCtrl.isDisabled">
+              </div>
             </div>
             <div class="endpoint-circle endpoint-circle-bottom"
                   ng-if="node.type === 'condition'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
-                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
+                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
+                  ng-attr-id="{{node.name + '_condition_false'}}">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div ng-if="node.error">
@@ -175,7 +193,7 @@
               </div>
             </div>
             <div class="node-metrics"
-                  ng-if="DAGPlusPlusCtrl.isDisabled && node.type !== 'condition'">
+                  ng-if="DAGPlusPlusCtrl.isDisabled && node.type !== 'condition' && node.type !== 'splittertransform'">
               <my-node-metrics
                 on-click="DAGPlusPlusCtrl.onMetricsClick"
                 node="node"

@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -30,11 +30,17 @@
 
   <div class="row">
     <div class="col-xs-12">
-      <my-complex-schema
-        ng-model="GetSchemaModalController.schema"
-        is-disabled="true"
-        ng-if="GetSchemaModalController.schema && !GetSchemaModalController.error">
-      </my-complex-schema>
+      <div ng-repeat="schema in GetSchemaModalController.schemas"
+          class="get-schema-modal-schema">
+        <span ng-if="schema.name !== 'etlSchemaBody'">
+          {{schema.name | caskCapitalizeFilter}}
+        </span>
+        <my-complex-schema
+          ng-model="schema.schema"
+          is-disabled="true"
+          ng-if="schema.schema && !GetSchemaModalController.error">
+        </my-complex-schema>
+      </div>
 
       <p class="text-danger" ng-if="GetSchemaModalController.error">
         Error: {{ GetSchemaModalController.error }}
@@ -43,9 +49,9 @@
   </div>
 </div>
 
-<div class="modal-footer" ng-if="GetSchemaModalController.schema">
+<div class="modal-footer" ng-if="GetSchemaModalController.schemas">
   <button class="btn btn-blue"
-          ng-disabled="!GetSchemaModalController.schema"
+          ng-disabled="!GetSchemaModalController.schemas"
           ng-click="GetSchemaModalController.apply()">
     Apply
   </button>
