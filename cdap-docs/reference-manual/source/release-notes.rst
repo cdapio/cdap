@@ -32,6 +32,27 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 4.1.3 <http://docs.cask.co/cdap/4.1.3/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-12022` - Add support for CDH 5.12.0.
+
+- :cask-issue:`CDAP-12541` - Improved memory usage of data pipeline with joiner in mapreduce execution engine.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-12557` - Fixed Spark HiveContext missing configuration issue in CDH 5.10+.
+
+- :cask-issue:`CDAP-11939` - Fixed a thread leakage issue in when using Spark Streaming in SDK and unit-test.
+
+- :cask-issue:`CDAP-11874` - Fixed a permgen memory leak issue when using Spark SQL in SDK and unit-test.
+
+
 `Release 4.1.2 <http://docs.cask.co/cdap/4.1.2/index.html>`__
 =============================================================
 
