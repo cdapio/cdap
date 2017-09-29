@@ -37,12 +37,8 @@ import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
-import co.cask.cdap.metrics.process.MessageCallbackFactory;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
-import co.cask.cdap.metrics.runtime.KafkaMetricsProcessorRuntimeService;
 import co.cask.cdap.metrics.runtime.MessagingMetricsProcessorRuntimeService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -102,7 +98,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
   @Override
   public void addServices(List<? super Service> services) {
-    services.add(injector.getInstance(KafkaMetricsProcessorRuntimeService.class));
     services.add(injector.getInstance(MessagingMetricsProcessorRuntimeService.class));
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
   }
@@ -151,35 +146,13 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     protected void configure() {
       // Single MetricDatasetFactory used by both KafkaMetricsProcessorService and MessagingMetricsProcessorService
       bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-      bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID)).toInstance(instanceId);
-
-      install(new FactoryModuleBuilder()
-                .build(KafkaMetricsProcessorServiceFactory.class));
 
       install(new FactoryModuleBuilder()
                 .build(MessagingMetricsProcessorServiceFactory.class));
 
       bind(MessagingMetricsProcessorRuntimeService.class);
       expose(MessagingMetricsProcessorRuntimeService.class);
-
-      bind(KafkaMetricsProcessorRuntimeService.class);
-      expose(KafkaMetricsProcessorRuntimeService.class);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
-    public int providesConsumerPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD,
-                          Constants.Metrics.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
-    public String providesKafkaTopicPrefix(CConfiguration cConf) {
-      return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX);
     }
 
     @SuppressWarnings("unused")
