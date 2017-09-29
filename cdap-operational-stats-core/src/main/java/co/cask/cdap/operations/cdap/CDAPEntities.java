@@ -27,6 +27,7 @@ import co.cask.cdap.operations.OperationalStats;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Predicates;
 import com.google.inject.Injector;
@@ -109,6 +110,7 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     List<NamespaceMeta> namespaceMetas;
     namespaceMetas = nsQueryAdmin.list();
     namespaces = namespaceMetas.size();
+    artifacts += artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, false).size();
     for (NamespaceMeta meta : namespaceMetas) {
       List<ApplicationRecord> appRecords =
         appLifecycleService.getApps(meta.getNamespaceId(), Predicates.<ApplicationRecord>alwaysTrue());
@@ -118,7 +120,7 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
       for (ProgramType programType : programTypes) {
         programs += programLifecycleService.list(meta.getNamespaceId(), programType).size();
       }
-      artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), true).size();
+      artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), false).size();
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();
       List<StreamSpecification> streamSpecs = streamAdmin.listStreams(meta.getNamespaceId());
       streams += streamSpecs.size();
