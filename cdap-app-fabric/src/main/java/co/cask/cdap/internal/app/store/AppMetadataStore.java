@@ -1177,7 +1177,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @return true if no rows required an upgrade
    */
   private <T> boolean upgradeVersionKeys(String recordType, Type typeOfT, int maxRows) {
-    LOG.info("Upgrading {}", recordType);
+    LOG.info("Checking upgrade for {}", recordType);
     MDSKey startKey = new MDSKey.Builder().add(recordType).build();
     Map<MDSKey, T> oldMap = listKV(startKey, typeOfT);
     Map<MDSKey, T> newMap = new HashMap<>();
@@ -1208,6 +1208,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       return true;
     }
 
+    LOG.info("Upgrading {} entries, deleting {} entries of {}", newMap.size(), deleteKeys.size(), recordType);
     // Delete old keys
     for (MDSKey oldKey : deleteKeys) {
       delete(oldKey);
