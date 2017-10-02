@@ -160,7 +160,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
       return EXPLORE_HTTP_USER_SERVICE;
-    } else if (matches(uriParts, "v3", "system", "services", null, "status")) {
+    } else if (matches(uriParts, "v3", "system", "services", null, "status")
+      || matches(uriParts, "v3", "system", "services", null, "stacks")) {
       switch (uriParts[3]) {
         case Constants.Service.LOGSAVER: return LOG_SAVER;
         case Constants.Service.TRANSACTION: return TRANSACTION;
