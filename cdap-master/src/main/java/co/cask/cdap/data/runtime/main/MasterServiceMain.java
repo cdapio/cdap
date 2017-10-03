@@ -792,13 +792,24 @@ public class MasterServiceMain extends DaemonMain {
 
       // Monitor the application
       serviceController.set(controller);
+      final TwillController finalController = controller;
       controller.onTerminated(new Runnable() {
         @Override
         public void run() {
           if (executor.isShutdown()) {
             return;
           }
-          LOG.warn("{} was terminated; restarting with back-off", Constants.Service.MASTER_SERVICES);
+          Thread.interrupted();
+          try {
+            finalController.terminate().get();
+            LOG.warn("{} was terminated", Constants.Service.MASTER_SERVICES);
+          } catch (InterruptedException e) {
+            // Should never happen
+          } catch (ExecutionException e) {
+            LOG.error("{} was terminated due to failure", Constants.Service.MASTER_SERVICES, e.getCause());
+          }
+
+          LOG.warn("Restarting {} with back-off", Constants.Service.MASTER_SERVICES);
           backoffRun();
         }
 
