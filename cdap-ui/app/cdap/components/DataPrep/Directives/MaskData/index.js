@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';

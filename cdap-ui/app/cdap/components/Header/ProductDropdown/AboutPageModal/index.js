@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import {Modal, ModalBody} from 'reactstrap';
 import T from 'i18n-react';
 import {getModeWithCloudProvider} from 'components/Header/ProductDropdown/helper';

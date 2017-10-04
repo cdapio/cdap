@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDeployActions';
 import NamespaceStore from 'services/NamespaceStore';

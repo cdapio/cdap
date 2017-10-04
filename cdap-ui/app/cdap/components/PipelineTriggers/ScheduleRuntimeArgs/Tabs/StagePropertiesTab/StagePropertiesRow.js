@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import ScheduleRuntimeArgsStore, {DEFAULTSTAGEMESSAGE, DEFAULTPROPERTYMESSAGE, DEFAULTTRIGGEREDMACROMESSAGE} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
 import {setArgMapping} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
 import {Row, Col} from 'reactstrap';

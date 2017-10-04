@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import IconSVG from 'components/IconSVG';

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import OneStepDeployApp from 'components/CaskWizards/OneStepDeploy/OneStepDeployApp';
 
 export default function OneStepDeployAppUsecase({input, onClose, isOpen}) {

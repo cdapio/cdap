@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {fetchSummary} from 'components/PipelineSummary/Store/PipelineSummaryActions';
 import PipelineSummaryStore from 'components/PipelineSummary/Store/PipelineSummaryStore';
 import {convertProgramToApi} from 'services/program-api-converter';

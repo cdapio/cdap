@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 require('./LoadingSVG.scss');
 
 export default function LoadingSVG({height = "30px", width ="24px"}) {

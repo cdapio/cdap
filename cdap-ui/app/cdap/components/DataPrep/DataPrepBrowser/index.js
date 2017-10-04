@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import DatabaseBrowser from 'components/DataPrep/DataPrepBrowser/DatabaseBrowser';
 import FileBrowser from 'components/FileBrowser';

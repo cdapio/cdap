@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import Body from 'components/HttpExecutor/RequestMetadata/Body';
 import Header from 'components/HttpExecutor/RequestMetadata/Header';
 import {connect} from 'react-redux';

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {MyAppApi} from 'api/app';
 import NamespaceStore from 'services/NamespaceStore';
 import {humanReadableNumber} from 'services/helpers';

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 
 export default function AbsLinkTo({context, linkLabel, className, children}) {
   return (

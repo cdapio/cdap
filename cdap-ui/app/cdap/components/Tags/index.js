@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {MyMetadataApi} from 'api/metadata';
 import isObject from 'lodash/isObject';
 import Mousetrap from 'mousetrap';

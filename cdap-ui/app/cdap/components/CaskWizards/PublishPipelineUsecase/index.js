@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 
 import T from 'i18n-react';

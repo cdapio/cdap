@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Row, Col, Input, Form, FormGroup, Label} from 'reactstrap';
 import {preventPropagation} from 'services/helpers';
 import DSVEditor from 'components/DSVEditor';

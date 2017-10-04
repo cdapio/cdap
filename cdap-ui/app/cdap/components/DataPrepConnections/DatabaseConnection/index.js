@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import DatabaseOptions from 'components/DataPrepConnections/DatabaseConnection/DatabaseOptions';
 import DatabaseDetail from 'components/DataPrepConnections/DatabaseConnection/DatabaseDetail';

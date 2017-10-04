@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {connect , Provider} from 'react-redux';
 import HostPortActions from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortActions';
 import HostPortStore from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortStore';

@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import classnames from 'classnames';
 import shortid from 'shortid';

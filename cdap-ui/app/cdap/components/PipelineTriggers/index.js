@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import CollapsibleSidebar from 'components/CollapsibleSidebar';
 import classnames from 'classnames';
 import PipelineListTab from 'components/PipelineTriggers/PipelineListTab';

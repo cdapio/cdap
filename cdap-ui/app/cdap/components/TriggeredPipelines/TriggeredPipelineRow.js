@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import LoadingSVG from 'components/LoadingSVG';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';

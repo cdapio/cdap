@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
 import EntityListView from 'components/EntityListView';

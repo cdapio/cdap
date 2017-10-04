@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';

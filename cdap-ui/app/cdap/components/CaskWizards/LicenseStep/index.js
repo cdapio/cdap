@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {MyMarketApi} from 'api/market';
 import T from 'i18n-react';
 require('./LicenseStep.scss');

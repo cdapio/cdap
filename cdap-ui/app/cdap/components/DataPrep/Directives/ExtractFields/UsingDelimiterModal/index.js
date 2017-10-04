@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';

@@ -33,7 +33,9 @@
     </Card>
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 require('./Card.scss');
 
 var classNames = require('classnames');

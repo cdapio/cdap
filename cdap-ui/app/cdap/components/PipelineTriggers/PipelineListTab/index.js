@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {changeNamespace} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
 import {connect} from 'react-redux';

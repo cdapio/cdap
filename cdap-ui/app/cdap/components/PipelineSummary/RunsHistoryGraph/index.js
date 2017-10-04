@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {XYPlot, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, DiscreteColorLegend, Hint} from 'react-vis';
 import moment from 'moment';
 import classnames from 'classnames';

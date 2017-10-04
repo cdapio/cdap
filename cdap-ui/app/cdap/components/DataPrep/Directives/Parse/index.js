@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import SingleFieldModal from 'components/DataPrep/Directives/Parse/Modals/SingleFieldModal';

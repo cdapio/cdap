@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Input, Button} from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
 import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';

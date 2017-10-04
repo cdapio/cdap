@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
 import {Route, Switch, NavLink as RouterNavLink} from 'react-router-dom';

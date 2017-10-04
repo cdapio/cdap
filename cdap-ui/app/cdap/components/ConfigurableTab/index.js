@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 
 import Tabs from '../Tabs';
 import TabHeaders from '../TabHeaders';

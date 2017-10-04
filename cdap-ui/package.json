@@ -118,6 +118,7 @@
     "node-uuid": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.7.tgz",
     "numeral": "1.5.3",
     "object-hash": "1.1.0",
+    "prop-types": "15.5.10",
     "q": "1.4.1",
     "query-string": "4.3.2",
     "react": "15.3.1",

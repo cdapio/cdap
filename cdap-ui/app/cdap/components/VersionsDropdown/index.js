@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import {MyAppApi} from 'api/app';
 import NamespaceStore from 'services/NamespaceStore';

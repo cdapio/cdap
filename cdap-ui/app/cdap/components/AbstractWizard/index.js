@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
 import UploadDataWizard from 'components/CaskWizards/UploadData';
 import UploadDataUsecaseWizard from 'components/CaskWizards/UploadDataUsecase';

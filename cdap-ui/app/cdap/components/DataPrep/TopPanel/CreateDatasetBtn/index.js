@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import T from 'i18n-react';
 import {Modal, ModalHeader, ModalBody, ModalFooter, Button, ButtonGroup, Form, FormGroup, Label, Col, Input} from 'reactstrap';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
