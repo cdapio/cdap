@@ -19,6 +19,7 @@ import IconSVG from 'components/IconSVG';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
+import S3Connection from 'components/DataPrepConnections/S3Connection';
 import T from 'i18n-react';
 
 require('./AddConnection.scss');
@@ -43,14 +44,15 @@ export default class AddConnection extends Component {
         icon: 'icon-database',
         component: DatabaseConnection
       },
-      // {
-      //   type: 'S3',
-      //   icon: 'icon-s3'
-      // },
       {
         type: 'Kafka',
         icon: 'icon-kafka',
         component: KafkaConnection
+      },
+      {
+        type: 'S3',
+        icon: 'icon-s3',
+        component: S3Connection
       }
     ];
   }

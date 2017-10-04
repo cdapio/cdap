@@ -22,6 +22,7 @@ import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
+import S3Connection from 'components/DataPrepConnections/S3Connection';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 
@@ -31,7 +32,8 @@ const PREFIX = 'features.DataPrepConnections.ConnectionManagement';
 
 const COMPONENT_MAP = {
   'DATABASE': DatabaseConnection,
-  'KAFKA': KafkaConnection
+  'KAFKA': KafkaConnection,
+  'S3': S3Connection
 };
 
 export default class ConnectionPopover extends Component {

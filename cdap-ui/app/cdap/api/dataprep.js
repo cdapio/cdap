@@ -66,6 +66,9 @@ const MyDataPrepApi = {
   readTopic: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/kafka/:topic/read`),
   getKafkaSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/kafka/:topic/specification`),
 
+  // S3
+  s3TestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/s3/test`),
+
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),
