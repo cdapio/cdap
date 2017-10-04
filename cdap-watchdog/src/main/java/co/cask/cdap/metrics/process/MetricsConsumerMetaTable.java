@@ -52,17 +52,6 @@ public class MetricsConsumerMetaTable {
     metaTable.put(updates);
   }
 
-  public <T extends MetricsMetaKey> void saveMessageIds(Map<T, byte[]> messageIds) throws Exception {
-    SortedMap<byte[], SortedMap<byte[], byte[]>> updates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<T, byte[]> entry : messageIds.entrySet()) {
-      SortedMap<byte[], byte[]> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      map.put(MESSAGE_ID_COLUMN, entry.getValue());
-      updates.put(entry.getKey().getKey(), map);
-    }
-    metaTable.putBytes(updates);
-  }
-
-
   public <T extends MetricsMetaKey>
   void saveMetricsProcessorStats(Map<T, TopicProcessMeta> messageIds) throws Exception {
     SortedMap<byte[], SortedMap<byte[], byte[]>> updates = new TreeMap<>(Bytes.BYTES_COMPARATOR);

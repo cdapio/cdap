@@ -597,9 +597,7 @@ public final class Constants {
     public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
 
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
-    public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
-    public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
-    public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
+    // legacy name, we no longer use Kafka for metrics, we use TMS
     public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
 
     // NOTE: "v2" to avoid conflict with data of older metrics system
@@ -615,8 +613,6 @@ public final class Constants {
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
 
     public static final long DEFAULT_RETENTION_HOURS = 2;
-
-    public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
 
