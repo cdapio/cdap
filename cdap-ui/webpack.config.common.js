@@ -19,8 +19,11 @@ var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
 var plugins = [
   new CaseSensitivePathsPlugin(),
-  new webpack.optimize.DedupePlugin(),
-  new webpack.optimize.CommonsChunkPlugin("common-lib", "common-lib.js", Infinity),
+  new webpack.optimize.CommonsChunkPlugin({
+    name: "common-lib",
+    fileName: "common-lib.js",
+    minChunks: Infinity
+  }),
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
@@ -29,41 +32,75 @@ var plugins = [
     },
   })
 ];
-var loaders = [
+var rules = [
   {
     test: /\.scss$/,
-    loader: 'style-loader!css-loader!sass-loader'
+    use: [
+      'style-loader',
+      'css-loader',
+      'sass-loader'
+    ]
   },
   {
     test: /\.ya?ml$/,
-    loader: 'yml'
+    use: 'yml-loader'
   },
   {
     test: /\.css$/,
-    loader: 'style-loader!css-loader!sass-loader'
+    use: [
+      'style-loader',
+      'css-loader',
+      'sass-loader'
+    ]
   },
   {
     test: /\.json$/,
-    loader: 'json-loader'
+    use: 'json-loader'
+  },
+  {
+    enforce: 'pre',
+    test: /\.js$/,
+    use: 'eslint-loader',
+    exclude: [
+      /node_modules/,
+      /bower_components/,
+      /dist/,
+      /old_dist/,
+      /cdap_dist/,
+      /login_dist/
+    ]
   },
   {
     test: /\.js$/,
-    loader: 'babel',
+    use: 'babel-loader',
     exclude: /node_modules/
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+    use: [
+      {
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          mimetype: 'application/font-woff'
+        }
+      }
+    ]
   },
   {
     test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'file-loader'
+    use: 'url-loader'
   },
   {
     test: /\.svg/,
-    loader: 'svg-sprite?'+ JSON.stringify({
-      prefixize: false
-    })
+    use: [
+      {
+        loader: 'svg-sprite-loader',
+        options: {
+          prefixize: false
+        }
+      }
+    ]
   }
 ];
 var webpackConfig = {
@@ -80,31 +117,20 @@ var webpackConfig = {
       'rx-dom',
       'react-dropzone',
       'react-redux',
-      'svg4everybody'
+      'svg4everybody',
+      'numeral'
     ]
   },
   module: {
-    preLoaders: [
-      {
-        test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [
-          /node_modules/,
-          /bower_components/,
-          /dist/,
-          /old_dist/,
-          /cdap_dist/,
-          /login_dist/
-        ]
-      }
-    ],
-    loaders: loaders
+    rules
   },
   output: {
     filename: './[name].js',
+    chunkFilename: '[name].js',
     path: __dirname + '/common_dist',
     library: 'CaskCommon',
-    libraryTarget: 'umd'
+    libraryTarget: 'umd',
+    publicPath: '/common_assets/'
   },
   externals: {
     'react': {
@@ -132,9 +158,6 @@ var webpackConfig = {
       root: ['React','addons','TransitionGroup']
     }
   },
-  devServer: {
-    stats: 'errors-only'
-  },
   resolve: {
     alias: {
       components: __dirname + '/app/cdap/components',
@@ -142,9 +165,6 @@ var webpackConfig = {
       api: __dirname + '/app/cdap/api',
       wrangler: __dirname + '/app/wrangler'
     }
-  },
-  stats: {
-    chunks: false
   },
   plugins
 };

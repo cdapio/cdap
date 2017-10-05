@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {MyMetricApi} from 'api/metric';
 import {MyStreamApi} from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';

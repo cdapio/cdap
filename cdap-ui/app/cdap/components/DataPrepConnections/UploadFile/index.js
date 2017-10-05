@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import FileDnD from 'components/FileDnD';
 import NamespaceStore from 'services/NamespaceStore';
 import cookie from 'react-cookie';

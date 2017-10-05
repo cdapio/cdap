@@ -14,11 +14,12 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import Loadable from 'react-loadable';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepStore from 'components/DataPrep/store';
-import SchemaModal from 'components/DataPrep/TopPanel/SchemaModal';
-import AddToPipelineModal from 'components/DataPrep/TopPanel/AddToPipelineModal';
-import UpgradeModal from 'components/DataPrep/TopPanel/UpgradeModal';
 import {objectQuery} from 'services/helpers';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
@@ -26,12 +27,28 @@ import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
 import isNil from 'lodash/isNil';
-import CreateDatasetBtn from 'components/DataPrep/TopPanel/CreateDatasetBtn';
 import {Switch} from 'components/DataPrep/DataPrepContentWrapper';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 
+
+const SchemaModal = Loadable({
+  loader: () => import(/* webpackChunkName: "SchemaModal"*/ 'components/DataPrep/TopPanel/SchemaModal'),
+  loading: LoadingSVGCentered
+});
+const AddToPipelineModal = Loadable({
+  loader: () => import(/* webpackChunkName: "AddToPipelineModal" */ 'components/DataPrep/TopPanel/AddToPipelineModal'),
+  loading: LoadingSVGCentered
+});
+const UpgradeModal = Loadable({
+  loader: () => import(/* webpackChunkName: "UpgradeModal" */ 'components/DataPrep/TopPanel/UpgradeModal'),
+  loading: LoadingSVGCentered
+});
+const CreateDatasetBtn = Loadable({
+  loader: () => import(/* webpackChunkName: "CreateDatasetBtn" */ 'components/DataPrep/TopPanel/CreateDatasetBtn'),
+  loading: LoadingSVGCentered
+});
 
 require('./TopPanel.scss');
 const PREFIX = 'features.DataPrep.TopPanel';
@@ -245,7 +262,7 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
-  renderMenuItem = (menuItem) => {
+  renderMenuItem = (menuItem, index) => {
     // This is to prevent items in the menu that doesn't make sense when rendered in pipeline view.
     if (menuItem.shouldRender && !menuItem.shouldRender()) {
       return null;
@@ -258,7 +275,7 @@ export default class DataPrepTopPanel extends Component {
       let {label, component: Component} = menuItem;
       let isDisabled = menuItem.disabled && menuItem.disabled();
       return (
-        <div>
+        <div key={index}>
           {
             Component && !isDisabled ?
               <span>
@@ -275,14 +292,16 @@ export default class DataPrepTopPanel extends Component {
       );
     };
     return (
-      <DropdownItem
-        className={menuItem.className}
-        title={menuItem.label}
-        onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
-        disabled={menuItem.disabled ? menuItem.disabled() : false}
-      >
-        {getMenuItem(menuItem)}
-      </DropdownItem>
+      <div key={index}>
+        <DropdownItem
+          className={menuItem.className}
+          title={menuItem.label}
+          onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
+          disabled={menuItem.disabled ? menuItem.disabled() : false}
+        >
+          {getMenuItem(menuItem)}
+        </DropdownItem>
+      </div>
     );
   };
   renderMenu() {
@@ -294,7 +313,7 @@ export default class DataPrepTopPanel extends Component {
         </DropdownToggle>
         <DropdownMenu right>
         {
-          this.menu.map((menu) => this.renderMenuItem(menu))
+          this.menu.map((menu, i) => this.renderMenuItem(menu, i))
         }
       </DropdownMenu>
     </UncontrolledDropdown>

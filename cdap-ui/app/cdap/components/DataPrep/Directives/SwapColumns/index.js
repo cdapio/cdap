@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import T from 'i18n-react';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
@@ -60,7 +62,7 @@ export default class SwapColumnsDirective extends Component {
 }
 
 SwapColumnsDirective.propTypes = {
-  column: PropTypes.array,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isDisabled: PropTypes.bool
 };

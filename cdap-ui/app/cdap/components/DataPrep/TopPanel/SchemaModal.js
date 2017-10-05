@@ -14,10 +14,13 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
-import SchemaEditor from 'components/SchemaEditor';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import Loadable from 'react-loadable';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
@@ -28,6 +31,12 @@ import T from 'i18n-react';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+
+var SchemaEditor = Loadable({
+  loader: () => import(/* webpackChunkName: "SchemaEditor" */ 'components/SchemaEditor'),
+  loading: LoadingSVGCentered
+});
+
 
 const mapErrorToMessage = (e) => {
   let message = e.message;

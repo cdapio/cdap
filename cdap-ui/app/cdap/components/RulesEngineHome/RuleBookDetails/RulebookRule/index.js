@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Col} from 'reactstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';

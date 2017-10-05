@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {parseType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';

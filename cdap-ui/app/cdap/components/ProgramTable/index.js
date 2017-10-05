@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import FastActions from 'components/EntityCard/FastActions';
 import SortableTable from 'components/SortableTable';
 import IconSVG from 'components/IconSVG';

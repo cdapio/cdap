@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import AppOverview from 'components/Overview/AppOverview';
 import DatasetOverview from 'components/Overview/DatasetOverview';
 import StreamOverview from 'components/Overview/StreamOverview';

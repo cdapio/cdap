@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import myExploreApi from 'api/explore';
 import isObject from 'lodash/isObject';

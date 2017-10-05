@@ -14,11 +14,8 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import 'whatwg-fetch';
-import CaskVideo from 'components/CaskVideo';
-require('./SplashScreen.scss');
-
 import Card from 'components/Card';
 import MyUserStoreApi from 'api/userstore';
 import T from 'i18n-react';
@@ -28,6 +25,8 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import {objectQuery} from 'services/helpers';
 import cookie from 'react-cookie';
 
+require('./SplashScreen.scss');
+
 class SplashScreen extends Component {
   constructor(props) {
     super(props);
@@ -35,13 +34,11 @@ class SplashScreen extends Component {
     this.state = {
       error: '',
       showSplashScreen: false,
-      videoOpen: false,
       version: ''
     };
 
     this.doNotShowCheck;
     this.onClose = this.onClose.bind(this);
-    this.toggleVideo = this.toggleVideo.bind(this);
     this.toggleCheckbox = this.toggleCheckbox.bind(this);
   }
 
@@ -90,25 +87,14 @@ class SplashScreen extends Component {
     });
     this.resetWelcomeMessage();
   }
-  toggleVideo() {
-    this.setState({
-      videoOpen : !this.state.videoOpen
-    });
-  }
-  closeVideo() {
-    if (this.state.videoOpen) {
-      this.setState({
-        videoOpen: false
-      });
-    }
-  }
+
   toggleCheckbox() {
     this.doNotShowCheck = !this.doNotShowCheck;
   }
   render() {
 
-    let cardTitle = this.state.videoOpen ? '' : T.translate('features.SplashScreen.title');
-    let cardTitleTwo = this.state.videoOpen ? '' : T.translate('features.SplashScreen.titleTwo');
+    let cardTitle = T.translate('features.SplashScreen.title');
+    let cardTitleTwo = T.translate('features.SplashScreen.titleTwo');
 
     let cardHeader = (
       <div className="card-header-splash">
@@ -132,29 +118,31 @@ class SplashScreen extends Component {
             >
               <div className="text-xs-center">
                 <div className="splash-main-container">
-                {
-                  this.state.videoOpen ?
-                    <div className="cask-video-container">
-                      <CaskVideo />
-                    </div>
-                  :
-                    <div>
-                      <img width="150px" src="cdap_assets/img/cdaplogo_white.svg" />
-                      <h4>
-                        {T.translate('features.SplashScreen.intro-message')}
-                      </h4>
-                    </div>
-                }
+                  <div>
+                    <img width="150px" src="cdap_assets/img/cdaplogo_white.svg" />
+                    <h4>
+                      {T.translate('features.SplashScreen.intro-message')}
+                    </h4>
+                  </div>
                 </div>
 
                 <div className={'group'}>
-                  <a className="spash-screen-btn" target="_blank" href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}>
+                  <a
+                    className="spash-screen-btn"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}
+                  >
                     <div className="btn btn-secondary">
                       <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
                     </div>
                   </a>
 
-                  <a target="_blank" href="http://cask.co/company/contact/#mailing-list">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="http://cask.co/company/contact/#mailing-list"
+                  >
                     <div
                       className={'btn btn-secondary spash-screen-btn'}
                     >
@@ -182,9 +170,4 @@ class SplashScreen extends Component {
   }
 }
 
-const propTypes = {
-  openVideo: PropTypes.func
-};
-
-SplashScreen.propTypes = propTypes;
 export default SplashScreen;

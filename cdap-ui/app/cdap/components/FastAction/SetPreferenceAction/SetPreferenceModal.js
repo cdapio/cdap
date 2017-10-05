@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import isObject from 'lodash/isObject';
 import upperFirst from 'lodash/upperFirst';
 import orderBy from 'lodash/orderBy';

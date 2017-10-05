@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
 import shortid from 'shortid';

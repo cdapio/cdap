@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
 import {MyMetadataApi} from 'api/metadata';

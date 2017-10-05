@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import FastActionButton from '../FastActionButton';
 import {Tooltip} from 'reactstrap';

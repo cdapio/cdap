@@ -110,6 +110,7 @@ export default class ColumnActions extends Component {
               this.state.columnDirectives.map((directive, i) => {
                 return (
                   <DropdownItem
+                    key={i}
                     title={directive.name}
                     onClick={this.setActiveDirective.bind(this, i)}
                   >

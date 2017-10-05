@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';

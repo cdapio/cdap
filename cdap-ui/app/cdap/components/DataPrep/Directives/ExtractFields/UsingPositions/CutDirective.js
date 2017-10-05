@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import ColumnTextSelection from 'components/DataPrep/ColumnTextSelection';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import T from 'i18n-react';
@@ -38,7 +40,7 @@ export default class CutDirective extends Component {
       textSelectionRange: {start: null, end: null, index: null},
       showPopover: false
     };
-    this.newColName = null;
+    this.newColName = '';
     this.onTextSelection = this.onTextSelection.bind(this);
     this.renderPopover = this.renderPopover.bind(this);
     this.togglePopover = this.togglePopover.bind(this);

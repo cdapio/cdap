@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Col, Form, FormGroup, Label, Row} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import moment from 'moment';

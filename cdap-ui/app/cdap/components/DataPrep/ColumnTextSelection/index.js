@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import classnames from 'classnames';
 import shortid from 'shortid';
@@ -28,7 +30,6 @@ export default class ColumnTextSelection extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      columnDimension: {},
       textSelectionRange: {start: null, end: null, index: null},
       showPopover: false,
     };
@@ -40,15 +41,6 @@ export default class ColumnTextSelection extends Component {
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleColNameChange = this.handleColNameChange.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
-  }
-  componentWillMount() {
-    if (this.props.columns.length) {
-      let column = this.props.columns[0];
-      let ele = document.getElementById(`column-${column}`);
-      this.setState({
-        columnDimension: ele.getBoundingClientRect()
-      });
-    }
   }
   componentDidMount() {
     this.documentClick$ = Rx.DOM.fromEvent(document.body, 'click', false)
@@ -193,10 +185,10 @@ export default class ColumnTextSelection extends Component {
         </td>
       );
     };
-    const renderTableHeader = (head) => {
+    const renderTableHeader = (head, index) => {
       if (head !== column) {
         return (
-          <th className="gray-out">
+          <th key={index} className="gray-out">
             <div>
               {head}
             </div>
@@ -205,7 +197,7 @@ export default class ColumnTextSelection extends Component {
       }
 
       return (
-        <th id="highlighted-header">
+        <th key={index} id="highlighted-header">
           <div>
             {head}
           </div>
@@ -221,11 +213,14 @@ export default class ColumnTextSelection extends Component {
           <colgroup>
             <col />
             {
-              headers.map(head => {
+              headers.map((head, i) => {
                 return (
-                  <col className={classnames({
-                    "highlight-column": head === column
-                  })} />
+                  <col
+                    key={i}
+                    className={classnames({
+                      "highlight-column": head === column
+                    })}
+                  />
                 );
               })
             }
@@ -234,8 +229,8 @@ export default class ColumnTextSelection extends Component {
             <tr>
               <th />
               {
-                headers.map( head => {
-                  return renderTableHeader(head);
+                headers.map((head, i) => {
+                  return renderTableHeader(head, i);
                 })
               }
             </tr>

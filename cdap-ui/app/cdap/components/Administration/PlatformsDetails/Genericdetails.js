@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import RenderObjectAsTable from 'components/RenderObjectAsTable';
 import capitalize from 'lodash/capitalize';
 import classnames from 'classnames';

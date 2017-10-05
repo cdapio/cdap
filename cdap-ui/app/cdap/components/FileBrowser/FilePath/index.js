@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import shortid from 'shortid';
 import {Link} from 'react-router-dom';
 import classnames from 'classnames';
@@ -207,5 +209,6 @@ FilePath.propTypes = {
   baseStatePath: PropTypes.string,
   fullpath: PropTypes.string,
   enableRouting: PropTypes.bool,
-  onPathChange: PropTypes.func
+  onPathChange: PropTypes.func,
+  originalPath: PropTypes.string
 };

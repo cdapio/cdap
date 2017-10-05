@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import DeleteAction from 'components/FastAction/DeleteAction';
 import TruncateAction from 'components/FastAction/TruncateAction';
 import StartStopAction from 'components/FastAction/StartStopAction';
@@ -107,7 +109,7 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log']),
+  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log', 'viewEvents']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func,
   opened: PropTypes.bool,

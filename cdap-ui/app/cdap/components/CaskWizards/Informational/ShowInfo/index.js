@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import { connect, Provider } from 'react-redux';
 import InformationalWizardStore from 'services/WizardStores/Informational/InformationalStore';
 require('./ShowInfo.scss');

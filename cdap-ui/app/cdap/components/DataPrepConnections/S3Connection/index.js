@@ -14,56 +14,47 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
-import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
-import HostPortEditor from 'components/DataPrepConnections/KafkaConnection/HostPortEditor';
-import shortid from 'shortid';
-import ee from 'event-emitter';
+import MyDataPrepApi from 'api/dataprep';
 import CardActionFeedback from 'components/CardActionFeedback';
+import {objectQuery} from 'services/helpers';
+import ee from 'event-emitter';
 
-const PREFIX = 'features.DataPrepConnections.AddConnections.Kafka';
+const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
 
 const LABEL_COL_CLASS = 'col-xs-3 col-form-label text-xs-right';
 const INPUT_COL_CLASS = 'col-xs-8';
 
-require('./KafkaConnection.scss');
+require('./S3Connection.scss');
 
-export default class KafkaConnection extends Component {
+export default class S3Connection extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      name: '',
-      brokersList: [{
-        host: 'localhost',
-        port: '9092',
-        uniqueId: shortid.generate()
-      }],
-      connectionResult: null,
-      testConnectionLoading: false,
       error: null,
-      loading: false
+      name: '',
+      accessKeyId: '',
+      accessSecretKey: '',
+      region: '',
+      testConnectionLoading: false,
+      connectionResult: null
     };
 
     this.eventEmitter = ee(ee);
-    this.preventDefault = this.preventDefault.bind(this);
     this.addConnection = this.addConnection.bind(this);
     this.editConnection = this.editConnection.bind(this);
     this.testConnection = this.testConnection.bind(this);
-    this.handleBrokersChange = this.handleBrokersChange.bind(this);
   }
 
   componentWillMount() {
     if (this.props.mode === 'ADD') { return; }
 
-    this.setState({ loading: true });
+    this.setState({loading: true});
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -75,14 +66,17 @@ export default class KafkaConnection extends Component {
     MyDataPrepApi.getConnection(params)
       .subscribe((res) => {
         let info = objectQuery(res, 'values', 0),
-            brokers = objectQuery(info, 'properties', 'brokers');
+            accessKeyId = objectQuery(info, 'properties', 'accessKeyId'),
+            accessSecretKey = objectQuery(info, 'properties', 'accessSecretKey'),
+            region = objectQuery(info, 'properties', 'region');
 
         let name = this.props.mode === 'EDIT' ? info.name : '';
-        let brokersList = this.parseBrokers(brokers);
 
         this.setState({
           name,
-          brokersList,
+          accessKeyId,
+          accessSecretKey,
+          region,
           loading: false
         });
       }, (err) => {
@@ -94,49 +88,16 @@ export default class KafkaConnection extends Component {
       });
   }
 
-  parseBrokers(brokers) {
-    let brokersList = [];
-
-    brokers.split(',').forEach((broker) => {
-      let split = broker.trim().split(':');
-
-      let obj = {
-        host: split[0] || '',
-        port: split[1] || '',
-        uniqueId: shortid.generate()
-      };
-
-      brokersList.push(obj);
-    });
-
-    return brokersList;
-  }
-
-  preventDefault(e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  handleBrokersChange(rows) {
-    this.setState({
-      brokersList: rows
-    });
-  }
-
-  convertBrokersList() {
-    return this.state.brokersList.map((broker) => {
-      return `${broker.host}:${broker.port}`;
-    }).join(',');
-  }
-
   addConnection() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestBody = {
       name: this.state.name,
-      type: 'KAFKA',
+      type: 'S3',
       properties: {
-        brokers: this.convertBrokersList()
+        accessKeyId: this.state.accessKeyId,
+        accessSecretKey: this.state.accessSecretKey,
+        region: this.state.region
       }
     };
 
@@ -164,16 +125,18 @@ export default class KafkaConnection extends Component {
     let requestBody = {
       name: this.state.name,
       id: this.props.connectionId,
-      type: 'KAFKA',
+      type: 'S3',
       properties: {
-        brokers: this.convertBrokersList()
+        accessKeyId: this.state.accessKeyId,
+        accessSecretKey: this.state.accessSecretKey,
+        region: this.state.region
       }
     };
 
     MyDataPrepApi.updateConnection(params, requestBody)
       .subscribe(() => {
         this.setState({error: null});
-        this.eventEmitter.emit('DATAPREP_CONNECTION_EDIT_KAFKA', this.props.connectionId);
+        this.eventEmitter.emit('DATAPREP_CONNECTION_EDIT_S3', this.props.connectionId);
         this.props.onAdd();
         this.props.close();
       }, (err) => {
@@ -195,13 +158,15 @@ export default class KafkaConnection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'KAFKA',
+      type: 'S3',
       properties: {
-        brokers: this.convertBrokersList()
+        accessKeyId: this.state.accessKeyId,
+        accessSecretKey: this.state.accessSecretKey,
+        region: this.state.region
       }
     };
 
-    MyDataPrepApi.kafkaTestConnection({namespace}, requestBody)
+    MyDataPrepApi.s3TestConnection({namespace}, requestBody)
       .subscribe((res) => {
         this.setState({
           connectionResult: {
@@ -231,53 +196,11 @@ export default class KafkaConnection extends Component {
     });
   }
 
-  renderKafka() {
-    return (
-      <div className="form-group row">
-        <label className={LABEL_COL_CLASS}>
-          {T.translate(`${PREFIX}.brokersList`)}
-          <span className="asterisk">*</span>
-        </label>
-        <div className={INPUT_COL_CLASS}>
-          <HostPortEditor
-            values={this.state.brokersList}
-            onChange={this.handleBrokersChange}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  renderAddConnectionButton() {
-    let disabled = !this.state.name;
-    disabled = disabled || this.state.brokersList.length === 0 || (this.state.brokersList.length === 1 && (!this.state.brokersList[0].host || !this.state.brokersList[0].port));
-
-    let onClickFn = this.addConnection;
-
-    if (this.props.mode === 'EDIT') {
-      onClickFn = this.editConnection;
-    }
-
-    return (
-      <div className="row">
-        <div className="col-xs-9 offset-xs-3 col-xs-offset-3">
-          <button
-            className="btn btn-primary"
-            onClick={onClickFn}
-            disabled={disabled}
-          >
-            {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
-          </button>
-
-          {this.renderTestButton()}
-        </div>
-      </div>
-    );
-  }
-
   renderTestButton() {
-    let disabled = this.state.testConnectionLoading || !this.state.name;
-    disabled = disabled || this.state.brokersList.length === 0 || (this.state.brokersList.length === 1 && (!this.state.brokersList[0].host || !this.state.brokersList[0].port));
+    let disabled = !this.state.name ||
+      !this.state.accessKeyId ||
+      !this.state.accessSecretKey ||
+      !this.state.region;
 
     return (
       <span className="test-connection-button">
@@ -314,24 +237,39 @@ export default class KafkaConnection extends Component {
     );
   }
 
-  renderError() {
-    if (!this.state.error) { return null; }
+  renderAddConnectionButton() {
+    let disabled = !this.state.name ||
+      !this.state.accessKeyId ||
+      !this.state.accessSecretKey ||
+      !this.state.region;
+
+    let onClickFn = this.addConnection;
+
+    if (this.props.mode === 'EDIT') {
+      onClickFn = this.editConnection;
+    }
 
     return (
-      <ModalFooter>
-        <CardActionFeedback
-          type="DANGER"
-          message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
-          extendedMessage={this.state.error}
-        />
-      </ModalFooter>
+      <div className="row">
+        <div className="col-xs-9 offset-xs-3 col-xs-offset-3">
+          <button
+            className="btn btn-primary"
+            onClick={onClickFn}
+            disabled={disabled}
+          >
+            {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
+          </button>
+
+          {this.renderTestButton()}
+        </div>
+      </div>
     );
   }
 
   renderContent() {
     if (this.state.loading) {
       return (
-        <div className="kafka-detail text-xs-center">
+        <div className="s3-detail text-xs-center">
           <br />
           <LoadingSVG />
         </div>
@@ -339,7 +277,7 @@ export default class KafkaConnection extends Component {
     }
 
     return (
-      <div className="kafka-detail">
+      <div className="s3-detail">
         <div className="row">
           <div className={`${INPUT_COL_CLASS} offset-xs-3 col-xs-offset-3`}>
             <span className="asterisk">*</span>
@@ -354,7 +292,7 @@ export default class KafkaConnection extends Component {
               <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
-              <div className="input-name">
+              <div className="input-text">
                 <input
                   type="text"
                   className="form-control"
@@ -366,12 +304,77 @@ export default class KafkaConnection extends Component {
             </div>
           </div>
 
-          {this.renderKafka()}
+          <div className="form-group row">
+            <label className={LABEL_COL_CLASS}>
+              {T.translate(`${PREFIX}.accessKeyId`)}
+              <span className="asterisk">*</span>
+            </label>
+            <div className={INPUT_COL_CLASS}>
+              <div className="input-text">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={this.state.accessKeyId}
+                  onChange={this.handleChange.bind(this, 'accessKeyId')}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group row">
+            <label className={LABEL_COL_CLASS}>
+              {T.translate(`${PREFIX}.accessSecretKey`)}
+              <span className="asterisk">*</span>
+            </label>
+            <div className={INPUT_COL_CLASS}>
+              <div className="input-text">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={this.state.accessSecretKey}
+                  onChange={this.handleChange.bind(this, 'accessSecretKey')}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group row">
+            <label className={LABEL_COL_CLASS}>
+              {T.translate(`${PREFIX}.region`)}
+              <span className="asterisk">*</span>
+            </label>
+            <div className={INPUT_COL_CLASS}>
+              <div className="input-text">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={this.state.region}
+                  onChange={this.handleChange.bind(this, 'region')}
+                />
+              </div>
+            </div>
+          </div>
+
+          <br />
 
           {this.renderAddConnectionButton()}
 
         </div>
       </div>
+    );
+  }
+
+  renderError() {
+    if (!this.state.error) { return null; }
+
+    return (
+      <ModalFooter>
+        <CardActionFeedback
+          type="DANGER"
+          message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
+          extendedMessage={this.state.error}
+        />
+      </ModalFooter>
     );
   }
 
@@ -382,7 +385,7 @@ export default class KafkaConnection extends Component {
           isOpen={true}
           toggle={this.props.close}
           size="lg"
-          className="kafka-connection-modal"
+          className="s3-connection-modal"
           backdrop="static"
           zIndex="1061"
         >
@@ -401,7 +404,7 @@ export default class KafkaConnection extends Component {
   }
 }
 
-KafkaConnection.propTypes = {
+S3Connection.propTypes = {
   close: PropTypes.func,
   onAdd: PropTypes.func,
   mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import T from 'i18n-react';
@@ -245,6 +247,7 @@ export default class FilterDirective extends Component {
               <a
                 href="http://commons.apache.org/proper/commons-jexl/"
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 {T.translate(`${PREFIX}.customconditiontooltiplink`)}
               </a>

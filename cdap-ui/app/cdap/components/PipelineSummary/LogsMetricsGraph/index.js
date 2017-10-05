@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {objectQuery} from 'services/helpers';
 import {XYPlot, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, Hint, DiscreteColorLegend, VerticalBarSeries as BarSeries} from 'react-vis';
 import moment from 'moment';

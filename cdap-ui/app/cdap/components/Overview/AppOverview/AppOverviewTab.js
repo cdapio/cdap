@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { TabContent, TabPane, Nav, NavItem, NavLink, Row, Col } from 'reactstrap';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';

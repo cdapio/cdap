@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import { connect, Provider } from 'react-redux';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';

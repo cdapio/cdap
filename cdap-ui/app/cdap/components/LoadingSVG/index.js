@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 require('./LoadingSVG.scss');
 
 export default function LoadingSVG({height = "30px", width ="24px"}) {
@@ -27,7 +29,7 @@ export default function LoadingSVG({height = "30px", width ="24px"}) {
       width={width}
       height={height}
       viewBox="0 0 24 30"
-      style={{'enable-background': 'new 0 0 50 50'}}
+      style={{'enableBackground': 'new 0 0 50 50'}}
     >
       <rect
         x="0"

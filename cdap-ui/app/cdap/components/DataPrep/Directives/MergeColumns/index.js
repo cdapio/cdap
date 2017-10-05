@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import {isCustomOption} from 'components/DataPrep/helper';
@@ -297,7 +299,7 @@ export default class MergeColumnsDirective extends Component {
 }
 
 MergeColumnsDirective.propTypes = {
-  column: PropTypes.array,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   close: PropTypes.func

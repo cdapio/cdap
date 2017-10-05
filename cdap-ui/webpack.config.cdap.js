@@ -19,9 +19,8 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 var path = require('path');
 var LiveReloadPlugin = require('webpack-livereload-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-var autoprefixer = require('autoprefixer');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
-var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
 var plugins = [
@@ -39,12 +38,7 @@ var plugins = [
     collections: true,
     caching: true
   }),
-  new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
-    {
-      from: './cdap.html',
-      to: './cdap.html'
-    },
     {
       from: './styles/fonts',
       to: './fonts/'
@@ -61,30 +55,61 @@ var plugins = [
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss']
+  }),
+  new HtmlWebpackPlugin({
+    title: 'CDAP',
+    template: './cdap.html',
+    filename: 'cdap.html',
+    hash: true
   })
 ];
 var mode = process.env.NODE_ENV;
 
-var loaders = [
+var rules = [
   {
     test: /\.scss$/,
-    loader: 'style-loader!css-loader!postcss-loader!sass-loader'
+    use: [
+      'style-loader',
+      'css-loader',
+      'postcss-loader',
+      'sass-loader'
+    ]
   },
   {
     test: /\.ya?ml$/,
-    loader: 'yml'
+    use: 'yml-loader'
   },
   {
     test: /\.json$/,
-    loader: 'json-loader'
+    use: 'json-loader'
   },
   {
     test: /\.css$/,
-    loader: 'style-loader!css-loader!sass-loader'
+    use: [
+      'style-loader',
+      'css-loader',
+      'postcss-loader',
+      'sass-loader'
+    ]
+  },
+  {
+    enforce: 'pre',
+    test: /\.js$/,
+    use: 'eslint-loader',
+    exclude: [
+      /node_modules/,
+      /bower_components/,
+      /dist/,
+      /old_dist/,
+      /cdap_dist/,
+      /common_dist/,
+      /lib/,
+      /wrangler_dist/
+    ]
   },
   {
     test: /\.js$/,
-    loader: 'babel',
+    use: 'babel-loader',
     exclude: [
       /node_modules/,
       /lib/
@@ -95,17 +120,30 @@ var loaders = [
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+    use: [
+      {
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          mimetype: 'application/font-woff'
+        }
+      }
+    ]
   },
   {
     test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'url-loader'
+    use: 'url-loader'
   },
   {
     test: /\.svg/,
-    loader: 'svg-sprite?'+ JSON.stringify({
-      prefixize: false
-    })
+    use: [
+      {
+        loader: 'svg-sprite-loader',
+        options: {
+          prefixize: false
+        }
+      }
+    ]
   }
 ];
 
@@ -116,33 +154,17 @@ var webpackConfig = {
     'cdap': ['babel-polyfill', './cdap.js', 'rx', 'rx-dom']
   },
   module: {
-    preLoaders: [
-      {
-        test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [
-          /node_modules/,
-          /bower_components/,
-          /dist/,
-          /old_dist/,
-          /cdap_dist/,
-          /common_dist/,
-          /lib/,
-          /wrangler_dist/
-        ]
-      }
-    ],
-    loaders: loaders
+    rules
   },
-  postcss: [
-    autoprefixer({ browsers: ['> 1%'], cascade:true })
-  ],
   output: {
-    filename: './[name].js',
-    path: __dirname + '/cdap_dist/cdap_assets'
+    filename: '[name].js',
+    chunkFilename: '[name].js',
+    path: __dirname + '/cdap_dist/cdap_assets/',
+    publicPath: '/cdap_assets/'
   },
   stats: {
-    chunks: false
+    chunks: false,
+    chunkModules: false
   },
   plugins: plugins,
   resolve: {
@@ -174,16 +196,6 @@ if (mode === 'production' || mode === 'build') {
 }
 
 if (mode !== 'production') {
-  if (mode === 'browser-testing') {
-    plugins.push(new BrowserSyncPlugin({
-        host: 'localhost',
-        port: 3000,
-        proxy: 'http://localhost:11011',
-        browser: ["google chrome", "firefox", "safari"]
-      },
-      {reload: false}
-    ));
-  }
   webpackConfig = Object.assign({}, webpackConfig, {
     devtool: 'source-map',
     plugins:  plugins.concat([

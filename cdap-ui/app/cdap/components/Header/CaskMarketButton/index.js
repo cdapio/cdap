@@ -14,11 +14,19 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
-import PlusButtonModal from 'components/PlusButtonModal';
+
+import PropTypes from 'prop-types';
+import React, {Component} from 'react';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import Loadable from 'react-loadable';
 import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+
+var PlusButtonModal = Loadable({
+  loader: () => import(/* webpackChunkName: "PlusButtonModal" */ 'components/PlusButtonModal'),
+  loading: LoadingSVGCentered
+});
 
 export default class CaskMarketButton extends Component {
   constructor(props) {

@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { connect, Provider } from 'react-redux';
 import MicroserviceQueueActions from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueActions';
 import {createMicroserviceQueueStore} from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueStore';

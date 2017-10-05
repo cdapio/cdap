@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {preventPropagation} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
 import classnames from 'classnames';

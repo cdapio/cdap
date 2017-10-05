@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 
 require('./Footer.scss');
 
@@ -43,6 +45,6 @@ export default class Footer extends Component {
   }
 }
 Footer.propTypes = {
-  version: React.PropTypes.string,
-  copyrightYear: React.PropTypes.string
+  version: PropTypes.string,
+  copyrightYear: PropTypes.string
 };

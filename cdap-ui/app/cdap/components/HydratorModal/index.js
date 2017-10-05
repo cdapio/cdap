@@ -17,7 +17,9 @@
 // THIS IS A COPY-PASTE OF MODAL FROM REACTSTRAP. WE NEED TO ADD CLASSNAME ALONGSIDE WITH 'modal' AND 3.9.4 OF
 // REACTSTRAP DOESN'T ALLOW THAT. HENCE THIS HORROR.
 
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React from 'react';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import TransitionGroup from 'react-addons-transition-group';

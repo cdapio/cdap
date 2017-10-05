@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import FileDataUpload from 'components/FileDataUpload';
 import classnames from 'classnames';

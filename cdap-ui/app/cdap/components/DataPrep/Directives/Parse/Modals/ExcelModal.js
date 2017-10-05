@@ -14,7 +14,9 @@
  * the License.
 */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter,FormGroup, Label, Input } from 'reactstrap';
 import isNil from 'lodash/isNil';
 import MouseTrap from 'mousetrap';

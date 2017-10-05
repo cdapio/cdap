@@ -50,6 +50,10 @@ const defaultGeneralState = {
   queues: []
 };
 
+const defaultStoreState = {
+  general: defaultGeneralState
+};
+
 // Reducers
 const general = (state = defaultGeneralState, action = defaultAction) => {
   let stateCopy = {};
@@ -185,7 +189,7 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
 };
 
 // Store
-const createMicroserviceQueueStore = (initialState = defaultGeneralState) => {
+const createMicroserviceQueueStore = (initialState = defaultStoreState) => {
   return createStore(
     combineReducers({general}),
     initialState

@@ -14,7 +14,9 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import PropTypes from 'prop-types';
+
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
 require('../ui-utils/url-generator');
@@ -23,8 +25,8 @@ require('./styles/lib-styles.scss');
 require('./styles/common.scss');
 require('./styles/main.scss');
 
-import Administration from 'components/Administration';
-import Dashboard from 'components/Dashboard';
+import Loadable from 'react-loadable';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Home from 'components/Home';
 import Header from 'components/Header';
 import Footer from 'components/Footer';
@@ -37,7 +39,6 @@ import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
-import SchemaEditor from 'components/SchemaEditor';
 import MyCDAPVersionApi from 'api/version.js';
 import VersionStore from 'services/VersionStore';
 import VersionActions from 'services/VersionStore/VersionActions';
@@ -49,6 +50,11 @@ import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
+
+const Administration = Loadable({
+  loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
+  loading: LoadingSVGCentered
+});
 
 class CDAP extends Component {
   constructor(props) {
@@ -115,9 +121,7 @@ class CDAP extends Component {
                   <Route exact path="/administration" component={Administration} />
                   <Route exact path="/ns" component={RouteToNamespace} />
                   <Route path="/ns/:namespace" history={history} component={Home} />
-                  <Route exact path="/ns/:namespace/dashboard" component={Dashboard} />
                   <Route path="/socket-example" component={ConnectionExample} />
-                  <Route path="/schemaeditor" component={SchemaEditor} />
                   <Route exact path="/httpexecutor" component={HttpExecutor} />
                   <Route component={Page404} />
                 </Switch>
