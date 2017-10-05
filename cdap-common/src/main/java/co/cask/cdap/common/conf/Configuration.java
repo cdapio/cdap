@@ -231,16 +231,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   private static Map<String, DeprecatedKeyInfo> deprecatedKeyMap = new HashMap<String, DeprecatedKeyInfo>() {
     {
-      put(KafkaConstants.ConfigKeys.REPLICATION_FACTOR_DEPRECATED,
-          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.REPLICATION_FACTOR));
-      put(KafkaConstants.ConfigKeys.LOG_DIRS_DEPRECATED,
-          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.LOG_DIRS));
-      put(KafkaConstants.ConfigKeys.PORT_CONFIG_DEPRECATED,
-          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.PORT_CONFIG));
-      put(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG_DEPRECATED,
-          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG));
-      put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED,
-          new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG));
 
       // The old key is defined in LoggingConfigurations class, which is in cdap-watchdog, hence can't use in here
       put("log.saver.checkpoint.interval.ms",
@@ -264,16 +254,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   private static Map<String, String[]> reverseDeprecatedKeyMap = new HashMap<String, String[]>() {
     {
-      put(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
-          new String[] {KafkaConstants.ConfigKeys.REPLICATION_FACTOR_DEPRECATED});
-      put(KafkaConstants.ConfigKeys.LOG_DIRS,
-          new String[] {KafkaConstants.ConfigKeys.LOG_DIRS_DEPRECATED});
-      put(KafkaConstants.ConfigKeys.PORT_CONFIG,
-          new String[] {KafkaConstants.ConfigKeys.PORT_CONFIG_DEPRECATED});
-      put(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG,
-          new String[] {KafkaConstants.ConfigKeys.HOSTNAME_CONFIG_DEPRECATED});
-      put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
-          new String[] {KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED});
       put(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS, new String[] { "log.saver.checkpoint.interval.ms" });
       put("log.pipeline.cdap.file.sync.interval.bytes", new String[] { "log.file.sync.interval.bytes" });
       put("log.pipeline.cdap.file.max.size.bytes", new String[] { "log.max.file.size.bytes" });
