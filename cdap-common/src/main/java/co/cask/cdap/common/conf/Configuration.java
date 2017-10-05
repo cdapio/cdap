@@ -231,7 +231,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   private static Map<String, DeprecatedKeyInfo> deprecatedKeyMap = new HashMap<String, DeprecatedKeyInfo>() {
     {
-      put(Constants.Security.AUTH_SERVER_ADDRESS, new DeprecatedKeyInfo(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
       put(KafkaConstants.ConfigKeys.REPLICATION_FACTOR_DEPRECATED,
           new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.REPLICATION_FACTOR));
       put(KafkaConstants.ConfigKeys.LOG_DIRS_DEPRECATED,
@@ -242,16 +241,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG));
       put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED,
           new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG));
-      put(Constants.AppFabric.SERVER_ADDRESS_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
-      put(Constants.Dataset.Manager.ADDRESS_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
-      put(Constants.LogSaver.MEMORY_MB_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.LogSaver.MEMORY_MB));
-      put(Constants.LogSaver.NUM_CORES_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.LogSaver.NUM_CORES));
-      put(Constants.Security.SSL_ENABLED_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.Security.SSL.EXTERNAL_ENABLED));
 
       // The old key is defined in LoggingConfigurations class, which is in cdap-watchdog, hence can't use in here
       put("log.saver.checkpoint.interval.ms",
@@ -275,7 +264,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   private static Map<String, String[]> reverseDeprecatedKeyMap = new HashMap<String, String[]>() {
     {
-      put(Constants.Security.AUTH_SERVER_BIND_ADDRESS, new String[] { Constants.Security.AUTH_SERVER_ADDRESS });
       put(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
           new String[] {KafkaConstants.ConfigKeys.REPLICATION_FACTOR_DEPRECATED});
       put(KafkaConstants.ConfigKeys.LOG_DIRS,
@@ -286,9 +274,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new String[] {KafkaConstants.ConfigKeys.HOSTNAME_CONFIG_DEPRECATED});
       put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
           new String[] {KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED});
-      put(Constants.Service.MASTER_SERVICES_BIND_ADDRESS,
-          new String[]{Constants.AppFabric.SERVER_ADDRESS_DEPRECATED, Constants.Dataset.Manager.ADDRESS_DEPRECATED});
-      put(Constants.Security.SSL.EXTERNAL_ENABLED, new String[] { Constants.Security.SSL_ENABLED_DEPRECATED });
       put(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS, new String[] { "log.saver.checkpoint.interval.ms" });
       put("log.pipeline.cdap.file.sync.interval.bytes", new String[] { "log.file.sync.interval.bytes" });
       put("log.pipeline.cdap.file.max.size.bytes", new String[] { "log.max.file.size.bytes" });
