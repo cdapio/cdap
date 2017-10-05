@@ -18,10 +18,16 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
-import SchemaEditor from 'components/SchemaEditor';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import Loadable from 'react-loadable';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 require('./SchemaTab.scss');
+
+var SchemaEditor = Loadable({
+  loader: () => import(/* webpackChunkName: "SchemaEditor" */ 'components/SchemaEditor'),
+  loading: LoadingSVGCentered
+});
 
 export default class SchemaTab extends Component {
   constructor(props) {

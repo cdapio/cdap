@@ -14,11 +14,15 @@
  * the License.
  */
 
+@import "../AppDetailedView/AppDetailedView.scss";
+
 .app-detailed-view {
   &.dataset-detailed-view {
     .iframe-container {
       height: 100%;
     }
+
+    @include overviewStyles();
 
     .properties-container {
       height: 100%;

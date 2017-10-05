@@ -214,87 +214,89 @@ export default class DataPrepTable extends Component {
     return (
       <table className="table table-bordered">
         <thead className="thead-inverse">
-          <th className="row-count-header" />
-          {
-            headers.map((head, index) => {
-              return (
-                <th
-                  id={`column-${head.name}`}
-                  className={classnames({
-                    'selected': this.columnIsSelected(head.name),
-                    'dropdownOpened': this.state.columnDropdownOpen === head.name
-                  })}
-                  key={head.name}
-                >
-                  <DataQuality columnInfo={this.state.columns[head.name]} />
-                  <div className="column-wrapper-container">
-                    <div className="col-type">{captialize(types[head.name] || 'unknown')}</div>
-                    <div
-                      className="clearfix column-wrapper"
-                    >
-                      <span className="directives-dropdown-button">
-                        <ColumnActionsDropdown
-                          column={head.name}
-                          dropdownOpened={this.columnDropdownOpened}
-                        />
-                      </span>
-                      {
-                        !head.edit ?
-                          <span
-                            className="header-text"
-                            onClick={this.switchToEditColumnName.bind(this, head)}
-                          >
-                            <span>
-                              {head.name}
+          <tr>
+            <th className="row-count-header" />
+            {
+              headers.map((head, index) => {
+                return (
+                  <th
+                    id={`column-${head.name}`}
+                    className={classnames({
+                      'selected': this.columnIsSelected(head.name),
+                      'dropdownOpened': this.state.columnDropdownOpen === head.name
+                    })}
+                    key={head.name}
+                  >
+                    <DataQuality columnInfo={this.state.columns[head.name]} />
+                    <div className="column-wrapper-container">
+                      <div className="col-type">{captialize(types[head.name] || 'unknown')}</div>
+                      <div
+                        className="clearfix column-wrapper"
+                      >
+                        <span className="directives-dropdown-button">
+                          <ColumnActionsDropdown
+                            column={head.name}
+                            dropdownOpened={this.columnDropdownOpened}
+                          />
+                        </span>
+                        {
+                          !head.edit ?
+                            <span
+                              className="header-text"
+                              onClick={this.switchToEditColumnName.bind(this, head)}
+                            >
+                              <span>
+                                {head.name}
+                              </span>
                             </span>
-                          </span>
-                        :
-                          <div className="warning-container-wrapper float-xs-left">
-                            <TextboxOnValium
-                              onChange={this.handleSaveEditedColumnName.bind(this, index)}
-                              value={head.name}
-                              onWarning={this.showWarningMessage.bind(this, index)}
-                              allowSpace={false}
-                              shouldSelect={true}
-                            />
-                            {
-                              head.showWarning ?
-                                <WarningContainer
-                                  message={T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)}
-                                >
-                                  <div className="warning-btns-container">
-                                    <div
-                                      className="btn btn-primary"
-                                      onClick={this.handleSaveEditedColumnName.bind(this, index, head.editedColumnName, false)}
-                                    >
-                                      {T.translate('features.DataPrep.Directives.apply')}
+                          :
+                            <div className="warning-container-wrapper float-xs-left">
+                              <TextboxOnValium
+                                onChange={this.handleSaveEditedColumnName.bind(this, index)}
+                                value={head.name}
+                                onWarning={this.showWarningMessage.bind(this, index)}
+                                allowSpace={false}
+                                shouldSelect={true}
+                              />
+                              {
+                                head.showWarning ?
+                                  <WarningContainer
+                                    message={T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)}
+                                  >
+                                    <div className="warning-btns-container">
+                                      <div
+                                        className="btn btn-primary"
+                                        onClick={this.handleSaveEditedColumnName.bind(this, index, head.editedColumnName, false)}
+                                      >
+                                        {T.translate('features.DataPrep.Directives.apply')}
+                                      </div>
+                                      <div
+                                        className="btn"
+                                        onClick={this.handleSaveEditedColumnName.bind(this, index, head.name, true)}
+                                      >
+                                        {T.translate('features.DataPrep.Directives.cancel')}
+                                      </div>
                                     </div>
-                                    <div
-                                      className="btn"
-                                      onClick={this.handleSaveEditedColumnName.bind(this, index, head.name, true)}
-                                    >
-                                      {T.translate('features.DataPrep.Directives.cancel')}
-                                    </div>
-                                  </div>
-                                </WarningContainer>
-                              :
-                                null
-                            }
-                          </div>
-                      }
-                      <span
-                        onClick={this.toggleColumnSelect.bind(this, head.name)}
-                        className={classnames('float-xs-right fa column-header-checkbox', {
-                          'fa-square-o': !this.columnIsSelected(head.name),
-                          'fa-check-square': this.columnIsSelected(head.name)
-                        })}
-                      />
+                                  </WarningContainer>
+                                :
+                                  null
+                              }
+                            </div>
+                        }
+                        <span
+                          onClick={this.toggleColumnSelect.bind(this, head.name)}
+                          className={classnames('float-xs-right fa column-header-checkbox', {
+                            'fa-square-o': !this.columnIsSelected(head.name),
+                            'fa-check-square': this.columnIsSelected(head.name)
+                          })}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </th>
-              );
-            })
-          }
+                  </th>
+                );
+              })
+            }
+          </tr>
         </thead>
         <tbody>
           {

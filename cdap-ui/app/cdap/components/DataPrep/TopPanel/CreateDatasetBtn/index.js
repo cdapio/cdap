@@ -472,9 +472,9 @@ export default class CreateDatasetBtn extends Component {
               value={this.state.rowKey}
             >
               {
-                headers.map(header => {
+                headers.map((header, index) => {
                   return (
-                    <option value={header}>{header}</option>
+                    <option value={header} key={index}>{header}</option>
                   );
                 })
               }
@@ -507,9 +507,9 @@ export default class CreateDatasetBtn extends Component {
               value={this.state.format}
             >
               {
-                fielsetDataType.map(datatype => {
+                fielsetDataType.map((datatype, index) => {
                   return (
-                    <option value={datatype.id}>{datatype.label}</option>
+                    <option value={datatype.id} key={index}>{datatype.label}</option>
                   );
                 })
               }
@@ -553,14 +553,17 @@ export default class CreateDatasetBtn extends Component {
     return (
       <div className="text-xs-left steps-container">
         {
-          this.state.copyingSteps.map(step => {
+          this.state.copyingSteps.map((step, index) => {
             return (
-              <div className={classnames("step-container", {
-                "text-success": step.status === 'success',
-                "text-danger": step.status === 'failure',
-                "text-info": step.status === 'running',
-                "text-muted": step.status === null
-              })}>
+              <div
+                key={index}
+                className={classnames("step-container", {
+                  "text-success": step.status === 'success',
+                  "text-danger": step.status === 'failure',
+                  "text-info": step.status === 'running',
+                  "text-muted": step.status === null
+                })}
+              >
                 <span>
                   {statusContainer(step.status)}
                 </span>

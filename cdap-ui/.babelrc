@@ -3,9 +3,11 @@
     "es2015",
     "react"
   ],
+  "comments": true,
   "plugins": [
     "transform-object-rest-spread",
     "transform-class-properties",
+    "syntax-dynamic-import",
     "lodash"
   ]
 }

@@ -17,6 +17,7 @@ var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var path = require('path');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
 var plugins = [
@@ -25,12 +26,7 @@ var plugins = [
     context: path.resolve(__dirname, 'dll'),
     manifest: require(path.join(__dirname, 'dll', '/shared-vendor-manifest.json'))
   }),
-  new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
-    {
-      from: './login.html',
-      to: './login.html'
-    },
     {
       from: './styles/fonts',
       to: './fonts/'
@@ -40,37 +36,72 @@ var plugins = [
       to: './img/'
     }
   ]),
+  new HtmlWebpackPlugin({
+    title: 'CDAP',
+    template: './login.html',
+    filename: 'login.html',
+    hash: true
+  }),
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss']
   })
 ];
 var mode = process.env.NODE_ENV;
-var loaders = [
+var rules = [
   {
     test: /\.scss$/,
-    loader: 'style-loader!css-loader!sass-loader'
+    use: [
+      'style-loader',
+      'css-loader',
+      'sass-loader'
+    ]
   },
   {
     test: /\.ya?ml$/,
-    loader: 'yml'
+    use: 'yml-loader'
   },
   {
     test: /\.css$/,
-    loader: 'style-loader!css-loader!sass-loader'
+    use: [
+      'style-loader',
+      'css-loader',
+      'sass-loader'
+    ]
+  },
+  {
+    enforce: 'pre',
+    test: /\.js$/,
+    use: 'eslint-loader',
+    exclude: [
+      /node_modules/,
+      /bower_components/,
+      /dist/,
+      /cdap_dist/,
+      /common_dist/,
+      /wrangler_dist/
+    ]
   },
   {
     test: /\.js$/,
-    loader: 'babel',
+    use: 'babel-loader',
     exclude: /node_modules/
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+    use: [
+      {
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          mimetype: 'application/font-woff'
+        }
+      }
+    ]
   },
   {
     test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'file-loader'
+    use: 'file-loader'
   }
 ];
 var webpackConfig = {
@@ -79,28 +110,15 @@ var webpackConfig = {
     'login': ['babel-polyfill', './login.js']
   },
   module: {
-    preLoaders: [
-      {
-        test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [
-          /node_modules/,
-          /bower_components/,
-          /dist/,
-          /cdap_dist/,
-          /common_dist/,
-          /wrangler_dist/
-        ]
-      }
-    ],
-    loaders: loaders
+    rules
   },
   stats: {
     chunks: false
   },
   output: {
     filename: './[name].js',
-    path: __dirname + '/login_dist/login_assets'
+    path: __dirname + '/login_dist/login_assets',
+    publicPath: '/login_assets/'
   },
   plugins: plugins
 };

@@ -24,12 +24,17 @@ import {createStore, combineReducers} from 'redux';
 import {connect} from 'react-redux';
 import {defaultAction} from 'services/helpers';
 import {Provider} from 'react-redux';
-import DataPrepVisualization from 'components/DataPrep/DataPrepVisualization';
+import Loadable from 'react-loadable';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 import classnames from 'classnames';
 import T from 'i18n-react';
 require('./DataPrepContentWrapper.scss');
 
+const DataPrepVisualization = Loadable({
+  loader: () => import(/* webpackChunkName: "DataprepVisualization" */ 'components/DataPrep/DataPrepVisualization'),
+  loading: LoadingSVGCentered
+});
 const PREFIX = 'features.DataPrep.TopPanel';
 const DEFAULTVIEW = 'data';
 const DEFAULTSTORESTATE = {view: DEFAULTVIEW};

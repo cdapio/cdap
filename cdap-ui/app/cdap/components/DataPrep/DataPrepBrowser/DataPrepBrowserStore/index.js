@@ -27,7 +27,7 @@ const Actions = {
   SET_KAFKA_ERROR: 'SET_KAFKA_ERROR'
 };
 
-export {Actions} ;
+export {Actions};
 
 const defaultDatabaseValue = {
   info: {},

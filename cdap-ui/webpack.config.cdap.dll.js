@@ -28,26 +28,39 @@ var plugins = [
     path: path.join(__dirname, 'dll', 'cdap-[name]-manifest.json'),
     name: 'cdap_[name]',
     context: path.resolve(__dirname, 'dll')
+  }),
+  new webpack.optimize.UglifyJsPlugin({
+    compress: {
+      warnings: false
+    }
   })
 ];
 var webpackConfig = {
   entry: {
     vendor: [
-      'react-addons-css-transition-group',
       'whatwg-fetch',
       'node-uuid',
       'sockjs-client',
       'fuse.js',
       'react-dropzone',
       'react-redux',
+      'redux-thunk',
+      'redux-undo',
       'moment',
+      'react-router',
       'react-router-dom',
+      'react-sparklines',
+      'react-tether',
+      'react-timeago',
       'react-file-download',
       'mousetrap',
       'd3',
-      'cdap-avsc',
       'react-datetime',
-      'svg4everybody'
+      'svg4everybody',
+      'vega',
+      'vega-lite',
+      'vega-tooltip',
+      'react-helmet'
     ]
   },
   output: {

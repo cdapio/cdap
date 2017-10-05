@@ -62,7 +62,7 @@ export default class SwapColumnsDirective extends Component {
 }
 
 SwapColumnsDirective.propTypes = {
-  column: PropTypes.array,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isDisabled: PropTypes.bool
 };
