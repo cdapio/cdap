@@ -76,45 +76,11 @@ public class LineageClient {
    * @param endTime end time for the query, in seconds
    * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
    * @return {@link LineageRecord} for the specified dataset.
-   * @deprecated since 4.0.0. Use {@link #getLineage(DatasetId, long, long, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.DatasetInstance datasetInstance, long startTime, long endTime,
-                                  @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(datasetInstance.toEntityId(), startTime, endTime, levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given dataset.
-   *
-   * @param datasetInstance the dataset for which to retrieve lineage
-   * @param startTime start time for the query, in seconds
-   * @param endTime end time for the query, in seconds
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified dataset.
    */
   public LineageRecord getLineage(DatasetId datasetInstance, long startTime, long endTime,
                                   @Nullable Integer levels)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given dataset.
-   *
-   * @param datasetInstance the dataset for which to retrieve lineage
-   * @param startTime start time for the query, in seconds, or in 'now - xs' format
-   * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified dataset.
-   * @deprecated since 4.0.0. Use {@link #getLineage(DatasetId, String, String, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
-                                  @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(datasetInstance.toEntityId(), startTime, endTime, levels);
   }
 
   /**
@@ -141,47 +107,11 @@ public class LineageClient {
    * @param collapseTypes fields on which lineage relations can be collapsed on
    * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
    * @return {@link LineageRecord} for the specified dataset.
-   * @deprecated since 4.0.0. Use {@link #getLineage(DatasetId, long, long, Set, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.DatasetInstance datasetInstance, long startTime, long endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(datasetInstance.toEntityId(), startTime, endTime, collapseTypes, levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given dataset.
-   *
-   * @param datasetInstance the dataset for which to retrieve lineage
-   * @param startTime start time for the query, in seconds
-   * @param endTime end time for the query, in seconds
-   * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified dataset.
    */
   public LineageRecord getLineage(DatasetId datasetInstance, long startTime, long endTime,
                                   Set<CollapseType> collapseTypes, @Nullable Integer levels)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given dataset.
-   *
-   * @param datasetInstance the dataset for which to retrieve lineage
-   * @param startTime start time for the query, in seconds, or in 'now - xs' format
-   * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified dataset.
-   * @deprecated since 4.0.0. Use {@link #getLineage(DatasetId, String, String, Set, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(datasetInstance.toEntityId(), startTime, endTime, collapseTypes, levels);
   }
 
   /**
@@ -216,44 +146,10 @@ public class LineageClient {
    * @param endTime end time for the query, in seconds
    * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
    * @return {@link LineageRecord} for the specified stream.
-   * @deprecated since 4.0.0. Use {@link #getLineage(StreamId, long, long, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.Stream streamId, long startTime, long endTime, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId.toEntityId(), startTime, endTime, levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds
-   * @param endTime end time for the query, in seconds
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
    */
   public LineageRecord getLineage(StreamId streamId, long startTime, long endTime, @Nullable Integer levels)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds
-   * @param endTime end time for the query, in seconds
-   * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
-   * @deprecated since 4.0.0. Use {@link #getLineage(StreamId, long, long, Set, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.Stream streamId, long startTime, long endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId.toEntityId(), startTime, endTime, collapseTypes, levels);
   }
 
   /**
@@ -280,44 +176,10 @@ public class LineageClient {
    * @param endTime end time for the query, in seconds, or in 'now - xs' format
    * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
    * @return {@link LineageRecord} for the specified stream.
-   * @deprecated since 4.0.0. Use {@link #getLineage(StreamId, String, String, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId.toEntityId(), startTime, endTime, levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds, or in 'now - xs' format
-   * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
    */
   public LineageRecord getLineage(StreamId streamId, String startTime, String endTime, @Nullable Integer levels)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(streamId, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds, or in 'now - xs' format
-   * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
-   * @deprecated since 4.0.0. Use {@link #getLineage(StreamId, String, String, Set, Integer)} instead.
-   */
-  @Deprecated
-  public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId.toEntityId(), startTime, endTime, collapseTypes, levels);
   }
 
   /**

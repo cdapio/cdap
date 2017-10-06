@@ -26,11 +26,9 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProtoConstraintCodec;
 import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ScheduleInstanceConfiguration;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ScheduleId;
@@ -84,36 +82,11 @@ public class ScheduleClient {
    * Add a new schedule for an existing application.
    *
    * @param scheduleId the ID of the schedule to add
-   * @param configuration describes the new schedule.
-   * @deprecated as of 4.2.0. Use {@link #add(ScheduleId, ScheduleDetail)} instead.
-   */
-  @Deprecated
-  public void add(ScheduleId scheduleId, ScheduleInstanceConfiguration configuration) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
-    doAdd(scheduleId, GSON.toJson(configuration));
-  }
-
-  /**
-   * Add a new schedule for an existing application.
-   *
-   * @param scheduleId the ID of the schedule to add
    * @param detail the {@link ScheduleDetail} describing the new schedule.
    */
   public void add(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doAdd(scheduleId, GSON.toJson(detail));
-  }
-
-  /**
-   * Update an existing schedule.
-   *
-   * @param scheduleId the ID of the schedule to add
-   * @param config describes the updates to the schedule. Fields that are null will not be updated.
-   */
-  @Deprecated
-  public void update(ScheduleId scheduleId, ScheduleInstanceConfiguration config) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
-    doUpdate(scheduleId, GSON.toJson(config));
   }
 
   public void update(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
@@ -125,49 +98,10 @@ public class ScheduleClient {
    * List all schedules for an existing workflow.
    *
    * @param workflow the ID of the workflow
-   * @deprecated as of 4.2.0. Use {@link #listSchedules(WorkflowId)} instead.
-   */
-  @Deprecated
-  public List<ScheduleSpecification> list(Id.Workflow workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return ScheduleDetail.toScheduleSpecs(doList(workflow.toEntityId()));
-  }
-
-  /**
-   * List all schedules for an existing workflow.
-   *
-   * @param workflow the ID of the workflow
-   * @deprecated as of 4.2.0. Use {@link #listSchedules(WorkflowId)} instead.
-   */
-  @Deprecated
-  public List<ScheduleSpecification> list(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return ScheduleDetail.toScheduleSpecs(doList(workflow));
-  }
-
-  /**
-   * List all schedules for an existing workflow.
-   *
-   * @param workflow the ID of the workflow
    */
   public List<ScheduleDetail> listSchedules(WorkflowId workflow)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     return doList(workflow);
-  }
-
-  /**
-   * Get the next scheduled run time of the program. A program may contain multiple schedules.
-   * This method returns the next scheduled runtimes for all the schedules. This method only takes
-   + into account {@link Schedule}s based on time. Schedules based on data are ignored.
-   *
-   * @param workflow Id of the Workflow for which to fetch next run times.
-   * @return list of Scheduled runtimes for the Workflow. Empty list if there are no schedules.
-   * @deprecated use {@link #nextRuntimes(WorkflowId)} instead
-   */
-  @Deprecated
-  public List<ScheduledRuntime> nextRuntimes(Id.Workflow workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return nextRuntimes(workflow.toEntityId());
   }
 
   /**
@@ -194,42 +128,6 @@ public class ScheduleClient {
     return objectResponse.getResponseObject();
   }
 
-  @Deprecated
-  public void suspend(Id.Schedule schedule)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    suspend(schedule.toEntityId());
-  }
-
-  public void suspend(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
-    UnauthorizedException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s/suspend", scheduleId.getApplication(),
-                                scheduleId.getVersion(), scheduleId.getSchedule());
-    URL url = config.resolveNamespacedURLV3(scheduleId.toId().getNamespace(), path);
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(scheduleId);
-    }
-  }
-
-  @Deprecated
-  public void resume(Id.Schedule schedule)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    resume(schedule.toEntityId());
-  }
-
-  public void resume(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
-    UnauthorizedException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s/resume", scheduleId.getApplication(),
-                                scheduleId.getVersion(), scheduleId.getSchedule());
-    URL url = config.resolveNamespacedURLV3(scheduleId.toId().getNamespace(), path);
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(scheduleId);
-    }
-  }
-
   /**
    * Delete an existing schedule.
    *
@@ -239,7 +137,7 @@ public class ScheduleClient {
     UnauthorizedException {
     String path = String.format("apps/%s/versions/%s/schedules/%s", scheduleId.getApplication(),
                                 scheduleId.getVersion(), scheduleId.getSchedule());
-    URL url = config.resolveNamespacedURLV3(scheduleId.toId().getNamespace(), path);
+    URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {

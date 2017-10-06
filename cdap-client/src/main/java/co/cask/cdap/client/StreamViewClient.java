@@ -23,7 +23,6 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.StreamId;
@@ -72,20 +71,6 @@ public class StreamViewClient {
    * @param id the view
    * @param viewSpecification the view config
    * @return true if a view was created, false if updated
-   * @deprecated since 4.0.0. Use {@link #createOrUpdate(StreamViewId, ViewSpecification)} instead.
-   */
-  @Deprecated
-  public boolean createOrUpdate(Id.Stream.View id, ViewSpecification viewSpecification)
-    throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
-    return createOrUpdate(id.toEntityId(), viewSpecification);
-  }
-
-  /**
-   * Creates or updates a view.
-   *
-   * @param id the view
-   * @param viewSpecification the view config
-   * @return true if a view was created, false if updated
    */
   public boolean createOrUpdate(StreamViewId id, ViewSpecification viewSpecification)
     throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
@@ -95,19 +80,6 @@ public class StreamViewClient {
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(viewSpecification)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken());
     return response.getResponseCode() == 201;
-  }
-
-  /**
-   * Deletes a view.
-   *
-   * @param id the view
-   * @throws NotFoundException if the view was not found
-   * @deprecated since 4.0.0. Use {@link #delete(StreamViewId)} instead.
-   */
-  @Deprecated
-  public void delete(Id.Stream.View id)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    delete(id.toEntityId());
   }
 
   /**
@@ -131,36 +103,11 @@ public class StreamViewClient {
    * Lists all views associated with a stream.
    *
    * @return the list of views associated with a stream
-   * @deprecated since 4.0.0. Use {@link #list(StreamId)} instead.
-   */
-  @Deprecated
-  public List<String> list(Id.Stream stream) throws IOException, UnauthenticatedException, UnauthorizedException {
-    return list(stream.toEntityId());
-  }
-
-  /**
-   * Lists all views associated with a stream.
-   *
-   * @return the list of views associated with a stream
    */
   public List<String> list(StreamId stream) throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(stream.getParent(), String.format("streams/%s/views", stream.getStream()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, LIST_TYPE).getResponseObject();
-  }
-
-  /**
-   * Gets detailed information about a view.
-   *
-   * @param id the view
-   * @return the detailed information about the view
-   * @throws NotFoundException if the view was not found
-   * @deprecated since 4.0.0. Use {@link #get(StreamViewId)} instead.
-   */
-  @Deprecated
-  public ViewDetail get(Id.Stream.View id)
-    throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
-    return get(id.toEntityId());
   }
 
   /**
