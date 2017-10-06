@@ -60,7 +60,7 @@ public class MetadataClient extends AbstractMetadataClient {
 
   @Override
   protected URL resolve(Id.Namespace namespace, String resource) throws MalformedURLException {
-    return config.resolveNamespacedURLV3(namespace, resource);
+    return config.resolveNamespacedURLV3(namespace.toEntityId(), resource);
   }
 
 }

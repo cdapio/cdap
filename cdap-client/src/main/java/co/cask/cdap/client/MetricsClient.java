@@ -192,21 +192,11 @@ public class MetricsClient {
     }
   }
 
-  @Deprecated
-  public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
-    return getFlowletMetrics(flowId.toEntityId().flowlet(flowletId));
-  }
-
   public RuntimeMetrics getFlowletMetrics(FlowletId flowletId) {
     return getMetrics(MetricsTags.flowlet(flowletId),
                       Constants.Metrics.Name.Flow.FLOWLET_INPUT,
                       Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
                       Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
-  }
-
-  @Deprecated
-  public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
-    return getServiceMetrics(serviceId.getApplication().toEntityId().service(serviceId.getId()));
   }
 
   public RuntimeMetrics getServiceMetrics(ServiceId serviceId) {
@@ -221,7 +211,6 @@ public class MetricsClient {
       outQueryParts.add(key + "=" + value);
     }
   }
-
   private void addTags(Map<String, String> tags, List<String> outQueryParts) {
     for (Map.Entry<String, String> tag : tags.entrySet()) {
       outQueryParts.add("tag=" + tag.getKey() + ":" + tag.getValue());
