@@ -29,6 +29,7 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ProtoConstraintCodec;
 import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.ScheduleDetail;
+import co.cask.cdap.proto.ScheduleInstanceConfiguration;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ScheduleId;
@@ -82,6 +83,19 @@ public class ScheduleClient {
    * Add a new schedule for an existing application.
    *
    * @param scheduleId the ID of the schedule to add
+   * @param configuration describes the new schedule.
+   * @deprecated as of 4.2.0. Use {@link #add(ScheduleId, ScheduleDetail)} instead.
+   */
+  @Deprecated
+  public void add(ScheduleId scheduleId, ScheduleInstanceConfiguration configuration) throws IOException,
+    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
+    doAdd(scheduleId, GSON.toJson(configuration));
+  }
+
+  /**
+   * Add a new schedule for an existing application.
+   *
+   * @param scheduleId the ID of the schedule to add
    * @param detail the {@link ScheduleDetail} describing the new schedule.
    */
   public void add(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
@@ -89,6 +103,17 @@ public class ScheduleClient {
     doAdd(scheduleId, GSON.toJson(detail));
   }
 
+  /**
+   * Update an existing schedule.
+   *
+   * @param scheduleId the ID of the schedule to add
+   * @param config describes the updates to the schedule. Fields that are null will not be updated.
+   */
+  @Deprecated
+  public void update(ScheduleId scheduleId, ScheduleInstanceConfiguration config) throws IOException,
+    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
+    doUpdate(scheduleId, GSON.toJson(config));
+  }
   public void update(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doUpdate(scheduleId, GSON.toJson(detail));
@@ -126,6 +151,30 @@ public class ScheduleClient {
     ObjectResponse<List<ScheduledRuntime>> objectResponse = ObjectResponse.fromJsonBody(
       response, new TypeToken<List<ScheduledRuntime>>() { }.getType(), GSON);
     return objectResponse.getResponseObject();
+  }
+
+  public void suspend(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/suspend", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
+    }
+  }
+
+  public void resume(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/resume", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
+    }
   }
 
   /**

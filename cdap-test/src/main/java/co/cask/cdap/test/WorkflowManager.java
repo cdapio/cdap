@@ -41,16 +41,6 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
   List<ScheduleDetail> getProgramSchedules();
 
   /**
-   * Get the list of schedules of the workflow.
-   *
-   * @return List of {@link ScheduleSpecification}.
-   *
-   * @deprecated since release 4.2. Use {@link #getProgramSchedules()} instead.
-   */
-  @Deprecated
-  List<ScheduleSpecification> getSchedules();
-
-  /**
    * Get the {@link ScheduleManager} instance to manage the schedule
    *
    * @param scheduleId of the workflow to retrieve

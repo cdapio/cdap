@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
@@ -55,19 +54,6 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   public List<ScheduleDetail> getProgramSchedules() {
     try {
       return appFabricClient.getProgramSchedules(
-        programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
-    } catch (NotFoundException e) {
-      // this can only happen if the workflow was deleted, unlikely during a test but if so, empty list is correct
-      return Collections.emptyList();
-    }
-  }
-
-  @Deprecated
-  @Override
-  public List<ScheduleSpecification> getSchedules() {
-    try {
-      //noinspection deprecation
-      return appFabricClient.getSchedules(
         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
     } catch (NotFoundException e) {
       // this can only happen if the workflow was deleted, unlikely during a test but if so, empty list is correct

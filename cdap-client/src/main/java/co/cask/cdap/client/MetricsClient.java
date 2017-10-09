@@ -21,8 +21,13 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricsTags;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -187,12 +192,35 @@ public class MetricsClient {
     }
   }
 
+  @Deprecated
+  public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
+    return getFlowletMetrics(flowId.toEntityId().flowlet(flowletId));
+  }
+
+  public RuntimeMetrics getFlowletMetrics(FlowletId flowletId) {
+    return getMetrics(MetricsTags.flowlet(flowletId),
+                      Constants.Metrics.Name.Flow.FLOWLET_INPUT,
+                      Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
+                      Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
+  }
+
+  @Deprecated
+  public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
+    return getServiceMetrics(serviceId.getApplication().toEntityId().service(serviceId.getId()));
+  }
+
+  public RuntimeMetrics getServiceMetrics(ServiceId serviceId) {
+    return getMetrics(MetricsTags.service(serviceId),
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
+  }
+
   private void add(String key, List<String> values, List<String> outQueryParts) {
     for (String value : values) {
       outQueryParts.add(key + "=" + value);
     }
   }
-
   private void addTags(Map<String, String> tags, List<String> outQueryParts) {
     for (Map.Entry<String, String> tag : tags.entrySet()) {
       outQueryParts.add("tag=" + tag.getKey() + ":" + tag.getValue());
