@@ -18,10 +18,8 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
@@ -42,8 +40,6 @@ import javax.ws.rs.Path;
 public final class WorkflowServiceHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder()
-                                    .registerTypeAdapter(WorkflowActionSpecification.class,
-                                                         new WorkflowActionSpecificationCodec())
                                     .registerTypeAdapter(CustomActionSpecification.class,
                                                          new CustomActionSpecificationCodec())
                                     .registerTypeAdapter(ConditionSpecification.class,

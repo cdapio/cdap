@@ -79,12 +79,6 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   }
 
   @Override
-  public WorkflowForkConfigurer<T> addAction(WorkflowAction action) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
-    return this;
-  }
-
-  @Override
   public WorkflowForkConfigurer<T> addAction(CustomAction action) {
     currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
                                                                          artifactRepository, pluginInstantiator));

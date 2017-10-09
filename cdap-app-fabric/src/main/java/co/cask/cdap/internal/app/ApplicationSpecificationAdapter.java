@@ -30,7 +30,6 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
@@ -48,7 +47,6 @@ import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.SparkSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
-import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowNodeCodec;
 import co.cask.cdap.proto.codec.WorkflowSpecificationCodec;
 import com.google.common.base.Preconditions;
@@ -98,7 +96,6 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(SparkSpecification.class, new SparkSpecificationCodec())
       .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
       .registerTypeAdapter(WorkflowNode.class, new WorkflowNodeCodec())
-      .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
       .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
       .registerTypeAdapter(ConditionSpecification.class, new ConditionSpecificationCodec())
       .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())

@@ -43,15 +43,6 @@ public interface WorkflowForkConfigurer<T> {
 
   /**
    * Adds custom action a a next sequential step to the current branch of the {@link WorkflowForkNode}
-   * @param action {@link WorkflowAction} to be added to the fork
-   * @return the configurer for the current fork
-   * @deprecated Deprecated as of 3.5.0. Please use {@link WorkflowForkConfigurer#addAction(CustomAction)} instead.
-   */
-  @Deprecated
-  WorkflowForkConfigurer<T> addAction(WorkflowAction action);
-
-  /**
-   * Adds custom action a a next sequential step to the current branch of the {@link WorkflowForkNode}
    * @param action {@link CustomAction} to be added to the fork
    * @return the configurer for the current fork
    */

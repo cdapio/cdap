@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -36,7 +35,6 @@ import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
@@ -45,7 +43,6 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -85,7 +82,6 @@ import javax.inject.Inject;
 public class ProgramClient {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramClient.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
     .registerTypeAdapter(ConditionSpecification.class, new ConditionSpecificationCodec())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())

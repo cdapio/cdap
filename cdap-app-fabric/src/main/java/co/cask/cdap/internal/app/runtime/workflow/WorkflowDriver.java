@@ -416,33 +416,25 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                    final ClassLoader classLoader, WorkflowToken token)  throws Exception {
 
     CustomActionExecutor customActionExecutor;
-    if (node.getActionSpecification() != null) {
-      // Node has WorkflowActionSpecification, so it must represent the deprecated WorkflowAction
-      // Create instance of the CustomActionExecutor using BasicWorkflowContext
-      BasicWorkflowContext context = createWorkflowContext(node.getActionSpecification(), token);
-      customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
-    } else {
-      // Node has CustomActionSpecification, so it must represent the CustomAction added in 3.5.0
-      // Create instance of the CustomActionExecutor using CustomActionContext
+    // Node has CustomActionSpecification, so it must represent the CustomAction added in 3.5.0
+    // Create instance of the CustomActionExecutor using CustomActionContext
 
-      WorkflowProgramInfo info = new WorkflowProgramInfo(workflowSpec.getName(), node.getNodeId(),
-                                                         workflowRunId.getRun(), node.getNodeId(),
-                                                         (BasicWorkflowToken) token);
-      ProgramOptions actionOptions =
-         new SimpleProgramOptions(programOptions.getProgramId(),
-                                  programOptions.getArguments(),
-                                  new BasicArguments(RuntimeArguments.extractScope(
-                                    ACTION_SCOPE, node.getNodeId(), programOptions.getUserArguments().asMap())));
+    WorkflowProgramInfo info = new WorkflowProgramInfo(workflowSpec.getName(), node.getNodeId(),
+                                                       workflowRunId.getRun(), node.getNodeId(),
+                                                       (BasicWorkflowToken) token);
+    ProgramOptions actionOptions =
+      new SimpleProgramOptions(programOptions.getProgramId(),
+                               programOptions.getArguments(),
+                               new BasicArguments(RuntimeArguments.extractScope(
+                                 ACTION_SCOPE, node.getNodeId(), programOptions.getUserArguments().asMap())));
 
-      BasicCustomActionContext context = new BasicCustomActionContext(program, actionOptions, cConf,
-                                                                      node.getCustomActionSpecification(), info,
-                                                                      metricsCollectionService, datasetFramework,
-                                                                      txClient, discoveryServiceClient,
-                                                                      pluginInstantiator, secureStore,
-                                                                      secureStoreManager, messagingService);
-      customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
-    }
-
+    BasicCustomActionContext context = new BasicCustomActionContext(program, actionOptions, cConf,
+                                                                    node.getCustomActionSpecification(), info,
+                                                                    metricsCollectionService, datasetFramework,
+                                                                    txClient, discoveryServiceClient,
+                                                                    pluginInstantiator, secureStore,
+                                                                    secureStoreManager, messagingService);
+    customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
     runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
