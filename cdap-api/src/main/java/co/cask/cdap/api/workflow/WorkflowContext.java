@@ -31,17 +31,12 @@ import java.util.Map;
 
 /**
  * Represents the runtime context of a {@link Workflow}. This context is also
- * available to {@link WorkflowAction} and {@link Condition}.
+ * available to {@link Condition}.
  */
 public interface WorkflowContext extends SchedulableProgramContext, RuntimeContext, Transactional, MessagingContext,
   ServiceDiscoverer, DatasetContext, PluginContext, SecureStore {
 
   WorkflowSpecification getWorkflowSpecification();
-
-  /**
-   * @throws UnsupportedOperationException if it is called from {@link Predicate}
-   */
-  WorkflowActionSpecification getSpecification();
 
   /**
    * Returns {@link ConditionSpecification} associated with the condition node in the Workflow.
@@ -66,8 +61,7 @@ public interface WorkflowContext extends SchedulableProgramContext, RuntimeConte
 
   /**
    * Return the state of the workflow. This method can be used from {@link AbstractWorkflow#destroy}
-   * to determine the status of the {@link Workflow}. It can also be used from {@link WorkflowAction#destroy} method
-   * to determine the status of the {@link WorkflowAction}.
+   * to determine the status of the {@link Workflow}.
    * @return a {@link ProgramState}
    */
   @Beta

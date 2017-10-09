@@ -53,16 +53,6 @@ public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer 
    * Adds a custom action as a next sequential step in the {@link Workflow}
    *
    * @param action to be added to the {@link Workflow}
-   * @deprecated Deprecated as of 3.5.0. Please use
-   * {@link WorkflowConfigurer#addAction(CustomAction action)} instead.
-   */
-  @Deprecated
-  void addAction(WorkflowAction action);
-
-  /**
-   * Adds a custom action as a next sequential step in the {@link Workflow}
-   *
-   * @param action to be added to the {@link Workflow}
    */
   void addAction(CustomAction action);
 

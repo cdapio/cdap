@@ -25,7 +25,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
@@ -107,11 +106,6 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   @Override
   public void addSpark(String spark) {
     nodes.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
-  }
-
-  @Override
-  public void addAction(WorkflowAction action) {
-    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
   }
 
   @Override

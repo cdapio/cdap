@@ -35,7 +35,6 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
@@ -71,7 +70,6 @@ import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
-import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -122,7 +120,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
-    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
   private static final Type LIST_OF_RUN_RECORD = new TypeToken<List<RunRecord>>() { }.getType();
