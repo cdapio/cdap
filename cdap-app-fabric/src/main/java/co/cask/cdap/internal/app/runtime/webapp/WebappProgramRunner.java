@@ -33,7 +33,6 @@ import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -99,11 +98,11 @@ public class WebappProgramRunner implements ProgramRunner {
       // TODO: add metrics reporting
       JarHttpHandler jarHttpHandler = webappHttpHandlerFactory.createHandler(program.getJarLocation());
       NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, program.getId().toString());
-      builder.addHttpHandlers(ImmutableSet.of(jarHttpHandler));
+      builder.setHttpHandlers(jarHttpHandler);
       builder.setUrlRewriter(new WebappURLRewriter(jarHttpHandler));
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();
-      httpService.startAndWait();
+      httpService.start();
       final InetSocketAddress address = httpService.getBindAddress();
 
       RunId runId = ProgramRunners.getRunId(options);

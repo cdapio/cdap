@@ -46,8 +46,9 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/privileges/grant")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void grant(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
+  public void grant(FullHttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
 
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
@@ -114,7 +115,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/privileges/revoke")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void revoke(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
+  public void revoke(FullHttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
@@ -140,7 +141,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listPrivileges(principal), PRIVILEGE_SET_TYPE, GSON);
+    httpResponder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(authorizer.listPrivileges(principal), PRIVILEGE_SET_TYPE));
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
@@ -173,7 +175,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void listAllRoles(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listAllRoles());
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(authorizer.listAllRoles()));
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
@@ -184,7 +186,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listRoles(principal));
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(authorizer.listRoles(principal)));
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
@@ -231,12 +233,12 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     AuditLogEntry logEntry = new AuditLogEntry();
     logEntry.setUserName(Objects.firstNonNull(authenticationContext.getPrincipal().getName(), "-"));
     logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
-    logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
+    logEntry.setRequestLine(httpRequest.method(), httpRequest.uri(), httpRequest.protocolVersion());
     if (request != null) {
       logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getAuthorizable(),
                                             request.getActions()));
     }
-    logEntry.setResponseCode(responseStatus.getCode());
+    logEntry.setResponseCode(responseStatus.code());
     AUDIT_LOG.trace(logEntry.toString());
   }
 }

@@ -20,7 +20,7 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
   }
 
   @Override
-  public void chunk(ChannelBuffer request, HttpResponder responder) {
+  public void chunk(ByteBuf request, HttpResponder responder) {
     try {
       if (output == null) {
         output = new FileOutputStream(file);

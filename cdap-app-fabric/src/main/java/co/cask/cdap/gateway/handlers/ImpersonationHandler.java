@@ -28,21 +28,21 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UGIWithPrincipal;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -76,8 +76,8 @@ public class ImpersonationHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/credentials")
-  public void getCredentials(HttpRequest request, HttpResponder responder) throws Exception {
-    String requestContent = request.getContent().toString(Charsets.UTF_8);
+  public void getCredentials(FullHttpRequest request, HttpResponder responder) throws Exception {
+    String requestContent = request.content().toString(StandardCharsets.UTF_8);
     if (requestContent == null) {
       throw new BadRequestException("Request body is empty.");
     }
@@ -112,7 +112,7 @@ public class ImpersonationHandler extends AbstractHttpHandler {
       LOG.debug("Wrote credentials for user {} to {}", ugiWithPrincipal.getPrincipal(), credentialsFile);
       PrincipalCredentials principalCredentials = new PrincipalCredentials(ugiWithPrincipal.getPrincipal(),
                                                                            credentialsFile.toURI().toString());
-      responder.sendJson(HttpResponseStatus.OK, principalCredentials);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(principalCredentials));
     } else {
       throw new IllegalStateException("Unable to create credentials directory.");
     }

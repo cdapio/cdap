@@ -22,10 +22,11 @@ import co.cask.cdap.internal.app.services.AppVersionUpgradeService;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,6 +48,6 @@ public class UpgradeHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/status")
   public void getUpgradeStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, appVersionUpgradeService.getUpgradeStatus());
+    responder.sendJson(HttpResponseStatus.OK, new Gson().toJson(appVersionUpgradeService.getUpgradeStatus()));
   }
 }

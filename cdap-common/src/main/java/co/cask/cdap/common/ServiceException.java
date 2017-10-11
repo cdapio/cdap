@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Similar to Exception, but responds with a custom error code.
@@ -33,6 +33,6 @@ public class ServiceException extends Exception implements HttpErrorStatusProvid
 
   @Override
   public int getStatusCode() {
-    return httpResponseStatus.getCode();
+    return httpResponseStatus.code();
   }
 }

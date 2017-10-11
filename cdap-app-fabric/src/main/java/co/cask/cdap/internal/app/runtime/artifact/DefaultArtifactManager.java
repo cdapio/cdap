@@ -41,10 +41,10 @@ import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +121,7 @@ public class DefaultArtifactManager {
    * cleanup will be performed.
    *
    * @param namespaceId artifact namespace
-   * @param artifactInfo artifact info whose artiact will be unpacked to create classloader
+   * @param artifactInfo artifact info whose artifact will be unpacked to create classloader
    * @param parentClassLoader  optional parent classloader, if null bootstrap classloader will be used
    * @return CloseableClassLoader call close on this CloseableClassLoader for cleanup
    * @throws IOException if artifact is not found or there were any error while getting artifact
@@ -148,18 +148,15 @@ public class DefaultArtifactManager {
   private List<ArtifactInfo> getArtifactsList(HttpRequest httpRequest) throws IOException {
     HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
-    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException("Could not list artifacts, endpoint not found");
     }
 
     if (httpResponse.getResponseCode() == 200) {
-      List<ArtifactInfo> artifactInfoList =
-        GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_INFO_LIST_TYPE);
-      return artifactInfoList;
-    } else {
-      throw new IOException(String.format("Exception while getting artifacts list %s",
-                                          httpResponse.getResponseBodyAsString()));
+      return GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_INFO_LIST_TYPE);
     }
+
+    throw new IOException("Exception while getting artifacts list " + httpResponse.getResponseBodyAsString());
   }
 
   private CloseableClassLoader createAndGetClassLoader(HttpRequest httpRequest,
@@ -167,7 +164,7 @@ public class DefaultArtifactManager {
                                                        @Nullable ClassLoader parentClassLoader) throws IOException {
     HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
-    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException("Could not get artifact detail, endpoint not found");
     }
 

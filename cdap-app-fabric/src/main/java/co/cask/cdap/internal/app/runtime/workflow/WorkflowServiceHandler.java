@@ -28,8 +28,8 @@ import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -63,6 +63,6 @@ public final class WorkflowServiceHandler extends AbstractHttpHandler {
   @Path("/status")
   public void handleStatus(HttpRequest request, HttpResponder responder) {
     Type type = new TypeToken<List<WorkflowActionNode>>() { }.getType();
-    responder.sendJson(HttpResponseStatus.OK, statusSupplier.get(), type, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(statusSupplier.get(), type));
   }
 }

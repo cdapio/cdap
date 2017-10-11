@@ -22,14 +22,13 @@ import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 /**
  * A {@link HttpContentProducer} that produce contents by reading from a {@link Location}.
@@ -41,18 +40,18 @@ public class LocationHttpContentProducer extends HttpContentProducer {
   // Default 64K chunk size
   private static final int DEFAULT_CHUNK_SIZE = 65536;
 
-  private final InputStream inputStream;
+  private final ReadableByteChannel input;
   private final Location location;
-  private final ChannelBuffer buffer;
+  private final int chunkSize;
 
   public LocationHttpContentProducer(Location location) throws IOException {
     this(location, DEFAULT_CHUNK_SIZE);
   }
 
   public LocationHttpContentProducer(Location location, int chunkSize) throws IOException {
-    this.inputStream = location.getInputStream();
+    this.input = Channels.newChannel(location.getInputStream());
     this.location = location;
-    this.buffer = ChannelBuffers.buffer(chunkSize);
+    this.chunkSize = chunkSize;
   }
 
   @Override
@@ -66,21 +65,25 @@ public class LocationHttpContentProducer extends HttpContentProducer {
 
   @Override
   public ByteBuffer nextChunk(Transactional transactional) throws Exception {
-    buffer.clear();
-    buffer.writeBytes(inputStream, buffer.writableBytes());
-    return buffer.toByteBuffer();
+    ByteBuffer buffer = ByteBuffer.allocate(chunkSize);
+    if (input.read(buffer) < 0) {
+      buffer.position(0).limit(0);
+      return buffer;
+    }
+    buffer.flip();
+    return buffer;
   }
 
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void onFinish() throws Exception {
-    inputStream.close();
+    input.close();
   }
 
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void onError(Throwable failureCause) {
-    Closeables.closeQuietly(inputStream);
+    Closeables.closeQuietly(input);
     LOG.warn("Failure in producing http content from location {}", location, failureCause);
   }
 }

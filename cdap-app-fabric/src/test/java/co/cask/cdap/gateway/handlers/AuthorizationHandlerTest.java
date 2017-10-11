@@ -46,16 +46,14 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.http.ChannelPipelineModifier;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpRequest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -95,23 +93,21 @@ public class AuthorizationHandlerTest {
     final InMemoryAuthorizer auth = new InMemoryAuthorizer();
     auth.initialize(FACTORY.create(properties));
     service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName())
-      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        auth, new AuthorizerInstantiator(conf, FACTORY) {
+      .setHttpHandlers(new AuthorizationHandler(auth, new AuthorizerInstantiator(conf, FACTORY) {
         @Override
         public Authorizer get() {
           return auth;
         }
-      }, conf, auth, new MasterAuthenticationContext(), entityExistenceVerifier)))
-      .modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
+      }, conf, auth, new MasterAuthenticationContext(), entityExistenceVerifier))
+      .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
-        public ChannelPipeline apply(ChannelPipeline input) {
-          input.addBefore("dispatcher", "usernamesetter", new TestUserNameSetter());
-          input.addAfter("usernamesetter", "authenticator", new AuthenticationChannelHandler());
-          return input;
+        public void modify(ChannelPipeline pipeline) {
+          pipeline.addBefore("dispatcher", "usernamesetter", new TestUserNameSetter());
+          pipeline.addAfter("usernamesetter", "authenticator", new AuthenticationChannelHandler());
         }
       })
       .build();
-    service.startAndWait();
+    service.start();
 
     client = new AuthorizationClient(
       ClientConfig.builder()
@@ -126,8 +122,8 @@ public class AuthorizationHandlerTest {
   }
 
   @After
-  public void tearDown() {
-    service.stopAndWait();
+  public void tearDown() throws Exception {
+    service.stop();
   }
 
   @Test
@@ -150,15 +146,15 @@ public class AuthorizationHandlerTest {
                             String configSetting) throws Exception {
     final InMemoryAuthorizer authorizer = new InMemoryAuthorizer();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName())
-      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
+      .setHttpHandlers(new AuthorizationHandler(
         authorizer, new AuthorizerInstantiator(cConf, FACTORY) {
         @Override
         public Authorizer get() {
           return authorizer;
         }
-      }, cConf, authorizer, new MasterAuthenticationContext(), entityExistenceVerifier)))
+      }, cConf, authorizer, new MasterAuthenticationContext(), entityExistenceVerifier))
       .build();
-    service.startAndWait();
+    service.start();
     try {
       final AuthorizationClient client = new AuthorizationClient(
         ClientConfig.builder()
@@ -237,7 +233,7 @@ public class AuthorizationHandlerTest {
         }
       }, feature, configSetting);
     } finally {
-      service.stopAndWait();
+      service.stop();
     }
   }
 
@@ -481,21 +477,20 @@ public class AuthorizationHandlerTest {
   }
 
   /**
-   * Test {@link SimpleChannelHandler} to set the username as an HTTP Header
+   * Test {@link ChannelInboundHandlerAdapter} to set the username as an HTTP Header
    * {@link co.cask.cdap.common.conf.Constants.Security.Headers#USER_ID}. In production, this is done in the router by
    * SecurityAuthenticationHandler
    */
-  private static final class TestUserNameSetter extends SimpleChannelHandler {
+  private static final class TestUserNameSetter extends ChannelInboundHandlerAdapter {
 
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-      Object msg = e.getMessage();
-      if (!(msg instanceof HttpRequest)) {
-        return;
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+      if (msg instanceof HttpRequest) {
+        HttpRequest request = (HttpRequest) msg;
+        request.headers().set(Constants.Security.Headers.USER_ID, System.getProperty(USERNAME_PROPERTY));
       }
-      HttpRequest request = (HttpRequest) msg;
-      request.setHeader(Constants.Security.Headers.USER_ID, System.getProperty(USERNAME_PROPERTY));
-      super.messageReceived(ctx, e);
+
+      ctx.fireChannelRead(msg);
     }
   }
 }

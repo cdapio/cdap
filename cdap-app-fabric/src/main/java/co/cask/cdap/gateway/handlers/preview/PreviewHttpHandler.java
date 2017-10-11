@@ -34,7 +34,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,17 +42,18 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,11 +87,11 @@ public class PreviewHttpHandler extends AbstractLogHandler {
 
   @POST
   @Path("/previews")
-  public void start(HttpRequest request, HttpResponder responder,
+  public void start(FullHttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     AppRequest appRequest;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       appRequest = GSON.fromJson(reader, AppRequest.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
@@ -115,7 +115,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                         @PathParam("preview-id") String previewId)  throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getStatus()));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getStatus()));
   }
 
   @GET
@@ -133,18 +133,18 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                       @PathParam("tracer-id") String tracerId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getData(tracerId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getData(tracerId)));
   }
 
   @POST
   @Path("/previews/{preview-id}/tracers")
-  public void getTracersData(HttpRequest request, HttpResponder responder,
+  public void getTracersData(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("preview-id") String previewId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
     Map<String, List<String>> previewRequest;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       previewRequest = GSON.fromJson(reader, STRING_LIST_MAP_TYPE);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
@@ -162,7 +162,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     for (String tracerName : tracerNames) {
       result.put(tracerName, previewManager.getRunner(application).getData(tracerName));
     }
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(result));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
   @GET
@@ -239,10 +239,10 @@ public class PreviewHttpHandler extends AbstractLogHandler {
       tags = overrideTags(tags, namespaceId, previewId);
       switch (target) {
         case "tag":
-          responder.sendJson(HttpResponseStatus.OK, helper.searchTags(tags));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(helper.searchTags(tags)));
           break;
         case "metric":
-          responder.sendJson(HttpResponseStatus.OK, helper.searchMetric(tags));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(helper.searchMetric(tags)));
           break;
         default:
           responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
@@ -259,7 +259,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
 
   @POST
   @Path("previews/{preview-id}/metrics/query")
-  public void query(HttpRequest request, HttpResponder responder,
+  public void query(FullHttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId,
                     @PathParam("preview-id") String previewId,
                     @QueryParam("metric") List<String> metrics,
@@ -267,21 +267,21 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                     @QueryParam("tag") List<String> tags) throws Exception {
     MetricsQueryHelper helper = getMetricsQueryHelper(namespaceId, previewId);
     try {
-      if (new QueryStringDecoder(request.getUri()).getParameters().isEmpty()) {
-        if (HttpHeaders.getContentLength(request) > 0) {
+      Map<String, List<String>> queryParameters = new QueryStringDecoder(request.uri()).parameters();
+      if (queryParameters.isEmpty()) {
+        if (request.content().isReadable()) {
           Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
-            GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+            GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                           new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() { }.getType());
           overrideQueries(queries, namespaceId, previewId);
-          responder.sendJson(HttpResponseStatus.OK, helper.executeBatchQueries(queries));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(helper.executeBatchQueries(queries)));
           return;
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
       }
       tags = overrideTags(tags, namespaceId, previewId);
       responder.sendJson(HttpResponseStatus.OK,
-                         helper.executeTagQuery(tags, metrics, groupBy,
-                                                new QueryStringDecoder(request.getUri()).getParameters()));
+                         GSON.toJson(helper.executeTagQuery(tags, metrics, groupBy, queryParameters)));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

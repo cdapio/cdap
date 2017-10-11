@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -59,7 +58,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -67,19 +65,23 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -136,15 +138,15 @@ public class AppFabricClient {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
 
       responder = new MockResponder();
-      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, String.format(
+      request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, String.format(
         "%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, namespace.getId()));
       namespaceHttpHandler.deleteDatasets(request, responder, namespaceMeta.getName());
       verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
                      String.format("could not delete datasets in namespace '%s'", namespace.getId()));
 
       responder = new MockResponder();
-      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
-                                       String.format("/v3/unrecoverable/namespaces/%s", namespace.getId()));
+      request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+                                           String.format("/v3/unrecoverable/namespaces/%s", namespace.getId()));
       namespaceHttpHandler.delete(request, responder, namespaceMeta.getName());
       verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
                      String.format("could not delete namespace '%s'", namespace.getId()));
@@ -156,11 +158,12 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/start",
                                getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     String argString = GSON.toJson(args);
     if (argString != null) {
-      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+      request.content().writeCharSequence(argString, StandardCharsets.UTF_8);
     }
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               type.getCategoryName(), flowId, "start");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
@@ -171,11 +174,12 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/versions/%s/%s/%s/start", getNamespacePath(namespaceId), appId, appVersion,
                                type.getCategoryName(), programId);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     String argString = GSON.toJson(args);
     if (argString != null) {
-      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+      request.content().writeCharSequence(argString, StandardCharsets.UTF_8);
     }
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,
                                               type.getCategoryName(), programId, "start");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
@@ -186,7 +190,8 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/stop",
                                getNamespacePath(namespaceId), appId, type.getCategoryName(), programId);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               type.getCategoryName(), programId, "stop");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
@@ -197,7 +202,8 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/versions/%s/%s/%s/stop",
                                getNamespacePath(namespaceId), appId, appVersion, type.getCategoryName(), programId);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,
                                               type.getCategoryName(), programId, "stop");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
@@ -230,10 +236,11 @@ public class AppFabricClient {
   public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
-    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    request.content().writeCharSequence(json.toString(), StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.setWorkerInstances(request, responder, namespaceId, appId, workerId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
   }
@@ -252,10 +259,11 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/services/%s/instances",
                                getNamespacePath(namespaceId), applicationId, serviceName);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
-    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    request.content().writeCharSequence(json.toString(), StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.setServiceInstances(request, responder, namespaceId, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set service instances failed");
   }
@@ -276,10 +284,11 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances/%s",
                                getNamespacePath(namespaceId), applicationId, flowId, flowletName, instances);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
-    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    request.content().writeCharSequence(json.toString(), StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.setFlowletInstances(request, responder, namespaceId,
                                                     applicationId, flowId, flowletName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
@@ -415,7 +424,8 @@ public class AppFabricClient {
   public void suspend(String namespaceId, String appId, String scheduleName) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/suspend", getNamespacePath(namespaceId), appId, scheduleName);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               "schedules", scheduleName, "suspend");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
@@ -424,7 +434,8 @@ public class AppFabricClient {
   public void resume(String namespaceId, String appId, String schedName) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/resume", getNamespacePath(namespaceId), appId, schedName);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               "schedules", schedName, "resume");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
@@ -448,8 +459,8 @@ public class AppFabricClient {
 
   private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
     if (!expected.equals(actual)) {
-      if (actual.getCode() == HttpResponseStatus.FORBIDDEN.getCode()) {
-        throw new UnauthorizedException(actual.getReasonPhrase());
+      if (actual.code() == HttpResponseStatus.FORBIDDEN.code()) {
+        throw new UnauthorizedException(actual.reasonPhrase());
       }
       throw new IllegalStateException(String.format("Expected %s, got %s. Error: %s",
                                                     expected, actual, errorMsg));
@@ -466,17 +477,17 @@ public class AppFabricClient {
     LOG.info("Created deployedJar at {}", deployedJar);
 
     String archiveName = String.format("%s-1.0.%d.jar", applicationClz.getSimpleName(), System.currentTimeMillis());
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                        String.format("/v3/namespaces/%s/apps", namespace.getId()));
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER, archiveName);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER, archiveName);
     if (config != null) {
-      request.setHeader(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, config);
+      request.headers().set(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, config);
     }
     String owner = null;
     if (ownerPrincipal != null) {
       owner = GSON.toJson(ownerPrincipal, KerberosPrincipalId.class);
-      request.setHeader(AbstractAppFabricHttpHandler.PRINCIPAL_HEADER, owner);
+      request.headers().set(AbstractAppFabricHttpHandler.PRINCIPAL_HEADER, owner);
     }
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
@@ -487,7 +498,7 @@ public class AppFabricClient {
       byte[] chunk = is.read();
       while (chunk.length > 0) {
         mockResponder = new MockResponder();
-        bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(chunk), mockResponder);
+        bodyConsumer.chunk(Unpooled.wrappedBuffer(chunk), mockResponder);
         Preconditions.checkState(mockResponder.getStatus() == null, "failed to deploy app");
         chunk = is.read();
       }
@@ -499,31 +510,23 @@ public class AppFabricClient {
   }
 
   public void deployApplication(Id.Application appId, AppRequest appRequest) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
-      String.format("%s/apps/%s", getNamespacePath(appId.getNamespaceId()), appId.getId()));
-    createApplication(appId.toEntityId(), request, appRequest);
+    deployApplication(appId.toEntityId(), appRequest);
   }
 
   public void deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
-    DefaultHttpRequest requst = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
       String.format("%s/apps/%s/versions/%s/create", getNamespacePath(appId.getNamespace()),
                     appId.getApplication(), appId.getVersion()));
-    createApplication(appId, requst, appRequest);
-  }
 
-  private void createApplication(ApplicationId appId, DefaultHttpRequest request, AppRequest appRequest)
-    throws Exception {
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setContent(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest.getConfig()))));
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
+    HttpUtil.setTransferEncodingChunked(request, true);
 
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.createAppVersion(request, mockResponder, appId.getNamespace(),
                                                                          appId.getApplication(), appId.getVersion());
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
-    byte[] contents = Bytes.toBytes(GSON.toJson(appRequest));
-    Preconditions.checkNotNull(contents);
-    bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(contents), mockResponder);
+    bodyConsumer.chunk(Unpooled.copiedBuffer(GSON.toJson(appRequest), StandardCharsets.UTF_8), mockResponder);
     bodyConsumer.finished(mockResponder);
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
   }
@@ -533,33 +536,33 @@ public class AppFabricClient {
   }
 
   public void deleteApplication(ApplicationId appId) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.DELETE,
       String.format("%s/apps/%s/versions/%s", getNamespacePath(appId.getNamespace()), appId.getApplication(),
                     appId.getVersion()));
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.deleteApp(request, mockResponder, appId.getNamespace(), appId.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Deleting app failed");
   }
 
   public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.DELETE,
       String.format("%s/apps", getNamespacePath(namespaceId.getNamespace()))
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.deleteAllApps(request, mockResponder, namespaceId.getNamespace());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Deleting all apps failed");
   }
 
   public ApplicationDetail getInfo(ApplicationId appId) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/apps/%s", getNamespacePath(appId.getNamespace()), appId.getApplication())
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.getAppInfo(request, mockResponder, appId.getNamespace(), appId.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting app info failed");
@@ -567,12 +570,12 @@ public class AppFabricClient {
   }
 
   public ApplicationDetail getVersionedInfo(ApplicationId appId) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/apps/%s/versions/%s", getNamespacePath(appId.getNamespace()),
                     appId.getApplication(), appId.getVersion())
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.getAppVersionInfo(request, mockResponder, appId.getNamespace(), appId.getApplication(),
                                               appId.getVersion());
@@ -581,11 +584,11 @@ public class AppFabricClient {
   }
 
   public Collection<String> listAppVersions(ApplicationId appId) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/apps/%s/versions", getNamespacePath(appId.getNamespace()), appId.getApplication())
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.listAppVersions(request, mockResponder, appId.getNamespace(), appId.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to list application versions");
@@ -593,15 +596,14 @@ public class AppFabricClient {
   }
 
   public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    FullHttpRequest request = new DefaultFullHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.PUT,
       String.format("%s/apps/%s/%s/%s/runtimeargs", getNamespacePath(programId.getNamespace()),
                     programId.getApplication(), programId.getType().getCategoryName(), programId.getProgram())
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    byte[] contents = Bytes.toBytes(GSON.toJson(args));
-    Preconditions.checkNotNull(contents);
-    request.setContent(ChannelBuffers.wrappedBuffer(contents));
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
+    request.content().writeCharSequence(GSON.toJson(args), StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     MockResponder mockResponder = new MockResponder();
     programLifecycleHttpHandler.saveProgramRuntimeArgs(request, mockResponder, programId.getNamespace(),
                                                        programId.getApplication(),
@@ -610,12 +612,12 @@ public class AppFabricClient {
   }
 
   public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/apps/%s/%s/%s/runtimeargs", getNamespacePath(programId.getNamespace()),
                     programId.getApplication(), programId.getType().getCategoryName(), programId.getProgram())
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     programLifecycleHttpHandler.getProgramRuntimeArgs(request, mockResponder, programId.getNamespace(),
                                                        programId.getApplication(),
@@ -625,11 +627,11 @@ public class AppFabricClient {
   }
 
   public List<PluginInstanceDetail> getPlugins(ApplicationId application) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
+    HttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/apps/%s", getNamespacePath(application.getNamespace()), application.getApplication())
     );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.getPluginsInfo(request, mockResponder, application.getNamespace(),
                                            application.getApplication());
@@ -641,8 +643,9 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/versions/%s/schedules/%s", getNamespacePath(application.getNamespace()),
                                application.getApplication(), application.getVersion(), scheduleDetail.getName());
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(scheduleDetail).getBytes()));
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    request.content().writeCharSequence(GSON.toJson(scheduleDetail), StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.addSchedule(request, responder, application.getNamespace(),
                                             application.getApplication(), application.getVersion(),
                                             scheduleDetail.getName());
@@ -654,7 +657,8 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/versions/%s/program-type/schedules/program-id/%s/action/enable",
                                getNamespacePath(scheduleId.getNamespace()), scheduleId.getVersion(),
                                scheduleId.getApplication(), scheduleId.getSchedule());
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    HttpUtil.setContentLength(request, 0);
     programLifecycleHttpHandler.performAction(request, responder, scheduleId.getNamespace(),
                                               scheduleId.getApplication(), scheduleId.getVersion(),
                                               "schedules", scheduleId.getSchedule(), "enable");
@@ -667,8 +671,9 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/versions/%s/schedules/%s/update",
                                getNamespacePath(application.getNamespace()), application.getApplication(),
                                application.getVersion(), scheduleId.getSchedule());
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(scheduleDetail).getBytes()));
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    request.content().writeCharSequence(GSON.toJson(scheduleDetail), StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.updateSchedule(request, responder, application.getNamespace(),
                                                application.getApplication(), application.getVersion(),
                                                scheduleId.getSchedule());

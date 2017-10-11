@@ -20,8 +20,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.http.HttpResponder;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

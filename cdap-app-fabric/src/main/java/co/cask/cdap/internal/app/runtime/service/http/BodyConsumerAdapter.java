@@ -28,10 +28,10 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.BodyConsumer;
 import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.Multimap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpHeaders;
 import org.apache.twill.common.Cancellable;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +71,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   }
 
   @Override
-  public void chunk(final ChannelBuffer request, HttpResponder responder) {
+  public void chunk(final ByteBuf chunk, HttpResponder responder) {
     // Due to async nature of netty, chunk might get called even we try to close the connection in onError.
     if (completed) {
       return;
@@ -80,7 +80,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     try {
       final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
       try {
-        delegate.onReceived(request.toByteBuffer(), transactional);
+        delegate.onReceived(chunk.nioBuffer(), transactional);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -127,9 +127,9 @@ final class BodyConsumerAdapter extends BodyConsumer {
     onError(cause, new DelayedHttpServiceResponder(responder, new ErrorBodyProducerFactory()) {
       @Override
       protected void doSend(int status, String contentType,
-                            @Nullable ChannelBuffer content,
+                            @Nullable ByteBuf content,
                             @Nullable HttpContentProducer contentProducer,
-                            @Nullable Multimap<String, String> headers) {
+                            @Nullable HttpHeaders headers) {
         // no-op
       }
 
@@ -200,8 +200,8 @@ final class BodyConsumerAdapter extends BodyConsumer {
       // Returning a body producer that gives empty content
       return new BodyProducer() {
         @Override
-        public ChannelBuffer nextChunk() throws Exception {
-          return ChannelBuffers.EMPTY_BUFFER;
+        public ByteBuf nextChunk() throws Exception {
+          return Unpooled.EMPTY_BUFFER;
         }
 
         @Override

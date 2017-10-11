@@ -20,19 +20,15 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Iterator;
-import java.util.Map;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -51,7 +47,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/updateWorkflowToken")
-  public void updateWorkflowToken(HttpRequest request, HttpResponder responder) throws Exception {
+  public void updateWorkflowToken(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
     ProgramRunId workflowRunId = deserializeNext(arguments);
@@ -63,7 +59,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/addWorkflowNodeState")
-  public void addWorkflowNodeState(HttpRequest request, HttpResponder responder) throws Exception {
+  public void addWorkflowNodeState(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
     ProgramRunId workflowRunId = deserializeNext(arguments);

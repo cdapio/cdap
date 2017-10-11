@@ -16,8 +16,8 @@
 
 package co.cask.cdap.common.logging;
 
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpVersion;
 
 import java.net.InetAddress;
 import java.text.DateFormat;

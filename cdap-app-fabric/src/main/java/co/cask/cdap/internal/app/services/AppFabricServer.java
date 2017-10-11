@@ -41,20 +41,14 @@ import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.internal.ServiceListenerAdapter;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +57,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -95,8 +90,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final boolean sslEnabled;
 
   private DefaultNamespaceEnsurer defaultNamespaceEnsurer;
-  private SSLHandlerFactory sslHandlerFactory;
-  private NettyHttpService httpService;
+  private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
 
@@ -171,18 +165,6 @@ public class AppFabricServer extends AbstractIdleService {
       )
     ).get();
 
-    int serverPort;
-    if (sslEnabled) {
-      serverPort = cConf.getInt(Constants.AppFabric.SERVER_SSL_PORT);
-      String password = generateRandomPassword();
-      KeyStore ks = KeyStores.generatedCertKeyStore(sConf, password);
-
-      this.sslHandlerFactory = new SSLHandlerFactory(ks, password);
-    } else {
-      serverPort = cConf.getInt(Constants.AppFabric.SERVER_PORT);
-      this.sslHandlerFactory = null;
-    }
-
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
     for (String hook : handlerHookNames) {
@@ -193,9 +175,8 @@ public class AppFabricServer extends AbstractIdleService {
     NettyHttpService.Builder httpServiceBuilder = new CommonNettyHttpServiceBuilder(cConf,
                                                                                     Constants.Service.APP_FABRIC_HTTP)
       .setHost(hostname.getCanonicalHostName())
-      .setPort(serverPort)
       .setHandlerHooks(builder.build())
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setConnectionBacklog(cConf.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
                                          Constants.AppFabric.DEFAULT_BACKLOG))
       .setExecThreadPoolSize(cConf.getInt(Constants.AppFabric.EXEC_THREADS,
@@ -205,68 +186,18 @@ public class AppFabricServer extends AbstractIdleService {
       .setWorkerThreadPoolSize(cConf.getInt(Constants.AppFabric.WORKER_THREADS,
                                             Constants.AppFabric.DEFAULT_WORKER_THREADS));
     if (sslEnabled) {
-      httpServiceBuilder.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
-        @Override
-        public ChannelPipeline apply(ChannelPipeline input) {
-          LOG.debug("Adding ssl handler to the pipeline.");
-          SslHandler sslHandler = sslHandlerFactory.create();
-          // SSL handler needs to be the first handler in the pipeline.
-          input.addFirst("ssl", sslHandler);
-          return input;
-        }
-      });
+      httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_SSL_PORT));
+
+      String password = generateRandomPassword();
+      KeyStore ks = KeyStores.generatedCertKeyStore(sConf, password);
+
+      SSLHandlerFactory sslHandlerFactory = new SSLHandlerFactory(ks, password);
+      httpServiceBuilder.enableSSL(sslHandlerFactory);
+    } else {
+      httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
     }
 
-    httpService = httpServiceBuilder.build();
-
-    // Add a listener so that when the service started, register with service discovery.
-    // Remove from service discovery when it is stopped.
-    httpService.addListener(new ServiceListenerAdapter() {
-
-      private List<Cancellable> cancellables = Lists.newArrayList();
-
-      @Override
-      public void running() {
-        String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
-                                           httpService.getBindAddress().getHostName());
-        int announcePort = cConf.getInt(Constants.AppFabric.SERVER_ANNOUNCE_PORT,
-                                        httpService.getBindAddress().getPort());
-
-        final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
-        LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
-
-        // Tag the discoverable's payload to mark it as supporting ssl.
-        byte[] sslPayload = sslEnabled ? Constants.Security.SSL_URI_SCHEME.getBytes() : Bytes.EMPTY_BYTE_ARRAY;
-        // TODO accept a list of services, and start them here
-        // When it is running, register it with service discovery
-        for (final String serviceName : servicesNames) {
-          cancellables.add(discoveryService.register(ResolvingDiscoverable.of(
-            new Discoverable(serviceName, socketAddress, sslPayload))));
-        }
-      }
-
-      @Override
-      public void terminated(State from) {
-        LOG.info("AppFabric HTTP service stopped.");
-        for (Cancellable cancellable : cancellables) {
-          if (cancellable != null) {
-            cancellable.cancel();
-          }
-        }
-      }
-
-      @Override
-      public void failed(State from, Throwable failure) {
-        LOG.info("AppFabric HTTP service stopped with failure.", failure);
-        for (Cancellable cancellable : cancellables) {
-          if (cancellable != null) {
-            cancellable.cancel();
-          }
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    httpService.startAndWait();
+    cancelHttpService = startHttpService(httpServiceBuilder.build());
     defaultNamespaceEnsurer.startAndWait();
     if (appVersionUpgradeService != null) {
       appVersionUpgradeService.startAndWait();
@@ -278,7 +209,7 @@ public class AppFabricServer extends AbstractIdleService {
     coreSchedulerService.stopAndWait();
     routeStore.close();
     defaultNamespaceEnsurer.stopAndWait();
-    httpService.stopAndWait();
+    cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
@@ -297,5 +228,48 @@ public class AppFabricServer extends AbstractIdleService {
     // base-32. 128 bits is considered to be cryptographically strong, but each digit in a base 32 number can encode
     // 5 bits, so 128 is rounded up to the next multiple of 5. Base 32 system uses alphabets A-Z and numbers 2-7
     return new BigInteger(130, new SecureRandom()).toString(32);
+  }
+
+  private Cancellable startHttpService(final NettyHttpService httpService) throws Exception {
+    httpService.start();
+
+    String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
+                                       httpService.getBindAddress().getHostName());
+    int announcePort = cConf.getInt(Constants.AppFabric.SERVER_ANNOUNCE_PORT,
+                                    httpService.getBindAddress().getPort());
+
+    final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
+    LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
+
+    // Tag the discoverable's payload to mark it as supporting ssl.
+    byte[] sslPayload = sslEnabled ? Constants.Security.SSL_URI_SCHEME.getBytes() : Bytes.EMPTY_BYTE_ARRAY;
+    // TODO accept a list of services, and start them here
+    // When it is running, register it with service discovery
+
+    final List<Cancellable> cancellables = new ArrayList<>();
+    for (final String serviceName : servicesNames) {
+      cancellables.add(discoveryService.register(ResolvingDiscoverable.of(
+        new Discoverable(serviceName, socketAddress, sslPayload))));
+    }
+
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        LOG.debug("Stopping AppFabric HTTP service.");
+        for (Cancellable cancellable : cancellables) {
+          if (cancellable != null) {
+            cancellable.cancel();
+          }
+        }
+
+        try {
+          httpService.stop();
+        } catch (Exception e) {
+          LOG.warn("Exception raised when stopping AppFabric HTTP service", e);
+        }
+
+        LOG.info("AppFabric HTTP service stopped.");
+      }
+    };
   }
 }

@@ -22,15 +22,15 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
 
   private final Location jarLocation;
   private File baseDir;
-  private String cannonicalBaseDir;
+  private String canonicalBaseDir;
   private ServePathGenerator servePathGenerator;
 
   @Inject
@@ -69,7 +69,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
       File jarFile = new File(jarLocation.toURI());
 
       baseDir = Files.createTempDir();
-      cannonicalBaseDir = baseDir.getCanonicalPath();
+      canonicalBaseDir = baseDir.getCanonicalPath();
       int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
 
       File serveDir = new File(baseDir, Constants.Webapp.WEBAPP_DIR);
@@ -111,14 +111,14 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
   public void serve(HttpRequest request, HttpResponder responder) {
     try {
 
-      String path = request.getUri();
+      String path = request.uri();
       if (path == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
 
       File file = new File(path);
-      if (!file.getCanonicalPath().startsWith(cannonicalBaseDir)) {
+      if (!file.getCanonicalPath().startsWith(canonicalBaseDir)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
@@ -133,8 +133,8 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
         return;
       }
 
-      responder.sendFile(file, ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                    mimeTypesMap.getContentType(file.getAbsolutePath())));
+      responder.sendFile(file, new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE,
+                                                            mimeTypesMap.getContentType(file.getAbsolutePath())));
 
     } catch (Throwable t) {
       LOG.error("Got exception: ", t);

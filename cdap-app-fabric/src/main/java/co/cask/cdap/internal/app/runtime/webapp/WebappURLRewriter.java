@@ -18,10 +18,11 @@ package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.http.HttpResponder;
 import co.cask.http.URLRewriter;
-import com.google.common.collect.ImmutableMultimap;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Rewrites incoming webapp URLs as Gateway URLs, if it is a Gateway call.
@@ -47,7 +48,7 @@ public class WebappURLRewriter implements URLRewriter {
       // Redirect requests that map to index.html without a trailing slash to url/
       if (!originalUri.endsWith("/") && !originalUri.endsWith("index.html") && uri.endsWith("index.html")) {
         responder.sendStatus(HttpResponseStatus.MOVED_PERMANENTLY,
-                             ImmutableMultimap.of("Location", originalUri + "/"));
+                             new DefaultHttpHeaders().set(HttpHeaderNames.LOCATION, originalUri + "/"));
         return false;
       }
       request.setUri(uri);

@@ -17,8 +17,8 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.http.BodyConsumer;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
 
 /**
  * A factory for creating {@link BodyConsumer} to support the stream batch ingest endpoint.
@@ -34,7 +34,7 @@ public class StreamBodyConsumerFactory {
                              ContentWriterFactory contentWriterFactory) throws UnsupportedOperationException {
 
     // Just hardcoded the supported type here, until we support a pluggable architecture
-    String contentType = request.getHeader(HttpHeaders.Names.CONTENT_TYPE);
+    String contentType = request.headers().get(HttpHeaderNames.CONTENT_TYPE);
     if (contentType == null) {
       throw new UnsupportedOperationException("Unknown content type");
     }

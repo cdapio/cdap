@@ -28,10 +28,12 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -46,6 +48,8 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
+
+  private static final Gson GSON = new Gson();
 
   private final PreferencesStore preferencesStore;
   private final Store store;
@@ -62,7 +66,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/preferences")
   @GET
   public void getInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, preferencesStore.getProperties());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesStore.getProperties()));
   }
 
   @Path("/preferences")
@@ -75,7 +79,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/preferences")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
+  public void setInstancePrefs(FullHttpRequest request, HttpResponder responder) throws Exception {
     try {
       Map<String, String> propMap = decodeArguments(request);
       preferencesStore.setProperties(propMap);
@@ -90,15 +94,15 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/preferences")
   @GET
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespace, @QueryParam("resolved") String resolved)
+                                @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved)
     throws Exception {
     if (nsStore.get(new NamespaceId(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
-      if (resolved != null && resolved.equals("true")) {
-        responder.sendJson(HttpResponseStatus.OK, preferencesStore.getResolvedProperties(namespace));
+      if (resolved) {
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesStore.getResolvedProperties(namespace)));
       } else {
-        responder.sendJson(HttpResponseStatus.OK, preferencesStore.getProperties(namespace));
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesStore.getProperties(namespace)));
       }
     }
   }
@@ -106,7 +110,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/preferences")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setNamespacePrefs(HttpRequest request, HttpResponder responder,
+  public void setNamespacePrefs(FullHttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
     if (nsStore.get(new NamespaceId(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
@@ -140,15 +144,16 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
-                          @QueryParam("resolved") String resolved) throws Exception {
+                          @QueryParam("resolved") boolean resolved) throws Exception {
     if (store.getApplication(new ApplicationId(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
     } else {
-      if (resolved != null && resolved.equals("true")) {
-        responder.sendJson(HttpResponseStatus.OK, preferencesStore.getResolvedProperties(namespace, appId));
+      if (resolved) {
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(preferencesStore.getResolvedProperties(namespace, appId)));
       } else {
-        responder.sendJson(HttpResponseStatus.OK, preferencesStore.getProperties(namespace, appId));
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesStore.getProperties(namespace, appId)));
       }
     }
   }
@@ -156,7 +161,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void putAppPrefs(HttpRequest request, HttpResponder responder,
+  public void putAppPrefs(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
     if (store.getApplication(new ApplicationId(namespace, appId)) == null) {
@@ -195,14 +200,15 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getProgramPrefs(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                               @PathParam("program-type") String programType, @PathParam("program-id") String programId,
-                              @QueryParam("resolved") String resolved) throws Exception {
+                              @QueryParam("resolved") boolean resolved) throws Exception {
     if (checkIfProgramExists(namespace, appId, programType, programId, responder)) {
-      if (resolved != null && resolved.equals("true")) {
-        responder.sendJson(HttpResponseStatus.OK, preferencesStore.getResolvedProperties(
-          namespace, appId, programType, programId));
+      if (resolved) {
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(preferencesStore.getResolvedProperties(namespace, appId,
+                                                                              programType, programId)));
       } else {
-        responder.sendJson(HttpResponseStatus.OK, preferencesStore.getProperties(
-          namespace, appId, programType, programId));
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(preferencesStore.getProperties(namespace, appId, programType, programId)));
       }
     }
   }
@@ -210,7 +216,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void putProgramPrefs(HttpRequest request, HttpResponder responder,
+  public void putProgramPrefs(FullHttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                               @PathParam("program-type") String programType, @PathParam("program-id") String programId)
     throws Exception {

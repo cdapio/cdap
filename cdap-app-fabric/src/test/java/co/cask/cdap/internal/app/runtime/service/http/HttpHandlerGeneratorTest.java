@@ -33,7 +33,6 @@ import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
@@ -314,11 +313,11 @@ public class HttpHandlerGeneratorTest {
         }
       });
 
-    NettyHttpService service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(httpHandler))
+    NettyHttpService service = NettyHttpService.builder("test-headers")
+      .setHttpHandlers(httpHandler)
       .build();
 
-    service.startAndWait();
+    service.start();
     try {
       InetSocketAddress bindAddress = service.getBindAddress();
 
@@ -350,7 +349,7 @@ public class HttpHandlerGeneratorTest {
       Assert.assertEquals(ImmutableList.of("v3", "v2", "v1"), headers.get("k1"));
       Assert.assertEquals(ImmutableList.of("v2"), headers.get("k2"));
     } finally {
-      service.stopAndWait();
+      service.stop();
     }
   }
 
@@ -371,18 +370,18 @@ public class HttpHandlerGeneratorTest {
       });
 
     // Creates a Netty http server with 1K request buffer
-    NettyHttpService service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(httpHandler))
+    NettyHttpService service = NettyHttpService.builder("test-content-consumer")
+      .setHttpHandlers(httpHandler)
       .setHttpChunkLimit(1024)
       .build();
 
-    service.startAndWait();
+    service.start();
     try {
       InetSocketAddress bindAddress = service.getBindAddress();
       testUpload(outputDir, bindAddress, "");
       testUpload(outputDir, bindAddress, "-no-tx");
     } finally {
-      service.stopAndWait();
+      service.stop();
     }
   }
 
@@ -439,11 +438,11 @@ public class HttpHandlerGeneratorTest {
         }
       });
 
-    NettyHttpService service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(httpHandler))
+    NettyHttpService service = NettyHttpService.builder("test-content-producer")
+      .setHttpHandlers(httpHandler)
       .build();
 
-    service.startAndWait();
+    service.start();
     try {
       // Generate a 100K file
       File file = TEMP_FOLDER.newFile();
@@ -503,7 +502,7 @@ public class HttpHandlerGeneratorTest {
       }
 
     } finally {
-      service.stopAndWait();
+      service.stop();
     }
   }
 
@@ -529,11 +528,11 @@ public class HttpHandlerGeneratorTest {
       }
     });
 
-    NettyHttpService service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(httpHandler, httpHandlerWithoutAnnotation))
+    NettyHttpService service = NettyHttpService.builder("test-handler-generator")
+      .setHttpHandlers(httpHandler, httpHandlerWithoutAnnotation)
       .build();
 
-    service.startAndWait();
+    service.start();
     try {
       InetSocketAddress bindAddress = service.getBindAddress();
 
@@ -563,7 +562,7 @@ public class HttpHandlerGeneratorTest {
 
       Assert.assertEquals("OK", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
     } finally {
-      service.stopAndWait();
+      service.stop();
     }
   }
 

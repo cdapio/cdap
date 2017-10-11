@@ -22,14 +22,19 @@ import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.http.ChunkResponder;
+import co.cask.http.BodyProducer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Closeables;
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
@@ -39,9 +44,6 @@ import org.apache.tephra.TxConstants;
 import org.apache.tephra.txprune.RegionPruneInfo;
 import org.apache.tephra.txprune.hbase.InvalidListPruningDebug;
 import org.apache.tephra.txprune.hbase.RegionsAtTime;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +51,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -65,6 +69,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionHttpHandler.class);
+  private static final Gson GSON = new Gson();
   private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
   private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
   private static final String PRUNING_TOOL_CLASS_NAME = "org.apache.tephra.hbase.txprune.InvalidListPruningDebugTool";
@@ -93,21 +98,31 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     throws TransactionCouldNotTakeSnapshotException, IOException {
     LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
     LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-    try (InputStream in = txClient.getSnapshotInputStream()) {
-      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                               ImmutableMultimap.<String, String>of());
-      while (true) {
-        // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
-        byte[] readBytes = new byte[4096];
-        int res = in.read(readBytes, 0, 4096);
-        if (res == -1) {
-          break;
+
+    final InputStream in = txClient.getSnapshotInputStream();
+    try {
+      responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+
+        @Override
+        public ByteBuf nextChunk() throws Exception {
+          ByteBuf buffer = Unpooled.buffer(4096);
+          buffer.writeBytes(in, 4096);
+          return buffer;
         }
-        // If failed to send chunk, IOException will be raised.
-        // It'll just propagated to the netty-http library to handle it
-        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
-      }
-      Closeables.closeQuietly(chunkResponder);
+
+        @Override
+        public void finished() throws Exception {
+          Closeables.closeQuietly(in);
+        }
+
+        @Override
+        public void handleError(@Nullable Throwable cause) {
+          Closeables.closeQuietly(in);
+        }
+      }, EmptyHttpHeaders.INSTANCE);
+    } catch (Exception e) {
+      Closeables.closeQuietly(in);
+      throw e;
     }
   }
 
@@ -138,7 +153,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/invalid/remove/until")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void truncateInvalidTxBefore(HttpRequest request,
+  public void truncateInvalidTxBefore(FullHttpRequest request,
                                       HttpResponder responder) throws InvalidTruncateTimeException {
     Map<String, Long> body;
     try {
@@ -161,7 +176,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/invalid/remove/ids")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
+  public void truncateInvalidTx(FullHttpRequest request, HttpResponder responder) {
     Map<String, Set<Long>> body;
     try {
       body = parseBody(request, STRING_LONG_SET_MAP_TYPE);
@@ -184,7 +199,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void invalidTxSize(HttpRequest request, HttpResponder responder) {
     int invalidSize = txClient.getInvalidSize();
-    responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("size", invalidSize));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(Collections.singletonMap("size", invalidSize)));
   }
 
   @Path("/transactions/invalid")
@@ -195,10 +210,10 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     txClient.abort(tx);
     long[] invalids = tx.getInvalids();
     if (limit == -1) {
-      responder.sendJson(HttpResponseStatus.OK, invalids);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(invalids));
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, Arrays.copyOf(invalids, Math.min(limit, invalids.length)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(Arrays.copyOf(invalids, Math.min(limit, invalids.length))));
   }
 
   /**
@@ -236,7 +251,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
                              "No prune upper bound has been registered for this region yet.");
         return;
       }
-      responder.sendJson(HttpResponseStatus.OK, pruneInfo);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pruneInfo));
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       LOG.debug("Exception while trying to fetch the RegionPruneInfo.", e);
@@ -253,7 +268,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       RegionsAtTime timeRegionInfo = pruningDebug.getRegionsOnOrBeforeTime(time);
-      responder.sendJson(HttpResponseStatus.OK, timeRegionInfo);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(timeRegionInfo));
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       LOG.debug("Exception while trying to fetch the time region.", e);
@@ -271,7 +286,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       SortedSet<? extends RegionPruneInfo> pruneInfos = pruningDebug.getIdleRegions(numRegions, time);
-      responder.sendJson(HttpResponseStatus.OK, pruneInfos);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pruneInfos));
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       LOG.debug("Exception while trying to fetch the idle regions.", e);
@@ -289,7 +304,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       Set<String> regionNames = pruningDebug.getRegionsToBeCompacted(numRegions, time);
-      responder.sendJson(HttpResponseStatus.OK, regionNames);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(regionNames));
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       LOG.debug("Exception while trying to get the regions that needs to be compacted.", e);

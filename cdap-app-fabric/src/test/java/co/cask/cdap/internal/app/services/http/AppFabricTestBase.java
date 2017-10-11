@@ -94,6 +94,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -117,8 +119,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -967,7 +967,7 @@ public abstract class AppFabricTestBase {
   private List<ScheduleDetail> doGetSchedules(String namespace, String schedulesUrl) throws Exception {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, namespace);
     HttpResponse response = doGet(versionedUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     return readResponse(response, Schedulers.SCHEDULE_DETAILS_TYPE);
   }
 
@@ -997,7 +997,7 @@ public abstract class AppFabricTestBase {
   private List<ScheduleSpecification> goGetScheduleSpecs(String namespace, String schedulesUrl) throws Exception {
     String versionedUrl = getVersionedAPIPath(schedulesUrl + "?format=spec", namespace);
     HttpResponse response = doGet(versionedUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     return readResponse(response, Schedulers.SCHEDULE_SPECS_TYPE);
   }
 
@@ -1043,7 +1043,7 @@ public abstract class AppFabricTestBase {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
     String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     return readResponse(response, ScheduleDetail.class);
   }
 
@@ -1053,7 +1053,7 @@ public abstract class AppFabricTestBase {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
     String path = String.format("apps/%s/versions/%s/schedules/%s?format=spec", appName, appVersion, scheduleName);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     return readResponse(response, ScheduleSpecification.class);
   }
 

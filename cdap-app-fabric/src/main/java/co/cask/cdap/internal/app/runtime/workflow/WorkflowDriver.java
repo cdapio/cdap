@@ -203,10 +203,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       .setWorkerThreadPoolSize(2)
       .setExecThreadPoolSize(4)
       .setHost(hostname.getHostName())
-      .addHttpHandlers(ImmutableList.of(new WorkflowServiceHandler(createStatusSupplier())))
+      .setHttpHandlers(new WorkflowServiceHandler(createStatusSupplier()))
       .build();
 
-    httpService.startAndWait();
+    httpService.start();
     runningThread = Thread.currentThread();
     createLocalDatasets();
     workflow = initializeWorkflow();
@@ -280,7 +280,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    httpService.stopAndWait();
+    httpService.stop();
     destroyWorkflow();
     deleteLocalDatasets();
     if (pluginInstantiator != null) {
@@ -665,7 +665,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
    * @throws IllegalStateException if the service is not started.
    */
   InetSocketAddress getServiceEndpoint() {
-    Preconditions.checkState(httpService != null && httpService.isRunning(), "Workflow service is not started.");
     return httpService.getBindAddress();
   }
 

@@ -43,8 +43,8 @@ import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,7 +105,7 @@ public class DefaultStreamWriter implements StreamWriter {
     }
     HttpResponse response = remoteClient.execute(builder.build());
     int responseCode = response.getResponseCode();
-    if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
+    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 

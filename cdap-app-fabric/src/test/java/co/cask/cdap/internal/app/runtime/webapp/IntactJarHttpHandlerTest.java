@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.webapp;
 
-import co.cask.http.BasicHandlerContext;
 import co.cask.http.HttpResponder;
+import co.cask.http.internal.BasicHandlerContext;
+import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -48,7 +48,7 @@ public class IntactJarHttpHandlerTest extends JarHttpHandlerTestBase {
 
   @Override
   protected void serve(HttpRequest request, HttpResponder responder) {
-    String servePath = jarHttpHandler.getServePath(request.getHeader("Host"), request.getUri());
+    String servePath = jarHttpHandler.getServePath(request.headers().get("Host"), request.uri());
     request.setUri(servePath);
     jarHttpHandler.serve(request, responder);
   }

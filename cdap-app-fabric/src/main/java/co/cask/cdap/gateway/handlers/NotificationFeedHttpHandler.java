@@ -27,15 +27,15 @@ import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -72,7 +73,7 @@ public class NotificationFeedHttpHandler extends AbstractHttpHandler {
   @PUT
   @Path("/feeds/categories/{feed-category}/names/{feed-name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void createFeed(HttpRequest request, HttpResponder responder,
+  public void createFeed(FullHttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("feed-category") String category,
                          @PathParam("feed-name") String name) {
@@ -148,7 +149,7 @@ public class NotificationFeedHttpHandler extends AbstractHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
-      responder.sendJson(HttpResponseStatus.OK, feedManager.getFeed(feed));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(feedManager.getFeed(feed)));
     } catch (NotificationFeedNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (NotificationFeedException e) {
@@ -167,7 +168,7 @@ public class NotificationFeedHttpHandler extends AbstractHttpHandler {
                         @PathParam("namespace-id") String namespaceId) {
     try {
       List<NotificationFeedInfo> feeds = feedManager.listFeeds(new NamespaceId(namespaceId));
-      responder.sendJson(HttpResponseStatus.OK, feeds);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(feeds));
     } catch (NotificationFeedException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            String.format("Could not check subscribe permission for Notification Feed. %s",
@@ -179,15 +180,15 @@ public class NotificationFeedHttpHandler extends AbstractHttpHandler {
   }
 
   @Nullable
-  private <T> T parseBody(HttpRequest request, Type type) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
+  private <T> T parseBody(FullHttpRequest request, Type type) throws IOException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
       return null;
     }
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
       return GSON.fromJson(reader, type);
     } catch (JsonSyntaxException e) {
-      LOG.debug("Failed to parse body on {} as {}", request.getUri(), type, e);
+      LOG.debug("Failed to parse body on {} as {}", request.uri(), type, e);
       throw e;
     }
   }

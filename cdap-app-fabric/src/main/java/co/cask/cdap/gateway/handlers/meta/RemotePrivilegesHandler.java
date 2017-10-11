@@ -27,16 +27,16 @@ import co.cask.cdap.proto.security.VisibilityRequest;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.TypeLiteral;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 import javax.inject.Inject;
@@ -66,8 +66,8 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/enforce")
-  public void enforce(HttpRequest request, HttpResponder responder) throws Exception {
-    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+  public void enforce(FullHttpRequest request, HttpResponder responder) throws Exception {
+    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                                   AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
     authorizationEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
@@ -77,31 +77,31 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/isVisible")
-  public void isVisible(HttpRequest request, HttpResponder responder) throws Exception {
-    VisibilityRequest visibilityRequest = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+  public void isVisible(FullHttpRequest request, HttpResponder responder) throws Exception {
+    VisibilityRequest visibilityRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                         VisibilityRequest.class);
     Principal principal = visibilityRequest.getPrincipal();
     Set<EntityId> entityIds = visibilityRequest.getEntityIds();
     LOG.trace("Checking visibility for principal {} on entities {}", principal, entityIds);
     Set<? extends EntityId> visiableEntities = authorizationEnforcer.isVisible(entityIds, principal);
     LOG.debug("Returning entities visible for principal {} as {}", principal, visiableEntities);
-    responder.sendJson(HttpResponseStatus.OK, visiableEntities);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(visiableEntities));
   }
 
   @POST
   @Path("/listPrivileges")
-  public void listPrivileges(HttpRequest request, HttpResponder responder) throws Exception {
+  public void listPrivileges(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
     Principal principal = deserializeNext(arguments);
     LOG.trace("Listing privileges for principal {}", principal);
     Set<Privilege> privileges = privilegesManager.listPrivileges(principal);
     LOG.debug("Returning privileges for principal {} as {}", principal, privileges);
-    responder.sendJson(HttpResponseStatus.OK, privileges);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(privileges));
   }
 
   @POST
   @Path("/grant")
-  public void grant(HttpRequest request, HttpResponder responder) throws Exception {
+  public void grant(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     Principal principal = deserializeNext(arguments);
@@ -114,7 +114,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/revoke")
-  public void revoke(HttpRequest request, HttpResponder responder) throws Exception {
+  public void revoke(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     Principal principal = deserializeNext(arguments);
@@ -127,7 +127,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/revokeAll")
-  public void revokeAll(HttpRequest request, HttpResponder responder) throws Exception {
+  public void revokeAll(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     LOG.trace("Revoking all actions on {}", entityId);

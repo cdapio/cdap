@@ -24,9 +24,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -72,7 +72,7 @@ public class ConsoleSettingsHttpHandlerTest extends AppFabricTestBase {
   private JsonElement getProperty(int expectedStatus) throws Exception {
     HttpResponse response = doGet("/v3/configuration/user");
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    if (expectedStatus == HttpResponseStatus.OK.getCode()) {
+    if (expectedStatus == HttpResponseStatus.OK.code()) {
       String jsonData = EntityUtils.toString(response.getEntity());
       return new JsonParser().parse(jsonData);
     }

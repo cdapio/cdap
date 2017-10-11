@@ -25,18 +25,18 @@ import co.cask.cdap.config.ConfigNotFoundException;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -51,7 +51,8 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
 public class DashboardHttpHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
+
+  private static final Gson GSON = new Gson();
   private static final JsonParser JSON_PARSER = new JsonParser();
   private static final String CONFIG_PROPERTY = "config";
   private static final String ID = "id";
@@ -66,9 +67,9 @@ public class DashboardHttpHandler extends AbstractHttpHandler {
   @Path("/")
   @POST
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
-  public void create(HttpRequest request, HttpResponder responder,
+  public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespace) throws Exception {
-    String data = request.getContent().toString(Charsets.UTF_8);
+    String data = request.content().toString(StandardCharsets.UTF_8);
     // Initialize with empty config if no data is sent during creation of the dashboard
     if (data.equals("")) {
       data = "{}";
@@ -87,7 +88,7 @@ public class DashboardHttpHandler extends AbstractHttpHandler {
     try {
       dashboardId = dashboardStore.create(namespace, propMap);
       Map<String, String> returnMap = ImmutableMap.of(ID, dashboardId);
-      responder.sendJson(HttpResponseStatus.OK, returnMap);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(returnMap));
     } catch (ConfigExistsException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, String.format("Dashboard %s already exists", dashboardId));
     }
@@ -105,7 +106,7 @@ public class DashboardHttpHandler extends AbstractHttpHandler {
       jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(config.getProperties().get(CONFIG_PROPERTY)));
       jsonArray.add(jsonObject);
     }
-    responder.sendJson(HttpResponseStatus.OK, jsonArray);
+    responder.sendJson(HttpResponseStatus.OK, jsonArray.toString());
   }
 
   @Path("/{dashboard-id}")
@@ -134,7 +135,7 @@ public class DashboardHttpHandler extends AbstractHttpHandler {
       //Dashboard Config is stored in ConfigStore as serialized JSON string with CONFIG_PROPERTY key.
       //When we send the data back, we send it as JSON object instead of sending the serialized string.
       jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(dashConfig.getProperties().get(CONFIG_PROPERTY)));
-      responder.sendJson(HttpResponseStatus.OK, jsonObject);
+      responder.sendJson(HttpResponseStatus.OK, jsonObject.toString());
     } catch (ConfigNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
     }
@@ -143,11 +144,11 @@ public class DashboardHttpHandler extends AbstractHttpHandler {
   @Path("/{dashboard-id}")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void set(HttpRequest request, HttpResponder responder,
+  public void set(FullHttpRequest request, HttpResponder responder,
                   @PathParam("namespace-id") String namespace,
                   @PathParam("dashboard-id") String id) throws Exception {
     try {
-      String data = request.getContent().toString(Charsets.UTF_8);
+      String data = request.content().toString(StandardCharsets.UTF_8);
       if (!isValidJSON(data)) {
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
         return;

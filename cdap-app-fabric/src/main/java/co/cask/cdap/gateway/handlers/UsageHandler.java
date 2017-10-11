@@ -29,9 +29,10 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -45,6 +46,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class UsageHandler extends AbstractHttpHandler {
 
+  private static final Gson GSON = new Gson();
   private final UsageRegistry registry;
 
   @Inject
@@ -59,8 +61,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                  @PathParam("app-id") String appId) {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
     Set<DatasetId> ids = registry.getDatasets(id);
-    responder.sendJson(HttpResponseStatus.OK,
-                       BackwardCompatibility.IdDatasetInstance.transform(ids));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(BackwardCompatibility.IdDatasetInstance.transform(ids)));
   }
 
   @GET
@@ -70,8 +71,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                 @PathParam("app-id") String appId) {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
     Set<StreamId> ids = registry.getStreams(id);
-    responder.sendJson(HttpResponseStatus.OK,
-                       BackwardCompatibility.IdStream.transform(ids));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(BackwardCompatibility.IdStream.transform(ids)));
   }
 
   @GET
@@ -84,8 +84,7 @@ public class UsageHandler extends AbstractHttpHandler {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     Set<DatasetId> ids = registry.getDatasets(id);
-    responder.sendJson(HttpResponseStatus.OK,
-                       BackwardCompatibility.IdDatasetInstance.transform(ids));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(BackwardCompatibility.IdDatasetInstance.transform(ids)));
   }
 
   @GET
@@ -98,8 +97,7 @@ public class UsageHandler extends AbstractHttpHandler {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     Set<StreamId> ids = registry.getStreams(id);
-    responder.sendJson(HttpResponseStatus.OK,
-                       BackwardCompatibility.IdStream.transform(ids));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(BackwardCompatibility.IdStream.transform(ids)));
   }
 
   @GET
@@ -109,8 +107,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                     @PathParam("stream-id") String streamId) {
     final StreamId id = new StreamId(namespaceId, streamId);
     Set<ProgramId> ids = registry.getPrograms(id);
-    responder.sendJson(HttpResponseStatus.OK,
-                       BackwardCompatibility.IdProgram.transform(ids));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(BackwardCompatibility.IdProgram.transform(ids)));
   }
 
   @GET
@@ -120,8 +117,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                  @PathParam("dataset-id") String datasetId) {
     final DatasetId id = new DatasetId(namespaceId, datasetId);
     Set<ProgramId> ids = registry.getPrograms(id);
-    responder.sendJson(HttpResponseStatus.OK,
-                       BackwardCompatibility.IdProgram.transform(ids));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(BackwardCompatibility.IdProgram.transform(ids)));
   }
 
   /**

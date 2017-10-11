@@ -17,8 +17,8 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when some method is not allowed.
@@ -44,6 +44,6 @@ public class MethodNotAllowedException extends Exception implements HttpErrorSta
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.METHOD_NOT_ALLOWED.getCode();
+    return HttpResponseStatus.METHOD_NOT_ALLOWED.code();
   }
 }

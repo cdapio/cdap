@@ -19,19 +19,21 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -43,7 +45,7 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
 
   @Override
   public final void sendJson(Object object) {
-    sendJson(HttpResponseStatus.OK.getCode(), object);
+    sendJson(HttpResponseStatus.OK.code(), object);
   }
 
   @Override
@@ -54,23 +56,22 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   @Override
   public final void sendJson(int status, Object object, Type type, Gson gson) {
     doSend(status, "application/json",
-           ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(gson.toJson(object, type))), null, null);
+           Unpooled.copiedBuffer(gson.toJson(object, type), StandardCharsets.UTF_8), null, null);
   }
 
   @Override
   public final void sendString(String data) {
-    sendString(HttpResponseStatus.OK.getCode(), data, Charsets.UTF_8);
+    sendString(HttpResponseStatus.OK.code(), data, StandardCharsets.UTF_8);
   }
 
   @Override
   public final void sendString(int status, String data, Charset charset) {
-    doSend(status, "text/plain; charset=" + charset.name(),
-           ChannelBuffers.wrappedBuffer(charset.encode(data)), null, null);
+    doSend(status, "text/plain; charset=" + charset.name(), Unpooled.copiedBuffer(data, charset), null, null);
   }
 
   @Override
   public final void sendStatus(int status) {
-    sendStatus(status, ImmutableMap.<String, String>of());
+    sendStatus(status, Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -80,7 +81,7 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
 
   @Override
   public final void sendStatus(int status, Iterable<? extends Map.Entry<String, String>> headers) {
-    doSend(status, "text/plain", null, null, createMultimap(headers));
+    doSend(status, "text/plain", null, null, createHeaders(headers));
   }
 
   @Override
@@ -96,12 +97,12 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   @Override
   public final void send(int status, ByteBuffer content, String contentType,
                    Iterable<? extends Map.Entry<String, String>> headers) {
-    doSend(status, contentType, ChannelBuffers.copiedBuffer(content), null, createMultimap(headers));
+    doSend(status, contentType, Unpooled.copiedBuffer(content), null, createHeaders(headers));
   }
 
   @Override
   public final void send(int status, Location location, String contentType) throws IOException {
-    send(status, location, contentType, ImmutableMap.<String, String>of());
+    send(status, location, contentType, Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -118,7 +119,7 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
 
   @Override
   public final void send(int status, HttpContentProducer producer, String contentType) {
-    send(status, producer, contentType, ImmutableMap.<String, String>of());
+    send(status, producer, contentType, Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -129,7 +130,7 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   @Override
   public final void send(int status, HttpContentProducer producer, String contentType,
                          Iterable<? extends Map.Entry<String, String>> headers) {
-    doSend(status, contentType, null, producer, createMultimap(headers));
+    doSend(status, contentType, null, producer, createHeaders(headers));
   }
 
   /**
@@ -143,18 +144,18 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
    * @param headers response headers
    */
   protected abstract void doSend(int status, String contentType,
-                                 @Nullable ChannelBuffer content,
+                                 @Nullable ByteBuf content,
                                  @Nullable HttpContentProducer contentProducer,
-                                 @Nullable Multimap<String, String> headers);
+                                 @Nullable HttpHeaders headers);
 
   /**
    * Creates a {@link Multimap} from an {@link Iterable} of {@link Map.Entry}.
    */
-  protected final <K, V> Multimap<K, V> createMultimap(Iterable<? extends Map.Entry<K, V>> entries) {
-    ImmutableMultimap.Builder<K, V> builder = ImmutableMultimap.builder();
-    for (Map.Entry<K, V> entry : entries) {
-      builder.put(entry);
+  protected final HttpHeaders createHeaders(Iterable<? extends Map.Entry<String, String>> entries) {
+    DefaultHttpHeaders headers = new DefaultHttpHeaders();
+    for (Map.Entry<String, String> entry : entries) {
+      headers.add(entry.getKey(), entry.getValue());
     }
-    return builder.build();
+    return headers;
   }
 }

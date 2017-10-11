@@ -23,17 +23,19 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
 
 /**
@@ -66,7 +68,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   }
 
   /**
-   * Intantiates the class from another {@link DelayedHttpServiceResponder}
+   * Instantiates the class from another {@link DelayedHttpServiceResponder}
    * with a different {@link BodyProducerFactory}.
    */
   DelayedHttpServiceResponder(DelayedHttpServiceResponder other, BodyProducerFactory bodyProducerFactory) {
@@ -79,9 +81,9 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
   @Override
   protected void doSend(int status, String contentType,
-                        @Nullable ChannelBuffer content,
+                        @Nullable ByteBuf content,
                         @Nullable HttpContentProducer contentProducer,
-                        @Nullable Multimap<String, String> headers) {
+                        @Nullable HttpHeaders headers) {
     Preconditions.checkState(!closed,
      "Responder is already closed. " +
        "This may due to either using a HttpServiceResponder inside HttpContentProducer or " +
@@ -114,10 +116,10 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   public void setTransactionFailureResponse(Throwable t) {
     LOG.error("Exception occurred while handling request:", t);
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    ChannelBuffer content = ChannelBuffers.copiedBuffer("Exception occurred while handling request: "
-                                                          + Throwables.getRootCause(t).getMessage(), Charsets.UTF_8);
+    ByteBuf content = Unpooled.copiedBuffer("Exception occurred while handling request: "
+                                              + Throwables.getRootCause(t).getMessage(), StandardCharsets.UTF_8);
 
-    bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
+    bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
                                             "text/plain; charset=" + Charsets.UTF_8.name(),
                                             content, null, null);
   }
@@ -151,10 +153,10 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
         serviceContext.dismissTransactionContext();
       }
 
-      Multimap<String, String> headers = LinkedListMultimap.create(bufferedResponse.getHeaders());
-      headers.put(HttpHeaders.Names.CONNECTION, keepAlive ? HttpHeaders.Values.KEEP_ALIVE : HttpHeaders.Values.CLOSE);
-      if (!headers.containsKey(HttpHeaders.Names.CONTENT_TYPE)) {
-        headers.put(HttpHeaders.Names.CONTENT_TYPE, bufferedResponse.getContentType());
+      HttpHeaders headers = new DefaultHttpHeaders().add(bufferedResponse.getHeaders());
+      headers.set(HttpHeaderNames.CONNECTION, keepAlive ? HttpHeaderValues.KEEP_ALIVE : HttpHeaderValues.CLOSE);
+      if (!headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
+        headers.set(HttpHeaderNames.CONTENT_TYPE, bufferedResponse.getContentType());
       }
 
       if (contentProducer != null) {
@@ -163,8 +165,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
                               headers);
       } else {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
-                              bufferedResponse.getContentBuffer(),
-                              bufferedResponse.getContentType(), headers);
+                              bufferedResponse.getContentBuffer(), headers);
       }
       emitMetrics(bufferedResponse.getStatus());
     } finally {
@@ -204,28 +205,27 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   private static final class BufferedResponse {
 
     private final int status;
-    private final ChannelBuffer contentBuffer;
+    private final ByteBuf contentBuffer;
     private final HttpContentProducer contentProducer;
     private final String contentType;
-    private final Multimap<String, String> headers;
+    private final HttpHeaders headers;
 
     private BufferedResponse(int status, String contentType,
-                             @Nullable ChannelBuffer contentBuffer,
+                             @Nullable ByteBuf contentBuffer,
                              @Nullable HttpContentProducer contentProducer,
-                             @Nullable Multimap<String, String> headers) {
+                             @Nullable HttpHeaders headers) {
       this.status = status;
       this.contentType = contentType;
-      this.contentBuffer = contentBuffer;
+      this.contentBuffer = contentBuffer == null ? Unpooled.EMPTY_BUFFER : contentBuffer;
       this.contentProducer = contentProducer;
-      this.headers = headers == null ? ImmutableMultimap.<String, String>of() : ImmutableMultimap.copyOf(headers);
+      this.headers = headers == null ? EmptyHttpHeaders.INSTANCE : headers;
     }
 
     public int getStatus() {
       return status;
     }
 
-    @Nullable
-    public ChannelBuffer getContentBuffer() {
+    public ByteBuf getContentBuffer() {
       return contentBuffer;
     }
 
@@ -238,7 +238,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
       return contentType;
     }
 
-    public Multimap<String, String> getHeaders() {
+    public HttpHeaders getHeaders() {
       return headers;
     }
   }

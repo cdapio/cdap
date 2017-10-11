@@ -30,9 +30,11 @@ import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -60,7 +62,8 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @Path("/{key-name}")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void create(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
+  public void create(FullHttpRequest httpRequest, HttpResponder httpResponder,
+                     @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws Exception {
 
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
@@ -91,9 +94,8 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                   @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    httpResponder.sendContent(HttpResponseStatus.OK,
-                              ChannelBuffers.wrappedBuffer(secureStore.getSecureData(namespace, name).get()),
-                              "text/plain; charset=utf-8", null);
+    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.getSecureData(namespace, name).get(),
+                                new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8"));
   }
 
   @Path("/{key-name}/metadata")
@@ -102,13 +104,13 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespace,
                           @PathParam("key-name") String name) throws Exception {
     SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
-    httpResponder.sendJson(HttpResponseStatus.OK, secureStoreData.getMetadata());
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStoreData.getMetadata()));
   }
 
   @Path("/")
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws Exception {
-    httpResponder.sendJson(HttpResponseStatus.OK, secureStore.listSecureData(namespace));
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.listSecureData(namespace)));
   }
 }

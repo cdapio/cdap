@@ -143,8 +143,8 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
       }
 
       // Constructs a NettyHttpService, to verify that the handlers passed in by the user are valid.
-      NettyHttpService.builder()
-        .addHttpHandlers(httpHandlers)
+      NettyHttpService.builder("service-configurer")
+        .setHttpHandlers(httpHandlers)
         .build();
     } catch (Throwable t) {
       String errMessage = String.format("Invalid handlers in service: %s.", name);

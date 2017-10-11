@@ -37,12 +37,11 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +63,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WorkflowStatsSLAHttpHandler.class);
+  private static final Gson GSON = new Gson();
   private final Store store;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final MetricStore metricStore;
@@ -123,7 +122,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
         + workflowId + " in the specified time range.");
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, workflowStatistics);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(workflowStatistics));
   }
 
   /**
@@ -177,7 +176,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     }
 
     Collection<WorkflowStatsComparison.ProgramNodes> formattedStatisticsMap = format(workflowRunMetricsList);
-    responder.sendJson(HttpResponseStatus.OK, new WorkflowStatsComparison(startTimes, formattedStatisticsMap));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(new WorkflowStatsComparison(startTimes, formattedStatisticsMap)));
   }
 
   /**
@@ -212,7 +212,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     List<WorkflowRunMetrics> workflowRunMetricsList = new ArrayList<>();
     workflowRunMetricsList.add(detailedStatistics);
     workflowRunMetricsList.add(otherDetailedStatistics);
-    responder.sendJson(HttpResponseStatus.OK, format(workflowRunMetricsList));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(format(workflowRunMetricsList)));
   }
 
   private Collection<WorkflowStatsComparison.ProgramNodes> format(List<WorkflowRunMetrics> workflowRunMetricsList) {
@@ -314,23 +314,23 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       this.metrics = metrics;
     }
 
-    public String getProgramName() {
+    String getProgramName() {
       return programName;
     }
 
-    public ProgramType getProgramType() {
+    ProgramType getProgramType() {
       return programType;
     }
 
-    public Map<String, Long> getMetrics() {
+    Map<String, Long> getMetrics() {
       return metrics;
     }
 
-    public long getProgramStartTime() {
+    long getProgramStartTime() {
       return programStartTime;
     }
 
-    public String getProgramRunId() {
+    String getProgramRunId() {
       return programRunId;
     }
   }
@@ -344,11 +344,11 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       this.programMetricsList = programMetricsList;
     }
 
-    public String getWorkflowRunId() {
+    String getWorkflowRunId() {
       return workflowRunId;
     }
 
-    public List<ProgramMetrics> getProgramMetricsList() {
+    List<ProgramMetrics> getProgramMetricsList() {
       return programMetricsList;
     }
   }

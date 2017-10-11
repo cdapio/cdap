@@ -18,9 +18,13 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import com.google.common.collect.ImmutableList;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,7 +38,7 @@ import java.util.Map;
 final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
   private final HttpRequest request;
-  private final ByteBuffer content;
+  private final ByteBuf content;
   private final Map<String, List<String>> headers;
 
   /**
@@ -44,11 +48,11 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
    */
   DefaultHttpServiceRequest(HttpRequest request) {
     this.request = request;
-    this.content = request.getContent().toByteBuffer();
+    this.content = request instanceof FullHttpRequest ? ((FullHttpRequest) request).content() : Unpooled.EMPTY_BUFFER;
 
     Map<String, List<String>> headers = new HashMap<>();
-    for (String name : request.getHeaderNames()) {
-      headers.put(name, ImmutableList.copyOf(request.getHeaders(name)));
+    for (String name : request.headers().names()) {
+      headers.put(name, Collections.unmodifiableList(new ArrayList<>(request.headers().getAll(name))));
     }
     this.headers = Collections.unmodifiableMap(headers);
   }
@@ -74,7 +78,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
    */
   @Override
   public ByteBuffer getContent() {
-    return content.duplicate().asReadOnlyBuffer();
+    return content.duplicate().asReadOnly().nioBuffer();
   }
 
   @Override

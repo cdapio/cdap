@@ -16,35 +16,30 @@
 
 package co.cask.cdap.security.tools;
 
-import org.jboss.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.Security;
-import java.security.UnrecoverableKeyException;
+import javax.annotation.Nullable;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 
 /**
  * A class that encapsulates SSL Certificate Information
  */
-public class SSLHandlerFactory {
-  private static final String PROTOCOL = "TLS";
-  private static final String ALGORITHM = "SunX509";
-  private final SSLContext serverContext;
+public class SSLHandlerFactory extends co.cask.http.SSLHandlerFactory {
 
-  public SSLHandlerFactory(File keyStore, String keyStoreType, String keyStorePassword, String certificatePassword) {
+  private static final String ALGORITHM = "SunX509";
+
+  private static SslContext createSslContext(KeyStore keyStore, String certificatePassword) {
     if (keyStore == null) {
-      throw new IllegalArgumentException("Key Store Path Not Configured");
+      throw new IllegalArgumentException("KeyStore path is not configured");
     }
-    if (keyStorePassword == null) {
-      throw new IllegalArgumentException("KeyStore Password Not Configured");
+    if (certificatePassword == null) {
+      throw new IllegalArgumentException("Certificate password is not configured");
     }
 
     String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
@@ -53,38 +48,46 @@ public class SSLHandlerFactory {
     }
 
     try {
-      KeyStore ks = KeyStore.getInstance(keyStoreType);
-      try (InputStream inputStream = new FileInputStream(keyStore)) {
-        ks.load(inputStream, keyStorePassword.toCharArray());
-      }
       // Set up key manager factory to use our key store
       KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);
-      kmf.init(ks, (certificatePassword != null) ? certificatePassword.toCharArray() : keyStorePassword.toCharArray());
+      kmf.init(keyStore, certificatePassword.toCharArray());
 
-      // Initialize the SSLContext to work with our key managers.
-      serverContext = SSLContext.getInstance(PROTOCOL);
-      serverContext.init(kmf.getKeyManagers(), null, null);
+      // Initialize the SslContext to work with our key managers.
+      return SslContextBuilder.forServer(kmf).build();
     } catch (Exception e) {
       throw new IllegalArgumentException("Failed to initialize the server-side SSLContext", e);
     }
   }
 
-  public SSLHandlerFactory(KeyStore keyStore, String password) {
+  private static SslContext createSslContext(File keyStoreFile, String keyStoreType,
+                                             String keyStorePassword, @Nullable String certificatePassword) {
+    if (keyStoreFile == null) {
+      throw new IllegalArgumentException("KeyStore path is not configured");
+    }
+    if (keyStoreType == null) {
+      throw new IllegalArgumentException("KeyStore type is not configured");
+    }
+    if (keyStorePassword == null) {
+      throw new IllegalArgumentException("KeyStore password is not Configured");
+    }
+
     try {
-      KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);
-      serverContext = SSLContext.getInstance(PROTOCOL);
-      kmf.init(keyStore, password.toCharArray());
-      serverContext.init(kmf.getKeyManagers(), null, null);
-    } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException | UnrecoverableKeyException e) {
+      KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+      try (InputStream inputStream = new FileInputStream(keyStoreFile)) {
+        keyStore.load(inputStream, keyStorePassword.toCharArray());
+      }
+      return createSslContext(keyStore, certificatePassword == null ? keyStorePassword : certificatePassword);
+    } catch (Exception e) {
       throw new IllegalArgumentException("Failed to initialize the server-side SSLContext", e);
     }
   }
 
-  public SslHandler create() {
-    SSLEngine engine = serverContext.createSSLEngine();
-    engine.setUseClientMode(false);
-    SslHandler handler =  new SslHandler(engine);
-    handler.setEnableRenegotiation(false);
-    return handler;
+  public SSLHandlerFactory(File keyStoreFile, String keyStoreType,
+                           String keyStorePassword, @Nullable String certificatePassword) {
+    super(createSslContext(keyStoreFile, keyStoreType, keyStorePassword, certificatePassword));
+  }
+
+  public SSLHandlerFactory(KeyStore keyStore, String password) {
+    super(createSslContext(keyStore, password));
   }
 }

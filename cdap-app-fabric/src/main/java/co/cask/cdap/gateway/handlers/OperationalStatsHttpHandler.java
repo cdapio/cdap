@@ -25,8 +25,9 @@ import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import com.google.gson.Gson;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,16 +49,15 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/system/serviceproviders")
 public class OperationalStatsHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsHttpHandler.class);
+  private static final Gson GSON = new Gson();
 
   @GET
   @Path("/")
   public void getServiceProviders(HttpRequest request, HttpResponder responder) throws Exception {
     // we want to fetch stats with the stat type 'info' grouped by the service name
-    responder.sendJson(
-      HttpResponseStatus.OK,
-      getStats(OperationalStatsUtils.STAT_TYPE_KEY, OperationalStatsUtils.STAT_TYPE_INFO,
-               OperationalStatsUtils.SERVICE_NAME_KEY)
-    );
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(getStats(OperationalStatsUtils.STAT_TYPE_KEY, OperationalStatsUtils.STAT_TYPE_INFO,
+                                            OperationalStatsUtils.SERVICE_NAME_KEY)));
   }
 
   @GET
@@ -72,7 +72,7 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
     }
     // info is only needed in the list API, not in the stats API
     stats.remove(OperationalStatsUtils.STAT_TYPE_INFO);
-    responder.sendJson(HttpResponseStatus.OK, stats);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(stats));
   }
 
   /**
