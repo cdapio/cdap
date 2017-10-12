@@ -36,6 +36,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.http.HttpResponse;
@@ -43,7 +44,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -179,9 +179,9 @@ public abstract class ExternalAuthenticationServerTestBase {
     verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains(getAuthenticatedUserName()));
 
     // Test correct headers being returned
-    String cacheControlHeader = response.getFirstHeader(HttpHeaders.Names.CACHE_CONTROL).getValue();
-    String pragmaHeader = response.getFirstHeader(HttpHeaders.Names.PRAGMA).getValue();
-    String contentType = response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue();
+    String cacheControlHeader = response.getFirstHeader(HttpHeaderNames.CACHE_CONTROL.toString()).getValue();
+    String pragmaHeader = response.getFirstHeader(HttpHeaderNames.PRAGMA.toString()).getValue();
+    String contentType = response.getFirstHeader(HttpHeaderNames.CONTENT_TYPE.toString()).getValue();
 
     assertEquals("no-store", cacheControlHeader);
     assertEquals("no-cache", pragmaHeader);
