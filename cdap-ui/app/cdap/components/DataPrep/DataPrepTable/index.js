@@ -31,20 +31,24 @@ import T from 'i18n-react';
 import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
 import captialize from 'lodash/capitalize';
 import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
+// Lazy load polyfill in safari as InteresectionObservers are not implemented there yet.
+(async function() {
+  typeof IntersectionObserver === 'undefined' ? await import(/* webpackChunkName: "intersection-observer" */'intersection-observer') : Promise.resolve();
+})();
 
 const PREFIX = 'features.DataPrep.DataPrepTable';
-
+const DEFAULT_WINDOW_SIZE = 100;
 export default class DataPrepTable extends Component {
   constructor(props) {
     super(props);
-
     let storeState = DataPrepStore.getState();
     let workspaceId = storeState.dataprep.workspaceId;
     let currentWorkspace = storeState.workspaces.list.find(workspace => workspace.id === workspaceId) || {};
     let currentWorkspaceName = currentWorkspace.name;
     this.state = {
       headers: storeState.dataprep.headers.map(header => ({name: header, edit: false})),
-      data: storeState.dataprep.data,
+      data: storeState.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),
+      windowSize: DEFAULT_WINDOW_SIZE,
       loading: !storeState.dataprep.initialized,
       directivesLength: storeState.dataprep.directives.length,
       workspaceId,
@@ -63,8 +67,13 @@ export default class DataPrepTable extends Component {
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState();
+      if (document.getElementById('dataprep-table-id')) {
+        // Scroll to the top of the table to avoid un-necessary pagination
+        document.getElementById('dataprep-table-id').scrollTop = 0;
+      }
       this.setState({
-        data: state.dataprep.data.map(d => Object.assign({}, d, {uniqueId: shortid.generate()})),
+        windowSize: DEFAULT_WINDOW_SIZE,
+        data: state.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),
         headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
         loading: !state.dataprep.initialized && !state.error.dataError,
         directivesLength: state.dataprep.directives.length,
@@ -81,6 +90,21 @@ export default class DataPrepTable extends Component {
     this.sub();
   }
 
+  componentDidMount() {
+    document
+      .querySelectorAll(`#dataprep-table tbody tr`)
+      .forEach(entry => {
+        this.io.observe(entry);
+      });
+  }
+
+  componentDidUpdate() {
+    document
+      .querySelectorAll(`#dataprep-table tbody tr`)
+      .forEach(entry => {
+        this.io.observe(entry);
+      });
+  }
   toggleColumnSelect(columnName) {
     let currentSelectedHeaders = this.state.selectedHeaders.slice();
     if (!this.columnIsSelected(columnName)) {
@@ -207,12 +231,32 @@ export default class DataPrepTable extends Component {
       );
   }
 
+  io = new IntersectionObserver(entries => {
+    let lastVisibleElement = this.state.windowSize;
+    for (const entry of entries) {
+      let id = entry.target.getAttribute("id");
+      id = id.split('-').pop();
+      id = parseInt(id, 10);
+      if (entry.isIntersecting) {
+        lastVisibleElement = id + 50 > this.state.windowSize ? id + DEFAULT_WINDOW_SIZE : id;
+      }
+    }
+    if (lastVisibleElement > this.state.windowSize) {
+      this.setState({
+        windowSize: lastVisibleElement
+      });
+    }
+  }, {
+    root: document.getElementById('dataprep-table-id'),
+    threshold: [0, 1]
+  });
+
   renderDataprepTable() {
     let headers = [...this.state.headers];
     let data = this.state.data;
     let types = DataPrepStore.getState().dataprep.types;
     return (
-      <table className="table table-bordered">
+      <table className="table table-bordered" id="dataprep-table">
         <thead className="thead-inverse">
           <tr>
             <th className="row-count-header" />
@@ -300,18 +344,20 @@ export default class DataPrepTable extends Component {
         </thead>
         <tbody>
           {
-            data.map((row, rowIndex) => {
-              return (
-                <tr key={row.uniqueId}>
-                  <td>{rowIndex + 1}</td>
-                  {
-                    headers.map((head, i) => {
-                      return <td key={i}><div>{row[head.name]}</div></td>;
-                    })
-                  }
-                </tr>
-              );
-            })
+            data
+              .slice(0, this.state.windowSize)
+              .map((row) => {
+                return (
+                  <tr key={row.uniqueId} id={`dataprep-${row.scrollId}`}>
+                    <td>{row.scrollId + 1}</td>
+                    {
+                      headers.map((head, i) => {
+                        return <td key={i}><div>{row[head.name]}</div></td>;
+                      })
+                    }
+                  </tr>
+                );
+              })
           }
         </tbody>
       </table>
