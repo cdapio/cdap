@@ -27,6 +27,15 @@ import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -38,13 +47,6 @@ import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -70,7 +72,7 @@ public final class StoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/publish")
-  public void publish(HttpRequest request, HttpResponder responder,
+  public void publish(FullHttpRequest request, HttpResponder responder,
                       @PathParam("namespace") String namespace,
                       @PathParam("topic") String topic) throws Exception {
 
@@ -90,13 +92,14 @@ public final class StoreHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
       return;
     }
-    ChannelBuffer response = encodeRollbackDetail(rollbackInfo);
-    responder.sendContent(HttpResponseStatus.OK, response, "avro/binary", null);
+    ByteBuf response = encodeRollbackDetail(rollbackInfo);
+    responder.sendContent(HttpResponseStatus.OK, response,
+                          new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
   }
 
   @POST
   @Path("/store")
-  public void store(HttpRequest request, HttpResponder responder,
+  public void store(FullHttpRequest request, HttpResponder responder,
                     @PathParam("namespace") String namespace,
                     @PathParam("topic") String topic) throws Exception {
 
@@ -114,13 +117,12 @@ public final class StoreHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/rollback")
-  public void rollback(HttpRequest request, HttpResponder responder,
+  public void rollback(FullHttpRequest request, HttpResponder responder,
                        @PathParam("namespace") String namespace,
                        @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
 
-    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ChannelBufferInputStream(request.getContent()),
-                                                               null);
+    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(Schemas.V1.PublishResponse.SCHEMA);
     messagingService.rollback(topicId, new GenericRecordRollbackDetail(datumReader.read(null, decoder)));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -129,14 +131,13 @@ public final class StoreHandler extends AbstractHttpHandler {
   /**
    * Creates a {@link StoreRequest} instance based on the given {@link HttpRequest}.
    */
-  private StoreRequest createStoreRequest(TopicId topicId, HttpRequest request) throws Exception {
+  private StoreRequest createStoreRequest(TopicId topicId, FullHttpRequest request) throws Exception {
     // Currently only support avro
-    if (!"avro/binary".equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
+    if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       throw new BadRequestException("Only avro/binary content type is supported.");
     }
 
-    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ChannelBufferInputStream(request.getContent()),
-                                                               null);
+    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(Schemas.V1.PublishRequest.SCHEMA);
     return new GenericRecordStoreRequest(topicId, datumReader.read(null, decoder));
   }
@@ -144,7 +145,7 @@ public final class StoreHandler extends AbstractHttpHandler {
   /**
    * Encodes the {@link RollbackDetail} object as avro record based on the {@link Schemas.V1.PublishResponse#SCHEMA}.
    */
-  private ChannelBuffer encodeRollbackDetail(RollbackDetail rollbackDetail) throws IOException {
+  private ByteBuf encodeRollbackDetail(RollbackDetail rollbackDetail) throws IOException {
     Schema schema = Schemas.V1.PublishResponse.SCHEMA;
 
     // Constructs the response object as GenericRecord
@@ -162,8 +163,8 @@ public final class StoreHandler extends AbstractHttpHandler {
     // For V1 PublishResponse, it contains an union(long, null) and then 2 longs and 2 integers,
     // hence the max size is 38
     // (union use 1 byte, long max size is 9 bytes, integer max size is 5 bytes in avro binary encoding)
-    ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(38);
-    Encoder encoder = EncoderFactory.get().directBinaryEncoder(new ChannelBufferOutputStream(buffer), null);
+    ByteBuf buffer = Unpooled.buffer(38);
+    Encoder encoder = EncoderFactory.get().directBinaryEncoder(new ByteBufOutputStream(buffer), null);
     DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
     datumWriter.write(response, encoder);
     return buffer;

@@ -34,9 +34,16 @@ import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -48,13 +55,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.tephra.TransactionCodec;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,27 +96,26 @@ public final class FetchHandler extends AbstractHttpHandler {
 
   @POST
   @Path("poll")
-  public void poll(HttpRequest request, HttpResponder responder,
+  public void poll(FullHttpRequest request, HttpResponder responder,
                    @PathParam("namespace") String namespace,
                    @PathParam("topic") String topic) throws Exception {
 
     TopicId topicId = new NamespaceId(namespace).topic(topic);
 
     // Currently only support avro
-    if (!"avro/binary".equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
+    if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       throw new BadRequestException("Only avro/binary content type is supported.");
     }
 
     // Decode the poll request
-    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ChannelBufferInputStream(request.getContent()),
-                                                               null);
+    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(Schemas.V1.ConsumeRequest.SCHEMA);
 
     // Fetch the messages
     CloseableIterator<RawMessage> iterator = fetchMessages(datumReader.read(null, decoder), topicId);
     try {
       responder.sendContent(HttpResponseStatus.OK, new MessagesBodyProducer(iterator, messageChunkSize),
-                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "avro/binary"));
+                            new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
     } catch (Throwable t) {
       iterator.close();
       throw t;
@@ -167,7 +166,7 @@ public final class FetchHandler extends AbstractHttpHandler {
     private final CloseableIterator<RawMessage> iterator;
     private final List<RawMessage> messages;
     private final int messageChunkSize;
-    private final ChannelBuffer chunk;
+    private final ByteBuf chunk;
     private final Encoder encoder;
     private final GenericRecord messageRecord;
     private final DatumWriter<GenericRecord> messageWriter;
@@ -178,8 +177,8 @@ public final class FetchHandler extends AbstractHttpHandler {
       this.iterator = iterator;
       this.messages = new ArrayList<>();
       this.messageChunkSize = messageChunkSize;
-      this.chunk = ChannelBuffers.dynamicBuffer(messageChunkSize);
-      this.encoder = EncoderFactory.get().directBinaryEncoder(new ChannelBufferOutputStream(chunk), null);
+      this.chunk = Unpooled.buffer(messageChunkSize);
+      this.encoder = EncoderFactory.get().directBinaryEncoder(new ByteBufOutputStream(chunk), null);
 
       // These are for writing individual message (response is an array of messages)
       this.messageRecord = new GenericData.Record(Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
@@ -196,10 +195,10 @@ public final class FetchHandler extends AbstractHttpHandler {
     }
 
     @Override
-    public ChannelBuffer nextChunk() throws Exception {
+    public ByteBuf nextChunk() throws Exception {
       // Already sent all messages, return empty to signal the end of response
       if (arrayEnded) {
-        return ChannelBuffers.EMPTY_BUFFER;
+        return Unpooled.EMPTY_BUFFER;
       }
 
       chunk.clear();
@@ -239,12 +238,13 @@ public final class FetchHandler extends AbstractHttpHandler {
         encoder.writeArrayEnd();
       }
 
-      return chunk;
+      return chunk.copy();
     }
 
     @Override
     public void finished() throws Exception {
       iterator.close();
+      chunk.release();
     }
 
     @Override
