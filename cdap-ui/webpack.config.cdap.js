@@ -151,7 +151,7 @@ var webpackConfig = {
   cache: true,
   context: __dirname + '/app/cdap',
   entry: {
-    'cdap': ['babel-polyfill', './cdap.js', 'rx', 'rx-dom']
+    'cdap': ['./cdap.js', 'rx', 'rx-dom']
   },
   module: {
     rules

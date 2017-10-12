@@ -107,7 +107,7 @@ var rules = [
 var webpackConfig = {
   context: __dirname + '/app/login',
   entry: {
-    'login': ['babel-polyfill', './login.js']
+    'login': ['./login.js']
   },
   module: {
     rules
