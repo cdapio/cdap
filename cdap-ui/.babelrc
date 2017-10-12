@@ -7,6 +7,7 @@
   "plugins": [
     "transform-object-rest-spread",
     "transform-class-properties",
+    "transform-async-to-generator",
     "syntax-dynamic-import",
     "lodash"
   ]
