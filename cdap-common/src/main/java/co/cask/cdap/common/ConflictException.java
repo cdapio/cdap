@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when there was a conflict.
@@ -38,6 +38,6 @@ public class ConflictException extends Exception implements HttpErrorStatusProvi
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.CONFLICT.getCode();
+    return HttpResponseStatus.CONFLICT.code();
   }
 }

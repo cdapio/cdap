@@ -22,8 +22,9 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import com.google.gson.Gson;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,7 @@ public class VersionHandler extends AbstractHttpHandler {
   @Path(Constants.Gateway.API_VERSION_3 + "/version")
   @GET
   public void version(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, new Version(version));
+    responder.sendJson(HttpResponseStatus.OK, new Gson().toJson(new Version(version)));
   }
 
   private String determineVersion() {

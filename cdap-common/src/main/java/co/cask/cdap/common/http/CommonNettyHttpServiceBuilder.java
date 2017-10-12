@@ -18,9 +18,10 @@ package co.cask.cdap.common.http;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.http.ChannelPipelineModifier;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Function;
-import org.jboss.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPipeline;
+import io.netty.util.concurrent.EventExecutor;
 
 /**
  * Provides a {@link co.cask.http.NettyHttpService.Builder} that has common settings built-in.
@@ -29,12 +30,17 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
 
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName) {
     super(serviceName);
+
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
-      this.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
+      setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
-        public ChannelPipeline apply(ChannelPipeline input) {
-          input.addBefore("dispatcher", "authenticator", new AuthenticationChannelHandler());
-          return input;
+        public void modify(ChannelPipeline pipeline) {
+          // Adds the AuthenticationChannelHandler before the dispatcher, using the same
+          // EventExecutor to make sure they get invoked from the same thread
+          // This is needed before we use a InheritableThreadLocal in SecurityRequestContext
+          // to remember the user id.
+          EventExecutor executor = pipeline.context("dispatcher").executor();
+          pipeline.addBefore(executor, "dispatcher", "authenticator", new AuthenticationChannelHandler());
         }
       });
     }

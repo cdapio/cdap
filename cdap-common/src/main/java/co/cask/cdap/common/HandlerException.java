@@ -16,12 +16,14 @@
 
 package co.cask.cdap.common;
 
-import com.google.common.base.Charsets;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Exception handling for failures in netty pipeline.
@@ -44,8 +46,9 @@ public final class HandlerException extends RuntimeException {
   }
 
   public HttpResponse createFailureResponse() {
-    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, failureStatus);
-    response.setContent(ChannelBuffers.copiedBuffer(message, Charsets.UTF_8));
+    FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, failureStatus);
+    response.content().writeCharSequence(message, StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(response, response.content().readableBytes());
     return response;
   }
 

@@ -16,10 +16,9 @@
 
 package co.cask.cdap.common.logging;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferIndexFinder;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 
 import java.io.FilterOutputStream;
@@ -33,7 +32,7 @@ import javax.annotation.Nullable;
  */
 public final class RedirectedPrintStream extends FilterOutputStream {
 
-  private final ChannelBuffer buffer;
+  private final ByteBuf buffer;
   private final PrintStream outStream;
   private final Logger logger;
   private final boolean isErrorStream;
@@ -59,9 +58,9 @@ public final class RedirectedPrintStream extends FilterOutputStream {
   }
 
   private RedirectedPrintStream(Logger logger, @Nullable PrintStream outStream, boolean isErrorStream) {
-    super(new ChannelBufferOutputStream(ChannelBuffers.dynamicBuffer()));
+    super(new ByteBufOutputStream(Unpooled.buffer()));
     // Safe cast as we know what outputStream we've created.
-    this.buffer = ((ChannelBufferOutputStream) out).buffer();
+    this.buffer = ((ByteBufOutputStream) out).buffer();
     this.logger = logger;
     this.outStream = outStream;
     this.isErrorStream = isErrorStream;
@@ -77,18 +76,24 @@ public final class RedirectedPrintStream extends FilterOutputStream {
 
     // Write out buffered data, line by line.
     // The last line may not be written out if it doesn't have a line separator.
-    int len = buffer.bytesBefore(ChannelBufferIndexFinder.CRLF);
-    while (len > 0) {
-      log(buffer.readSlice(len).toString(StandardCharsets.UTF_8));
-
-      // Skip the CRLF.
-      while (buffer.bytesBefore(ChannelBufferIndexFinder.CRLF) == 0) {
-        buffer.readByte();
+    int len = buffer.bytesBefore((byte) '\n');
+    while (len >= 0) {
+      if (len == 0) {
+        log("");
+      } else {
+        CharSequence line = buffer.readCharSequence(len, StandardCharsets.UTF_8);
+        if (line.charAt(line.length() - 1) == '\r') {
+          line = line.subSequence(0, line.length() - 1);
+        }
+        log(line.toString());
       }
-      len = buffer.bytesBefore(ChannelBufferIndexFinder.CRLF);
+
+      // Read the '\n'
+      buffer.readByte();
+      len = buffer.bytesBefore((byte) '\n');
     }
 
-    if (!buffer.readable()) {
+    if (!buffer.isReadable()) {
       buffer.clear();
     } else {
       buffer.discardReadBytes();

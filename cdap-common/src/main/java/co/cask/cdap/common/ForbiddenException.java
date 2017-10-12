@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when the operation is forbidden.
@@ -38,6 +38,6 @@ public class ForbiddenException extends Exception implements HttpErrorStatusProv
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.FORBIDDEN.getCode();
+    return HttpResponseStatus.FORBIDDEN.code();
   }
 }

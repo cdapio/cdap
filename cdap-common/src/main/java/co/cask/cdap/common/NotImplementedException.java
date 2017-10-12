@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when some operation is not implemented.
@@ -30,6 +30,6 @@ public class NotImplementedException extends Exception implements HttpErrorStatu
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.NOT_IMPLEMENTED.getCode();
+    return HttpResponseStatus.NOT_IMPLEMENTED.code();
   }
 }

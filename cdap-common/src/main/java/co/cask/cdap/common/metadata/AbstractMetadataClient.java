@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -143,8 +143,8 @@ public abstract class AbstractMetadataClient {
       path += "&showHidden=" + true;
     }
     URL searchURL = resolve(namespace, path);
-    HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.getCode());
-    if (HttpResponseStatus.BAD_REQUEST.getCode() == response.getResponseCode()) {
+    HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.code());
+    if (HttpResponseStatus.BAD_REQUEST.code() == response.getResponseCode()) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
     return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponse.class);

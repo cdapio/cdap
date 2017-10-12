@@ -22,6 +22,7 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
@@ -29,7 +30,6 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

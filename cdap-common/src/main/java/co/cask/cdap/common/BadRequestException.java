@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when the input was bad.
@@ -38,6 +38,6 @@ public class BadRequestException extends Exception implements HttpErrorStatusPro
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.BAD_REQUEST.getCode();
+    return HttpResponseStatus.BAD_REQUEST.code();
   }
 }

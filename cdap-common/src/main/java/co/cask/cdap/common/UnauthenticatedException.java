@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when a user is not authenticated.
@@ -39,6 +39,6 @@ public class UnauthenticatedException extends UnauthorizedException implements H
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.UNAUTHORIZED.getCode();
+    return HttpResponseStatus.UNAUTHORIZED.code();
   }
 }

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common.logging;
 
-import org.jboss.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpMethod;
 
 import java.util.List;
 import java.util.Objects;
