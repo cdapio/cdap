@@ -377,14 +377,11 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
 
     // 14. multi-output mapreduce writing partition fails because partition already exists
     // 14a. first output fails, other output must rollback partition 5
-    // TODO: bring this back when CDAP-8766 is fixed
-    /*
     mrManager.start(ImmutableMap.of("output.datasets", BOTH, PFS_OUT, "2", OTHER_OUT, "5", "input.text", "2x 5x"));
     mrManager.waitForRuns(ProgramRunStatus.FAILED, ++numRuns, 2, TimeUnit.MINUTES);
     pfsValidator.validate();
     otherValidator.validate();
     Assert.assertFalse(other.getPartitionOutput(KEY_5).getLocation().exists());
-    */
     // 14b. second output fails, first output must rollback partition 5
     mrManager.start(ImmutableMap.of("output.datasets", BOTH, PFS_OUT, "5", OTHER_OUT, "2", "input.text", "2x 5x"));
     mrManager.waitForRuns(ProgramRunStatus.FAILED, ++numRuns, 2, TimeUnit.MINUTES);
@@ -394,8 +391,6 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
 
     // 15. multi-output mapreduce writing partition fails because Hive partition already exists
     // 15a. first output fails, other output must rollback partitions 0 and 5
-    // TODO: bring this back when CDAP-8766 is fixed
-    /*
     mrManager.start(ImmutableMap.of("output.datasets", BOTH, PFS_OUT, "4", "input.text", "0x 5x"));
     mrManager.waitForRuns(ProgramRunStatus.FAILED, ++numRuns, 2, TimeUnit.MINUTES);
     pfsValidator.validate();
@@ -411,6 +406,5 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
     Assert.assertFalse(other.getPartitionOutput(KEY_4).getLocation().exists());
     Assert.assertFalse(pfs.getPartitionOutput(KEY_0).getLocation().exists());
     Assert.assertFalse(pfs.getPartitionOutput(KEY_5).getLocation().exists());
-    */
   }
 }
