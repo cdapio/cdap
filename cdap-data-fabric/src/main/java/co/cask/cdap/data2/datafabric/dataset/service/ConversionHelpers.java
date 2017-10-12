@@ -27,18 +27,18 @@ import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -113,8 +113,8 @@ class ConversionHelpers {
     return datasetSummaries;
   }
 
-  static DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) throws BadRequestException {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+  static DatasetInstanceConfiguration getInstanceConfiguration(FullHttpRequest request) throws BadRequestException {
+    Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8);
     try {
       DatasetInstanceConfiguration config = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
       Preconditions.checkNotNull(config.getTypeName(), "The typeName must be specified.");
@@ -124,8 +124,8 @@ class ConversionHelpers {
     }
   }
 
-  static Map<String, String> getProperties(HttpRequest request) throws BadRequestException {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+  static Map<String, String> getProperties(FullHttpRequest request) throws BadRequestException {
+    Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8);
     try {
       return GSON.fromJson(reader, new TypeToken<Map<String, String>>() {
       }.getType());

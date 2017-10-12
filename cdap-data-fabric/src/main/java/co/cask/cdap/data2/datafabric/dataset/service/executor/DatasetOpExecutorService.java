@@ -62,7 +62,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
     int execThreads = cConf.getInt(Constants.Dataset.Executor.EXEC_THREADS, 10);
 
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_EXECUTOR)
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
       .setPort(cConf.getInt(Constants.Dataset.Executor.PORT))
       .setHandlerHooks(ImmutableList.of(
@@ -80,7 +80,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
                                                                        Constants.Service.DATASET_EXECUTOR));
     LOG.info("Starting DatasetOpExecutorService...");
 
-    httpService.startAndWait();
+    httpService.start();
     cancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.DATASET_EXECUTOR, httpService.getBindAddress())));
     LOG.info("DatasetOpExecutorService started successfully on {}", httpService.getBindAddress());
@@ -95,7 +95,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
     }
   }
 

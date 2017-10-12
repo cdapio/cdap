@@ -22,10 +22,9 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferIndexFinder;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +44,7 @@ final class TextStreamBodyConsumer extends BodyConsumer {
   private final ContentWriterFactory contentWriterFactory;
   private ContentWriter contentWriter;
   private boolean failed;
-  private ChannelBuffer buffer = ChannelBuffers.EMPTY_BUFFER;
+  private ByteBuf buffer = Unpooled.EMPTY_BUFFER;
 
   TextStreamBodyConsumer(ContentWriterFactory contentWriterFactory) {
     this.streamId = contentWriterFactory.getStream();
@@ -53,21 +52,21 @@ final class TextStreamBodyConsumer extends BodyConsumer {
   }
 
   @Override
-  public void chunk(ChannelBuffer chunk, HttpResponder responder) {
+  public void chunk(ByteBuf chunk, HttpResponder responder) {
     if (failed) {
       return;
     }
 
-    ChannelBuffer contentChunk = chunk;
-    if (buffer.readable()) {
-      contentChunk = ChannelBuffers.wrappedBuffer(buffer, contentChunk);
-      buffer = ChannelBuffers.EMPTY_BUFFER;
+    ByteBuf contentChunk = chunk;
+    if (buffer.isReadable()) {
+      contentChunk = Unpooled.wrappedBuffer(buffer, contentChunk);
+      buffer = Unpooled.EMPTY_BUFFER;
     }
 
     try {
       processChunk(contentChunk);
-      if (contentChunk.readable()) {
-        buffer = contentChunk;
+      if (contentChunk.isReadable()) {
+        buffer = contentChunk.copy();
       }
     } catch (Exception e) {
       failed = true;
@@ -84,11 +83,11 @@ final class TextStreamBodyConsumer extends BodyConsumer {
     try {
       // Process any leftover content.
       ContentWriter writer = getContentWriter();
-      if (buffer.readable()) {
+      if (buffer.isReadable()) {
         processChunk(buffer);
 
-        if (buffer.readable()) {
-          writer.append(buffer.toByteBuffer(), true);
+        if (buffer.isReadable()) {
+          writer.append(buffer.nioBuffer(), false);
         }
       }
       writer.close();
@@ -106,23 +105,30 @@ final class TextStreamBodyConsumer extends BodyConsumer {
     LOG.warn("Failed to handle upload to stream {}", streamId, cause);
   }
 
-  private void processChunk(final ChannelBuffer chunk) throws IOException {
+  private void processChunk(final ByteBuf chunk) throws IOException {
     final ContentWriter writer = getContentWriter();
     writer.appendAll(new AbstractIterator<ByteBuffer>() {
       @Override
       protected ByteBuffer computeNext() {
-        int len = chunk.bytesBefore(ChannelBufferIndexFinder.CRLF);
-        if (len <= 0) {
+        int len = chunk.bytesBefore((byte) '\n');
+        if (len < 0) {
           return endOfData();
         }
-        ChannelBuffer body = chunk.readSlice(len);
-        // Skip the CRLF.
-        while (chunk.bytesBefore(ChannelBufferIndexFinder.CRLF) == 0) {
-          chunk.readByte();
+        ByteBuf body;
+        if (len > 0) {
+          body = chunk.readSlice(len);
+          if (body.getByte(body.writerIndex() - 1) == (byte) '\r') {
+            body.writerIndex(body.writerIndex() - 1);
+          }
+        } else {
+          body = Unpooled.EMPTY_BUFFER;
         }
-        return body.toByteBuffer();
+
+        // Swallow the '\n'
+        chunk.readByte();
+        return body.nioBuffer();
       }
-    }, true);
+    }, false);
   }
 
   private ContentWriter getContentWriter() throws IOException {

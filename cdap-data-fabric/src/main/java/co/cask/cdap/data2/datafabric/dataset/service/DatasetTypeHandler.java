@@ -24,9 +24,10 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +45,10 @@ import javax.ws.rs.QueryParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetTypeHandler extends AbstractHttpHandler {
-  private static final String HEADER_CLASS_NAME = "X-Class-Name";
-
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
+  private static final Gson GSON = new Gson();
+
+  private static final String HEADER_CLASS_NAME = "X-Class-Name";
 
   private final DatasetTypeService typeService;
 
@@ -69,7 +71,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules")
   public void listModules(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, typeService.listModules(new NamespaceId(namespaceId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(typeService.listModules(new NamespaceId(namespaceId))));
   }
 
   @DELETE
@@ -104,14 +106,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void getModuleInfo(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("name") String name) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, typeService.getModule(new NamespaceId(namespaceId).datasetModule(name)));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(typeService.getModule(new NamespaceId(namespaceId).datasetModule(name))));
   }
 
   @GET
   @Path("/data/types")
   public void listTypes(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, typeService.listTypes(new NamespaceId(namespaceId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(typeService.listTypes(new NamespaceId(namespaceId))));
   }
 
   @GET
@@ -119,6 +122,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void getTypeInfo(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("name") String name) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, typeService.getType(new NamespaceId(namespaceId).datasetType(name)));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(typeService.getType(new NamespaceId(namespaceId).datasetType(name))));
   }
 }

@@ -63,8 +63,8 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,11 +202,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     // privileges in rare scenarios, but there can never be orphaned datasets.
     // If the module previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
     // privileges for the module. Revoke them first, so no users unintentionally get privileges on the dataset.
-    try {
-      return createModuleConsumer(datasetModuleId, className, forceUpdate);
-    } catch (Exception e) {
-      throw e;
-    }
+    return createModuleConsumer(datasetModuleId, className, forceUpdate);
   }
 
   /**

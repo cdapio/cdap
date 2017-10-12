@@ -30,16 +30,17 @@ import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang.StringUtils;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -72,7 +73,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     try {
       DatasetId instanceId = namespace.dataset(instanceName);
       responder.sendJson(HttpResponseStatus.OK,
-                         new DatasetAdminOpResponse(datasetAdminService.exists(instanceId), null));
+                         GSON.toJson(new DatasetAdminOpResponse(datasetAdminService.exists(instanceId), null)));
     } catch (NotFoundException e) {
       LOG.debug("Got handler exception", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -84,11 +85,11 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/create")
-  public void create(HttpRequest request, HttpResponder responder,
+  public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
     propagateUserId(request);
-    InternalDatasetCreationParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+    InternalDatasetCreationParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
     Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
@@ -99,7 +100,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     try {
       DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
-      responder.sendJson(HttpResponseStatus.OK, spec);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
     } catch (BadRequestException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
@@ -109,11 +110,11 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/update")
-  public void update(HttpRequest request, HttpResponder responder,
+  public void update(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
     propagateUserId(request);
-    InternalDatasetUpdateParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+    InternalDatasetUpdateParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                        InternalDatasetUpdateParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
     Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
@@ -126,7 +127,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     try {
       DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, existing);
-      responder.sendJson(HttpResponseStatus.OK, spec);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
     } catch (NotFoundException e) {
       LOG.debug("Got handler exception", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -141,11 +142,11 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/drop")
-  public void drop(HttpRequest request, HttpResponder responder,
+  public void drop(FullHttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String instanceName) throws Exception {
     propagateUserId(request);
-    InternalDatasetDropParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+    InternalDatasetDropParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                      InternalDatasetDropParams.class);
     Preconditions.checkArgument(params.getInstanceSpec() != null, "Missing required 'instanceSpec' parameter.");
     Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
@@ -155,7 +156,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
     try {
       datasetAdminService.drop(new DatasetId(namespaceId, instanceName), typeMeta, spec);
-      responder.sendJson(HttpResponseStatus.OK, spec);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
     } catch (BadRequestException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
@@ -170,7 +171,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     try {
       DatasetId instanceId = new DatasetId(namespaceId, instanceName);
       datasetAdminService.truncate(instanceId);
-      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
     } catch (NotFoundException e) {
       LOG.debug("Got handler exception", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -189,7 +190,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     try {
       DatasetId instanceId = new DatasetId(namespaceId, instanceName);
       datasetAdminService.upgrade(instanceId);
-      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
     } catch (NotFoundException e) {
       LOG.debug("Got handler exception", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -203,9 +204,9 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     return String.format("Error executing admin operation %s for dataset instance %s", opName, instanceName);
   }
 
-  // propagate userid from the HTTP Request in the current thread
+  // propagate user id from the HTTP Request in the current thread
   private void propagateUserId(HttpRequest request) {
-    String userId = request.getHeader(Constants.Security.Headers.USER_ID);
+    String userId = request.headers().get(Constants.Security.Headers.USER_ID);
     if (userId != null) {
       LOG.debug("Propagating userId as {}", userId);
       SecurityRequestContext.setUserId(userId);

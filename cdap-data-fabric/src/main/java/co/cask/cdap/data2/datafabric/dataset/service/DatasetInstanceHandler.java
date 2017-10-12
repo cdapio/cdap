@@ -22,26 +22,24 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,16 +70,16 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, ConversionHelpers.spec2Summary(
-      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId))));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ConversionHelpers.spec2Summary(
+      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId)))));
   }
 
   @PUT
   @Path("/data/datasets/")
-  public void listWithSpecifiedProperties(HttpRequest request, HttpResponder responder,
+  public void listWithSpecifiedProperties(FullHttpRequest request, HttpResponder responder,
                                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, ConversionHelpers.spec2Summary(
-      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId), getDatasetProperties(request))));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ConversionHelpers.spec2Summary(
+      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId), getDatasetProperties(request)))));
   }
 
   /**
@@ -100,9 +98,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("name") String name,
                   @QueryParam("owner") List<String> owners) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name),
-                                           ConversionHelpers.strings2ProgramIds(owners)),
-                       DatasetMeta.class);
+                       GSON.toJson(instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name),
+                                                       ConversionHelpers.strings2ProgramIds(owners)),
+                                   DatasetMeta.class));
   }
 
   /**
@@ -114,7 +112,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/datasets/{name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+  public void create(FullHttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
 
     DatasetInstanceConfiguration creationProperties = ConversionHelpers.getInstanceConfiguration(request);
@@ -137,8 +135,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                             @PathParam("name") String name) throws Exception {
     DatasetId instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     responder.sendJson(HttpResponseStatus.OK,
-                       instanceService.getOriginalProperties(instance),
-                       new TypeToken<Map<String, String>>() { }.getType());
+                       GSON.toJson(instanceService.getOriginalProperties(instance),
+                                   new TypeToken<Map<String, String>>() { }.getType()));
   }
 
   /**
@@ -151,7 +149,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/datasets/{name}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void update(HttpRequest request, HttpResponder responder,
+  public void update(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
     DatasetId instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
@@ -199,8 +197,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                            @PathParam("method") String method) throws Exception {
     DatasetId instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     try {
-      DatasetAdminOpResponse response = instanceService.executeAdmin(instance, method);
-      responder.sendJson(HttpResponseStatus.OK, response);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(instanceService.executeAdmin(instance, method)));
     } catch (HandlerException e) {
       responder.sendStatus(e.getFailureStatus());
     }
@@ -221,14 +218,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
-  private Map<String, String> getDatasetProperties(HttpRequest request) {
+  private Map<String, String> getDatasetProperties(FullHttpRequest request) {
     Map<String, String> properties = new HashMap<>();
-    ChannelBuffer content = request.getContent();
-    if (content == ChannelBuffers.EMPTY_BUFFER) {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
       return properties;
     }
 
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
     } catch (IOException e) {
       // no-op since is happens during closing of the reader
