@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-require("babel-polyfill");
+
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import 'whatwg-fetch';
