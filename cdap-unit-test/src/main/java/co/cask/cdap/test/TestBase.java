@@ -46,7 +46,6 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.TestRunner;
-import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -67,8 +66,6 @@ import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
@@ -1228,6 +1225,13 @@ public class TestBase {
     return new BasicMessagingAdmin(messagingService, namespace);
   }
 
+  /**
+   * Returns the transaction manager.
+   *
+   * @deprecated as of 5.0.0. Use {@link DataSetManager} instead in order to interact
+   * with transactional datasets. 
+   */
+  @Deprecated
   protected TransactionManager getTxService() {
     return txService;
   }
