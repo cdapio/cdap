@@ -23,7 +23,6 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -31,10 +30,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,11 +43,13 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +64,8 @@ import javax.ws.rs.PathParam;
  *
  */
 public class ExploreDriverTest {
+
+  private static final Gson GSON = new Gson();
 
   private static String exploreServiceUrl;
   private static MockHttpService httpService;
@@ -209,14 +213,14 @@ public class ExploreDriverTest {
 
     @POST
     @Path("namespaces/{namespace-id}/data/explore/queries")
-    public void query(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+    public void query(FullHttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
       try {
         QueryHandle handle = QueryHandle.generate();
         Map<String, String> args = decodeArguments(request);
         if (LONG_RUNNING_QUERY.equals(args.get("query"))) {
           longRunningQueries.add(handle.getHandle());
         }
-        responder.sendJson(HttpResponseStatus.OK, handle);
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(handle));
       } catch (IOException e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
@@ -247,7 +251,7 @@ public class ExploreDriverTest {
       } else {
         status = new QueryStatus(QueryStatus.OpStatus.FINISHED, true);
       }
-      responder.sendJson(HttpResponseStatus.OK, status);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(status));
     }
 
     @GET
@@ -261,7 +265,7 @@ public class ExploreDriverTest {
           new ColumnDesc("column1", "INT", 1, ""),
           new ColumnDesc("column2", "STRING", 2, "")
       );
-      responder.sendJson(HttpResponseStatus.OK, schema);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(schema));
     }
 
     @POST
@@ -277,17 +281,17 @@ public class ExploreDriverTest {
         rows.add(new QueryResult(ImmutableList.<Object>of("2", "two")));
         handleWithFetchedResutls.add(id);
       }
-      responder.sendJson(HttpResponseStatus.OK, rows);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(rows));
     }
 
-    private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-      ChannelBuffer content = request.getContent();
-      if (!content.readable()) {
+    private Map<String, String> decodeArguments(FullHttpRequest request) throws IOException {
+      ByteBuf content = request.content();
+      if (!content.isReadable()) {
         return ImmutableMap.of();
       }
-      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+      try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
         Map<String, String> args = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-        return args == null ? ImmutableMap.<String, String>of() : args;
+        return args == null ? Collections.<String, String>emptyMap() : args;
       }
     }
   }

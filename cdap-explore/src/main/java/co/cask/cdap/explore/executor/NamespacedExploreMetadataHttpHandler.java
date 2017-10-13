@@ -30,9 +30,11 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +53,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/data/explore")
 public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespacedExploreMetadataHttpHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final ExploreService exploreService;
   private final Impersonator impersonator;
@@ -70,7 +73,7 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
       impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(namespaceId));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(exploreService.getTables(namespaceId)));
           return null;
         }
       });
@@ -91,7 +94,8 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
       impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, database, table));
+          responder.sendJson(HttpResponseStatus.OK,
+                             GSON.toJson(exploreService.getTableInfo(namespaceId, database, table)));
           return null;
         }
       });
@@ -112,11 +116,11 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/tables")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void getJDBCTables(HttpRequest request, HttpResponder responder,
+  public void getJDBCTables(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
+    handleEndpointExecution(request, responder, new EndpointCoreExecution<FullHttpRequest, QueryHandle>() {
       @Override
-      public QueryHandle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(FullHttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         TablesArgs args = decodeArguments(request, TablesArgs.class, new TablesArgs(null, namespaceId, "%", null));
         LOG.trace("Received get tables with params: {}", args.toString());
@@ -129,11 +133,11 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/columns")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void getJDBCColumns(HttpRequest request, HttpResponder responder,
+  public void getJDBCColumns(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
+    handleEndpointExecution(request, responder, new EndpointCoreExecution<FullHttpRequest, QueryHandle>() {
       @Override
-      public QueryHandle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(FullHttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         ColumnsArgs args = decodeArguments(request, ColumnsArgs.class, new ColumnsArgs(null, namespaceId, "%", "%"));
         LOG.trace("Received get columns with params: {}", args.toString());
@@ -146,11 +150,11 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/schemas")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void getJDBCSchemas(HttpRequest request, HttpResponder responder,
+  public void getJDBCSchemas(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
+    handleEndpointExecution(request, responder, new EndpointCoreExecution<FullHttpRequest, QueryHandle>() {
       @Override
-      public QueryHandle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(FullHttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         SchemasArgs args = decodeArguments(request, SchemasArgs.class, new SchemasArgs(null, namespaceId));
         LOG.trace("Received get schemas with params: {}", args.toString());
@@ -162,12 +166,12 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/functions")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void getJDBCFunctions(HttpRequest request, HttpResponder responder,
+  public void getJDBCFunctions(FullHttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") final String namespaceId)
     throws ExploreException, IOException {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
+    handleEndpointExecution(request, responder, new EndpointCoreExecution<FullHttpRequest, QueryHandle>() {
       @Override
-      public QueryHandle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(FullHttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         FunctionsArgs args = decodeArguments(request, FunctionsArgs.class, new FunctionsArgs(null, namespaceId, "%"));
         LOG.trace("Received get functions with params: {}", args.toString());

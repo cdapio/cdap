@@ -24,9 +24,9 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.http.BodyProducer;
 import com.google.gson.Gson;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ final class QueryResultsBodyProducer extends BodyProducer {
   private final ExploreService exploreService;
   private final QueryHandle handle;
 
-  private final ChannelBuffer buffer;
+  private final ByteBuf buffer;
   private final PrintWriter writer;
 
   private List<QueryResult> results;
@@ -57,13 +57,12 @@ final class QueryResultsBodyProducer extends BodyProducer {
     this.exploreService = exploreService;
     this.handle = handle;
 
-    this.buffer = ChannelBuffers.dynamicBuffer();
-    this.writer = new PrintWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
-                                                         StandardCharsets.UTF_8));
+    this.buffer = Unpooled.buffer();
+    this.writer = new PrintWriter(new OutputStreamWriter(new ByteBufOutputStream(buffer), StandardCharsets.UTF_8));
   }
 
   @Override
-  public ChannelBuffer nextChunk() throws Exception {
+  public ByteBuf nextChunk() throws Exception {
     buffer.clear();
 
     if (results == null) {
@@ -71,7 +70,7 @@ final class QueryResultsBodyProducer extends BodyProducer {
     }
 
     if (results.isEmpty()) {
-      return ChannelBuffers.EMPTY_BUFFER;
+      return Unpooled.EMPTY_BUFFER;
     }
 
     for (QueryResult result : results) {
@@ -80,7 +79,7 @@ final class QueryResultsBodyProducer extends BodyProducer {
     writer.flush();
 
     results = exploreService.nextResults(handle, AbstractExploreQueryExecutorHttpHandler.DOWNLOAD_FETCH_CHUNK_SIZE);
-    return buffer;
+    return buffer.copy();
   }
 
   private void initialize() throws HandleNotFoundException, SQLException, ExploreException {

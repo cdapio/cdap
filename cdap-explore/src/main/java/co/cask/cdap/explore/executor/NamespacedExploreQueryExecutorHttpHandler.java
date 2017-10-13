@@ -27,14 +27,16 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.ImpersonatedOpType;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecutorHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespacedExploreQueryExecutorHttpHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final ExploreService exploreService;
   private final Impersonator impersonator;
@@ -65,7 +68,7 @@ public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQu
   @POST
   @Path("data/explore/queries")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void query(HttpRequest request, HttpResponder responder,
+  public void query(FullHttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") final String namespaceId) throws Exception {
     try {
       Map<String, String> args = decodeArguments(request);
@@ -79,7 +82,7 @@ public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQu
           return exploreService.execute(new NamespaceId(namespaceId), query, additionalSessionConf);
         }
       }, ImpersonatedOpType.EXPLORE);
-      responder.sendJson(HttpResponseStatus.OK, queryHandle);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(queryHandle));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -103,7 +106,7 @@ public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQu
     // this operation doesn't interact with hive, so doesn't require impersonation
     List<QueryInfo> queries = exploreService.getQueries(new NamespaceId(namespaceId));
     // return the queries by after filtering (> offset) and limiting number of queries
-    responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(filterQueries(queries, offset, isForward, limit)));
   }
 
   @GET
@@ -112,6 +115,6 @@ public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQu
                                   @PathParam("namespace-id") String namespaceId) throws ExploreException {
     // this operation doesn't interact with hive, so doesn't require impersonation
     int count = exploreService.getActiveQueryCount(new NamespaceId(namespaceId));
-    responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("count", count));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(Collections.singletonMap("count", count)));
   }
 }

@@ -68,7 +68,7 @@ public class ExploreExecutorService extends AbstractIdleService {
     int execThreads = cConf.getInt(Constants.Explore.EXEC_THREADS, 10);
 
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-        .addHttpHandlers(handlers)
+        .setHttpHandlers(handlers)
         .setHost(cConf.get(Constants.Explore.SERVER_ADDRESS))
         .setPort(cConf.getInt(Constants.Explore.SERVER_PORT))
         .setHandlerHooks(ImmutableList.of(
@@ -91,7 +91,7 @@ public class ExploreExecutorService extends AbstractIdleService {
       exploreService.startAndWait();
     }
 
-    httpService.startAndWait();
+    httpService.start();
     cancellable = discoveryService.register(ResolvingDiscoverable.of(
       new Discoverable(Constants.Service.EXPLORE_HTTP_USER_SERVICE, httpService.getBindAddress())));
     LOG.info("{} started successfully on {}", ExploreExecutorService.class.getSimpleName(),
@@ -110,7 +110,7 @@ public class ExploreExecutorService extends AbstractIdleService {
     } finally {
       try {
         // Then stop HTTP service so that we don't send anymore requests to explore service.
-        httpService.stopAndWait();
+        httpService.stop();
       } finally {
         // Finally stop explore service
         exploreService.stopAndWait();

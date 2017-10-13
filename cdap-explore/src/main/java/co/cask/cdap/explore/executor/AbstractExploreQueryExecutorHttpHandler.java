@@ -18,18 +18,16 @@ package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.http.AbstractHttpHandler;
-import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -81,16 +81,16 @@ public class AbstractExploreQueryExecutorHttpHandler extends AbstractHttpHandler
   }
 
   // get arguments contained in the request body
-  protected Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      return ImmutableMap.of();
+  protected Map<String, String> decodeArguments(FullHttpRequest request) throws IOException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
+      return Collections.emptyMap();
     }
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
       Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
+      return args == null ? Collections.<String, String>emptyMap() : args;
     } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      LOG.info("Failed to parse runtime arguments on {}", request.uri(), e);
       throw e;
     }
   }
