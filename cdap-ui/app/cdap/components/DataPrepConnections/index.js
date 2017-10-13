@@ -22,6 +22,7 @@ import classnames from 'classnames';
 import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
 import {
   setActiveBrowser,
+  setS3AsActiveBrowser,
   setDatabaseAsActiveBrowser,
   setKafkaAsActiveBrowser
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
@@ -39,6 +40,8 @@ import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover'
 import DataPrepStore from 'components/DataPrep/store';
 import {objectQuery, preventPropagation} from 'services/helpers';
 import Helmet from 'react-helmet';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import queryString from 'query-string';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -86,6 +89,7 @@ export default class DataPrepConnections extends Component {
       sidePanelExpanded: this.props.enableRouting ? true : false,
       backendChecking: true,
       backendDown: false,
+      loading: this.props.enableRouting ? true : false,
       databaseList: [],
       kafkaList: [],
       s3List: [],
@@ -155,7 +159,7 @@ export default class DataPrepConnections extends Component {
 
   handlePropagation(browserName, e) {
     if (this.props.enableRouting && !this.props.singleWorkspaceMode) {
-      setActiveBrowser({name: browserName});
+      setActiveBrowser({name: typeof browserName === 'object' ? browserName.name : browserName});
       return;
     }
     preventPropagation(e);
@@ -165,14 +169,14 @@ export default class DataPrepConnections extends Component {
     }
 
     // FIXME: This feels adhoc. We should be able to simplify this.
-    if (browserName === 'upload') {
+    if (typeof browserName === 'object' && browserName.type === 'upload') {
       this.setState({
         showUpload: true
       });
       return;
     }
     let activeConnectionType, activeConnectionid;
-    if (browserName === 'file') {
+    if (typeof browserName === 'object' && browserName.type === 'file') {
       setActiveBrowser({name: 'file'});
       activeConnectionType = 'file';
     } else if (typeof browserName === 'object' && browserName.type === 'DATABASE') {
@@ -183,6 +187,8 @@ export default class DataPrepConnections extends Component {
       setKafkaAsActiveBrowser({name: 'kafka', id: browserName.id});
       activeConnectionType = 'kafka';
       activeConnectionid = browserName.id;
+    } else if (typeof browserName === 'object' && browserName.type === 'S3') {
+      setS3AsActiveBrowser({name: 's3', id: browserName.id, path: '/'});
     }
 
     this.setState({
@@ -229,6 +235,7 @@ export default class DataPrepConnections extends Component {
       state.databaseList = databaseList;
       state.kafkaList = kafkaList;
       state.s3List = s3List;
+      state.loading = false;
       this.setState(state);
     });
   }
@@ -333,7 +340,7 @@ export default class DataPrepConnections extends Component {
                 to={`${baseLinkPath}/s3/${s3.id}`}
                 activeClassName="active"
                 className="menu-item-expanded-list"
-                onClick={this.handlePropagation.bind(this, s3)}
+                onClick={this.handlePropagation.bind(this, {...s3, name: s3.type.toLowerCase()})}
                 singleWorkspaceMode={this.props.singleWorkspaceMode}
               >
                 {s3.name}
@@ -378,7 +385,7 @@ export default class DataPrepConnections extends Component {
             <NavLinkWrapper
               to={`${baseLinkPath}/upload`}
               activeClassName="active"
-              onClick={this.handlePropagation.bind(this, 'upload')}
+              onClick={this.handlePropagation.bind(this, {type: 'upload'})}
               singleWorkspaceMode={this.props.singleWorkspaceMode}
             >
               <span className="fa fa-fw">
@@ -395,7 +402,7 @@ export default class DataPrepConnections extends Component {
             <NavLinkWrapper
               to={`${baseLinkPath}/browser`}
               activeClassName="active"
-              onClick={this.handlePropagation.bind(this, 'file')}
+              onClick={this.handlePropagation.bind(this, {type: 'file'})}
               singleWorkspaceMode={this.props.singleWorkspaceMode}
             >
               <span className="fa fa-fw">
@@ -511,6 +518,22 @@ export default class DataPrepConnections extends Component {
             );
           }}
         />
+        <Route
+          path={`${BASEPATH}/s3/:s3Id`}
+          render={(match) => {
+            let id  = match.match.params.s3Id;
+            let {prefix = '/'} = queryString.parse(match.location.search);
+            setS3AsActiveBrowser({name: 's3', id, path: prefix});
+            return (
+              <DataPrepBrowser
+                match={match}
+                location={location}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
         <Route component={RouteToHDFS} />
       </Switch>
     );
@@ -532,6 +555,15 @@ export default class DataPrepConnections extends Component {
       setKafkaAsActiveBrowser({name: 'kafka', id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === 'file') {
       setActiveBrowser({name: 'file'});
+    } else if (this.state.activeConnectionType === 's3') {
+      let {workspaceInfo} = DataPrepStore.getState().dataprep;
+      let {key} = workspaceInfo.properties;
+      let bucketName = workspaceInfo.properties['bucket-name'];
+      let path;
+      if (bucketName) {
+        path = `/${bucketName}/${key}`;
+      }
+      setS3AsActiveBrowser({name: 's3', id: this.state.activeConnectionid, path});
     }
     return (
       <DataPrepBrowser
@@ -570,6 +602,10 @@ export default class DataPrepConnections extends Component {
       );
     }
 
+    let {backendChecking, loading} = this.state;
+    if (backendChecking || loading) {
+      return (<LoadingSVGCentered />);
+    }
     return (
       <div className="dataprep-connections-container">
         {pageTitle}

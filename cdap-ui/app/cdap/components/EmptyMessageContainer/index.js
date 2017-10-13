@@ -12,33 +12,31 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import classnames from 'classnames';
-require('./IconSVG.scss');
-require('../../styles/fonts/symbol-defs.svg');
-require('../../styles/fonts/symbol-defs_new.svg');
+import T from 'i18n-react';
+require('./EmptyMessageContainer.scss');
 
-export default function IconSVG(props) {
-  const {name, className, ...moreProps} = props;
-  const iconClassName = classnames('icon-svg', name, className);
-  const path = `${window.location.href}#${name}`;
+const PREFIX = 'features.EmptyMessageContainer';
 
+export default function EmptyMessageContainer({searchText, children}) {
   return (
-    <svg
-      className={iconClassName}
-      {...moreProps}
-    >
-      <use xlinkHref={path} />
-    </svg>
+    <div className="empty-search-container">
+      <div className="empty-search">
+        <strong>
+          {T.translate(`${PREFIX}.title`, {searchText})}
+        </strong>
+        <hr />
+        <span> {T.translate(`${PREFIX}.suggestionTitle`)} </span>
+        {children}
+      </div>
+    </div>
   );
 }
-
-IconSVG.propTypes = {
-  name: PropTypes.string.isRequired,
-  className: PropTypes.string,
-  onClick: PropTypes.func
+EmptyMessageContainer.propTypes = {
+  searchText: PropTypes.string,
+  children: PropTypes.node.isRequired
 };

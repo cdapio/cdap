@@ -22,7 +22,7 @@ const setDatabaseInfoLoading = () => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_LOADING,
     payload: {
-      loading: !DataPrepBrowserStore.getState().database.loading
+      loading: true
     }
   });
 };
@@ -31,7 +31,7 @@ const setKafkaInfoLoading = () => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_LOADING,
     payload: {
-      loading: !DataPrepBrowserStore.getState().kafka.loading
+      loading: true
     }
   });
 };
@@ -91,6 +91,98 @@ const setDatabaseAsActiveBrowser = (payload) => {
     });
 };
 
+const setS3AsActiveBrowser = (payload) => {
+  let {s3} = DataPrepBrowserStore.getState();
+  if (s3.loading) {
+    return;
+  }
+  setActiveBrowser(payload);
+  setS3Loading();
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let {id, path} = payload;
+  let params = {
+    namespace,
+    connectionId: id
+  };
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_S3_CONNECTION_ID,
+    payload: {
+      connectionId: id
+    }
+  });
+  if (s3.connectionId !== payload.id) {
+    MyDataPrepApi.getConnection(params)
+      .subscribe((res) => {
+        let info = objectQuery(res, 'values', 0);
+        DataPrepBrowserStore.dispatch({
+          type: BrowserStoreActions.SET_S3_CONNECTION_DETAILS,
+          payload: {
+            info,
+            connectionId: id
+          }
+        });
+        if (path) {
+          setPrefix(path);
+        }
+      });
+  } else {
+    if (path) {
+      setPrefix(path);
+    }
+  }
+};
+
+const setPrefix = (prefix) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_S3_PREFIX,
+    payload: {
+      prefix
+    }
+  });
+  fetchBucketDetails(prefix);
+};
+
+const fetchBucketDetails = (path = '') => {
+  let { connectionId, loading} = DataPrepBrowserStore.getState().s3;
+  if (loading) {
+    return;
+  }
+  setS3Loading();
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let params = {
+    namespace,
+    connectionId
+  };
+  if (path) {
+    params = {...params, path};
+  }
+  MyDataPrepApi
+    .exploreBucketDetails(params)
+    .subscribe(
+      res => {
+        DataPrepBrowserStore.dispatch({
+          type: BrowserStoreActions.SET_S3_ACTIVE_BUCKET_DETAILS,
+          payload: {
+            activeBucketDetails: res.values
+          }
+        });
+      }
+    );
+};
+
+const setS3Loading = () => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_S3_LOADING
+  });
+};
+
+const setS3Search = (search) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_S3_SEARCH,
+    payload: {search}
+  });
+};
+
 const setKafkaAsActiveBrowser = (payload) => {
   setActiveBrowser(payload);
   setKafkaInfoLoading();
@@ -132,7 +224,6 @@ const setDatabaseProperties = (payload) => {
     type: BrowserStoreActions.SET_DATABASE_PROPERTIES,
     payload
   });
-  setDatabaseInfoLoading();
 };
 
 const setKafkaProperties = (payload) => {
@@ -140,12 +231,16 @@ const setKafkaProperties = (payload) => {
     type: BrowserStoreActions.SET_KAFKA_PROPERTIES,
     payload
   });
-  setKafkaInfoLoading();
 };
 
 export {
   setActiveBrowser,
+  setS3AsActiveBrowser,
+  setS3Search,
   setDatabaseProperties,
   setDatabaseAsActiveBrowser,
-  setKafkaAsActiveBrowser
+  setKafkaAsActiveBrowser,
+  setPrefix,
+  fetchBucketDetails,
+  setS3Loading
 };
