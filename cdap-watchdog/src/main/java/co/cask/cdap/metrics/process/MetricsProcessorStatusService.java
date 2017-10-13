@@ -56,7 +56,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
                                         MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS_PROCESSOR)
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                         Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)))
       .setHost(cConf.get(Constants.MetricsProcessor.ADDRESS))
@@ -70,7 +70,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
                                                                        Constants.Service.METRICS_PROCESSOR));
     LOG.info("Starting MetricsProcessor Status Service...");
 
-    httpService.startAndWait();
+    httpService.start();
 
     cancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.METRICS_PROCESSOR, httpService.getBindAddress())));
@@ -85,7 +85,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
       LOG.info("MetricsProcessor Status Service Stopped");
     }
     LOG.info("Stopped MetricsProcessor Status Service.");

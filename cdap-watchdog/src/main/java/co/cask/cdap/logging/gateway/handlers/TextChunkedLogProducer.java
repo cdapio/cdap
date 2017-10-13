@@ -18,19 +18,19 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.logging.read.LogEvent;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * LogReader BodyProducer to encode log events, as text.
@@ -38,7 +38,6 @@ import java.io.IOException;
 class TextChunkedLogProducer extends AbstractChunkedLogProducer {
   private final PatternLayout patternLayout;
   private final boolean escape;
-  private final ChannelBuffer channelBuffer;
 
   TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern, boolean escape) {
     super(logEventIter);
@@ -52,35 +51,34 @@ class TextChunkedLogProducer extends AbstractChunkedLogProducer {
     patternLayout.setContext(loggerContext);
     patternLayout.setPattern(logPattern);
     patternLayout.start();
-
-    channelBuffer = ChannelBuffers.dynamicBuffer(BUFFER_BYTES);
   }
 
   @Override
-  public Multimap<String, String> getResponseHeaders() {
-    return ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
+  public HttpHeaders getResponseHeaders() {
+    return new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8");
   }
 
   @Override
-  protected ChannelBuffer writeLogEvents(CloseableIterator<LogEvent> logEventIter) throws IOException {
-    channelBuffer.clear();
-    while (logEventIter.hasNext() && channelBuffer.readableBytes() < BUFFER_BYTES) {
+  protected ByteBuf writeLogEvents(CloseableIterator<LogEvent> logEventIter) throws IOException {
+    ByteBuf buffer = Unpooled.buffer(BUFFER_BYTES);
+
+    while (logEventIter.hasNext() && buffer.readableBytes() < BUFFER_BYTES) {
       LogEvent logEvent = logEventIter.next();
       String logLine = patternLayout.doLayout(logEvent.getLoggingEvent());
       logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
-      channelBuffer.writeBytes(Bytes.toBytes(logLine));
+      buffer.writeCharSequence(logLine, StandardCharsets.UTF_8);
     }
-    return channelBuffer;
+    return buffer;
   }
 
   @Override
-  protected ChannelBuffer onWriteStart() throws IOException {
-    return ChannelBuffers.EMPTY_BUFFER;
+  protected ByteBuf onWriteStart() throws IOException {
+    return Unpooled.EMPTY_BUFFER;
   }
 
   @Override
-  protected ChannelBuffer onWriteFinish() throws IOException {
-    return ChannelBuffers.EMPTY_BUFFER;
+  protected ByteBuf onWriteFinish() throws IOException {
+    return Unpooled.EMPTY_BUFFER;
   }
 
   @Override

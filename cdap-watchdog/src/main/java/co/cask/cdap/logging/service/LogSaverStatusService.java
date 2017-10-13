@@ -51,7 +51,7 @@ public class LogSaverStatusService extends AbstractIdleService {
                                MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.httpService = NettyHttpService.builder(LogSaverStatusService.class.getName())
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.LogSaver.LOG_SAVER_STATUS_HANDLER)))
       .setHost(cConf.get(Constants.LogSaver.ADDRESS))
@@ -63,7 +63,7 @@ public class LogSaverStatusService extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.LOGSAVER));
-    httpService.startAndWait();
+    httpService.start();
 
     cancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOGSAVER, httpService.getBindAddress())));
@@ -76,7 +76,7 @@ public class LogSaverStatusService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
     }
   }
 

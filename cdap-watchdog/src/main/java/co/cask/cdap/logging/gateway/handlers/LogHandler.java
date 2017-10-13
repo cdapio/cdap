@@ -32,7 +32,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
 
 import java.util.List;
 import javax.ws.rs.DefaultValue;

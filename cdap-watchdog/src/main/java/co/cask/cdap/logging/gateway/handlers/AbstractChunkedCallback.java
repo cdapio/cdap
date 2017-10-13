@@ -22,8 +22,9 @@ import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,7 @@ public abstract class AbstractChunkedCallback implements Callback {
   /**
    * Return {@link Multimap} of HTTP response headers
    */
-  protected abstract Multimap<String, String> getResponseHeaders();
+  protected abstract HttpHeaders getResponseHeaders();
 
   /**
    * Handle each {@link LogEvent}
@@ -103,7 +104,7 @@ public abstract class AbstractChunkedCallback implements Callback {
       do {
         coderResult = charsetEncoder.flush(chunkBuffer);
         chunkBuffer.flip();
-        chunkResponder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
+        chunkResponder.sendChunk(Unpooled.copiedBuffer(chunkBuffer));
         chunkBuffer.clear();
       } while (coderResult.isOverflow());
     } catch (IOException e) {
@@ -121,7 +122,7 @@ public abstract class AbstractChunkedCallback implements Callback {
       if (coderResult.isOverflow()) {
         // if reached buffer capacity then flush chunk
         chunkBuffer.flip();
-        chunkResponder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
+        chunkResponder.sendChunk(Unpooled.copiedBuffer(chunkBuffer));
         chunkBuffer.clear();
       } else if (coderResult.isError()) {
         // skip characters causing error, and retry

@@ -55,6 +55,10 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.http</groupId>
+      <artifactId>netty-http</artifactId>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-security</artifactId>
       <version>${project.version}</version>

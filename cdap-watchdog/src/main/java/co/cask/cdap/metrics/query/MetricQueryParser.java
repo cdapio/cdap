@@ -26,8 +26,8 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.commons.lang.CharEncoding;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -432,7 +432,7 @@ final class MetricQueryParser {
    * From the query string determine the query type, time range and related parameters.
    */
   public static void parseQueryString(URI requestURI, MetricDataQueryBuilder builder) throws MetricsPathException {
-    Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
+    Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).parameters();
     parseTimeseries(queryParams, builder);
   }
 

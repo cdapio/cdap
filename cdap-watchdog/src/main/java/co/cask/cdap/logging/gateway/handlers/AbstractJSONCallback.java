@@ -19,10 +19,10 @@ package co.cask.cdap.logging.gateway.handlers;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
 
 import java.io.IOException;
 import java.nio.CharBuffer;
@@ -40,8 +40,8 @@ public abstract class AbstractJSONCallback extends AbstractChunkedCallback {
   }
 
   @Override
-  protected Multimap<String, String> getResponseHeaders() {
-    return ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+  protected HttpHeaders getResponseHeaders() {
+    return new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
   }
 
   @Override
