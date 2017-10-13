@@ -1037,7 +1037,7 @@
 
   <property>
     <name>dataset.service.exec.threads</name>
-    <value>10</value>
+    <value>30</value>
     <description>
       Number of Netty service executor threads for the dataset service
     </description>
