@@ -68,6 +68,10 @@ export default class DataPrepTable extends Component {
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState();
+      if (document.getElementById('dataprep-table-id')) {
+        // Scroll to the top of the table to avoid un-necessary pagination
+        document.getElementById('dataprep-table-id').scrollTop = 0;
+      }
       this.setState({
         windowSize: 100,
         data: state.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),

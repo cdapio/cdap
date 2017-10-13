@@ -91,6 +91,7 @@
     "webpack-livereload-plugin": "0.11.0"
   },
   "dependencies": {
+    "babel-polyfill": "6.26.0",
     "body-parser": "1.14.2",
     "bootstrap": "4.0.0-alpha.5",
     "cask-datavoyager": "2.0.0-alpha.12.5",

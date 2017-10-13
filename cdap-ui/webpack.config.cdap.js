@@ -151,7 +151,8 @@ var webpackConfig = {
   cache: true,
   context: __dirname + '/app/cdap',
   entry: {
-    'cdap': ['./cdap.js', 'rx', 'rx-dom']
+    // including babel-polyfill is temporary as of now. Once babel handles adding https://github.com/babel/babel/issues/4169.
+    'cdap': ['babel-polyfill', './cdap.js', 'rx', 'rx-dom']
   },
   module: {
     rules
