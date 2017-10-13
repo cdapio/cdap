@@ -21,11 +21,11 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Closeables;
 import com.google.common.io.Resources;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
@@ -110,7 +110,7 @@ public final class SparkClassFileHandler extends AbstractHttpHandler implements 
   @GET
   @Path("/.*")
   public void getClassFile(HttpRequest request, HttpResponder responder) throws Exception {
-    String requestURI = URLDecoder.decode(request.getUri(), "UTF-8");
+    String requestURI = URLDecoder.decode(request.uri(), "UTF-8");
     requestURI = requestURI.isEmpty() ? requestURI : requestURI.substring(1);
 
     Lock readLock = this.lock.readLock();
@@ -119,8 +119,7 @@ public final class SparkClassFileHandler extends AbstractHttpHandler implements 
       // Use the classloader to find the class file
       URL resource = jarClassFinder.getResource(requestURI);
       if (resource != null) {
-        responder.sendByteArray(HttpResponseStatus.OK, Resources.toByteArray(resource),
-                                ImmutableMultimap.of("Content-Type", "application/octet-stream"));
+        responder.sendByteArray(HttpResponseStatus.OK, Resources.toByteArray(resource), EmptyHttpHeaders.INSTANCE);
         return;
       }
 
