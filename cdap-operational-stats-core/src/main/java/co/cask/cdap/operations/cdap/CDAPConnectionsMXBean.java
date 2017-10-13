@@ -16,7 +16,7 @@
 
 package co.cask.cdap.operations.cdap;
 
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.management.MXBean;
 
