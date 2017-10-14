@@ -22,11 +22,10 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
-import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -51,7 +50,7 @@ public final class UserProfileServiceHandler extends AbstractHttpServiceHandler 
     byte[] encodedUserProfile = userProfiles.read(id);
     if (encodedUserProfile == null) {
       responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
-                           String.format("No profile found for user : %s", id), Charsets.UTF_8);
+                           String.format("No profile found for user : %s", id), StandardCharsets.UTF_8);
     } else {
       UserProfile userProfile = GSON.fromJson(Bytes.toString(encodedUserProfile), UserProfile.class);
       responder.sendJson(userProfile);
@@ -62,12 +61,13 @@ public final class UserProfileServiceHandler extends AbstractHttpServiceHandler 
   @POST
   public void setUserProfile(HttpServiceRequest request, HttpServiceResponder responder) {
     try {
-      String encodedUserProfile = new String(ChannelBuffers.copiedBuffer(request.getContent()).array());
+      String encodedUserProfile = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       UserProfile userProfile = GSON.fromJson(encodedUserProfile, UserProfile.class);
       userProfiles.write(userProfile.getId(), GSON.toJson(userProfile));
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     } catch (Exception e) {
-      responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST, "Could not decode user profile.", Charsets.UTF_8);
+      responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
+                           "Could not decode user profile.", StandardCharsets.UTF_8);
     }
   }
 }

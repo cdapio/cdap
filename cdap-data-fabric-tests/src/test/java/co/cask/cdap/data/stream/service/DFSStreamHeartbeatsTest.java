@@ -68,12 +68,12 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -204,7 +204,7 @@ public class DFSStreamHeartbeatsTest {
   private HttpURLConnection openURL(String location, HttpMethod method) throws IOException {
     URL url = new URL(location);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    urlConn.setRequestMethod(method.getName());
+    urlConn.setRequestMethod(method.name());
     return urlConn;
   }
 
@@ -224,7 +224,7 @@ public class DFSStreamHeartbeatsTest {
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+      Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
       urlConn.disconnect();
     }
 

@@ -21,9 +21,9 @@ import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionSystemClient;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -51,6 +51,7 @@ public class TransactionPingHandler extends PingHandler {
   public void status(HttpRequest request, HttpResponder responder) {
     // ignore the service-name, since we dont need it. its only used for routing
     responder.sendJson(HttpResponseStatus.OK,
-                       Constants.Monitor.STATUS_OK.equals(transactionSystemClient.status()) ? OK_JSON : NOT_OK_JSON);
+                       Constants.Monitor.STATUS_OK.equals(transactionSystemClient.status())
+                         ? OK_JSON.toString() : NOT_OK_JSON.toString());
   }
 }
