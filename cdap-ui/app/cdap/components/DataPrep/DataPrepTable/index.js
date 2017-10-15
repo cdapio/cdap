@@ -37,19 +37,18 @@ import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
 })();
 
 const PREFIX = 'features.DataPrep.DataPrepTable';
-const DEFAULT_WIDOW_SIZE = 100;
+const DEFAULT_WINDOW_SIZE = 100;
 export default class DataPrepTable extends Component {
   constructor(props) {
     super(props);
-
     let storeState = DataPrepStore.getState();
     let workspaceId = storeState.dataprep.workspaceId;
     let currentWorkspace = storeState.workspaces.list.find(workspace => workspace.id === workspaceId) || {};
     let currentWorkspaceName = currentWorkspace.name;
     this.state = {
       headers: storeState.dataprep.headers.map(header => ({name: header, edit: false})),
-      data: storeState.dataprep.data,
-      windowSize: DEFAULT_WIDOW_SIZE,
+      data: storeState.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),
+      windowSize: DEFAULT_WINDOW_SIZE,
       loading: !storeState.dataprep.initialized,
       directivesLength: storeState.dataprep.directives.length,
       workspaceId,
@@ -73,7 +72,7 @@ export default class DataPrepTable extends Component {
         document.getElementById('dataprep-table-id').scrollTop = 0;
       }
       this.setState({
-        windowSize: 100,
+        windowSize: DEFAULT_WINDOW_SIZE,
         data: state.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),
         headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
         loading: !state.dataprep.initialized && !state.error.dataError,
@@ -231,7 +230,7 @@ export default class DataPrepTable extends Component {
       id = id.split('-').pop();
       id = parseInt(id, 10);
       if (entry.isIntersecting) {
-        lastVisibleElement = id + 100 > DEFAULT_WIDOW_SIZE ? id + 100 : DEFAULT_WIDOW_SIZE;
+        lastVisibleElement = id + 50 > this.state.windowSize ? id + DEFAULT_WINDOW_SIZE : id;
       }
     }
     if (lastVisibleElement > this.state.windowSize) {
