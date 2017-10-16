@@ -85,7 +85,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       cdap: {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
-        routerSSLServerPort: cdapConfig['router.ssl.bind.port'],
+        routerSSLServerPort: cdapConfig['router.ssl.server.port'],
         standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
         uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
       },
@@ -260,7 +260,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       protocol = 'http://';
     }
     if (cdapConfig['ssl.external.enabled'] === 'true') {
-      port = cdapConfig['router.ssl.bind.port'];
+      port = cdapConfig['router.ssl.server.port'];
     } else {
       port = cdapConfig['router.server.port'];
     }
@@ -419,7 +419,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       }
 
       if (cdapConfig['ssl.external.enabled'] === 'true') {
-        port = cdapConfig['router.ssl.bind.port'];
+        port = cdapConfig['router.ssl.server.port'];
       } else {
         port = cdapConfig['router.server.port'];
       }
@@ -624,7 +624,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       cdap: {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
-        routerSSLServerPort: cdapConfig['router.ssl.bind.port']
+        routerSSLServerPort: cdapConfig['router.ssl.server.port']
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
