@@ -112,7 +112,7 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 #. Using the CDAP UI, stop all CDAP applications and services.
 
-#. Upgrade to the new version of HDP, following Hortonworks's `documentation on upgrading
-   <http://docs.hortonworks.com/HDPDocuments/Ambari-2.4.0.1/bk_ambari-upgrade/content/upgrading_hdp_stack.html>`__.
+#. Upgrade to the new version of CDH, following Cloudera's `documentation on upgrading
+   <https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ag_upgrading_cm.html>`__.
 
 #. Start CDAP using Cloudera Manager.
