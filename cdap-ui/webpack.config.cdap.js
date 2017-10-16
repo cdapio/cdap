@@ -22,7 +22,7 @@ var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
-
+var shortid = require('shortid');
 var plugins = [
   new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
@@ -60,7 +60,8 @@ var plugins = [
     title: 'CDAP',
     template: './cdap.html',
     filename: 'cdap.html',
-    hash: true
+    hash: true,
+    hashId: shortid.generate()
   })
 ];
 var mode = process.env.NODE_ENV;
@@ -159,7 +160,7 @@ var webpackConfig = {
   },
   output: {
     filename: '[name].js',
-    chunkFilename: '[name].js',
+    chunkFilename: '[name]-[chunkhash].js',
     path: __dirname + '/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/'
   },
