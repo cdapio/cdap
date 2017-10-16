@@ -94,7 +94,7 @@
     "babel-polyfill": "6.26.0",
     "body-parser": "1.14.2",
     "bootstrap": "4.0.0-alpha.5",
-    "cask-datavoyager": "2.0.0-alpha.12.5",
+    "cask-datavoyager": "2.0.0-alpha.12.6",
     "cdap-avsc": "4.1.12",
     "classnames": "2.2.5",
     "clipboard": "1.7.1",
