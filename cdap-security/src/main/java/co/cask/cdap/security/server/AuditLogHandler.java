@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,16 +43,11 @@ public class AuditLogHandler extends DefaultHandler {
   @Override
   public void handle(String target, Request baseRequest, HttpServletRequest request,
                      HttpServletResponse response) throws IOException, ServletException {
-    logRequest(request, response);
-  }
-
-  private void logRequest(HttpServletRequest request, HttpServletResponse response) throws UnknownHostException {
-    AuditLogEntry logEntry = new AuditLogEntry();
-    logEntry.setUserName(request.getRemoteUser());
-    logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
-    logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
-    logEntry.setResponseCode(response.getStatus());
-    logEntry.setResponseContentLength(((Response) response).getContentCount());
+    String requestLine = request.getMethod() + " " + request.getRequestURI() + " " + request.getProtocol();
+    AuditLogEntry logEntry = new AuditLogEntry(requestLine, request.getRemoteUser(),
+                                               InetAddress.getByName(request.getRemoteAddr()).getHostAddress(),
+                                               Collections.<String, String>emptyMap());
+    logEntry.setResponse(response.getStatus(), ((Response) response).getContentCount());
     logger.trace(logEntry.toString());
   }
 }

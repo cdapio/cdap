@@ -19,10 +19,10 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import com.google.common.collect.ImmutableList;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -156,20 +156,20 @@ public class RouterPathTest {
     // The following two should resort to resort to APP_FABRIC_HTTP, because there is no actual method being called.
     String servicePath = "v3/namespaces/default/apps/AppName/services/CatalogLookup//methods////";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     RouteDestination result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
 
     servicePath = "v3/namespaces/some/apps/otherAppName/services/CatalogLookup//methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
 
     // v3 servicePaths
     servicePath = "/v3/namespaces/testnamespace/apps//PurchaseHistory///services/CatalogLookup///methods//ping/1";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals("service.testnamespace.PurchaseHistory.CatalogLookup", result.getServiceName());
     Assert.assertNull(result.getVersion());
@@ -177,27 +177,27 @@ public class RouterPathTest {
     servicePath = "///v3/namespaces/testnamespace//apps/PurchaseHistory-123//services/weird!service@@NAme///methods/" +
       "echo/someParam";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals("service.testnamespace.PurchaseHistory-123.weird!service@@NAme", result.getServiceName());
     Assert.assertNull(result.getVersion());
 
     servicePath = "v3/namespaces/testnamespace/apps/SomeApp_Name/services/CatalogLookup/methods/getHistory/itemID";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals("service.testnamespace.SomeApp_Name.CatalogLookup", result.getServiceName());
     Assert.assertNull(result.getVersion());
 
     servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup//methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
 
     servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup////methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
   }

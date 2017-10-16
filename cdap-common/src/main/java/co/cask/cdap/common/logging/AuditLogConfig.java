@@ -16,28 +16,29 @@
 
 package co.cask.cdap.common.logging;
 
+import com.google.common.collect.ImmutableSet;
 import io.netty.handler.codec.http.HttpMethod;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Audit log content which indicates what additional info is needed for the
  * {@link co.cask.cdap.common.logging.AuditLogEntry}
  */
-public class AuditLogContent {
+public class AuditLogConfig {
 
   private final HttpMethod httpMethod;
   private final boolean logRequestBody;
-  private final boolean logResponsebody;
-  private final List<String> headerNames;
+  private final boolean logResponseBody;
+  private final Set<String> headerNames;
 
-  public AuditLogContent(HttpMethod httpMethod, boolean logRequestBody, boolean logResponsebody,
-                         List<String> headerNames) {
+  public AuditLogConfig(HttpMethod httpMethod, boolean logRequestBody, boolean logResponseBody,
+                        Iterable<String> headerNames) {
     this.httpMethod = httpMethod;
     this.logRequestBody = logRequestBody;
-    this.logResponsebody = logResponsebody;
-    this.headerNames = headerNames;
+    this.logResponseBody = logResponseBody;
+    this.headerNames = ImmutableSet.copyOf(headerNames);
   }
 
   public HttpMethod getHttpMethod() {
@@ -48,11 +49,11 @@ public class AuditLogContent {
     return logRequestBody;
   }
 
-  public boolean isLogResponsebody() {
-    return logResponsebody;
+  public boolean isLogResponseBody() {
+    return logResponseBody;
   }
 
-  public List<String> getHeaderNames() {
+  public Set<String> getHeaderNames() {
     return headerNames;
   }
 
@@ -65,16 +66,16 @@ public class AuditLogContent {
       return false;
     }
 
-    AuditLogContent other = (AuditLogContent) o;
+    AuditLogConfig other = (AuditLogConfig) o;
     return Objects.equals(httpMethod, other.getHttpMethod()) &&
       logRequestBody == other.isLogRequestBody() &&
-      logResponsebody == other.isLogResponsebody() &&
+      logResponseBody == other.isLogResponseBody() &&
       Objects.equals(headerNames, other.getHeaderNames());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(httpMethod, logRequestBody, logResponsebody, headerNames);
+    return Objects.hash(httpMethod, logRequestBody, logResponseBody, headerNames);
   }
 
   @Override
@@ -82,7 +83,7 @@ public class AuditLogContent {
     return "AuditLogContent{" +
       "httpMethod=" + httpMethod +
       ", logRequestBody=" + logRequestBody +
-      ", logResponsebody=" + logResponsebody +
+      ", logResponseBody=" + logResponseBody +
       ", headerNames=" + headerNames +
       '}';
   }

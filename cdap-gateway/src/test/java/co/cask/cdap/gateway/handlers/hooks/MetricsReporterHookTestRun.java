@@ -25,13 +25,13 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -58,7 +58,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
     // Make a successful call
     HttpResponse response = GatewayFastTestsSuite.doGet("/ping");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     // received and successful should have increased by one, clientError should be the same
     verifyMetrics(received + 1, context, "system.request.received");
@@ -77,7 +77,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
     // Get info of non-existent stream
     HttpResponse response = GatewayFastTestsSuite.doGet(
       "/v3/namespaces/default/streams/metrics-hook-test-non-existent-stream");
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
     // received and clientError should have increased by one, successful should be the same
     verifyMetrics(received + 1, context, "system.request.received");
@@ -116,7 +116,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
     return 0L;
   }
 
-  public static HttpResponse doPost(String resource) throws Exception {
+  private static HttpResponse doPost(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(getEndPoint(resource));
     post.setHeader(AUTH_HEADER);

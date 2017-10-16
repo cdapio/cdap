@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -27,17 +26,18 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A generic http service for testing router.
  */
 public class MockHttpService extends AbstractIdleService {
-  private static final Logger log = LoggerFactory.getLogger(MockHttpService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MockHttpService.class);
 
   private final DiscoveryService discoveryService;
   private final String serviceName;
-  private final Set<HttpHandler> httpHandlers;
+  private final List<HttpHandler> httpHandlers;
 
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
@@ -46,32 +46,32 @@ public class MockHttpService extends AbstractIdleService {
                           String serviceName, HttpHandler... httpHandlers) {
     this.discoveryService = discoveryService;
     this.serviceName = serviceName;
-    this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
+    this.httpHandlers = Arrays.asList(httpHandlers);
   }
 
   @Override
   protected void startUp() throws Exception {
     NettyHttpService.Builder builder = NettyHttpService.builder(MockHttpService.class.getName());
-    builder.addHttpHandlers(httpHandlers);
+    builder.setHttpHandlers(httpHandlers);
     builder.setHost("localhost");
     builder.setPort(0);
     httpService = builder.build();
-    httpService.startAndWait();
+    httpService.start();
 
     registerServer();
 
-    log.info("Started test server on {}", httpService.getBindAddress());
+    LOG.info("Started test server on {}", httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
     cancelDiscovery.cancel();
-    httpService.stopAndWait();
+    httpService.stop();
   }
 
   public void registerServer() {
     // Register services of test server
-    log.info("Registering service {}", serviceName);
+    LOG.info("Registering service {}", serviceName);
     cancelDiscovery = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(serviceName, httpService.getBindAddress())));
   }

@@ -47,8 +47,8 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
   }
 
   @Override
-  protected RouterService createRouterService() {
-    return new HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
+  protected RouterService createRouterService(String hostname, DiscoveryService discoveryService) {
+    return new HttpRouterService(hostname, discoveryService);
   }
 
   @Override

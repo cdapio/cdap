@@ -17,51 +17,52 @@
 package co.cask.cdap.gateway.router.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import com.google.common.base.Charsets;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.ReferenceCountUtil;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Handler for the status requests
  */
-public class HttpStatusRequestHandler extends SimpleChannelUpstreamHandler {
+public class HttpStatusRequestHandler extends ChannelInboundHandlerAdapter {
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx,
-                              MessageEvent event) throws Exception {
-
-    Object msg = event.getMessage();
-
-    if (msg instanceof HttpRequest) {
-        HttpRequest request = (HttpRequest) msg;
-        // To have an independent health check of the router status, the command should
-        // be served by the router itself without it talking to any downstream services
-        if (request.getUri().equals(Constants.EndPoints.STATUS)) {
-          String statusString = Constants.Monitor.STATUS_OK;
-          ChannelBuffer responseContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(statusString));
-          HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-          httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain");
-          httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, responseContent.readableBytes());
-          httpResponse.setContent(responseContent);
-
-          ChannelFuture writeFuture = Channels.future(event.getChannel());
-          Channels.write(ctx, writeFuture, httpResponse);
-          writeFuture.addListener(ChannelFutureListener.CLOSE);
-          return;
-        }
+  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    if (!(msg instanceof HttpRequest)) {
+      ctx.fireChannelRead(msg);
+      return;
     }
-    super.messageReceived(ctx, event);
+
+    try {
+      HttpRequest request = (HttpRequest) msg;
+      // To have an independent health check of the router status, the command should
+      // be served by the router itself without it talking to any downstream services
+      if (request.uri().equals(Constants.EndPoints.STATUS)) {
+        ByteBuf content = Unpooled.copiedBuffer(Constants.Monitor.STATUS_OK, StandardCharsets.UTF_8);
+
+        HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
+        HttpUtil.setContentLength(response, content.readableBytes());
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8");
+
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+      } else {
+        ReferenceCountUtil.retain(msg);
+        ctx.fireChannelRead(msg);
+      }
+    } finally {
+      ReferenceCountUtil.release(msg);
+    }
   }
 }

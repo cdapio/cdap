@@ -552,6 +552,7 @@ public final class Constants {
     public static final String CONNECTION_TIMEOUT_SECS = "router.connection.idle.timeout.secs";
     public static final String ROUTER_USERSERVICE_FALLBACK_STRAGEY = "router.userservice.fallback.strategy";
     public static final String ROUTER_AUDIT_PATH_CHECK_ENABLED = "router.audit.path.check.enabled";
+    public static final String ROUTER_AUDIT_LOG_ENABLED = "router.audit.log.enabled";
 
     /**
      * Defaults.
@@ -561,6 +562,7 @@ public final class Constants {
     public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
     public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
+    public static final String AUDIT_LOGGER_NAME = "http-access";
   }
 
   /**

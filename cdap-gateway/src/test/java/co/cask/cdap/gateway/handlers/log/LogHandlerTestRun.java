@@ -36,9 +36,9 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -251,7 +251,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
                                 endPoint);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespaceId));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
-    if (response.getStatusLine().getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+    if (response.getStatusLine().getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
       return ImmutableList.of();
     }
     String out = EntityUtils.toString(response.getEntity());
@@ -323,7 +323,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=json",
                             "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, MockLogReader.TEST_NAMESPACE));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogDataOffset> logDataOffsetList = GSON.fromJson(out, LIST_LOGDATA_OFFSET_TYPE);
     Assert.assertEquals(logDataOffsetList.size(), 15);
@@ -335,16 +335,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
                                                                    String endPoint) throws Exception {
-    return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpResponseStatus.OK.getCode());
+    return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpResponseStatus.OK.code());
   }
 
   @Test
   public void testNonExistenceRunLogs() throws Exception {
     getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
-            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "next", HttpResponseStatus.NOT_FOUND.getCode());
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "next", HttpResponseStatus.NOT_FOUND.code());
 
     getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
-            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpResponseStatus.NOT_FOUND.getCode());
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpResponseStatus.NOT_FOUND.code());
   }
   
   private void testNext(String appId, String entityType, String entityId, boolean escape, String namespace)
@@ -433,14 +433,14 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     String prevUrl = String.format("/%s/system/services/%s/logs/next?max=10",
                                    Constants.Gateway.API_VERSION_3_TOKEN, serviceName);
     HttpResponse response = doGet(prevUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
   }
 
   private void testPrevSystemLogs(String serviceName) throws Exception {
     String prevUrl = String.format("/%s/system/services/%s/logs/prev?max=10",
                                    Constants.Gateway.API_VERSION_3_TOKEN, serviceName);
     HttpResponse response = doGet(prevUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
   }
 
   private void testPrevNoMax(String appId, String entityType, String entityId, String namespace) throws Exception {
@@ -500,7 +500,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s",
                             appId, entityType, entityId, 350, 300);
     response = doGet(getVersionedAPIPath(logsUrl, namespace));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
   }
 
   private void testLogsFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
@@ -597,7 +597,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private void verifyLogs(HttpResponse response, String entityId, String format, int stepSize,
                           boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue,
                           List<String> suppress) throws IOException {
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<String> logMessages = new ArrayList<>();
     boolean escape;
