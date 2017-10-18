@@ -143,7 +143,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       validateCustomMapping(metadata);
     }
 
-    // check that the user has configured either both of none of the following configuration: principal and keytab URI
+    // check that the user has configured either both or none of the following configuration: principal and keytab URI
     boolean hasValidKerberosConf = false;
     if (metadata.getConfig() != null) {
       String configuredPrincipal = metadata.getConfig().getPrincipal();
@@ -151,7 +151,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       if ((!Strings.isNullOrEmpty(configuredPrincipal) && Strings.isNullOrEmpty(configuredKeytabURI)) ||
         (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(configuredKeytabURI))) {
         throw new BadRequestException(
-          String.format("Either neither or both of the following two configurations must be configured. " +
+          String.format("Either both or none of the following two configurations must be configured. " +
                           "Configured principal: %s, Configured keytabURI: %s",
                         configuredPrincipal, configuredKeytabURI));
       }
@@ -336,6 +336,26 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     NamespaceConfig config = namespaceMeta.getConfig();
     if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    if (config != null && config.getKeytabURI() != null) {
+      String keytabURI = config.getKeytabURI();
+      if (keytabURI.isEmpty()) {
+        throw new BadRequestException("Cannot update keytab URI with an empty URI.");
+      }
+      String existingKeytabURI = existingMeta.getConfig().getKeytabURIWithoutVersion();
+      if (existingKeytabURI == null) {
+        throw new BadRequestException("Cannot update keytab URI since there is no existing principal or keytab URI.");
+      }
+      if (keytabURI.equals(existingKeytabURI)) {
+        // The given keytab URI is the same as the existing one, but the content of the keytab file might be changed.
+        // Increment the keytab URI version so that the cache will reload content in the updated keytab file.
+        builder.incrementKeytabURIVersion();
+      } else {
+        builder.setKeytabURIWithoutVersion(keytabURI);
+        // clear keytab URI version
+        builder.setKeytabURIVersion(0);
+      }
     }
 
     if (config != null) {

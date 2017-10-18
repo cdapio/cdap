@@ -35,6 +35,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -61,14 +62,20 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(namespaceAdmin.list()));
+    // return keytab URI without version
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(namespaceAdmin.list().stream()
+                                     .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
+                                     .collect(Collectors.toList())));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}")
   public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
-    NamespaceMeta ns = namespaceAdmin.get(new NamespaceId(namespaceId));
+    // return keytab URI without version
+    NamespaceMeta ns =
+      new NamespaceMeta.Builder(namespaceAdmin.get(new NamespaceId(namespaceId))).buildWithoutKeytabURIVersion();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ns));
   }
 
