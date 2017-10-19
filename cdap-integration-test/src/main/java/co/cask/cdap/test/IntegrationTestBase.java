@@ -226,10 +226,13 @@ public abstract class IntegrationTestBase {
     Properties properties = new Properties();
     properties.setProperty("security.auth.client.username", username);
     properties.setProperty("security.auth.client.password", password);
+    properties.setProperty("security.auth.client.verify.ssl.cert",
+                           Boolean.toString(getClientConfig().isVerifySSLCert()));
     final AuthenticationClient authClient = new BasicAuthenticationClient();
     authClient.configure(properties);
     ConnectionConfig connectionConfig = getClientConfig().getConnectionConfig();
-    authClient.setConnectionInfo(connectionConfig.getHostname(), connectionConfig.getPort(), false);
+    authClient.setConnectionInfo(connectionConfig.getHostname(), connectionConfig.getPort(),
+                                 connectionConfig.isSSLEnabled());
     checkServicesWithRetry(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
