@@ -116,21 +116,34 @@ export default class Header extends Component {
     let dataprepBasePath = `${basePath}/dataprep`;
     let connectionsBasePath = `${basePath}/connections`;
     let rulesenginepath = `${basePath}/rulesengine`;
+    let analytics = `${basePath}/experiments`;
     if (
       location.pathname.startsWith(basePath) &&
       !location.pathname.startsWith(dataprepBasePath) &&
       !location.pathname.startsWith(connectionsBasePath) &&
-      !location.pathname.startsWith(rulesenginepath)
+      !location.pathname.startsWith(rulesenginepath) &&
+      !location.pathname.startsWith(analytics)
     ) {
       return true;
     }
     return false;
   };
 
+  isMMDSActive = (match, location = window.location) => {
+    if (match && match.isExact) {
+      return true;
+    }
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let experimentsBasePath = `/ns/${namespace}/experiments`;
+    return location.pathname.startsWith(experimentsBasePath);
+  };
+
   render() {
     let baseCDAPURL = `/ns/${this.state.currentNamespace}`;
     let rulesengineUrl = `${baseCDAPURL}/rulesengine`;
     let dataprepUrl = `${baseCDAPURL}/dataprep`;
+    let mmdsurl = `${baseCDAPURL}/experiments`;
+
     let pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
       stateParams: {
@@ -140,7 +153,6 @@ export default class Header extends Component {
       }
     });
     let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
-
 
     return (
       <div className="global-navbar">
@@ -191,6 +203,15 @@ export default class Header extends Component {
             >
               {T.translate('features.Navbar.pipelinesLabel')}
             </a>
+          </li>
+          <li>
+            <NavLinkWrapper
+              isNativeLink={this.props.nativeLink}
+              to={this.props.nativeLink ? `/cdap${mmdsurl}` : mmdsurl}
+              isActive={this.isMMDSActive}
+              >
+              {T.translate(`features.Navbar.MMDS`)}
+            </NavLinkWrapper>
           </li>
           <li>
               <NavLinkWrapper

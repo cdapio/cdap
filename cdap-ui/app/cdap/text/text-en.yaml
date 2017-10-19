@@ -1181,6 +1181,7 @@ features:
       integrationsLabel: Integrations
       searchLabel: Search
       tagsLabel: Tags
+    MMDS: Analytics
     NamespaceDropdown:
       addNS: "Add Namespace"
       applications: Applications
