@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import {parseType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';
-import uuid from 'node-uuid';
+import uuid from 'uuid/v4';
 import T from 'i18n-react';
 require('./EnumSchemaRow.scss');
 
@@ -29,7 +29,7 @@ export default class EnumSchemaRow extends Component {
     super(props);
     if (typeof props.row === 'object') {
       let rowType = parseType(props.row);
-      let symbols = rowType.type.getSymbols().map(symbol => ({symbol, id: uuid.v4()}));
+      let symbols = rowType.type.getSymbols().map(symbol => ({symbol, id: uuid()}));
       this.state = {
         symbols,
         error: '',
@@ -37,7 +37,7 @@ export default class EnumSchemaRow extends Component {
       };
     } else {
       this.state = {
-        symbols: [{symbol: '', id: uuid.v4()}],
+        symbols: [{symbol: '', id: uuid()}],
         error: ''
       };
     }
@@ -74,7 +74,7 @@ export default class EnumSchemaRow extends Component {
     });
     symbols = insertAt(symbols, index, {
       symbol: '',
-      id: uuid.v4(),
+      id: uuid(),
       refRequired: true
     });
     this.setState({symbols}, () => {

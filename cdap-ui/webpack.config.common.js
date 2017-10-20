@@ -95,10 +95,7 @@ var rules = [
     test: /\.svg/,
     use: [
       {
-        loader: 'svg-sprite-loader',
-        options: {
-          prefixize: false
-        }
+        loader: 'svg-sprite-loader'
       }
     ]
   }

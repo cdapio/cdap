@@ -190,16 +190,61 @@
           <plugin>
             <groupId>com.github.eirslett</groupId>
             <artifactId>frontend-maven-plugin</artifactId>
-            <version>0.0.23</version>
+            <version>1.6</version>
             <executions>
               <execution>
                 <id>dist</id>
                 <goals>
-                  <goal>install-node-and-npm</goal>
+                  <goal>install-node-and-yarn</goal>
                 </goals>
                 <configuration>
-                  <nodeVersion>v4.5.0</nodeVersion>
-                  <npmVersion>3.8.8</npmVersion>
+                  <nodeVersion>v8.7.0</nodeVersion>
+                  <yarnVersion>v1.2.1</yarnVersion>
+                </configuration>
+              </execution>
+              <execution>
+                <id>install-node-gyp</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>global add node-gyp</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>yarn-install</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>install --silent --frozen-lockfile</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>bower-install</id>
+                <goals>
+                  <goal>bower</goal>
+                </goals>
+                <configuration>
+                  <arguments>install --allow-root</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>build-ui</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>run cdap-full-build</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>clean-node-modules</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>install --production</arguments>
                 </configuration>
               </execution>
             </executions>
@@ -209,65 +254,6 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>1.3.1</version>
             <executions>
-              <execution>
-                <id>npm-install</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/node/node</executable>
-                  <arguments>
-                    <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
-                    <argument>install</argument>
-                    <argument>-s --progress=false</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>bower-install</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/node/node</executable>
-                  <arguments>
-                    <executable>${project.basedir}/node_modules/bower/bin/bower</executable>
-                    <argument>install</argument>
-                    <argument>--allow-root</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>build-ui</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/node/node</executable>
-                  <arguments>
-                    <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
-                    <argument>run</argument>
-                    <argument>cdap-prod-build</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>build-hydrator-tracker</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/node/node</executable>
-                  <arguments>
-                    <executable>${project.basedir}/node_modules/gulp/bin/gulp.js</executable>
-                    <argument>distribute</argument>
-                  </arguments>
-                </configuration>
-              </execution>
               <execution>
                 <id>clean-bower-components</id>
                 <phase>process-resources</phase>
@@ -279,21 +265,6 @@
                   <arguments>
                     <argument>-rf</argument>
                     <argument>bower_components</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>npm-install-production-deps</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/node/node</executable>
-                  <arguments>
-                    <argument>${project.basedir}/node/npm/bin/npm-cli.js</argument>
-                    <argument>prune</argument>
-                    <argument>--production</argument>
                   </arguments>
                 </configuration>
               </execution>

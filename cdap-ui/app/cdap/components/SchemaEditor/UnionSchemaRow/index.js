@@ -22,7 +22,7 @@ import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';
-import uuid from 'node-uuid';
+import uuid from 'uuid/v4';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -34,7 +34,7 @@ export default class UnionSchemaRow extends Component {
     if (typeof props.row === 'object') {
       let rowType = parseType(props.row);
       let parsedTypes = rowType.type.getTypes();
-      let displayTypes = parsedTypes.map(type => Object.assign({}, parseType(type), {id: 'a' + uuid.v4()}));
+      let displayTypes = parsedTypes.map(type => Object.assign({}, parseType(type), {id: 'a' + uuid()}));
       this.state = {
         displayTypes,
         error: ''
@@ -46,7 +46,7 @@ export default class UnionSchemaRow extends Component {
           {
             displayType: 'string',
             type: 'string',
-            id: uuid.v4(),
+            id: uuid(),
             nullable: false
           }
         ],
@@ -113,7 +113,7 @@ export default class UnionSchemaRow extends Component {
     let displayTypes = insertAt([...this.state.displayTypes], index, {
       type: 'string',
       displayType: 'string',
-      id: uuid.v4(),
+      id: uuid(),
       nullable: false
     });
     let parsedTypes = insertAt(cloneDeep(this.parsedTypes), index, 'string');
