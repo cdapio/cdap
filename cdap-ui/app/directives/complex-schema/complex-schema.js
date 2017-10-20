@@ -68,7 +68,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     field.nested = SchemaHelper.checkComplexType(field.displayType);
   };
 
-  vm.pasteFields = (event) => {
+  vm.pasteFields = (event, index) => {
+    event.preventDefault();
     let data = [];
     let pastedData = event.clipboardData.getData('text/plain');
     let pastedDataArr = pastedData.replace(/[\n\r\t,| ]/g, '$').split('$');
@@ -86,6 +87,11 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     });
 
     document.getElementsByClassName('bottompanel-body')[0].scrollTop = 0;
+    // This happens when the user adds a new field, then paste the data.
+    // In that case we should delete the empty before pasting.
+    if (!vm.parsedSchema[index].name) {
+      vm.parsedSchema.splice(index, 1);
+    }
 
     vm.parsedSchema = vm.parsedSchema.concat(data);
     vm.formatOutput();

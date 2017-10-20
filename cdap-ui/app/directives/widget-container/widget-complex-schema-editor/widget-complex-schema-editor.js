@@ -182,7 +182,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   EventPipe.on('schema.export', exportSchema);
   EventPipe.on('schema.clear', () => {
-    vm.schemas = '';
+    vm.schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj('')];
     reRenderComplexSchema();
   });
 
@@ -191,6 +191,10 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     vm.error = '';
     if (typeof schemas === 'string') {
       schemas = JSON.parse(schemas);
+    }
+
+    if (!Array.isArray(schemas)) {
+      schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(schemas)];
     }
 
     vm.schemas = schemas.map((schema) => {

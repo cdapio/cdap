@@ -16,9 +16,14 @@
 
 import PropTypes from 'prop-types';
 
-import React from 'react';
-import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis';
+import React, { Component } from 'react';
+import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries} from 'react-vis';
+import NodeMetricsGraphLegends from 'components/PipelineNodeGraphs/NodeMetricsGraphLegends';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
+import maxBy from 'lodash/maxBy';
+import findKey from 'lodash/findKey';
+import findIndex from 'lodash/findIndex';
+import capitalize from 'lodash/capitalize';
 
 const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
@@ -27,113 +32,188 @@ const metricTypeToColorMap = {
   'recordsout': RECORDS_OUT_COLOR
 };
 
-function renderAreaChart(data, metricType) {
-  if (!Array.isArray(data) && typeof data === 'object') {
-    return Object
-      .keys(data)
-      .map(key => {
+const FPlot = makeVisFlexible(XYPlot);
+
+export default class NodeMetricsGraph extends Component {
+
+  static propTypes = {
+    xAxisTitle: PropTypes.string,
+    yAxisTitle: PropTypes.string,
+    data: PropTypes.arrayOf(PropTypes.object),
+    metricType: PropTypes.string,
+    isMultiplePorts: PropTypes.bool,
+    portsToShow: PropTypes.arrayOf(PropTypes.string)
+  };
+
+  constructor(props) {
+    super(props);
+
+    this.data = this.props.data;
+
+    let dataToShow = Object.keys(this.data).map(dataKey => this.data[dataKey].label);
+
+    if (this.props.isMultiplePorts && this.props.portsToShow && this.props.portsToShow.length) {
+      let portsToShow = this.props.portsToShow;
+      // always show error records no matter what port the user clicks on
+      if (portsToShow.indexOf('errors') === -1) {
+        portsToShow.push('errors');
+      }
+      dataToShow = portsToShow.map(port => capitalize(port));
+    }
+
+    this.state = {
+      dataToShow
+    };
+
+    if (Array.isArray(this.data) && !this.data.length) {
+      return;
+    }
+
+    this.xDomain = [0, 10];
+    let {tickFormat, yDomain} = getYAxisProps(this.data);
+    this.tickFormat = tickFormat;
+    this.yDomain = yDomain;
+    this.dummyData = [{
+      x: 0,
+      y: 0
+    }];
+
+    this.colorLegend = [];
+
+    if (Array.isArray(this.data) && this.data.length > 10) {
+      this.xDomain[1] = this.data.length;
+      this.colorLegend = [{
+        title: this.data.label,
+        color: this.data.color
+      }];
+    } else if (!Array.isArray(this.data) && typeof this.data === 'object') {
+      let dataObjects = Object.keys(this.data).map((key) => this.data[key]);
+      let objectWithMaxLength = maxBy(dataObjects, (dataObject) => dataObject.data.length);
+      this.xDomain[1] = objectWithMaxLength.data.length;
+      Object
+        .keys(this.data)
+        .forEach(d => {
+          this.colorLegend.push({
+            title: this.data[d].label,
+            color: this.data[d].color
+          });
+        });
+    }
+  }
+
+  onLegendClick = (itemTitle) => {
+    let legendKey = findKey(this.data, (dataKey) => dataKey.label === itemTitle);
+    if (!legendKey) {
+      return;
+    }
+
+    let legendItem = this.data[legendKey];
+    let newDataToShow = [...this.state.dataToShow];
+    let legendItemIndex = findIndex(newDataToShow, (dataKey) => dataKey === legendItem.label);
+    if (legendItemIndex !== -1) {
+      newDataToShow.splice(legendItemIndex, 1);
+    } else {
+      newDataToShow.push(legendItem.label);
+    }
+    this.setState({
+      dataToShow: newDataToShow
+    });
+  };
+
+  renderAreaChart(data, metricType) {
+    if (!Array.isArray(data) && typeof data === 'object') {
+      let dataArrayToShow = Object.keys(data).filter(key => this.state.dataToShow.indexOf(data[key].label) !== -1);
+      if (!dataArrayToShow.length) {
         return (
           <AreaSeries
             curve="curveLinear"
-            color={data[key].color || metricTypeToColorMap[metricType]}
-            stroke={data[key].color || metricTypeToColorMap[metricType]}
-            data={data[key].data}
+            color={metricTypeToColorMap[metricType]}
+            stroke={metricTypeToColorMap[metricType]}
+            data={this.dummyData}
             opacity={0.2}
           />
         );
-      });
-  }
-  return (
-    <AreaSeries
-      curve="curveLinear"
-      color={metricTypeToColorMap[metricType]}
-      stroke={metricTypeToColorMap[metricType]}
-      data={data}
-      opacity={0.5}
-    />
-  );
-}
+      }
 
-function renderLineChart(data, metricType) {
-  if (!Array.isArray(data) && typeof data === 'object') {
-    return Object
-      .keys(data)
-      .map(key => {
-        return (
-          <LineSeries
-            color={data[key].color || metricTypeToColorMap[metricType]}
-            data={data[key].data}
-            strokeWidth={4}
-          />
-        );
-      });
-  }
-  return (
-    <LineSeries
-      color={metricTypeToColorMap[metricType]}
-      data={data}
-      strokeWidth={4}
-    />
-  );
-}
-
-export default function NodeMetricsGraph({data, xAxisTitle, yAxisTitle, metricType}) {
-  if (Array.isArray(data) && !data.length) {
-    return null;
-  }
-  let xDomain = [0, 10];
-  let {tickFormat, yDomain} = getYAxisProps(data);
-  var color_legend = [];
-  if (Array.isArray(data) && data.length > 10) {
-    xDomain[1] = data.length;
-    color_legend = [{
-      title: data.label,
-      color: data.color
-    }];
-  } else if (!Array.isArray(data) && typeof data === 'object') {
-    let firstKey = Object.keys(data)[0];
-    xDomain[1] = data[firstKey].data.length;
-    Object
-      .keys(data)
-      .forEach(d => {
-        color_legend.push({
-          title: data[d].label,
-          color: data[d].color
+      return dataArrayToShow
+        .map(key => {
+          let dataToPlot = data[key].data;
+          if (!dataToPlot || !dataToPlot.length) {
+            dataToPlot = this.dummyData;
+          }
+          return (
+            <AreaSeries
+              curve="curveLinear"
+              color={data[key].color || metricTypeToColorMap[metricType]}
+              stroke={data[key].color || metricTypeToColorMap[metricType]}
+              data={dataToPlot}
+              opacity={0.2}
+            />
+          );
         });
-      });
-  }
-  let FPlot = makeVisFlexible(XYPlot);
-  return (
-    <div className="graph-plot-container">
-      <FPlot
-        xType="linear"
-        yType="linear"
-        xDomain={xDomain}
-        yDomain={yDomain}
-        tickTotal={xDomain[1]}
-        className="run-history-fp-plot"
-      >
-        <XAxis />
-        <YAxis tickFormat={tickFormat} />
-        <HorizontalGridLines />
-        {renderAreaChart(data, metricType)}
-        {renderLineChart(data, metricType)}
-        <div className="x-axis-title">{xAxisTitle}</div>
-        <div className="y-axis-title">{yAxisTitle}</div>
-      </FPlot>
-      <DiscreteColorLegend
-        style={{position: 'absolute', left: '40px', top: '0px'}}
-        orientation="horizontal"
-        items={color_legend}
+    }
+    return (
+      <AreaSeries
+        curve="curveLinear"
+        color={metricTypeToColorMap[metricType]}
+        stroke={metricTypeToColorMap[metricType]}
+        data={data}
+        opacity={0.5}
       />
-    </div>
-  );
-}
+    );
+  }
 
-NodeMetricsGraph.propTypes = {
-  xAxisTitle: PropTypes.string,
-  yAxisTitle: PropTypes.string,
-  data: PropTypes.arrayOf(PropTypes.object),
-  metricType: PropTypes.string
-};
+  renderLineChart(data, metricType) {
+    if (!Array.isArray(data) && typeof data === 'object') {
+      return Object
+        .keys(data)
+        .filter(key => this.state.dataToShow.indexOf(data[key].label) !== -1)
+        .map(key => {
+          return (
+            <LineSeries
+              color={data[key].color || metricTypeToColorMap[metricType]}
+              data={data[key].data}
+              strokeWidth={4}
+            />
+          );
+        });
+    }
+    return (
+      <LineSeries
+        color={metricTypeToColorMap[metricType]}
+        data={data}
+        strokeWidth={4}
+      />
+    );
+  }
+
+  render() {
+    return (
+      <div className="graph-plot-container">
+        <FPlot
+          xType="linear"
+          yType="linear"
+          xDomain={this.xDomain}
+          yDomain={this.yDomain}
+          tickTotal={this.xDomain[1]}
+          className="run-history-fp-plot"
+        >
+          <XAxis />
+          <YAxis tickFormat={this.tickFormat} />
+          <HorizontalGridLines />
+          {this.renderAreaChart(this.data, this.metricType)}
+          {this.renderLineChart(this.data, this.metricType)}
+          <div className="x-axis-title">{this.props.xAxisTitle}</div>
+          <div className="y-axis-title">{this.props.yAxisTitle}</div>
+        </FPlot>
+        <NodeMetricsGraphLegends
+          items={this.colorLegend}
+          checkedItems={this.state.dataToShow}
+          onLegendClick={this.onLegendClick}
+          isMultiplePorts={this.props.isMultiplePorts}
+        />
+      </div>
+    );
+  }
+}
 

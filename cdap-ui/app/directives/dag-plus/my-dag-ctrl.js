@@ -90,41 +90,11 @@ angular.module(PKG.name + '.commons')
       initTimeout = $timeout(function () {
         initNodes();
         addConnections();
-        vm.instance.bind('connection', addConnection);
-        vm.instance.bind('connectionDetached', removeConnection);
-        vm.instance.bind('connectionMoved', moveConnection);
-        vm.instance.bind('beforeStartDetach', onStartDetach);
-        vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
-        vm.instance.bind('beforeDrag', onBeforeDrag);
-        // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
-        // but seems like the 'click' event is triggered both when clicking on an endpoint &&
-        // clicking on a connection
-        vm.instance.bind('click', toggleConnections);
-
-        Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
-        Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
-        Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
+        bindJsPlumbEvents();
+        bindKeyboardEvents();
 
         if (vm.isDisabled) {
-          // Disable all endpoints
-          angular.forEach($scope.nodes, function (node) {
-            if (node.plugin.type === 'condition') {
-              let endpoints = [`${node.name}_condition_true`, `${node.name}_condition_false`];
-              angular.forEach(endpoints, (endpoint) => {
-                disableEndpoints(endpoint);
-              });
-            } else if (node.plugin.type === 'splittertransform')  {
-              let portNames = node.outputSchema.map(port => port.name);
-              let endpoints = portNames.map(portName => `${node.name}_port_${portName}`);
-              angular.forEach(endpoints, (endpoint) => {
-                // different from others because the name here is the uuid of the splitter endpoint,
-                // not the id of DOM element
-                disableEndpoint(endpoint);
-              });
-            } else {
-              disableEndpoints(node.name);
-            }
-          });
+          disableAllEndpoints();
         }
 
         // Process metrics data
@@ -161,8 +131,19 @@ angular.module(PKG.name + '.commons')
               });
             }
 
-            angular.forEach($scope.metricsData, function (value, key) {
-              metricsPopovers[key].scope.data.metrics = value;
+            angular.forEach($scope.metricsData, function (pluginMetrics, pluginName) {
+              let metricsToDisplay = {};
+              let pluginMetricsKeys = Object.keys(pluginMetrics);
+              for (let i = 0; i < pluginMetricsKeys.length; i++) {
+                let pluginMetric = pluginMetricsKeys[i];
+                if (typeof pluginMetrics[pluginMetric] === 'object') {
+                  metricsToDisplay[pluginMetric] = _.sum(Object.keys(pluginMetrics[pluginMetric]).map(key => pluginMetrics[pluginMetric][key]));
+                } else {
+                  metricsToDisplay[pluginMetric] = pluginMetrics[pluginMetric];
+                }
+              }
+
+              metricsPopovers[pluginName].scope.data.metrics = metricsToDisplay;
             });
           }, true);
         }
@@ -177,6 +158,30 @@ angular.module(PKG.name + '.commons')
         vm.cleanUpGraph();
         vm.fitToScreen();
       }, 500);
+    }
+
+    function bindJsPlumbEvents() {
+      vm.instance.bind('connection', addConnection);
+      vm.instance.bind('connectionDetached', removeConnection);
+      vm.instance.bind('connectionMoved', moveConnection);
+      vm.instance.bind('beforeStartDetach', onStartDetach);
+      vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
+      vm.instance.bind('beforeDrag', onBeforeDrag);
+      // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
+      // but seems like the 'click' event is triggered both when clicking on an endpoint &&
+      // clicking on a connection
+      vm.instance.bind('click', toggleConnections);
+    }
+
+    function bindKeyboardEvents() {
+      Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
+      Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
+      Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
+    }
+
+    function unbindKeyboardEvents() {
+      Mousetrap.unbind(['command+z', 'ctrl+z']);
+      Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
     }
 
     function closeMetricsPopover(node) {
@@ -613,6 +618,27 @@ angular.module(PKG.name + '.commons')
       }
     }
 
+    function disableAllEndpoints() {
+      angular.forEach($scope.nodes, function (node) {
+        if (node.plugin.type === 'condition') {
+          let endpoints = [`${node.name}_condition_true`, `${node.name}_condition_false`];
+          angular.forEach(endpoints, (endpoint) => {
+            disableEndpoints(endpoint);
+          });
+        } else if (node.plugin.type === 'splittertransform')  {
+          let portNames = node.outputSchema.map(port => port.name);
+          let endpoints = portNames.map(portName => `${node.name}_port_${portName}`);
+          angular.forEach(endpoints, (endpoint) => {
+            // different from others because the name here is the uuid of the splitter endpoint,
+            // not the id of DOM element
+            disableEndpoint(endpoint);
+          });
+        } else {
+          disableEndpoints(node.name);
+        }
+      });
+    }
+
     function onStartDetach() {
       connectionDropped = false;
     }
@@ -741,13 +767,7 @@ angular.module(PKG.name + '.commons')
           removeContextMenuEventListener(selectedConnObj);
         });
         selectedConnections = [];
-        vm.instance.bind('connection', addConnection);
-        vm.instance.bind('connectionMoved', moveConnection);
-        vm.instance.bind('connectionDetached', removeConnection);
-        vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
-        vm.instance.bind('beforeStartDetach', onStartDetach);
-        vm.instance.bind('beforeDrag', onBeforeDrag);
-        vm.instance.bind('click', toggleConnections);
+        bindJsPlumbEvents();
 
         if (commentsTimeout) {
           vm.comments = DAGPlusPlusNodesStore.getComments();
@@ -922,11 +942,9 @@ angular.module(PKG.name + '.commons')
 
         // can do keybindings only if no node is selected
         if (!vm.activeNodeId) {
-          Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
-          Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
+          bindKeyboardEvents();
         } else {
-          Mousetrap.unbind(['command+z', 'ctrl+z']);
-          Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
+          unbindKeyboardEvents();
         }
       });
 
@@ -939,13 +957,13 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
-    vm.onMetricsClick = function(event, node) {
+    vm.onMetricsClick = function(event, node, portName) {
       event.stopPropagation();
       if ($scope.disableMetricsClick) {
         return;
       }
       closeMetricsPopover(node);
-      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true);
+      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true, portName);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 

@@ -68,7 +68,7 @@
                        ng-blur="ComplexSchema.formatOutput()"
                        ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
                        placeholder="Field Name"
-                       ng-paste="ComplexSchema.pasteFields($event)"
+                       ng-paste="ComplexSchema.pasteFields($event, $index)"
                        ng-class="{'disabled': ComplexSchema.isDisabled }">
               </div>
             </div>
