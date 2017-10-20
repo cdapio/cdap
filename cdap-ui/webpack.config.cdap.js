@@ -159,7 +159,7 @@ var webpackConfig = {
   },
   output: {
     filename: '[name].js',
-    chunkFilename: '[name].js',
+    chunkFilename: '[name]-[chunkhash].js',
     path: __dirname + '/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/'
   },
