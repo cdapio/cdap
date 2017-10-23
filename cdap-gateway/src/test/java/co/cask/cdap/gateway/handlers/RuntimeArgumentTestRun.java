@@ -121,7 +121,7 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     // Wait for program states. Make sure they are stopped before deletion
-    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.KILLED, 2);
+    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.KILLED, 3);
     waitForProgramRuns("services", "HighPassFilterApp", "Count", ProgramRunStatus.KILLED, 1);
 
     response = GatewayFastTestsSuite.doDelete("/v3/namespaces/default/apps/HighPassFilterApp");
