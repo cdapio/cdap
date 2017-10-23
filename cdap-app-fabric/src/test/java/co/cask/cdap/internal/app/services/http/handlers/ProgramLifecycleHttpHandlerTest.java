@@ -966,6 +966,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stop
     stopProgram(wordcountFlow1);
     waitState(wordcountFlow1, STOPPED);
+    LOG.info("wordcountFlow1 runs: {}", getProgramRuns(wordcountFlow1, ProgramRunStatus.ALL));
 
     // delete queues
     Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));

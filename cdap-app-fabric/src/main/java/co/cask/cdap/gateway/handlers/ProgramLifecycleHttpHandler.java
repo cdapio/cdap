@@ -1709,6 +1709,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       ProgramStatus status = lifecycleService.getProgramStatus(flow);
       if (ProgramStatus.RUNNING == status) {
+        LOG.error("Flow {} is running", flow);
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(flow);
