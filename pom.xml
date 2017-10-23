@@ -206,6 +206,22 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
+          <!--
+            Excludes all transitive dependencies on netty, as we'll have dependency on netty-all directly
+            to override transitive dependency on netty 4.0 from Spark.
+          -->
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -485,11 +501,6 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
-        <version>${netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-transport-native-epoll</artifactId>
         <version>${netty.version}</version>
       </dependency>
       <dependency>

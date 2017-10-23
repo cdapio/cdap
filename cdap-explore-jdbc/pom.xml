@@ -127,6 +127,10 @@
       <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+    </dependency>
+    <dependency>
       <!-- TODO: Remove this CDAP-4054 -->
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>

@@ -59,6 +59,10 @@
       <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-security</artifactId>
       <version>${project.version}</version>
