@@ -99,12 +99,12 @@ Download the appropriate CDAP tar file, and then unpack it to an appropriate dir
            
   .. RHEL
 
-  $ curl |http:|//repository.cask.co/downloads/co/cask/cdap/cdap-distributed-rpm-bundle/|short-version|/cdap-distributed-rpm-bundle-|version|.tgz
+  $ curl -O |http:|//downloads.cask.co/cdap-distributed-rpm-bundle/cdap-distributed-rpm-bundle-|version|.tgz
   $ tar xf cdap-distributed-rpm-bundle-|version|.tgz -C $dir
   
   .. Ubuntu
 
-  $ curl |http:|//repository.cask.co/downloads/co/cask/cdap/cdap-distributed-deb-bundle/|short-version|/cdap-distributed-deb-bundle-|version|.tgz
+  $ curl -O |http:|//downloads.cask.co/cdap-distributed-deb-bundle/cdap-distributed-deb-bundle-|version|.tgz
   $ tar xf cdap-distributed-deb-bundle-|version|.tgz -C $dir
 
 
