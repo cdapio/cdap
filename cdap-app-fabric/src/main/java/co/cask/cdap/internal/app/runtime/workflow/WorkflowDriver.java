@@ -79,10 +79,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -280,11 +278,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    httpService.stop();
-    destroyWorkflow();
-    deleteLocalDatasets();
-    if (pluginInstantiator != null) {
-      pluginInstantiator.close();
+    // Clear the interrupt flag.
+    boolean interrupted = Thread.interrupted();
+    try {
+      httpService.stop();
+      destroyWorkflow();
+      deleteLocalDatasets();
+      if (pluginInstantiator != null) {
+        pluginInstantiator.close();
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
