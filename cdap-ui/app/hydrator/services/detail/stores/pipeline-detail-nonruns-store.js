@@ -87,10 +87,14 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getNodes = function() {
       return this.state.DAGConfig.nodes;
     };
+    this.getSourceConnections = function(nodeId) {
+      return this.state.DAGConfig.connections.filter( conn => conn.to === nodeId );
+    };
     this.getSourceNodes = function(nodeId) {
       let nodesMap = {};
       this.state.DAGConfig.nodes.forEach( node => nodesMap[node.name] = node );
-      return this.state.DAGConfig.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
+      return this.getSourceConnections(nodeId)
+        .map(matchedConnection => nodesMap[matchedConnection.from] );
     };
     this.getDatasets = function() {
       return this.state.datasets;

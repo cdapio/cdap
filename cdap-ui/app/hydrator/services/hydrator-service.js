@@ -216,20 +216,6 @@ class HydratorPlusPlusHydratorService {
 
   }
 
-  generateSchemaOnEdge(sourceId) {
-    var nodes = this.DAGPlusPlusNodesStore.getNodes();
-    var sourceNode;
-
-    for (var i = 0; i<nodes.length; i++) {
-      if (nodes[i].name === sourceId) {
-        sourceNode = nodes[i];
-        break;
-      }
-    }
-
-    return this.formatSchema(sourceNode);
-  }
-
   formatOutputSchema (schemaArray) {
     let typeMap = 'map<string, string>';
     let mapObj = {
@@ -259,7 +245,7 @@ class HydratorPlusPlusHydratorService {
     if (properties.length !== 0) {
       let schema = {
         type: 'record',
-        name: 'etlSchemaBody',
+        name: this.GLOBALS.defaultSchemaName,
         fields: properties
       };
       // turn schema into JSON string
@@ -271,7 +257,7 @@ class HydratorPlusPlusHydratorService {
     }
   }
 
-  formatOutputSchemaToAvro(schema) {
+  formatSchemaToAvro(schema) {
     let typeMap = 'map<string, string>';
     let mapObj = {
       type: 'map',
@@ -308,7 +294,7 @@ class HydratorPlusPlusHydratorService {
       };
     });
     return JSON.stringify({
-      name: outputSchema.name || 'etlSchemaBody',
+      name: outputSchema.name || this.GLOBALS.defaultSchemaName,
       type: outputSchema.type || 'record',
       fields: outputSchema.fields || fields
     });

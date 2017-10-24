@@ -130,7 +130,8 @@ my-dag-plus {
       }
 
       .jsplumb-endpoint {
-        &.condition-endpoint {
+        &.condition-endpoint,
+        &.splitter-endpoint {
           cursor: initial;
         }
       }
@@ -206,7 +207,7 @@ my-dag-plus {
 
           &:hover,
           &.hover {
-            &:not(.disabled) {
+            &:not(.disabled):not(.node-splitter-endpoint) {
               background-color: @endpoint-connection-hover-stroke-color;
 
               &:before,
@@ -217,6 +218,12 @@ my-dag-plus {
               .endpoint-caret {
                 visibility: hidden;
               }
+            }
+          }
+
+          &.node-splitter-endpoint {
+            .node-spitter-num-ports {
+              color: @endpoint-caret-bg-color;
             }
           }
         }
@@ -619,7 +626,8 @@ my-dag-plus {
     .jsplumb-endpoint {
       z-index: 1;
 
-      &.condition-endpoint {
+      &.condition-endpoint,
+      &.splitter-endpoint {
         cursor: pointer;
         z-index: 2;
       }
@@ -757,34 +765,5 @@ my-dag-plus {
 
   .popover-content {
     padding: 0 10px 10px;
-
-    .schema-popover {
-      max-height: 400px;
-      overflow-y: auto;
-      overflow-x: hidden;
-
-      .well { margin-bottom: 0; }
-
-      table.table-curved {
-        background-color: transparent;
-        border-left: 1px solid @table-border-color;
-        margin-top: 0;
-        margin-bottom: 0;
-        th,
-        td {
-          border-left: 0;
-        }
-        th {
-          border-bottom: 1px solid @table-border-color;
-          color: #5f6674;
-          font-size: 13px;
-          font-weight: 500;
-        }
-        td {
-          font-size: 13px;
-          padding: 8px;
-        }
-      }
-    }
   }
 }

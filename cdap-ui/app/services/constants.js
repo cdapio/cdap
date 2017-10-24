@@ -49,7 +49,9 @@ angular.module(PKG.name + '.services')
         'windower': 'windower',
         'errortransform': 'errortransform',
         'alertpublisher': 'alertpublisher',
-        'condition': 'condition'
+        'condition': 'condition',
+        'splittertransform': 'splittertransform'
+
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
@@ -68,7 +70,8 @@ angular.module(PKG.name + '.services')
         'errortransform': 'errortransform',
         'sparkprogram': 'sparkprogram',
         'alertpublisher': 'alertpublisher',
-        'condition': 'condition'
+        'condition': 'condition',
+        'splittertransform': 'splittertransform'
       },
       'post-run-actions': {
         'email': 'Send Email',
@@ -93,6 +96,7 @@ angular.module(PKG.name + '.services')
       'sparkprogram': pluginLabels['action'],
       'alertpublisher': pluginLabels['sink'],
       'condition': pluginLabels['action'],
+      'splittertransform': pluginLabels['transform']
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.
@@ -113,7 +117,8 @@ angular.module(PKG.name + '.services')
       'errortransform': 'transform',
       'sparkprogram': 'action',
       'alertpublisher': 'sink',
-      'condition': 'condition'
+      'condition': 'condition',
+      'splittertransform': 'transform'
     },
 
     artifactConvert: {
@@ -129,6 +134,8 @@ angular.module(PKG.name + '.services')
       'cdap-data-pipeline': 'ETLBatch',
       'cdap-data-streams': 'sparkstreaming'
     },
+
+    defaultSchemaName: 'etlSchemaBody',
 
     'en': {
       hydrator: {

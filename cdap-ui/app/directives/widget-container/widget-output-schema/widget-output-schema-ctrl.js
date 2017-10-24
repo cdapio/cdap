@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,30 @@
  * the License.
 */
 angular.module(PKG.name + '.commons')
-  .controller('MyInputSchemaCtrl', function($scope) {
-    this.multipleInputs = ($scope.multipleInputs === 'true' ? true : false);
-    try {
-      this.inputSchemas = JSON.parse($scope.inputSchema);
-    } catch(e) {
-      this.inputSchemas = [];
-    }
-    this.inputSchemas = this.inputSchemas
-      .map( function(node) {
-        var schema;
-        try {
-          schema = JSON.parse(node.schema);
-        } catch(e) {
-          schema = {
-            'name': 'etlSchemaBody',
-            'type': 'record',
-            'fields': []
-          };
+  .controller('MyOutputSchemaCtrl', function($scope, GLOBALS) {
+    this.outputSchemas = $scope.node.outputSchema
+      .map((node) => {
+        var schema = node.schema;
+        if (typeof schema === 'string') {
+          try {
+            schema = JSON.parse(schema);
+          } catch(e) {
+            schema = {
+              'name': GLOBALS.defaultSchemaName,
+              'type': 'record',
+              'fields': []
+            };
+          }
         }
         return {
           name: node.name,
           schema: schema
         };
       });
+
     this.currentIndex = 0;
-    this.isInStudio = $scope.isInStudio;
+
+    this.onOutputSchemaChange = (newOutputSchemas) => {
+      $scope.node.outputSchema = newOutputSchemas;
+    };
   });

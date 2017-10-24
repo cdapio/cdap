@@ -309,6 +309,7 @@ class HydratorPlusPlusTopPanelCtrl {
             More complicated cases will be handled by the backend
           */
           if (macroString &&
+            typeof macroString === 'string' &&
             macroString.indexOf('${') !== -1 &&
             macroString.indexOf('}') !== -1
           ) {
