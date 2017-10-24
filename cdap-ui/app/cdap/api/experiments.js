@@ -20,5 +20,6 @@ import {apiCreator} from 'services/resource-helper';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basePath = '/namespaces/:namespace/apps/ModelPrepApp/services/ModelManagerService/methods';
 export const myExperimentsApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`)
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`),
+  getModelsInExperiment: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/models`)
 };
