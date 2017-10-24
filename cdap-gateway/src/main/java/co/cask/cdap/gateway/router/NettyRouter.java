@@ -20,6 +20,7 @@ import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.gateway.router.handlers.AuditLogHandler;
 import co.cask.cdap.gateway.router.handlers.AuthenticationHandler;
 import co.cask.cdap.gateway.router.handlers.HttpRequestRouter;
 import co.cask.cdap.gateway.router.handlers.HttpStatusRequestHandler;
@@ -189,6 +190,9 @@ public class NettyRouter extends AbstractIdleService {
             pipeline.addLast("access-token-authenticator",
                              new AuthenticationHandler(cConf, realm, tokenValidator,
                                                        discoveryServiceClient, accessTokenTransformer));
+          }
+          if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
+            pipeline.addLast("audit-log", new AuditLogHandler());
           }
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler", new HttpRequestRouter(cConf, serviceLookup));

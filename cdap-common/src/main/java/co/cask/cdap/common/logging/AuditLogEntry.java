@@ -70,9 +70,6 @@ public final class AuditLogEntry {
     this.userName = userName;
     this.clientIP = clientIP;
     this.headers = headers.isEmpty() ? null : Collections.unmodifiableMap(new TreeMap<>(headers));
-
-    this.requestBody = new StringBuilder();
-    this.responseBody = new StringBuilder();
   }
 
   public String toString() {

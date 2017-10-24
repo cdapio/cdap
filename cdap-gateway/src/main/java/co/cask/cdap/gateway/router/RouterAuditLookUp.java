@@ -81,7 +81,7 @@ public final class RouterAuditLookUp {
   }
 
   private int createMatcher() {
-    List<Class<?>> handlerClasses;
+    List<ClassPath.ClassInfo> handlerClasses;
     try {
       handlerClasses = getAllHandlerClasses();
     } catch (IOException e) {
@@ -90,7 +90,9 @@ public final class RouterAuditLookUp {
     }
 
     int count = 0;
-    for (Class<?> handlerClass : handlerClasses) {
+    for (ClassPath.ClassInfo classInfo : handlerClasses) {
+      Class<?> handlerClass = classInfo.load();
+
       Path classPath = handlerClass.getAnnotation(Path.class);
       String classPathStr = classPath == null ? "" : classPath.value();
       for (Method method : handlerClass.getMethods()) {
@@ -125,7 +127,11 @@ public final class RouterAuditLookUp {
                                                            headerNames);
         LOG.trace("Audit log lookup: bootstrapped with path: {}", completePath);
         patternMatcher.add(completePath, auditLogConfig);
-        count++;
+
+        // Don't count classes in unit-tests
+        if (!isTestClass(classInfo)) {
+          count++;
+        }
       }
     }
     LOG.debug("Audit log lookup: bootstrapped with {} paths", count);
@@ -145,21 +151,26 @@ public final class RouterAuditLookUp {
     return null;
   }
 
-  private List<Class<?>> getAllHandlerClasses() throws IOException {
+  private List<ClassPath.ClassInfo> getAllHandlerClasses() throws IOException {
     ClassLoader cl = getClass().getClassLoader();
     Map<String, Boolean> cache = new HashMap<>();
     Function<String, URL> lookup = ClassLoaders.createClassResourceLookup(cl);
     ClassPath cp = ClassPath.from(cl);
-    List<Class<?>> results = new ArrayList<>();
+    List<ClassPath.ClassInfo> results = new ArrayList<>();
     for (ClassPath.ClassInfo info : cp.getAllClasses()) {
       if (!info.getPackageName().startsWith("co.cask.cdap")) {
         continue;
       }
       if (Classes.isSubTypeOf(info.getName(), HttpHandler.class.getName(), lookup, cache)) {
-        results.add(info.load());
+        results.add(info);
       }
     }
     return results;
+  }
+
+  private boolean isTestClass(ClassPath.ClassInfo classInfo) {
+    URL url = classInfo.url();
+    return url != null && url.getPath().contains("target/test-classes");
   }
 
   @VisibleForTesting

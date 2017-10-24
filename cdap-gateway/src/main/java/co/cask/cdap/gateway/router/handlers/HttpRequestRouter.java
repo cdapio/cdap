@@ -307,9 +307,6 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
             pipeline.addLast("idle-state-handler",
                              new IdleStateHandler(0, 0, cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS)));
             pipeline.addLast("codec", new HttpClientCodec());
-            if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
-              pipeline.addLast("audit-log", new AuditLogHandler(cConf));
-            }
             pipeline.addLast("forwarder", new OutboundHandler(inboundChannel));
           }
         });

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.router.handlers;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.AuditLogConfig;
 import co.cask.cdap.common.logging.AuditLogEntry;
@@ -50,22 +49,12 @@ public class AuditLogHandler extends ChannelDuplexHandler {
   private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME);
   private static final Set<HttpMethod> AUDIT_LOG_LOOKUP_METHOD = ImmutableSet.of(HttpMethod.PUT, HttpMethod.DELETE,
                                                                                  HttpMethod.POST);
-  private final boolean auditLogEnabled;
   private AuditLogEntry logEntry;
   private boolean logRequestBody;
   private boolean logResponseBody;
 
-  public AuditLogHandler(CConfiguration cConf) {
-    this.auditLogEnabled = cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED);
-  }
-
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    if (!auditLogEnabled) {
-      ctx.write(msg, promise);
-      return;
-    }
-
+  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     // When a request is forwarded to the internal CDAP service
     if (msg instanceof HttpRequest) {
       HttpRequest request = (HttpRequest) msg;
@@ -89,13 +78,13 @@ public class AuditLogHandler extends ChannelDuplexHandler {
       }
     }
 
-    ctx.write(msg, promise);
+    ctx.fireChannelRead(msg);
   }
 
   @Override
-  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
     if (logEntry == null) {
-      ctx.fireChannelRead(msg);
+      ctx.write(msg, promise);
       return;
     }
 
@@ -119,7 +108,7 @@ public class AuditLogHandler extends ChannelDuplexHandler {
       }
     }
 
-    ctx.fireChannelRead(msg);
+    ctx.write(msg, promise);
   }
 
   @Override
