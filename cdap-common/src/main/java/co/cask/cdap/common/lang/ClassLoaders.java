@@ -195,21 +195,27 @@ public final class ClassLoaders {
     queue.add(classLoader);
     while (!queue.isEmpty()) {
       ClassLoader cl = queue.remove();
-      if (cl instanceof URLClassLoader) {
-        result.add((URLClassLoader) cl);
-      } else if (cl instanceof Delegator) {
-        Object delegate = ((Delegator) cl).getDelegate();
-        if (delegate != null && delegate instanceof ClassLoader) {
-          // Use add first for delegate, which effectively is replacing the current classloader
-          queue.addFirst((ClassLoader) delegate);
-        }
-      } else if (cl instanceof CombineClassLoader) {
+
+      // Although CombineClassLoader is a URLClassLoader, we always get the delegates instead
+      // This is for making sure we can get the parent ClassLoaders of each of the underlying delegate
+      // for the search.
+      if (cl instanceof CombineClassLoader) {
         List<ClassLoader> delegates = ((CombineClassLoader) cl).getDelegates();
         ListIterator<ClassLoader> iterator = delegates.listIterator(delegates.size());
         // Use add first for delegates, which effectively is replacing the current classloader
         while (iterator.hasPrevious()) {
           queue.addFirst(iterator.previous());
         }
+      } else if (cl instanceof Delegator) {
+        // Similarly for Delegator, although it might implement URLClassLoader, we get the delegate instead
+        // so that the parent classloader can be correctly inspected later
+        Object delegate = ((Delegator) cl).getDelegate();
+        if (delegate != null && delegate instanceof ClassLoader) {
+          // Use add first for delegate, which effectively is replacing the current classloader
+          queue.addFirst((ClassLoader) delegate);
+        }
+      } else if (cl instanceof URLClassLoader) {
+        result.add((URLClassLoader) cl);
       }
 
       if (cl.getParent() != null) {
