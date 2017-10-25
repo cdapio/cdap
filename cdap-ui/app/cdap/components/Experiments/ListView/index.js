@@ -23,7 +23,10 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
+import GroupedBarChart from 'components/GroupedBarChart';
 require('./ListView.scss');
+const DEFAULT_DEPLOYED_COLOR = '#B9C0D8';
+const DEFAULT_TOTAL_COLOR = '#5B6787';
 
 const tableHeaders = [
   {
@@ -113,6 +116,28 @@ const renderTableBody = (entities) => {
     </table>
   );
 };
+const getDataForStackedChart = (experiments) => {
+  console.log(experiments);
+  if (!experiments.length) {
+    return null;
+  }
+  let data = [];
+  experiments.map(experiment => {
+    data.push(
+      {
+        name: experiment.name,
+        type: 'Models',
+        count: Array.isArray(experiment.models) ? experiment.models.length: 0
+      },
+      {
+        name: experiment.name,
+        type: 'Deployed',
+        count: Array.isArray(experiment.models) ? experiment.models.filter(model => model.deploytime).length : 0
+      }
+    );
+  });
+  return data;
+};
 function ExperimentsListView({loading, list}) {
   if (loading) {
     return <LoadingSVGCentered />;
@@ -120,6 +145,18 @@ function ExperimentsListView({loading, list}) {
   return (
     <div className="experiments-listview">
       <TopPanel message="Analytics - All Experiments" />
+      <GroupedBarChart
+        data={getDataForStackedChart(list)}
+        customEncoding={{
+          "color": {
+            "field": "type",
+            "type": "nominal",
+            "scale": {
+              "range": [DEFAULT_DEPLOYED_COLOR, DEFAULT_TOTAL_COLOR]
+              }
+          }
+        }}
+      />
       <div className="clearfix">
         <PaginationWithTitle
           handlePageChange={(currentPage) => console.log(`Pagination coming soon. Right now in page # ${currentPage}`)}
