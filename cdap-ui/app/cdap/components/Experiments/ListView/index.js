@@ -23,10 +23,8 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
-import GroupedBarChart from 'components/GroupedBarChart';
+import ExperimentsListBarChart from 'components/Experiments/ExperimentsListBarChart';
 require('./ListView.scss');
-const DEFAULT_DEPLOYED_COLOR = '#B9C0D8';
-const DEFAULT_TOTAL_COLOR = '#5B6787';
 
 const tableHeaders = [
   {
@@ -50,7 +48,9 @@ const tableHeaders = [
     property: 'testData'
   }
 ];
+
 const colorScale = d3.scale.category20();
+
 const getAlgoDistribution = (models) => {
   if (!models.length) {
     return null;
@@ -79,6 +79,7 @@ const getAlgoDistribution = (models) => {
   });
   return Object.keys(modelsMap).map(m => modelsMap[m]);
 };
+
 const renderTableBody = (entities) => {
   let list = entities.map(entity => {
     let models = entity.models || [];
@@ -116,8 +117,8 @@ const renderTableBody = (entities) => {
     </table>
   );
 };
-const getDataForStackedChart = (experiments) => {
-  console.log(experiments);
+
+const getDataForGroupedChart = (experiments) => {
   if (!experiments.length) {
     return null;
   }
@@ -138,6 +139,7 @@ const getDataForStackedChart = (experiments) => {
   });
   return data;
 };
+
 function ExperimentsListView({loading, list}) {
   if (loading) {
     return <LoadingSVGCentered />;
@@ -145,17 +147,8 @@ function ExperimentsListView({loading, list}) {
   return (
     <div className="experiments-listview">
       <TopPanel message="Analytics - All Experiments" />
-      <GroupedBarChart
-        data={getDataForStackedChart(list)}
-        customEncoding={{
-          "color": {
-            "field": "type",
-            "type": "nominal",
-            "scale": {
-              "range": [DEFAULT_DEPLOYED_COLOR, DEFAULT_TOTAL_COLOR]
-              }
-          }
-        }}
+      <ExperimentsListBarChart
+        data={getDataForGroupedChart(list)}
       />
       <div className="clearfix">
         <PaginationWithTitle
@@ -174,6 +167,7 @@ function ExperimentsListView({loading, list}) {
     </div>
   );
 }
+
 ExperimentsListView.propTypes = {
   loading: PropTypes.bool,
   list: PropTypes.arrayOf(PropTypes.object)

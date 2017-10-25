@@ -16,56 +16,43 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import VegaLiteChart from 'components/VegaLiteChart';
+import GroupedBarChart from 'components/GroupedBarChart';
 
-const chartSpec = {
-  "data": {
-    "values": []
+const DEFAULT_DEPLOYED_COLOR = '#B9C0D8';
+const DEFAULT_TOTAL_COLOR = '#5B6787';
+const customEncoding = {
+  "color": {
+    "field": "type",
+    "type": "nominal",
+    "scale": {
+      "range": [DEFAULT_DEPLOYED_COLOR, DEFAULT_TOTAL_COLOR]
+      }
   },
-  "mark": "bar",
-  "encoding": {
-    "column": {
-      "field": "name", "type": "ordinal",
-    },
-    "y": {
-      "field": "count", "type": "quantitative",
-      "axis": {"title": "Count", "grid": false}
-    },
-    "x": {
-      "field": "type", "type": "nominal",
-      "axis": {"title": ""}
-    },
-    "color": {
-      "field": "type",
-      "type": "nominal"
+  "column": {
+    "field": "name", "type": "ordinal",
+    "header": {"title": ""}
+  },
+  "x": {
+    "field": "type", "type": "nominal",
+    "axis": {
+      "labels": false,
+      "title": ""
     }
-  },
-  "config": {
-    "view": {"stroke": "transparent"}
   }
 };
-
-export default function GroupedBarChart({data, customEncoding = {}}) {
-  let newSpec = {
-    ...chartSpec,
-    "encoding": {
-      ...chartSpec.encoding,
-      ...customEncoding
-    }
-  };
+export default function ExperimentsListBarChart({data}) {
   return (
-    <VegaLiteChart
-      spec={newSpec}
+    <GroupedBarChart
       data={data}
+      customEncoding={customEncoding}
     />
   );
 }
 
-GroupedBarChart.propTypes = {
+ExperimentsListBarChart.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     type: PropTypes.string,
     count: PropTypes.number
-  })).isRequired,
-  customEncoding: PropTypes.object
+  })).isRequired
 };
