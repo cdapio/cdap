@@ -126,7 +126,7 @@ var webpackConfig = {
   },
   output: {
     filename: './[name].js',
-    chunkFilename: '[name].js',
+    chunkFilename: '[name]-[chunkhash].js',
     path: __dirname + '/common_dist',
     library: 'CaskCommon',
     libraryTarget: 'umd',

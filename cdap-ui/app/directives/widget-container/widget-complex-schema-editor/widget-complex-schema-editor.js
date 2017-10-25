@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnValium, avsc, myHelpers, IMPLICIT_SCHEMA) {
+function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnValium, avsc, myHelpers, IMPLICIT_SCHEMA, HydratorPlusPlusNodeService) {
   'ngInject';
 
   let vm = this;
@@ -22,7 +22,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   let clearDOMTimeoutTick1;
   let clearDOMTimeoutTick2;
 
-  vm.schemaObj = vm.model;
+  vm.currentIndex = 0;
   vm.clearDOM = false;
   vm.implicitSchemaPresent = false;
 
@@ -67,20 +67,31 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     }
     vm.clearDOM = true;
     vm.implicitSchemaPresent = true;
-    vm.schemaObj = IMPLICIT_SCHEMA[format];
+    vm.schemas = IMPLICIT_SCHEMA[format];
     reRenderComplexSchema();
   }
 
 
   vm.formatOutput = (updateDefault = false) => {
-    vm.error = '';
-    if (typeof vm.schemaObj !== 'string') {
-      vm.model = JSON.stringify(vm.schemaObj);
-    } else {
-      vm.model = vm.schemaObj;
+    if (!Array.isArray(vm.schemas)) {
+      let schema = vm.schemas.schema;
+      if (!schema) {
+        schema = '';
+      }
+
+      vm.schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(schema)];
     }
-    if (vm.updateOutputSchema && updateDefault) {
-      vm.updateOutputSchema({outputSchema: vm.model});
+    let newOutputSchemas = vm.schemas.map(schema => {
+      if (typeof schema.schema !== 'string') {
+        schema.schema = JSON.stringify(schema.schema);
+      }
+      return schema;
+    });
+    if (vm.onChange && typeof vm.onChange === 'function') {
+      vm.onChange({newOutputSchemas});
+    }
+    if (vm.updateDefaultOutputSchema && updateDefault) {
+      vm.updateDefaultOutputSchema({outputSchema: vm.schemas[0].schema});
     }
   };
 
@@ -89,27 +100,28 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       URL.revokeObjectURL(vm.url);
     }
 
-    if (!vm.model) {
+    if (!vm.schemas) {
       vm.error = 'Cannot export empty schema';
       return;
     }
 
-    var schema;
-    try {
-      schema = JSON.parse(vm.model);
-    } catch(e) {
-      console.log('ERROR: ', e);
-      schema = {
-        fields: []
-      };
-    }
-    schema = schema.fields;
+    vm.schemas = vm.schemas.map(schema => {
+      try {
+        schema.schema = JSON.parse(schema.schema);
+      } catch (e) {
+        console.log('ERROR: ', e);
+        schema.schema = {
+          fields: []
+        };
+      }
+      return schema;
+    });
 
     if (vm.pluginName === 'Stream') {
-      schema = vm.schemaPrefix.fields.concat(schema);
+      vm.schemas[0].fields = vm.schemaPrefix.fields.concat(vm.schemas[0].fields);
     }
 
-    var blob = new Blob([JSON.stringify(schema, null, 4)], { type: 'application/json'});
+    var blob = new Blob([JSON.stringify(vm.schemas, null, 4)], { type: 'application/json'});
     vm.url = URL.createObjectURL(blob);
     vm.exportFileName = 'schema';
 
@@ -147,20 +159,21 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     if (!_.isUndefined(isDisabled) && !_.isNull(isDisabled)) {
       vm.isDisabled = isDisabled;
     }
+
     if (datasetId) {
       vm.derivedDatasetId = datasetId;
     }
 
     if (!_.isEmpty(schema) || (_.isEmpty(schema) && vm.isDisabled)) {
-      vm.schemaObj = schema;
+      vm.schemas[0].schema = schema;
     } else {
       // if dataset name is changed to a non-existing dataset, the schemaObj will be empty,
       // so assign to it the value of the input schema
       if (vm.isDisabled === false && vm.inputSchema) {
         if (vm.inputSchema.length > 0 && vm.inputSchema[0].schema) {
-          vm.schemaObj = angular.copy(vm.inputSchema[0].schema);
+          vm.schemas[0].schema = angular.copy(vm.inputSchema[0].schema);
         } else {
-          vm.schemaObj = '';
+          vm.schemas[0].schema = '';
         }
       }
     }
@@ -169,50 +182,55 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   EventPipe.on('schema.export', exportSchema);
   EventPipe.on('schema.clear', () => {
-    vm.schemaObj = '';
+    vm.schemas = '';
     reRenderComplexSchema();
   });
 
-  EventPipe.on('schema.import', (data, append) => {
+  EventPipe.on('schema.import', (schemas) => {
     vm.clearDOM = true;
     vm.error = '';
-    let jsonSchema;
-
-    try {
-      jsonSchema = JSON.parse(data);
-
-      if (Array.isArray(jsonSchema)) {
-        let recordTypeSchema = {
-          name: 'etlSchemaBody',
-          type: 'record',
-          fields: jsonSchema
-        };
-
-        jsonSchema = recordTypeSchema;
-      } else if (jsonSchema.type !== 'record') {
-        myAlertOnValium.show({
-          type: 'danger',
-          content: 'Imported schema is not a valid Avro schema'
-        });
-        vm.clearDOM = false;
-        return;
-      }
-
-      if (append && vm.schemaObj.fields){
-        jsonSchema.fields = _.union(vm.schemaObj.fields, jsonSchema.fields);
-      }
-
-      if (vm.pluginName === 'Stream') {
-        modifyStreamSchema(jsonSchema);
-      }
-
-      vm.schemaObj = avsc.parse(jsonSchema, { wrapUnions: true });
-
-    } catch (e) {
-      vm.error = 'Imported schema is not a valid Avro schema: ' + e;
-      vm.clearDOM = false;
-      return;
+    if (typeof schemas === 'string') {
+      schemas = JSON.parse(schemas);
     }
+
+    vm.schemas = schemas.map((schema) => {
+      let jsonSchema = schema.schema;
+
+      try {
+        if (typeof jsonSchema === 'string') {
+          jsonSchema = JSON.parse(jsonSchema);
+        }
+
+        if (Array.isArray(jsonSchema)) {
+          let recordTypeSchema = {
+            name: 'etlSchemaBody',
+            type: 'record',
+            fields: jsonSchema
+          };
+
+          jsonSchema = recordTypeSchema;
+        } else if (jsonSchema.type !== 'record') {
+          myAlertOnValium.show({
+            type: 'danger',
+            content: 'Imported schema is not a valid Avro schema'
+          });
+          vm.clearDOM = false;
+          return;
+        }
+
+        if (vm.pluginName === 'Stream') {
+          modifyStreamSchema(jsonSchema);
+        }
+
+        schema.schema = avsc.parse(jsonSchema, { wrapUnions: true });
+        return schema;
+
+      } catch (e) {
+        vm.error = 'Imported schema is not a valid Avro schema: ' + e;
+        vm.clearDOM = false;
+        return schema;
+      }
+    });
 
     reRenderComplexSchema();
   });
@@ -236,13 +254,14 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'widget-container/widget-complex-schema-editor/widget-complex-schema-editor.html',
       bindToController: true,
       scope: {
-        model: '=ngModel',
+        schemas: '=',
         inputSchema: '=?',
         isDisabled: '=',
         pluginProperties: '=?',
         config: '=?',
         pluginName: '=',
-        updateOutputSchema: '&',
+        updateDefaultOutputSchema: '&',
+        onChange: '&',
         isInStudio: '='
       },
       controller: ComplexSchemaEditorController,

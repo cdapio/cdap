@@ -1,0 +1,88 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import "../../styles/variables.less";
+
+@splitter-border-color: #0076dc;
+
+.box {
+  .node {
+    .node-splitter-endpoint {
+      .node-splitter-popover {
+        min-width: 80px;
+        max-width: 200px;
+        min-height: 40px;
+        position: absolute;
+        top: -25px;
+        left: 24px;
+        padding: 1px;
+        font-size: 13px;
+        border: 1px solid @splitter-border-color;
+        background-color: white;
+        border-style: solid;
+        z-index: 1;
+        background-clip: padding-box;
+        border-radius: 6px;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+
+        > .arrow,
+        > .arrow:after {
+          position: absolute;
+          border-color: transparent;
+          border-style: solid;
+        }
+
+        > .arrow {
+          top: 31px;
+          border-width: 11px 11px 11px 0;
+          margin-top: -11px;
+          left: -11px;
+          border-right-color: @splitter-border-color;
+
+          &:after {
+            border-width: 10px;
+            content: '';
+            left: 1px;
+            bottom: -10px;
+            border-left-width: 0;
+            border-right-color: white;
+          }
+        }
+
+        .popover-content {
+          padding: 10px;
+          color: @text-color;
+
+          .port-name {
+            width: 65%;
+            display: inline-block;
+          }
+
+          .endpoint-circle {
+            position: relative;
+            display: inline-flex;
+            top: -3px;
+            right: -20px;
+
+            &.disabled {
+              top: 2px;
+            }
+          }
+        }
+      }
+    }
+  }
+}

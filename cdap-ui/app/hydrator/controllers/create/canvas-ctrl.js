@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
     this.nodes = [];
     this.connections = [];
     this.previewMode = false;
+    this.nodeConfigModalOpen = false;
 
     DAGPlusPlusNodesStore.registerOnChangeListener(() => {
       this.setActiveNode();
@@ -53,7 +54,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
 
   setActiveNode() {
     var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
-    if (!nodeId) {
+    if (!nodeId || this.nodeConfigModalOpen) {
       return;
     }
     var pluginNode;
@@ -89,13 +90,11 @@ class HydratorPlusPlusCreateCanvasCtrl {
             rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusConfigStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusConfigStore, GLOBALS) {
               let pluginId = pluginNode.name;
               let appType = HydratorPlusPlusConfigStore.getAppType();
-
-              let sourceConn = HydratorPlusPlusConfigStore
-                .getSourceNodes(pluginId)
-                .filter( node => typeof node.outputSchema === 'string');
+              let sourceConnections = HydratorPlusPlusConfigStore.getSourceConnections(pluginId);
+              let sourceNodes = HydratorPlusPlusConfigStore.getSourceNodes(pluginId);
               let artifactVersion = HydratorPlusPlusConfigStore.getArtifact().version;
               return HydratorPlusPlusNodeService
-                .getPluginInfo(pluginNode, appType, sourceConn, artifactVersion)
+                .getPluginInfo(pluginNode, appType, sourceConnections, sourceNodes, artifactVersion)
                 .then((nodeWithInfo) => {
                   let pluginType = nodeWithInfo.type || nodeWithInfo.plugin.type;
                   return {
@@ -113,16 +112,19 @@ class HydratorPlusPlusCreateCanvasCtrl {
           }
         })
         .result
-        .then(this.deleteNode.bind(this), this.deleteNode.bind(this)); // Both close and ESC events in the modal are considered as SUCCESS and ERROR in promise callback. Hence the same callback for both success & failure.
+        .then(this.modalCallback.bind(this), this.modalCallback.bind(this)); // Both close and ESC events in the modal are considered as SUCCESS and ERROR in promise callback. Hence the same callback for both success & failure.
+
+    this.nodeConfigModalOpen = true;
+  }
+
+  modalCallback() {
+    this.deleteNode();
+    this.nodeConfigModalOpen = false;
   }
 
   deleteNode() {
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     this.setStateAndUpdateConfigStore();
-  }
-
-  generateSchemaOnEdge(sourceId) {
-    return this.HydratorPlusPlusHydratorService.generateSchemaOnEdge(sourceId);
   }
 }
 HydratorPlusPlusCreateCanvasCtrl.$inject = ['DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusPreviewStore', '$scope'];

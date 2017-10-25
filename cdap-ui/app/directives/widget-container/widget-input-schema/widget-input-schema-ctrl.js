@@ -15,10 +15,6 @@
 */
 angular.module(PKG.name + '.commons')
   .controller('MyInputSchemaCtrl', function($scope) {
-    this.doLoadNextSetOfInputSchemaRows = function() {
-      this.inputSchemaRowLimit += 10;
-    };
-    this.inputSchemaRowLimit = 15;
     this.multipleInputs = ($scope.multipleInputs === 'true' ? true : false);
     try {
       this.inputSchemas = JSON.parse($scope.inputSchema);

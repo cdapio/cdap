@@ -252,7 +252,7 @@ export function getWorkspaceList(workspaceId) {
         return;
       }
 
-      let workspaceList = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
+      let workspaceList = orderBy(res.values, [(workspace) => (workspace.name || '').toLowerCase()], ['asc']);
 
       DataPrepStore.dispatch({
         type: DataPrepActions.setWorkspaceList,

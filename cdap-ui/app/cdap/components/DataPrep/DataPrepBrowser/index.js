@@ -20,12 +20,14 @@ import React, { Component } from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import DatabaseBrowser from 'components/DataPrep/DataPrepBrowser/DatabaseBrowser';
 import FileBrowser from 'components/FileBrowser';
+import S3Browser from 'components/DataPrep/DataPrepBrowser/S3Browser';
 import KafkaBrowser from 'components/DataPrep/DataPrepBrowser/KafkaBrowser';
 
 const browserMap = {
   database: DatabaseBrowser,
   file: FileBrowser,
-  kafka: KafkaBrowser
+  kafka: KafkaBrowser,
+  s3: S3Browser
 };
 
 export default class DataPrepBrowser extends Component {
@@ -39,7 +41,7 @@ export default class DataPrepBrowser extends Component {
   componentWillMount() {
     DataPrepBrowserStore.subscribe(() => {
       let {activeBrowser} = DataPrepBrowserStore.getState();
-      if (this.state.activeBrowser.name !== activeBrowser.name) {
+      if (activeBrowser.name && this.state.activeBrowser.name !== activeBrowser.name) {
         this.setState({
           activeBrowser
         });
@@ -47,8 +49,9 @@ export default class DataPrepBrowser extends Component {
     });
   }
   render() {
-    if (browserMap.hasOwnProperty(this.state.activeBrowser.name)) {
-      let Tag = browserMap[this.state.activeBrowser.name];
+    let activeBrowser = this.state.activeBrowser.name.toLowerCase();
+    if (browserMap.hasOwnProperty(activeBrowser)) {
+      let Tag = browserMap[activeBrowser];
       return (
         <Tag
           {...this.props}

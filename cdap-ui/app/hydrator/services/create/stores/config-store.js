@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG) {
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG, EventPipe, myPipelineApi, myAppsApi) {
     'ngInject';
     this.state = {};
     this.mySettings = mySettings;
@@ -32,6 +32,9 @@ class HydratorPlusPlusConfigStore {
     this.$state = $state;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
     this.avsc = avsc;
+    this.EventPipe = EventPipe;
+    this.myPipelineApi = myPipelineApi;
+    this.myAppsApi = myAppsApi;
     this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
 
     this.changeListeners = [];
@@ -56,6 +59,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetMaxConcurrentRuns', this.setMaxConcurrentRuns.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onPublishPipeline', this.publishPipeline.bind(this));
   }
   registerOnChangeListener(callback) {
     // index of the listener to be removed while un-subscribing
@@ -570,7 +574,7 @@ class HydratorPlusPlusConfigStore {
         node.outputSchema = node.plugin.properties[node.outputSchemaProperty];
       }
       if (nodeConfig.outputSchema.implicitSchema) {
-        let outputSchema = this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(nodeConfig.outputSchema.implicitSchema);
+        let outputSchema = this.HydratorPlusPlusHydratorService.formatSchemaToAvro(nodeConfig.outputSchema.implicitSchema);
         node.outputSchema = outputSchema;
       }
       if (!node.outputSchema && nodeConfig.outputSchema.schemaProperties['default-schema']) {
@@ -703,10 +707,14 @@ class HydratorPlusPlusConfigStore {
   getStages() {
     return this.getState().config.stages || [];
   }
+  getSourceConnections(nodeId) {
+    return this.state.config.connections.filter( conn => conn.to === nodeId );
+  }
   getSourceNodes(nodeId) {
     let nodesMap = {};
     this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
-    return this.state.config.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
+    return this.getSourceConnections(nodeId)
+      .map(matchedConnection => nodesMap[matchedConnection.from] );
   }
   editNodeProperties(nodeId, nodeConfig) {
     let nodes = this.state.__ui__.nodes;
@@ -981,7 +989,7 @@ class HydratorPlusPlusConfigStore {
       this.$stateParams.draftId = this.getDraftId();
       this.$state.go('hydrator.create', this.$stateParams, {notify: false});
     }
-    let config = this.getDisplayConfig();
+    let config = this.getConfigForExport();
     config.__ui__ = {
       draftId: this.getDraftId()
     };
@@ -1023,6 +1031,84 @@ class HydratorPlusPlusConfigStore {
           }]);
         }
       );
+  }
+
+  publishPipeline() {
+    this.HydratorPlusPlusConsoleActions.resetMessages();
+    let error = this.validateState(true);
+
+    if (!error) { return; }
+    this.EventPipe.emit('showLoadingIcon', 'Deploying Pipeline...');
+
+    let removeFromUserDrafts = (adapterName) => {
+      let draftId = this.getState().__ui__.draftId;
+      this.mySettings
+        .get('hydratorDrafts', true)
+        .then(
+          (res) => {
+            var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, draftId);
+            if (savedDraft) {
+              delete res[this.$stateParams.namespace][draftId];
+              return this.mySettings.set('hydratorDrafts', res);
+            }
+          },
+          (err) => {
+            this.HydratorPlusPlusConsoleActions.addMessage([{
+              type: 'error',
+              content: err
+            }]);
+            return this.$q.reject(false);
+          }
+        )
+        .then(
+          () => {
+            this.EventPipe.emit('hideLoadingIcon.immediate');
+            this.setState(this.getDefaults());
+            this.$state.go('hydrator.detail', { pipelineId: adapterName });
+          }
+        );
+    };
+
+    let publish = (pipelineName) => {
+      this.myPipelineApi.save(
+        {
+          namespace: this.$state.params.namespace,
+          pipeline: pipelineName
+        },
+        config
+      )
+      .$promise
+      .then(
+        removeFromUserDrafts.bind(this, pipelineName),
+        (err) => {
+          this.EventPipe.emit('hideLoadingIcon.immediate');
+          this.HydratorPlusPlusConsoleActions.addMessage([{
+            type: 'error',
+            content: angular.isObject(err) ? err.data : err
+          }]);
+        }
+      );
+    };
+
+    var config = this.getConfigForExport();
+
+    // Checking if Pipeline name already exist
+    this.myAppsApi
+      .list({ namespace: this.$state.params.namespace })
+      .$promise
+      .then( (apps) => {
+        var appNames = apps.map( (app) => { return app.name; } );
+
+        if (appNames.indexOf(config.name) !== -1) {
+          this.HydratorPlusPlusConsoleActions.addMessage([{
+            type: 'error',
+            content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
+          }]);
+          this.EventPipe.emit('hideLoadingIcon.immediate');
+        } else {
+          publish(config.name);
+        }
+      });
   }
 }
 

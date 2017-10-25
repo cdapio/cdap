@@ -20,6 +20,7 @@ import React from 'react';
 import classnames from 'classnames';
 require('./IconSVG.scss');
 require('../../styles/fonts/symbol-defs.svg');
+require('../../styles/fonts/symbol-defs_new.svg');
 
 export default function IconSVG(props) {
   const {name, className, ...moreProps} = props;

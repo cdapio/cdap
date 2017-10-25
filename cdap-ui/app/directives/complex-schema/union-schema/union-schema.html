@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@
               <select class="form-control"
                       ng-model="item.displayType"
                       ng-options="option as option for option in UnionSchema.SCHEMA_TYPES"
-                      ng-change="UnionSchema.changeType(item)">
+                      ng-change="UnionSchema.changeType(item, '{{item.displayType}}')">
               </select>
             </div>
           </div>
@@ -61,6 +61,7 @@
       <my-embedded-schema-selector
         type="item.type"
         display-type="item.displayType"
+        index="item.index"
         parent-format-output="UnionSchema.formatOutput()"
         is-disabled="UnionSchema.isDisabled">
       </my-embedded-schema-selector>

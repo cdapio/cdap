@@ -361,6 +361,22 @@ features:
           1: '{count} Topic'
           _: "{count} Topics"
         title: Select Topic
+      S3Browser:
+        BucketData:
+          Content:
+            EmptymessageContainer:
+              suggestion1: your search
+          Headers:
+            LastModified: Last Modified
+            Name: Name
+            Owner: Owner
+            Size: Size
+        Search:
+          placeholder: Search this directory
+        TopPanel:
+          ListingInfo:
+            label: "{dirsCount} Directories and {filesCount} Files"
+          selectData: Select Data
     Directives:
       apply: Apply
       cancel: Cancel
@@ -834,6 +850,8 @@ features:
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      S3Pipeline:
+        error: Cannot find S3 plugin. Please install Amazon S3 plugins before creating a pipeline
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       Tabs:
@@ -983,7 +1001,10 @@ features:
   DetailView:
     PropertiesTab:
       title: Properties for {entityType} "{entityId}"
-
+  EmptyMessageContainer:
+    clearLabel: Clear
+    title: 'No match found for "{searchText}"'
+    suggestionTitle: "You can try to:"
   FileBrowser:
     directory: Directory
     EmptyMessage:

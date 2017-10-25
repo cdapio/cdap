@@ -30,6 +30,7 @@ import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import T from 'i18n-react';
 import findIndex from 'lodash/findIndex';
 import debounce from 'lodash/debounce';
+import MouseTrap from 'mousetrap';
 
 require('./WorkspaceTabs.scss');
 
@@ -75,6 +76,11 @@ export default class WorkspaceTabs extends Component {
 
   componentDidMount() {
     this.calculateMaxTabs();
+    MouseTrap.bind('enter', () => {
+      if (this.state.deleteWorkspace) {
+        this.handleDeleteWorkspace(this.state.deleteWorkspace.id);
+      }
+    });
 
     window.addEventListener('resize', this.debouncedCalculateMaxTabs);
   }
@@ -96,7 +102,7 @@ export default class WorkspaceTabs extends Component {
     if (this.sub) {
       this.sub();
     }
-
+    MouseTrap.unbind('enter');
     window.removeEventListener('resize', this.debouncedCalculateMaxTabs);
   }
 

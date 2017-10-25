@@ -257,7 +257,11 @@ angular.module(PKG.name + '.commons')
       });
 
       connections.forEach(function (connection) {
-        graph.setEdge(connection.from, connection.to);
+        if (connection.port) {
+          graph.setEdge(connection.from, connection.to, {minlen: 1.5});
+        } else {
+          graph.setEdge(connection.from, connection.to);
+        }
       });
 
       dagre.layout(graph);

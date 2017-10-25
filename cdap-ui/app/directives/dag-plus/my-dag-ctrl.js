@@ -37,14 +37,15 @@ angular.module(PKG.name + '.commons')
     vm.isDisabled = $scope.isDisabled;
     vm.disableNodeClick = $scope.disableNodeClick;
 
-    var nodePopovers = {};
+    var metricsPopovers = {};
     var selectedConnections = [];
     var endpointClicked = false;
     var connectionDropped = false;
     var dagMenu;
     let conditionNodes = [];
+    let splitterNodesPorts = {};
 
-    this.pluginsMap = {};
+    vm.pluginsMap = {};
 
     vm.scale = 1.0;
 
@@ -66,7 +67,7 @@ angular.module(PKG.name + '.commons')
         nodesTimeout,
         fitToScreenTimeout,
         initTimeout,
-        nodePopoverTimeout,
+        metricsPopoverTimeout,
         resetTimeout;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
@@ -107,12 +108,21 @@ angular.module(PKG.name + '.commons')
         if (vm.isDisabled) {
           // Disable all endpoints
           angular.forEach($scope.nodes, function (node) {
-            var endpointArr = vm.instance.getEndpoints(node.name);
-
-            if (endpointArr) {
-              angular.forEach(endpointArr, function (endpoint) {
-                endpoint.setEnabled(false);
+            if (node.plugin.type === 'condition') {
+              let endpoints = [`${node.name}_condition_true`, `${node.name}_condition_false`];
+              angular.forEach(endpoints, (endpoint) => {
+                disableEndpoints(endpoint);
               });
+            } else if (node.plugin.type === 'splittertransform')  {
+              let portNames = node.outputSchema.map(port => port.name);
+              let endpoints = portNames.map(portName => `${node.name}_port_${portName}`);
+              angular.forEach(endpoints, (endpoint) => {
+                // different from others because the name here is the uuid of the splitter endpoint,
+                // not the id of DOM element
+                disableEndpoint(endpoint);
+              });
+            } else {
+              disableEndpoints(node.name);
             }
           });
         }
@@ -129,7 +139,7 @@ angular.module(PKG.name + '.commons')
             };
             scope.version = node.plugin.artifact.version;
 
-            nodePopovers[node.name] = {
+            metricsPopovers[node.name] = {
               scope: scope,
               element: elem,
               popover: null,
@@ -146,13 +156,13 @@ angular.module(PKG.name + '.commons')
 
           $scope.$watch('metricsData', function () {
             if (Object.keys($scope.metricsData).length === 0) {
-              angular.forEach(nodePopovers, function (value) {
+              angular.forEach(metricsPopovers, function (value) {
                 value.scope.data.metrics = 0;
               });
             }
 
             angular.forEach($scope.metricsData, function (value, key) {
-              nodePopovers[key].scope.data.metrics = value;
+              metricsPopovers[key].scope.data.metrics = value;
             });
           }, true);
         }
@@ -169,10 +179,10 @@ angular.module(PKG.name + '.commons')
       }, 500);
     }
 
-    function closeNodePopover(node) {
-      var nodeInfo = nodePopovers[node.name];
-      if (nodePopoverTimeout) {
-        $timeout.cancel(nodePopoverTimeout);
+    function closeMetricsPopover(node) {
+      var nodeInfo = metricsPopovers[node.name];
+      if (metricsPopoverTimeout) {
+        $timeout.cancel(metricsPopoverTimeout);
       }
       if (nodeInfo && nodeInfo.popover) {
         nodeInfo.popover.hide();
@@ -184,10 +194,10 @@ angular.module(PKG.name + '.commons')
     vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
 
-      var nodeInfo = nodePopovers[node.name];
+      var nodeInfo = metricsPopovers[node.name];
 
-      if (nodePopoverTimeout) {
-        $timeout.cancel(nodePopoverTimeout);
+      if (metricsPopoverTimeout) {
+        $timeout.cancel(metricsPopoverTimeout);
       }
 
       if (nodeInfo.element && nodeInfo.scope) {
@@ -195,7 +205,7 @@ angular.module(PKG.name + '.commons')
           trigger: 'manual',
           placement: 'auto right',
           target: angular.element(nodeInfo.element[0]),
-          templateUrl: $scope.nodePopoverTemplate,
+          templateUrl: $scope.metricsPopoverTemplate,
           container: 'main',
           scope: nodeInfo.scope
         });
@@ -204,7 +214,7 @@ angular.module(PKG.name + '.commons')
 
             // Needs a timeout here to avoid showing popups instantly when just moving
             // cursor across a node
-            nodePopoverTimeout = $timeout(function () {
+            metricsPopoverTimeout = $timeout(function () {
               if (nodeInfo.popover && typeof nodeInfo.popover.show === 'function') {
                 nodeInfo.popover.show();
               }
@@ -216,7 +226,7 @@ angular.module(PKG.name + '.commons')
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
 
-      closeNodePopover(node);
+      closeMetricsPopover(node);
     };
 
     vm.zoomIn = function () {
@@ -271,62 +281,12 @@ angular.module(PKG.name + '.commons')
       }
 
       angular.forEach($scope.nodes, function (node) {
-        if (node.type !== 'condition') {
-          let sourceObj = {
-            isSource: true,
-            filter: function(event) {
-              // we need this variable because when the user clicks on the endpoint circle, multiple
-              // 'mousedown' events are fired
-              if (event.target.className.indexOf('endpoint-circle') !== -1 && !endpointClicked) {
-                endpointClicked = true;
-              }
-
-              return event.target.className.indexOf('endpoint-circle') !== -1;
-            },
-            connectionType: 'basic'
-          };
-          if (vm.isDisabled) {
-            sourceObj.enabled = false;
-          }
-
-          vm.instance.makeSource(node.name, sourceObj);
-
+        if (node.type === 'condition') {
+          initConditionNode(node.name);
+        } else if (node.type === 'splittertransform') {
+          initSplitterNode(node);
         } else {
-          if (conditionNodes.indexOf(node.name) !== -1) {
-            return;
-          }
-          let newTrueEndpoint = vm.instance.addEndpoint(node.name, {
-            anchor: 'Right',
-            cssClass: 'condition-endpoint condition-endpoint-true',
-            isSource: true,
-            maxConnections: -1,
-            endpoint: 'Dot',
-            uuid: 'True' + node.name,
-            connectorStyle: vm.conditionTrueConnectionStyle,
-            overlays: [
-              [ 'Label', { label: 'Yes', id: 'yesLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
-            ]
-          });
-          newTrueEndpoint.hideOverlay('yesLabel');
-
-          let newFalseEndpoint = vm.instance.addEndpoint(node.name, {
-            anchor: 'Bottom',
-            cssClass: 'condition-endpoint condition-endpoint-false',
-            isSource: true,
-            maxConnections: -1,
-            endpoint: 'Dot',
-            uuid: 'False' + node.name,
-            connectorStyle: vm.conditionFalseConnectionStyle,
-            overlays: [
-              [ 'Label', { label: 'No', id: 'noLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
-            ]
-          });
-          newFalseEndpoint.hideOverlay('noLabel');
-
-          addListenersForEndpoint(newTrueEndpoint, 'right', node.name, 'yesLabel');
-          addListenersForEndpoint(newFalseEndpoint, 'bottom', node.name, 'noLabel');
-
-          conditionNodes.push(node.name);
+          initNormalNode(node.name);
         }
 
         vm.instance.makeTarget(node.name, {
@@ -338,10 +298,120 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    function initNormalNode(nodeName) {
+      let sourceObj = {
+        isSource: true,
+        filter: function(event) {
+          // we need this variable because when the user clicks on the endpoint circle, multiple
+          // 'mousedown' events are fired
+          if (event.target.className.indexOf('endpoint-circle') !== -1 && !endpointClicked) {
+            endpointClicked = true;
+          }
+
+          return event.target.className.indexOf('endpoint-circle') !== -1;
+        },
+        connectionType: 'basic'
+      };
+      if (vm.isDisabled) {
+        sourceObj.enabled = false;
+      }
+
+      vm.instance.makeSource(nodeName, sourceObj);
+    }
+
+    function initConditionNode(nodeName) {
+      if (conditionNodes.indexOf(nodeName) !== -1) {
+        return;
+      }
+      let trueEndpointDOMElId = nodeName + '_condition_true';
+      let trueEndpointDOMEl = document.querySelector(`#${trueEndpointDOMElId}`);
+      let newTrueEndpoint = vm.instance.addEndpoint(trueEndpointDOMElId, {
+        anchor: 'Right',
+        cssClass: 'condition-endpoint condition-endpoint-true',
+        isSource: true,
+        maxConnections: -1,
+        endpoint: 'Dot',
+        connectorStyle: vm.conditionTrueConnectionStyle,
+        overlays: [
+          [ 'Label', { label: 'Yes', id: 'yesLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
+        ]
+      });
+      newTrueEndpoint.hideOverlay('yesLabel');
+
+      let falseEndpointDOMElId = nodeName + '_condition_false';
+      let falseEndpointDOMEl = document.querySelector(`#${falseEndpointDOMElId}`);
+      let newFalseEndpoint = vm.instance.addEndpoint(falseEndpointDOMElId, {
+        anchor: 'Bottom',
+        cssClass: 'condition-endpoint condition-endpoint-false',
+        isSource: true,
+        maxConnections: -1,
+        endpoint: 'Dot',
+        connectorStyle: vm.conditionFalseConnectionStyle,
+        overlays: [
+          [ 'Label', { label: 'No', id: 'noLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
+        ]
+      });
+      newFalseEndpoint.hideOverlay('noLabel');
+
+      addListenersForEndpoint(newTrueEndpoint, trueEndpointDOMEl, 'yesLabel');
+      addListenersForEndpoint(newFalseEndpoint, falseEndpointDOMEl, 'noLabel');
+
+      conditionNodes.push(nodeName);
+    }
+
+    function initSplitterNode(node) {
+      if (!node.outputSchema || !Array.isArray(node.outputSchema) || (Array.isArray(node.outputSchema) && node.outputSchema[0].name === GLOBALS.defaultSchemaName)) {
+        return;
+      }
+
+      let newPorts = node.outputSchema
+        .map(schema => schema.name);
+
+      let splitterPorts = splitterNodesPorts[node.name];
+
+      let portsChanged = !_.isEqual(splitterPorts, newPorts);
+
+      if (!portsChanged) {
+        return;
+      }
+
+      angular.forEach(splitterPorts, (port) => {
+        let portElId = node.name + '_port_' + port;
+        deleteEndpoints(portElId);
+      });
+
+      angular.forEach(node.outputSchema, (outputSchema) => {
+        let domCircleElId = node.name + '_port_' + outputSchema.name;
+        let splitterEndpoint;
+
+        let domCircleEl = document.getElementsByClassName(domCircleElId);
+        domCircleEl = domCircleEl[domCircleEl.length - 1];
+
+        splitterEndpoint = vm.instance.addEndpoint(domCircleEl, {
+          anchor: 'Right',
+          cssClass: 'splitter-endpoint',
+          isSource: true,
+          maxConnections: -1,
+          endpoint: 'Dot',
+          uuid: domCircleElId
+        });
+        addListenersForEndpoint(splitterEndpoint, domCircleEl);
+      });
+
+      DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+      splitterNodesPorts[node.name] = newPorts;
+    }
+
+    function getPortEndpointClass(splitterNodeClassList) {
+      let portElemClassList = [].slice.call(splitterNodeClassList);
+      let portClass = _.find(portElemClassList, (className) => className.indexOf('_port_') !== -1);
+      return portClass;
+    }
+
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
-        var sourceNode = $scope.nodes.find( node => node.name === conn.from);
-        var targetNode = $scope.nodes.find( node => node.name === conn.to);
+        var sourceNode = $scope.nodes.find(node => node.name === conn.from);
+        var targetNode = $scope.nodes.find(node => node.name === conn.to);
 
         if (!sourceNode || !targetNode) {
           return;
@@ -353,11 +423,9 @@ angular.module(PKG.name + '.commons')
         };
 
         if (conn.hasOwnProperty('condition')) {
-          if (conn.condition) {
-            connObj.source = vm.instance.getEndpoint('True' + conn.from);
-          } else {
-            connObj.source = vm.instance.getEndpoint('False' + conn.from);
-          }
+          connObj.source = vm.instance.getEndpoints(`${conn.from}_condition_${conn.condition}`)[0];
+        } else if (conn.hasOwnProperty('port')) {
+          connObj.source = vm.instance.getEndpoint(`${conn.from}_port_${conn.port}`);
         }
 
         let newConn = vm.instance.connect(connObj);
@@ -382,20 +450,38 @@ angular.module(PKG.name + '.commons')
         from: newConnObj.sourceId,
         to: newConnObj.targetId
       };
-      if (newConnObj.sourceEndpoint.canvas.classList.contains('condition-endpoint')) {
-        if (newConnObj.sourceEndpoint.canvas.classList.contains('condition-endpoint-true')) {
-          connection.condition = true;
+
+      let sourceIsCondition = newConnObj.sourceId.indexOf('_condition_') !== -1;
+      let sourceIsPort = newConnObj.source.className.indexOf('_port_') !== -1;
+
+      let sourceIdSplit;
+
+      if (sourceIsCondition || sourceIsPort) {
+        if (sourceIsCondition) {
+          sourceIdSplit = newConnObj.sourceId.split('_');
+          connection.condition = sourceIdSplit[2] === 'true';
         } else {
-          connection.condition = false;
+          let portClass = getPortEndpointClass(newConnObj.source.classList);
+          sourceIdSplit = portClass.split('_');
+          connection.port = sourceIdSplit[2];
         }
+        connection.from = sourceIdSplit[0];
       }
+
       $scope.connections.push(connection);
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
     }
 
     function removeConnection(detachedConnObj, updateStore = true) {
+      let connObj = Object.assign({}, detachedConnObj);
+      if (detachedConnObj.sourceId.indexOf('_condition_') !== -1) {
+        connObj.sourceId = detachedConnObj.sourceId.split('_')[0];
+      } else if (detachedConnObj.source.className.indexOf('_port_') !== -1) {
+        let portClass = getPortEndpointClass(detachedConnObj.source.classList);
+        connObj.sourceId = portClass.split('_')[0];
+      }
       var connectionIndex = _.findIndex($scope.connections, function (conn) {
-        return conn.from === detachedConnObj.sourceId && conn.to === detachedConnObj.targetId;
+        return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
       if (connectionIndex !== -1) {
         $scope.connections.splice(connectionIndex, 1);
@@ -421,8 +507,8 @@ angular.module(PKG.name + '.commons')
       vm.instance.unbind('connectionDetached');
       angular.forEach(selectedConnections, function (selectedConnectionObj) {
         removeContextMenuEventListener(selectedConnectionObj);
-        vm.instance.detach(selectedConnectionObj);
         removeConnection(selectedConnectionObj, false);
+        vm.instance.detach(selectedConnectionObj);
       });
       vm.instance.bind('connectionDetached', removeConnection);
       selectedConnections = [];
@@ -438,47 +524,49 @@ angular.module(PKG.name + '.commons')
         return;
       }
 
+      if (!selectedObj.connections || !selectedObj.connections.length) {
+        return;
+      }
+
       // else is endpoint
-      if (selectedObj.connections && selectedObj.connections.length > 0) {
-        if (selectedObj.isTarget) {
-          toggleConnection(selectedObj.connections[0]);
-          return;
-        }
+      if (selectedObj.isTarget) {
+        toggleConnection(selectedObj.connections[0]);
+        return;
+      }
 
-        let connectionsToToggle;
+      let connectionsToToggle;
 
-        // If it's an endpoint on a condition node, then only toggle connections
-        // from that endpoint. For other nodes, toggle all the connections of the
-        // source that this endpoint belongs to
+      // If it's an endpoint on a condition node, then only toggle connections
+      // from that endpoint. For other nodes, toggle all the connections of the
+      // source that this endpoint belongs to
 
-        if (selectedObj.endpoint.canvas.classList.contains('condition-endpoint')) {
-          connectionsToToggle = selectedObj.connections;
-        } else {
-            connectionsToToggle = vm.instance.getConnections({
-            source: selectedObj.connections[0].sourceId
-          });
-        }
+      if (selectedObj.endpoint.canvas.classList.contains('condition-endpoint')) {
+        connectionsToToggle = selectedObj.connections;
+      } else {
+        connectionsToToggle = vm.instance.getConnections({
+          source: selectedObj.connections[0].sourceId
+        });
+      }
 
-        let notYetSelectedConnections = _.difference(connectionsToToggle, selectedConnections);
+      let notYetSelectedConnections = _.difference(connectionsToToggle, selectedConnections);
 
-        // This is to toggle all connections coming from an endpoint.
-        // If zero, one or more (but not all) of the connections are already selected,
-        // then just select the remaining ones. Else if they're all selected,
-        // then unselect them.
+      // This is to toggle all connections coming from an endpoint.
+      // If zero, one or more (but not all) of the connections are already selected,
+      // then just select the remaining ones. Else if they're all selected,
+      // then unselect them.
 
-        if (notYetSelectedConnections.length !== 0) {
-          notYetSelectedConnections.forEach(connection => {
-            selectedConnections.push(connection);
-            connection.connector.canvas.addEventListener('contextmenu', openContextMenu);
-            connection.addType('selected');
-          });
-        } else {
-          connectionsToToggle.forEach(connection => {
-            selectedConnections.splice(selectedConnections.indexOf(connection), 1);
-            removeContextMenuEventListener(connection);
-            connection.removeType('selected');
-          });
-        }
+      if (notYetSelectedConnections.length !== 0) {
+        notYetSelectedConnections.forEach(connection => {
+          selectedConnections.push(connection);
+          connection.connector.canvas.addEventListener('contextmenu', openContextMenu);
+          connection.addType('selected');
+        });
+      } else {
+        connectionsToToggle.forEach(connection => {
+          selectedConnections.splice(selectedConnections.indexOf(connection), 1);
+          removeContextMenuEventListener(connection);
+          connection.removeType('selected');
+        });
       }
     }
 
@@ -493,33 +581,83 @@ angular.module(PKG.name + '.commons')
       connObj.toggleType('selected');
     }
 
+    function deleteEndpoints(elementId) {
+      vm.instance.unbind('connectionDetached');
+      let endpoint = vm.instance.getEndpoint(elementId);
+
+      if (endpoint && endpoint.connections) {
+        angular.forEach(endpoint.connections, (conn) => {
+          removeConnection(conn, false);
+          vm.instance.detach(conn);
+        });
+      }
+
+      vm.instance.deleteEndpoint(endpoint);
+      vm.instance.bind('connectionDetached', removeConnection);
+    }
+
+    function disableEndpoint(uuid) {
+      let endpoint = vm.instance.getEndpoint(uuid);
+      if (endpoint) {
+        endpoint.setEnabled(false);
+      }
+    }
+
+    function disableEndpoints(elementId) {
+      let endpointArr = vm.instance.getEndpoints(elementId);
+
+      if (endpointArr) {
+        angular.forEach(endpointArr, (endpoint) => {
+          endpoint.setEnabled(false);
+        });
+      }
+    }
+
     function onStartDetach() {
       connectionDropped = false;
     }
 
-    function addListenersForEndpoint(endpoint, location, nodeId, labelId) {
-      let nodeDomElCircle = document.querySelector(`#${nodeId} .endpoint-circle-${location}`);
-
-      endpoint.canvas.addEventListener('mouseover', function() {
-        if (!nodeDomElCircle.classList.contains('hover')) {
-          nodeDomElCircle.classList.add('hover');
-        }
+    function addHoverListener(endpoint, domCircleEl, labelId) {
+      if (!domCircleEl.classList.contains('hover')) {
+        domCircleEl.classList.add('hover');
+      }
+      if (labelId) {
         endpoint.showOverlay(labelId);
-      });
-      endpoint.canvas.addEventListener('mouseout', function() {
-        if (nodeDomElCircle.classList.contains('hover')) {
-          nodeDomElCircle.classList.remove('hover');
-        }
+      }
+    }
+
+    function removeHoverListener(endpoint, domCircleEl, labelId) {
+      if (domCircleEl.classList.contains('hover')) {
+        domCircleEl.classList.remove('hover');
+      }
+      if (labelId) {
         endpoint.hideOverlay(labelId);
-      });
-      endpoint.canvas.addEventListener('mousedown', function() {
-        endpointClicked = true;
-      });
+      }
+    }
+
+    function enableEndpointClickFlag() {
+      endpointClicked = true;
+    }
+
+    function addListenersForEndpoint(endpoint, domCircleEl, labelId) {
+      endpoint.canvas.removeEventListener('mouseover', addHoverListener);
+      endpoint.canvas.removeEventListener('mouseout', removeHoverListener);
+      endpoint.canvas.removeEventListener('mousedown', enableEndpointClickFlag);
+      endpoint.canvas.addEventListener('mouseover', addHoverListener.bind(null, endpoint, domCircleEl, labelId));
+      endpoint.canvas.addEventListener('mouseout', removeHoverListener.bind(null, endpoint, domCircleEl, labelId));
+      endpoint.canvas.addEventListener('mousedown', enableEndpointClickFlag);
     }
 
     function checkIfConnectionExistsOrValid(connObj) {
       // return false if connection already exists, which will prevent the connecton from being formed
       if (connectionDropped) { return false; }
+
+      if (connObj.sourceId.indexOf('_condition_') !== -1) {
+        connObj.sourceId = connObj.sourceId.split('_')[0];
+      } else if (connObj.connection.source.className.indexOf('_port_') !== -1) {
+        let portClass = getPortEndpointClass(connObj.connection.source.classList);
+        connObj.sourceId = portClass.split('_')[0];
+      }
 
       var exists = _.find($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
@@ -543,28 +681,32 @@ angular.module(PKG.name + '.commons')
       });
       connectionDropped = true;
 
+
+      if (!valid) {
+        return valid;
+      }
+
       // If valid, then modifies the look of the connection before showing it
-      if (valid) {
-        if (sourceNode.type === 'action' || targetNode.type === 'action') {
-          connObj.connection.setType('dashed');
-        } else if (sourceNode.type !== 'condition' && targetNode.type !== 'condition') {
-          connObj.connection.setType('basic solid');
-        } else {
-          if (sourceNode.type === 'condition') {
-            if (connObj.connection.endpoints && connObj.connection.endpoints.length > 0) {
-              let sourceEndpoint = connObj.dropEndpoint;
-              if (sourceEndpoint.canvas.classList.contains('condition-endpoint-true')) {
-                connObj.connection.setType('conditionTrue');
-              } else if (sourceEndpoint.canvas.classList.contains('condition-endpoint-false')) {
-                connObj.connection.setType('conditionFalse');
-              }
+      if (sourceNode.type === 'action' || targetNode.type === 'action') {
+        connObj.connection.setType('dashed');
+      } else if (sourceNode.type !== 'condition' && targetNode.type !== 'condition') {
+        connObj.connection.setType('basic solid');
+      } else {
+        if (sourceNode.type === 'condition') {
+          if (connObj.connection.endpoints && connObj.connection.endpoints.length > 0) {
+            let sourceEndpoint = connObj.dropEndpoint;
+            // TODO: simplify this?
+            if (sourceEndpoint.canvas.classList.contains('condition-endpoint-true')) {
+              connObj.connection.setType('conditionTrue');
+            } else if (sourceEndpoint.canvas.classList.contains('condition-endpoint-false')) {
+              connObj.connection.setType('conditionFalse');
             }
-          } else {
-            connObj.connection.setType('basic');
           }
-          if (targetNode.type === 'condition') {
-            connObj.connection.addType('dashed');
-          }
+        } else {
+          connObj.connection.setType('basic');
+        }
+        if (targetNode.type === 'condition') {
+          connObj.connection.addType('dashed');
         }
       }
 
@@ -586,6 +728,7 @@ angular.module(PKG.name + '.commons')
       resetTimeout = $timeout(function () {
         vm.instance.reset();
         conditionNodes = [];
+        splitterNodesPorts = {};
 
         $scope.nodes = DAGPlusPlusNodesStore.getNodes();
         $scope.connections = DAGPlusPlusNodesStore.getConnections();
@@ -691,30 +834,31 @@ angular.module(PKG.name + '.commons')
     }
 
     vm.selectEndpoint = function(event, node) {
-      if (event.target.className.indexOf('endpoint-circle') !== -1) {
-        let sourceElem = node.name;
-        let endpoints = vm.instance.getEndpoints(sourceElem);
-        if (endpoints) {
-          for (let i = 0; i < endpoints.length; i++) {
-            let endpoint = endpoints[i];
-            if (endpoint.connections && endpoint.connections.length > 0) {
-              if (endpoint.connections[0].sourceId === node.name) {
-                toggleConnections(endpoint);
-                break;
-              }
-            }
+      if (event.target.className.indexOf('endpoint-circle') === -1) { return; }
+
+      endpointClicked = false;
+      let sourceElem = node.name;
+      let endpoints = vm.instance.getEndpoints(sourceElem);
+
+      if (!endpoints) { return; }
+
+      for (let i = 0; i < endpoints.length; i++) {
+        let endpoint = endpoints[i];
+        if (endpoint.connections && endpoint.connections.length > 0) {
+          if (endpoint.connections[0].sourceId === node.name) {
+            toggleConnections(endpoint);
+            break;
           }
         }
       }
-      endpointClicked = false;
     };
 
     function openContextMenu(e) {
-      if (selectedConnections.length > 0) {
-        e.preventDefault();
-        vm.openDagMenu(true);
-        positionContextMenu(e, dagMenu);
-      }
+      if (!selectedConnections.length) { return; }
+
+      e.preventDefault();
+      vm.openDagMenu(true);
+      positionContextMenu(e, dagMenu);
     }
 
     function removeContextMenuEventListener(connection) {
@@ -726,9 +870,9 @@ angular.module(PKG.name + '.commons')
     jsPlumb.ready(function() {
       var dagSettings = DAGPlusPlusFactory.getSettings();
       var dagSettingsDefault = dagSettings.default;
-      var {defaultConnectionStyle, selectedConnectionStyle, dashedConnectionStyle, solidConnectionStyle} = dagSettings;
-      vm.conditionTrueConnectionStyle = dagSettings.conditionTrueConnectionStyle;
-      vm.conditionFalseConnectionStyle = dagSettings.conditionFalseConnectionStyle;
+      var {defaultConnectionStyle, selectedConnectionStyle, dashedConnectionStyle, solidConnectionStyle, conditionTrueConnectionStyle, conditionFalseConnectionStyle} = dagSettings;
+      vm.conditionTrueConnectionStyle = conditionTrueConnectionStyle;
+      vm.conditionFalseConnectionStyle = conditionFalseConnectionStyle;
 
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettingsDefault);
@@ -736,8 +880,8 @@ angular.module(PKG.name + '.commons')
       vm.instance.registerConnectionType('selected', selectedConnectionStyle);
       vm.instance.registerConnectionType('dashed', dashedConnectionStyle);
       vm.instance.registerConnectionType('solid', solidConnectionStyle);
-      vm.instance.registerConnectionType('conditionTrue', vm.conditionTrueConnectionStyle);
-      vm.instance.registerConnectionType('conditionFalse', vm.conditionFalseConnectionStyle);
+      vm.instance.registerConnectionType('conditionTrue', conditionTrueConnectionStyle);
+      vm.instance.registerConnectionType('conditionFalse', conditionFalseConnectionStyle);
 
       init();
 
@@ -790,7 +934,7 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
-      closeNodePopover(node);
+      closeMetricsPopover(node);
       HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
@@ -800,7 +944,7 @@ angular.module(PKG.name + '.commons')
       if ($scope.disableMetricsClick) {
         return;
       }
-      closeNodePopover(node);
+      closeMetricsPopover(node);
       HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
@@ -808,6 +952,19 @@ angular.module(PKG.name + '.commons')
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
+
+      if (Object.keys(splitterNodesPorts).indexOf(node.name) !== -1) {
+        delete splitterNodesPorts[node.name];
+      }
+      let nodeType = node.plugin.type || node.type;
+      if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
+        let portNames = node.outputSchema.map(port => port.name);
+        let endpoints = portNames.map(portName => `${node.name}_port_${portName}`);
+        angular.forEach(endpoints, (endpoint) => {
+          deleteEndpoints(endpoint);
+        });
+      }
+
       vm.instance.unbind('connectionDetached');
       selectedConnections = selectedConnections.filter(function(selectedConnObj) {
         if (selectedConnObj.sourceId === node.name || selectedConnObj.targetId === node.name) {
@@ -817,6 +974,7 @@ angular.module(PKG.name + '.commons')
       });
       vm.instance.unmakeSource(node.name);
       vm.instance.unmakeTarget(node.name);
+
       vm.instance.remove(node.name);
       vm.instance.bind('connectionDetached', removeConnection);
     };
@@ -887,7 +1045,6 @@ angular.module(PKG.name + '.commons')
         vm.nodeMenuOpen = nodeName;
       }
     };
-
 
     vm.openDagMenu = function(open) {
       vm.dagMenuOpen = open;
@@ -1041,25 +1198,25 @@ angular.module(PKG.name + '.commons')
     vm.shouldShowCustomIcon = (node) => {
       let key = generatePluginMapKey(node);
 
-      let iconSourceType = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'type');
+      let iconSourceType = myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'icon', 'type');
 
       return ['inline', 'link'].indexOf(iconSourceType) !== -1;
     };
 
     vm.getCustomIconSrc = (node) => {
       let key = generatePluginMapKey(node);
-      let iconSourceType = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'type');
+      let iconSourceType = myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'icon', 'type');
 
       if (iconSourceType === 'inline') {
-        return myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'arguments', 'data');
+        return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'icon', 'arguments', 'data');
       }
 
-      return myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'arguments', 'url');
+      return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'icon', 'arguments', 'url');
     };
 
 
     let subAvailablePlugins = AvailablePluginsStore.subscribe(() => {
-      this.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
+      vm.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
     });
 
     $scope.$on('$destroy', function () {
@@ -1076,7 +1233,7 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(nodesTimeout);
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
-      $timeout.cancel(nodePopoverTimeout);
+      $timeout.cancel(metricsPopoverTimeout);
       angular.forEach(selectedConnections, function(selectedConnObj) {
         removeContextMenuEventListener(selectedConnObj);
       });

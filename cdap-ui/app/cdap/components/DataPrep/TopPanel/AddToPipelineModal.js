@@ -245,6 +245,40 @@ export default class AddToHydratorModal extends Component {
     };
   }
 
+  constructS3Source(artifactsList, s3Info) {
+    if (!s3Info) {
+      return null;
+    }
+    let batchArtifact = find(artifactsList, {name: 'amazon-s3-plugins'});
+    if (!batchArtifact) {
+      this.setState({
+        error: T.translate('features.DataPrep.TopPanel.S3Pipeline.error'),
+        loading: false
+      });
+      return;
+    }
+    batchArtifact.version = '[1.7.0, 3.0.0)';
+    let plugin = objectQuery(s3Info, 'values', 0, 'S3');
+    let batchPluginInfo = {
+      name: plugin.name,
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: batchArtifact,
+      properties: {...plugin.properties, referenceName: plugin.name}
+    };
+    let batchStage = {
+      name: 'S3',
+      plugin: batchPluginInfo
+    };
+    return {
+      batchSource: batchStage,
+      connections: [{
+        from: 'S3',
+        to: 'Wrangler'
+      }]
+    };
+  }
+
   constructProperties(pluginVersion) {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
@@ -286,6 +320,15 @@ export default class AddToHydratorModal extends Component {
       };
 
       rxArray.push(MyDataPrepApi.getKafkaSpecification(specParams));
+    } else if (state.workspaceInfo.properties.connection === 's3') {
+      let specParams = {
+        namespace,
+        connectionId: state.workspaceInfo.properties.connectionid,
+        activeBucket: state.workspaceInfo.properties['bucket-name'],
+        key: state.workspaceInfo.properties.key
+      };
+
+      rxArray.push(MyDataPrepApi.getS3Specification(specParams));
     }
 
     MyArtifactApi.list({ namespace })
@@ -366,6 +409,11 @@ export default class AddToHydratorModal extends Component {
           sourceConfigs = this.constructDatabaseSource(res[0], res[2]);
         } else if (state.workspaceInfo.properties.connection === 'kafka') {
           sourceConfigs = this.constructKafkaSource(res[0], res[2]);
+        } else if (state.workspaceInfo.properties.connection === 's3') {
+          sourceConfigs = this.constructS3Source(res[0], res[2]);
+          if (!sourceConfigs) {
+            return;
+          }
         }
 
         if (sourceConfigs) {
@@ -400,7 +448,7 @@ export default class AddToHydratorModal extends Component {
           }
         });
 
-        if (state.workspaceInfo.properties.connection === 'database') {
+        if (['database', 's3'].indexOf(state.workspaceInfo.properties.connection) !== -1) {
           realtimeUrl = null;
         }
 

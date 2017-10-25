@@ -19,15 +19,30 @@
     {{ SchemaEditor.error }}
   </div>
   <div ng-if="!SchemaEditor.clearDOM">
-    <my-complex-schema
-      ng-model="SchemaEditor.schemaObj"
-      record-name="'etlSchemaBody'"
-      is-disabled="SchemaEditor.isDisabled || SchemaEditor.implicitSchemaPresent"
-      parent-format-output="SchemaEditor.formatOutput(updateDefault)"
-      schema-prefix="SchemaEditor.schemaPrefix"
-      derived-dataset-id="SchemaEditor.derivedDatasetId"
-      is-in-studio="SchemaEditor.isInStudio">
-    </my-complex-schema>
+    <div ng-repeat="schemaObj in SchemaEditor.schemas track by $index">
+      <div ng-if="SchemaEditor.schemas.length > 1"
+           ng-click="SchemaEditor.currentIndex = $index" class="schema-title">
+        <i class="fa" ng-class="{'fa-arrow-right': SchemaEditor.currentIndex !== $index, 'fa-arrow-down': SchemaEditor.currentIndex === $index}"></i>
+        <span>{{schemaObj.name | caskCapitalizeFilter}}</span>
+      </div>
+      <div ng-if="SchemaEditor.schemas.length === 1">
+        <span ng-if="schemaObj.name !== 'etlSchemaBody'">
+          {{schemaObj.name | caskCapitalizeFilter}}
+        </span>
+      </div>
+      <div class="content" ng-class="{'hide': SchemaEditor.currentIndex !== $index, '': SchemaEditor.currentIndex === $index}">
+        <my-complex-schema
+          ng-model="schemaObj.schema"
+          record-name="'etlSchemaBody'"
+          is-disabled="SchemaEditor.isDisabled || SchemaEditor.implicitSchemaPresent"
+          parent-format-output="SchemaEditor.formatOutput(updateDefault)"
+          schema-prefix="SchemaEditor.schemaPrefix"
+          derived-dataset-id="SchemaEditor.derivedDatasetId"
+          is-in-studio="SchemaEditor.isInStudio">
+        </my-complex-schema>
+      </div>
+    </div>
+    </div>
   </div>
 
   <div class="text-center"
