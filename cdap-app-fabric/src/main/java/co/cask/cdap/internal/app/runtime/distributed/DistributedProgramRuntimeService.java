@@ -31,6 +31,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -62,6 +63,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.common.Threads;
 import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,9 +111,23 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   @Nullable
   @Override
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId) {
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId,
+                                          final Runnable cleanUpTask) {
     if (controller instanceof AbstractTwillProgramController) {
       RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+          if (currentState == ProgramController.State.ALIVE) {
+            alive();
+          }
+        }
+
+        @Override
+        public void alive() {
+          cleanUpTask.run();
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
       return new SimpleRuntimeInfo(controller, programId, twillRunId);
     }
     return null;
