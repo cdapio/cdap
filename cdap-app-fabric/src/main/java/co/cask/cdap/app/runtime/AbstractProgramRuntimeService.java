@@ -128,7 +128,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
 
-      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
+                                                  cleanUpTask);
       monitorProgram(runtimeInfo, cleanUpTask);
       return runtimeInfo;
     } catch (Exception e) {
@@ -308,7 +309,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     new BasicArguments(userArguments), options.isDebug());
   }
 
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId) {
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
     return new SimpleRuntimeInfo(controller, programId);
   }
 

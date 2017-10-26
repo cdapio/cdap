@@ -119,7 +119,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   @Nullable
   @Override
-  protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId) {
+  protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId,
+                                          final Runnable cleanUpTask) {
     if (controller instanceof AbstractTwillProgramController) {
       RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
 
@@ -129,9 +130,16 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       controller.addListener(new AbstractListener() {
         @Override
         public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-          if (currentState == ProgramController.State.KILLED) {
+          if (currentState == ProgramController.State.ALIVE) {
+            alive();
+          } else if (currentState == ProgramController.State.KILLED) {
             killed();
           }
+        }
+
+        @Override
+        public void alive() {
+          cleanUpTask.run();
         }
 
         @Override
