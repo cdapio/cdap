@@ -103,9 +103,7 @@ class CDAP extends Component {
     return (
       <BrowserRouter basename="/cdap">
         <div className="cdap-container">
-          <Helmet
-            title={T.translate('features.EntityListView.Title')}
-          />
+          <Helmet title={T.translate('commons.cdap')} />
           <Header />
           <SplashScreen openVideo={this.openCaskVideo}/>
           <LoadingIndicator />

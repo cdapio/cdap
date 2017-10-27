@@ -12,17 +12,23 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-body {
-  .cdap-container {
-    height: 100%;
-    .container-fluid {
-      height: 100%;
-      padding: 0;
-      > div {
-        height: 100%;
-      }
-    }
-  }
+import React from 'react';
+import {Provider} from 'react-redux';
+import createExperimentStore from 'components/Experiments/store/createExperimentStore';
+import NewExperimentPopover from 'components/Experiments/Popovers/NewExperimentPopover';
+import NewModelPopover from 'components/Experiments/Popovers/NewModelPopover';
+
+require('./ExperimentPopovers.scss');
+
+export default function ExperimentPopovers() {
+  return (
+    <Provider store={createExperimentStore}>
+      <div>
+        <NewExperimentPopover />
+        <NewModelPopover />
+      </div>
+    </Provider>
+  );
 }

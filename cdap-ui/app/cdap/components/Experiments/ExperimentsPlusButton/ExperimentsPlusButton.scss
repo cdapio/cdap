@@ -14,16 +14,32 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
-@import "../ListView/ListView.scss";
+#experiments-plus-btn {
+  &.button-container {
+    height: 58px;
+    width: 58px;
 
-.experiments-toppanel {
-  background: $cdap-gray;
-  height: 50px;
-  margin-left: -$listview-padding;
-  margin-right: -$listview-padding;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    h1 {
+      font-size: 3em;
+    }
+  }
+}
+
+.popover {
+  margin-top: 10px;
+  &.add-experiment-popover-element {
+    margin-left: 0;
+    &:before,
+    &:after {
+      display: none;
+    }
+    .popover-content {
+      padding: 9px 14px;
+      a[href] {
+        text-decoration: none;
+        color: black;
+        cursor: pointer;
+      }
+    }
+  }
 }

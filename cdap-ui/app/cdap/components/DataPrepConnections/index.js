@@ -87,7 +87,7 @@ export default class DataPrepConnections extends Component {
 
     let {workspaceInfo} = DataPrepStore.getState().dataprep;
     this.state = {
-      sidePanelExpanded: this.props.enableRouting ? true : false,
+      sidePanelExpanded: this.props.sidePanelExpanded || (this.props.enableRouting ? true : false),
       backendChecking: true,
       backendDown: false,
       loading: this.props.enableRouting ? true : false,
@@ -665,7 +665,7 @@ export default class DataPrepConnections extends Component {
     if (this.state.backendChecking) {
       return (
         <div className="text-xs-center">
-          {pageTitle}
+          {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
           <LoadingSVG />
         </div>
       );
@@ -674,7 +674,7 @@ export default class DataPrepConnections extends Component {
     if (this.state.backendDown) {
       return (
         <div>
-          {pageTitle}
+          {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
           <DataPrepServiceControl
             onServiceStart={this.onServiceStart}
           />
@@ -688,7 +688,7 @@ export default class DataPrepConnections extends Component {
     }
     return (
       <div className="dataprep-connections-container">
-        {pageTitle}
+        {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
         {this.renderPanel()}
 
         <div className={classnames('connections-content', {
@@ -716,5 +716,6 @@ DataPrepConnections.propTypes = {
   location: PropTypes.object,
   enableRouting: PropTypes.bool,
   onWorkspaceCreate: PropTypes.func,
-  singleWorkspaceMode: PropTypes.bool
+  singleWorkspaceMode: PropTypes.bool,
+  sidePanelExpanded: PropTypes.bool
 };

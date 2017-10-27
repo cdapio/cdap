@@ -58,6 +58,11 @@ const Experiments = Loadable({
   loader: () => import(/* webpackChunkName: "Experiments" */ 'components/Experiments'),
   loading: LoadingSVGCentered
 });
+const ExperimentsCreateView = Loadable({
+  loader: () => import(/* webpackChunkName: "ExperimentsCreateView" */ 'components/Experiments/CreateView'),
+  loading: LoadingSVGCentered
+});
+
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
@@ -93,6 +98,7 @@ export default class Home extends Component {
             );
           }} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
+          <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
           <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route component={Page404} />
         </Switch>
