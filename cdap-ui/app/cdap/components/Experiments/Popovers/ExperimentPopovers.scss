@@ -16,7 +16,7 @@
 
 @import "../../../styles/variables.scss";
 
-$popover_container_border_color: #adadad;
+$popover_container_border_color: $grey-05;
 
 .new-experiment-popover {
   padding: 0;

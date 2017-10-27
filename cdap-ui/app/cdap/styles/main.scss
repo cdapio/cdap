@@ -16,8 +16,13 @@
 
 body {
   .cdap-container {
+    height: 100%;
     .container-fluid {
+      height: 100%;
       padding: 0;
+      > div {
+        height: 100%;
+      }
     }
   }
 }

@@ -25,10 +25,10 @@
     .ml-algorithm-list-view {
       margin: 0 20px;
       .ml-algorithm-category-title {
-        color: #adadad;
+        color: $grey-05;
       }
       .ml-algorithm-list-item {
-        border-top: 1px solid #adadad;
+        border-top: 1px solid $grey-05;
         cursor: pointer;
         display: flex;
         padding: 8px;
@@ -37,7 +37,7 @@
           background: $orange-05;
         }
         &:last-child {
-          border-bottom: 1px solid #adadad;
+          border-bottom: 1px solid $grey-05;
         }
         input[type="radio"] {
           margin-right: 5px;

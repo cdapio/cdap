@@ -25,11 +25,13 @@ $cdap-darkorange:       rgb(138, 56, 0);    // #8A3800
 $cdap-header:           rgb(60, 67, 85);    // #3c4355
 $cdap-darkness:         rgb(102, 110, 130); // #666e82
 $cdap-bluegray:         rgb(111, 124, 157); // #6f7c9d
+// until today we were defining the same name twice with different colors.
+// rgray represents regular gray :sigh:
 $cdap-gray:             rgb(111, 124, 159); // #6f7c9f
 $cdap-lightgray:        rgb(102, 110, 131); // #666e83
 $cdap-darkblue:         rgb(44, 73, 138);   // #2c498a
 $cdap-header-icons:     rgb(121, 127, 141); // #797f8d
-$cdap-gray:             rgb(238, 238, 238); // #eeeeee
+$cdap-rgray:             rgb(238, 238, 238); // #eeeeee
 $cdap-red-text:         rgb(212, 0, 1);     // #d40001
 $program-text:          rgb(150, 150, 150); // #969696
 
@@ -125,3 +127,21 @@ $orange-02: #fa8a00;
 $orange-03: #ffa727;
 $orange-04: #ffcc80;
 $orange-05: #ffe0b2;
+// Different shades of grey.
+// huh - that didn't sound correct.
+$grey-01: #333333;
+$grey-02: #666666;
+$grey-03: #999999;
+$grey-04: #bbbbbb;
+$grey-05: #cccccc;
+$grey-06: #dbdbdb;
+$grey-07: #eeeeee;
+$grey-08: #f5f5f5;
+$red-01: #a40403;
+$red-02: #d40001;
+$red-03: #d15668;
+$yellow-01: #ffba01;
+$yellow-02: #ffd500;
+$green-01: #01b133;
+$green-02: #3cc801;
+$green-03: #8af302;

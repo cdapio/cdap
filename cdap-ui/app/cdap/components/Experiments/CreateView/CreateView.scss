@@ -23,7 +23,7 @@
   .experiments-toppanel {
     margin-left: 0;
     margin-right: 0;
-    border-bottom: 1px solid $cdap-rgray;
+    border-bottom: 1px solid $cdap-gray;
     .icon-svg.icon-close {
       font-size: 20px;
       cursor: pointer;
@@ -75,7 +75,7 @@
       > div {
         margin: 0 20px 0 0;
         &.grayed {
-          color: #adadad;
+          color: $grey-05;
         }
         > * {
           margin: 0 5px;
