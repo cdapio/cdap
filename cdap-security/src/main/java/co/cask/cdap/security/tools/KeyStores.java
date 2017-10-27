@@ -66,10 +66,10 @@ public final class KeyStores {
 
      All fields are not required.
     */
-  private static final String DISTINGUISHED_NAME = "CN=CDAP, L=Palo Alto, C=US";
-  private static final String SIGNATURE_ALGORITHM = "MD5withRSA";
-  private static final String SSL_KEYSTORE_TYPE = "JKS";
-  private static final String CERT_ALIAS = "cert";
+  static final String DISTINGUISHED_NAME = "CN=CDAP, L=Palo Alto, C=US";
+  static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
+  static final String SSL_KEYSTORE_TYPE = "JKS";
+  static final String CERT_ALIAS = "cert";
   private static final int KEY_SIZE = 2048;
   private static final int VALIDITY = 999;
 
@@ -130,7 +130,7 @@ public final class KeyStores {
     info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
     info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
     info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-    AlgorithmId algo = new AlgorithmId(AlgorithmId.md5WithRSAEncryption_oid);
+    AlgorithmId algo = new AlgorithmId(AlgorithmId.sha1WithRSAEncryption_oid);
     info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
     // Create the certificate and sign it with the private key
     X509CertImpl cert = new X509CertImpl(info);
