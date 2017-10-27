@@ -75,7 +75,7 @@ export default class UncontrolledPopover extends Component {
         className="dataprep-toggle-all-dropdown"
         tether={tetherOption}
       >
-        <PopoverContent onClick={this.itemClicked}>
+        <PopoverContent>
           {this.props.children}
         </PopoverContent>
       </Popover>
@@ -83,6 +83,19 @@ export default class UncontrolledPopover extends Component {
   }
   render() {
     let iconName = this.props.icon || 'fa-caret-square-o-down';
+    let Tag = this.props.tag || 'span';
+    if (this.props.popoverElement) {
+      return (
+        <Tag
+          id={this.state.id}
+          onClick={this.togglePopover}
+          ref={(ref) => this.popover = ref}
+        >
+          {this.props.popoverElement}
+          {this.renderPopover()}
+        </Tag>
+      );
+    }
 
     return (
       <span
@@ -99,7 +112,9 @@ export default class UncontrolledPopover extends Component {
   }
 }
 UncontrolledPopover.propTypes = {
+  tag: PropTypes.string,
   children: PropTypes.node.isRequired,
+  popoverElement: PropTypes.node,
   dropdownOpen: PropTypes.bool,
   tetherOption: PropTypes.object,
   documentElement: PropTypes.node,
