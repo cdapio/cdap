@@ -15,6 +15,7 @@
 */
 
 import experimentsStore, {ACTIONS} from 'components/Experiments/store';
+import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS} from 'components/Experiments/store/createExperimentStore';
 import {myExperimentsApi} from 'api/experiments';
 import NamespaceStore from 'services/NamespaceStore';
 
@@ -55,9 +56,136 @@ function getModelsListInExperiment(experimentId) {
     });
 }
 
+function onExperimentNameChange(e) {
+  let value = e.target.value;
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_NAME,
+    payload: {name: value}
+  });
+}
+function onExperimentDescriptionChange(e) {
+  let value = e.target.value;
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_DESCRIPTION,
+    payload: {description: value}
+  });
+}
+function onExperimentOutcomeChange(e) {
+  let value = e.target.value;
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_OUTCOME,
+    payload: {outcome: value}
+  });
+}
+
+function setSrcPath(srcpath) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_SRC_PATH,
+    payload: {srcpath}
+  });
+}
+
+function setOutcomeColumns(columns) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_OUTCOME_COLUMNS,
+    payload: {columns}
+  });
+}
+
+function setDirectives(directives) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_DIRECTIVES,
+    payload: {directives}
+  });
+}
+
+function setExperimentCreated(value) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_NEW_EXPERIMENT_CREATED,
+    payload: {
+      isExperimentCreated: typeof value === 'boolean' ? value : true
+    }
+  });
+}
+
+function onModelNameChange(e) {
+  let value = e.target.value;
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_MODEL_NAME,
+    payload: {name: value}
+  });
+}
+
+function onModelDescriptionChange(e) {
+  let value = e.target.value;
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_MODEL_DESCRIPTION,
+    payload: {description: value}
+  });
+}
+
+function setModelCreated() {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_MODEL_CREATED
+  });
+}
+
+function setModelAlgorithm(algorithm) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_MODEL_ML_ALGORITHM,
+    payload: {algorithm}
+  });
+}
+
+function createExperiment(experiment) {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  return myExperimentsApi.createExperiment({namespace, experimentId: experiment.name}, experiment);
+}
+function createModel(experiment, model) {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  return myExperimentsApi.createModelInExperiment({namespace, experimentId: experiment.name}, model);
+}
+function createExperimentAndModel() {
+  let {experiments_create, model_create} = createExperimentStore.getState();
+  let experiment= {
+    name: experiments_create.name,
+    description: experiments_create.description,
+    outcome: experiments_create.outcome,
+    srcpath: experiments_create.srcpath
+  };
+
+  let model = {
+    name: model_create.name,
+    description: model_create.description,
+    algorithm: model_create.algorithm.name,
+    hyperparameters: {},
+    directives: model_create.directives,
+    features: model_create.columns.filter(column => column !== experiments_create.outcome)
+  };
+  createExperiment(experiment)
+    .combineLatest(
+      createModel(experiment, model)
+    )
+    .subscribe(() => {
+      let {selectedNamespace: namespace} = NamespaceStore.getState();
+      window.location.href = `${window.location.origin}/cdap/ns/${namespace}/experiments`;
+    });
+}
 export {
   setExperimentsLoading,
   getExperimentsList,
-  getModelsListInExperiment
+  getModelsListInExperiment,
+  onExperimentNameChange,
+  onExperimentDescriptionChange,
+  onExperimentOutcomeChange,
+  setOutcomeColumns,
+  setDirectives,
+  setExperimentCreated,
+  onModelNameChange,
+  onModelDescriptionChange,
+  setModelCreated,
+  setModelAlgorithm,
+  createExperimentAndModel,
+  setSrcPath
 };
 
