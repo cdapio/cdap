@@ -17,8 +17,6 @@
 package co.cask.cdap.etl.spec;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.ErrorTransform;
@@ -43,7 +41,6 @@ import co.cask.cdap.etl.proto.v2.ETLConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -70,22 +67,16 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
   protected final PluginConfigurer configurer;
   protected final Engine engine;
-  private final Class<? extends Dataset> errorDatasetClass;
-  private final DatasetProperties errorDatasetProperties;
   private final Set<String> sourcePluginTypes;
   private final Set<String> sinkPluginTypes;
 
   protected PipelineSpecGenerator(PluginConfigurer configurer,
                                   Set<String> sourcePluginTypes,
                                   Set<String> sinkPluginTypes,
-                                  Class<? extends Dataset> errorDatasetClass,
-                                  DatasetProperties errorDatasetProperties,
                                   Engine engine) {
     this.configurer = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
-    this.errorDatasetClass = errorDatasetClass;
-    this.errorDatasetProperties = errorDatasetProperties;
     this.engine = engine;
   }
 
@@ -250,10 +241,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
 
-    if (!Strings.isNullOrEmpty(stage.getErrorDatasetName())) {
-      configurer.createDataset(stage.getErrorDatasetName(), errorDatasetClass, errorDatasetProperties);
-    }
-
     PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
     DefaultStageConfigurer stageConfigurer = pluginConfigurer.getStageConfigurer();
     Map<String, StageSpec.Port> outputSchemas = new HashMap<>();
@@ -296,7 +283,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     }
 
     StageSpec stageSpec = StageSpec.builder(stageName, pluginSpec)
-      .setErrorDatasetName(stage.getErrorDatasetName())
       .addInputSchemas(inputSchemas)
       .addOutputPortSchemas(outputSchemas)
       .setErrorSchema(stageConfigurer.getErrorSchema())

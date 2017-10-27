@@ -153,7 +153,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <_exportcontents>co.cask.cdap.etl.api.*;org.apache.avro.*</_exportcontents>
+              <_exportcontents>co.cask.cdap.etl.api.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>

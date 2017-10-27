@@ -20,7 +20,6 @@ import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 import co.cask.cdap.etl.proto.UpgradeContext;
 
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * ETL Stage Configuration.
@@ -28,16 +27,13 @@ import javax.annotation.Nullable;
 public final class ETLStage {
   private final String name;
   private final ETLPlugin plugin;
+  // removed in 5.0.0, but keeping it here so that we can validate that nobody is trying to use it.
   private final String errorDatasetName;
 
-  public ETLStage(String name, ETLPlugin plugin, @Nullable String errorDatasetName) {
+  public ETLStage(String name, ETLPlugin plugin) {
     this.name = name;
     this.plugin = plugin;
-    this.errorDatasetName = errorDatasetName;
-  }
-
-  public ETLStage(String name, ETLPlugin plugin) {
-    this(name, plugin, null);
+    this.errorDatasetName = null;
   }
 
   public String getName() {
@@ -48,11 +44,6 @@ public final class ETLStage {
     return plugin;
   }
 
-  @Nullable
-  public String getErrorDatasetName() {
-    return errorDatasetName;
-  }
-
   /**
    * Validate correctness. Since this object is created through deserialization, some fields that should not be null
    * may be null.
@@ -61,10 +52,18 @@ public final class ETLStage {
    */
   public void validate() {
     if (name == null || name.isEmpty()) {
-      throw new IllegalArgumentException("Invalid stage " + toString() + ": name must be specified.");
+      throw new IllegalArgumentException(String.format("Invalid stage '%s': name must be specified.",
+                                                       toString()));
     }
     if (plugin == null) {
-      throw new IllegalArgumentException("Invalid stage " + toString() + ": plugin must be specified.");
+      throw new IllegalArgumentException(String.format("Invalid stage '%s': plugin must be specified.",
+                                                       name));
+    }
+    if (errorDatasetName != null) {
+      throw new IllegalArgumentException(
+        String.format("Invalid stage '%s'. Error datasets have been replaced by error collectors. " +
+                        "Please connect stage '%s' to an error collector, then connect the error collector " +
+                        "to a sink.", name, name));
     }
     plugin.validate();
   }
@@ -75,7 +74,7 @@ public final class ETLStage {
       upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
     co.cask.cdap.etl.proto.v2.ETLPlugin etlPlugin = new co.cask.cdap.etl.proto.v2.ETLPlugin(
       plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
-    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin, errorDatasetName);
+    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 
   @Override
@@ -83,7 +82,6 @@ public final class ETLStage {
     return "ETLStage{" +
       "name='" + name + '\'' +
       ", plugin=" + plugin +
-      ", errorDatasetName='" + errorDatasetName + '\'' +
       '}';
   }
 
@@ -99,13 +97,12 @@ public final class ETLStage {
     ETLStage that = (ETLStage) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(plugin, that.plugin) &&
-      Objects.equals(errorDatasetName, that.errorDatasetName);
+      Objects.equals(plugin, that.plugin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin, errorDatasetName);
+    return Objects.hash(name, plugin);
   }
 
 }

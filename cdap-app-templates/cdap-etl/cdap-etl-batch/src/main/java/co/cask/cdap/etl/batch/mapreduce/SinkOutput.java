@@ -23,19 +23,13 @@ import java.util.Set;
  */
 class SinkOutput {
   private Set<String> sinkOutputs;
-  private String errorDatasetName;
 
-  SinkOutput(Set<String> sinkOutputs, String errorDatasetName) {
+  SinkOutput(Set<String> sinkOutputs) {
     this.sinkOutputs = sinkOutputs;
-    this.errorDatasetName = errorDatasetName;
   }
 
   public Set<String> getSinkOutputs() {
     return sinkOutputs;
-  }
-
-  public String getErrorDatasetName() {
-    return errorDatasetName;
   }
 
 }

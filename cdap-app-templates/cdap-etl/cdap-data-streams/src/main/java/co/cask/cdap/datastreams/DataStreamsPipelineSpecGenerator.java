@@ -32,7 +32,7 @@ public class DataStreamsPipelineSpecGenerator
 
   public DataStreamsPipelineSpecGenerator(PluginConfigurer configurer, Set<String> sourcePluginTypes,
                                           Set<String> sinkPluginTypes) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, null, null, Engine.SPARK);
+    super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
   }
 
   @Override

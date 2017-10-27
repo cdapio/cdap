@@ -21,8 +21,6 @@ import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.ipc.trace.TimestampedEvent;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -60,8 +58,8 @@ public class PipelineTypeValidatorTest {
   public void testSimpleValidType() throws Exception {
     // Child --> Parent | Integer --> Object
     ArrayList<Type> typeList = Lists.newArrayList();
-    typeList.add(TimestampedEvent.class);
-    typeList.add(GenericRecord.class);
+    typeList.add(SomeImplementation.class);
+    typeList.add(SomeInterface.class);
     typeList.add(Integer.class);
     typeList.add(Object.class);
     PipelineTypeValidator.validateTypes(typeList);
@@ -149,6 +147,14 @@ public class PipelineTypeValidatorTest {
   }
 
   private abstract static class NoOpSink<X, Y> extends BatchSink<Object, X, Y> {
+
+  }
+
+  private interface SomeInterface {
+
+  }
+
+  private static class SomeImplementation implements SomeInterface {
 
   }
 }

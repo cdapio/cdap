@@ -18,14 +18,10 @@ package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -67,9 +63,7 @@ import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -160,19 +154,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       throw new IllegalArgumentException(String.format(
         "Pipeline phase '%s' cannot contain more than one reducer but it has reducers '%s'.",
         phaseSpec.getPhaseName(), Joiner.on(',').join(reducers)));
-    } else if (!reducers.isEmpty()) {
-      String reducerName = reducers.iterator().next().getName();
-      PipelinePhase mapperPipeline = phaseSpec.getPhase().subsetTo(ImmutableSet.of(reducerName));
-      for (StageSpec stageInfo : mapperPipeline) {
-        // error datasets are not supported in the map phase of a mapreduce, because we can only
-        // write out the group/join key and not error dataset data.
-        // we need to re-think how error datasets are done. perhaps they are just sinks instead of a special thing.
-        if (stageInfo.getErrorDatasetName() != null) {
-          throw new IllegalArgumentException(String.format(
-            "Stage %s is not allowed to have an error dataset because it connects to reducer %s.",
-            stageInfo.getName(), reducerName));
-        }
-      }
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
@@ -275,7 +256,7 @@ public class ETLMapReduce extends AbstractMapReduce {
           new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
             @Override
             public void act(MapReduceBatchContext sinkContext) {
-              sinkOutputs.put(stageName, new SinkOutput(sinkContext.getOutputNames(), stageSpec.getErrorDatasetName()));
+              sinkOutputs.put(stageName, new SinkOutput(sinkContext.getOutputNames()));
             }
           });
 
@@ -356,13 +337,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
     finisher = new CompositeFinisher(finishers);
 
-    // we should be able to remove this explicit transaction once CDAP-12634 is resolved
-    context.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetContext) throws Exception {
-        addErrorDatasets(context, phase);
-      }
-    });
     job.setMapperClass(ETLMapper.class);
 
     WorkflowToken token = context.getWorkflowToken();
@@ -374,20 +348,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     // token is null when just the mapreduce job is run but not the entire workflow
     // we still want things to work in that case.
     hConf.set(RUNTIME_ARGS_KEY, GSON.toJson(pipelineRuntime.getArguments().asMap()));
-  }
-
-  private void addErrorDatasets(MapReduceContext context, PipelinePhase phase) {
-    // setup time partition for each error dataset
-    for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
-                                          phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
-      if (stageInfo.getErrorDatasetName() != null) {
-        Map<String, String> args = new HashMap<>();
-        args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
-                 Constants.ERROR_SCHEMA.toString());
-        TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
-        context.addOutput(Output.ofDataset(stageInfo.getErrorDatasetName(), args));
-      }
-    }
   }
 
   private Class<?> getOutputKeyClass(String reducerName, Class<?> outputKeyClass) {

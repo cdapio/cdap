@@ -60,10 +60,6 @@ public final class ETLStage {
     return plugin;
   }
 
-  public String getErrorDatasetName() {
-    return errorDatasetName;
-  }
-
   @Override
   public String toString() {
     return "ETLStage{" +
@@ -101,6 +97,13 @@ public final class ETLStage {
     }
     co.cask.cdap.etl.proto.v2.ETLPlugin etlPlugin = new co.cask.cdap.etl.proto.v2.ETLPlugin(
       plugin.getName(), type, plugin.getProperties(), artifactSelectorConfig);
-    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin, errorDatasetName);
+
+    if (errorDatasetName != null) {
+      throw new IllegalStateException(
+        String.format("Cannot upgrade stage '%s'. Error datasets have been replaced by error collectors. " +
+                        "Please connect stage '%s' to an error collector, then connect the error collector " +
+                        "to a sink.", name, name));
+    }
+    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 }

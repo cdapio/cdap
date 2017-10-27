@@ -16,8 +16,6 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
@@ -36,10 +34,8 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
   public BatchPipelineSpecGenerator(PluginConfigurer configurer,
                                     Set<String> sourcePluginTypes,
                                     Set<String> sinkPluginTypes,
-                                    Class<? extends Dataset> errorDatasetClass,
-                                    DatasetProperties errorDatasetProperties,
                                     Engine engine) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, errorDatasetClass, errorDatasetProperties, engine);
+    super(configurer, sourcePluginTypes, sinkPluginTypes, engine);
   }
 
   @Override
