@@ -30,7 +30,11 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -183,6 +187,13 @@ public class SparkExecutionServiceTest {
   public void testWriteCredentials() throws Exception {
     ProgramRunId programRunId = new ProgramRunId("ns", "app", ProgramType.SPARK, "test", RunIds.generate().getId());
 
+    // Set a token and a key to the UGI
+    Credentials credentials = new Credentials();
+    Token<TokenIdentifier> token = new Token<>(new byte[]{1}, new byte[]{2}, new Text(), new Text("test"));
+    credentials.addToken(new Text("test"), token);
+    credentials.addSecretKey(new Text("testkey"), new byte[] { 1, 2, 3 });
+    UserGroupInformation.getCurrentUser().addCredentials(credentials);
+
     // Start a service that doesn't support workflow token
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
@@ -201,10 +212,16 @@ public class SparkExecutionServiceTest {
       Assert.assertEquals(FsAction.NONE, status.getPermission().getOtherAction());
 
       // Should be able to deserialize back to credentials
-      Credentials credentials = new Credentials();
+      Credentials result = new Credentials();
       try (DataInputStream is = new DataInputStream(targetLocation.getInputStream())) {
-        credentials.readTokenStorageStream(is);
+        result.readTokenStorageStream(is);
       }
+
+      // Verify the token
+      Assert.assertEquals(token, result.getToken(new Text("test")));
+
+      // Verify there is no secret key
+      Assert.assertNull(result.getSecretKey(new Text("testkey")));
 
       // Call complete to notify the service it has been stopped
       client.completed(null);

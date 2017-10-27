@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
+import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -29,6 +30,7 @@ import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
@@ -45,12 +47,16 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -201,13 +207,12 @@ public final class SparkExecutionService extends AbstractIdleService {
       }
 
       Location targetLocation = locationFactory.create(targetURI);
-      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+      Credentials creds = removeSecretKeys(new Credentials(UserGroupInformation.getCurrentUser().getCredentials()));
       try (DataOutputStream os = new DataOutputStream(targetLocation.getOutputStream("600"))) {
-        credentials.writeTokenStorageToStream(os);
+        creds.writeTokenStorageToStream(os);
       }
 
-      LOG.debug("Credentials written for {} of run {} to {}: {}",
-                programName, runId, targetURI, credentials.getAllTokens());
+      LOG.debug("Credentials written for {} of run {} to {}: {}", programName, runId, targetURI, creds.getAllTokens());
 
       responder.sendStatus(HttpResponseStatus.OK);
     }
@@ -252,6 +257,45 @@ public final class SparkExecutionService extends AbstractIdleService {
         LOG.warn("Exception when deocoding workflow token update request for {}", programRunId, e);
       }
     }
-  }
 
+    /**
+     * Removes secret keys from the given {@link Credentials} and retains tokens only.
+     * This is needed for CDAP-12752.
+     */
+    private Credentials removeSecretKeys(Credentials credentials) {
+      // In Hadoop 2.6+, there are APIs to do so. If it is available, use them.
+      // For 2.6+, effectively we want to do:
+      // for (Text name : credentials.getAllSecretKeys()) {
+      //   crentials.removeSecretKey(name);
+      // }
+      try {
+        List<Text> names = (List<Text>) credentials.getClass().getMethod("getAllSecretKeys").invoke(credentials);
+        Method removeSecretKey = credentials.getClass().getMethod("removeSecretKey", Text.class);
+        for (Text name : names) {
+          removeSecretKey.invoke(credentials, name);
+        }
+      } catch (Exception e) {
+        try {
+          // If there is any exception from above, try to use reflection to access the secretKeys map field
+          // directly and clear it.
+          Field secretKeysMap = credentials.getClass().getDeclaredField("secretKeysMap");
+          secretKeysMap.setAccessible(true);
+          ((Map<Text, byte[]>) secretKeysMap.get(credentials)).clear();
+        } catch (Exception ex) {
+          // This shouldn't happen. If it really does (e.g. for future hadoop API changes), log a warning
+          if (credentials.getSecretKey(new Text("sparkCookie")) != null) {
+            Properties defaultConf = SparkPackageUtils.getSparkDefaultConf();
+            boolean authEnabled = Boolean.parseBoolean(defaultConf.getProperty("spark.authenticate"));
+            boolean shuffleEnabled = Boolean.parseBoolean(defaultConf.getProperty("spark.shuffle.service.enabled"));
+
+            if (authEnabled && shuffleEnabled) {
+              LOG.warn("Unable to remove 'sparkCookie' from UGI credentials. The Spark program might fail.");
+            }
+          }
+        }
+      }
+
+      return credentials;
+    }
+  }
 }
