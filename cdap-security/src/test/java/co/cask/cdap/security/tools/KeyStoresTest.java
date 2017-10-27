@@ -25,10 +25,6 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 
 public class KeyStoresTest {
-  private static final String CERT_ALIAS = "cert";
-  private static final String DISTINGUISHED_NAME = "CN=CDAP, L=Palo Alto, C=US";
-  private static final String SIGNATURE_ALGORITHM = "MD5withRSA";
-  private static final String SSL_KEYSTORE_TYPE = "JKS";
   private static final String CERTIFICATE_TYPE = "X.509";
   private static final String SSL_PASSWORD = "pass";
 
@@ -37,16 +33,16 @@ public class KeyStoresTest {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.SSL.KEYSTORE_PASSWORD, SSL_PASSWORD);
     KeyStore ks = KeyStores.generatedCertKeyStore(sConf, SSL_PASSWORD);
-    Assert.assertEquals(SSL_KEYSTORE_TYPE, ks.getType());
-    Assert.assertEquals(CERT_ALIAS, ks.aliases().nextElement());
+    Assert.assertEquals(KeyStores.SSL_KEYSTORE_TYPE, ks.getType());
+    Assert.assertEquals(KeyStores.CERT_ALIAS, ks.aliases().nextElement());
     Assert.assertEquals(1, ks.size());
-    Assert.assertTrue(ks.getCertificate(CERT_ALIAS) instanceof X509Certificate);
+    Assert.assertTrue(ks.getCertificate(KeyStores.CERT_ALIAS) instanceof X509Certificate);
 
-    X509Certificate cert = (X509Certificate) ks.getCertificate(CERT_ALIAS);
+    X509Certificate cert = (X509Certificate) ks.getCertificate(KeyStores.CERT_ALIAS);
     cert.checkValidity(); // throws an exception on failure
     Assert.assertEquals(CERTIFICATE_TYPE, cert.getType());
-    Assert.assertEquals(SIGNATURE_ALGORITHM, cert.getSigAlgName());
-    Assert.assertEquals(DISTINGUISHED_NAME, cert.getIssuerDN().getName());
+    Assert.assertEquals(KeyStores.SIGNATURE_ALGORITHM, cert.getSigAlgName());
+    Assert.assertEquals(KeyStores.DISTINGUISHED_NAME, cert.getIssuerDN().getName());
     Assert.assertEquals(3, cert.getVersion());
   }
 }
