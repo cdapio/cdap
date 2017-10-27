@@ -38,6 +38,7 @@ public class HBaseVersion {
   private static final String HBASE_10_VERSION = "1.0";
   private static final String HBASE_11_VERSION = "1.1";
   private static final String HBASE_12_VERSION = "1.2";
+  private static final String HBASE_13_VERSION = "1.3";
   private static final String CDH55_CLASSIFIER = "cdh5.5.";
   private static final String CDH56_CLASSIFIER = "cdh5.6.";
   private static final String CDH57_CLASSIFIER = "cdh5.7.";
@@ -271,7 +272,13 @@ public class HBaseVersion {
     if (versionString.startsWith(HBASE_12_VERSION)) {
       return getHBase12VersionFromVersion(ver);
     }
-    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+    boolean isCDH = ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER);
+    // hbase 1.3 packaged with any future CDH version will likely not be compatible, since the hbase 1.2 version with
+    // CDH is not compatible, whereas the HDP and OSS versions are
+    if (versionString.startsWith(HBASE_13_VERSION) && !isCDH) {
+      return Version.HBASE_11;
+    }
+    if (isCDH) {
       return Version.UNKNOWN_CDH;
     }
     return Version.UNKNOWN;

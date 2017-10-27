@@ -82,7 +82,7 @@ public class HBaseVersionTest {
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_10_CDH56, "1.0.0-cdh5.6.1");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_11, "1.1.1");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_11, "1.2.0-IBM-7");
-    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN, "1.3.0");
+    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN, "1.4.0");
 
     // hbase versions packaged with HDP
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_96, "0.96.1.2.0.13.0-43-hadoop2"); // hdp 2.0.13.0
@@ -100,12 +100,17 @@ public class HBaseVersionTest {
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.11.0");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.12.0");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.13.0");
-    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN_CDH, "1.2.0-cdh5.14.0");
-    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN_CDH, "1.3.0-cdh5.11.0");
-    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN_CDH, "1.3.0-cdh5.12.0");
 
     // bigtop 1.1.0
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_98, "0.98.12-hadoop2");
+
+    // EMR 5.4.0 - 5.6.0
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_11, "1.3.0");
+    // EMR 5.7.0+
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_11, "1.3.1");
+    // make sure that if future CDH versions come out with hbase 1.3.0, don't assume they're compatible with HBASE_11
+    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN_CDH, "1.3.0-cdh5.15.0");
+    assertCompatModuleMapping(HBaseVersion.Version.UNKNOWN_CDH, "1.3.0-cdh5.16.0");
   }
 
   private void assertCompatModuleMapping(HBaseVersion.Version expectedCompatModule,
