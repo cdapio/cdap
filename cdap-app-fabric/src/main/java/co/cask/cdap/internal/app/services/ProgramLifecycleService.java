@@ -361,6 +361,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public List<ListenableFuture<ProgramController>> issueStop(ProgramId programId, @Nullable String runId)
     throws Exception {
+    LOG.info("Stopping {}", programId);
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
     if (runtimeInfos.isEmpty()) {

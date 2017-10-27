@@ -311,6 +311,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     ProgramId program = applicationId.program(programType, programId);
     ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
+    LOG.info("{} has status {}", program, programStatus);
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
     responder.sendJson(HttpResponseStatus.OK, status);
