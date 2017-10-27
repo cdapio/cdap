@@ -14,40 +14,29 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
+#experiments-plus-btn {
+  &.button-container {
+    height: 58px;
+    width: 58px;
 
-$listview-padding: 20px;
-
-.experiments-listview {
-  padding: 0 $listview-padding;
-
-  .experiments-toppanel {
-    position: relative;
-
-    .experiments-plus-btn {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      width: 58px;
+    h1 {
+      font-size: 3em;
     }
   }
-  > .clearfix {
-    margin-top: 20px;
-    .pagination-with-title {
-      margin-right: 0;
+}
+
+.popover {
+  margin-top: 10px;
+  &.add-experiment-popover-element {
+    &:before,
+    &:after {
+      display: none;
     }
-  }
-  .table {
-    &:first-child {
-      margin-bottom: 0;
-    }
-    th,
-    td {
-      width: 20%;
-    }
-    td {
-      small {
-        color: $cdap-lightgray;
+    .popover-content {
+      a[href] {
+        text-decoration: none;
+        color: black;
+        cursor: pointer;
       }
     }
   }

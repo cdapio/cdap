@@ -24,6 +24,8 @@ import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
 import ExperimentsListBarChart from 'components/Experiments/ExperimentsListBarChart';
+import ExperimentsPlusButton from 'components/Experiments/ExperimentsPlusButton';
+
 require('./ListView.scss');
 
 const tableHeaders = [
@@ -146,7 +148,10 @@ function ExperimentsListView({loading, list}) {
   }
   return (
     <div className="experiments-listview">
-      <TopPanel message="Analytics - All Experiments" />
+      <TopPanel>
+        <h4>Analytics - All Experiments</h4>
+        <ExperimentsPlusButton />
+      </TopPanel>
       <ExperimentsListBarChart
         data={getDataForGroupedChart(list)}
       />
