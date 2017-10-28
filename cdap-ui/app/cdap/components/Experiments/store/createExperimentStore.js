@@ -23,13 +23,15 @@ const ACTIONS = {
   SET_EXPERIMENT_OUTCOME: 'SET_EXPERIMENT_OUTCOME',
   SET_EXPERIMENT_SRC_PATH: 'SET_EXPERIMENT_SRC_PATH',
   SET_NEW_EXPERIMENT_CREATED: 'SET_NEW_EXPERIMENT_CREATED',
+  SET_CREATE_EXPERIMENT_LOADING: 'SET_CREATE_EXPERIMENT_LOADING',
 
   SET_OUTCOME_COLUMNS: 'SET_OUTCOME_COLUMNS',
   SET_DIRECTIVES: 'SET_DIRECTIVES',
   SET_MODEL_NAME: 'SET_MODEL_NAME',
   SET_MODEL_DESCRIPTION: 'SET_MODEL_DESCRIPTION',
   SET_MODEL_CREATED: 'SET_MODEL_CREATED',
-  SET_MODEL_ML_ALGORITHM: 'SET_MODEL_ML_ALGORITHM'
+  SET_MODEL_ML_ALGORITHM: 'SET_MODEL_ML_ALGORITHM',
+  SET_WORKSPACE_ID: 'SET_WORKSPACE_ID'
 };
 
 const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
@@ -37,6 +39,7 @@ const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
   description: '',
   outcome: '',
   srcpath: '',
+  loading: false,
   isExperimentCreated: false
 };
 
@@ -45,6 +48,7 @@ const DEFAULT_MODEL_CREATE_VALUE = {
   description: '',
   directives: [],
   columns: [],
+  workspaceId: '',
   splitMethod: 'random',
   algorithm: {
     name: ''
@@ -101,6 +105,11 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
         ...state,
         isExperimentCreated: action.payload.isExperimentCreated
       };
+    case ACTIONS.SET_CREATE_EXPERIMENT_LOADING:
+      return {
+        ...state,
+        loading: action.payload.loading
+      };
     default:
       return state;
   }
@@ -136,6 +145,11 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
       return {
         ...state,
         algorithm: action.payload.algorithm
+      };
+    case ACTIONS.SET_WORKSPACE_ID:
+      return {
+        ...state,
+        workspaceId: action.payload.workspaceId
       };
     default:
       return state;

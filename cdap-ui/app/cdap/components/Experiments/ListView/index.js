@@ -25,6 +25,9 @@ import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
 import ExperimentsListBarChart from 'components/Experiments/ExperimentsListBarChart';
 import ExperimentsPlusButton from 'components/Experiments/ExperimentsPlusButton';
+import EmptyMessageContainer from 'components/EmptyMessageContainer';
+import NamespaceStore from 'services/NamespaceStore';
+import {Link} from 'react-router-dom';
 
 require('./ListView.scss');
 
@@ -145,6 +148,29 @@ const getDataForGroupedChart = (experiments) => {
 function ExperimentsListView({loading, list}) {
   if (loading) {
     return <LoadingSVGCentered />;
+  }
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  if (!list.length) {
+    return (
+      <div className="experiments-listview">
+        <TopPanel>
+          <h4>Analytics - All Experiments</h4>
+          <ExperimentsPlusButton />
+        </TopPanel>
+        <EmptyMessageContainer title="You have not created any experiments">
+          <ul>
+            <li>
+              <Link
+                to={`/ns/${namespace}/experiments/create`}
+              >
+                Create
+              </Link>
+              <span> a new experiment</span>
+            </li>
+          </ul>
+        </EmptyMessageContainer>
+      </div>
+    );
   }
   return (
     <div className="experiments-listview">

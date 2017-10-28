@@ -21,6 +21,11 @@ $listview-padding: 20px;
 .experiments-listview {
   padding: 0 $listview-padding;
 
+  .empty-search-container {
+    a[href] {
+      color: $cdap-orange;
+    }
+  }
   .experiments-toppanel {
     position: relative;
 

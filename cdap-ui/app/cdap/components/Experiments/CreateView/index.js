@@ -26,11 +26,12 @@ import NamespaceStore from 'services/NamespaceStore';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import ExperimentPopovers from 'components/Experiments/Popovers';
 import DataPrepStore from 'components/DataPrep/store';
-import {setOutcomeColumns, setDirectives, setSrcPath} from 'components/Experiments/store/ActionCreator';
+import {setOutcomeColumns, setDirectives, setSrcPath, setWorkspace} from 'components/Experiments/store/ActionCreator';
 import MLAlgorithmSelection from 'components/Experiments/MLAlgorithmSelection';
 import ExperimentMetadata from 'components/Experiments/ExperimentMetadata';
-require('./CreateView.scss');
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
+require('./CreateView.scss');
 
 export default class ExperimentCreateView extends Component {
   state = {
@@ -49,10 +50,15 @@ export default class ExperimentCreateView extends Component {
       setDirectives(directives);
     });
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
-      let {model_create} = createExperimentStore.getState();
+      let {model_create, experiments_create} = createExperimentStore.getState();
       let {isModelCreated} = model_create;
       if (this.state.isModelCreated !== isModelCreated) {
         this.setState({ isModelCreated });
+      }
+      if (experiments_create.loading) {
+        this.setState({
+          loading: true
+        });
       }
     });
   }
@@ -60,7 +66,7 @@ export default class ExperimentCreateView extends Component {
     if (this.dataprepsubscription) {
       this.dataprepsubscription();
     }
-    let {isExperimentCreated} = createExperimentStore.getState().experiment_create;
+    let {isExperimentCreated} = createExperimentStore.getState().experiments_create;
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     let workspaceId = this.state.workspaceId;
     if (!isExperimentCreated) {
@@ -82,7 +88,10 @@ export default class ExperimentCreateView extends Component {
         <DataPrepConnections
           enableRouting={false}
           singleWorkspaceMode={true}
-          onWorkspaceCreate={(workspaceId) => this.setState({workspaceId})}
+          onWorkspaceCreate={(workspaceId) => {
+            setWorkspace(workspaceId);
+            this.setState({workspaceId});
+          }}
         />
       </span>
     );
@@ -154,6 +163,7 @@ export default class ExperimentCreateView extends Component {
     return (
       <div className="experiments-create-view">
         {this.renderSteps()}
+        {this.state.loading ? <LoadingSVGCentered /> : null}
         <Prompt message={"Are you sure you want to navigate away?"} />
       </div>
     );
