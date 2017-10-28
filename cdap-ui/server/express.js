@@ -54,16 +54,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   // middleware
   try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
-  catch(e) { log.error('Favicon missing! Please run `gulp build`'); }
+  catch (e) { log.error('Favicon missing! Please run `gulp build`'); }
 
-  // Check environment variable CDAP_UI_COMPRESSION_ENABLED
-  // Default to true, unless this variable is set to something else
-  if (typeof process.env.CDAP_UI_COMPRESSION_ENABLED === 'undefined' ||
-      process.env.CDAP_UI_COMPRESSION_ENABLED === true ||
-      process.env.CDAP_UI_COMPRESSION_ENABLED === 'true') {
-    app.use(compression());
-  }
-
+  app.use(compression());
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
@@ -304,7 +297,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.use('/old_assets', [
     express.static(OLD_DIST_PATH + '/assets', {
-      index: false
+      index: false,
+      maxAge: '1y'
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
@@ -313,7 +307,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   // serve static assets
   app.use('/assets', [
     express.static(DIST_PATH + '/assets', {
-      index: false
+      index: false,
+      maxAge: '1y'
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
@@ -321,7 +316,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/cdap_assets', [
     express.static(CDAP_DIST_PATH + '/cdap_assets', {
-      index: false
+      index: false,
+      maxAge: '1y'
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
@@ -329,7 +325,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/dll_assets', [
     express.static(DLL_PATH, {
-      index: false
+      index: false,
+      maxAge: '1y'
     }),
     function(req, res) {
       finalhandler(req, res)(false);
@@ -337,7 +334,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/login_assets', [
     express.static(LOGIN_DIST_PATH + '/login_assets', {
-      index: false
+      index: false,
+      maxAge: '1y'
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
@@ -345,7 +343,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/common_assets', [
     express.static(MARKET_DIST_PATH, {
-      index: false
+      index: false,
+      maxAge: '1y'
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
