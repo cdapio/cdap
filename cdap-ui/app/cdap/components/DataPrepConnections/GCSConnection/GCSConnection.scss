@@ -1,0 +1,78 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$asterisk-color: #d50000;
+$success-color: #00c853;
+$modal-header-bg-color: #efefef;
+$close-button-color: #333333;
+
+.modal-dialog.gcs-connection-modal {
+  .modal-content { border-radius: 0; }
+
+  .modal-header {
+    border-bottom: none;
+    background-color: $modal-header-bg-color;
+
+    .modal-title { font-size: 16px; }
+
+    .close {
+      color: $close-button-color;
+      font-size: 23px;
+      opacity: 1;
+    }
+  }
+
+  .modal-footer {
+    padding: 0;
+    text-align: left;
+    border-top: 0;
+  }
+
+  .gcs-detail {
+    .col-form-label {
+      font-weight: 500;
+      font-size: 14px;
+      padding-top: 4px;
+
+      .asterisk {
+        position: relative;
+        top: -3px;
+        left: 2px;
+      }
+    }
+
+    .connection-check { margin-left: 5px; }
+
+    .asterisk { color: $asterisk-color; }
+
+    .action-buttons-container {
+      .btn.btn-link {
+        padding: 7px 5px;
+      }
+
+      .add-row-btn i { vertical-align: middle; }
+    }
+
+    .test-connection-button {
+      margin-left: 5px;
+    }
+
+    .loading-indicator {
+      vertical-align: middle;
+      margin-left: 5px;
+    }
+  }
+}
