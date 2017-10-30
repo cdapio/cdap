@@ -315,10 +315,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
+    LOG.info("Issuing stop for program {} run {}", programId, runId);
     List<ListenableFuture<ProgramController>> futures = issueStop(programId, runId);
 
     // Block until all stop requests completed. This call never throw ExecutionException
     Futures.successfulAsList(futures).get();
+    LOG.info("All stop requests completed for program {} run {}", programId, runId);
 
     Throwable failureCause = null;
     for (ListenableFuture<ProgramController> f : futures) {
@@ -337,6 +339,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
     }
     if (failureCause != null) {
+      LOG.error("{} out of {} runs of the program %{} failed to stop with failure cause {}",
+                failureCause.getSuppressed().length + 1, futures.size(), programId, failureCause);
       throw new ExecutionException(String.format("%d out of %d runs of the program %s failed to stop",
                                                  failureCause.getSuppressed().length + 1, futures.size(), programId),
                                    failureCause);

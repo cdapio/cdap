@@ -382,6 +382,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     ProgramId program = applicationId.program(programType, programId);
+    LOG.info("Performing action '{}' for {}", action, program);
     Map<String, String> args = decodeArguments(request);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
@@ -396,6 +397,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         lifecycleService.start(program, args, true);
         break;
       case "stop":
+        LOG.info("Stopping {}", program);
         lifecycleService.stop(program);
         break;
       default:
