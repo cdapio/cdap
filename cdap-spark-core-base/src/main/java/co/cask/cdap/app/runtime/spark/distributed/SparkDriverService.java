@@ -206,12 +206,15 @@ public class SparkDriverService extends AbstractExecutionThreadService {
             client.writeCredentials(tmpLocation);
 
             // Decode the credentials, update the credentials of the current user and return it
-            Credentials credentials = new Credentials();
             try (DataInputStream input = new DataInputStream(tmpLocation.getInputStream())) {
+              Credentials credentials = new Credentials();
               credentials.readTokenStorageStream(input);
-              UserGroupInformation.getCurrentUser().addCredentials(credentials);
+              UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
+              ugi.addCredentials(credentials);
               LOG.debug("Credentials updated: {}", credentials.getAllTokens());
-              return credentials;
+
+              // Returns the current user credentials to get updated to all executors.
+              return ugi.getCredentials();
             }
           } finally {
             if (!tmpLocation.delete()) {
