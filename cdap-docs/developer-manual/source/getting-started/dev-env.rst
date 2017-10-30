@@ -128,9 +128,6 @@ To do so, follow these steps:
    or `Eclipse <http://scala-ide.org>`__) as there is Scala code in the project.
 #. Open the CDAP project in the IDE as an existing project by finding and opening the ``cdap/pom.xml``.
 #. Resolve dependencies: this can take quite a while, as there are numerous downloads required.
-#. Before starting CDAP, disable audit logs by changing the ``audit.enabled`` setting in
-   ``cdap-default.xml`` to ``false``. Otherwise, due to :cask-issue:`CDAP-5864`, Kafka
-   errors will appear in the logs.
 #. In the case of IntelliJ, you can create a run configuration to run CDAP Sandbox:
 
    1. Select ``Run > Edit`` Configurations...

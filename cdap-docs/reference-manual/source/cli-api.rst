@@ -62,12 +62,12 @@ The executable should bring you into a shell, with a prompt similar to:
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
 
-- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
+- To interact with a remote CDAP server, run the CLI by specifying the uri ``-u example.com``.
 - To change the current CDAP server, run the CLI command ``connect example.com``.
-- To connect to an SSL-enabled CDAP server, run the CLI command ``connect https://example.com``.
+- To connect to an SSL-enabled CDAP server, run the CLI with arguments ``-u https://example.com``.
 
-For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
-a CDAP instance at ``example.com``, port ``11015``::
+For example, with the arguments ``-u example.com``, the CLI would be interacting with
+a CDAP instance at ``example.com``, using the default port ``11015``::
 
   cdap (http://example.com:11015/namespace:default)>
 
