@@ -15,23 +15,26 @@
 -->
 
 <div class="metrics-content" ng-class="{'disabled': disabled}">
-  <a class="node-metrics-labels"
-    ng-click="onClick($event, node)">
+  <a class="node-metrics-labels" ng-click="onClick($event, node)">
     <span class="metric-records-out">
-      <span ng-if="node.type.indexOf('sink') === -1">
+      <span ng-if="node.type.indexOf('sink') === -1 && node.type !== 'splittertransform' && !portName">
         <span class="metric-records-out-label">Out</span>
-        <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis">
-        </span>
+        <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis"></span>
+        <span>/</span>
       </span>
-      <span ng-if="node.type.indexOf('sink') !== -1">
+      <span ng-if="node.type.indexOf('sink') !== -1 && !portName">
         <span class="metric-records-out-label">In</span>
-        <span ng-bind="metricsData[node.name].recordsIn || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis">
-        </span>
+        <span ng-bind="metricsData[node.name].recordsIn || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis"></span>
+        <span>/</span>
       </span>
+      <span ng-if="portName">
+        <span class="metric-records-out-label">Out</span>
+        <span ng-bind="metricsData[node.name].recordsOut[portName] || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis"></span>
+      </span>
+
     </span>
-    <span>/</span>
-    <span class="metric-errors">
-      <span class="metric-errors-label">Error</span>
+    <span class="metric-errors" ng-if="!portName">
+      <span class="metric-errors-label">Errors</span>
       <span ng-bind="metricsData[node.name].recordsError || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis">
       </span>
     </span>

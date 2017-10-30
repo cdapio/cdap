@@ -62,18 +62,32 @@ angular.module(PKG.name + '.feature.hydrator')
 
         if (key !== 'app' && !metricObj[key]) {
           metricObj[key] = {
-            nodeName: split[1]
+            nodeName: key
           };
         }
 
-        if (metric.metricName.indexOf(split[1] + '.records.in') !== -1) {
-          metricObj[key].recordsIn = metric.data[0].value;
-        } else if (metric.metricName.indexOf(split[1] + '.records.out') !== -1) {
-          metricObj[key].recordsOut = metric.data[0].value;
-        } else if (metric.metricName.indexOf(split[1] + '.records.error') !== -1) {
-          metricObj[key].recordsError = metric.data[0].value;
-        } else if (systemLogMetrics.indexOf(metric.metricName) !== -1) {
-          logsMetrics[metric.metricName] = metric.data[0].value;
+        let metricName = metric.metricName;
+        let metricValue = metric.data[0].value;
+
+        if (metricName.indexOf(key + '.records.in') !== -1) {
+          metricObj[key].recordsIn = metricValue;
+        } else if (metricName.indexOf(key + '.records.out') !== -1) {
+
+          // contains multiple records.out metrics
+          if (metricName.indexOf(key + '.records.out.') !== -1) {
+            let port = split[split.length - 1];
+            if (!metricObj[key].recordsOut) {
+              metricObj[key].recordsOut = {};
+            }
+            metricObj[key].recordsOut[port] = metricValue;
+          } else {
+            metricObj[key].recordsOut = metricValue;
+          }
+
+        } else if (metricName.indexOf(key + '.records.error') !== -1) {
+          metricObj[key].recordsError = metricValue;
+        } else if (systemLogMetrics.indexOf(metricName) !== -1) {
+          logsMetrics[metricName] = metricValue;
         }
 
       });

@@ -19,8 +19,17 @@
   <div ng-repeat="port in SplitterPopoverCtrl.ports">
     <span class="port-name">{{ port.name | caskCapitalizeFilter }}</span>
     <div class="endpoint-circle"
-          ng-class="['{{nodeName}}_port_{{port.name}}', {'disabled': isDisabled}]">
+          ng-class="['{{node.name}}_port_{{port.name}}', {'disabled': isDisabled}]">
       <div class="endpoint-caret" ng-if="!isDisabled"></div>
+    </div>
+    <div class="port-metrics" ng-if="isDisabled">
+      <my-node-metrics
+        on-click="onMetricsClick"
+        node="node"
+        disabled="disableMetricsClick"
+        metrics-data="metricsData"
+        port-name="port.name">
+      </my-node-metrics>
     </div>
   </div>
 </div>

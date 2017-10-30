@@ -23,7 +23,8 @@ angular.module(PKG.name+'.commons')
       onClick: '&',
       node: '=',
       metricsData: '=',
-      disabled: '='
+      disabled: '=',
+      portName: '='
     },
     link: function(scope) {
       let metricsTimeout = null;
