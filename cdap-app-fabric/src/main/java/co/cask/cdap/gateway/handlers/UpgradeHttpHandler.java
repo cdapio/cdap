@@ -38,6 +38,9 @@ import javax.ws.rs.Path;
 @Beta
 @Path(Constants.Gateway.API_VERSION_3 + "/system/upgrade")
 public class UpgradeHttpHandler extends AbstractHttpHandler {
+
+  private static final Gson GSON = new Gson();
+
   private final AppVersionUpgradeService appVersionUpgradeService;
 
   @Inject
@@ -48,6 +51,6 @@ public class UpgradeHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/status")
   public void getUpgradeStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, new Gson().toJson(appVersionUpgradeService.getUpgradeStatus()));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appVersionUpgradeService.getUpgradeStatus()));
   }
 }

@@ -80,7 +80,6 @@ public class NettyRouter extends AbstractIdleService {
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
   private final CConfiguration cConf;
-  private final String realm;
   private final boolean sslEnabled;
   private final SSLHandlerFactory sslHandlerFactory;
 
@@ -100,7 +99,6 @@ public class NettyRouter extends AbstractIdleService {
     this.serviceToPortMap = new HashMap<>();
     this.serviceLookup = serviceLookup;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED, false);
-    this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -188,7 +186,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator",
-                             new AuthenticationHandler(cConf, realm, tokenValidator,
+                             new AuthenticationHandler(cConf, tokenValidator,
                                                        discoveryServiceClient, accessTokenTransformer));
           }
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {

@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Version;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import io.netty.handler.codec.http.HttpRequest;
@@ -29,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -38,6 +38,7 @@ import javax.ws.rs.Path;
 public class VersionHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(VersionHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final String version;
 
@@ -48,12 +49,12 @@ public class VersionHandler extends AbstractHttpHandler {
   @Path(Constants.Gateway.API_VERSION_3 + "/version")
   @GET
   public void version(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, new Gson().toJson(new Version(version)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Version(version)));
   }
 
   private String determineVersion() {
     try {
-      String version = Resources.toString(Resources.getResource("VERSION"), Charsets.UTF_8);
+      String version = Resources.toString(Resources.getResource("VERSION"), StandardCharsets.UTF_8);
       if (!version.equals("${project.version}")) {
         return version.trim();
       }

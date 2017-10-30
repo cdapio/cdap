@@ -101,7 +101,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         if (inflightRequests != 1) {
           // This means there is concurrent request via HTTP pipelining.
           // Simply return
-          // At the end of the first response, we'll response to all the other requests as well
+          // At the end of the first response, we'll respond to all the other requests as well
           return;
         }
 
@@ -264,7 +264,6 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
    */
   private static final class MessageSender implements Flushable, Closeable {
 
-    private final Channel inboundChannel;
     private final Discoverable discoverable;
     private final Queue<OutboundMessage> pendingMessages;
     private final Bootstrap clientBootstrap;
@@ -274,7 +273,6 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     private boolean connecting;
 
     private MessageSender(final CConfiguration cConf, final Channel inboundChannel, final Discoverable discoverable) {
-      this.inboundChannel = inboundChannel;
       this.discoverable = discoverable;
       this.pendingMessages = new LinkedList<>();
 

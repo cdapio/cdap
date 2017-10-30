@@ -83,7 +83,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     artifactJar = createArtifactJar(ServiceLifecycleApp.class);
   }
 
-  // TODO: Due to changes in netty executor, this test doesn't apply. Need to rework on it.
+  // TODO CDAP-12765: Due to changes in netty executor, this test doesn't apply. Need to rework on it.
   @Ignore
   @Test
   public void testLifecycleWithThreadTerminates() throws Exception {

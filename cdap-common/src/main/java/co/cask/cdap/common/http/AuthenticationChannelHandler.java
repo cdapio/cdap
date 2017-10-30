@@ -25,7 +25,6 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,6 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     LOG.error("Got exception: {}", cause.getMessage(), cause);
     // TODO: add WWW-Authenticate header for 401 response -  REACTOR-900
     HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-    HttpUtil.setContentLength(response, 0);
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
   }
 }

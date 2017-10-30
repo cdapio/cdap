@@ -73,6 +73,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME);
 
   private final CConfiguration cConf;
+  private final String realm;
   private final TokenValidator tokenValidator;
   private final Pattern bypassPattern;
   private final boolean auditLogEnabled;
@@ -80,10 +81,11 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final AccessTokenTransformer tokenTransformer;
 
-  public AuthenticationHandler(CConfiguration cConf, String realm, TokenValidator tokenValidator,
+  public AuthenticationHandler(CConfiguration cConf, TokenValidator tokenValidator,
                                DiscoveryServiceClient discoveryServiceClient,
                                AccessTokenTransformer tokenTransformer) {
     this.cConf = cConf;
+    this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.tokenValidator = tokenValidator;
     this.bypassPattern = createBypassPattern(cConf);
     this.auditLogEnabled = cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED);
@@ -114,8 +116,6 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
     // Response with failure, plus optionally audit log
     try {
-      String realm = cConf.get(Constants.Security.CFG_REALM);
-
       HttpHeaders headers = new DefaultHttpHeaders();
       JsonObject jsonObject = new JsonObject();
       if (tokenState == TokenState.MISSING) {
@@ -242,7 +242,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     try {
       return future.get(2, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
-      LOG.debug("No authentication server detected via service discovery");
+      LOG.warn("No authentication server detected via service discovery");
       return result;
     } catch (Exception e) {
       // There shouldn't be other exception, hence just returning
