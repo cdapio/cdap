@@ -24,7 +24,8 @@ import {
   setActiveBrowser,
   setS3AsActiveBrowser,
   setDatabaseAsActiveBrowser,
-  setKafkaAsActiveBrowser
+  setKafkaAsActiveBrowser,
+  setGCSAsActiveBrowser
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
@@ -93,6 +94,7 @@ export default class DataPrepConnections extends Component {
       databaseList: [],
       kafkaList: [],
       s3List: [],
+      gcsList: [],
       activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
       activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
       showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
@@ -189,6 +191,8 @@ export default class DataPrepConnections extends Component {
       activeConnectionid = browserName.id;
     } else if (typeof browserName === 'object' && browserName.type === 'S3') {
       setS3AsActiveBrowser({name: 's3', id: browserName.id, path: '/'});
+    } else if (typeof browserName === 'object' && browserName.type === 'GCS') {
+      setGCSAsActiveBrowser({name: 'gcs', id: browserName.id, path: '/'});
     }
 
     this.setState({
@@ -213,7 +217,8 @@ export default class DataPrepConnections extends Component {
 
       let databaseList = [],
           kafkaList = [],
-          s3List = [];
+          s3List = [],
+          gcsList = [];
 
       let state = {};
       if (action === 'delete' && this.state.activeConnectionid === targetId) {
@@ -229,12 +234,15 @@ export default class DataPrepConnections extends Component {
           kafkaList.push(connection);
         } else if (connection.type === 'S3') {
           s3List.push(connection);
+        } else if (connection.type === 'GCS') {
+          gcsList.push(connection);
         }
       });
 
       state.databaseList = databaseList;
       state.kafkaList = kafkaList;
       state.s3List = s3List;
+      state.gcsList = gcsList;
       state.loading = false;
       this.setState(state);
     });
@@ -357,6 +365,40 @@ export default class DataPrepConnections extends Component {
     );
   }
 
+  renderGCSDetail() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.gcsList.map((gcs) => {
+          return (
+            <div
+              key={gcs.id}
+              title={gcs.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/gcs/${gcs.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, {...gcs, name: gcs.type.toLowerCase()})}
+                singleWorkspaceMode={this.props.singleWorkspaceMode}
+              >
+                {gcs.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={gcs}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   renderPanel() {
     if (!this.state.sidePanelExpanded)  { return null; }
 
@@ -450,6 +492,18 @@ export default class DataPrepConnections extends Component {
             </div>
             {this.renderS3Detail()}
           </ExpandableMenu>
+
+          <ExpandableMenu>
+            <div>
+              <span className="fa fa-fw">
+                <IconSVG name="icon-google" />
+              </span>
+              <span>
+              {T.translate(`${PREFIX}.gcs`, {count: this.state.gcsList.length})}
+              </span>
+            </div>
+            {this.renderGCSDetail()}
+          </ExpandableMenu>
         </div>
 
         <AddConnection
@@ -534,6 +588,22 @@ export default class DataPrepConnections extends Component {
             );
           }}
         />
+        <Route
+          path={`${BASEPATH}/gcs/:gcsId`}
+          render={(match) => {
+            let id  = match.match.params.gcsId;
+            let {prefix = '/'} = queryString.parse(match.location.search);
+            setGCSAsActiveBrowser({name: 'gcs', id, path: prefix});
+            return (
+              <DataPrepBrowser
+                match={match}
+                location={location}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
         <Route component={RouteToHDFS} />
       </Switch>
     );
@@ -564,6 +634,16 @@ export default class DataPrepConnections extends Component {
         path = `/${bucketName}/${key}`;
       }
       setS3AsActiveBrowser({name: 's3', id: this.state.activeConnectionid, path});
+    } else if (this.state.activeConnectionType === 'gcs') {
+      let {workspaceInfo} = DataPrepStore.getState().dataprep;
+      let {path} = workspaceInfo.properties;
+      path = path.split('/');
+      path = path.slice(0, path.length - 1).join('/');
+      let bucketName = workspaceInfo.properties.bucket;
+      if (bucketName) {
+        path = `/${bucketName}/${path}/`;
+      }
+      setGCSAsActiveBrowser({name: 'gcs', id: this.state.activeConnectionid, path});
     }
     return (
       <DataPrepBrowser

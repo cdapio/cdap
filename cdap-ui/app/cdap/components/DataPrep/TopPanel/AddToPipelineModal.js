@@ -279,6 +279,47 @@ export default class AddToHydratorModal extends Component {
     };
   }
 
+  constructGCSSource(artifactsList, gcsInfo) {
+    if (!gcsInfo) { return null; }
+
+    let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+    if (!batchArtifact) {
+      this.setState({
+        error: T.translate('features.DataPrep.TopPanel.GCSPipeline.error'),
+        loading: false
+      });
+      return;
+    }
+
+    batchArtifact.version = '[0.9.0, 3.0.0)';
+    let plugin = objectQuery(gcsInfo, 'values', 0);
+
+    let pluginName = Object.keys(plugin)[0]; // this is because the plugin can be GCSFile or GCSFileBlob
+
+    plugin = plugin[pluginName];
+
+    let batchPluginInfo = {
+      name: plugin.name,
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: batchArtifact,
+      properties: plugin.properties
+    };
+
+    let batchStage = {
+      name: 'GCS',
+      plugin: batchPluginInfo
+    };
+
+    return {
+      batchSource: batchStage,
+      connections: [{
+        from: 'GCS',
+        to: 'Wrangler'
+      }]
+    };
+  }
+
   constructProperties(pluginVersion) {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
@@ -297,7 +338,7 @@ export default class AddToHydratorModal extends Component {
       MyDataPrepApi.getSchema(requestObj, requestBody)
     ];
 
-    if (state.workspaceUri && state.workspaceUri.length > 0) {
+    if (state.workspaceInfo.properties.connection === 'file') {
       let specParams = {
         namespace,
         path: state.workspaceUri
@@ -329,6 +370,14 @@ export default class AddToHydratorModal extends Component {
       };
 
       rxArray.push(MyDataPrepApi.getS3Specification(specParams));
+    } else if (state.workspaceInfo.properties.connection === 'gcs') {
+      let specParams = {
+        namespace,
+        connectionId: state.workspaceInfo.properties.connectionid,
+        wid: workspaceId
+      };
+
+      rxArray.push(MyDataPrepApi.getGCSSpecification(specParams));
     }
 
     MyArtifactApi.list({ namespace })
@@ -414,6 +463,8 @@ export default class AddToHydratorModal extends Component {
           if (!sourceConfigs) {
             return;
           }
+        } else if (state.workspaceInfo.properties.connection === 'gcs') {
+          sourceConfigs = this.constructGCSSource(res[0], res[2]);
         }
 
         if (sourceConfigs) {
@@ -448,7 +499,7 @@ export default class AddToHydratorModal extends Component {
           }
         });
 
-        if (['database', 's3'].indexOf(state.workspaceInfo.properties.connection) !== -1) {
+        if (['database', 's3', 'gcs'].indexOf(state.workspaceInfo.properties.connection) !== -1) {
           realtimeUrl = null;
         }
 
