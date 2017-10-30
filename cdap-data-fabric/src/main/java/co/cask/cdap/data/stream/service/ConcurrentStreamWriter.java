@@ -40,6 +40,8 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
+import io.netty.buffer.ByteBuf;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -203,11 +205,11 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @throws NotFoundException If the stream doesn't exists
    */
   public void asyncEnqueue(final StreamId streamId,
-                           Map<String, String> headers, ByteBuffer body,
+                           Map<String, String> headers, final ByteBuf body,
                            Executor executor) throws IOException, NotFoundException {
     // Put the event to the queue first and then execute the write asynchronously
     final EventQueue eventQueue = getEventQueue(streamId);
-    final WriteRequest writeRequest = eventQueue.append(headers, body);
+    final WriteRequest writeRequest = eventQueue.append(headers, body.nioBuffer());
     executor.execute(new Runnable() {
       @Override
       public void run() {
@@ -216,6 +218,8 @@ public final class ConcurrentStreamWriter implements Closeable {
         } catch (IOException e) {
           // Since it's done in the async executor, simply log the exception
           LOG.error("Async write failed", e);
+        } finally {
+          ReferenceCountUtil.safeRelease(body);
         }
       }
     });

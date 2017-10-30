@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -240,8 +241,8 @@ public class NettyRouter extends AbstractIdleService {
       public void cancel() {
         List<Future<?>> futures = new ArrayList<>();
         futures.add(channelGroup.close());
-        futures.add(serverBootstrap.config().group().shutdownGracefully());
-        futures.add(serverBootstrap.config().childGroup().shutdownGracefully());
+        futures.add(serverBootstrap.config().group().shutdownGracefully(0, 5, TimeUnit.SECONDS));
+        futures.add(serverBootstrap.config().childGroup().shutdownGracefully(0, 5, TimeUnit.SECONDS));
 
         for (Future<?> future : futures) {
           future.awaitUninterruptibly();

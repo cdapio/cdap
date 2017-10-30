@@ -270,8 +270,9 @@ public final class StreamHandler extends AbstractHttpHandler {
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
-    streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
-                              request.content().nioBuffer(), asyncExecutor);
+
+    // Need to retain the content buffer since writing is async
+    streamWriter.asyncEnqueue(streamId, getHeaders(request, stream), request.content().retain(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 
