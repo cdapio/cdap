@@ -211,6 +211,7 @@ public class MetricsClient {
       outQueryParts.add(key + "=" + value);
     }
   }
+
   private void addTags(Map<String, String> tags, List<String> outQueryParts) {
     for (Map.Entry<String, String> tag : tags.entrySet()) {
       outQueryParts.add("tag=" + tag.getKey() + ":" + tag.getValue());

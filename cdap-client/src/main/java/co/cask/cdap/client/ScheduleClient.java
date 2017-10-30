@@ -114,6 +114,7 @@ public class ScheduleClient {
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doUpdate(scheduleId, GSON.toJson(config));
   }
+
   public void update(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doUpdate(scheduleId, GSON.toJson(detail));
