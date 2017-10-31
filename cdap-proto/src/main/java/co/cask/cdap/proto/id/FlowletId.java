@@ -113,7 +113,7 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(getNamespace(), getApplication(), getVersion(),
                                                       getFlow(), flowlet));
   }

@@ -109,7 +109,7 @@ public class NamespaceId extends NamespacedEntityId {
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.singletonList(namespace);
   }
 

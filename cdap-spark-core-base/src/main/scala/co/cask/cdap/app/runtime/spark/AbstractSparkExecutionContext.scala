@@ -215,7 +215,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     val cConf = runtimeContext.getCConfiguration
     val tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile
-    val classDir = new File(tempDir, runtimeContext.getProgramRunId + "-classes-" + interpreterCount.incrementAndGet())
+    val classDir = new File(tempDir,
+ 	runtimeContext.getProgramRunId.toIdParts.mkString(".") + "-classes-" + interpreterCount.incrementAndGet())
     if (!DirUtils.mkdirs(classDir)) {
       throw new IOException("Failed to create directory " + classDir + " for storing compiled class files.")
     }

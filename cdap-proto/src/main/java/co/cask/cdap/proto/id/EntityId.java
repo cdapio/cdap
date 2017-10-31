@@ -136,7 +136,7 @@ public abstract class EntityId implements IdCompatible {
     this.entity = entity;
   }
 
-  protected abstract Iterable<String> toIdParts();
+  public abstract Iterable<String> toIdParts();
 
   public abstract String getEntityName();
 

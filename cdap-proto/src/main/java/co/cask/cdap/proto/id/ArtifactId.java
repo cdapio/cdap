@@ -132,7 +132,7 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, artifact, version));
   }
 

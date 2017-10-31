@@ -86,7 +86,7 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, stream));
   }
 
