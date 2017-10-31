@@ -78,17 +78,14 @@ public abstract class DatasetRuntimeContext {
     final Thread callerThread = Thread.currentThread();
     final DatasetRuntimeContext oldContext = CONTEXT_THREAD_LOCAL.get();
     CONTEXT_THREAD_LOCAL.set(context);
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        // This must be called from the same thread that call setContext
-        Thread currentThread = Thread.currentThread();
-        if (currentThread != callerThread) {
-          LOG.warn("Cancel is called from different thread. Expected {}, actual: {}", callerThread, currentThread);
-          return;
-        }
-        CONTEXT_THREAD_LOCAL.set(oldContext);
+    return () -> {
+      // This must be called from the same thread that call setContext
+      Thread currentThread = Thread.currentThread();
+      if (currentThread != callerThread) {
+        LOG.warn("Cancel is called from different thread. Expected {}, actual: {}", callerThread, currentThread);
+        return;
       }
+      CONTEXT_THREAD_LOCAL.set(oldContext);
     };
   }
 

@@ -48,7 +48,7 @@ import java.util.Map;
  */
 public abstract class AbstractApplication<T extends Config> extends AbstractPluginConfigurable<ApplicationConfigurer>
   implements Application<T> {
-  private ApplicationContext context;
+  private ApplicationContext<T> context;
   private ApplicationConfigurer configurer;
   private TriggerFactory triggerFactory;
 
@@ -163,7 +163,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    */
   @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
-    scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
+    scheduleWorkflow(schedule, workflowName, Collections.emptyMap());
   }
 
 

@@ -17,10 +17,8 @@
 package co.cask.cdap.api.dataset.lib.app.partitioned;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import org.apache.tephra.TransactionFailureException;
 
@@ -69,14 +67,9 @@ public class PartitionExploreCorrector extends AbstractApplication {
       String disableArg = getContext().getRuntimeArguments().get("disable.explore");
       boolean doDisable = disableArg == null || Boolean.valueOf(disableArg);
 
-      final AtomicReference<Class<?>> pfsClass = new AtomicReference<>();
+      AtomicReference<Class<?>> pfsClass = new AtomicReference<>();
       try {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            pfsClass.set(context.getDataset(datasetName).getClass());
-          }
-        });
+        getContext().execute(context -> pfsClass.set(context.getDataset(datasetName).getClass()));
       } catch (TransactionFailureException e) {
         throw new RuntimeException("Failed to determine the PartitionedFileSet class name through reflection", e);
       }

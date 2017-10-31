@@ -77,12 +77,7 @@ public class PartitionBatchInput {
     PartitionedFileSetArguments.addInputPartitions(arguments, consumedPartitions);
     mapreduceContext.addInput(Input.ofDataset(partitionedFileSetName, arguments));
 
-    return new BatchPartitionCommitter() {
-      @Override
-      public void onFinish(boolean succeeded) {
-        partitionConsumer.onFinish(consumedPartitions, succeeded);
-      }
-    };
+    return succeeded -> partitionConsumer.onFinish(consumedPartitions, succeeded);
   }
 
   /**

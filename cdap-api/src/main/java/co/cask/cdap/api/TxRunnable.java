@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
  * A runnable that provides a {@link DatasetContext} to programs which may be used to get
  * access to and use datasets.
  */
+@FunctionalInterface
 public interface TxRunnable {
 
   /**

@@ -34,7 +34,7 @@ public final class Plugin {
 
   @Deprecated
   public Plugin(ArtifactId artifactId, PluginClass pluginClass, PluginProperties properties) {
-    this(new ArrayList<ArtifactId>(), artifactId, pluginClass, properties);
+    this(new ArrayList<>(), artifactId, pluginClass, properties);
   }
 
   /**

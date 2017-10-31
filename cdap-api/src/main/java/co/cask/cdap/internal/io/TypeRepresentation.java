@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 
 /**
    * Helper class to represent a type parameter in a serializable form. It would be simple if we could just use 
@@ -107,11 +108,7 @@ public final class TypeRepresentation implements ParameterizedType {
     if (this.parameters == null) {
       return null;
     }
-    Type[] typeArgs = new Type[this.parameters.length];
-    for (int i = 0; i < typeArgs.length; i++) {
-      typeArgs[i] = this.parameters[i].toType();
-    }
-    return typeArgs;
+    return Arrays.stream(this.parameters).map(TypeRepresentation::toType).toArray(Type[]::new);
   }
 
   @Override

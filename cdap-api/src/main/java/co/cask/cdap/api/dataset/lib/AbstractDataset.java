@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Handy abstract implementation of {@link Dataset} that acts on a list of underlying datasets and
@@ -45,12 +46,10 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
     this.underlying.add(embedded);
     Collections.addAll(this.underlying, otherEmbedded);
 
-    List<TransactionAware> txAwares = new ArrayList<>();
-    for (Dataset dataset : underlying) {
-      if (dataset instanceof TransactionAware) {
-        txAwares.add((TransactionAware) dataset);
-      }
-    }
+    List<TransactionAware> txAwares = underlying.stream()
+      .filter(dataset -> dataset instanceof TransactionAware)
+      .map(dataset -> (TransactionAware) dataset)
+      .collect(Collectors.toList());
     this.txAwares = TransactionAwares.of(txAwares);
   }
 

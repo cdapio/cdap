@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,12 +40,7 @@ public final class Reflections {
       return isResolved(((GenericArrayType) type).getGenericComponentType());
     }
     if (type instanceof ParameterizedType) {
-      for (Type t : ((ParameterizedType) type).getActualTypeArguments()) {
-        if (!isResolved(t)) {
-          return false;
-        }
-      }
-      return true;
+      return Arrays.stream(((ParameterizedType) type).getActualTypeArguments()).allMatch(Reflections::isResolved);
     }
     return type instanceof Class;
   }

@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.Dataset;
  * @param <V> type of the return value from the {@link #call(DatasetContext)}.
  *
  */
+@FunctionalInterface
 public interface TxCallable<V> {
   /**
    * Provides a {@link DatasetContext} to get instances of {@link Dataset}s.

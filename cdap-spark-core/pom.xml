@@ -194,7 +194,7 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.1</version>
       </plugin>
       <!-- copy the source from cdap-spark-core-base in order to compile everything as scala 2.10 -->
       <plugin>

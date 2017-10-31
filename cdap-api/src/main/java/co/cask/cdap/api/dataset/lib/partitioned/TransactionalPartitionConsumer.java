@@ -17,17 +17,15 @@
 package co.cask.cdap.api.dataset.lib.partitioned;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import org.apache.tephra.TransactionFailureException;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An implementation of {@link PartitionConsumer} that uses a {@link Transactional} to execute its methods
@@ -78,77 +76,39 @@ public final class TransactionalPartitionConsumer implements PartitionConsumer {
   }
 
   @Override
-  public PartitionConsumerResult consumePartitions(final PartitionAcceptor acceptor) {
+  public PartitionConsumerResult consumePartitions(PartitionAcceptor acceptor) {
 
-    final AtomicReference<PartitionConsumerResult> partitions = new AtomicReference<>();
-
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          partitions.set(getPartitionConsumer(context).consumePartitions(acceptor));
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException(e);
-    }
-    return partitions.get();
+    return Transactionals.execute(transactional, context -> {
+      return getPartitionConsumer(context).consumePartitions(acceptor);
+    });
   }
 
   @Override
-  public void onFinish(final List<? extends Partition> partitions, final boolean succeeded) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getPartitionConsumer(context).onFinish(partitions, succeeded);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException(e);
-    }
+  public void onFinish(final List<? extends Partition> partitions, boolean succeeded) {
+    Transactionals.execute(transactional, context -> {
+      getPartitionConsumer(context).onFinish(partitions, succeeded);
+    });
   }
 
   @Override
-  public void onFinishWithKeys(final List<? extends PartitionKey> partitionKeys, final boolean succeeded) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getPartitionConsumer(context).onFinishWithKeys(partitionKeys, succeeded);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException(e);
-    }
+  public void onFinishWithKeys(final List<? extends PartitionKey> partitionKeys, boolean succeeded) {
+    Transactionals.execute(transactional, context -> {
+      getPartitionConsumer(context).onFinishWithKeys(partitionKeys, succeeded);
+    });
   }
 
   @Override
-  public void untake(final List<? extends Partition> partitions) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getPartitionConsumer(context).untake(partitions);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException(e);
-    }
+  public void untake(List<? extends Partition> partitions) {
+    Transactionals.execute(transactional, context -> {
+      getPartitionConsumer(context).untake(partitions);
+    });
   }
 
   @Override
-  public void untakeWithKeys(final List<? extends PartitionKey> partitionKeys) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getPartitionConsumer(context).untakeWithKeys(partitionKeys);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException(e);
-    }
+  public void untakeWithKeys(List<? extends PartitionKey> partitionKeys) {
+    Transactionals.execute(transactional, context -> {
+      getPartitionConsumer(context).untakeWithKeys(partitionKeys);
+    });
   }
 
   private PartitionConsumer getPartitionConsumer(DatasetContext context) {

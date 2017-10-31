@@ -66,8 +66,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     String recordName = typeToken.getRawType().getName();
     Map<String, TypeToken<?>> recordFieldTypes =
       typeToken.getRawType().isInterface() ?
-        collectByMethods(typeToken, new TreeMap<String, TypeToken<?>>()) :
-        collectByFields(typeToken, new TreeMap<String, TypeToken<?>>());
+        collectByMethods(typeToken, new TreeMap<>()) :
+        collectByFields(typeToken, new TreeMap<>());
 
     // Recursively generate field type schema.
     List<Schema.Field> fields = new ArrayList<>();
