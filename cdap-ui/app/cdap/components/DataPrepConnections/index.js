@@ -86,7 +86,7 @@ export default class DataPrepConnections extends Component {
 
     let {workspaceInfo} = DataPrepStore.getState().dataprep;
     this.state = {
-      sidePanelExpanded: this.props.enableRouting ? true : false,
+      sidePanelExpanded: this.props.sidePanelExpanded || (this.props.enableRouting ? true : false),
       backendChecking: true,
       backendDown: false,
       loading: this.props.enableRouting ? true : false,
@@ -636,5 +636,6 @@ DataPrepConnections.propTypes = {
   location: PropTypes.object,
   enableRouting: PropTypes.bool,
   onWorkspaceCreate: PropTypes.func,
-  singleWorkspaceMode: PropTypes.bool
+  singleWorkspaceMode: PropTypes.bool,
+  sidePanelExpanded: PropTypes.bool
 };

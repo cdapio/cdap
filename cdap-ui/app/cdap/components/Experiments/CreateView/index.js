@@ -86,6 +86,7 @@ export default class ExperimentCreateView extends Component {
           <IconSVG name="icon-close" />
         </TopPanel>
         <DataPrepConnections
+          sidePanelExpanded={true}
           enableRouting={false}
           singleWorkspaceMode={true}
           onWorkspaceCreate={(workspaceId) => {
