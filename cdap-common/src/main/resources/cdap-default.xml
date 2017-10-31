@@ -182,18 +182,20 @@
 
   <property>
     <name>twill.java.heap.memory.ratio</name>
-    <value>0.6</value>
+    <value>0.7</value>
     <description>
-      The minimum ratio of heap to non-heap memory for Apache Twill container
+      The minimum ratio of heap to non-heap memory for all launched Apache Twill
+      containers. Container-specific settings also exist for CDAP system containers.
     </description>
   </property>
 
   <property>
     <name>twill.java.reserved.memory.mb</name>
-    <value>250</value>
+    <value>300</value>
     <description>
-      Desired reserved non-heap memory in megabytes for Apache Twill container.
+      Desired reserved non-heap memory in megabytes for all launched Apache Twill containers.
       The actual value is bounded by the ${twill.java.heap.memory.ratio} setting of the container memory size.
+      Container-specific settings also exist for CDAP system containers.
     </description>
   </property>
 
@@ -1538,11 +1540,9 @@
 
   <property>
     <name>log.saver.container.memory.mb</name>
-    <value>1024</value>
+    <value>${master.service.memory.mb}</value>
     <description>
-      Memory in megabytes for each log saver instance to run in YARN. This
-      is explicitly set differently than ${master.service.memory.mb} as the
-      log saver requires more memory to run than the CDAP Master service.
+      Memory in megabytes for each log saver instance to run in YARN.
     </description>
   </property>
 
@@ -1684,9 +1684,10 @@
 
   <property>
     <name>master.service.memory.mb</name>
-    <value>512</value>
+    <value>1024</value>
     <description>
-      Memory in megabytes for each master service instance
+      Macro property to set the default memory in megabytes for each CDAP
+      system container
     </description>
   </property>
 
