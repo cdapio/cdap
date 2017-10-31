@@ -30,16 +30,14 @@ import co.cask.common.http.HttpResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.matcher.Matcher;
-import org.apache.commons.lang.StringUtils;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,6 +50,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -222,9 +221,9 @@ public class RESTClientTest {
     private final NettyHttpService httpService;
 
     public TestHttpService() {
-      this.httpService = NettyHttpService.builder()
+      this.httpService = NettyHttpService.builder("rest-client-test")
         .setHost("localhost")
-        .addHttpHandlers(Sets.newHashSet(new TestHandler()))
+        .setHttpHandlers(new TestHandler())
         .setWorkerThreadPoolSize(10)
         .setExecThreadPoolSize(10)
         .setConnectionBacklog(20000)
@@ -237,12 +236,12 @@ public class RESTClientTest {
 
     @Override
     protected void startUp() throws Exception {
-      httpService.startAndWait();
+      httpService.start();
     }
 
     @Override
     protected void shutDown() throws Exception {
-      httpService.stopAndWait();
+      httpService.stop();
     }
 
     @Override
@@ -264,9 +263,8 @@ public class RESTClientTest {
 
     @POST
     @Path("/testCount")
-    public void testIncrement(org.jboss.netty.handler.codec.http.HttpRequest request,
-                              HttpResponder responder) throws Exception {
-      Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+    public void testIncrement(FullHttpRequest request, HttpResponder responder) throws Exception {
+      Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8);
       String content = (new Gson()).fromJson(reader, String.class);
       switch (content) {
         case "increment":
@@ -283,12 +281,11 @@ public class RESTClientTest {
 
     @POST
     @Path("/testPostAuth")
-    public void testPostAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
-                             HttpResponder responder) throws Exception {
-      String authHeaderVal = request.getHeader(HttpHeaders.AUTHORIZATION);
+    public void testPostAuth(FullHttpRequest request, HttpResponder responder) throws Exception {
+      String authHeaderVal = request.headers().get(HttpHeaders.AUTHORIZATION);
       if (("Bearer " + ACCESS_TOKEN).equals(authHeaderVal)) {
         responder.sendString(HttpResponseStatus.OK, "Access token received: "
-          + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
+          + request.headers().get(HttpHeaders.AUTHORIZATION).replace("Bearer ", ""));
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
       }
@@ -296,12 +293,12 @@ public class RESTClientTest {
 
     @PUT
     @Path("/testPutAuth")
-    public void testPutAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testPutAuth(FullHttpRequest request,
                             HttpResponder responder) throws Exception {
-      String authHeaderVal = request.getHeader(HttpHeaders.AUTHORIZATION);
+      String authHeaderVal = request.headers().get(HttpHeaders.AUTHORIZATION);
       if (("Bearer " + ACCESS_TOKEN).equals(authHeaderVal)) {
         responder.sendString(HttpResponseStatus.OK, "Access token received: "
-          + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
+          + request.headers().get(HttpHeaders.AUTHORIZATION).replace("Bearer ", ""));
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
       }
@@ -309,12 +306,12 @@ public class RESTClientTest {
 
     @DELETE
     @Path("/testDeleteAuth")
-    public void testDeleteAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testDeleteAuth(FullHttpRequest request,
                                HttpResponder responder) throws Exception {
-      String authHeaderVal = request.getHeader(HttpHeaders.AUTHORIZATION);
+      String authHeaderVal = request.headers().get(HttpHeaders.AUTHORIZATION);
       if (("Bearer " + ACCESS_TOKEN).equals(authHeaderVal)) {
         responder.sendString(HttpResponseStatus.OK, "Access token received: "
-          + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
+          + request.headers().get(HttpHeaders.AUTHORIZATION).replace("Bearer ", ""));
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
       }
@@ -322,12 +319,12 @@ public class RESTClientTest {
 
     @GET
     @Path("/testGetAuth")
-    public void testGetAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testGetAuth(FullHttpRequest request,
                             HttpResponder responder) throws Exception {
-      String authHeaderVal = request.getHeader(HttpHeaders.AUTHORIZATION);
+      String authHeaderVal = request.headers().get(HttpHeaders.AUTHORIZATION);
       if (("Bearer " + ACCESS_TOKEN).equals(authHeaderVal)) {
         responder.sendString(HttpResponseStatus.OK, "Access token received: "
-          + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
+          + request.headers().get(HttpHeaders.AUTHORIZATION).replace("Bearer ", ""));
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
       }
@@ -335,35 +332,35 @@ public class RESTClientTest {
 
     @PUT
     @Path("/testPutForbidden")
-    public void testPutForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testPutForbidden(FullHttpRequest request,
                                  HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.FORBIDDEN, message);
     }
 
     @POST
     @Path("/testPostForbidden")
-    public void testPostForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testPostForbidden(FullHttpRequest request,
                                   HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.FORBIDDEN, message);
     }
 
     @DELETE
     @Path("/testDeleteForbidden")
-    public void testDeleteForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testDeleteForbidden(FullHttpRequest request,
                                     HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.FORBIDDEN, message);
     }
 
     @GET
     @Path("/testGetForbidden")
-    public void testGetForbidden(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testGetForbidden(FullHttpRequest request,
                                  HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.FORBIDDEN, message);
     }
 
     @GET
     @Path("/testUnavail")
-    public void testUnavail(org.jboss.netty.handler.codec.http.HttpRequest request,
+    public void testUnavail(FullHttpRequest request,
                             HttpResponder responder) throws Exception {
       unavailEnpointCount++;
       //Max number of calls to this endpoint should be 1 (Original request) + RETRY_LIMIT.

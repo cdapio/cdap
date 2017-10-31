@@ -18,15 +18,15 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.logging.AuditLogContent;
+import co.cask.cdap.common.logging.AuditLogConfig;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.internal.asm.Classes;
 import co.cask.http.HttpHandler;
-import co.cask.http.PatternPathRouterWithGroups;
+import co.cask.http.internal.PatternPathRouterWithGroups;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
-import org.jboss.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,27 +52,27 @@ import javax.ws.rs.Path;
 public final class RouterAuditLookUp {
 
   private static final Logger LOG = LoggerFactory.getLogger(RouterAuditLookUp.class);
-  private static final RouterAuditLookUp AUDIT_LOOK_UP = new RouterAuditLookUp();
-  private static final int maxParts = 25;
+  private static final RouterAuditLookUp INSTANCE = new RouterAuditLookUp();
+  private static final int MAX_PARTS = 25;
   private final int numberOfPaths;
 
-  private final PatternPathRouterWithGroups<AuditLogContent> patternMatcher =
-    PatternPathRouterWithGroups.create(maxParts);
+  public static RouterAuditLookUp getInstance() {
+    return INSTANCE;
+  }
+
+  private final PatternPathRouterWithGroups<AuditLogConfig> patternMatcher =
+    PatternPathRouterWithGroups.create(MAX_PARTS);
 
   private RouterAuditLookUp() {
     numberOfPaths = createMatcher();
   }
 
-  public static RouterAuditLookUp getAuditLookUp() {
-    return AUDIT_LOOK_UP;
-  }
-
   @Nullable
-  public AuditLogContent getAuditLogContent(String path, HttpMethod httpMethod) throws Exception {
-    List<PatternPathRouterWithGroups.RoutableDestination<AuditLogContent>> destinations =
+  public AuditLogConfig getAuditLogContent(String path, HttpMethod httpMethod) throws Exception {
+    List<PatternPathRouterWithGroups.RoutableDestination<AuditLogConfig>> destinations =
       patternMatcher.getDestinations(path);
-    for (PatternPathRouterWithGroups.RoutableDestination<AuditLogContent> entry : destinations) {
-      AuditLogContent destination = entry.getDestination();
+    for (PatternPathRouterWithGroups.RoutableDestination<AuditLogConfig> entry : destinations) {
+      AuditLogConfig destination = entry.getDestination();
       if (destination.getHttpMethod().equals(httpMethod)) {
         return destination;
       }
@@ -81,7 +81,7 @@ public final class RouterAuditLookUp {
   }
 
   private int createMatcher() {
-    List<Class<?>> handlerClasses;
+    List<ClassPath.ClassInfo> handlerClasses;
     try {
       handlerClasses = getAllHandlerClasses();
     } catch (IOException e) {
@@ -90,7 +90,9 @@ public final class RouterAuditLookUp {
     }
 
     int count = 0;
-    for (Class<?> handlerClass : handlerClasses) {
+    for (ClassPath.ClassInfo classInfo : handlerClasses) {
+      Class<?> handlerClass = classInfo.load();
+
       Path classPath = handlerClass.getAnnotation(Path.class);
       String classPathStr = classPath == null ? "" : classPath.value();
       for (Method method : handlerClass.getMethods()) {
@@ -119,13 +121,17 @@ public final class RouterAuditLookUp {
           }
         }
 
-        AuditLogContent auditLogContent = new AuditLogContent(httpMethod,
-                                                              auditContents.contains(AuditDetail.REQUEST_BODY),
-                                                              auditContents.contains(AuditDetail.RESPONSE_BODY),
-                                                              headerNames);
+        AuditLogConfig auditLogConfig = new AuditLogConfig(httpMethod,
+                                                           auditContents.contains(AuditDetail.REQUEST_BODY),
+                                                           auditContents.contains(AuditDetail.RESPONSE_BODY),
+                                                           headerNames);
         LOG.trace("Audit log lookup: bootstrapped with path: {}", completePath);
-        patternMatcher.add(completePath, auditLogContent);
-        count++;
+        patternMatcher.add(completePath, auditLogConfig);
+
+        // Don't count classes in unit-tests
+        if (!isTestClass(classInfo)) {
+          count++;
+        }
       }
     }
     LOG.debug("Audit log lookup: bootstrapped with {} paths", count);
@@ -145,21 +151,26 @@ public final class RouterAuditLookUp {
     return null;
   }
 
-  private List<Class<?>> getAllHandlerClasses() throws IOException {
+  private List<ClassPath.ClassInfo> getAllHandlerClasses() throws IOException {
     ClassLoader cl = getClass().getClassLoader();
     Map<String, Boolean> cache = new HashMap<>();
     Function<String, URL> lookup = ClassLoaders.createClassResourceLookup(cl);
     ClassPath cp = ClassPath.from(cl);
-    List<Class<?>> results = new ArrayList<>();
+    List<ClassPath.ClassInfo> results = new ArrayList<>();
     for (ClassPath.ClassInfo info : cp.getAllClasses()) {
       if (!info.getPackageName().startsWith("co.cask.cdap")) {
         continue;
       }
       if (Classes.isSubTypeOf(info.getName(), HttpHandler.class.getName(), lookup, cache)) {
-        results.add(info.load());
+        results.add(info);
       }
     }
     return results;
+  }
+
+  private boolean isTestClass(ClassPath.ClassInfo classInfo) {
+    URL url = classInfo.url();
+    return url != null && url.getPath().contains("target/test-classes");
   }
 
   @VisibleForTesting

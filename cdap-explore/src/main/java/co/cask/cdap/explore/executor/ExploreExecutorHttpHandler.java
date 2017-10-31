@@ -50,7 +50,6 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -58,15 +57,17 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -108,12 +109,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("streams/{stream}/tables/{table}/enable")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void enableStream(HttpRequest request, HttpResponder responder,
+  public void enableStream(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
                            @PathParam("stream") String streamName,
                            @PathParam("table") final String tableName) throws Exception {
     final StreamId streamId = new StreamId(namespace, streamName);
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()))) {
       final FormatSpecification format = GSON.fromJson(reader, FormatSpecification.class);
       if (format == null) {
         throw new BadRequestException("Expected format in the body");
@@ -126,7 +127,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
     } catch (UnsupportedTypeException e) {
       LOG.error("Exception while generating create statement for stream {}", streamName, e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -159,7 +160,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
     } catch (Throwable t) {
       LOG.error("Got exception disabling exploration for stream {}", streamId, t);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
@@ -168,7 +169,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("datasets/{dataset}/enable-internal")
-  public void enableInternal(HttpRequest request, HttpResponder responder,
+  public void enableInternal(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace,
                              @PathParam("dataset") String datasetName)
     throws BadRequestException, IOException {
@@ -219,7 +220,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (ExploreException e) {
@@ -242,7 +243,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateDataset(HttpRequest request, HttpResponder responder,
+  public void updateDataset(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
     throws BadRequestException {
 
@@ -265,7 +266,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (ExploreException e) {
@@ -282,24 +283,24 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private static EnableExploreParameters readEnableParameters(HttpRequest request)
+  private static EnableExploreParameters readEnableParameters(FullHttpRequest request)
     throws BadRequestException, IOException {
     return doReadExploreParameters(request, EnableExploreParameters.class);
   }
 
-  private static DisableExploreParameters readDisableParameters(HttpRequest request)
+  private static DisableExploreParameters readDisableParameters(FullHttpRequest request)
     throws BadRequestException, IOException {
     return doReadExploreParameters(request, DisableExploreParameters.class);
   }
 
-  private static UpdateExploreParameters readUpdateParameters(HttpRequest request)
+  private static UpdateExploreParameters readUpdateParameters(FullHttpRequest request)
     throws BadRequestException, IOException {
     return doReadExploreParameters(request, UpdateExploreParameters.class);
   }
 
-  private static <T> T doReadExploreParameters(HttpRequest request, Class<T> clz)
+  private static <T> T doReadExploreParameters(FullHttpRequest request, Class<T> clz)
     throws BadRequestException, IOException {
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       return GSON.fromJson(reader, clz);
     } catch (JsonSyntaxException | NullPointerException e) {
       throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
@@ -327,7 +328,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("datasets/{dataset}/disable-internal")
-  public void disableInternal(HttpRequest request, HttpResponder responder,
+  public void disableInternal(FullHttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
     throws BadRequestException, IOException {
 
@@ -344,7 +345,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
     } catch (Throwable e) {
       LOG.error("Got exception while trying to disable explore on dataset {}", datasetId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -353,7 +354,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("datasets/{dataset}/partitions")
-  public void addPartition(final HttpRequest request, final HttpResponder responder,
+  public void addPartition(final FullHttpRequest request, final HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
                            @PathParam("dataset") String datasetName,
                            @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId) throws Exception {
@@ -386,7 +387,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       throws ExploreException, SQLException;
   }
 
-  private void doPartitionOperation(HttpRequest request, HttpResponder responder, DatasetId datasetId,
+  private void doPartitionOperation(FullHttpRequest request, HttpResponder responder, DatasetId datasetId,
                                     PartitionOperation partitionOperation) {
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
@@ -400,7 +401,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (classNotFoundMessage != null) {
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
+        responder.sendJson(HttpResponseStatus.OK, json.toString());
         return;
       }
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
@@ -415,7 +416,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
 
-      Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+      Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()));
       Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
 
 
@@ -437,7 +438,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -449,7 +450,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   // of the request, and that does not work with many HTTP clients, including Java's URLConnection.
   @POST
   @Path("datasets/{dataset}/deletePartition")
-  public void dropPartition(final HttpRequest request, final HttpResponder responder,
+  public void dropPartition(final FullHttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
                             @PathParam("dataset") String datasetName,
                             @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId) throws Exception {
@@ -473,7 +474,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("datasets/{dataset}/concatenatePartition")
-  public void concatenatePartition(final HttpRequest request, final HttpResponder responder,
+  public void concatenatePartition(final FullHttpRequest request, final HttpResponder responder,
                                    @PathParam("namespace-id") String namespace,
                                    @PathParam("dataset") String datasetName,
                                    @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId)
@@ -512,9 +513,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     return Strings.isNullOrEmpty(programId) ? entityId : ProgramId.fromString(programId);
   }
 
-  // propagate userid from the HTTP Request in the current thread
+  // propagate user id from the HTTP Request in the current thread
   private void propagateUserId(HttpRequest request) {
-    String userId = request.getHeader(Constants.Security.Headers.USER_ID);
+    String userId = request.headers().get(Constants.Security.Headers.USER_ID);
     if (userId != null) {
       LOG.debug("Propagating userId as {}", userId);
       SecurityRequestContext.setUserId(userId);

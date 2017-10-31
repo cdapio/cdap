@@ -54,21 +54,22 @@ import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +78,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -98,7 +100,10 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Gson GSON = new GsonBuilder()
+  // Gson for writing response
+  private static final Gson GSON = new Gson();
+  // Gson for decoding request
+  private static final Gson DECODE_GSON = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
@@ -223,7 +228,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         names.add(name);
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getApps(namespace, names, artifactVersion));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(applicationLifecycleService.getApps(namespace, names, artifactVersion)));
   }
 
   /**
@@ -237,7 +243,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getAppDetail(applicationId));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
   }
 
   /**
@@ -253,7 +259,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (versions.isEmpty()) {
       throw new ApplicationNotFoundException(applicationId);
     }
-    responder.sendJson(HttpResponseStatus.OK, versions);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(versions));
   }
 
   /**
@@ -268,7 +274,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
-    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getAppDetail(applicationId));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
   }
 
   /**
@@ -282,7 +288,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getPlugins(applicationId));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
   }
 
   /**
@@ -330,7 +336,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateApp(HttpRequest request, HttpResponder responder,
+  public void updateApp(FullHttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName)
     throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
@@ -338,8 +344,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
 
     AppRequest appRequest;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      appRequest = GSON.fromJson(reader, AppRequest.class);
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
+      appRequest = DECODE_GSON.fromJson(reader, AppRequest.class);
     } catch (IOException e) {
       LOG.error("Error reading request to update app {} in namespace {}.", appName, namespaceId, e);
       throw new IOException("Error reading request body.");
@@ -376,7 +382,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try (FileReader fileReader = new FileReader(uploadedFile)) {
 
-          AppRequest<?> appRequest = GSON.fromJson(fileReader, AppRequest.class);
+          AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
           ArtifactSummary artifactSummary = appRequest.getArtifact();
 
           KerberosPrincipalId ownerPrincipalId =
@@ -440,7 +446,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format(
                              "%s header not present. Please include the header and set its value to the jar name.",
                              ARCHIVE_NAME_HEADER),
-                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+                           new DefaultHttpHeaders().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE));
       return null;
     }
 

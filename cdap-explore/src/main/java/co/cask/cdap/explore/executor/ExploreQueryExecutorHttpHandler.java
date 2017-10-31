@@ -29,9 +29,12 @@ import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +55,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecutorHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryExecutorHttpHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final ExploreService exploreService;
 
@@ -113,7 +117,7 @@ public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecuto
       } else {
         status = QueryStatus.NO_OP;
       }
-      responder.sendJson(HttpResponseStatus.OK, status);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(status));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -146,7 +150,7 @@ public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecuto
       } else {
         schema = Lists.newArrayList();
       }
-      responder.sendJson(HttpResponseStatus.OK, schema);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(schema));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -161,7 +165,7 @@ public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecuto
 
   @POST
   @Path("data/explore/queries/{id}/next")
-  public void getQueryNextResults(HttpRequest request, HttpResponder responder,
+  public void getQueryNextResults(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("id") String id) throws IOException, ExploreException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
@@ -179,7 +183,7 @@ public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecuto
           }
         });
       }
-      responder.sendJson(HttpResponseStatus.OK, results);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(results));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -210,7 +214,7 @@ public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecuto
           }
         });
       }
-      responder.sendJson(HttpResponseStatus.OK, results);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(results));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -253,7 +257,7 @@ public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecuto
       }
 
       QueryResultsBodyProducer queryResultsBodyProducer = new QueryResultsBodyProducer(exploreService, handle);
-      responder.sendContent(HttpResponseStatus.OK, queryResultsBodyProducer, null);
+      responder.sendContent(HttpResponseStatus.OK, queryResultsBodyProducer, EmptyHttpHeaders.INSTANCE);
 
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);

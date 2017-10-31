@@ -67,7 +67,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -889,30 +889,30 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     RESTClient restClient = new RESTClient(clientConfig);
     URL url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT, "apps/WordCountApp/metadata?scope=system");
     Assert.assertEquals(
-      HttpResponseStatus.OK.getCode(),
+      HttpResponseStatus.OK.code(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
     url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
                                               "datasets/mydataset/metadata/properties?scope=SySTeM");
     Assert.assertEquals(
-      HttpResponseStatus.OK.getCode(),
+      HttpResponseStatus.OK.code(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
     url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
                                               "apps/WordCountApp/flows/WordCountFlow/metadata/tags?scope=USER");
     Assert.assertEquals(
-      HttpResponseStatus.OK.getCode(),
+      HttpResponseStatus.OK.code(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
     url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT, "streams/text/metadata?scope=user");
     Assert.assertEquals(
-      HttpResponseStatus.OK.getCode(),
+      HttpResponseStatus.OK.code(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
     url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT, "streams/text/metadata?scope=blah");
     Assert.assertEquals(
-      HttpResponseStatus.BAD_REQUEST.getCode(),
-      restClient.execute(HttpRequest.get(url).build(), null, HttpResponseStatus.BAD_REQUEST.getCode()).getResponseCode()
+      HttpResponseStatus.BAD_REQUEST.code(),
+      restClient.execute(HttpRequest.get(url).build(), null, HttpResponseStatus.BAD_REQUEST.code()).getResponseCode()
     );
     appClient.delete(app);
 

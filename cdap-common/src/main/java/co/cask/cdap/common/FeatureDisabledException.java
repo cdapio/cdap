@@ -17,7 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Exception thrown when a feature is disabled.
@@ -67,6 +67,6 @@ public class FeatureDisabledException extends Exception implements HttpErrorStat
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.NOT_IMPLEMENTED.getCode();
+    return HttpResponseStatus.NOT_IMPLEMENTED.code();
   }
 }

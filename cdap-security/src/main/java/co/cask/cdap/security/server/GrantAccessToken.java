@@ -25,8 +25,8 @@ import co.cask.cdap.security.auth.TokenManager;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.commons.codec.binary.Base64;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,8 +128,8 @@ public class GrantAccessToken {
 
     // Set response headers
     response.setContentType("application/json;charset=UTF-8");
-    response.addHeader(HttpHeaders.Names.CACHE_CONTROL, "no-store");
-    response.addHeader(HttpHeaders.Names.PRAGMA, "no-cache");
+    response.addHeader(HttpHeaderNames.CACHE_CONTROL.toString(), "no-store");
+    response.addHeader(HttpHeaderNames.PRAGMA.toString(), "no-cache");
 
     // Set response body
     JsonObject json = new JsonObject();

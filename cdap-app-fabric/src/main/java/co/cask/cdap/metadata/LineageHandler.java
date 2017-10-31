@@ -38,8 +38,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -90,10 +90,10 @@ public class LineageHandler extends AbstractHttpHandler {
     Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(),
                                                   levels, rollup);
     responder.sendJson(HttpResponseStatus.OK,
-                       LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
-                                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                                                         lineage, getCollapseTypes(collapse)),
-                       LineageRecord.class, GSON);
+                       GSON.toJson(LineageSerializer.toLineageRecord(
+                         TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                         lineage, getCollapseTypes(collapse)), LineageRecord.class));
   }
 
   @GET
@@ -113,10 +113,10 @@ public class LineageHandler extends AbstractHttpHandler {
     StreamId streamId = new StreamId(namespaceId, stream);
     Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels, rollup);
     responder.sendJson(HttpResponseStatus.OK,
-                       LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
-                                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                                                         lineage, getCollapseTypes(collapse)),
-                       LineageRecord.class, GSON);
+                       GSON.toJson(LineageSerializer.toLineageRecord(
+                         TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                         lineage, getCollapseTypes(collapse)), LineageRecord.class));
   }
 
   @GET
@@ -129,7 +129,8 @@ public class LineageHandler extends AbstractHttpHandler {
                                 @PathParam("run-id") String runId) throws Exception {
     ProgramRunId run = new ProgramRunId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId,
                                         runId);
-    responder.sendJson(HttpResponseStatus.OK, lineageAdmin.getMetadataForRun(run), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(lineageAdmin.getMetadataForRun(run), SET_METADATA_RECORD_TYPE));
   }
 
   private void checkLevels(int levels) throws BadRequestException {

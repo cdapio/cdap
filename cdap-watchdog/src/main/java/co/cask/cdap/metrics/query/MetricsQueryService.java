@@ -62,7 +62,7 @@ public class MetricsQueryService extends AbstractIdleService {
     int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS);
-    builder.addHttpHandlers(handlers);
+    builder.setHttpHandlers(handlers);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.METRICS)));
 
@@ -91,7 +91,7 @@ public class MetricsQueryService extends AbstractIdleService {
                                                                        Constants.Service.METRICS));
 
     LOG.info("Starting Metrics Service...");
-    httpService.startAndWait();
+    httpService.start();
     LOG.info("Started Metrics HTTP Service...");
     // Register the service
     cancelDiscovery = discoveryService.register(
@@ -105,6 +105,6 @@ public class MetricsQueryService extends AbstractIdleService {
 
     // Unregister the service
     cancelDiscovery.cancel();
-    httpService.stopAndWait();
+    httpService.stop();
   }
 }

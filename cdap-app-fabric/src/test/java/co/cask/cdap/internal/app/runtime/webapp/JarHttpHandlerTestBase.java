@@ -17,15 +17,19 @@
 package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.http.HttpResponder;
-import co.cask.http.InternalHttpResponder;
-import org.apache.commons.io.IOUtils;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import co.cask.http.internal.InternalHttpResponder;
+import com.google.common.io.CharStreams;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Base class for jar http handler tests.
@@ -38,9 +42,11 @@ public abstract class JarHttpHandlerTestBase {
     InternalHttpResponder responder = new InternalHttpResponder();
     serve(createRequest("/netlens/1.txt", "www.abc.com:20000"), responder);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), responder.getResponse().getStatusCode());
-    Assert.assertEquals("1 line default",
-                        IOUtils.toString(responder.getResponse().getInputSupplier().getInput()).trim());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), responder.getResponse().getStatusCode());
+
+    try (Reader reader = new InputStreamReader(responder.getResponse().openInputStream(), StandardCharsets.UTF_8)) {
+      Assert.assertEquals("1 line default", CharStreams.toString(reader).trim());
+    }
   }
 
   @Test
@@ -48,7 +54,7 @@ public abstract class JarHttpHandlerTestBase {
     InternalHttpResponder responder = new InternalHttpResponder();
     serve(createRequest("/geo/nofile.txt", "www.abc.com:80"), responder);
 
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), responder.getResponse().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), responder.getResponse().getStatusCode());
   }
 
   @Test
@@ -56,7 +62,7 @@ public abstract class JarHttpHandlerTestBase {
     InternalHttpResponder responder = new InternalHttpResponder();
     serve(createRequest("/geo/data", "www.abc.com:80"), responder);
 
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), responder.getResponse().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), responder.getResponse().getStatusCode());
   }
 
   @Test
@@ -64,12 +70,12 @@ public abstract class JarHttpHandlerTestBase {
     InternalHttpResponder responder = new InternalHttpResponder();
     serve(createRequest("/geo/../../../../../../", "www.abc.com:80"), responder);
 
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), responder.getResponse().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), responder.getResponse().getStatusCode());
   }
 
   private HttpRequest createRequest(String uri, String host) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    request.setHeader("Host", host);
+    HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    request.headers().set("Host", host);
     return request;
   }
 }

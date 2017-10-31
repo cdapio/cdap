@@ -22,14 +22,14 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +97,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttp
   @Path("**")
   public void serve(HttpRequest request, HttpResponder responder) {
     try {
-      String path = request.getUri();
+      String path = request.uri();
       if (path == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -122,9 +122,8 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttp
 
       try {
         responder.sendByteArray(HttpResponseStatus.OK, ByteStreams.toByteArray(in),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                     mimeTypesMap.getContentType(path)));
-
+                                new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE,
+                                                             mimeTypesMap.getContentType(path)));
       } finally {
         in.close();
       }

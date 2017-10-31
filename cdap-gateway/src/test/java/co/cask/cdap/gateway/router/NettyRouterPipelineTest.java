@@ -30,6 +30,26 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -52,7 +72,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -128,6 +150,56 @@ public class NettyRouterPipelineTest {
   public void testDeployNTimes() throws Exception {
     // regression tests for race condition during multiple deploys.
     deploy(100);
+  }
+
+  @Test
+  public void testHttpPipelining() throws Exception {
+    final BlockingQueue<HttpResponseStatus> responseStatuses = new LinkedBlockingQueue<>();
+    EventLoopGroup eventGroup = new NioEventLoopGroup();
+
+    Bootstrap bootstrap = new Bootstrap()
+      .channel(NioSocketChannel.class)
+      .group(eventGroup)
+      .handler(new ChannelInitializer<SocketChannel>() {
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+          ChannelPipeline pipeline = ch.pipeline();
+          pipeline.addLast("codec", new HttpClientCodec());
+          pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
+          pipeline.addLast("handler", new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+              if (msg instanceof HttpResponse) {
+                responseStatuses.add(((HttpResponse) msg).status());
+              }
+              ReferenceCountUtil.release(msg);
+            }
+          });
+        }
+      });
+
+    // Create a connection and make five consecutive HTTP call without waiting for the first to respond
+    Channel channel = bootstrap.connect(HOSTNAME, ROUTER.getServiceMap().get(GATEWAY_NAME)).sync().channel();
+    for (int i = 0; i < 5; i++) {
+      HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,
+                                                       HttpMethod.GET, "/v1/sleep?sleepMillis=3000");
+      request.headers().set(HttpHeaderNames.HOST, HOSTNAME);
+      channel.writeAndFlush(request);
+    }
+
+    // Should get the first response as normal one
+    HttpResponseStatus status = responseStatuses.poll(5, TimeUnit.SECONDS);
+    Assert.assertEquals(HttpResponseStatus.OK, status);
+
+    // The rest four should be failure responses
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(HttpResponseStatus.NOT_IMPLEMENTED, responseStatuses.poll(1, TimeUnit.SECONDS));
+    }
+
+    eventGroup.shutdownGracefully();
+    channel.close();
+
+    Assert.assertTrue(responseStatuses.isEmpty());
   }
 
   //Deploy word count app n times.

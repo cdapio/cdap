@@ -18,11 +18,9 @@ package co.cask.cdap.examples.profiles;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
 
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * An event represents a user's click on a URL.
@@ -42,9 +40,7 @@ public class Event {
   }
 
   public static Event fromJson(ByteBuffer input) {
-    Event event = GSON.fromJson(new InputStreamReader(
-      new ChannelBufferInputStream(
-        ChannelBuffers.wrappedBuffer(input))), Event.class);
+    Event event = GSON.fromJson(StandardCharsets.UTF_8.decode(input).toString(), Event.class);
     Preconditions.checkNotNull(event.getTime(), "Time cannot be null.");
     Preconditions.checkNotNull(event.getUserId(), "User ID cannot be null.");
     Preconditions.checkNotNull(event.getUrl(), "URL cannot be null.");

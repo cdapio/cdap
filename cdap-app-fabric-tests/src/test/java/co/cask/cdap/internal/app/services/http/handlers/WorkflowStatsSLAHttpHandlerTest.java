@@ -41,10 +41,10 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.http.HttpResponse;
 import org.apache.twill.api.RunId;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -183,7 +183,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), "now", "0", "90", "95");
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
                         response.getStatusLine().getStatusCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
@@ -192,10 +192,10 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), "now", "0", "90.0", "950");
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
                         response.getStatusLine().getStatusCode());
     Id.Application appId = new Id.Application(Id.Namespace.DEFAULT, WorkflowApp.class.getSimpleName());
-    deleteApp(appId, HttpResponseStatus.OK.getCode());
+    deleteApp(appId, HttpResponseStatus.OK.code());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
                               "&percentile=%s",
@@ -205,7 +205,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             System.currentTimeMillis(),
                             "99");
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     Assert.assertTrue(readResponse(response).startsWith("There are no statistics associated with this workflow : "));
   }
 
@@ -240,28 +240,28 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=10&interval=10",
                             Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=10&interval=10P",
                             Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=20&interval=0d",
                             Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
   }
 
   @Test

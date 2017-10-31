@@ -28,12 +28,13 @@ import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,7 @@ import javax.ws.rs.PathParam;
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
+  private static final Gson GSON = new Gson();
 
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
@@ -86,7 +88,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
     if (serviceManager.isServiceEnabled()) {
-      responder.sendJson(HttpResponseStatus.OK, serviceManager.getLiveInfo());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(serviceManager.getLiveInfo()));
     } else {
       throw new ForbiddenException(String.format("Service %s is not enabled", serviceName));
     }
@@ -109,7 +111,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       int actualInstance = serviceManagementMap.get(serviceName).getInstances();
       reply.addProperty("provisioned", actualInstance);
       reply.addProperty("requested", getSystemServiceInstanceCount(serviceName));
-      responder.sendJson(HttpResponseStatus.OK, reply);
+      responder.sendJson(HttpResponseStatus.OK, reply.toString());
     } else {
       throw new ForbiddenException(String.format("Service %s is not enabled", serviceName));
     }
@@ -121,7 +123,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/{service-name}/instances")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setServiceInstance(HttpRequest request, HttpResponder responder,
+  public void setServiceInstance(FullHttpRequest request, HttpResponder responder,
                                  @PathParam("service-name") final String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
@@ -163,13 +165,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         result.put(service, status);
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, result);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
   @Path("/system/services")
   @GET
   public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
-    List<SystemServiceMeta> response = Lists.newArrayList();
+    List<SystemServiceMeta> response = new ArrayList<>();
     SortedSet<String> services = new TreeSet<>(serviceManagementMap.keySet());
     List<String> serviceList = new ArrayList<>(services);
     for (String service : serviceList) {
@@ -184,7 +186,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
                                            getSystemServiceInstanceCount(service), serviceManager.getInstances()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, response);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   /**
@@ -216,7 +218,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder,
                                                     @PathParam("service-name") String serviceName) throws Exception {
     try {
-      responder.sendJson(HttpResponseStatus.OK, serviceStore.getLatestRestartInstancesRequest(serviceName));
+      responder.sendJson(HttpResponseStatus.OK,
+                         GSON.toJson(serviceStore.getLatestRestartInstancesRequest(serviceName)));
     } catch (IllegalStateException ex) {
       throw new NotFoundException(String.format("No restart instances request found or %s", serviceName));
     }
@@ -227,7 +230,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
    */
   @Path("system/services/{service-name}/loglevels")
   @PUT
-  public void updateServiceLogLevels(HttpRequest request, HttpResponder responder,
+  public void updateServiceLogLevels(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("service-name") String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
@@ -260,7 +263,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
    */
   @Path("system/services/{service-name}/resetloglevels")
   @POST
-  public void resetServiceLogLevels(HttpRequest request, HttpResponder responder,
+  public void resetServiceLogLevels(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("service-name") String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));

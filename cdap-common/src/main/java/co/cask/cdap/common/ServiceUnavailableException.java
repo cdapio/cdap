@@ -18,7 +18,7 @@ package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.retry.RetryableException;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Exception thrown when the service is not running.
@@ -50,6 +50,6 @@ public class ServiceUnavailableException extends RetryableException implements H
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.SERVICE_UNAVAILABLE.getCode();
+    return HttpResponseStatus.SERVICE_UNAVAILABLE.code();
   }
 }

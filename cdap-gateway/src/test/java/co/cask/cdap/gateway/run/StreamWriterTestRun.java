@@ -21,9 +21,9 @@ import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.gateway.apps.AppWritingtoStream;
 import co.cask.cdap.proto.ProgramRunStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,22 +37,22 @@ public class StreamWriterTestRun extends GatewayTestBase {
   @Test
   public void testStreamWrites() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.deploy(AppWritingtoStream.class, TEMP_FOLDER.newFolder());
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     //Start Flow
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/flows/%s/start",
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.FLOW), null);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     //Start Worker
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/workers/%s/start",
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.WORKER), null);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     //Start Service
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/services/%s/start",
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.SERVICE), null);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     waitForProgramRuns("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, ProgramRunStatus.RUNNING, 1);
     waitForProgramRuns("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, ProgramRunStatus.RUNNING, 1);
@@ -64,13 +64,13 @@ public class StreamWriterTestRun extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/flows/%s/stop",
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.FLOW), null);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     //Stop Service
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/services/%s/stop",
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.SERVICE), null);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     waitForProgramRuns("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, ProgramRunStatus.KILLED, 1);
     waitForProgramRuns("workers", AppWritingtoStream.APPNAME, AppWritingtoStream.WORKER, ProgramRunStatus.COMPLETED, 1);
@@ -78,7 +78,7 @@ public class StreamWriterTestRun extends GatewayTestBase {
 
     response = GatewayFastTestsSuite.doDelete(String.format("/v3/namespaces/default/apps/%s",
                                                             AppWritingtoStream.APPNAME));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
 
   }
@@ -91,7 +91,7 @@ public class StreamWriterTestRun extends GatewayTestBase {
                       AppWritingtoStream.APPNAME,
                       AppWritingtoStream.SERVICE,
                       AppWritingtoStream.ENDPOINT));
-      if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
+      if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.code()) {
         String count = EntityUtils.toString(response.getEntity());
         if (expected == Integer.valueOf(count)) {
           break;
@@ -110,7 +110,7 @@ public class StreamWriterTestRun extends GatewayTestBase {
           AppWritingtoStream.APPNAME,
           AppWritingtoStream.SERVICE,
           key));
-      if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
+      if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.code()) {
         String val = EntityUtils.toString(response.getEntity());
         if (expected.equals(val)) {
           break;

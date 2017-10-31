@@ -40,14 +40,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +83,8 @@ public class DefaultStreamManager implements StreamManager {
   @Override
   public void createStream() throws IOException {
     String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, path);
+    FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, path);
+    HttpUtil.setContentLength(httpRequest, 0);
 
     MockResponder responder = new MockResponder();
     try {
@@ -98,8 +101,8 @@ public class DefaultStreamManager implements StreamManager {
   @Override
   public void setStreamProperties(StreamProperties properties) throws IOException {
     String path = String.format("/v3/namespaces/%s/streams/%s/properties", streamId.getNamespaceId(), streamId.getId());
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, path);
-    httpRequest.setContent(ChannelBuffers.wrappedBuffer(StandardCharsets.UTF_8.encode(GSON.toJson(properties))));
+    FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, path);
+    httpRequest.content().writeCharSequence(GSON.toJson(properties), StandardCharsets.UTF_8);
 
     MockResponder responder = new MockResponder();
     try {
@@ -151,14 +154,13 @@ public class DefaultStreamManager implements StreamManager {
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
     String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
+    FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     for (Map.Entry<String, String> entry : headers.entrySet()) {
-      httpRequest.setHeader(streamId.getId() + "." + entry.getKey(), entry.getValue());
+      httpRequest.headers().set(streamId.getId() + "." + entry.getKey(), entry.getValue());
     }
-    ChannelBuffer content = ChannelBuffers.wrappedBuffer(buffer);
-    httpRequest.setContent(content);
-    httpRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+    httpRequest.content().writeBytes(buffer);
+    HttpUtil.setContentLength(httpRequest, httpRequest.content().readableBytes());
 
     MockResponder responder = new MockResponder();
     try {
@@ -176,7 +178,8 @@ public class DefaultStreamManager implements StreamManager {
   public void send(File file, String contentType) throws Exception {
     String path = String.format("/v3/namespaces/%s/streams/%s/batch", streamId.getNamespaceId(), streamId.getId());
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
-    request.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+    request.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
+    HttpUtil.setTransferEncodingChunked(request, true);
     final MockResponder responder = new MockResponder();
     final BodyConsumer bodyConsumer = streamHandler.batch(request, responder, streamId.getNamespaceId(),
                                                           streamId.getId());
@@ -185,7 +188,7 @@ public class DefaultStreamManager implements StreamManager {
     ByteStreams.readBytes(Files.newInputStreamSupplier(file), new ByteProcessor<BodyConsumer>() {
       @Override
       public boolean processBytes(byte[] buf, int off, int len) throws IOException {
-        bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(buf, off, len), responder);
+        bodyConsumer.chunk(Unpooled.wrappedBuffer(buf, off, len), responder);
         return true;
       }
 

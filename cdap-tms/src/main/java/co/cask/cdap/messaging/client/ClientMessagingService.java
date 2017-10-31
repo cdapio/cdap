@@ -342,8 +342,16 @@ public final class ClientMessagingService implements MessagingService {
    * Verifies the content-type in the header matches with the required type.
    */
   private void verifyContentType(Map<String, ? extends Collection<String>> headers, String requiredContentType) {
-    Collection<String> values = headers.get(HttpHeaders.CONTENT_TYPE);
-    if (values == null || !requiredContentType.equals(Iterables.getFirst(values, null))) {
+    // Netty 4.1 has all headers set with lower case name
+    // However, the cdap-http library doesn't handle it well, hence we iterate all headers instead of lookup in here
+    boolean passed = false;
+    for (Map.Entry<String, ? extends Collection<String>> entry : headers.entrySet()) {
+      if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
+        passed = requiredContentType.equalsIgnoreCase(Iterables.getFirst(entry.getValue(), null));
+        break;
+      }
+    }
+    if (!passed) {
       throw new IllegalArgumentException("Only " + requiredContentType + " content type is support.");
     }
   }

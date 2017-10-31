@@ -19,19 +19,19 @@ package co.cask.cdap.gateway.handlers.meta;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.http.AbstractHttpHandler;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Implements common functionality for reading method arguments and deserializing them.
+ * Implements common functionality for reading method arguments and deserialize them.
  */
 class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
 
@@ -41,8 +41,8 @@ class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
   // we don't share the same version as other handlers in app fabric, so we can upgrade/iterate faster
   protected static final String VERSION = "/v1";
 
-  Iterator<MethodArgument> parseArguments(HttpRequest request) {
-    String body = request.getContent().toString(Charsets.UTF_8);
+  Iterator<MethodArgument> parseArguments(FullHttpRequest request) {
+    String body = request.content().toString(StandardCharsets.UTF_8);
     List<MethodArgument> arguments = GSON.fromJson(body, METHOD_ARGUMENT_LIST_TYPE);
     return arguments.iterator();
   }

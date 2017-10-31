@@ -28,10 +28,11 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -70,21 +71,21 @@ public final class MetadataHandler extends AbstractHttpHandler {
 
   @PUT
   @Path("/topics/{topic}")
-  public void createTopic(HttpRequest request, HttpResponder responder,
+  public void createTopic(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace") String namespace,
                           @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    messagingService.createTopic(new TopicMetadata(topicId, decodeTopicProperties(request.getContent())));
+    messagingService.createTopic(new TopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @PUT
   @Path("/topics/{topic}/properties")
-  public void updateTopic(HttpRequest request, HttpResponder responder,
+  public void updateTopic(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace") String namespace,
                           @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    messagingService.updateTopic(new TopicMetadata(topicId, decodeTopicProperties(request.getContent())));
+    messagingService.updateTopic(new TopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -95,7 +96,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
                        @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
     TopicMetadata metadata = messagingService.getTopic(topicId);
-    responder.sendJson(HttpResponseStatus.OK, metadata.getProperties(), TOPIC_PROPERTY_TYPE);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata.getProperties(), TOPIC_PROPERTY_TYPE));
   }
 
   @GET
@@ -103,8 +104,9 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void listTopics(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace") String namespace) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       Lists.transform(messagingService.listTopics(new NamespaceId(namespace)), TOPIC_TO_NAME),
-                       TOPIC_LIST_TYPE);
+                       GSON.toJson(
+                         Lists.transform(messagingService.listTopics(new NamespaceId(namespace)), TOPIC_TO_NAME),
+                         TOPIC_LIST_TYPE));
   }
 
   @DELETE
@@ -120,13 +122,13 @@ public final class MetadataHandler extends AbstractHttpHandler {
   /**
    * Decodes the topic property map from the given request body.
    */
-  private Map<String, String> decodeTopicProperties(ChannelBuffer channelBuffer) throws BadRequestException {
-    if (!channelBuffer.readable()) {
+  private Map<String, String> decodeTopicProperties(ByteBuf channelBuffer) throws BadRequestException {
+    if (!channelBuffer.isReadable()) {
       return Collections.emptyMap();
     }
 
     try {
-      return GSON.fromJson(new InputStreamReader(new ChannelBufferInputStream(channelBuffer), StandardCharsets.UTF_8),
+      return GSON.fromJson(new InputStreamReader(new ByteBufInputStream(channelBuffer), StandardCharsets.UTF_8),
                            TOPIC_PROPERTY_TYPE);
     } catch (Exception e) {
       throw new BadRequestException("Invalid topic properties. It must be JSON object with string values.");

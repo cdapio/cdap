@@ -29,11 +29,13 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.route.store.RouteConfig;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -52,6 +54,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}")
 public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type ROUTE_CONFIG_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
+  private static final Gson GSON = new Gson();
   private final ProgramLifecycleService lifecycleService;
   private final RouteStore routeStore;
 
@@ -69,13 +72,13 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
     RouteConfig routeConfig = routeStore.fetch(programId);
-    responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(routeConfig.getRoutes()));
   }
 
   @PUT
   @Path("/routeconfig")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void storeRouteConfig(HttpRequest request, HttpResponder responder,
+  public void storeRouteConfig(FullHttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("service-id") String serviceId) throws Exception {

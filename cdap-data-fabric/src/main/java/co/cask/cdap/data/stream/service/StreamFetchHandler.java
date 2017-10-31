@@ -39,24 +39,24 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -157,11 +157,11 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
 
           // Send with chunk response, as we don't want to buffer all events in memory to determine the content-length.
           ChunkResponder chunkResponder = responder.sendChunkStart(
-            HttpResponseStatus.OK, ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                        "application/json; charset=utf-8"));
-          ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-          JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
-                                                                        Charsets.UTF_8));
+            HttpResponseStatus.OK, new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE,
+                                                                "application/json; charset=utf-8"));
+          ByteBuf buffer = Unpooled.buffer();
+          JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(buffer),
+                                                                        StandardCharsets.UTF_8));
           // Response is an array of stream event
           jsonWriter.beginArray();
           while (limit > 0 && eventsRead > 0) {
@@ -191,7 +191,7 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
           jsonWriter.close();
 
           // Send the last chunk that still has data
-          if (buffer.readable()) {
+          if (buffer.isReadable()) {
             // No need to copy the last chunk, since the buffer will not be reused
             chunkResponder.sendChunk(buffer);
           }

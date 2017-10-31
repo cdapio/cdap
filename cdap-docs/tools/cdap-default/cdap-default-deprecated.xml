@@ -208,6 +208,22 @@
   </property>
 
   <property>
+    <name>router.client.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads in the CDAP Router service client
+    </description>
+  </property>
+
+  <property>
+    <name>router.client.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of worker threads in the CDAP Router service client
+    </description>
+  </property>
+
+  <property>
     <name>security.auth.server.address</name>
     <value>0.0.0.0</value>
     <description>

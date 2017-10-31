@@ -76,7 +76,6 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.http.HttpHandler;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -91,6 +90,7 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -101,7 +101,6 @@ import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
@@ -110,6 +109,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -368,8 +368,8 @@ public class BaseHiveExploreServiceTest {
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(StandardCharsets.UTF_8));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
@@ -388,7 +388,7 @@ public class BaseHiveExploreServiceTest {
       urlConn.addRequestProperty(streamId.getEntityName() + "." + header.getKey(), header.getValue());
     }
     urlConn.getOutputStream().write(body);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 

@@ -25,8 +25,8 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Iterator;
 import javax.ws.rs.POST;
@@ -47,7 +47,7 @@ public class RemoteLineageWriterHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/addDatasetAccess")
-  public void addDatasetAccess(HttpRequest request, HttpResponder responder) throws Exception {
+  public void addDatasetAccess(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
     ProgramRunId run = deserializeNext(arguments);
@@ -61,7 +61,7 @@ public class RemoteLineageWriterHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/addStreamAccess")
-  public void addStreamAccess(HttpRequest request, HttpResponder responder) throws Exception {
+  public void addStreamAccess(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
     ProgramRunId run = deserializeNext(arguments);

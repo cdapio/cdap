@@ -23,7 +23,6 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
-import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
@@ -31,7 +30,7 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

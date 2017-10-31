@@ -35,7 +35,6 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.jboss.netty.buffer.HeapChannelBufferFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -59,7 +58,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.STREAMS)
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Stream.STREAM_HANDLER)))
       .setHost(cConf.get(Constants.Stream.ADDRESS))
@@ -67,8 +66,6 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(0)         // Execution happens in the io worker thread directly
       .setConnectionBacklog(20000)
-      .setChannelConfig("child.bufferFactory",
-                        HeapChannelBufferFactory.getInstance()) // ChannelBufferFactory that always creates new Buffer
       .build();
   }
 
@@ -77,7 +74,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getEntityName(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.STREAMS));
-    httpService.startAndWait();
+    httpService.start();
 
     discoverable = ResolvingDiscoverable.of(new Discoverable(Constants.Service.STREAMS, httpService.getBindAddress()));
     cancellable = discoveryService.register(discoverable);
@@ -90,7 +87,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
     }
   }
 

@@ -17,14 +17,12 @@
 package co.cask.cdap.gateway.discovery;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.route.store.RouteConfig;
 import co.cask.cdap.route.store.RouteStore;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -40,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link UserServiceEndpointStrategy}
@@ -224,35 +221,6 @@ public class UserServiceEndpointStrategyTest {
     @Override
     public Iterator<Discoverable> iterator() {
       return discoverables.iterator();
-    }
-  }
-
-  private static class InMemoryRouteStore implements RouteStore {
-    private final Map<ProgramId, RouteConfig> routeMap;
-
-    public InMemoryRouteStore(Map<ProgramId, RouteConfig> routeMap) {
-      this.routeMap = Maps.newHashMap(routeMap);
-    }
-
-    @Override
-    public void store(ProgramId serviceId, RouteConfig routeConfig) {
-      routeMap.put(serviceId, routeConfig);
-    }
-
-    @Override
-    public void delete(ProgramId serviceId) throws NotFoundException {
-      routeMap.remove(serviceId);
-    }
-
-    @Nullable
-    @Override
-    public RouteConfig fetch(ProgramId serviceId) {
-      return routeMap.get(serviceId);
-    }
-
-    @Override
-    public void close() throws Exception {
-      // nothing to do
     }
   }
 }

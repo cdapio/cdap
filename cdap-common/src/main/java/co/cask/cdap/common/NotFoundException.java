@@ -18,7 +18,7 @@ package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.proto.id.EntityId;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.annotation.Nullable;
 
@@ -62,6 +62,6 @@ public class NotFoundException extends Exception implements HttpErrorStatusProvi
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.NOT_FOUND.getCode();
+    return HttpResponseStatus.NOT_FOUND.code();
   }
 }

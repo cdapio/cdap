@@ -38,7 +38,6 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -47,16 +46,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -105,7 +106,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("app-id") String appId,
                              @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, getMetadata(app, scope), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getMetadata(app, scope), SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -117,7 +118,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                  @PathParam("program-id") String programId,
                                  @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ProgramId program = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, getMetadata(program, scope), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getMetadata(program, scope), SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -128,7 +129,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                   @PathParam("artifact-version") String artifactVersionStr,
                                   @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, getMetadata(artifactId, scope), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getMetadata(artifactId, scope), SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -138,7 +139,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                  @PathParam("dataset-id") String datasetId,
                                  @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, getMetadata(datasetInstance, scope), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(getMetadata(datasetInstance, scope), SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -148,7 +150,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                 @PathParam("stream-id") String streamId,
                                 @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     StreamId stream = new StreamId(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, getMetadata(stream, scope), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getMetadata(stream, scope), SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -159,7 +161,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                               @PathParam("view-id") String viewId,
                               @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
-    responder.sendJson(HttpResponseStatus.OK, getMetadata(view, scope), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getMetadata(view, scope), SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -169,7 +171,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                @PathParam("app-id") String appId,
                                @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, getProperties(app, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(app, scope)));
   }
 
   @GET
@@ -180,7 +182,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                     @PathParam("artifact-version") String artifactVersionStr,
                                     @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, getProperties(artifactId, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(artifactId, scope)));
   }
 
   @GET
@@ -192,7 +194,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                    @PathParam("program-id") String programId,
                                    @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ProgramId program = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, getProperties(program, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(program, scope)));
   }
 
   @GET
@@ -202,7 +204,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                    @PathParam("dataset-id") String datasetId,
                                    @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, getProperties(datasetInstance, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(datasetInstance, scope)));
   }
 
   @GET
@@ -212,7 +214,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                   @PathParam("stream-id") String streamId,
                                   @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     StreamId stream = new StreamId(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, getProperties(stream, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(stream, scope)));
   }
 
   @GET
@@ -223,13 +225,13 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                 @PathParam("view-id") String viewId,
                                 @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
-    responder.sendJson(HttpResponseStatus.OK, getProperties(view, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(view, scope)));
   }
 
   @POST
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addAppProperties(HttpRequest request, HttpResponder responder,
+  public void addAppProperties(FullHttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId) throws BadRequestException, NotFoundException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
@@ -240,7 +242,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addArtifactProperties(HttpRequest request, HttpResponder responder,
+  public void addArtifactProperties(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("artifact-name") String artifactName,
                                     @PathParam("artifact-version") String artifactVersionStr)
@@ -253,7 +255,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addProgramProperties(HttpRequest request, HttpResponder responder,
+  public void addProgramProperties(FullHttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("program-type") String programType,
@@ -267,7 +269,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addDatasetProperties(HttpRequest request, HttpResponder responder,
+  public void addDatasetProperties(FullHttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("dataset-id") String datasetId)
     throws BadRequestException, NotFoundException {
@@ -279,7 +281,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addStreamProperties(HttpRequest request, HttpResponder responder,
+  public void addStreamProperties(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("stream-id") String streamId)
     throws BadRequestException, NotFoundException {
@@ -291,10 +293,10 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addViewProperties(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("stream-id") String streamId,
-                                  @PathParam("view-id") String viewId) throws NotFoundException, BadRequestException {
+  public void addViewProperties(FullHttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("stream-id") String streamId,
+                                @PathParam("view-id") String viewId) throws NotFoundException, BadRequestException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
     metadataAdmin.addProperties(view, readMetadata(request));
     responder.sendString(HttpResponseStatus.OK, "Metadata added successfully to " + view);
@@ -522,7 +524,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addAppTags(HttpRequest request, HttpResponder responder,
+  public void addAppTags(FullHttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("app-id") String appId) throws BadRequestException, NotFoundException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
@@ -534,7 +536,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addArtifactTags(HttpRequest request, HttpResponder responder,
+  public void addArtifactTags(FullHttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("artifact-name") String artifactName,
                               @PathParam("artifact-version") String artifactVersionStr)
@@ -548,7 +550,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addProgramTags(HttpRequest request, HttpResponder responder,
+  public void addProgramTags(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-id") String appId,
                              @PathParam("program-type") String programType,
@@ -562,7 +564,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addDatasetTags(HttpRequest request, HttpResponder responder,
+  public void addDatasetTags(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("dataset-id") String datasetId) throws BadRequestException, NotFoundException {
     DatasetId dataset = new DatasetId(namespaceId, datasetId);
@@ -574,7 +576,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addStreamTags(HttpRequest request, HttpResponder responder,
+  public void addStreamTags(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream-id") String streamId) throws BadRequestException, NotFoundException {
     StreamId stream = new StreamId(namespaceId, streamId);
@@ -586,7 +588,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addViewTags(HttpRequest request, HttpResponder responder,
+  public void addViewTags(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream-id") String streamId,
                             @PathParam("view-id") String viewId) throws NotFoundException, BadRequestException {
@@ -603,7 +605,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          @PathParam("app-id") String appId,
                          @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, getTags(app, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(app, scope)));
   }
 
   @GET
@@ -615,7 +617,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                               @QueryParam("scope") String scope)
     throws BadRequestException, NotFoundException {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, getTags(artifactId, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(artifactId, scope)));
   }
 
   @GET
@@ -627,7 +629,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("program-id") String programId,
                              @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     ProgramId program = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, getTags(program, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(program, scope)));
   }
 
   @GET
@@ -637,7 +639,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("dataset-id") String datasetId,
                              @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     DatasetId dataset = new DatasetId(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, getTags(dataset, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(dataset, scope)));
   }
 
   @GET
@@ -647,7 +649,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                             @PathParam("stream-id") String streamId,
                             @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     StreamId stream = new StreamId(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, getTags(stream, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(stream, scope)));
   }
 
   @GET
@@ -658,7 +660,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                           @PathParam("view-id") String viewId,
                           @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
-    responder.sendJson(HttpResponseStatus.OK, getTags(view, scope));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(view, scope)));
   }
 
   @DELETE
@@ -808,14 +810,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          String.format("Tag %s for view %s deleted successfully.", tag, view));
   }
 
-  private Map<String, String> readMetadata(HttpRequest request) throws BadRequestException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
+  private Map<String, String> readMetadata(FullHttpRequest request) throws BadRequestException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
       throw new BadRequestException("Unable to read metadata properties from the request.");
     }
 
     Map<String, String> metadata;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
       metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
     } catch (IOException e) {
       throw new BadRequestException("Unable to read metadata properties from the request.", e);
@@ -827,14 +829,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     return metadata;
   }
 
-  private String[] readArray(HttpRequest request) throws BadRequestException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
+  private String[] readArray(FullHttpRequest request) throws BadRequestException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
       throw new BadRequestException("Unable to read a list of tags from the request.");
     }
 
     List<String> toReturn;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
       toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
     } catch (IOException e) {
       throw new BadRequestException("Unable to read a list of tags from the request.", e);
@@ -877,7 +879,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       MetadataSearchResponse response =
         metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
                              sortInfo, offset, limit, numCursors, cursor, showHidden, validateEntityScope(entityScope));
-      responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponse.class));
     } catch (Exception e) {
       // if MetadataDataset throws an exception, it gets wrapped
       if (Throwables.getRootCause(e) instanceof BadRequestException) {

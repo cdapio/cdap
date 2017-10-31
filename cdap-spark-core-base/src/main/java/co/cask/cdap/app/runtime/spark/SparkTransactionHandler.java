@@ -21,12 +21,13 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +187,7 @@ public final class SparkTransactionHandler extends AbstractHttpHandler {
 
     // Serialize the transaction and send it back
     try {
-      responder.sendByteArray(HttpResponseStatus.OK, TX_CODEC.encode(transaction), null);
+      responder.sendByteArray(HttpResponseStatus.OK, TX_CODEC.encode(transaction), EmptyHttpHeaders.INSTANCE);
     } catch (IOException e) {
       // Shouldn't happen
       LOG.error("Failed to encode Transaction {}", jobTransaction, e);

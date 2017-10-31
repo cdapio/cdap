@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
@@ -54,18 +53,16 @@ import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.common.Threads;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -75,7 +72,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -168,15 +164,14 @@ public class MapReduceRunnerTestBase {
 
   protected void writeToStream(Id.Stream streamId, String body) throws IOException {
     String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
+    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
-    ChannelBuffer content = ChannelBuffers.wrappedBuffer(ByteBuffer.wrap(Bytes.toBytes(body)));
-    httpRequest.setContent(content);
-    httpRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+    request.content().writeCharSequence(body, StandardCharsets.UTF_8);
+    HttpUtil.setContentLength(request, request.content().readableBytes());
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.enqueue(httpRequest, responder, streamId.getNamespaceId(), streamId.getId());
+      streamHandler.enqueue(request, responder, streamId.getNamespaceId(), streamId.getId());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

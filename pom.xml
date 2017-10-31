@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2016 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -96,7 +96,7 @@
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <cask.common.cli.version>0.8.0</cask.common.cli.version>
-    <cask.common.version>0.7.1</cask.common.version>
+    <cask.common.version>0.9.0</cask.common.version>
     <cdap.client.version>1.2.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.codec.version>1.6</commons.codec.version>
@@ -134,8 +134,8 @@
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
-    <netty.http.version>0.17.0</netty.http.version>
-    <netty.version>3.6.6.Final</netty.version>
+    <netty.http.version>1.0.0-SNAPSHOT</netty.http.version>
+    <netty.version>4.1.16.Final</netty.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
@@ -150,7 +150,7 @@
     <tephra.version>0.13.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.12.0</twill.version>
+    <twill.version>0.13.0-SNAPSHOT</twill.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
@@ -205,6 +205,22 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <!--
+            Excludes all transitive dependencies on netty, as we'll have dependency on netty-all directly
+            to override transitive dependency on netty 4.0 from Spark.
+          -->
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -474,7 +490,17 @@
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
-        <artifactId>netty</artifactId>
+        <artifactId>netty-buffer</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-codec-http</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
         <version>${netty.version}</version>
       </dependency>
       <dependency>

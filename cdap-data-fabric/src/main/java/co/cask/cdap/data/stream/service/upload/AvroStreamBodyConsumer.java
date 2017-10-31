@@ -26,15 +26,15 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ final class AvroStreamBodyConsumer extends BodyConsumer {
   }
 
   @Override
-  public void chunk(ChannelBuffer request, HttpResponder responder) {
+  public void chunk(ByteBuf request, HttpResponder responder) {
     if (failed || (failed = respondIfFailed(responder))) {
       return;
     }
@@ -82,7 +82,7 @@ final class AvroStreamBodyConsumer extends BodyConsumer {
   public void finished(HttpResponder responder) {
     try {
       // Signal the end of input and wait for the writer thread to complete
-      bufferInput.append(ChannelBuffers.EMPTY_BUFFER);
+      bufferInput.append(Unpooled.EMPTY_BUFFER);
       writerThread.join();
 
       if (!respondIfFailed(responder)) {

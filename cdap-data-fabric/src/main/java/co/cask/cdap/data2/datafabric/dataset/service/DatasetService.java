@@ -78,21 +78,16 @@ public class DatasetService extends AbstractExecutionThreadService {
     this.typeService = datasetTypeService;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_MANAGER);
-    builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
-                                             datasetInstanceHandler));
-
-    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Service.DATASET_MANAGER)));
-
-    builder.setHost(cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
-
-    builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
-
-    builder.setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS));
-    builder.setExecThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.EXEC_THREADS));
-    builder.setBossThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.BOSS_THREADS));
-    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.WORKER_THREADS));
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_MANAGER)
+      .setHttpHandlers(datasetTypeHandler, datasetInstanceHandler)
+      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                Constants.Service.DATASET_MANAGER)))
+      .setHost(cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
+      .setPort(cConf.getInt(Constants.Dataset.Manager.PORT))
+      .setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS))
+      .setExecThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.EXEC_THREADS))
+      .setBossThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.BOSS_THREADS))
+      .setWorkerThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.WORKER_THREADS));
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
@@ -107,7 +102,7 @@ public class DatasetService extends AbstractExecutionThreadService {
 
     typeService.startAndWait();
     opExecutorClient.startAndWait();
-    httpService.startAndWait();
+    httpService.start();
 
     // setting watch for ops executor service that we need to be running to operate correctly
     ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
@@ -214,7 +209,7 @@ public class DatasetService extends AbstractExecutionThreadService {
       LOG.error("Interrupted while waiting...", e);
     }
 
-    httpService.stopAndWait();
+    httpService.stop();
     opExecutorClient.stopAndWait();
   }
 

@@ -27,18 +27,18 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import com.google.common.io.Closeables;
-import org.apache.commons.io.Charsets;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.GET;
@@ -104,10 +104,10 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
     @GET
     public void square(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("num") String num) {
       if (num.isEmpty()) {
-        responder.sendError(HttpResponseStatus.NO_CONTENT.getCode(), "No number provided");
+        responder.sendError(HttpURLConnection.HTTP_NO_CONTENT, "No number provided");
       } else {
-        responder.sendString(HttpResponseStatus.OK.getCode(), String.valueOf(Integer.parseInt(num) *
-                                                                            Integer.parseInt(num)), Charsets.UTF_8);
+        int number = Integer.parseInt(num);
+        responder.sendString(HttpURLConnection.HTTP_OK, String.valueOf(number * number), StandardCharsets.UTF_8);
       }
     }
   }

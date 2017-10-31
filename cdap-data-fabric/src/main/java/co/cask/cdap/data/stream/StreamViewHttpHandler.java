@@ -35,15 +35,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -71,7 +73,7 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
   @PUT
   @Path("/streams/{stream}/views/{view}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void createOrUpdate(HttpRequest request, HttpResponder responder,
+  public void createOrUpdate(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace") String namespace,
                              @PathParam("stream") String stream,
                              @PathParam("view") String view) throws Exception {
@@ -83,7 +85,7 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException(e);
     }
 
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       ViewSpecification spec = GSON.fromJson(reader, ViewSpecification.class);
       if (spec == null) {
         throw new BadRequestException("Missing ViewSpecification in request body");
@@ -123,7 +125,7 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
           return input.getEntityName();
         }
       });
-    responder.sendJson(HttpResponseStatus.OK, list);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(list));
   }
 
   @GET
@@ -135,6 +137,6 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
 
     StreamViewId viewId = new StreamViewId(namespace, stream, view);
     ViewDetail detail = new ViewDetail(viewId.getEntityName(), admin.getView(viewId));
-    responder.sendJson(HttpResponseStatus.OK, detail, ViewDetail.class, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ViewDetail.class));
   }
 }

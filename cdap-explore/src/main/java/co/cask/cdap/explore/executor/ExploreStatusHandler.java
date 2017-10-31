@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonObject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -37,6 +37,6 @@ public class ExploreStatusHandler extends AbstractHttpHandler {
   public void status(HttpRequest request, HttpResponder responder) {
     JsonObject json = new JsonObject();
     json.addProperty("status", "OK");
-    responder.sendJson(HttpResponseStatus.OK, json);
+    responder.sendJson(HttpResponseStatus.OK, json.toString());
   }
 }

@@ -21,14 +21,14 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.AbstractHandlerHook;
-import co.cask.http.HandlerInfo;
 import co.cask.http.HttpResponder;
+import co.cask.http.internal.HandlerInfo;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
       try {
         MetricsContext collector = collectorCache.get(createContext(handlerInfo));
         String name;
-        int code = status.getCode();
+        int code = status.code();
         if (code < 100) {
           name = "unknown";
         } else if (code < 200) {

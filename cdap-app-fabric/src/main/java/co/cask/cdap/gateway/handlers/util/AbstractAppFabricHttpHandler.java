@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -38,17 +37,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.logging.LogEntry;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -81,7 +81,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   public static final String PRINCIPAL_HEADER = "X-Principal";
   public static final String SCHEDULES_HEADER = "X-App-Deploy-Update-Schedules";
 
-  protected int getInstances(HttpRequest request) throws BadRequestException {
+  protected int getInstances(FullHttpRequest request) throws BadRequestException {
     Instances instances;
       try {
         instances = parseBody(request, Instances.class);
@@ -95,23 +95,23 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   @Nullable
-  protected <T> T parseBody(HttpRequest request, Type type) throws IllegalArgumentException, JsonSyntaxException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
+  protected <T> T parseBody(FullHttpRequest request, Type type) throws IllegalArgumentException, JsonSyntaxException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
       return null;
     }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8);
     try {
       return GSON.fromJson(reader, type);
     } catch (RuntimeException e) {
-      LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
+      LOG.info("Failed to parse body on {} as {}", request.uri(), type, e);
       throw e;
     } finally {
       Closeables.closeQuietly(reader);
     }
   }
 
-  protected Map<String, String> decodeArguments(HttpRequest request) throws JsonSyntaxException {
+  protected Map<String, String> decodeArguments(FullHttpRequest request) throws JsonSyntaxException {
     Map<String, String> args = parseBody(request, MAP_STRING_TYPE);
     if (args == null) {
       return ImmutableMap.of();

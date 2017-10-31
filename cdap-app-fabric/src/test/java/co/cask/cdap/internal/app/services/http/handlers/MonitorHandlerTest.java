@@ -23,9 +23,9 @@ import co.cask.cdap.proto.SystemServiceMeta;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,7 +45,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
   private HttpURLConnection openURL(String path, HttpMethod method) throws IOException, URISyntaxException {
     HttpURLConnection urlConn = (HttpURLConnection) createURL(path).openConnection();
-    urlConn.setRequestMethod(method.getName());
+    urlConn.setRequestMethod(method.name());
     return urlConn;
   }
 
@@ -59,7 +59,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
     Type token = new TypeToken<List<SystemServiceMeta>>() { }.getType();
 
     HttpURLConnection urlConn = openURL("system/services", HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     List<SystemServiceMeta> actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), token);
 
@@ -74,7 +74,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
     Type token = new TypeToken<Map<String, String>>() { }.getType();
 
     HttpURLConnection urlConn = openURL("system/services/status", HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
 
     Map<String, String> result = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                Charsets.UTF_8), token);
@@ -90,7 +90,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
     String path = String.format("system/services/%s/instances", Constants.Service.APP_FABRIC_HTTP);
     HttpURLConnection urlConn = openURL(path, HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
 
     Map<String, Integer> result = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                           Charsets.UTF_8), token);
@@ -106,13 +106,13 @@ public class MonitorHandlerTest extends AppFabricTestBase {
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPost(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     RestartServiceInstancesStatus result =
       GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
@@ -129,13 +129,13 @@ public class MonitorHandlerTest extends AppFabricTestBase {
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPost(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     RestartServiceInstancesStatus result =
       GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
@@ -152,13 +152,13 @@ public class MonitorHandlerTest extends AppFabricTestBase {
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPost(path);
 
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     RestartServiceInstancesStatus result =
       GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),

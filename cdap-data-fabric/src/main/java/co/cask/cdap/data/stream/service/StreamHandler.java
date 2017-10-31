@@ -68,16 +68,18 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Threads;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -191,7 +193,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     for (StreamSpecification specification : specifications) {
       streamDetails.add(new StreamDetail(specification.getName()));
     }
-    responder.sendJson(HttpResponseStatus.OK, streamDetails);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(streamDetails));
   }
 
   @GET
@@ -202,13 +204,13 @@ public final class StreamHandler extends AbstractHttpHandler {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
     StreamProperties properties = streamAdmin.getProperties(streamId);
-    responder.sendJson(HttpResponseStatus.OK, properties, StreamProperties.class, GSON);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(properties, StreamProperties.class));
   }
 
   @PUT
   @Path("/{stream}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void create(HttpRequest request, HttpResponder responder,
+  public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
@@ -219,7 +221,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     Properties props = new Properties();
     StreamProperties streamProperties;
     // If the request to create a stream contains a non-empty body, then construct and set StreamProperties
-    if (request.getContent().readable()) {
+    if (request.content().isReadable()) {
       streamProperties = getAndValidateConfig(request);
 
       if (streamProperties.getTTL() != null) {
@@ -250,26 +252,27 @@ public final class StreamHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/{stream}")
-  public void enqueue(HttpRequest request, HttpResponder responder,
+  public void enqueue(FullHttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
-    streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
+    streamWriter.enqueue(streamId, getHeaders(request, stream), request.content().nioBuffer());
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
   @Path("/{stream}/async")
-  public void asyncEnqueue(HttpRequest request, HttpResponder responder,
+  public void asyncEnqueue(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
-    streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
-                              request.getContent().toByteBuffer(), asyncExecutor);
+
+    // Need to retain the content buffer since writing is async
+    streamWriter.asyncEnqueue(streamId, getHeaders(request, stream), request.content().retain(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 
@@ -322,7 +325,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   @PUT
   @Path("/{stream}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setConfig(HttpRequest request, HttpResponder responder,
+  public void setConfig(FullHttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
@@ -380,10 +383,10 @@ public final class StreamHandler extends AbstractHttpHandler {
   /**
    * Gets stream properties from the request. If there is request is invalid, a BadRequestException will be thrown.
    */
-  private StreamProperties getAndValidateConfig(HttpRequest request) throws BadRequestException {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+  private StreamProperties getAndValidateConfig(FullHttpRequest request) throws BadRequestException {
     StreamProperties properties;
-    try {
+
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       properties = GSON.fromJson(reader, StreamProperties.class);
     } catch (Exception e) {
       throw new BadRequestException("Invalid stream configuration. Please check that the " +
@@ -462,7 +465,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                                          ImmutableMap.Builder<String, String> builder) {
     // and transfer all other headers that are to be preserved
     String prefix = stream + ".";
-    for (Map.Entry<String, String> header : request.getHeaders()) {
+    for (Map.Entry<String, String> header : request.headers()) {
       if (header.getKey().startsWith(prefix)) {
         builder.put(header.getKey().substring(prefix.length()), header.getValue());
       }
@@ -474,7 +477,7 @@ public final class StreamHandler extends AbstractHttpHandler {
    * Creates a {@link ContentWriterFactory} based on the request size. Used by the batch endpoint.
    */
   private ContentWriterFactory createContentWriterFactory(StreamId streamId, HttpRequest request) throws IOException {
-    String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
+    String contentType = request.headers().get(HttpHeaderNames.CONTENT_TYPE, "");
 
     // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
     Map<String, String> headers = getHeaders(request, streamId.getEntityName(),

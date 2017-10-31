@@ -23,13 +23,11 @@ import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.BodyProducer;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.apache.twill.common.Cancellable;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.ByteBuffer;
 
 /**
  * An adapter class to delegate calls from {@link HttpContentProducer} to {@link BodyProducer}
@@ -63,15 +61,13 @@ public class BodyProducerAdapter extends BodyProducer {
   }
 
   @Override
-  public ChannelBuffer nextChunk() throws Exception {
-    ByteBuffer buffer;
+  public ByteBuf nextChunk() throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassloader);
     try {
-      buffer = delegate.nextChunk(serviceContext);
+      return Unpooled.copiedBuffer(delegate.nextChunk(serviceContext));
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
-    return ChannelBuffers.wrappedBuffer(buffer);
   }
 
   @Override

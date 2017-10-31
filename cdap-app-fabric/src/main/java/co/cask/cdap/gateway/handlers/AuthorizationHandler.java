@@ -28,7 +28,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -46,8 +45,9 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.EnumSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -96,7 +95,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/privileges/grant")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void grant(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
+  public void grant(FullHttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
 
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
@@ -108,13 +107,13 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     privilegesManager.grant(request.getAuthorizable(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, request, HttpResponseStatus.OK);
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("/privileges/revoke")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void revoke(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
+  public void revoke(FullHttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
@@ -130,7 +129,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, request, HttpResponseStatus.OK);
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("{principal-type}/{principal-name}/privileges")
@@ -140,8 +139,9 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listPrivileges(principal), PRIVILEGE_SET_TYPE, GSON);
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    httpResponder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(authorizer.listPrivileges(principal), PRIVILEGE_SET_TYPE));
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
 
@@ -156,7 +156,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     ensureSecurityEnabled();
     authorizer.createRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("/roles/{role-name}")
@@ -166,15 +166,15 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     ensureSecurityEnabled();
     authorizer.dropRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("/roles")
   @GET
   public void listAllRoles(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listAllRoles());
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(authorizer.listAllRoles()));
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("{principal-type}/{principal-name}/roles")
@@ -184,8 +184,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listRoles(principal));
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(authorizer.listRoles(principal)));
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("/{principal-type}/{principal-name}/roles/{role-name}")
@@ -198,7 +198,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
     authorizer.addRoleToPrincipal(new Role(roleName), principal);
     httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   @Path("/{principal-type}/{principal-name}/roles/{role-name}")
@@ -211,7 +211,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
     authorizer.removeRoleFromPrincipal(new Role(roleName), principal);
     httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, null, HttpResponseStatus.OK);
+    createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
   private void ensureSecurityEnabled() throws FeatureDisabledException {
@@ -226,17 +226,11 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,
-                              HttpResponseStatus responseStatus) throws UnknownHostException {
-    AuditLogEntry logEntry = new AuditLogEntry();
-    logEntry.setUserName(Objects.firstNonNull(authenticationContext.getPrincipal().getName(), "-"));
-    logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
-    logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
-    if (request != null) {
-      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getAuthorizable(),
-                                            request.getActions()));
-    }
-    logEntry.setResponseCode(responseStatus.getCode());
+  private void createLogEntry(HttpRequest httpRequest, HttpResponseStatus responseStatus) throws UnknownHostException {
+    InetAddress clientAddr = InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0"));
+    AuditLogEntry logEntry = new AuditLogEntry(httpRequest, clientAddr.getHostAddress());
+    logEntry.setUserName(authenticationContext.getPrincipal().getName());
+    logEntry.setResponse(responseStatus.code(), 0L);
     AUDIT_LOG.trace(logEntry.toString());
   }
 }

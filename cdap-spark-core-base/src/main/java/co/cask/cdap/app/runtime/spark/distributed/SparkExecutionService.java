@@ -26,20 +26,19 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +51,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +92,7 @@ public final class SparkExecutionService extends AbstractIdleService {
                                ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
     this.locationFactory = locationFactory;
     this.httpServer = NettyHttpService.builder(programRunId.getProgram() + "-spark-exec-service")
-      .addHttpHandlers(Collections.singletonList(new SparkControllerHandler()))
+      .setHttpHandlers(Collections.singletonList(new SparkControllerHandler()))
       .setHost(host)
       .setExceptionHandler(new HttpExceptionHandler())
       .build();
@@ -115,7 +115,7 @@ public final class SparkExecutionService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    httpServer.startAndWait();
+    httpServer.start();
   }
 
   @Override
@@ -124,7 +124,7 @@ public final class SparkExecutionService extends AbstractIdleService {
     if (!stopLatch.await(SHUTDOWN_WAIT_SECONDS, TimeUnit.SECONDS)) {
       LOG.warn("Timeout in waiting for Spark program to stop: {}", programRunId);
     }
-    httpServer.stopAndWait();
+    httpServer.stop();
   }
 
   public void shutdownNow() {
@@ -142,7 +142,7 @@ public final class SparkExecutionService extends AbstractIdleService {
      */
     @POST
     @Path("/v1/spark/{programName}/runs/{runId}/heartbeat")
-    public synchronized void heartbeat(HttpRequest request, HttpResponder responder,
+    public synchronized void heartbeat(FullHttpRequest request, HttpResponder responder,
                                        @PathParam("programName") String programName,
                                        @PathParam("runId") String runId) throws Exception {
       if (stopLatch.await(0, TimeUnit.SECONDS)) {
@@ -151,12 +151,12 @@ public final class SparkExecutionService extends AbstractIdleService {
       }
 
       validateRequest(programName, runId);
-      updateWorkflowToken(request.getContent());
+      updateWorkflowToken(request.content());
 
       // If the stop was requested, send the "stop" command
       if (stopping.get()) {
         Command.Builder.of("stop");
-        responder.sendJson(HttpResponseStatus.OK, SparkCommand.STOP);
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(SparkCommand.STOP));
       } else {
         responder.sendStatus(HttpResponseStatus.OK);
       }
@@ -167,12 +167,12 @@ public final class SparkExecutionService extends AbstractIdleService {
      */
     @PUT
     @Path("/v1/spark/{programName}/runs/{runId}/completed")
-    public synchronized void completed(HttpRequest request, HttpResponder responder,
+    public synchronized void completed(FullHttpRequest request, HttpResponder responder,
                                        @PathParam("programName") String programName,
                                        @PathParam("runId") String runId) throws Exception {
       validateRequest(programName, runId);
       try {
-        updateWorkflowToken(request.getContent());
+        updateWorkflowToken(request.content());
         responder.sendStatus(HttpResponseStatus.OK);
       } finally {
         stopLatch.countDown();
@@ -186,10 +186,10 @@ public final class SparkExecutionService extends AbstractIdleService {
      */
     @POST
     @Path("/v1/spark/{programName}/runs/{runId}/credentials")
-    public void writeCredentials(HttpRequest request, HttpResponder responder,
+    public void writeCredentials(FullHttpRequest request, HttpResponder responder,
                                  @PathParam("programName") String programName,
                                  @PathParam("runId") String runId) throws Exception {
-      CredentialsRequest credentialsRequest = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+      CredentialsRequest credentialsRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                             CredentialsRequest.class);
       if (credentialsRequest == null || credentialsRequest.getUri() == null) {
         throw new BadRequestException("Expected request body a JSON object with an 'uri' field");
@@ -237,8 +237,8 @@ public final class SparkExecutionService extends AbstractIdleService {
     /**
      * Updates {@link WorkflowToken} of the program. It is a json Map<String, String> in the request body.
      */
-    private void updateWorkflowToken(ChannelBuffer requestBody) {
-      if (!requestBody.readable()) {
+    private void updateWorkflowToken(ByteBuf requestBody) {
+      if (!requestBody.isReadable()) {
         return;
       }
       if (workflowToken == null) {
@@ -247,7 +247,7 @@ public final class SparkExecutionService extends AbstractIdleService {
         return;
       }
 
-      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(requestBody), Charsets.UTF_8)) {
+      try (Reader reader = new InputStreamReader(new ByteBufInputStream(requestBody), StandardCharsets.UTF_8)) {
         Map<String, String> token = GSON.fromJson(reader, TOKEN_TYPE);
         for (Map.Entry<String, String> entry : token.entrySet()) {
           workflowToken.put(entry.getKey(), entry.getValue());

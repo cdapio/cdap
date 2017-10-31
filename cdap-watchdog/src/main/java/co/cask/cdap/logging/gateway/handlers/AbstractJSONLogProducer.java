@@ -18,14 +18,14 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.logging.read.LogEvent;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -38,34 +38,31 @@ public abstract class AbstractJSONLogProducer extends AbstractChunkedLogProducer
 
   protected static final Gson GSON = new Gson();
 
-  private final ChannelBuffer channelBuffer;
+  private final ByteBuf channelBuffer;
   private final JsonWriter jsonWriter;
-
-  private boolean hasStarted = false;
-
 
   AbstractJSONLogProducer(CloseableIterator<LogEvent> logEventIter) {
     super(logEventIter);
-    this.channelBuffer = ChannelBuffers.dynamicBuffer(BUFFER_BYTES);
-    this.jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
+    this.channelBuffer = Unpooled.buffer(BUFFER_BYTES);
+    this.jsonWriter = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(channelBuffer),
                                                             StandardCharsets.UTF_8));
   }
 
   @Override
-  protected Multimap<String, String> getResponseHeaders() {
-    return ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+  protected HttpHeaders getResponseHeaders() {
+    return new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
   }
 
   @Override
-  protected ChannelBuffer onWriteStart() throws IOException {
+  protected ByteBuf onWriteStart() throws IOException {
     channelBuffer.clear();
     jsonWriter.beginArray();
     jsonWriter.flush();
-    return channelBuffer;
+    return channelBuffer.copy();
   }
 
   @Override
-  protected ChannelBuffer writeLogEvents(CloseableIterator<LogEvent> logEventIter) throws IOException {
+  protected ByteBuf writeLogEvents(CloseableIterator<LogEvent> logEventIter) throws IOException {
     channelBuffer.clear();
 
     while (logEventIter.hasNext() && channelBuffer.readableBytes() < BUFFER_BYTES) {
@@ -73,15 +70,15 @@ public abstract class AbstractJSONLogProducer extends AbstractChunkedLogProducer
       GSON.toJson(encodedObject, encodedObject.getClass(), jsonWriter);
       jsonWriter.flush();
     }
-    return channelBuffer;
+    return channelBuffer.copy();
   }
 
   @Override
-  protected ChannelBuffer onWriteFinish() throws IOException {
+  protected ByteBuf onWriteFinish() throws IOException {
     channelBuffer.clear();
     jsonWriter.endArray();
     jsonWriter.flush();
-    return channelBuffer;
+    return channelBuffer.copy();
   }
 
   /**

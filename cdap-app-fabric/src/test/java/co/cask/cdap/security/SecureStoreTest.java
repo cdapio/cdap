@@ -103,14 +103,14 @@ public class SecureStoreTest {
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
     httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore")
-      .addHttpHandlers(Collections.singleton(injector.getInstance(SecureStoreHandler.class)))
+      .setHttpHandlers(Collections.singleton(injector.getInstance(SecureStoreHandler.class)))
       .build();
-    httpServer.startAndWait();
+    httpServer.start();
   }
 
   @AfterClass
-  public static void afterClass() {
-    httpServer.stopAndWait();
+  public static void afterClass() throws Exception {
+    httpServer.stop();
   }
 
   private URL getURL(String path) throws MalformedURLException {

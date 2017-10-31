@@ -31,10 +31,8 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
 
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -133,10 +131,7 @@ public class UserProfileService extends AbstractService {
         responder.sendError(409, "User already exists.");
         return;
       }
-      Profile profile = GSON.fromJson(new InputStreamReader(
-                                        new ChannelBufferInputStream(
-                                          ChannelBuffers.wrappedBuffer(request.getContent()))),
-                                      Profile.class);
+      Profile profile = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), Profile.class);
       if (profile.getId() == null || profile.getName() == null || profile.getEmail() == null) {
         responder.sendError(400, "Profile must contain id, name, and email.");
         return;
@@ -176,7 +171,7 @@ public class UserProfileService extends AbstractService {
     public void updateEmail(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("user-id") String userId) {
 
-      String address = Charsets.UTF_8.decode(request.getContent()).toString();
+      String address = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       if (!address.contains("@")) {
         responder.sendError(400, "Invalid email address.");
         return;
@@ -195,7 +190,7 @@ public class UserProfileService extends AbstractService {
     @Path("profiles/{user-id}/lastLogin")
     public void updateLastLogin(HttpServiceRequest request, HttpServiceResponder responder,
                                 @PathParam("user-id") String userId) {
-      String body = Charsets.UTF_8.decode(request.getContent()).toString();
+      String body = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       long time;
       try {
         time = Long.parseLong(body);

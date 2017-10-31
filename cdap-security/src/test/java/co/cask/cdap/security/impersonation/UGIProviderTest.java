@@ -35,6 +35,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.io.Text;
@@ -48,8 +50,6 @@ import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -62,7 +62,6 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -235,10 +234,10 @@ public class UGIProviderTest {
   public void testRemoteUGIProvider() throws Exception {
     // Starts a mock server to handle remote UGI requests
     final NettyHttpService httpService = NettyHttpService.builder("remoteUGITest")
-      .addHttpHandlers(Collections.singleton(new UGIProviderTestHandler()))
+      .setHttpHandlers(new UGIProviderTestHandler())
       .build();
 
-    httpService.startAndWait();
+    httpService.start();
 
     setKeytabDir(localKeytabDirPath.getAbsolutePath());
 
@@ -282,7 +281,7 @@ public class UGIProviderTest {
       ugiProvider.invalidCache();
       Assert.assertNotSame(aliceUGIWithPrincipal, ugiProvider.getConfiguredUGI(aliceImpRequest));
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
     }
 
     // cleanup
@@ -351,9 +350,9 @@ public class UGIProviderTest {
 
     @Path("/v1/impersonation/credentials")
     @POST
-    public void getCredentials(HttpRequest request, HttpResponder responder) throws IOException {
+    public void getCredentials(FullHttpRequest request, HttpResponder responder) throws IOException {
       ImpersonationRequest impersonationRequest =
-        GSON.fromJson(request.getContent().toString(StandardCharsets.UTF_8), ImpersonationRequest.class);
+        GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), ImpersonationRequest.class);
       // Generate a Credentials based on the request info
       Credentials credentials = new Credentials();
       credentials.addToken(new Text("entity"),
@@ -381,7 +380,7 @@ public class UGIProviderTest {
       }
       PrincipalCredentials principalCredentials = new PrincipalCredentials(aliceKerberosPrincipalId.getPrincipal(),
                                                                            credentialsFile.toURI().toString());
-      responder.sendJson(HttpResponseStatus.OK, principalCredentials);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(principalCredentials));
     }
   }
 }

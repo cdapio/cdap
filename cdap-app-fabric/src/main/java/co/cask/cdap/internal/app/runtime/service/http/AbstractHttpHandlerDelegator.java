@@ -31,10 +31,10 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
+import io.netty.handler.codec.http.HttpRequest;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.common.Cancellable;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
  * An abstract base class for all {@link HttpHandler} generated through the {@link HttpHandlerGenerator}.

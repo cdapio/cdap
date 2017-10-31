@@ -53,7 +53,7 @@ public class WebappProgramController extends AbstractProgramController {
   protected void doStop() throws Exception {
     LOG.info("Stopping webapp...");
     cancellable.cancel();
-    httpService.stopAndWait();
+    httpService.stop();
     LOG.info("Webapp stopped.");
   }
 

@@ -32,11 +32,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,14 +89,13 @@ public class MessagingHttpService extends AbstractIdleService {
         }
 
         private void logWithTrace(HttpRequest request, Throwable t) {
-          LOG.trace("Error in handling request={} {} for user={}:", request.getMethod().getName(), request.getUri(),
+          LOG.trace("Error in handling request={} {} for user={}:", request.method().name(), request.uri(),
                     Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
         }
       })
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .build();
-    httpService.startAndWait();
-
+    httpService.start();
     cancelDiscovery = discoveryService.register(new Discoverable(Constants.Service.MESSAGING_SERVICE,
                                                                  httpService.getBindAddress()));
     LOG.info("Messaging HTTP server started on {}", httpService.getBindAddress());
@@ -107,7 +106,7 @@ public class MessagingHttpService extends AbstractIdleService {
     try {
       cancelDiscovery.cancel();
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
     }
     LOG.info("Messaging HTTP server stopped");
   }

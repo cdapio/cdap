@@ -32,10 +32,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,8 +113,8 @@ public class RouterServiceLookup {
     }
 
     // Normalize the path once and strip off any query string. Just keep the URI path.
-    String path = URI.create(httpRequest.getUri()).normalize().getPath();
-    String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
+    String path = URI.create(httpRequest.uri()).normalize().getPath();
+    String host = httpRequest.headers().get(HttpHeaderNames.HOST);
 
     if (host == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);

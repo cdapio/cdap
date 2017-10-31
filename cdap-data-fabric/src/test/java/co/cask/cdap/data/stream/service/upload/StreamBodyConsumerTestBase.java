@@ -25,12 +25,12 @@ import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -102,19 +102,16 @@ public abstract class StreamBodyConsumerTestBase {
    */
   private void sendChunks(InputSupplier<? extends InputStream> inputSupplier, int chunkSize,
                           BodyConsumer bodyConsumer, HttpResponder responder) throws IOException {
-    InputStream input = inputSupplier.getInput();
-    try {
+    try (InputStream input = inputSupplier.getInput()) {
       byte[] bytes = new byte[chunkSize];
       int len = input.read(bytes);
       while (len >= 0) {
-        bodyConsumer.chunk(ChannelBuffers.copiedBuffer(bytes, 0, len), responder);
+        bodyConsumer.chunk(Unpooled.copiedBuffer(bytes, 0, len), responder);
         len = input.read(bytes);
       }
       bodyConsumer.finished(responder);
     } catch (Exception e) {
       bodyConsumer.handleError(e);
-    } finally {
-      input.close();
     }
   }
 
@@ -156,18 +153,18 @@ public abstract class StreamBodyConsumerTestBase {
    * A {@link ContentWriter} for testing. It keeps all content written in memory.
    */
   private static class TestContentWriter implements ContentWriter {
-    private final List<ChannelBuffer> contents;
+    private final List<ByteBuf> contents;
     private final CountDownLatch completion;
     private int events;
 
-    public TestContentWriter() {
+    TestContentWriter() {
       this.contents = Lists.newLinkedList();
       this.completion = new CountDownLatch(1);
     }
 
     @Override
     public void append(ByteBuffer body, boolean immutable) throws IOException {
-      contents.add(immutable ? ChannelBuffers.wrappedBuffer(body) : ChannelBuffers.copiedBuffer(body));
+      contents.add(immutable ? Unpooled.wrappedBuffer(body) : Unpooled.copiedBuffer(body));
       events++;
     }
 
@@ -183,12 +180,12 @@ public abstract class StreamBodyConsumerTestBase {
       completion.countDown();
     }
 
-    public boolean waitForClose(long timeout, TimeUnit unit) throws InterruptedException {
+    boolean waitForClose(long timeout, TimeUnit unit) throws InterruptedException {
       return completion.await(timeout, unit);
     }
 
     public ByteBuffer getContent() {
-      return ChannelBuffers.wrappedBuffer(contents.toArray(new ChannelBuffer[contents.size()])).toByteBuffer();
+      return Unpooled.wrappedBuffer(contents.toArray(new ByteBuf[contents.size()])).nioBuffer();
     }
 
     @Override
@@ -209,29 +206,27 @@ public abstract class StreamBodyConsumerTestBase {
     private final AtomicReference<HttpResponseStatus> responseStatus = new AtomicReference<>();
 
     @Override
-    public ChunkResponder sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
+    public ChunkResponder sendChunkStart(HttpResponseStatus status, HttpHeaders headers) {
       // Not used in test
       return null;
     }
 
     @Override
-    public void sendContent(HttpResponseStatus status, ChannelBuffer content,
-                            String contentType, Multimap<String, String> headers) {
+    public void sendContent(HttpResponseStatus status, ByteBuf content, HttpHeaders headers) {
       responseStatus.compareAndSet(null, status);
     }
 
     @Override
-    public void sendFile(File file, Multimap<String, String> headers) {
+    public void sendFile(File file, HttpHeaders headers) {
       // Not used in test
     }
 
     @Override
-    public void sendContent(HttpResponseStatus httpResponseStatus,
-                            BodyProducer bodyProducer, Multimap<String, String> multimap) {
+    public void sendContent(HttpResponseStatus httpResponseStatus, BodyProducer bodyProducer, HttpHeaders headers) {
       // Not used in test
     }
 
-    public HttpResponseStatus getResponseStatus() {
+    HttpResponseStatus getResponseStatus() {
       return responseStatus.get();
     }
   }

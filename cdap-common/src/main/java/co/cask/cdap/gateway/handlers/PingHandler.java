@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonObject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class PingHandler extends AbstractHttpHandler {
   @Path(Constants.Gateway.API_VERSION_3 + "/system/services/{service-name}/status")
   @GET
   public void status(HttpRequest request, HttpResponder responder) {
-    // ignore the service-name, since we dont need it. its only used for routing
-    responder.sendJson(HttpResponseStatus.OK, OK_JSON);
+    // ignore the service-name, since we don't need it. its only used for routing
+    responder.sendJson(HttpResponseStatus.OK, OK_JSON.toString());
   }
 }

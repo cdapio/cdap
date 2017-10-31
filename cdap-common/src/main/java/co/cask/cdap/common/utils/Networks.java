@@ -20,9 +20,12 @@ import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import javax.annotation.Nullable;
 
 /**
  * Utility class to provide methods for common network related operations.
@@ -60,6 +63,23 @@ public final class Networks {
     } catch (IOException e) {
       return -1;
     }
+  }
+
+  /**
+   * Gets the IP address from the given {@link SocketAddress}
+   *
+   * @return the ip address or {@code null} if not able to ge the ip address
+   */
+  @Nullable
+  public static String getIP(@Nullable SocketAddress address) {
+    if (!(address instanceof InetSocketAddress)) {
+      return null;
+    }
+    InetAddress inetAddress = ((InetSocketAddress) address).getAddress();
+    if (inetAddress == null) {
+      return null;
+    }
+    return inetAddress.getHostAddress();
   }
 
   private Networks() {

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,19 +25,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 /**
- * An {@link InputStream} implementation that reads data from {@link ChannelBuffer}.
+ * An {@link InputStream} implementation that reads data from {@link ByteBuf}.
  * It allows asynchronous update to add new buffer from this class to read from. The end of file
- * is signaled by appending an empty {@link ChannelBuffer} to this stream.
+ * is signaled by appending an empty {@link ByteBuf} to this stream.
  */
 public final class AsyncChannelBufferInputStream extends InputStream {
 
-  private final BlockingQueue<ChannelBuffer> buffers = new SynchronousQueue<>();
-  private ChannelBuffer currentBuffer = ChannelBuffers.EMPTY_BUFFER;
+  private final BlockingQueue<ByteBuf> buffers = new SynchronousQueue<>();
+  private ByteBuf currentBuffer = Unpooled.EMPTY_BUFFER;
   private boolean eof;
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    ChannelBuffer buffer = getCurrentBuffer();
+    ByteBuf buffer = getCurrentBuffer();
     if (eof) {
       return -1;
     }
@@ -48,7 +48,7 @@ public final class AsyncChannelBufferInputStream extends InputStream {
 
   @Override
   public int read() throws IOException {
-    ChannelBuffer buffer = getCurrentBuffer();
+    ByteBuf buffer = getCurrentBuffer();
     return eof ? -1 : buffer.readByte();
   }
 
@@ -57,19 +57,24 @@ public final class AsyncChannelBufferInputStream extends InputStream {
     eof = true;
 
     // Need to poll from queue to unblock any thread that is trying to append
-    while (buffers.poll() != null) {
-      // Empty loop
+    ByteBuf buf;
+    while ((buf = buffers.poll()) != null) {
+      // release all buffers
+      buf.release();
     }
     // Offer an empty to unblock the reader thread
-    buffers.offer(ChannelBuffers.EMPTY_BUFFER);
+    buffers.offer(Unpooled.EMPTY_BUFFER);
   }
 
-  private ChannelBuffer getCurrentBuffer() throws IOException {
+  private ByteBuf getCurrentBuffer() throws IOException {
     try {
-      if (!eof && !currentBuffer.readable()) {
+      if (!eof && !currentBuffer.isReadable()) {
+        // Release the buffer when it is done reading
+        currentBuffer.release();
         currentBuffer = buffers.take();
       }
-      if (!currentBuffer.readable()) {
+      if (!currentBuffer.isReadable()) {
+        currentBuffer.release();
         eof = true;
       }
       return currentBuffer;
@@ -84,10 +89,11 @@ public final class AsyncChannelBufferInputStream extends InputStream {
    *
    * @throws InterruptedException if the append operation is interrupted
    */
-  public void append(ChannelBuffer buffer) throws InterruptedException, IOException {
+  public void append(ByteBuf buffer) throws InterruptedException, IOException {
     if (eof) {
       throw new IOException("Stream already closed");
     }
-    buffers.put(buffer);
+    // Retain the buffer for processing asynchronously
+    buffers.put(buffer.retain());
   }
 }

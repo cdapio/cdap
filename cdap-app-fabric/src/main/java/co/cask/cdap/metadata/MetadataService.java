@@ -29,10 +29,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +50,7 @@ public class MetadataService extends AbstractIdleService {
   private final MetadataUpgrader metadataUpgrader;
 
   private NettyHttpService httpService;
+  private Cancellable cancelDiscovery;
 
   @Inject
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -70,7 +69,7 @@ public class MetadataService extends AbstractIdleService {
     LOG.info("Starting Metadata Service");
     metadataUpgrader.createOrUpgradeIfNecessary();
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.METADATA_SERVICE)))
       .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
@@ -79,36 +78,21 @@ public class MetadataService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_EXEC_THREADS))
       .setConnectionBacklog(20000)
       .build();
-    httpService.addListener(new ServiceListenerAdapter() {
-      private Cancellable cancellable;
 
-      @Override
-      public void running() {
-        final InetSocketAddress socketAddress = httpService.getBindAddress();
-        LOG.info("Metadata service running at {}", socketAddress);
-        cancellable = discoveryService.register(
-          ResolvingDiscoverable.of(new Discoverable(Constants.Service.METADATA_SERVICE, socketAddress)));
-      }
+    httpService.start();
 
-      @Override
-      public void terminated(State from) {
-        LOG.info("Metadata HTTP service stopped");
-        cancellable.cancel();
-      }
+    InetSocketAddress socketAddress = httpService.getBindAddress();
+    LOG.info("Metadata service running at {}", socketAddress);
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.METADATA_SERVICE, socketAddress)));
 
-      @Override
-      public void failed(State from, Throwable failure) {
-        LOG.info("Metadata HTTP service stopped with failure.", failure);
-        cancellable.cancel();
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    httpService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down Metadata Service");
-    httpService.stopAndWait();
+    cancelDiscovery.cancel();
+    httpService.stop();
+    LOG.info("Metadata HTTP service stopped");
   }
 }

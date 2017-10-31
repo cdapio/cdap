@@ -25,9 +25,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -162,7 +162,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   private String createDashboard(String namespace, String contents, int expectedStatus) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/configuration/dashboards", namespace), contents);
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    if (expectedStatus == HttpResponseStatus.OK.getCode()) {
+    if (expectedStatus == HttpResponseStatus.OK.code()) {
       String jsonData = EntityUtils.toString(response.getEntity());
       Map<String, String> idMap = GSON.fromJson(jsonData, MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, idMap.size());

@@ -17,26 +17,22 @@ package co.cask.cdap.common.http;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpChunk;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code SecurityRequestContext}.
  */
-public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
+public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
   private String currentUserId;
@@ -47,30 +43,27 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
    * Returns a 401 if the identifier is malformed.
    */
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    Object message = e.getMessage();
-    if (message instanceof HttpRequest) {
+  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    if (msg instanceof HttpRequest) {
       // TODO: authenticate the user using user id - CDAP-688
-      HttpRequest request = (HttpRequest) message;
-      currentUserId = request.getHeader(Constants.Security.Headers.USER_ID);
-      currentUserIP = request.getHeader(Constants.Security.Headers.USER_IP);
+      HttpRequest request = (HttpRequest) msg;
+      currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
+      currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserIP(currentUserIP);
-    } else if (message instanceof HttpChunk) {
+    } else if (msg instanceof HttpContent) {
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserIP(currentUserIP);
     }
 
-    super.messageReceived(ctx, e);
+    ctx.fireChannelRead(msg);
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-    LOG.error("Got exception: ", e.getCause());
-    ChannelFuture future = Channels.future(ctx.getChannel());
-    future.addListener(ChannelFutureListener.CLOSE);
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    LOG.error("Got exception: {}", cause.getMessage(), cause);
     // TODO: add WWW-Authenticate header for 401 response -  REACTOR-900
-    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-    Channels.write(ctx, future, response);
+    HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+    ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
   }
 }

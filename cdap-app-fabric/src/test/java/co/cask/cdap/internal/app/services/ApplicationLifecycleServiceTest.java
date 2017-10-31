@@ -38,11 +38,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -138,18 +138,18 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     String ownerPrincipal = "alice/somehost.net@somekdc.net";
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
                                    ownerPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     // trying to redeploy the same app as a different owner should fail
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
                       "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(),
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(),
                         response.getStatusLine().getStatusCode());
 
     // although trying to re-deploy the app with same owner should work
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
                       ownerPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
   }
 
@@ -164,23 +164,23 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     // deploy an app without owner
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName());
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     // try to redeploy with some owner different than namespace principal it should fail
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
                       "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(),
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(),
                         response.getStatusLine().getStatusCode());
 
     // although trying to re-deploy the app with namespace principal should work
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
                       nsPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
                         response.getStatusLine().getStatusCode());
 
     // re-deploy without any owner should also work
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName());
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
                         response.getStatusLine().getStatusCode());
 
     // cleanup
@@ -194,18 +194,18 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     // deploy an app with an owner
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
                       "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     // re-deploy with namespace principal should fail
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
                       impNsMeta.getConfig().getPrincipal());
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(),
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(),
                         response.getStatusLine().getStatusCode());
 
     // although redeploy with same app principal should work
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
                       "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
                         response.getStatusLine().getStatusCode());
   }
 

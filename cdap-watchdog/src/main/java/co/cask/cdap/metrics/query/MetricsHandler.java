@@ -19,17 +19,18 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.GET;
@@ -64,10 +65,10 @@ public class MetricsHandler extends AbstractHttpHandler {
     try {
       switch (target) {
         case "tag":
-          responder.sendJson(HttpResponseStatus.OK, metricsQueryHelper.searchTags(tags));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metricsQueryHelper.searchTags(tags)));
           break;
         case "metric":
-          responder.sendJson(HttpResponseStatus.OK, metricsQueryHelper.searchMetric(tags));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metricsQueryHelper.searchMetric(tags)));
           break;
         default:
           responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
@@ -84,24 +85,24 @@ public class MetricsHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/query")
-  public void query(HttpRequest request, HttpResponder responder,
+  public void query(FullHttpRequest request, HttpResponder responder,
                     @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
                     @QueryParam("tag") List<String> tags) throws Exception {
     try {
-      if (new QueryStringDecoder(request.getUri()).getParameters().isEmpty()) {
-        if (HttpHeaders.getContentLength(request) > 0) {
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.uri()).parameters();
+      if (queryParams.isEmpty()) {
+        if (HttpUtil.getContentLength(request) > 0) {
           Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
-            GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+            GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                           new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() { }.getType());
-          responder.sendJson(HttpResponseStatus.OK, metricsQueryHelper.executeBatchQueries(queries));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
           return;
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
       }
       responder.sendJson(HttpResponseStatus.OK,
-                         metricsQueryHelper.executeTagQuery(tags, metrics, groupBy,
-                                                            new QueryStringDecoder(request.getUri()).getParameters()));
+                         GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -114,6 +115,7 @@ public class MetricsHandler extends AbstractHttpHandler {
   @GET
   @Path("/processor/status")
   public void processorStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, metricsQueryHelper.getMetricStore().getMetricsProcessorStats());
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(metricsQueryHelper.getMetricStore().getMetricsProcessorStats()));
   }
 }

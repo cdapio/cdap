@@ -122,10 +122,6 @@
       <artifactId>async-http-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-yarn</artifactId>
     </dependency>

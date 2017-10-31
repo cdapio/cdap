@@ -29,12 +29,12 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -47,7 +47,8 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
+
+  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final NamespaceAdmin namespaceAdmin;
@@ -61,7 +62,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.list());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(namespaceAdmin.list()));
   }
 
   @GET
@@ -69,14 +70,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceMeta ns = namespaceAdmin.get(new NamespaceId(namespaceId));
-    responder.sendJson(HttpResponseStatus.OK, ns);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ns));
   }
 
 
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
+  public void updateNamespaceProperties(FullHttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceMeta meta = getNamespaceMeta(request);
     namespaceAdmin.updateProperties(new NamespaceId(namespaceId), meta);
@@ -86,7 +87,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/namespaces/{namespace-id}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void create(HttpRequest request, HttpResponder responder,
+  public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId) throws Exception {
     Id.Namespace namespace;
     try {
@@ -150,11 +151,12 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isReserved(String namespaceId) {
-    return Id.Namespace.DEFAULT.getId().equals(namespaceId) || Id.Namespace.SYSTEM.getId().equals(namespaceId) ||
-      Id.Namespace.CDAP.getId().equals(namespaceId);
+    return NamespaceId.DEFAULT.getNamespace().equals(namespaceId)
+      || NamespaceId.SYSTEM.getNamespace().equals(namespaceId)
+      || NamespaceId.CDAP.getNamespace().equals(namespaceId);
   }
 
-  private NamespaceMeta getNamespaceMeta(HttpRequest request) throws BadRequestException {
+  private NamespaceMeta getNamespaceMeta(FullHttpRequest request) throws BadRequestException {
     try {
       return parseBody(request, NamespaceMeta.class);
     } catch (JsonSyntaxException e) {

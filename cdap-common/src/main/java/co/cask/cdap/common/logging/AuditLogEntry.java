@@ -16,14 +16,19 @@
 
 package co.cask.cdap.common.logging;
 
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import co.cask.cdap.common.conf.Constants;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpUtil;
 
-import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * Represents an entry in an audit log.
@@ -34,144 +39,94 @@ public final class AuditLogEntry {
   /** Each audit log field will default to "-" if the field is missing or not supported. */
   private static final String DEFAULT_VALUE = "-";
 
-  /** Indicates whether this entry has already been logged. */
-  private boolean logged;
-  private boolean logResponseBody;
+  private final String requestLine;
+  private final Map<String, String> headers;
+  private final Date date;
+  private final String clientIP;
 
-  private InetAddress clientIP;
   private String userName;
-  private Date date;
-  private String requestLine;
-  private String requestBody;
   private Integer responseCode;
   private Long responseContentLength;
-  private String userIdentity;
-  private Map<String, String> headers;
-  private String responseBody;
+  private StringBuilder requestBody;
+  private StringBuilder responseBody;
 
-  public AuditLogEntry() {
+  public AuditLogEntry(HttpRequest request, @Nullable String clientIP) {
+    this(request, clientIP, Collections.<String>emptySet());
+  }
+
+  public AuditLogEntry(HttpRequest request, @Nullable String clientIP, Set<String> includeHeaders) {
+    this(request.method() + " " + request.uri() + " " + request.protocolVersion(),
+         request.headers().contains(Constants.Security.Headers.USER_ID)
+           ? request.headers().get(Constants.Security.Headers.USER_ID)
+           : null,
+         clientIP,
+         extractHeaders(request, includeHeaders));
+  }
+
+  public AuditLogEntry(String requestLine, @Nullable String userName,
+                       @Nullable String clientIP, Map<String, String> headers) {
     this.date = new Date();
+    this.requestLine = requestLine;
+    this.userName = userName;
+    this.clientIP = clientIP;
+    this.headers = headers.isEmpty() ? null : Collections.unmodifiableMap(new TreeMap<>(headers));
   }
 
   public String toString() {
-    return String.format("%s %s %s [%s] \"%s\" %s %s %s %s %s",
-                         clientIP != null ? clientIP.getHostAddress() : DEFAULT_VALUE,
-                         fieldOrDefault(userIdentity),
-                         fieldOrDefault(userName),
+    return String.format("%s - %s [%s] \"%s\" %s %s %s %s %s",
+                         toString(clientIP),
+                         toString(userName),
                          DEFAULT_DATE_FORMAT.format(date),
-                         fieldOrDefault(requestLine),
-                         fieldOrDefault(headers),
-                         fieldOrDefault(requestBody),
-                         fieldOrDefault(responseCode),
-                         fieldOrDefault(responseContentLength),
-                         fieldOrDefault(responseBody));
+                         toString(requestLine),
+                         toString(headers),
+                         toString(requestBody),
+                         toString(responseCode),
+                         toString(responseContentLength),
+                         toString(responseBody));
   }
 
-  public String getUserIdentity() {
-    return userIdentity;
-  }
-
-  public void setUserIdentity(String userIdentity) {
-    this.userIdentity = userIdentity;
-  }
-
-  public boolean isLogged() {
-    return logged;
-  }
-
-  public void setLogged(boolean logged) {
-    this.logged = logged;
-  }
-
-  public InetAddress getClientIP() {
-    return clientIP;
-  }
-
-  public void setClientIP(InetAddress clientIP) {
-    this.clientIP = clientIP;
-  }
-
-  public String getUserName() {
-    return userName;
-  }
-
-  public void setUserName(String userName) {
+  public void setUserName(@Nullable String userName) {
     this.userName = userName;
   }
 
-  public Date getDate() {
-    return date;
+  public void appendRequestBody(String requestBody) {
+    if (this.requestBody == null) {
+      this.requestBody = new StringBuilder();
+    }
+    this.requestBody.append(requestBody);
   }
 
-  public void setDate(Date date) {
-    this.date = date;
+  public void setResponse(HttpResponse response) {
+    responseCode = response.status().code();
+    responseContentLength = HttpUtil.getContentLength(response, -1L);
+    if (responseContentLength < 0) {
+      responseContentLength = null;
+    }
   }
 
-  public String getRequestLine() {
-    return requestLine;
-  }
-
-  public void setRequestLine(HttpMethod method, String uri, HttpVersion protocolVersion) {
-    this.requestLine = method + " " + uri + " " + protocolVersion;
-  }
-
-  public void setRequestLine(String method, String uri, String protocolVersion) {
-    this.requestLine = method + " " + uri + " " + protocolVersion;
-  }
-
-  public void setRequestBody(String requestBody) {
-    this.requestBody = requestBody;
-  }
-
-  public String getRequestBody() {
-    return requestBody;
-  }
-
-  public Integer getResponseCode() {
-    return responseCode;
-  }
-
-  public void setResponseCode(Integer responseCode) {
-    this.responseCode = responseCode;
-  }
-
-  public Long getResponseContentLength() {
-    return responseContentLength;
-  }
-
-  public void setResponseContentLength(Long responseContentLength) {
-    this.responseContentLength = responseContentLength;
-  }
-
-  public Map<String, String> getHeaders() {
-    return headers;
-  }
-
-  public void setHeaders(Map<String, String> headers) {
-    this.headers = headers;
-  }
-
-  public String getResponseBody() {
-    return responseBody;
-  }
-
-  public void setResponseBody(String responseBody) {
-     this.responseBody = responseBody;
+  public void setResponse(int code, long length) {
+    responseCode = code;
+    responseContentLength = length >= 0 ? length : null;
   }
 
   public void appendResponseBody(String appendBody) {
-    this.responseBody += appendBody;
+    if (this.responseBody == null) {
+      this.responseBody = new StringBuilder();
+    }
+    this.responseBody.append(appendBody);
   }
 
-  public boolean isLogResponseBody() {
-    return logResponseBody;
+  private String toString(Object value) {
+    return value == null ? DEFAULT_VALUE : value.toString();
   }
 
-  public void setLogResponseBody(boolean logResponseBody) {
-    this.logResponseBody = logResponseBody;
-  }
-
-  private String fieldOrDefault(Object field) {
-    return field == null ? DEFAULT_VALUE : field.toString();
+  private static Map<String, String> extractHeaders(HttpRequest request, Set<String> headerNames) {
+    Map<String, String> headers = new TreeMap<>();
+    for (String header : headerNames) {
+      if (request.headers().contains(header)) {
+        headers.put(header, request.headers().get(header));
+      }
+    }
+    return headers;
   }
 }

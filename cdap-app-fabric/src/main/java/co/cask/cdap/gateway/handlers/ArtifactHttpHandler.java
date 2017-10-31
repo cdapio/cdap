@@ -63,7 +63,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -77,9 +76,10 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +89,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -167,13 +168,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/namespaces/{namespace-id}/artifactproperties")
-  public void getArtifactProperties(HttpRequest request, HttpResponder responder,
+  public void getArtifactProperties(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId) throws Exception {
 
     NamespaceId namespace = validateAndGetNamespace(namespaceId);
 
     List<ArtifactPropertiesRequest> propertyRequests;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       propertyRequests = GSON.fromJson(reader, BATCH_ARTIFACT_PROPERTIES_REQUEST);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Unable to parse request: " + e.getMessage(), e);
@@ -202,7 +203,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                                propertiesRequest.getScope(), filteredProperties));
     }
 
-    responder.sendJson(HttpResponseStatus.OK, result, BATCH_ARTIFACT_PROPERTIES_RESPONSE);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result, BATCH_ARTIFACT_PROPERTIES_RESPONSE));
   }
 
   @GET
@@ -215,10 +216,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       if (scope == null) {
         NamespaceId namespace = validateAndGetNamespace(namespaceId);
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(namespace, true));
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(artifactRepository.getArtifactSummaries(namespace, true)));
       } else {
         NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(namespace, false));
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(artifactRepository.getArtifactSummaries(namespace, false)));
       }
     } catch (IOException e) {
       LOG.error("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
@@ -247,11 +250,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       if (range == null) {
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(namespace, artifactName,
-                                                                                          limitNumber, sortOrder));
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(artifactRepository.getArtifactSummaries(namespace, artifactName,
+                                                                               limitNumber, sortOrder)));
       } else {
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(range, limitNumber,
-                                                                                          sortOrder));
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(artifactRepository.getArtifactSummaries(range, limitNumber, sortOrder)));
       }
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
@@ -278,7 +282,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
                                            detail.getMeta().getClasses(), detail.getMeta().getProperties(),
                                            detail.getMeta().getUsableBy());
-      responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(info, ArtifactInfo.class));
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
@@ -311,7 +315,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       } else {
         result = properties;
       }
-      responder.sendJson(HttpResponseStatus.OK, result);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -322,7 +326,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   @PUT
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void writeProperties(HttpRequest request, HttpResponder responder,
+  public void writeProperties(FullHttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("artifact-name") String artifactName,
                               @PathParam("artifact-version") String artifactVersion) throws Exception {
@@ -331,7 +335,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     Map<String, String> properties;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       properties = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Json Syntax Error while parsing properties from request. " +
@@ -352,7 +356,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   @PUT
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties/{property}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void writeProperty(HttpRequest request, HttpResponder responder,
+  public void writeProperty(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("artifact-name") String artifactName,
                             @PathParam("artifact-version") String artifactVersion,
@@ -361,7 +365,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
-    String value = request.getContent().toString(Charsets.UTF_8);
+    String value = request.content().toString(StandardCharsets.UTF_8);
     if (value == null) {
       responder.sendStatus(HttpResponseStatus.OK);
       return;
@@ -461,7 +465,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
           pluginTypes.add(pluginClass.getType());
         }
       }
-      responder.sendJson(HttpResponseStatus.OK, pluginTypes);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginTypes));
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -498,7 +502,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             pluginClass.getClassName(), pluginArtifactSummary));
         }
       }
-      responder.sendJson(HttpResponseStatus.OK, pluginSummaries);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginSummaries));
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -511,7 +515,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
     "versions/{artifact-version}/plugintypes/{plugin-type}/plugins/{plugin-name}/methods/{plugin-method}")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
-  public void callArtifactPluginMethod(HttpRequest request, HttpResponder responder,
+  public void callArtifactPluginMethod(FullHttpRequest request, HttpResponder responder,
                                        @PathParam("namespace-id") String namespaceId,
                                        @PathParam("artifact-name") String artifactName,
                                        @PathParam("artifact-version") String artifactVersion,
@@ -521,7 +525,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                        @QueryParam("scope") @DefaultValue("user") String scope)
     throws Exception {
 
-    String requestBody = request.getContent().toString(Charsets.UTF_8);
+    String requestBody = request.content().toString(StandardCharsets.UTF_8);
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
     ArtifactId artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
@@ -611,7 +615,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
           pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
           pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints()));
       }
-      responder.sendJson(HttpResponseStatus.OK, pluginInfos);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginInfos));
     } catch (PluginNotExistsException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (IOException e) {
@@ -631,12 +635,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       if (scope == null) {
         NamespaceId namespace = validateAndGetNamespace(namespaceId);
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, true),
-                           APPCLASS_SUMMARIES_TYPE, GSON);
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(artifactRepository.getApplicationClasses(namespace, true),
+                                       APPCLASS_SUMMARIES_TYPE));
       } else {
         NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, false),
-                           APPCLASS_SUMMARIES_TYPE, GSON);
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(artifactRepository.getApplicationClasses(namespace, false),
+                                       APPCLASS_SUMMARIES_TYPE));
       }
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
@@ -656,8 +662,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
     try {
-      responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, className),
-                         APPCLASS_INFOS_TYPE, GSON);
+      responder.sendJson(HttpResponseStatus.OK,
+                         GSON.toJson(artifactRepository.getApplicationClasses(namespace, className),
+                                     APPCLASS_INFOS_TYPE));
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -795,7 +802,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       List<ArtifactInfo> artifactInfoList = new ArrayList<>();
       artifactInfoList.addAll(artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
       artifactInfoList.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
-      responder.sendJson(HttpResponseStatus.OK, artifactInfoList, ARTIFACT_INFO_LIST_TYPE, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactInfoList, ARTIFACT_INFO_LIST_TYPE));
     } catch (Exception e) {
       LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");

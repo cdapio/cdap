@@ -20,17 +20,14 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -42,7 +39,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class ConfigHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
+  private static final Gson GSON = new Gson();
   private final ConfigService configService;
 
   @Inject
@@ -55,12 +52,11 @@ public class ConfigHandler extends AbstractHttpHandler {
   public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     if ("json".equals(format)) {
-      responder.sendJson(HttpResponseStatus.OK, configService.getCConf());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getCConf()));
     } else if ("xml".equals(format)) {
-      String xmlString = configService.getCConfXMLString();
-      responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
+      responder.sendString(HttpResponseStatus.OK, configService.getCConfXMLString(),
+                           new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));
     } else {
-
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
     }
   }
@@ -70,16 +66,12 @@ public class ConfigHandler extends AbstractHttpHandler {
   public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                           @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     if ("json".equals(format)) {
-      responder.sendJson(HttpResponseStatus.OK, configService.getHConf());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getHConf()));
     } else if ("xml".equals(format)) {
-      String xmlString = configService.getHConfXMLString();
-      responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
+      responder.sendString(HttpResponseStatus.OK, configService.getHConfXMLString(),
+                           new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
     }
-  }
-
-  private ChannelBuffer newChannelBuffer(String string) {
-    return ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, string, Charsets.UTF_8);
   }
 }

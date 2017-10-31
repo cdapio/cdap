@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.Arrays;
 
 /**
  * An HTTP service that runs in the Spark driver process for providing various functionalities to executors,
@@ -35,7 +34,7 @@ final class SparkDriverHttpService extends AbstractIdleService {
 
   SparkDriverHttpService(String programName, String hostname, HttpHandler...handlers) {
     this.httpServer = NettyHttpService.builder(programName + "-http-service")
-      .addHttpHandlers(Arrays.asList(handlers))
+      .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(hostname)
       .build();
@@ -43,12 +42,12 @@ final class SparkDriverHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    httpServer.startAndWait();
+    httpServer.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    httpServer.stopAndWait();
+    httpServer.stop();
   }
 
   /**

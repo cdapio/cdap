@@ -19,28 +19,30 @@ import co.cask.http.AbstractHttpResponder;
 import co.cask.http.BodyProducer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A mock implementation of {@link HttpResponder} that only record the response status.
  */
 public final class MockResponder extends AbstractHttpResponder {
-  private HttpResponseStatus status = null;
-  private ChannelBuffer content = null;
+
   private static final Gson GSON = new Gson();
+
+  private HttpResponseStatus status;
+  private ByteBuf content;
 
   public HttpResponseStatus getStatus() {
     return status;
@@ -52,23 +54,23 @@ public final class MockResponder extends AbstractHttpResponder {
 
   public <T> T decodeResponseContent(Type type, Gson gson) {
     JsonReader jsonReader = new JsonReader(new InputStreamReader
-                                             (new ChannelBufferInputStream(content), Charsets.UTF_8));
+                                             (new ByteBufInputStream(content), StandardCharsets.UTF_8));
     return gson.fromJson(jsonReader, type);
   }
 
   @Override
-  public ChunkResponder sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
+  public ChunkResponder sendChunkStart(HttpResponseStatus status, HttpHeaders headers) {
     this.status = status;
     return new ChunkResponder() {
       @Override
       public void sendChunk(ByteBuffer chunk) throws IOException {
-        sendChunk(ChannelBuffers.wrappedBuffer(chunk));
+        sendChunk(Unpooled.wrappedBuffer(chunk));
       }
 
       @Override
-      public void sendChunk(ChannelBuffer chunk) throws IOException {
+      public void sendChunk(ByteBuf chunk) throws IOException {
         if (content == null) {
-          content = ChannelBuffers.dynamicBuffer();
+          content = Unpooled.buffer(chunk.readableBytes());
         }
         content.writeBytes(chunk);
       }
@@ -81,22 +83,18 @@ public final class MockResponder extends AbstractHttpResponder {
   }
 
   @Override
-  public void sendContent(HttpResponseStatus status,
-                          ChannelBuffer content, String contentType, Multimap<String, String> headers) {
-    if (content != null) {
-      this.content = content;
-    }
+  public void sendContent(HttpResponseStatus status, ByteBuf content, HttpHeaders headers) {
+    this.content = content.copy();
     this.status = status;
   }
 
   @Override
-  public void sendFile(File file, Multimap<String, String> headers) {
+  public void sendFile(File file, HttpHeaders headers) {
     this.status = HttpResponseStatus.OK;
   }
 
   @Override
-  public void sendContent(HttpResponseStatus httpResponseStatus, BodyProducer bodyProducer,
-                          Multimap<String, String> multimap) {
+  public void sendContent(HttpResponseStatus httpResponseStatus, BodyProducer bodyProducer, HttpHeaders headers) {
     this.status = HttpResponseStatus.OK;
   }
 }

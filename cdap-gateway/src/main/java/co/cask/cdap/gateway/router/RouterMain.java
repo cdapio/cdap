@@ -73,7 +73,7 @@ public class RouterMain extends DaemonMain {
       cConf = CConfiguration.create();
 
       if (cConf.getBoolean(Constants.Security.ENABLED)) {
-        int foundPaths = RouterAuditLookUp.getAuditLookUp().getNumberOfPaths();
+        int foundPaths = RouterAuditLookUp.getInstance().getNumberOfPaths();
         if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_PATH_CHECK_ENABLED) &&
           foundPaths != ExceptedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER) {
           LOG.error("Failed to start the router due to the incorrect number of paths with AuditPolicy. " +

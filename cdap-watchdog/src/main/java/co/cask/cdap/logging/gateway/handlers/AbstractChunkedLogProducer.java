@@ -20,8 +20,9 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.http.BodyProducer;
 import com.google.common.collect.Multimap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,27 +49,27 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
   /**
    * Return {@link Multimap} of HTTP response headers
    */
-  protected abstract Multimap<String, String> getResponseHeaders();
+  protected abstract HttpHeaders getResponseHeaders();
 
-  protected abstract ChannelBuffer onWriteStart() throws IOException;
-  protected abstract ChannelBuffer writeLogEvents(CloseableIterator<LogEvent> logEvent) throws IOException;
-  protected abstract ChannelBuffer onWriteFinish() throws IOException;
+  protected abstract ByteBuf onWriteStart() throws IOException;
+  protected abstract ByteBuf writeLogEvents(CloseableIterator<LogEvent> logEvent) throws IOException;
+  protected abstract ByteBuf onWriteFinish() throws IOException;
 
   public void close() {
     logEventIter.close();
   }
 
   @Override
-  public ChannelBuffer nextChunk() throws Exception {
-    ChannelBuffer startBuffer = ChannelBuffers.EMPTY_BUFFER;
+  public ByteBuf nextChunk() throws Exception {
+    ByteBuf startBuffer = Unpooled.EMPTY_BUFFER;
     if (!hasStarted) {
       hasStarted = true;
-      startBuffer = ChannelBuffers.copiedBuffer(onWriteStart());
+      startBuffer = Unpooled.copiedBuffer(onWriteStart());
     }
 
     if (logEventIter.hasNext()) {
-      ChannelBuffer eventsBuffer = writeLogEvents(logEventIter);
-      return startBuffer.readable() ? ChannelBuffers.wrappedBuffer(startBuffer, eventsBuffer) : eventsBuffer;
+      ByteBuf eventsBuffer = writeLogEvents(logEventIter);
+      return startBuffer.isReadable() ? Unpooled.wrappedBuffer(startBuffer, eventsBuffer) : eventsBuffer;
     }
 
     if (!hasFinished) {
@@ -76,7 +77,7 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
       return onWriteFinish();
     }
 
-    return ChannelBuffers.EMPTY_BUFFER;
+    return Unpooled.EMPTY_BUFFER;
   }
 
   @Override

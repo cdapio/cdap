@@ -23,8 +23,8 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Iterator;
 import javax.ws.rs.POST;
@@ -45,7 +45,7 @@ public class RemoteUsageRegistryHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/registerDataset")
-  public void registerDataset(HttpRequest request, HttpResponder responder) throws Exception {
+  public void registerDataset(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
     ProgramId programId = deserializeNext(arguments);
@@ -57,7 +57,7 @@ public class RemoteUsageRegistryHandler extends AbstractRemoteSystemOpsHandler {
 
   @POST
   @Path("/registerStream")
-  public void registerStream(HttpRequest request, HttpResponder responder) throws Exception {
+  public void registerStream(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
     ProgramId programId = deserializeNext(arguments);

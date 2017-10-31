@@ -58,7 +58,7 @@ public class TransactionHttpService extends AbstractIdleService {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TRANSACTION_HTTP);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.TRANSACTION_HTTP)));
-    builder.addHttpHandlers(handlers);
+    builder.setHttpHandlers(handlers);
 
     builder.setHost(address);
 
@@ -69,7 +69,7 @@ public class TransactionHttpService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Transaction HTTP Service...");
-    httpService.startAndWait();
+    httpService.start();
     // Register the service
     cancelDiscovery = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.TRANSACTION_HTTP, httpService.getBindAddress())));
@@ -82,6 +82,6 @@ public class TransactionHttpService extends AbstractIdleService {
 
     // Unregister the service
     cancelDiscovery.cancel();
-    httpService.stopAndWait();
+    httpService.stop();
   }
 }

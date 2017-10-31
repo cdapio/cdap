@@ -20,20 +20,21 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 /**
@@ -43,24 +44,25 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreMetadataHttpHandler.class);
   private static final Gson GSON = new Gson();
 
-  protected void handleResponseEndpointExecution(HttpRequest request, HttpResponder responder,
-                                                 final EndpointCoreExecution<QueryHandle> execution)
+  protected <R extends HttpRequest> void handleEndpointExecution(R request, HttpResponder responder,
+                                                                 final EndpointCoreExecution<R, QueryHandle> execution)
     throws ExploreException, IOException {
-    genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
+    genericEndpointExecution(request, responder, new EndpointCoreExecution<R, Void>() {
       @Override
-      public Void execute(HttpRequest request, HttpResponder responder)
+      public Void execute(R request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         QueryHandle handle = execution.execute(request, responder);
         JsonObject json = new JsonObject();
         json.addProperty("handle", handle.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
+        responder.sendJson(HttpResponseStatus.OK, json.toString());
         return null;
       }
     });
   }
 
-  protected void genericEndpointExecution(HttpRequest request, HttpResponder responder,
-                                          EndpointCoreExecution<Void> execution) throws ExploreException, IOException {
+  protected <R extends HttpRequest> void genericEndpointExecution(R request, HttpResponder responder,
+                                                                  EndpointCoreExecution<R, Void> execution)
+    throws ExploreException, IOException {
     try {
       execution.execute(request, responder);
     } catch (IllegalArgumentException e) {
@@ -73,12 +75,12 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected <T> T decodeArguments(HttpRequest request, Class<T> argsType, T defaultValue) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
+  protected <T> T decodeArguments(FullHttpRequest request, Class<T> argsType, T defaultValue) throws IOException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
       return defaultValue;
     }
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
       T args = GSON.fromJson(reader, argsType);
       return (args == null) ? defaultValue : args;
     } catch (JsonSyntaxException e) {
@@ -90,10 +92,11 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
   /**
    * Represents the core execution of an endpoint.
    *
+   * @param <R> type of the {@link HttpRequest} object
    * @param <T> type of result object from the {@link #execute(HttpRequest, HttpResponder)} method
    */
-  protected interface EndpointCoreExecution<T> {
-    T execute(HttpRequest request, HttpResponder responder)
+  protected interface EndpointCoreExecution<R extends HttpRequest, T> {
+    T execute(R request, HttpResponder responder)
       throws IllegalArgumentException, SQLException, ExploreException, IOException;
   }
 

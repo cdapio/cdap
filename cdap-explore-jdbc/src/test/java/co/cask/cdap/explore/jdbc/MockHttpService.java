@@ -43,11 +43,11 @@ public class MockHttpService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     NettyHttpService.Builder builder = NettyHttpService.builder(MockHttpService.class.getName());
-    builder.addHttpHandlers(httpHandlers);
+    builder.setHttpHandlers(httpHandlers);
     builder.setHost("localhost");
     builder.setPort(0);
     httpService = builder.build();
-    httpService.startAndWait();
+    httpService.start();
 
     port = httpService.getBindAddress().getPort();
     log.info("Started test server on {}", httpService.getBindAddress());
@@ -59,6 +59,6 @@ public class MockHttpService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    httpService.stopAndWait();
+    httpService.stop();
   }
 }

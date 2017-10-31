@@ -19,8 +19,8 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.http.AbstractHttpHandler;
+import io.netty.handler.codec.http.HttpRequest;
 import org.apache.commons.lang.StringUtils;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
@@ -57,7 +57,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    */
   public RouteDestination getRoutingService(String fallbackService, String requestPath, HttpRequest httpRequest) {
     try {
-      String method = httpRequest.getMethod().getName();
+      String method = httpRequest.method().name();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
 

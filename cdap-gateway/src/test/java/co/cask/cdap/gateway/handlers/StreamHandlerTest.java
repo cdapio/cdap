@@ -48,9 +48,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.ArrayUtils;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -93,7 +93,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
   protected HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    urlConn.setRequestMethod(method.getName());
+    urlConn.setRequestMethod(method.name());
     urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
     return urlConn;
   }
@@ -108,7 +108,7 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testStreamCreateInvalidName() throws Exception {
     // Now, create the new stream with an invalid character: '@'
     HttpURLConnection urlConn = openURL(createURL("streams/inv@lidStreamName"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
@@ -123,12 +123,12 @@ public class StreamHandlerTest extends GatewayTestBase {
       TextRecordFormat.class.getCanonicalName(), schema, ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
     StreamProperties properties = new StreamProperties(1L, formatSpecification, 128, desc, null);
     urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Check whether ttl and description got persisted
     urlConn = openURL(createStreamInfoURL("stream1"), HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
@@ -139,11 +139,11 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn = openURL(createPropertiesURL("stream1"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     urlConn = openURL(createStreamInfoURL("stream1"), HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8),
                            StreamProperties.class);
     urlConn.disconnect();
@@ -160,7 +160,7 @@ public class StreamHandlerTest extends GatewayTestBase {
                           "alice/bob/somehost@SOMEKDC.NET");
     // The above failure to store the owner must have failed the stream creation and stream meta should not exists
     HttpURLConnection urlConn = openURL(createStreamInfoURL("ownedStream"), HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Should be able to create a stream with valid principal format
@@ -179,7 +179,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
     // Should be able create a stream without owner info
     urlConn = openURL(createURL("streams/noOwner"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // There should be no owner information present for this stream
@@ -194,22 +194,22 @@ public class StreamHandlerTest extends GatewayTestBase {
     // Try to get info on a non-existent stream
     HttpURLConnection urlConn = openURL(createStreamInfoURL("test_stream1"), HttpMethod.GET);
 
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // try to POST info to the non-existent stream
     urlConn = openURL(createURL("streams/non_existent_stream"), HttpMethod.POST);
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Now, create the new stream.
     urlConn = openURL(createURL("streams/test_stream1"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // getInfo should now return 200
     urlConn = openURL(createStreamInfoURL("test_stream1"), HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
@@ -217,7 +217,7 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testSimpleStreamEnqueue() throws Exception {
     // Create new stream.
     HttpURLConnection urlConn = openURL(createURL("streams/test_stream_enqueue"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Enqueue 10 entries
@@ -226,7 +226,7 @@ public class StreamHandlerTest extends GatewayTestBase {
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream_enqueue.header1", Integer.toString(i));
       urlConn.getOutputStream().write(Integer.toString(i).getBytes(Charsets.UTF_8));
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+      Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
       urlConn.disconnect();
     }
 
@@ -270,7 +270,7 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testStreamInfo() throws Exception {
     // Now, create the new stream.
     HttpURLConnection urlConn = openURL(createURL("streams/stream_info"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a new config
@@ -283,12 +283,12 @@ public class StreamHandlerTest extends GatewayTestBase {
                             ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
     StreamProperties streamProperties = new StreamProperties(2L, formatSpecification, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // test the config ttl by calling info
     urlConn = openURL(createStreamInfoURL("stream_info"), HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                         Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
@@ -299,7 +299,7 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testPutStreamConfigDefaults() throws Exception {
     // Now, create the new stream.
     HttpURLConnection urlConn = openURL(createURL("streams/stream_defaults"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a new config
@@ -309,13 +309,13 @@ public class StreamHandlerTest extends GatewayTestBase {
     FormatSpecification formatSpecification = new FormatSpecification(Formats.TEXT, null, null);
     StreamProperties streamProperties = new StreamProperties(2L, formatSpecification, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // test the config ttl by calling info
     urlConn = openURL(createStreamInfoURL("stream_defaults"),
                       HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
@@ -328,14 +328,14 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testPutInvalidStreamConfig() throws Exception {
     // create the new stream.
     HttpURLConnection urlConn = openURL(createURL("streams/stream_badconf"), HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with invalid json
     urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write("ttl:2".getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with an invalid TTL
@@ -343,7 +343,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn.setDoOutput(true);
     StreamProperties streamProperties = new StreamProperties(-1L, null, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with a format without a format class
@@ -352,7 +352,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     FormatSpecification formatSpec = new FormatSpecification(null, null, null);
     streamProperties = new StreamProperties(2L, formatSpec, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with a format with a bad format class
@@ -361,7 +361,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     formatSpec = new FormatSpecification("gibberish", null, null);
     streamProperties = new StreamProperties(2L, formatSpec, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with an incompatible format and schema
@@ -371,7 +371,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     formatSpec = new FormatSpecification(TextRecordFormat.class.getCanonicalName(), schema, null);
     streamProperties = new StreamProperties(2L, formatSpec, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with a bad threshold
@@ -379,7 +379,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn.setDoOutput(true);
     streamProperties = new StreamProperties(2L, null, -20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
@@ -388,7 +388,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     NamespaceId originallyNonExistentNamespace = new NamespaceId("originallyNonExistentNamespace");
     StreamId streamId = originallyNonExistentNamespace.stream("streamName");
     HttpResponse response = createStream(streamId, 404);
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // once the namespace exists, the same stream create works.
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
@@ -531,7 +531,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
   private String getOwner(String streamName) throws IOException, URISyntaxException {
     HttpURLConnection urlConn = openURL(createStreamInfoURL(streamName), HttpMethod.GET);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     StreamProperties properties = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                            Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
@@ -544,7 +544,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn.setDoOutput(true);
     StreamProperties properties = new StreamProperties(1L, null, 128, null, owner);
     urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(responseStatus.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(responseStatus.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
@@ -554,7 +554,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     HttpURLConnection urlConn = openURL(createPropertiesURL(streamName), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 }

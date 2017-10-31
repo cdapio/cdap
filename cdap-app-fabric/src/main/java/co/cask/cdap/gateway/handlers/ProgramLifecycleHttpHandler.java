@@ -114,10 +114,11 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,6 +126,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -161,19 +163,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Map<String, String> EMPTY_PROPERTIES = new HashMap<>();
 
   private static final String SCHEDULES = "schedules";
+
   /**
    * Json serializer/deserializer.
    */
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
 
-  // the CaseInsensitiveEnumTypeAdapterFactory breaks schedule deserialization in clients
-  private static final Gson GSON_FOR_SCHEDULES = ApplicationSpecificationAdapter
+  /**
+   * Json serde for decoding request. It uses a case insensitive enum adapter.
+   */
+  private static final Gson DECODE_GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
@@ -267,7 +272,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some of the values, and GSON otherwise fails
     Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
-    responder.sendJson(HttpResponseStatus.OK, mrJobInfo, mrJobInfo.getClass(), gson);
+    responder.sendJson(HttpResponseStatus.OK, gson.toJson(mrJobInfo, mrJobInfo.getClass()));
   }
 
   /**
@@ -299,7 +304,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       JsonObject json = new JsonObject();
       ScheduleId scheduleId = applicationId.schedule(programId);
       json.addProperty("status", lifecycleService.getScheduleStatus(scheduleId).toString());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, json.toString());
       return;
     }
 
@@ -313,7 +318,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
-    responder.sendJson(HttpResponseStatus.OK, status);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(status));
   }
 
   /**
@@ -341,7 +346,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/{program-type}/{program-id}/{action}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void performAction(HttpRequest request, HttpResponder responder,
+  public void performAction(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("app-id") String appId,
                             @PathParam("program-type") String type,
@@ -353,7 +358,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/versions/{app-version}/{program-type}/{program-id}/{action}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void performAction(HttpRequest request, HttpResponder responder,
+  public void performAction(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("app-id") String appId,
                             @PathParam("app-version") String appVersion,
@@ -363,7 +368,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doPerformAction(request, responder, namespaceId, appId, appVersion, type, programId, action);
   }
 
-  private void doPerformAction(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+  private void doPerformAction(FullHttpRequest request, HttpResponder responder, String namespaceId, String appId,
                                String appVersion, String type, String programId, String action) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
     if (SCHEDULES.equals(type)) {
@@ -490,7 +495,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     RunRecordMeta runRecordMeta = store.getRun(progId, runid);
     if (runRecordMeta != null) {
       RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
-      responder.sendJson(HttpResponseStatus.OK, runRecord);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
       return;
     }
     throw new NotFoundException(progId.run(runid));
@@ -517,7 +522,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+  public void saveProgramRuntimeArgs(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
@@ -549,7 +554,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+  public void saveProgramRuntimeArgs(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-name") String appName,
                                      @PathParam("app-version") String appVersion,
@@ -566,11 +571,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +
                                                   "type '%s'.", programType));
     }
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.getRuntimeArgs(programId));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getRuntimeArgs(programId)));
   }
 
-  private void saveProgramIdRuntimeArgs(ProgramId programId, HttpRequest request,
-                                       HttpResponder responder) throws Exception {
+  private void saveProgramIdRuntimeArgs(ProgramId programId, FullHttpRequest request,
+                                        HttpResponder responder) throws Exception {
     ProgramType programType = programId.getType();
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
@@ -599,7 +604,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null) {
-      throw new MethodNotAllowedException(request.getMethod(), request.getUri());
+      throw new MethodNotAllowedException(request.method(), request.uri());
     }
 
     ApplicationId application = new ApplicationId(namespaceId, appName, appVersion);
@@ -608,7 +613,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (specification == null) {
       throw new NotFoundException(programId);
     }
-    responder.sendJson(HttpResponseStatus.OK, specification);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(specification));
   }
 
   /**
@@ -678,9 +683,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(filterSchedulesByStatus(schedules, scheduleStatus));
     if (asScheduleSpec) {
       List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
-      responder.sendJson(HttpResponseStatus.OK, specs, Schedulers.SCHEDULE_SPECS_TYPE, GSON_FOR_SCHEDULES);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(specs, Schedulers.SCHEDULE_SPECS_TYPE));
     } else {
-      responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON_FOR_SCHEDULES);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
     }
   }
 
@@ -722,9 +727,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // then this application must be using new APIs and the schedule can't be returned in old form.
         throw new NotFoundException(scheduleId);
       }
-      responder.sendJson(HttpResponseStatus.OK, spec, ScheduleSpecification.class, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec, ScheduleSpecification.class));
     } else {
-      responder.sendJson(HttpResponseStatus.OK, detail, ScheduleDetail.class, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
     }
   }
 
@@ -806,9 +811,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
     if (asScheduleSpec) {
       List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
-      responder.sendJson(HttpResponseStatus.OK, specs, Schedulers.SCHEDULE_SPECS_TYPE, GSON_FOR_SCHEDULES);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(specs, Schedulers.SCHEDULE_SPECS_TYPE));
     } else {
-      responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON_FOR_SCHEDULES);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
     }
   }
 
@@ -830,7 +835,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("apps/{app-name}/schedules/{schedule-name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addSchedule(HttpRequest request, HttpResponder responder,
+  public void addSchedule(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName)
@@ -841,7 +846,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addSchedule(HttpRequest request, HttpResponder responder,
+  public void addSchedule(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("app-version") String appVersion,
@@ -850,7 +855,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doAddSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
   }
 
-  private void doAddSchedule(HttpRequest request, HttpResponder responder, String namespace, String appName,
+  private void doAddSchedule(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
                              String appVersion, String scheduleName) throws Exception {
 
     final ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
@@ -859,7 +864,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       request, scheduleName, false, new Function<JsonElement, ScheduleDetail>() {
         @Override
         public ScheduleDetail apply(@Nullable JsonElement input) {
-          ScheduleSpecification scheduleSpec = GSON.fromJson(input, ScheduleSpecification.class);
+          ScheduleSpecification scheduleSpec = DECODE_GSON.fromJson(input, ScheduleSpecification.class);
           return toScheduleDetail(applicationId, scheduleSpec);
         }
       });
@@ -898,7 +903,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("apps/{app-name}/schedules/{schedule-name}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateSchedule(HttpRequest request, HttpResponder responder,
+  public void updateSchedule(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
@@ -908,7 +913,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateSchedule(HttpRequest request, HttpResponder responder,
+  public void updateSchedule(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("app-version") String appVersion,
@@ -916,7 +921,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doUpdateSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
   }
 
-  private void doUpdateSchedule(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+  private void doUpdateSchedule(FullHttpRequest request, HttpResponder responder, String namespaceId, String appId,
                                 String appVersion, String scheduleName) throws Exception {
 
     ScheduleId scheduleId = new ApplicationId(namespaceId, appId, appVersion).schedule(scheduleName);
@@ -926,7 +931,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       request, scheduleName, true, new Function<JsonElement, ScheduleDetail>() {
         @Override
         public ScheduleDetail apply(@Nullable JsonElement input) {
-          ScheduleUpdateDetail updateDetail = GSON.fromJson(input, ScheduleUpdateDetail.class);
+          ScheduleUpdateDetail updateDetail = DECODE_GSON.fromJson(input, ScheduleUpdateDetail.class);
           return toScheduleDetail(updateDetail, existingSchedule);
         }
       });
@@ -935,15 +940,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private ScheduleDetail readScheduleDetailBody(HttpRequest request, String scheduleName, boolean isUpdate,
+  private ScheduleDetail readScheduleDetailBody(FullHttpRequest request, String scheduleName, boolean isUpdate,
                                                 Function<JsonElement, ScheduleDetail> toScheduleDetail)
     throws BadRequestException, IOException {
 
     // TODO: remove backward compatibility with ScheduleSpecification, use fromJson(ScheduleDetail.class)
     JsonElement json;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), Charsets.UTF_8)) {
       // The schedule spec in the request body does not contain the program information
-      json = GSON.fromJson(reader, JsonElement.class);
+      json = DECODE_GSON.fromJson(reader, JsonElement.class);
     } catch (IOException e) {
       throw new IOException("Error reading request body", e);
     } catch (JsonSyntaxException e) {
@@ -965,7 +970,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     } else {
       try {
-        scheduleDetail = GSON.fromJson(json, ScheduleDetail.class);
+        scheduleDetail = DECODE_GSON.fromJson(json, ScheduleDetail.class);
       } catch (JsonSyntaxException e) {
         throw new BadRequestException("Error parsing request body as a schedule specification: " + e.getMessage());
       }
@@ -1108,7 +1113,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/loglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
+  public void updateProgramLogLevels(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespace,
                                      @PathParam("app-name") String appName,
                                      @PathParam("program-type") String type,
@@ -1124,7 +1129,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/loglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
+  public void updateProgramLogLevels(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespace,
                                      @PathParam("app-name") String appName,
                                      @PathParam("app-version") String appVersion,
@@ -1143,7 +1148,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
+  public void resetProgramLogLevels(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespace,
                                     @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
@@ -1159,7 +1164,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
+  public void resetProgramLogLevels(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespace,
                                     @PathParam("app-name") String appName,
                                     @PathParam("app-version") String appVersion,
@@ -1200,7 +1205,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/status")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void getStatuses(HttpRequest request, HttpResponder responder,
+  public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
 
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
@@ -1212,13 +1217,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         ProgramStatus programStatus = lifecycleService.getProgramStatus(programId);
         statuses.add(new BatchProgramStatus(
-          program, HttpResponseStatus.OK.getCode(), null, programStatus.name()));
+          program, HttpResponseStatus.OK.code(), null, programStatus.name()));
       } catch (NotFoundException e) {
         statuses.add(new BatchProgramStatus(
-          program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage(), null));
+          program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage(), null));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, statuses);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(statuses));
   }
 
   /**
@@ -1251,7 +1256,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/stop")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
-  public void stopPrograms(HttpRequest request, HttpResponder responder,
+  public void stopPrograms(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
 
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
@@ -1267,17 +1272,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             new Function<ProgramController, BatchProgramResult>() {
               @Override
               public BatchProgramResult apply(ProgramController input) {
-                return new BatchProgramResult(program, HttpResponseStatus.OK.getCode(), null, input.getRunId().getId());
+                return new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, input.getRunId().getId());
               }
             });
           issuedStops.add(issuedStop);
         }
       } catch (NotFoundException e) {
         issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage())));
+          new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage())));
       } catch (BadRequestException e) {
         issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage())));
+          new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage())));
       }
     }
 
@@ -1290,12 +1295,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         output.add(issuedStop.get());
       } catch (Throwable t) {
         LOG.warn(t.getMessage(), t);
-        output.add(new BatchProgramResult(programs.get(i), HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
+        output.add(new BatchProgramResult(programs.get(i), HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
                                           t.getMessage()));
       }
       i++;
     }
-    responder.sendJson(HttpResponseStatus.OK, output);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
   }
 
   /**
@@ -1329,7 +1334,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/start")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
-  public void startPrograms(HttpRequest request, HttpResponder responder,
+  public void startPrograms(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
 
     List<BatchProgramStart> programs = validateAndGetBatchInput(request, BATCH_STARTS_TYPE);
@@ -1340,17 +1345,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                           program.getProgramId());
       try {
         ProgramController programController = lifecycleService.start(programId, program.getRuntimeargs(), false);
-        output.add(new BatchProgramResult(program, HttpResponseStatus.OK.getCode(), null,
+        output.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null,
                                           programController.getRunId().getId()));
       } catch (NotFoundException e) {
-        output.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage()));
+        output.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage()));
       } catch (BadRequestException e) {
-        output.add(new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage()));
+        output.add(new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage()));
       } catch (ConflictException e) {
-        output.add(new BatchProgramResult(program, HttpResponseStatus.CONFLICT.getCode(), e.getMessage()));
+        output.add(new BatchProgramResult(program, HttpResponseStatus.CONFLICT.code(), e.getMessage()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, output);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
   }
 
   /**
@@ -1393,7 +1398,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/instances")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void getInstances(HttpRequest request, HttpResponder responder,
+  public void getInstances(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
 
     List<BatchRunnable> runnables = validateAndGetBatchInput(request, BATCH_RUNNABLES_TYPE);
@@ -1405,7 +1410,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (BatchRunnable runnable : runnables) {
       // cant get instances for things that are not flows, services, or workers
       if (!canHaveInstances(runnable.getProgramType())) {
-        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
                    String.format("Program type '%s' is not a valid program type to get instances",
                      runnable.getProgramType().getPrettyName())));
         continue;
@@ -1420,7 +1425,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationSpecification spec = appSpecs.get(appId);
       if (spec == null) {
-        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
           String.format("App: %s not found", appId)));
         continue;
       }
@@ -1428,7 +1433,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
       output.add(getProgramInstances(runnable, spec, programId));
     }
-    responder.sendJson(HttpResponseStatus.OK, output);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
   }
 
   /*
@@ -1443,7 +1448,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW));
+                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW)));
   }
 
   /**
@@ -1454,7 +1459,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.MAPREDUCE));
+                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.MAPREDUCE)));
   }
 
   /**
@@ -1465,7 +1470,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SPARK));
+                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SPARK)));
   }
 
   /**
@@ -1476,8 +1481,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(validateAndGetNamespace(namespaceId),
-                                             ProgramType.WORKFLOW));
+                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.WORKFLOW)));
   }
 
   /**
@@ -1487,16 +1491,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(validateAndGetNamespace(namespaceId),
-                                                                    ProgramType.SERVICE));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SERVICE)));
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(validateAndGetNamespace(namespaceId),
-                                                                    ProgramType.WORKER));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.WORKER)));
   }
 
   /**
@@ -1514,7 +1518,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new NotFoundException(workderId);
       }
       int count = store.getWorkerInstances(workderId);
-      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Instances(count)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1531,7 +1535,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/workers/{worker-id}/instances")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setWorkerInstances(HttpRequest request, HttpResponder responder,
+  public void setWorkerInstances(FullHttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId,
                                  @PathParam("worker-id") String workerId) throws Exception {
@@ -1565,7 +1569,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
        throw new NotFoundException(flow);
       }
       int count = store.getFlowletInstances(flow, flowletId);
-      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Instances(count)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1582,7 +1586,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public synchronized void setFlowletInstances(HttpRequest request, HttpResponder responder,
+  public synchronized void setFlowletInstances(FullHttpRequest request, HttpResponder responder,
                                                @PathParam("namespace-id") String namespaceId,
                                                @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                                @PathParam("flowlet-id") String flowletId) throws Exception {
@@ -1608,7 +1612,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateFlowletLogLevels(HttpRequest request, HttpResponder responder,
+  public void updateFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
                                      @PathParam("flow-id") String flowId,
@@ -1624,7 +1628,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateFlowletLogLevels(HttpRequest request, HttpResponder responder,
+  public void updateFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
                                      @PathParam("app-version") String appVersion,
@@ -1642,7 +1646,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void resetFlowletLogLevels(HttpRequest request, HttpResponder responder,
+  public void resetFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
                                     @PathParam("flow-id") String flowId,
@@ -1658,7 +1662,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void resetFlowletLogLevels(HttpRequest request, HttpResponder responder,
+  public void resetFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
                                     @PathParam("app-version") String appVersion,
@@ -1690,7 +1694,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void getLiveInfo(HttpResponder responder, ProgramId programId,
                              ProgramRuntimeService runtimeService) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimeService.getLiveInfo(programId)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -1737,7 +1741,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       int instances = store.getServiceInstances(programId);
       responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceInstances(instances, getInstanceCount(programId, serviceId)));
+                         GSON.toJson(new ServiceInstances(instances, getInstanceCount(programId, serviceId))));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -1790,7 +1794,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/services/{service-id}/instances")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setServiceInstances(HttpRequest request, HttpResponder responder,
+  public void setServiceInstances(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId)
@@ -1866,14 +1870,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = programId.getType();
     if (programType == ProgramType.WORKER) {
       if (!spec.getWorkers().containsKey(programName)) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
                                           "Worker: " + programName + " not found");
       }
       requested = spec.getWorkers().get(programName).getInstances();
 
     } else if (programType == ProgramType.SERVICE) {
       if (!spec.getServices().containsKey(programName)) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
                                           "Service: " + programName + " not found");
       }
       requested = spec.getServices().get(programName).getInstances();
@@ -1882,28 +1886,28 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // flows must have runnable id
       runnableId = runnable.getRunnableId();
       if (runnableId == null) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
                                           "Must provide the flowlet id as the runnableId for flows");
       }
       FlowSpecification flowSpec = spec.getFlows().get(programName);
       if (flowSpec == null) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
                                           "Flow: " + programName + " not found");
       }
       FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
       if (flowletDefinition == null) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
                                           "Flowlet: " + runnableId + " not found");
       }
       requested = flowletDefinition.getInstances();
 
     } else {
-      return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
+      return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
                                         "Instances not supported for program type + " + programType);
     }
     int provisioned = getInstanceCount(programId, runnableId);
     // use the pretty name of program types to be consistent
-    return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.getCode(), provisioned, requested);
+    return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.code(), provisioned, requested);
   }
 
   private void getRuns(HttpResponder responder, ProgramId programId, String status,
@@ -1917,7 +1921,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         CONVERT_TO_RUN_RECORD
       );
 
-      responder.sendJson(HttpResponseStatus.OK, records);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(String.format("Invalid status %s. Supported options for status of runs are " +
                                                     "running/completed/failed", status));
@@ -1966,13 +1970,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
-  private <T extends BatchProgram> List<T> validateAndGetBatchInput(HttpRequest request, Type type)
+  private <T extends BatchProgram> List<T> validateAndGetBatchInput(FullHttpRequest request, Type type)
     throws BadRequestException, IOException {
 
     List<T> programs;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       try {
-        programs = GSON.fromJson(reader, type);
+        programs = DECODE_GSON.fromJson(reader, type);
         if (programs == null) {
           throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
         }
@@ -1993,7 +1997,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return programs;
   }
 
-  private void updateLogLevels(HttpRequest request, HttpResponder responder, String namespace, String appName,
+  private void updateLogLevels(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
                                String appVersion, String type, String programName,
                                @Nullable String component, String runId) throws Exception {
     ProgramType programType = getProgramType(type);
@@ -2016,7 +2020,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void resetLogLevels(HttpRequest request, HttpResponder responder, String namespace, String appName,
+  private void resetLogLevels(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
                               String appVersion, String type, String programName,
                               @Nullable String component, String runId) throws Exception {
     ProgramType programType = getProgramType(type);

@@ -25,18 +25,17 @@ import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -48,7 +47,7 @@ import javax.ws.rs.Path;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/configuration/user")
 public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
+
   private static final JsonParser JSON_PARSER = new JsonParser();
 
   private static final String CONFIG_PROPERTY = "property";
@@ -78,7 +77,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
 
     //We store the serialized JSON string of the properties in ConfigStore and we return a JsonObject back
     jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(userConfig.getProperties().get(CONFIG_PROPERTY)));
-    responder.sendJson(HttpResponseStatus.OK, jsonObject);
+    responder.sendJson(HttpResponseStatus.OK, jsonObject.toString());
   }
 
   @Path("/")
@@ -96,8 +95,8 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @Path("/")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void set(HttpRequest request, HttpResponder responder) throws Exception {
-    String data = request.getContent().toString(Charsets.UTF_8);
+  public void set(FullHttpRequest request, HttpResponder responder) throws Exception {
+    String data = request.content().toString(StandardCharsets.UTF_8);
     if (!isValidJSON(data)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
       return;

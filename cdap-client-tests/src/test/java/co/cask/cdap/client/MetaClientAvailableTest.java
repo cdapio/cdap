@@ -23,9 +23,8 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
-import com.google.common.collect.ImmutableList;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,12 +46,12 @@ public class MetaClientAvailableTest {
   private MetaClient fakeMetaClient;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     handler = new TestPingHandler();
-    service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(handler))
+    service = NettyHttpService.builder("meta-client-service")
+      .setHttpHandlers(handler)
       .build();
-    service.startAndWait();
+    service.start();
 
     metaClient = new MetaClient(
       ClientConfig.builder()
@@ -76,8 +75,8 @@ public class MetaClientAvailableTest {
   }
 
   @After
-  public void tearDown() {
-    service.stopAndWait();
+  public void tearDown() throws Exception {
+    service.stop();
   }
 
   @Test

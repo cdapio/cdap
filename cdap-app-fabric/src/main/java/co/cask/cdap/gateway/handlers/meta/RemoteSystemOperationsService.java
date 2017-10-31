@@ -62,7 +62,7 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
     int execThreads = cConf.getInt(Constants.RemoteSystemOpService.EXEC_THREADS);
 
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.REMOTE_SYSTEM_OPERATION)
-      .addHttpHandlers(handlers)
+      .setHttpHandlers(handlers)
       .setHost(cConf.get(Constants.RemoteSystemOpService.SERVICE_BIND_ADDRESS))
       .setHandlerHooks(ImmutableList.of(
         new MetricsReporterHook(metricsCollectionService, Constants.Service.REMOTE_SYSTEM_OPERATION)))
@@ -79,7 +79,7 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
                                                                        Constants.Service.REMOTE_SYSTEM_OPERATION));
     LOG.info("Starting RemoteSystemOperationService...");
 
-    httpService.startAndWait();
+    httpService.start();
     cancellable = discoveryService.register(ResolvingDiscoverable.of(
       new Discoverable(Constants.Service.REMOTE_SYSTEM_OPERATION, httpService.getBindAddress())));
     LOG.info("RemoteSystemOperationService started successfully on {}", httpService.getBindAddress());
@@ -94,7 +94,7 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      httpService.stop();
     }
   }
 

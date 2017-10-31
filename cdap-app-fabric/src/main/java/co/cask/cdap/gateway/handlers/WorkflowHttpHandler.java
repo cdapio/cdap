@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -68,22 +67,20 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -179,28 +176,18 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                 @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
                                 @PathParam("run-id") String runId) throws IOException {
     try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             // This uses responder.sendByteArray because status.getResult returns a
-                                             // json string, and responder.sendJson would need deserialization and
-                                             // serialization.
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     Bytes.toBytes(status.getResult()),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
-
-                                           } else {
-                                             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                  status.getResult());
-                                           }
-                                         }
-                                       });
+      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId, new WorkflowClient.Callback() {
+         @Override
+         public void handle(WorkflowClient.Status status) {
+           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+             responder.sendJson(HttpResponseStatus.OK, status.getResult());
+           } else {
+             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
+           }
+         }
+       });
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -250,7 +237,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       } else {
         runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
-      responder.sendJson(HttpResponseStatus.OK, runtimes);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimes));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -304,15 +291,16 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     WorkflowTokenDetail workflowTokenDetail = WorkflowTokenDetail.of(workflowToken.getAll(tokenScope));
     Type workflowTokenDetailType = new TypeToken<WorkflowTokenDetail>() { }.getType();
     if (key.isEmpty()) {
-      responder.sendJson(HttpResponseStatus.OK, workflowTokenDetail, workflowTokenDetailType, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(workflowTokenDetail, workflowTokenDetailType));
       return;
     }
     List<NodeValue> nodeValueEntries = workflowToken.getAll(key, tokenScope);
     if (nodeValueEntries.isEmpty()) {
       throw new NotFoundException(key);
     }
-    responder.sendJson(HttpResponseStatus.OK, WorkflowTokenDetail.of(ImmutableMap.of(key, nodeValueEntries)),
-                       workflowTokenDetailType, GSON);
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(WorkflowTokenDetail.of(Collections.singletonMap(key, nodeValueEntries)),
+                                   workflowTokenDetailType));
   }
 
   @GET
@@ -331,15 +319,16 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     WorkflowTokenNodeDetail tokenAtNode = WorkflowTokenNodeDetail.of(workflowTokenFromNode);
     Type workflowTokenNodeDetailType = new TypeToken<WorkflowTokenNodeDetail>() { }.getType();
     if (key.isEmpty()) {
-      responder.sendJson(HttpResponseStatus.OK, tokenAtNode, workflowTokenNodeDetailType, GSON);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(tokenAtNode, workflowTokenNodeDetailType));
       return;
     }
     if (!workflowTokenFromNode.containsKey(key)) {
       throw new NotFoundException(key);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       WorkflowTokenNodeDetail.of(ImmutableMap.of(key, workflowTokenFromNode.get(key))),
-                       workflowTokenNodeDetailType, GSON);
+                       GSON.toJson(WorkflowTokenNodeDetail.of(Collections.singletonMap(key,
+                                                                                       workflowTokenFromNode.get(key))),
+                                   workflowTokenNodeDetailType));
   }
 
   private WorkflowToken getWorkflowToken(String namespaceId, String appName, String workflow,
@@ -391,7 +380,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       nodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
     }
 
-    responder.sendJson(HttpResponseStatus.OK, nodeStates, STRING_TO_NODESTATEDETAIL_MAP_TYPE);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(nodeStates, STRING_TO_NODESTATEDETAIL_MAP_TYPE));
   }
 
   @GET
@@ -414,7 +403,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
     }
 
-    responder.sendJson(HttpResponseStatus.OK, localDatasetSummaries);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(localDatasetSummaries));
   }
 
   @DELETE
