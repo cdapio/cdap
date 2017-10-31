@@ -18,8 +18,11 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
+import classnames from 'classnames';
+import isNil from 'lodash/isNil';
 
-const ExperimentMetadataWrapper = ({modelName, modelDescription, directives}) => {
+const ExperimentMetadataWrapper = ({modelName, modelDescription, directives, algorithm}) => {
+  let isAlgorithmEmpty = () => isNil(algorithm) || !algorithm.length;
   return (
     <div className="experiment-metadata">
       <div>
@@ -38,9 +41,14 @@ const ExperimentMetadataWrapper = ({modelName, modelDescription, directives}) =>
         <strong>Split Method: </strong>
         <span>Random</span>
       </div>
-      <div className="grayed">
+      <div className={classnames({
+        "grayed": isAlgorithmEmpty()
+      })}
+        >
         <strong>ML Algorithm: </strong>
-        <span>--</span>
+        <span>
+          { isAlgorithmEmpty() ? '--' : algorithm }
+        </span>
       </div>
     </div>
   );
@@ -48,12 +56,18 @@ const ExperimentMetadataWrapper = ({modelName, modelDescription, directives}) =>
 ExperimentMetadataWrapper.propTypes = {
   modelName: PropTypes.string,
   modelDescription: PropTypes.string,
-  directives: PropTypes.array
+  directives: PropTypes.array,
+  algorithm: PropTypes.string
 };
 const mapStateToProps = (state) => ({
   modelName: state.model_create.name,
   modelDescription: state.model_create.description,
-  directives: state.model_create.directives
+  directives: state.model_create.directives,
+  algorithm: !state.model_create.algorithm.name.length
+    ? '' :
+    state.model_create.algorithmsList
+      .find(algo => algo.name === state.model_create.algorithm.name)
+      .label
 });
 const ConnectedExperimentMetadata = connect(mapStateToProps, null)(ExperimentMetadataWrapper);
 
