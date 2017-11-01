@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
+import maxBy from 'lodash/maxBy';
 
 const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
@@ -91,8 +92,9 @@ export default function NodeMetricsGraph({data, xAxisTitle, yAxisTitle, metricTy
       color: data.color
     }];
   } else if (!Array.isArray(data) && typeof data === 'object') {
-    let firstKey = Object.keys(data)[0];
-    xDomain[1] = data[firstKey].data.length;
+    let dataObjects = Object.keys(data).map((key) => data[key]);
+    let objectWithMaxLength = maxBy(dataObjects, (dataObject) => dataObject.data.length);
+    xDomain[1] = objectWithMaxLength.data.length;
     Object
       .keys(data)
       .forEach(d => {

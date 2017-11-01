@@ -65,7 +65,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (this.metricsContext) {
       this.nodeMetrics = [
         `user.${this.state.node.name}.records.in`,
-        `user.${this.state.node.name}.records.out`,
         `user.${this.state.node.name}.records.error`,
         `user.${this.state.node.name}.process.time.total`,
         `user.${this.state.node.name}.process.time.avg`,
@@ -73,6 +72,16 @@ class HydratorPlusPlusNodeConfigCtrl {
         `user.${this.state.node.name}.process.time.min`,
         `user.${this.state.node.name}.process.time.stddev`
       ];
+      let nodeType = this.state.node.type || this.state.node.plugin.type;
+      if (nodeType === 'splittertransform') {
+        if (this.state.node.outputSchema && Array.isArray(this.state.node.outputSchema))   {
+          angular.forEach(this.state.node.outputSchema, (port) => {
+            this.nodeMetrics.push(`user.${this.state.node.name}.records.out.${port.name}`);
+          });
+        }
+      } else {
+        this.nodeMetrics.push(`user.${this.state.node.name}.records.out`);
+      }
     } else {
       this.nodeMetrics = [];
     }

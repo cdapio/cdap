@@ -1312,6 +1312,7 @@ features:
       seconds: Seconds
       totalRecordsIn: "Total Records In: {totalRecordsIn}"
       totalRecordsOut: "Total Records Out: {totalRecordsOut}"
+      totalRecordsOutPorts: "{port} Out: {recordCount}"
       totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:

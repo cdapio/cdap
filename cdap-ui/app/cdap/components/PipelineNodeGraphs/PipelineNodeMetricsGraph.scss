@@ -36,7 +36,8 @@ $error_records_label_color: #a40403;
       cursor: pointer;
     }
     .total-records {
-      strong {
+      > span {
+        strong,
         span {
           margin: 0 10px 0 0;
           &.error-records-count {
