@@ -54,6 +54,10 @@ const AppDetailedView = Loadable({
   loader: () => import(/* webpackChunkName: "AppDetailedView" */ 'components/AppDetailedView'),
   loading: LoadingSVGCentered
 });
+const Experiments = Loadable({
+  loader: () => import(/* webpackChunkName: "Experiments" */ 'components/Experiments'),
+  loading: LoadingSVGCentered
+});
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
@@ -89,6 +93,7 @@ export default class Home extends Component {
             );
           }} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
+          <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route component={Page404} />
         </Switch>
       </div>
