@@ -28,11 +28,13 @@
 .popover {
   margin-top: 10px;
   &.add-experiment-popover-element {
+    margin-left: 0;
     &:before,
     &:after {
       display: none;
     }
     .popover-content {
+      padding: 9px 14px;
       a[href] {
         text-decoration: none;
         color: black;

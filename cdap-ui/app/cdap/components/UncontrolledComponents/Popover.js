@@ -88,6 +88,7 @@ export default class UncontrolledPopover extends Component {
       return (
         <Tag
           id={this.state.id}
+          className={this.props.className}
           onClick={this.togglePopover}
           ref={(ref) => this.popover = ref}
         >
@@ -99,7 +100,7 @@ export default class UncontrolledPopover extends Component {
 
     return (
       <span
-        className={classnames(`fa ${iconName}`, {
+        className={classnames(`fa ${iconName}`, this.props.className, {
           'expanded': this.state.dropdownOpen
         })}
         id={this.state.id}
@@ -118,5 +119,6 @@ UncontrolledPopover.propTypes = {
   dropdownOpen: PropTypes.bool,
   tetherOption: PropTypes.object,
   documentElement: PropTypes.node,
-  icon: PropTypes.string
+  icon: PropTypes.string,
+  className: PropTypes.string
 };
