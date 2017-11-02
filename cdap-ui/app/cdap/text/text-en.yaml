@@ -1298,6 +1298,10 @@ features:
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
+      portRecordsCountPopover:
+        hide: Hide All
+        title: Total Records Out
+        view: View All
       processTimeTable:
         avgProcessTime: Average Processing Time
         minProcessTime: Min Process Time (one record)
@@ -1307,12 +1311,12 @@ features:
         stddevProcessTime: Standard Deviation
       recordsInTitle: Records In
       recordsOutTitle: Records Out
-      recordsErrorTitle: Records Error # Error Records??
+      recordsErrorTitle: Errors
       runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
       totalRecordsIn: "Total Records In: {totalRecordsIn}"
       totalRecordsOut: "Total Records Out: {totalRecordsOut}"
-      totalRecordsOutPorts: "{port} Out: {recordCount}"
+      totalRecordsOutPorts: "{port}: {recordCount}"
       totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:

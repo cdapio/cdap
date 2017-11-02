@@ -96,7 +96,8 @@ export default class PipelineNodeMetricsGraph extends Component {
     processTimeMetrics: {},
     resolution: 'hours',
     aggregate: false,
-    loading: true
+    loading: true,
+    showPortsRecordsCountPopover: false
   };
 
   componentDidMount() {
@@ -213,7 +214,7 @@ export default class PipelineNodeMetricsGraph extends Component {
         [portName]: {
           data: recordsOutPortsData[i],
           label: portName,
-          color: RECORDS_OUT_PORTS_PATH_COLORS[i % 7]
+          color: this.state.totalRecordsOutPorts[portName].color
         }
       };
     }
@@ -318,7 +319,12 @@ export default class PipelineNodeMetricsGraph extends Component {
             }
             if (d.metricName.match(/user.*records.out./)) {
               let portName = capitalize(d.metricName.split('.').pop());
-              recordsOutPorts[portName] = dataValue;
+              let portColor = RECORDS_OUT_PORTS_PATH_COLORS[Object.keys(recordsOutPorts).length % 7];
+
+              recordsOutPorts[portName] = {
+                value: dataValue,
+                color: portColor
+              };
             }
             processTimeMetrics[metricName] = dataValue;
           });
@@ -384,7 +390,12 @@ export default class PipelineNodeMetricsGraph extends Component {
           });
         }
       );
+  };
 
+  togglePortsRecordsCountPopover = () => {
+    this.setState({
+      showPortsRecordsCountPopover: !this.state.showPortsRecordsCountPopover
+    });
   };
 
   renderChart = (data, type) => {
@@ -519,10 +530,67 @@ export default class PipelineNodeMetricsGraph extends Component {
     });
   };
 
-  renderPortRecordsCount = (port) => {
+  renderPortsRecordsCount() {
+    if (Object.keys(this.state.totalRecordsOutPorts).length <= 2) {
+      return (
+        Object.keys(this.state.totalRecordsOutPorts)
+          .map(key => {
+            return (
+              <span>
+                { this.renderPortCount(key) }
+              </span>
+            );
+          })
+      );
+    }
+
+    return (
+      <a className="toggle-records-count-popover"
+          onClick={this.togglePortsRecordsCountPopover}
+      >
+        {
+          this.state.showPortsRecordsCountPopover ?
+            <span>{T.translate(`${PREFIX}.portRecordsCountPopover.hide`)}</span>
+          :
+            <span>{T.translate(`${PREFIX}.portRecordsCountPopover.view`)}</span>
+        }
+      </a>
+    );
+  }
+
+  rendePortsRecordsCountPopover() {
+    if (!this.state.showPortsRecordsCountPopover) {
+      return null;
+    }
+
+    return (
+      <div className="port-records-count-popover">
+        <div className="popover-content">
+          <strong>{T.translate(`${PREFIX}.portRecordsCountPopover.title`)}</strong>
+          {
+            Object.keys(this.state.totalRecordsOutPorts)
+              .map(key => {
+                let colorStyle = { backgroundColor: this.state.totalRecordsOutPorts[key].color };
+                return (
+                  <div className="port-count-container">
+                    <span
+                      className="port-legend-circle"
+                      style={colorStyle}
+                    />
+                    { this.renderPortCount(key) }
+                  </div>
+                );
+              })
+          }
+        </div>
+      </div>
+    );
+  }
+
+  renderPortCount = (port) => {
     return T.translate(`${PREFIX}.totalRecordsOutPorts`, {
       port,
-      recordCount: this.state.totalRecordsOutPorts[port] || '0'
+      recordCount: this.state.totalRecordsOutPorts[port].value || '0'
     });
   };
 
@@ -576,19 +644,11 @@ export default class PipelineNodeMetricsGraph extends Component {
                         <strong>
                           { this.renderRecordsCount('totalRecordsOut') }
                         </strong>
-                        {
-                          Object.keys(this.state.totalRecordsOutPorts)
-                            .map(key => {
-                              return (
-                                <span>
-                                  { this.renderPortRecordsCount(key) }
-                                </span>
-                              );
-                            })
-                        }
+                        { this.renderPortsRecordsCount() }
                         <strong className="error-records-count">
                           { this.renderRecordsCount('totalRecordsError') }
                         </strong>
+                        { this.rendePortsRecordsCountPopover() }
                       </span>
                   }
                 </div>

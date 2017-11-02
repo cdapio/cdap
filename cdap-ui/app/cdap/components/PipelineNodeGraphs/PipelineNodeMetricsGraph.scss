@@ -36,7 +36,10 @@ $error_records_label_color: #a40403;
       cursor: pointer;
     }
     .total-records {
+      > strong,
       > span {
+        position: relative;
+
         strong,
         span {
           margin: 0 10px 0 0;
@@ -51,6 +54,39 @@ $error_records_label_color: #a40403;
     }
     > div:not(.title) {
       font-size: 14px;
+    }
+
+    .port-records-count-popover {
+      position: absolute;
+      background: white;
+      z-index: 1;
+      border: 1px solid black;
+
+      .popover-content {
+        padding: 10px 15px 15px 15px;
+
+        .port-count-container {
+          display: flex;
+          align-items: center;
+          margin-top: 3px;
+
+          .port-legend-circle {
+            margin: 0 3px 0 0;
+            height: 15px;
+            width: 15px;
+            display: inline-block;
+            border-radius: 50%;
+          }
+        }
+      }
+    }
+
+    a.toggle-records-count-popover {
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: none;
+      }
     }
   }
   .node-metrics-container {
@@ -104,10 +140,11 @@ $error_records_label_color: #a40403;
               .rv-discrete-color-legend-item__color {
                 display: inline-block;
                 vertical-align: bottom;
-                width: 30px;
+                width: 20px;
                 border: 1px solid $graph_container_border_color;
                 height: 20px;
                 margin: 0 5px 0 0;
+                border-radius: 50%;
               }
             }
           }
