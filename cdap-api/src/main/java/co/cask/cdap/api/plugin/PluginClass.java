@@ -68,7 +68,7 @@ public class PluginClass {
 
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties) {
-    this(type, name, description, className, configfieldName, properties, new HashSet<String>());
+    this(type, name, description, className, configfieldName, properties, new HashSet<>());
   }
 
   /**

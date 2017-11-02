@@ -130,8 +130,7 @@ public final class FlowletDefinition {
     }
 
     // Adding schema to the set under new name (creating set if not exists)
-    Set<Schema> newSchemas =
-      inputs.containsKey(newStreamInput) ? inputs.get(newStreamInput) : new LinkedHashSet<Schema>();
+    Set<Schema> newSchemas = inputs.containsKey(newStreamInput) ? inputs.get(newStreamInput) : new LinkedHashSet<>();
     newSchemas.add(streamSchema);
     inputs.put(newStreamInput, newSchemas);
   }

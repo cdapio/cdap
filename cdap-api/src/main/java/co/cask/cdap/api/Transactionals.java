@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.api;
 
-import co.cask.cdap.api.data.DatasetContext;
 import org.apache.tephra.TransactionFailureException;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,14 +38,9 @@ public final class Transactionals {
    * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
    * If the TransactionFailureException has a cause in it, the cause is propagated.
    */
-  public static void execute(Transactional transactional, final TxRunnable runnable) {
+  public static void execute(Transactional transactional, TxRunnable runnable) {
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          runnable.run(context);
-        }
-      });
+      transactional.execute(runnable);
     } catch (TransactionFailureException e) {
       throw propagate(e);
     }
@@ -64,14 +58,9 @@ public final class Transactionals {
    * if it is not already a {@link RuntimeException}.
    */
   public static <X extends Throwable> void execute(Transactional transactional,
-                                                   final TxRunnable runnable, Class<X> exception) throws X {
+                                                   TxRunnable runnable, Class<X> exception) throws X {
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          runnable.run(context);
-        }
-      });
+      transactional.execute(runnable);
     } catch (TransactionFailureException e) {
       throw propagate(e, exception);
     }
@@ -91,16 +80,12 @@ public final class Transactionals {
    * @throws RuntimeException if cause is not an instance of X1 or X2. The cause is wrapped with
    * {@link RuntimeException} if it is not already a {@link RuntimeException}.
    */
-  public static <X1 extends Throwable, X2 extends Throwable>
-  void execute(Transactional transactional, final TxRunnable runnable, Class<X1> exception1,
-               Class<X2> exception2) throws X1, X2 {
+  public static <X1 extends Throwable, X2 extends Throwable> void execute(Transactional transactional,
+                                                                          TxRunnable runnable,
+                                                                          Class<X1> exception1,
+                                                                          Class<X2> exception2) throws X1, X2 {
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          runnable.run(context);
-        }
-      });
+      transactional.execute(runnable);
     } catch (TransactionFailureException e) {
       throw propagate(e, exception1, exception2);
     }
@@ -115,15 +100,10 @@ public final class Transactionals {
    * @throws  RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
    * If the TransactionFailureException has a cause in it, the cause is propagated.
    */
-  public static <V> V execute(Transactional transactional, final TxCallable<V> callable) {
-    final AtomicReference<V> result = new AtomicReference<>();
+  public static <V> V execute(Transactional transactional, TxCallable<V> callable) {
+    AtomicReference<V> result = new AtomicReference<>();
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          result.set(callable.call(context));
-        }
-      });
+      transactional.execute(context -> result.set(callable.call(context)));
     } catch (TransactionFailureException e) {
       throw propagate(e);
     }
@@ -144,15 +124,10 @@ public final class Transactionals {
    * if it is not already a {@link RuntimeException}.
    */
   public static <V, X extends Throwable> V execute(Transactional transactional,
-                              final TxCallable<V> callable, Class<X> exception) throws X {
-    final AtomicReference<V> result = new AtomicReference<>();
+                                                   TxCallable<V> callable, Class<X> exception) throws X {
+    AtomicReference<V> result = new AtomicReference<>();
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          result.set(callable.call(context));
-        }
-      });
+      transactional.execute(context -> result.set(callable.call(context)));
     } catch (TransactionFailureException e) {
       throw propagate(e, exception);
     }
@@ -175,17 +150,13 @@ public final class Transactionals {
    * @throws RuntimeException if cause is not an instance of X1 or X2. The cause is wrapped with
    * {@link RuntimeException} if it is not already a {@link RuntimeException}.
    */
-  public static <V, X1 extends Throwable, X2 extends Throwable> V execute(
-    Transactional transactional, final TxCallable<V> callable,
-    Class<X1> exception1, Class<X2> exception2) throws X1, X2 {
-    final AtomicReference<V> result = new AtomicReference<>();
+  public static <V, X1 extends Throwable, X2 extends Throwable> V execute(Transactional transactional,
+                                                                          TxCallable<V> callable,
+                                                                          Class<X1> exception1,
+                                                                          Class<X2> exception2) throws X1, X2 {
+    AtomicReference<V> result = new AtomicReference<>();
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          result.set(callable.call(context));
-        }
-      });
+      transactional.execute(context -> result.set(callable.call(context)));
     } catch (TransactionFailureException e) {
       throw propagate(e, exception1, exception2);
     }

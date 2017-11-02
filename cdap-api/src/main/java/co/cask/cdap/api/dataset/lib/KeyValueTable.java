@@ -36,10 +36,11 @@ import co.cask.cdap.internal.guava.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -91,18 +92,11 @@ public class KeyValueTable extends AbstractDataset implements
    */
   @ReadOnly
   public Map<byte[], byte[]> readAll(byte[][] keys) {
-    List<Get> gets = new ArrayList<>(keys.length);
-    for (byte[] key : keys) {
-      gets.add(new Get(key).add(KEY_COLUMN));
-    }
-    List<Row> results = table.get(gets);
-    Map<byte[], byte[]> values = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    for (Row row : results) {
-      if (row.get(KEY_COLUMN) != null) {
-        values.put(row.getRow(), row.get(KEY_COLUMN));
-      }
-    }
-    return values;
+    List<Get> gets = Arrays.stream(keys).map(key -> new Get(key).add(KEY_COLUMN)).collect(Collectors.toList());
+    return table.get(gets).stream()
+      .filter(row -> row.get(KEY_COLUMN) != null)
+      .collect(Collectors.toMap(Row::getRow, row -> row.get(KEY_COLUMN), (v1, v2) -> v2,
+                                () -> new TreeMap<>(Bytes.BYTES_COMPARATOR)));
   }
 
   /**

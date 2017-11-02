@@ -42,8 +42,7 @@ public class ConsumerWorkingSet {
    * Constructs an empty working set.
    */
   public ConsumerWorkingSet() {
-    this(PartitionConsumerState.FROM_BEGINNING,
-         new ArrayList<ConsumablePartition>());
+    this(PartitionConsumerState.FROM_BEGINNING, new ArrayList<>());
   }
 
   /**

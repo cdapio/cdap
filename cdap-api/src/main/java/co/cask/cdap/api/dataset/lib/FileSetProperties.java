@@ -20,8 +20,8 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.ExploreProperties;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Helper to build properties for files datasets.
@@ -272,13 +272,9 @@ public class FileSetProperties {
    * @return a map of all properties whose key begins with the given prefix, without that prefix
    */
   public static Map<String, String> propertiesWithPrefix(Map<String, String> properties, String prefix) {
-    Map<String, String> result = new HashMap<>();
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      if (entry.getKey().startsWith(prefix)) {
-        result.put(entry.getKey().substring(prefix.length()), entry.getValue());
-      }
-    }
-    return result;
+    return properties.entrySet().stream()
+      .filter(entry -> entry.getKey().startsWith(prefix))
+      .collect(Collectors.toMap(entry -> entry.getKey().substring(prefix.length()), Map.Entry::getValue, (a, b) -> b));
   }
 
   /**

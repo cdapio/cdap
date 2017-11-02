@@ -274,8 +274,8 @@ public class DelimitedStringsRecordFormatTest {
     Assert.assertEquals(2, output.getSchema().getFields().size());
     Assert.assertNull(output.get("f1"));
     Assert.assertNull(output.get("f2"));
-    Assert.assertEquals(floatVal, output.get("f3"));
-    Assert.assertEquals(doubleVal, output.get("f4"));
+    Assert.assertEquals(floatVal, output.get("f3"), 0.0001f);
+    Assert.assertEquals(doubleVal, output.get("f4"), 0.0001d);
     Assert.assertNull(output.get("f5"));
     Assert.assertNull(output.get("f6"));
     Assert.assertNull(output.get("f7"));
@@ -285,7 +285,7 @@ public class DelimitedStringsRecordFormatTest {
     Assert.assertEquals(2, output.getSchema().getFields().size());
     Assert.assertNull(output.get("f1"));
     Assert.assertNull(output.get("f2"));
-    Assert.assertTrue(Math.abs(3.14159 - (Float) output.get("f3")) < 0.000001);
+    Assert.assertEquals(3.14159f, output.get("f3"), 0.0001f);
     Assert.assertNull(output.get("f4"));
     Assert.assertNull(output.get("f5"));
     Assert.assertNull(output.get("f6"));
@@ -330,9 +330,9 @@ public class DelimitedStringsRecordFormatTest {
 
     StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
     Assert.assertEquals(booleanVal, output.get("f1"));
-    Assert.assertEquals(intVal, output.get("f2"));
-    Assert.assertEquals(floatVal, output.get("f3"));
-    Assert.assertEquals(doubleVal, output.get("f4"));
+    Assert.assertEquals(intVal, (int) output.get("f2"));
+    Assert.assertEquals(floatVal, output.get("f3"), 0.0001f);
+    Assert.assertEquals(doubleVal, output.get("f4"), 0.0001d);
     Assert.assertArrayEquals(bytesVal, (byte[]) output.get("f5"));
     Assert.assertEquals(stringVal, output.get("f6"));
     Assert.assertArrayEquals(arrayVal, (String[]) output.get("f7"));
@@ -341,7 +341,7 @@ public class DelimitedStringsRecordFormatTest {
     output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes("true,,3.14159,,,hello world,extra1"))));
     Assert.assertTrue((Boolean) output.get("f1"));
     Assert.assertNull(output.get("f2"));
-    Assert.assertTrue(Math.abs(3.14159 - (Float) output.get("f3")) < 0.000001);
+    Assert.assertEquals(3.14159f, output.get("f3"), 0.0001f);
     Assert.assertNull(output.get("f4"));
     Assert.assertNull(output.get("f5"));
     Assert.assertEquals("hello world", output.get("f6"));

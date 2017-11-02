@@ -20,7 +20,6 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Configuration parameters to be used by a {@link PartitionConsumer}.
@@ -92,12 +91,7 @@ public class ConsumerConfiguration {
     /**
      * Default values
      */
-    private Predicate<PartitionDetail> partitionPredicate = new Predicate<PartitionDetail>() {
-      @Override
-      public boolean apply(@Nullable PartitionDetail input) {
-        return true;
-      }
-    };
+    private Predicate<PartitionDetail> partitionPredicate = input -> true;
     private int maxWorkingSetSize = 1000;
     // 12 hour timeout
     private long timeout = TimeUnit.HOURS.toSeconds(12);

@@ -54,18 +54,18 @@ public class AvroRecordFormatTest {
   public void testMultipleReads() throws Exception {
     Schema schema = Schema.recordOf("record", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     FormatSpecification formatSpecification =
-      new FormatSpecification(Formats.AVRO, schema, Collections.<String, String>emptyMap());
+      new FormatSpecification(Formats.AVRO, schema, Collections.emptyMap());
 
     org.apache.avro.Schema avroSchema = convertSchema(schema);
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     GenericRecord record = new GenericRecordBuilder(avroSchema).set("x", 5).build();
     StructuredRecord actual = format.read(toStreamEvent(record));
-    Assert.assertEquals(5, actual.get("x"));
+    Assert.assertEquals(5, (int) actual.get("x"));
 
     record = new GenericRecordBuilder(avroSchema).set("x", 10).build();
     actual = format.read(toStreamEvent(record));
-    Assert.assertEquals(10, actual.get("x"));
+    Assert.assertEquals(10, (int) actual.get("x"));
   }
 
   @Test
@@ -87,7 +87,7 @@ public class AvroRecordFormatTest {
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO,
       schema,
-      Collections.<String, String>emptyMap()
+      Collections.emptyMap()
     );
 
     org.apache.avro.Schema avroSchema = convertSchema(schema);
@@ -108,15 +108,15 @@ public class AvroRecordFormatTest {
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     StructuredRecord actual = format.read(toStreamEvent(record));
-    Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
-    Assert.assertEquals(Long.MAX_VALUE, actual.get("long"));
-    Assert.assertFalse((Boolean) actual.get("boolean"));
+    Assert.assertEquals(Integer.MAX_VALUE, (int) actual.get("int"));
+    Assert.assertEquals(Long.MAX_VALUE, (long) actual.get("long"));
+    Assert.assertFalse(actual.get("boolean"));
     Assert.assertArrayEquals(Bytes.toBytes("hello world"), Bytes.toBytes((ByteBuffer) actual.get("bytes")));
-    Assert.assertEquals(Double.MAX_VALUE, actual.get("double"));
-    Assert.assertEquals(Float.MAX_VALUE, actual.get("float"));
+    Assert.assertEquals(Double.MAX_VALUE, actual.get("double"), 0.0001d);
+    Assert.assertEquals(Float.MAX_VALUE, actual.get("float"), 0.0001f);
     Assert.assertEquals("foo bar", actual.get("string"));
     Assert.assertEquals(Lists.newArrayList(1, 2, 3), actual.get("array"));
-    assertMapEquals(ImmutableMap.<String, Object>of("k1", 1, "k2", 2), (Map<Object, Object>) actual.get("map"));
+    assertMapEquals(ImmutableMap.of("k1", 1, "k2", 2), actual.get("map"));
     Assert.assertNull(actual.get("nullable"));
     Assert.assertEquals("Hello", actual.get("nullable2"));
   }
@@ -151,15 +151,15 @@ public class AvroRecordFormatTest {
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO,
       schema,
-      Collections.<String, String>emptyMap()
+      Collections.emptyMap()
     );
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     StructuredRecord actual = format.read(toStreamEvent(record));
-    Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
+    Assert.assertEquals(Integer.MAX_VALUE, (int) actual.get("int"));
     StructuredRecord actualInner = actual.get("record");
-    Assert.assertEquals(5, actualInner.get("int"));
-    Assert.assertEquals(3.14159, actualInner.get("double"));
+    Assert.assertEquals(5, (int) actualInner.get("int"));
+    Assert.assertEquals(3.14159d, actualInner.get("double"), 0.0001d);
 
     List<Float> array = actualInner.get("array");
     Assert.assertEquals(ImmutableList.of(1.0f, 2.0f), array);
@@ -179,8 +179,7 @@ public class AvroRecordFormatTest {
       .set("name", "value")
       .build();
 
-    FormatSpecification formatSpecification = new FormatSpecification(Formats.AVRO, readSchema,
-                                                                      ImmutableMap.<String, String>of());
+    FormatSpecification formatSpecification = new FormatSpecification(Formats.AVRO, readSchema, ImmutableMap.of());
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     // Convert an event that has schema associated

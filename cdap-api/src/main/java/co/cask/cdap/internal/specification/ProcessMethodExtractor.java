@@ -102,11 +102,7 @@ public final class ProcessMethodExtractor extends MethodVisitor {
     }
 
     for (String inputName : inputNames) {
-      Set<Type> types = inputTypes.get(inputName);
-      if (types == null) {
-        types = new HashSet<>();
-        inputTypes.put(inputName, types);
-      }
+      Set<Type> types = inputTypes.computeIfAbsent(inputName, k -> new HashSet<>());
       checkArgument(types.add(inputType),
                     "Same type already defined for the same input name %s in process method %s.%s.",
                     inputName, inspectTypeToken.getRawType().getName(), method);

@@ -16,11 +16,11 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Constants and helper methods to configure runtime arguments for a file dataset.
@@ -114,13 +114,6 @@ public class FileSetArguments {
     if (pathsArg == null) {
       return Collections.emptyList();
     }
-    List<String> paths = new ArrayList<>();
-    for (String path : pathsArg.split("\\s*,\\s*")) {
-      if (!path.isEmpty()) {
-        paths.add(path);
-      }
-    }
-    return paths;
+    return Arrays.stream(pathsArg.split("\\s*,\\s*")).filter(path -> !path.isEmpty()).collect(Collectors.toList());
   }
-
 }

@@ -43,8 +43,8 @@ public class StructuredRecordBuilderTest {
       Schema.of(Schema.Type.INT),
       Schema.of(Schema.Type.LONG))));
     Assert.assertNull(StructuredRecord.builder(schema).set("x", null).build().get("x"));
-    Assert.assertEquals(5, StructuredRecord.builder(schema).set("x", 5).build().get("x"));
-    Assert.assertEquals(5L, StructuredRecord.builder(schema).set("x", 5L).build().get("x"));
+    Assert.assertEquals(5, (int) StructuredRecord.builder(schema).set("x", 5).build().get("x"));
+    Assert.assertEquals(5L, (long) StructuredRecord.builder(schema).set("x", 5L).build().get("x"));
   }
 
   @Test

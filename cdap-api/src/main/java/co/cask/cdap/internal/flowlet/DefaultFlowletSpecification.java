@@ -54,8 +54,7 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
     this.description = description;
     this.failurePolicy = failurePolicy;
     this.dataSets = Collections.unmodifiableSet(new HashSet<>(dataSets));
-    this.properties = Collections.unmodifiableMap(properties == null ? new HashMap<String, String>()
-                                                                     : new HashMap<>(properties));
+    this.properties = Collections.unmodifiableMap(properties == null ? new HashMap<>() : new HashMap<>(properties));
     this.resources = resources;
   }
 

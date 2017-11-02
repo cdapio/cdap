@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * An ObjectStore Dataset extension that supports access to objects via indices; lookups by the index will return
@@ -98,43 +99,28 @@ public class IndexedObjectStore<T> extends AbstractDataset {
 
     // if the index has no match, return nothing
     if (!row.isEmpty()) {
-      for (byte[] column : row.getColumns().keySet()) {
-        T obj = objectStore.read(column);
-        resultList.add(obj);
-      }
+      resultList = row.getColumns().keySet().stream().map(objectStore::read).collect(Collectors.toList());
     }
     return Collections.unmodifiableList(resultList);
   }
 
   private List<byte[]> secondaryKeysToDelete(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
-    List<byte[]> secondaryKeysToDelete = new ArrayList<>();
-    if (existingSecondaryKeys.size() > 0) {
-      for (byte[] secondaryKey : existingSecondaryKeys) {
-        // If it is not in newSecondaryKeys then it needs to be deleted.
-        if (!newSecondaryKeys.contains(secondaryKey)) {
-          secondaryKeysToDelete.add(secondaryKey);
-        }
-      }
-    }
-    return secondaryKeysToDelete;
+    // If it is not in newSecondaryKeys then it needs to be deleted.
+    return existingSecondaryKeys.stream()
+      .filter(secondaryKey -> !newSecondaryKeys.contains(secondaryKey))
+      .collect(Collectors.toList());
   }
 
   private List<byte[]> secondaryKeysToAdd(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
-    List<byte[]> secondaryKeysToAdd = new ArrayList<>();
-    if (existingSecondaryKeys.size() > 0) {
-      for (byte[] secondaryKey : newSecondaryKeys) {
-        // If it is not in existingSecondaryKeys then it needs to be added
-        // else it exists already.
-        if (!existingSecondaryKeys.contains(secondaryKey)) {
-          secondaryKeysToAdd.add(secondaryKey);
-        }
-      }
-    } else {
-      //all the newValues should be added
-      secondaryKeysToAdd.addAll(newSecondaryKeys);
+    // If it is not in existingSecondaryKeys then it needs to be added
+    if (!existingSecondaryKeys.isEmpty()) {
+      return newSecondaryKeys.stream()
+        .filter(secondaryKey -> !existingSecondaryKeys.contains(secondaryKey))
+        .collect(Collectors.toList());
     }
 
-    return secondaryKeysToAdd;
+    // all the newValues should be added
+    return new ArrayList<>(newSecondaryKeys);
   }
 
   /**

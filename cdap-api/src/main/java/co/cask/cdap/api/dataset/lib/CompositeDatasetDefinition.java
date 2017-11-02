@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Handy implementation of {@link DatasetDefinition} that implements basic methods by delegating logic execution to
@@ -116,10 +117,9 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    List<DatasetSpecification> specs = new ArrayList<>();
-    for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
-      specs.add(impl.getValue().configure(impl.getKey(), properties));
-    }
+    List<DatasetSpecification> specs = this.delegates.entrySet().stream()
+      .map(impl -> impl.getValue().configure(impl.getKey(), properties))
+      .collect(Collectors.toList());
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(specs)

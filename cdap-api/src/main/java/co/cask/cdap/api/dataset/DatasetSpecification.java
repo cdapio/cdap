@@ -258,11 +258,7 @@ public final class DatasetSpecification {
       return true;
     }
     if (datasetName.startsWith(specification.getName())) {
-      for (DatasetSpecification spec : specification.getSpecifications().values()) {
-        if (isParent(datasetName, spec)) {
-          return true;
-        }
-      }
+      return specification.getSpecifications().values().stream().anyMatch(spec -> isParent(datasetName, spec));
     }
     return  false;
   }
