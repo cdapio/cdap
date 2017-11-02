@@ -443,8 +443,60 @@ public class RouterPathTest {
   @Test
   public void testServiceProviderStatsPaths() {
     assertRouting("/v3/system/////serviceproviders", RouterPathLookup.APP_FABRIC_HTTP);
-    assertRouting("/v3/system/////serviceproviders/serviceprovider/stats", RouterPathLookup.APP_FABRIC_HTTP);
-    assertRouting("/v3/system/////serviceproviders///////", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
+  public void testSystemServiceStatusPaths() {
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.LOGSAVER),
+                  RouterPathLookup.LOG_SAVER);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.TRANSACTION),
+                  RouterPathLookup.TRANSACTION);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METRICS_PROCESSOR),
+                  RouterPathLookup.METRICS_PROCESSOR);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METRICS),
+                  RouterPathLookup.METRICS);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.APP_FABRIC_HTTP),
+                  RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.STREAMS),
+                  RouterPathLookup.STREAMS_SERVICE);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.DATASET_EXECUTOR),
+                  RouterPathLookup.DATASET_EXECUTOR);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.REMOTE_SYSTEM_OPERATION),
+                  RouterPathLookup.DATASET_EXECUTOR);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METADATA_SERVICE),
+                  RouterPathLookup.METADATA_SERVICE);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.EXPLORE_HTTP_USER_SERVICE),
+                  RouterPathLookup.EXPLORE_HTTP_USER_SERVICE);
+    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.MESSAGING_SERVICE),
+                  RouterPathLookup.MESSAGING);
+    assertRouting(String.format("/v3/system/services/%s/status", "unknown.service"), null);
+  }
+
+  @Test
+  public void testSystemServiceStacksPaths() {
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.LOGSAVER),
+                  RouterPathLookup.LOG_SAVER);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.TRANSACTION),
+                  RouterPathLookup.TRANSACTION);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METRICS_PROCESSOR),
+                  RouterPathLookup.METRICS_PROCESSOR);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METRICS),
+                  RouterPathLookup.METRICS);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.APP_FABRIC_HTTP),
+                  RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.STREAMS),
+                  RouterPathLookup.STREAMS_SERVICE);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.DATASET_EXECUTOR),
+                  RouterPathLookup.DATASET_EXECUTOR);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.REMOTE_SYSTEM_OPERATION),
+                  RouterPathLookup.DATASET_EXECUTOR);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METADATA_SERVICE),
+                  RouterPathLookup.METADATA_SERVICE);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.EXPLORE_HTTP_USER_SERVICE),
+                  RouterPathLookup.EXPLORE_HTTP_USER_SERVICE);
+    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.MESSAGING_SERVICE),
+                  RouterPathLookup.MESSAGING);
+    assertRouting(String.format("/v3/system/services/%s/stacks", "unknown.service"), null);
   }
 
   private void assertRouting(String path, RouteDestination destination) {
