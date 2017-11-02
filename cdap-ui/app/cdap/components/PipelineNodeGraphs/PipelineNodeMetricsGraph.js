@@ -402,12 +402,16 @@ export default class PipelineNodeMetricsGraph extends Component {
     if (Array.isArray(data) && !data.length) {
       return <EmptyMessageContainer message={T.translate(`${PREFIX}.nodata`)} />;
     }
+
+    let isMultiplePorts = type === 'recordsout' && Object.keys(this.state.totalRecordsOutPorts).length;
+
     return (
       <NodeMetricsGraph
         xAxisTitle={this.state.resolution}
         yAxisTitle={T.translate(`${PREFIX}.numberOfRecords`)}
         data={data}
         metricType={type}
+        isMultiplePorts={isMultiplePorts}
       />
     );
   }

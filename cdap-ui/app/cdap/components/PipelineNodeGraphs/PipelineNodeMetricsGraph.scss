@@ -17,6 +17,7 @@
 $graph_container_border_color: lightgray;
 $table_header_border: #c9ccd6;
 $error_records_label_color: #a40403;
+$legend-checkbox-bg-color: rgb(88, 183,286);
 
 .pipeline-node-metrics-graph {
   height: 100%;
@@ -128,21 +129,84 @@ $error_records_label_color: #a40403;
             bottom: -10px;
             left: 50%;
           }
-          .rv-discrete-color-legend.horizontal {
+          .ports-legend-popover {
+            width: 100%;
+            min-width: 200px;
+
+            .legend-popover-toggle {
+              cursor: pointer;
+              border-bottom: 1px solid;
+              width: 50%;
+              max-width: 170px;
+              padding-bottom: 2px;
+              display: flex;
+              align-items: center;
+
+              .rv-discrete-color-legend {
+                padding: 0;
+              }
+
+              .toggle-caret {
+                margin-left: auto;
+                font-size: 18px;
+              }
+            }
+
+            .legend-popover {
+              position: absolute;
+              background: white;
+              border: 1px solid black;
+            }
+
+            .popover-content.rv-discrete-color-legend {
+              padding: 10px 0 15px 15px;
+
+              .rv-discrete-color-legend-item.vertical {
+                margin-top: 5px;
+
+                .legend-item-checkbox {
+                  margin-right: 10px;
+                  transform: translateY(1px);
+                }
+              }
+            }
+          }
+          .rv-discrete-color-legend {
             width: 100%;
             padding: 10px 0 0;
-            .rv-discrete-color-legend-item.horizontal {
-              display: inline-block;
+
+            .rv-discrete-color-legend-item {
+              display: inline-flex;
+              align-items: center;
               margin: 0 40px 0 0;
+
+              &.vertical {
+                display: flex;
+              }
+
+              &.pointer {
+                cursor: pointer;
+              }
+
+              .legend-item-checkbox {
+                font-size: 20px;
+                width: 17px;
+                margin-right: 5px;
+
+                &.fa-check-square {
+                  color: $legend-checkbox-bg-color;
+                }
+              }
+
               .rv-discrete-color-legend-item__title {
                 font-size: 14px;
               }
               .rv-discrete-color-legend-item__color {
                 display: inline-block;
                 vertical-align: bottom;
-                width: 20px;
+                width: 18px;
+                height: 18px;
                 border: 1px solid $graph_container_border_color;
-                height: 20px;
                 margin: 0 5px 0 0;
                 border-radius: 50%;
               }
