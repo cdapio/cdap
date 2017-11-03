@@ -636,11 +636,12 @@ export default class DataPrepConnections extends Component {
       setS3AsActiveBrowser({name: 's3', id: this.state.activeConnectionid, path});
     } else if (this.state.activeConnectionType === 'gcs') {
       let {workspaceInfo} = DataPrepStore.getState().dataprep;
-      let {key} = workspaceInfo.properties;
-      let bucketName = workspaceInfo.properties['bucket-name'];
-      let path;
+      let {path} = workspaceInfo.properties;
+      path = path.split('/');
+      path = path.slice(0, path.length - 1).join('/');
+      let bucketName = workspaceInfo.properties.bucket;
       if (bucketName) {
-        path = `/${bucketName}/${key}`;
+        path = `/${bucketName}/${path}/`;
       }
       setGCSAsActiveBrowser({name: 'gcs', id: this.state.activeConnectionid, path});
     }

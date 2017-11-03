@@ -26,6 +26,7 @@ import classnames from 'classnames';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
+import {humanReadableDate, convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
 
 const PREFIX = 'features.DataPrep.DataPrepBrowser.GCSBrowser.BrowserData';
 const props = {
@@ -69,7 +70,7 @@ const TableHeader = ({enableRouting}) => {
           {T.translate(`${PREFIX}.Headers.Name`)}
         </div>
         <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Owner`)}
+          {T.translate(`${PREFIX}.Headers.Type`)}
         </div>
         <div className="col-xs-3">
           {T.translate(`${PREFIX}.Headers.Size`)}
@@ -132,29 +133,39 @@ const TableContents = ({enableRouting, search, data, onWorkspaceCreate, prefix, 
     return (
       <div className="gcs-buckets">
         {
-          filteredData.map(file => (
-            <ContainerElement
-              className={classnames({'disabled': !file.directory && !file.wrangle})}
-              to={`${pathname}?prefix=${getPrefix(file, prefix)}`}
-              onClick={onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-            >
-              <div className="row">
-                <div className="col-xs-3">
-                  <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
-                  {file.name}
+          filteredData.map(file => {
+            let lastModified = humanReadableDate(file['updated'], true);
+            let size = convertBytesToHumanReadable(file['size'], HUMANREADABLESTORAGE_NODECIMAL, true);
+            let type = file.directory ? T.translate(`${PREFIX}.Content.directory`) : file.type;
+
+            if (file.type === 'UNKNOWN') {
+              type = '--';
+            }
+
+            return (
+              <ContainerElement
+                className={classnames({'disabled': !file.directory && !file.wrangle})}
+                to={`${pathname}?prefix=${getPrefix(file, prefix)}`}
+                onClick={onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
+              >
+                <div className="row">
+                  <div className="col-xs-3">
+                    <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
+                    {file.name}
+                  </div>
+                  <div className="col-xs-3">
+                    {type}
+                  </div>
+                  <div className="col-xs-3">
+                    {size}
+                  </div>
+                  <div className="col-xs-3">
+                    {lastModified}
+                  </div>
                 </div>
-                <div className="col-xs-3">
-                  {file['owner']}
-                </div>
-                <div className="col-xs-3">
-                  {file['size']}
-                </div>
-                <div className="col-xs-3">
-                  {file['last-modified']}
-                </div>
-              </div>
-            </ContainerElement>
-          ))
+              </ContainerElement>
+            );
+          })
         }
       </div>
     );

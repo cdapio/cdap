@@ -349,13 +349,14 @@ features:
       GCSBrowser:
         BrowserData:
           Content:
+            directory: Directory
             EmptymessageContainer:
               suggestion1: your search
           Headers:
             LastModified: Last Modified
             Name: Name
-            Owner: Owner
             Size: Size
+            Type: Type
         Search:
           placeholder: Search this directory
         TopPanel:
