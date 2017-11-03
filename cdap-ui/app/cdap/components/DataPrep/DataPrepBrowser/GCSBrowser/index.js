@@ -61,7 +61,7 @@ export default class GCSBrowser extends Component {
       connectionId,
       activeBucket: file.bucket,
       generation: file.generation,
-      path: file.name,
+      blob: file.blob,
       lines: 10000,
       sampler: 'first'
     };
