@@ -193,6 +193,10 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       schemas = JSON.parse(schemas);
     }
 
+    if (!Array.isArray(schemas)) {
+      schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(schemas)];
+    }
+
     vm.schemas = schemas.map((schema) => {
       let jsonSchema = schema.schema;
 
