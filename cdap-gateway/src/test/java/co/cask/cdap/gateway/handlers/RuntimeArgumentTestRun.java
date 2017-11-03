@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.gateway.apps.HighPassFilterApp;
@@ -111,6 +112,12 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("3");
+
+    // Make sure the programs are in running state before stopping
+    Tasks.waitFor("RUNNING", () -> getState("flows", "HighPassFilterApp", "FilterFlow"),
+                  5, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    Tasks.waitFor("RUNNING", () -> getState("services", "HighPassFilterApp", "Count"),
+                  5, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
     //Stop all flows and services and reset the state of the cdap
     response = GatewayFastTestsSuite.doPost(

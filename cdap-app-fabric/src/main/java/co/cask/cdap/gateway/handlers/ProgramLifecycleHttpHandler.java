@@ -138,6 +138,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -182,14 +183,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
-
-  private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
-    new Function<RunRecordMeta, RunRecord>() {
-      @Override
-      public RunRecord apply(RunRecordMeta input) {
-        return new RunRecord(input);
-      }
-    };
 
   private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -494,7 +487,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     RunRecordMeta runRecordMeta = store.getRun(progId, runid);
     if (runRecordMeta != null) {
-      RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
+      RunRecord runRecord = new RunRecord(runRecordMeta);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
       return;
     }
@@ -1916,10 +1909,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
         ProgramRunStatus.valueOf(status.toUpperCase());
 
-      Collection<RunRecord> records = Collections2.transform(
-        store.getRuns(programId, runStatus, start, end, limit).values(),
-        CONVERT_TO_RUN_RECORD
-      );
+      List<RunRecord> records = store.getRuns(programId, runStatus, start, end, limit).values().stream()
+        .map(RunRecord::new).collect(Collectors.toList());
 
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
     } catch (IllegalArgumentException e) {

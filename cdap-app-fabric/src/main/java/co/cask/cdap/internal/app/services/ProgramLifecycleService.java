@@ -58,7 +58,7 @@ import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -76,10 +76,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -95,7 +100,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
-  private final NamespaceStore nsStore;
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -103,12 +107,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final Scheduler scheduler;
 
   @Inject
-  ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
+  ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext, Scheduler scheduler) {
     this.store = store;
-    this.nsStore = nsStore;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
     this.preferencesStore = preferencesStore;
@@ -359,34 +362,77 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
-  public List<ListenableFuture<ProgramController>> issueStop(ProgramId programId, @Nullable String runId)
-    throws Exception {
+  public List<ListenableFuture<ProgramController>> issueStop(ProgramId programId,
+                                                             @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
-    if (runtimeInfos.isEmpty()) {
+
+    // See if the program is running as per the runtime service
+    Map<RunId, RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
+    Map<ProgramRunId, RunRecordMeta> activeRunRecords = getActiveRuns(programId, runId);
+
+    if (runtimeInfos.isEmpty() && activeRunRecords.isEmpty()) {
+      // Error out if no run information from runtime service and from run record
       if (!store.applicationExists(programId.getParent())) {
         throw new ApplicationNotFoundException(programId.getParent());
       } else if (!store.programExists(programId)) {
         throw new ProgramNotFoundException(programId);
-      } else if (runId != null) {
-        ProgramRunId programRunId = programId.run(runId);
-        // Check if the program is running and is started by the Workflow
-        RunRecordMeta runRecord = store.getRun(programId, runId);
+      }
+      throw new BadRequestException(String.format("Program '%s' is not running.", programId));
+    }
+
+    // Stop the running program based on a combination of runtime info and run record
+    // It's possible that some of them are not yet available from the runtimeService due to timing
+    // differences between the run record was created vs being added to runtimeService
+    // So we retry in a loop for up to 3 seconds max to cater for those cases
+
+    Set<String> pendingStops = Stream.concat(runtimeInfos.keySet().stream().map(RunId::getId),
+                                             activeRunRecords.keySet().stream().map(ProgramRunId::getRun))
+                                      .collect(Collectors.toSet());
+
+    List<ListenableFuture<ProgramController>> futures = new ArrayList<>();
+    Stopwatch stopwatch = new Stopwatch().start();
+
+    while (!pendingStops.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 3L) {
+      Iterator<String> iterator = pendingStops.iterator();
+      while (iterator.hasNext()) {
+        ProgramRunId activeRunId = programId.run(iterator.next());
+        RunRecordMeta runRecord = activeRunRecords.get(activeRunId);
+        if (runRecord == null) {
+          runRecord = store.getRun(programId, activeRunId.getRun());
+        }
+        // Check if the program is actually started from workflow and the workflow is running
         if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
           && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
           String workflowRunId = runRecord.getProperties().get("workflowrunid");
           throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
-                                                        "run '%s'. Please stop the Workflow.", programRunId,
+                                                        "run '%s'. Please stop the Workflow.", activeRunId,
                                                       workflowRunId));
         }
-        throw new NotFoundException(programRunId);
+
+        RuntimeInfo runtimeInfo = runtimeService.lookup(programId, RunIds.fromString(activeRunId.getRun()));
+        if (runtimeInfo != null) {
+          futures.add(runtimeInfo.getController().stop());
+          iterator.remove();
+        }
       }
-      throw new BadRequestException(String.format("Program '%s' is not running.", programId));
+
+      if (!pendingStops.isEmpty()) {
+        // If not able to stop all of them, meaning there are some runs that doesn't have a runtime info, due to
+        // either the run was already finished or the run hasn't been registered with the runtime service.
+        // We'll get the active runs again and filter it by the pending stops. Stop will be retried for those.
+        Set<String> finalPendingStops = pendingStops;
+
+        activeRunRecords = getActiveRuns(programId, runId).entrySet().stream()
+          .filter(e -> finalPendingStops.contains(e.getKey().getRun()))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        pendingStops = activeRunRecords.keySet().stream().map(ProgramRunId::getRun).collect(Collectors.toSet());
+
+        if (!pendingStops.isEmpty()) {
+          TimeUnit.MILLISECONDS.sleep(200);
+        }
+      }
     }
-    List<ListenableFuture<ProgramController>> futures = new ArrayList<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      futures.add(runtimeInfo.getController().stop());
-    }
+
     return futures;
   }
 
@@ -523,8 +569,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE, ProgramType.SPARK).contains(type);
   }
 
-  private List<ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(ProgramId programId,
-                                                                  @Nullable String runId) throws BadRequestException {
+  private Map<RunId, ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(
+    ProgramId programId, @Nullable String runId) throws BadRequestException {
+
     if (runId != null) {
       RunId run;
       try {
@@ -533,15 +580,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
         throw new BadRequestException("Error parsing run-id.", e);
       }
       ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, run);
-      return runtimeInfo == null ? Collections.<RuntimeInfo>emptyList() : Collections.singletonList(runtimeInfo);
+      return runtimeInfo == null ? Collections.emptyMap() : Collections.singletonMap(run, runtimeInfo);
     }
-    return new ArrayList<>(runtimeService.list(programId).values());
+    return new HashMap<>(runtimeService.list(programId));
   }
 
   @Nullable
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) throws BadRequestException {
-    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, null);
-    return runtimeInfos.isEmpty() ? null : runtimeInfos.iterator().next();
+    return findRuntimeInfo(programId, null).values().stream().findFirst().orElse(null);
   }
 
   /**
@@ -733,8 +779,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private void updateLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
                                @Nullable String component, @Nullable String runId) throws Exception {
-    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeInfos.isEmpty() ? null : runtimeInfos.get(0);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
+                                                                                     .findFirst().orElse(null);
     if (runtimeInfo != null) {
       LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
       logLevelUpdater.updateLogLevels(logLevels, component);
@@ -746,8 +792,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private void resetLogLevels(ProgramId programId, Set<String> loggerNames,
                               @Nullable String component, @Nullable String runId) throws Exception {
-    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeInfos.isEmpty() ? null : runtimeInfos.get(0);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
+                                                                                     .findFirst().orElse(null);
     if (runtimeInfo != null) {
       LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
       logLevelUpdater.resetLogLevels(loggerNames, component);
@@ -764,4 +810,21 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
     return ((LogLevelUpdater) programController);
   }
+
+  /**
+   * Returns the active run records (STARTING / RUNNING / SUSPENDED) based on the given program id and an optional
+   * run id.
+   */
+  private Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId, @Nullable String runId) {
+    if (runId == null) {
+      return store.getActiveRuns(programId);
+    }
+    RunRecordMeta runRecord = store.getRun(programId, runId);
+    EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.STARTING,
+                                                        ProgramRunStatus.RUNNING,
+                                                        ProgramRunStatus.SUSPENDED);
+    return runRecord == null || !activeStates.contains(runRecord.getStatus())
+      ? Collections.emptyMap()
+      : Collections.singletonMap(programId.run(runId), runRecord);
+  };
 }
