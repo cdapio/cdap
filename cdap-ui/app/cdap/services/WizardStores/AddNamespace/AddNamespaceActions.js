@@ -21,6 +21,7 @@ const AddNamespaceActions = {
   setHDFSDirectory: 'SET-HDFS-DIRECTORY',
   setHiveDatabaseName: 'SET-HIVE-DATABASE-NAME',
   setHBaseNamespace: 'SET-HBASE-NS-NAME',
+  setSchedulerQueueName: 'SET_SCHEDULER_QUEUE_NAME',
   setPrincipal: 'SET-PRINCIPAL',
   setKeytab: 'SET-KEYTAB',
   onError: 'FORM-SUBMIT-FAILURE',

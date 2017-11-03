@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import {combineReducers, createStore, compose} from 'redux';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
 import head from 'lodash/head';
@@ -41,7 +41,8 @@ const defaultGeneralState = Object.assign({
 const defaultMappingState = Object.assign({
   hdfsDirectory: '',
   hiveDatabaseName: '',
-  hbaseNamespace: ''
+  hbaseNamespace: '',
+  schedulerQueueName: '',
 }, skippableDefaultState);
 
 const defaultSecurityState = Object.assign({
@@ -154,6 +155,11 @@ const mapping = (state = defaultMappingState, action = defaultAction) => {
         hbaseNamespace: action.payload.hbaseNamespace
       });
       break;
+    case AddNamespaceActions.setSchedulerQueueName:
+      stateCopy = Object.assign({}, state, {
+        schedulerQueueName: action.payload.schedulerQueueName
+      });
+      break;
     case AddNamespaceActions.onError:
       return onErrorHandler('mapping', Object.assign({}, state), action);
     case AddNamespaceActions.onSuccess:
@@ -216,6 +222,13 @@ const preferences = (state = defaultPreferencesState, action = defaultAction) =>
   });
 };
 
+const composeEnhancers =
+typeof window === 'object' &&
+window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?
+  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+    name: 'AddNamespaceStore'
+  }) : compose;
+
 // Store
 const createAddNamespaceStore = () => {
   return createStore(
@@ -225,7 +238,8 @@ const createAddNamespaceStore = () => {
       security,
       preferences
     }),
-    defaultInitialState
+    defaultInitialState,
+    composeEnhancers()
   );
 };
 

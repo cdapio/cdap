@@ -1698,6 +1698,7 @@ features:
         hdfs-root-directory-placeholder: "Base directory on HDFS for this namespace"
         hive-db-name-label: "Hive Database Name"
         hive-db-name-placeholder: "Hive database for this namespace"
+        scheduler-queue-name: "Scheduler Queue Name"
         sld-label: "Specify mapping of namespace resources to the existing underlying storage resources."
         ssd-label: "Namespace Mapping"
       Step3:
