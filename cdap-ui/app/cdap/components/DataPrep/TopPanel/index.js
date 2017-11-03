@@ -250,6 +250,34 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
         );
+      } else if (info.properties.connection === 's3') {
+        return (
+          <div className="data-prep-name">
+            <div className="connection-type">
+              {T.translate(`${PREFIX}.s3`)}
+            </div>
+            <div
+              className="title"
+              title={info.properties.name}
+            >
+              {info.properties.name}
+            </div>
+          </div>
+        );
+      } else if (info.properties.connection === 'gcs') {
+        return (
+          <div className="data-prep-name">
+            <div className="connection-type">
+              {T.translate(`${PREFIX}.gcs`)}
+            </div>
+            <div
+              className="title"
+              title={info.properties.name}
+            >
+              {info.properties.name}
+            </div>
+          </div>
+        );
       }
     }
 

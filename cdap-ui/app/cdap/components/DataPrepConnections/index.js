@@ -24,7 +24,8 @@ import {
   setActiveBrowser,
   setS3AsActiveBrowser,
   setDatabaseAsActiveBrowser,
-  setKafkaAsActiveBrowser
+  setKafkaAsActiveBrowser,
+  setGCSAsActiveBrowser
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
@@ -190,6 +191,8 @@ export default class DataPrepConnections extends Component {
       activeConnectionid = browserName.id;
     } else if (typeof browserName === 'object' && browserName.type === 'S3') {
       setS3AsActiveBrowser({name: 's3', id: browserName.id, path: '/'});
+    } else if (typeof browserName === 'object' && browserName.type === 'GCS') {
+      setGCSAsActiveBrowser({name: 'gcs', id: browserName.id, path: '/'});
     }
 
     this.setState({
@@ -590,7 +593,7 @@ export default class DataPrepConnections extends Component {
           render={(match) => {
             let id  = match.match.params.gcsId;
             let {prefix = '/'} = queryString.parse(match.location.search);
-            setS3AsActiveBrowser({name: 'gcs', id, path: prefix});
+            setGCSAsActiveBrowser({name: 'gcs', id, path: prefix});
             return (
               <DataPrepBrowser
                 match={match}
@@ -631,6 +634,15 @@ export default class DataPrepConnections extends Component {
         path = `/${bucketName}/${key}`;
       }
       setS3AsActiveBrowser({name: 's3', id: this.state.activeConnectionid, path});
+    } else if (this.state.activeConnectionType === 'gcs') {
+      let {workspaceInfo} = DataPrepStore.getState().dataprep;
+      let {key} = workspaceInfo.properties;
+      let bucketName = workspaceInfo.properties['bucket-name'];
+      let path;
+      if (bucketName) {
+        path = `/${bucketName}/${key}`;
+      }
+      setGCSAsActiveBrowser({name: 'gcs', id: this.state.activeConnectionid, path});
     }
     return (
       <DataPrepBrowser

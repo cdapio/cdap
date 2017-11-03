@@ -132,6 +132,99 @@ const setS3AsActiveBrowser = (payload) => {
   }
 };
 
+const setGCSAsActiveBrowser = (payload) => {
+  let {gcs} = DataPrepBrowserStore.getState();
+
+  if (gcs.loading) { return; }
+
+  setActiveBrowser(payload);
+  setGCSLoading();
+
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let {id, path} = payload;
+  let params = {
+    namespace,
+    connectionId: id
+  };
+
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_GCS_CONNECTION_ID,
+    payload: {
+      connectionId: id
+    }
+  });
+  if (gcs.connectionId !== payload.id) {
+    MyDataPrepApi.getConnection(params)
+      .subscribe((res) => {
+        let info = objectQuery(res, 'values', 0);
+        DataPrepBrowserStore.dispatch({
+          type: BrowserStoreActions.SET_GCS_CONNECTION_DETAILS,
+          payload: {
+            info,
+            connectionId: id
+          }
+        });
+        if (path) {
+          setGCSPrefix(path);
+        }
+      });
+  } else {
+    if (path) {
+      setGCSPrefix(path);
+    }
+  }
+};
+
+const setGCSPrefix = (prefix) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_GCS_PREFIX,
+    payload: {
+      prefix
+    }
+  });
+  fetchGCSDetails(prefix);
+};
+
+const fetchGCSDetails = (path = '') => {
+  let { connectionId, loading} = DataPrepBrowserStore.getState().gcs;
+  if (loading) {
+    return;
+  }
+  setGCSLoading();
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let params = {
+    namespace,
+    connectionId
+  };
+  if (path) {
+    params = {...params, path};
+  }
+  MyDataPrepApi.exploreGCSBucketDetails(params)
+    .subscribe(
+      res => {
+        DataPrepBrowserStore.dispatch({
+          type: BrowserStoreActions.SET_GCS_ACTIVE_BUCKET_DETAILS,
+          payload: {
+            activeBucketDetails: res.values
+          }
+        });
+      }
+    );
+};
+
+const setGCSLoading = () => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_GCS_LOADING
+  });
+};
+
+const setGCSSearch = (search) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_GCS_SEARCH,
+    payload: { search }
+  });
+};
+
 const setPrefix = (prefix) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_S3_PREFIX,
@@ -237,6 +330,11 @@ export {
   setActiveBrowser,
   setS3AsActiveBrowser,
   setS3Search,
+  setGCSAsActiveBrowser,
+  setGCSSearch,
+  setGCSLoading,
+  setGCSPrefix,
+  fetchGCSDetails,
   setDatabaseProperties,
   setDatabaseAsActiveBrowser,
   setKafkaAsActiveBrowser,
