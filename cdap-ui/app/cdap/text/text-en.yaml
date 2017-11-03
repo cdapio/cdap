@@ -346,6 +346,23 @@ features:
           1: '{context} Table'
           _: "{context} Tables"
         title: Select Table
+      GCSBrowser:
+        BrowserData:
+          Content:
+            directory: Directory
+            EmptymessageContainer:
+              suggestion1: your search
+          Headers:
+            LastModified: Last Modified
+            Name: Name
+            Size: Size
+            Type: Type
+        Search:
+          placeholder: Search this directory
+        TopPanel:
+          ListingInfo:
+            label: "{dirsCount} Directories and {filesCount} Files"
+          selectData: Select Data
       KafkaBrowser:
         EmptyMessage:
           clearLabel: Clear
@@ -842,6 +859,7 @@ features:
       database: Database
       databaseTitle: "Table: {name}"
       file: File System
+      gcs: GCS
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
@@ -850,6 +868,7 @@ features:
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      s3: S3
       S3Pipeline:
         error: Cannot find S3 plugin. Please install Amazon S3 plugins before creating a pipeline
       SchemaModal:
@@ -919,6 +938,25 @@ features:
           ADD: "Add Connection: Database"
           DUPLICATE: "Duplicate Connection: {connection}"
           EDIT: "Edit Connection: {connection}"
+      GCS:
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to Google Cloud Service
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add Connection: GCS"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+        name: Name
+        projectId: Project ID
+        required: Required
+        serviceAccountKeyfile: Service Account Keyfile Location
+        testConnection: Test Connection
       Kafka:
         brokersList: Broker Host
         Buttons:
@@ -979,6 +1017,7 @@ features:
       duplicate: Duplicate
       edit: Edit
     database: Database ({count})
+    gcs: Google Cloud Service
     hdfs: File System
     kafka: Kafka ({count})
     s3: S3 ({count})

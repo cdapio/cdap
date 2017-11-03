@@ -31,7 +31,14 @@ const Actions = {
   SET_S3_CONNECTION_ID: 'SET_S3_CONNECTION_ID',
   SET_S3_PREFIX: 'SET_S3_PREFIX',
   SET_S3_DATAVIEW: 'SET_S3_DATAVIEW',
-  SET_S3_SEARCH: 'SET_S3_SEARCH'
+  SET_S3_SEARCH: 'SET_S3_SEARCH',
+  SET_GCS_LOADING: 'SET_GCS_LOADING',
+  SET_GCS_ACTIVE_BUCKET_DETAILS: 'SET_GCS_ACTIVE_BUCKET_DETAILS',
+  SET_GCS_CONNECTION_DETAILS: 'SET_GCS_CONNECTION_DETAILS',
+  SET_GCS_CONNECTION_ID: 'SET_GCS_CONNECTION_ID',
+  SET_GCS_PREFIX: 'SET_GCS_PREFIX',
+  SET_GCS_DATAVIEW: 'SET_GCS_DATAVIEW',
+  SET_GCS_SEARCH: 'SET_GCS_SEARCH'
 };
 
 export {Actions};
@@ -53,6 +60,15 @@ const defaultKafkaValue = {
 };
 
 const defaultS3Value = {
+  info: {},
+  loading: false,
+  error: null,
+  activeBucketDetails: [],
+  prefix: '',
+  connectionId: ''
+};
+
+const defaultGCSValue = {
   info: {},
   loading: false,
   error: null,
@@ -157,6 +173,46 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
   }
 };
 
+const gcs = (state = defaultGCSValue, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.SET_GCS_CONNECTION_ID:
+      // This means the user is starting afresh. Reset everything to default and set the connectionID
+      return {
+        ...defaultGCSValue,
+        connectionId: action.payload.connectionId
+      };
+    case Actions.SET_GCS_CONNECTION_DETAILS:
+      return {
+        ...state,
+        info: action.payload.info,
+        error: null
+      };
+    case Actions.SET_GCS_LOADING:
+      return {
+        ...state,
+        loading: true
+      };
+    case Actions.SET_GCS_ACTIVE_BUCKET_DETAILS:
+      return {
+        ...state,
+        activeBucketDetails: action.payload.activeBucketDetails,
+        loading: false
+      };
+    case Actions.SET_GCS_PREFIX:
+      return {
+        ...state,
+        prefix: action.payload.prefix
+      };
+    case Actions.SET_GCS_SEARCH:
+      return {
+        ...state,
+        search: action.payload.search
+      };
+    default:
+      return state;
+  }
+};
+
 const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_ACTIVEBROWSER:
@@ -173,7 +229,8 @@ const DataPrepBrowserStore = createStore(
     database,
     kafka,
     activeBrowser,
-    s3
+    s3,
+    gcs
   }),
   {
     database: defaultDatabaseValue,

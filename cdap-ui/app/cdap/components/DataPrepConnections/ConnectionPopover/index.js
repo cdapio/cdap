@@ -25,6 +25,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import S3Connection from 'components/DataPrepConnections/S3Connection';
+import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 
@@ -35,7 +36,8 @@ const PREFIX = 'features.DataPrepConnections.ConnectionManagement';
 const COMPONENT_MAP = {
   'DATABASE': DatabaseConnection,
   'KAFKA': KafkaConnection,
-  'S3': S3Connection
+  'S3': S3Connection,
+  'GCS': GCSConnection
 };
 
 export default class ConnectionPopover extends Component {

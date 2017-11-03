@@ -236,11 +236,11 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
         );
-      } else if (info.properties.connection === 'kafka') {
+      } else if (['kafka', 's3', 'gcs'].indexOf(info.properties.connection) !== -1) {
         return (
           <div className="data-prep-name">
             <div className="connection-type">
-              {T.translate(`${PREFIX}.kafka`)}
+              {T.translate(`${PREFIX}.${info.properties.connection}`)}
             </div>
             <div
               className="title"
