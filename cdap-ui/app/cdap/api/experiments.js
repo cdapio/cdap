@@ -21,5 +21,7 @@ let dataSrc = DataSourceConfigurer.getInstance();
 let basePath = '/namespaces/:namespace/apps/ModelPrepApp/services/ModelManagerService/methods';
 export const myExperimentsApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`),
-  getModelsInExperiment: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/models`)
+  getModelsInExperiment: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/models`),
+  createExperiment: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basePath}/experiments/:experimentId`),
+  createModelInExperiment: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models`)
 };

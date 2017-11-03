@@ -61,6 +61,8 @@ export default function GroupedBarChart({data, customEncoding = {}}) {
   );
 }
 
+// TODO: Should have options to change axis style. Right now customEncoding has to provide everything.
+// Might be useful if we could identify just the props that we will be changing
 GroupedBarChart.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,

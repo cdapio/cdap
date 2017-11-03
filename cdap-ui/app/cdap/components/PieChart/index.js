@@ -21,7 +21,7 @@ import shortid from 'shortid';
 import isNil from 'lodash/isNil';
 
 export default class PieChart extends Component {
-  propTypes = {
+  static propTypes = {
     data: PropTypes.arrayOf(PropTypes.shape({
       color: PropTypes.string,
       value: PropTypes.string

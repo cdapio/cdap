@@ -22,12 +22,14 @@ require('./EmptyMessageContainer.scss');
 
 const PREFIX = 'features.EmptyMessageContainer';
 
-export default function EmptyMessageContainer({searchText, children}) {
+export default function EmptyMessageContainer({title, searchText, children}) {
   return (
     <div className="empty-search-container">
       <div className="empty-search">
         <strong>
-          {T.translate(`${PREFIX}.title`, {searchText})}
+          {
+            title ? title : T.translate(`${PREFIX}.title`, {searchText})
+          }
         </strong>
         <hr />
         <span> {T.translate(`${PREFIX}.suggestionTitle`)} </span>
@@ -37,6 +39,7 @@ export default function EmptyMessageContainer({searchText, children}) {
   );
 }
 EmptyMessageContainer.propTypes = {
+  title: PropTypes.string,
   searchText: PropTypes.string,
   children: PropTypes.node.isRequired
 };

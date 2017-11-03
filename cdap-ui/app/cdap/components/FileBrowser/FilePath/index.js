@@ -125,9 +125,10 @@ export default class FilePath extends Component {
           </DropdownToggle>
           <DropdownMenu>
             {
-              collapsedLinks.map((path) => {
+              collapsedLinks.map((path, i) => {
                 return (
                   <DropdownItem
+                    key={i}
                     title={path.name}
                   >
                     <LinkWrapper

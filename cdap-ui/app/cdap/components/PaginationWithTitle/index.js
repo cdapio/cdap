@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 require('./PaginationWithTitle.scss');
 
 export default class PaginationWithTitle extends Component {
-  propTypes = {
+  static propTypes = {
     currentPage: PropTypes.number,
     totalPages: PropTypes.number,
     title: PropTypes.string,
