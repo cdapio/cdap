@@ -222,7 +222,7 @@ function trainModel(experiment) {
           return getModPlugin(stage, modelPrepArtifact, {
             experimentId: experiment.name,
             modelId: models[0].id,
-            targetField: experiment.outcome,
+            outcome: experiment.outcome,
             algorithm: models[0].algorithm,
             predictionsDataset: `${models[0].pipeline}_prediction_dataset`
           });

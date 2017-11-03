@@ -109,7 +109,7 @@ const pipelineJson = {
             "overwrite": "true",
             "experimentId": "",
             "modelId": "",
-            "targetField": "",
+            "outcome": "",
             "algorithm": "",
             "predictionsDataset": ""
           }
