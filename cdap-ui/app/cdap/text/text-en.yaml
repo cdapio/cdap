@@ -1017,7 +1017,7 @@ features:
       duplicate: Duplicate
       edit: Edit
     database: Database ({count})
-    gcs: Google Cloud Service
+    gcs: Google Cloud Service ({count})
     hdfs: File System
     kafka: Kafka ({count})
     s3: S3 ({count})
