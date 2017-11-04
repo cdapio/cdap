@@ -34,7 +34,7 @@ const DEFAULT_SEARCH_FILTER_OPTIONS = [
   }
 ];
 
-const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS.map(filter => filter.id);
+const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS.filter(f => f.id !== 'artifact').map(filter => filter.id);
 
 const DEFAULT_SEARCH_SORT_OPTIONS = [
   {
