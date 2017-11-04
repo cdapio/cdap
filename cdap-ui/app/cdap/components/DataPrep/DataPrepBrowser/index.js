@@ -22,12 +22,14 @@ import DatabaseBrowser from 'components/DataPrep/DataPrepBrowser/DatabaseBrowser
 import FileBrowser from 'components/FileBrowser';
 import S3Browser from 'components/DataPrep/DataPrepBrowser/S3Browser';
 import KafkaBrowser from 'components/DataPrep/DataPrepBrowser/KafkaBrowser';
+import GCSBrowser from 'components/DataPrep/DataPrepBrowser/GCSBrowser';
 
 const browserMap = {
   database: DatabaseBrowser,
   file: FileBrowser,
   kafka: KafkaBrowser,
-  s3: S3Browser
+  s3: S3Browser,
+  gcs: GCSBrowser
 };
 
 export default class DataPrepBrowser extends Component {

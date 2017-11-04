@@ -22,6 +22,7 @@ import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import S3Connection from 'components/DataPrepConnections/S3Connection';
+import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import T from 'i18n-react';
 
 require('./AddConnection.scss');
@@ -55,6 +56,11 @@ export default class AddConnection extends Component {
         type: 'S3',
         icon: 'icon-s3',
         component: S3Connection
+      },
+      {
+        type: 'GCS',
+        icon: 'icon-google',
+        component: GCSConnection
       }
     ];
   }
