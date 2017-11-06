@@ -15,24 +15,63 @@
 */
 
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
-import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries} from 'react-vis';
+import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineMarkSeries, Hint} from 'react-vis';
 import NodeMetricsGraphLegends from 'components/PipelineNodeGraphs/NodeMetricsGraphLegends';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
+import {humanReadableDate, objectQuery} from 'services/helpers';
 import maxBy from 'lodash/maxBy';
 import findKey from 'lodash/findKey';
 import findIndex from 'lodash/findIndex';
 import capitalize from 'lodash/capitalize';
+import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
+import isEqual from 'lodash/isEqual';
+import T from 'i18n-react';
 
 const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
+const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph.NodeMetricsGraph`;
 const metricTypeToColorMap = {
   'recordsin': RECORDS_IN_COLOR,
   'recordsout': RECORDS_OUT_COLOR
 };
 
-const FPlot = makeVisFlexible(XYPlot);
+const metricLabelMap = {
+  'recordsIn': {
+    label: T.translate(`${PREFIX}.recordsIn`),
+    numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsIn`)
+  },
+  'recordsOut': {
+    label: T.translate(`${PREFIX}.recordsOut`),
+    numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsOut`),
+  },
+  'recordsError': {
+    label: T.translate(`${PREFIX}.recordsError`),
+    numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsError`),
+  }
+};
+
+
+function isDataSeriesHaveSingleDatapoint(data) {
+  if (!data) {
+    return false;
+  }
+  if (Array.isArray(data) && data.length === 1) {
+    return true;
+  }
+  if (typeof data === 'object') {
+    let allObjectsHaveSingleDataPoint = true;
+    Object.keys(data).forEach(d => {
+      if (data[d].data.length > 1) {
+        allObjectsHaveSingleDataPoint = false;
+      }
+    });
+    return allObjectsHaveSingleDataPoint;
+  }
+}
+
+export {isDataSeriesHaveSingleDatapoint};
+
 
 export default class NodeMetricsGraph extends Component {
 
@@ -62,7 +101,8 @@ export default class NodeMetricsGraph extends Component {
     }
 
     this.state = {
-      dataToShow
+      dataToShow,
+      currentHoveredElement: null
     };
 
     if (Array.isArray(this.data) && !this.data.length) {
@@ -163,31 +203,65 @@ export default class NodeMetricsGraph extends Component {
     );
   }
 
-  renderLineChart(data, metricType) {
+  renderLineChart = (data, metricType) => {
+    const onValueMouseOver = (key, d) => {
+      this.state.currentHoveredElement ? delete this.state.currentHoveredElement['key'] : null;
+      if (isEqual(this.state.currentHoveredElement, d)) {
+        return;
+      }
+      this.setState({
+        currentHoveredElement: {...d, key}
+      });
+    };
     if (!Array.isArray(data) && typeof data === 'object') {
       return Object
         .keys(data)
         .filter(key => this.state.dataToShow.indexOf(data[key].label) !== -1)
         .map(key => {
           return (
-            <LineSeries
+            <LineMarkSeries
               color={data[key].color || metricTypeToColorMap[metricType]}
               data={data[key].data}
               strokeWidth={4}
+              size={3}
+              onValueMouseOut={() => {
+                this.setState({
+                  currentHoveredElement: null
+                });
+              }}
+              onValueMouseOver={onValueMouseOver.bind(this, key)}
             />
           );
         });
     }
     return (
-      <LineSeries
+      <LineMarkSeries
         color={metricTypeToColorMap[metricType]}
         data={data}
         strokeWidth={4}
+        size={3}
+        onValueMouseOut={() => {
+          this.setState({
+            currentHoveredElement: null
+          });
+        }}
+        onValueMouseOver={onValueMouseOver.bind(this)}
       />
     );
-  }
-
+  };
   render() {
+    if (Array.isArray(this.props.data) && !this.props.data.length) {
+      return null;
+    }
+    let FPlot = makeVisFlexible(XYPlot);
+    if (isDataSeriesHaveSingleDatapoint(this.props.data)) {
+      return (
+        <div className="graph-plot-container single-datapoint-graph">
+          <NodeMetricsSingleDatapoint data={this.props.data} />
+        </div>
+      );
+    }
+    let metricLabel = objectQuery(this.state, 'currentHoveredElement', 'key') || this.props.metricType;
     return (
       <div className="graph-plot-container">
         <FPlot
@@ -205,6 +279,33 @@ export default class NodeMetricsGraph extends Component {
           {this.renderLineChart(this.data, this.metricType)}
           <div className="x-axis-title">{this.props.xAxisTitle}</div>
           <div className="y-axis-title">{this.props.yAxisTitle}</div>
+          {
+            this.state.currentHoveredElement ?
+              <Hint value={this.state.currentHoveredElement}>
+                <div className="title">
+                  <h4>
+                    {metricLabelMap[metricLabel] ? metricLabelMap[metricLabel].label : `${metricLabelMap['recordsOut'].label} (${metricLabel})`}
+                  </h4>
+                </div>
+                <div className="log-stats">
+                  <div>
+                    <span>{metricLabelMap[metricLabel] ? metricLabelMap[metricLabel].numOfRecordsLabel : metricLabelMap['recordsOut'].numOfRecordsLabel}</span>
+                    <span>{this.state.currentHoveredElement.actualRecords || '0'}</span>
+                  </div>
+                  <div>
+                    <span>{T.translate(`${PREFIX}.ts`)}</span>
+                    <span>{ humanReadableDate(this.state.currentHoveredElement.time, true) }
+                    </span>
+                  </div>
+                  <div>
+                    <span>{T.translate(`${PREFIX}.accumulatedRecords`)}</span>
+                    <span>{this.state.currentHoveredElement.y}</span>
+                  </div>
+                </div>
+              </Hint>
+            :
+              null
+          }
         </FPlot>
         <NodeMetricsGraphLegends
           items={this.colorLegend}
