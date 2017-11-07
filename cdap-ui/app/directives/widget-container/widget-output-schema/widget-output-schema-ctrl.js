@@ -14,7 +14,10 @@
  * the License.
 */
 angular.module(PKG.name + '.commons')
-  .controller('MyOutputSchemaCtrl', function($scope, GLOBALS) {
+  .controller('MyOutputSchemaCtrl', function($scope, GLOBALS, HydratorPlusPlusNodeService) {
+    if (typeof $scope.node.outputSchema === 'string') {
+      $scope.node.outputSchema = [HydratorPlusPlusNodeService.getOutputSchemaObj($scope.node.outputSchema)];
+    }
     this.outputSchemas = $scope.node.outputSchema
       .map((node) => {
         var schema = node.schema;

@@ -127,9 +127,12 @@
               <div class="node-splitter-popover"
                     ng-if="node.outputSchema.length && node.outputSchema[0].name !== 'etlSchemaBody'"
                     my-splitter-popover
-                    node-name="node.name"
+                    node="node"
                     ports="node.outputSchema"
-                    is-disabled="DAGPlusPlusCtrl.isDisabled">
+                    is-disabled="DAGPlusPlusCtrl.isDisabled"
+                    on-metrics-click="DAGPlusPlusCtrl.onMetricsClick"
+                    disable-metrics-click="disableMetricsClick"
+                    metrics-data="metricsData">
               </div>
             </div>
             <div class="endpoint-circle endpoint-circle-bottom"
@@ -193,7 +196,7 @@
               </div>
             </div>
             <div class="node-metrics"
-                  ng-if="DAGPlusPlusCtrl.isDisabled && node.type !== 'condition' && node.type !== 'splittertransform'">
+                  ng-if="DAGPlusPlusCtrl.isDisabled && node.type !== 'condition'">
               <my-node-metrics
                 on-click="DAGPlusPlusCtrl.onMetricsClick"
                 node="node"
