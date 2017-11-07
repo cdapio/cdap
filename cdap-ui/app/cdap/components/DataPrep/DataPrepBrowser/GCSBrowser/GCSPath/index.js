@@ -17,7 +17,7 @@
 import shortid from 'shortid';
 import FilePath from 'components/FileBrowser/FilePath';
 import {connect} from 'react-redux';
-import {setPrefix} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {setGCSPrefix} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 
 class GCSPath extends FilePath {
   constructor(props) {
@@ -28,6 +28,7 @@ class GCSPath extends FilePath {
     if (path[path.length -1 ] === '/') {
       path = path.slice(0, path.length - 1);
     }
+
     let parts = path.split(/\//);
     let individualPaths = [];
     let pathname = window.location.pathname.replace(/\/cdap/, '');
@@ -57,6 +58,7 @@ class GCSPath extends FilePath {
         });
       });
     }
+
     this.setState({
       paths: individualPaths,
       originalPath: path
@@ -77,7 +79,7 @@ const mapDispatchToProps = () => {
       // split with '=' and the second element in the path we need.
       let p = path.split('=').pop();
       p = p[p.length - 1] !== '/' ? `${p}/` : p;
-      setPrefix(p);
+      setGCSPrefix(p);
     }
   };
 };
