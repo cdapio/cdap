@@ -306,10 +306,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   // serve static assets
   app.use('/assets', [
-    express.static(DIST_PATH + '/assets', {
-      index: false,
-      maxAge: '1y'
-    }),
+    express.static(DIST_PATH + '/assets'),
     function(req, res) {
       finalhandler(req, res)(false); // 404
     }

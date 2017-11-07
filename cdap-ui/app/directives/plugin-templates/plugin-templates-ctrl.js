@@ -15,7 +15,7 @@
  */
 
 angular.module(`${PKG.name}.commons`)
-  .controller('PluginTemplatesCtrl', function (PluginTemplatesDirStore, PluginTemplatesDirActions, $scope, myPipelineApi, HydratorPlusPlusPluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope) {
+  .controller('PluginTemplatesCtrl', function (PluginTemplatesDirStore, PluginTemplatesDirActions, $scope, myPipelineApi, HydratorPlusPlusPluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope, HydratorPlusPlusNodeService, HydratorPlusPlusHydratorService) {
 
     var vm = this;
     var oldTemplateName;
@@ -128,11 +128,21 @@ angular.module(`${PKG.name}.commons`)
       if (!vm.pluginConfig) {
         vm.pluginConfig = {
           _backendProperties: vm.plugin.properties,
-          properties: {},
+          plugin: {
+            name: vm.plugin.name, // only important for Stream
+            properties: {}
+          },
+          outputSchema: [
+            {
+              'name': 'etlSchemaBody',
+              'schema': ''
+            }
+          ],
           lock: {}
         };
       } else {
         vm.pluginConfig._backendProperties = vm.plugin.properties;
+        vm.pluginConfig.plugin.name = vm.plugin.name;
       }
 
       var artifact = {
@@ -153,7 +163,7 @@ angular.module(`${PKG.name}.commons`)
           angular.forEach(vm.groupsConfig.groups, function (group) {
             angular.forEach(group.fields, function (field) {
               if (field.defaultValue) {
-                vm.pluginConfig.properties[field.name] = vm.pluginConfig.properties[field.name] || field.defaultValue;
+                vm.pluginConfig.plugin.properties[field.name] = vm.pluginConfig.plugin.properties[field.name] || field.defaultValue;
               }
             });
           });
@@ -170,7 +180,9 @@ angular.module(`${PKG.name}.commons`)
               });
             });
 
-            vm.pluginConfig.outputSchema = JSON.stringify({ fields: formattedSchema });
+            let arraySchemaFormat = [HydratorPlusPlusNodeService.getOutputSchemaObj(HydratorPlusPlusHydratorService.formatSchemaToAvro(configOutputSchema.implicitSchema))];
+
+            vm.pluginConfig.outputSchema = arraySchemaFormat;
           }
         }, function error () {
           // When there is no config
@@ -207,7 +219,7 @@ angular.module(`${PKG.name}.commons`)
             vm.pluginConfig = {
               artifact: template.artifact,
               pluginTemplate: template.pluginTemplate,
-              properties: template.properties,
+              plugin: { properties: template.plugin ? template.plugin.properties : template.properties },
               outputSchema: template.outputSchema,
               lock: template.lock
             };
@@ -240,8 +252,9 @@ angular.module(`${PKG.name}.commons`)
       PluginTemplatesDirActions.templateClose(true);
     };
 
-    vm.save = function (isValid) {
-      if (!isValid) {
+    vm.save = function () {
+      if (!vm.pluginConfig.pluginTemplate) {
+        vm.missingTemplateName = true;
         return;
       }
 
@@ -256,14 +269,14 @@ angular.module(`${PKG.name}.commons`)
       var outputPropertyName = myHelpers.objectQuery(vm.groupsConfig, 'outputSchema', 'outputSchemaProperty', '0');
 
       if (outputPropertyName && vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties[outputPropertyName]) {
-        vm.pluginConfig.properties[outputPropertyName] = vm.pluginConfig.outputSchema;
+        vm.pluginConfig.plugin.properties[outputPropertyName] = vm.pluginConfig.outputSchema;
       }
 
       var properties = {
         artifact: vm.plugin.artifact,
         pluginTemplate: vm.pluginConfig.pluginTemplate,
         description: vm.pluginDescription,
-        properties: vm.pluginConfig.properties,
+        properties: vm.pluginConfig.plugin.properties,
         pluginType: vm.pluginType,
         templateType: vm.templateType,
         pluginName: vm.pluginName,

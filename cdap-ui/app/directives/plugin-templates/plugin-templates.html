@@ -30,151 +30,148 @@
   </div>
 </div>
 <div class="modal-body">
-  <form name="templateCreateEditForm" ng-submit="PluginTemplatesCtrl.save(templateCreateEditForm.$valid)" novalidation>
-    <div class="form-content">
-      <div ng-if="PluginTemplatesCtrl.pluginType">
-        <label class="label-control">
-          <span>Choose Plugin</span>
-          <span class="fa fa-asterisk text-danger"></span>
-          <span class="text-danger" ng-show="PluginTemplatesCtrl.submitted && templateCreateEditForm.pluginList.$error.required"> {{PluginTemplatesCtrl.GLOBALS.en.admin.pluginMissingError}}</span>
-        </label>
-        <div class="select-wrapper">
-          <select ng-model="PluginTemplatesCtrl.pluginName"
-                  name="pluginList"
-                  ng-change="PluginTemplatesCtrl.onPluginSelect()"
-                  ng-if="!PluginTemplatesCtrl.prefill.pluginName"
-                  class="form-control" required>
-            <option ng-repeat="plugin in PluginTemplatesCtrl.pluginList" value="{{plugin}}">{{plugin}}</option>
-          </select>
-          <input class="form-control"
-                 ng-model="PluginTemplatesCtrl.pluginName"
-                 ng-if="PluginTemplatesCtrl.prefill.pluginName" disabled />
-        </div>
-        <div ng-if="!PluginTemplatesCtrl.prefill.pluginName && PluginTemplatesCtrl.pluginList.length === 0">
-          <h4>There is no plugin for this template</h4>
-        </div>
+  <div class="form-content">
+    <div ng-if="PluginTemplatesCtrl.pluginType">
+      <label class="label-control">
+        <span>Choose Plugin</span>
+        <span class="fa fa-asterisk text-danger"></span>
+      </label>
+      <div class="select-wrapper">
+        <select ng-model="PluginTemplatesCtrl.pluginName"
+                name="pluginList"
+                ng-change="PluginTemplatesCtrl.onPluginSelect()"
+                ng-if="!PluginTemplatesCtrl.prefill.pluginName"
+                class="form-control" required>
+          <option ng-repeat="plugin in PluginTemplatesCtrl.pluginList" value="{{plugin}}">{{plugin}}</option>
+        </select>
+        <input class="form-control"
+               ng-model="PluginTemplatesCtrl.pluginName"
+               ng-if="PluginTemplatesCtrl.prefill.pluginName" disabled />
       </div>
-
-      <div ng-if="PluginTemplatesCtrl.pluginVersions.length > 0">
-        <label class="label-control">
-          <span>Choose Version</span>
-          <span class="fa fa-asterisk text-danger"></span>
-          <span class="text-danger" ng-show="PluginTemplatesCtrl.submitted && templateCreateEditForm.pluginVersionList.$error.required">{{PluginTemplatesCtrl.GLOBALS.en.admin.pluginVersionMissingError}}</span>
-        </label>
-        <div class="select-wrapper">
-          <select ng-model="PluginTemplatesCtrl.plugin"
-                  name="pluginVersionList"
-                  ng-change="PluginTemplatesCtrl.onPluginVersionSelect()"
-                  ng-options="plugin.artifact.version for plugin in PluginTemplatesCtrl.pluginVersions"
-                  class="form-control" required>
-          </select>
-        </div>
+      <div ng-if="!PluginTemplatesCtrl.prefill.pluginName && PluginTemplatesCtrl.pluginList.length === 0">
+        <h4>There is no plugin for this template</h4>
       </div>
+    </div>
 
-      <div ng-if="PluginTemplatesCtrl.configFetched">
-        <h3>Plugin Properties</h3>
+    <div ng-if="PluginTemplatesCtrl.pluginVersions.length > 0">
+      <label class="label-control">
+        <span>Choose Version</span>
+        <span class="fa fa-asterisk text-danger"></span>
+      </label>
+      <div class="select-wrapper">
+        <select ng-model="PluginTemplatesCtrl.plugin"
+                name="pluginVersionList"
+                ng-change="PluginTemplatesCtrl.onPluginVersionSelect()"
+                ng-options="plugin.artifact.version for plugin in PluginTemplatesCtrl.pluginVersions"
+                class="form-control" required>
+        </select>
+      </div>
+    </div>
 
-        <label class="label-control">
-          <span>Template Name</span>
-          <span class="fa fa-asterisk text-danger"></span>
-          <span class="text-danger" ng-show="PluginTemplatesCtrl.submitted && templateCreateEditForm.pluginTemplateName.$error.required"> {{PluginTemplatesCtrl.GLOBALS.en.admin.templateNameMissingError}}</span>
-          <span class="text-danger" ng-if="PluginTemplatesCtrl.submitted && PluginTemplatesCtrl.pluginTemplateNameError">
-            {{PluginTemplatesCtrl.pluginTemplateNameError}}
-          </span>
-        </label>
-        <input type="text"
-                class="form-control"
-                name="pluginTemplateName"
-                ng-model="PluginTemplatesCtrl.pluginConfig.pluginTemplate" required>
+    <div ng-if="PluginTemplatesCtrl.configFetched">
+      <h3>Plugin Properties</h3>
 
-        <label class="label-control">Template Description</label>
-        <textarea class="form-control" ng-model="PluginTemplatesCtrl.pluginDescription"></textarea>
+      <label class="label-control">
+        <span>Template Name</span>
+        <span class="fa fa-asterisk text-danger"></span>
+        <span class="text-danger" ng-show="PluginTemplatesCtrl.missingTemplateName"> {{PluginTemplatesCtrl.GLOBALS.en.admin.templateNameMissingError}}</span>
+        <span class="text-danger" ng-if="PluginTemplatesCtrl.pluginTemplateNameError">
+          {{PluginTemplatesCtrl.pluginTemplateNameError}}
+        </span>
+      </label>
+      <input type="text"
+              class="form-control"
+              name="pluginTemplateName"
+              ng-model="PluginTemplatesCtrl.pluginConfig.pluginTemplate" required>
 
-        <!-- WHEN THERE IS CONFIG -->
-        <div ng-if="!PluginTemplatesCtrl.noConfig">
-          <div ng-repeat="group in PluginTemplatesCtrl.groupsConfig.groups">
-            <div class="widget-group-container">
-              <h4>{{::group.display}}</h4>
-              <div ng-repeat="field in group.fields">
-                <div ng-if="field.name !== PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperty">
+      <label class="label-control">Template Description</label>
+      <textarea class="form-control" ng-model="PluginTemplatesCtrl.pluginDescription"></textarea>
 
-                  <div class="form-group">
-                    <label class="control-label">
-                      <span>{{::field.label}}</span>
-                      <span class="fa fa-info-circle"
-                            uib-tooltip="{{::field.description}}"
-                            tooltip-placement="right"
-                            tooltip-append-to-body="true">
-                      </span>
-                      <span class="fa fa-asterisk" ng-if="PluginTemplatesCtrl.pluginConfig._backendProperties[field.name].required"></span>
-                      <small class="text-danger" ng-if="PluginTemplatesCtrl.pluginConfig._backendProperties[field.name].required && !PluginTemplatesCtrl.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
-                    </label>
+      <!-- WHEN THERE IS CONFIG -->
+      <div ng-if="!PluginTemplatesCtrl.noConfig">
+        <div ng-repeat="group in PluginTemplatesCtrl.groupsConfig.groups">
+          <div class="widget-group-container">
+            <h4>{{::group.display}}</h4>
+            <div ng-repeat="field in group.fields">
+              <div ng-if="field.name !== PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperty">
 
-                    <div>
-                      <div data-name="field"
-                           class="my-widget-container"
-                           ng-class="{'select-wrapper': field.widget === 'select'}"
-                           data-model="PluginTemplatesCtrl.pluginConfig.properties[field.name]"
-                           data-myconfig="field"
-                           data-properties="PluginTemplatesCtrl.pluginConfig.properties"
-                           widget-container>
-                      </div>
+                <div class="form-group">
+                  <label class="control-label">
+                    <span>{{::field.label}}</span>
+                    <span class="fa fa-info-circle"
+                          uib-tooltip="{{::field.description}}"
+                          tooltip-placement="right"
+                          tooltip-append-to-body="true">
+                    </span>
+                    <span class="fa fa-asterisk" ng-if="PluginTemplatesCtrl.pluginConfig._backendProperties[field.name].required"></span>
+                    <small class="text-danger" ng-if="PluginTemplatesCtrl.pluginConfig._backendProperties[field.name].required && !PluginTemplatesCtrl.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+                  </label>
 
-                      <label class="label-control">Lock change?</label>
-                      <input type="checkbox" ng-model="PluginTemplatesCtrl.pluginConfig.lock[field.name]">
+                  <div>
+                    <div data-name="field"
+                         class="my-widget-container"
+                         ng-class="{'select-wrapper': field.widget === 'select'}"
+                         data-model="PluginTemplatesCtrl.pluginConfig.plugin.properties[field.name]"
+                         data-myconfig="field"
+                         data-properties="PluginTemplatesCtrl.pluginConfig.plugin.properties"
+                         widget-container>
                     </div>
-                  </div>
 
+                    <label class="label-control">Lock change?</label>
+                    <input type="checkbox" ng-model="PluginTemplatesCtrl.pluginConfig.lock[field.name]">
+                  </div>
                 </div>
+
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- WHEN THERE IS NO CONFIG -->
-        <div ng-if="PluginTemplatesCtrl.noConfig">
-          <div ng-repeat="(name, value) in PluginTemplatesCtrl.plugin.properties track by $index">
-            <div class="form-group">
-              <label class="control-label">
-                <span>{{name}}</span>
-                <span class="fa fa-info-circle"
-                      uib-tooltip="{{value.description}}"
-                      tooltip-placement="right"
-                      tooltip-append-to-body="true">
-                </span>
-                <span class="fa fa-asterisk" ng-if="value.required"></span>
-              </label>
-              <input type="text"
-                      class="form-control"
-                      ng-model="PluginTemplatesCtrl.pluginConfig.properties[name]" />
-            </div>
+      <!-- WHEN THERE IS NO CONFIG -->
+      <div ng-if="PluginTemplatesCtrl.noConfig">
+        <div ng-repeat="(name, value) in PluginTemplatesCtrl.plugin.properties track by $index">
+          <div class="form-group">
+            <label class="control-label">
+              <span>{{name}}</span>
+              <span class="fa fa-info-circle"
+                    uib-tooltip="{{value.description}}"
+                    tooltip-placement="right"
+                    tooltip-append-to-body="true">
+              </span>
+              <span class="fa fa-asterisk" ng-if="value.required"></span>
+            </label>
+            <input type="text"
+                    class="form-control"
+                    ng-model="PluginTemplatesCtrl.pluginConfig.plugin.properties[name]" />
           </div>
         </div>
+      </div>
 
-        <div ng-if="!PluginTemplatesCtrl.noConfig">
-          <div class="output-schema">
-            <h4>Output Schema</h4>
+      <div ng-if="!PluginTemplatesCtrl.noConfig">
+        <div class="output-schema">
+          <h4>Output Schema</h4>
 
-            <fieldset ng-disabled="PluginTemplatesCtrl.isDisabled">
-              <my-schema-editor
-                ng-model="PluginTemplatesCtrl.pluginConfig['outputSchema']"
-                data-disabled="PluginTemplatesCtrl.groupsConfig.outputSchema.implicitSchema"
-                plugin-properties="PluginTemplatesCtrl.pluginConfig.properties"
-                config="PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperties">
-              </my-schema-editor>
-            </fieldset>
+          <fieldset ng-disabled="PluginTemplatesCtrl.isDisabled">
+            <my-output-schema
+              schema-advance="false"
+              node="PluginTemplatesCtrl.pluginConfig"
+              groups-config="PluginTemplatesCtrl.groupsConfig"
+              is-disabled="isDisabled">
+            </my-output-schema>
 
-          </div>
+          </fieldset>
+
         </div>
-
       </div>
 
     </div>
-  </form>
+
+  </div>
 </div>
 <div class="modal-footer">
   <div class="form-buttons text-right">
-    <button type="submit" ng-click="PluginTemplatesCtrl.submitted = true && PluginTemplatesCtrl.save(templateCreateEditForm.$valid)" class="btn btn-blue">
+    <button ng-click="PluginTemplatesCtrl.save()" class="btn btn-blue">
       <span ng-if="!PluginTemplatesCtrl.isEdit">Add</span>
       <span ng-if="PluginTemplatesCtrl.isEdit">Save</span>
     </button>
