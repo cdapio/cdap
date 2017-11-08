@@ -77,7 +77,7 @@ public class QueryId extends EntityId {
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.singletonList(handle);
   }
 

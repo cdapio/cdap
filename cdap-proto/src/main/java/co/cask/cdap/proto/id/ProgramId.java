@@ -140,7 +140,7 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(
       Arrays.asList(getNamespace(), getApplication(), getVersion(), type.getPrettyName().toLowerCase(), program));
   }

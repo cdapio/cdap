@@ -60,7 +60,7 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, name));
   }
 

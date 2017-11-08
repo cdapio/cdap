@@ -122,7 +122,7 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(
       Arrays.asList(getNamespace(), getApplication(), getVersion(), getType().getPrettyName().toLowerCase(),
                     getProgram(), run)
