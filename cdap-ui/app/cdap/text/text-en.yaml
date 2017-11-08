@@ -1688,7 +1688,6 @@ features:
         name-label: "Name"
         name-placeholder: "Namespace name"
         scheduler-queue-label: "Scheduler Queue"
-        scheduler-queue-placeholder: "Specify the Yarn queue name to be used for programs in this namespace"
         sld-desc:  "Specify the name and the description of the namespace."
         ssd-label: "General Information"
       Step2:
@@ -1699,6 +1698,7 @@ features:
         hive-db-name-label: "Hive Database Name"
         hive-db-name-placeholder: "Hive database for this namespace"
         scheduler-queue-name: "Scheduler Queue Name"
+        scheduler-queue-placeholder: "Yarn queue name to be used to submit programs in this namespace"
         sld-label: "Specify mapping of namespace resources to the existing underlying storage resources."
         ssd-label: "Namespace Mapping"
       Step3:
