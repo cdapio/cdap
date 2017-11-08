@@ -14,6 +14,11 @@
   the License.
 -->
 
+<div
+  ng-if="schemaError"
+  class="text-danger">
+  Cannot fetch schema. Please enter the output schema manually.
+</div>
 <input type="text" class="form-control"
   ng-model="model"
   data-min-length="0"
