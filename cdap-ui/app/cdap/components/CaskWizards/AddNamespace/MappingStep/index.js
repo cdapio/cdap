@@ -85,7 +85,7 @@ const mapStateToSchedulerQueueNameProps = (state) => {
   return {
     value: state.mapping.schedulerQueueName,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-name')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-placeholder')
   };
 };
 const mapDispatchToSchedulerQueueNameProps = (dispatch) => {
