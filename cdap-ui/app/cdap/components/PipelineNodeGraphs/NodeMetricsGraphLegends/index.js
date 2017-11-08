@@ -18,7 +18,8 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
-import NodeMetricsGraphLegend from 'components/PipelineNodeGraphs/NodeMetricsGraphLegend';
+import NodeMetricsGraphLegend from 'components/PipelineNodeGraphs/NodeMetricsGraphLegends/NodeMetricsGraphLegend';
+require('./NodeMetricsGraphLegends.scss');
 
 const PREFIX = 'features.PipelineSummary.pipelineNodesMetricsGraph';
 

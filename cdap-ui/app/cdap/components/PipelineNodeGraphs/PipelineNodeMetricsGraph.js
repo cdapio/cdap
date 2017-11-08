@@ -20,18 +20,18 @@ import {MyMetricApi} from 'api/metric';
 import T from 'i18n-react';
 import Rx from 'rx';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
-import NodeMetricsGraph from 'components/PipelineNodeGraphs/NodeMetricsGraph';
+import NodeMetricsGraph, {isDataSeriesHaveSingleDatapoint} from 'components/PipelineNodeGraphs/NodeMetricsGraph';
 import isNil from 'lodash/isNil';
-require('./PipelineNodeMetricsGraph.scss');
 import findIndex from 'lodash/findIndex';
-import maxBy from 'lodash/maxBy';
 import capitalize from 'lodash/capitalize';
 import cloneDeep from 'lodash/cloneDeep';
 import {getGapFilledAccumulatedData} from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 import {humanReadableDuration, isPluginSource, isPluginSink} from 'services/helpers';
+import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
 
+require('./PipelineNodeMetricsGraph.scss');
 const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph`;
 const RECORDS_OUT_PATH_COLOR = '#97A0BA';
 const RECORDS_ERROR_PATH_COLOR = '#A40403';
@@ -125,13 +125,16 @@ export default class PipelineNodeMetricsGraph extends Component {
         totalRecords += d.value;
         return {
           x: d.time,
-          y: totalRecords
+          y: totalRecords,
+          actualRecords: d.value
         };
       });
       formattedRecords = getGapFilledAccumulatedData(formattedRecords, numOfDataPoints)
         .map((data, i) => ({
           x: i,
-          y: data.y
+          y: data.y,
+          time: data.x * 1000,
+          actualRecords: data.actualRecords
         }));
     }
     return formattedRecords;
@@ -166,18 +169,16 @@ export default class PipelineNodeMetricsGraph extends Component {
 
   getOutputRecordsForCharting() {
     let {
-      recordsInData,
       recordsOutData,
       recordsErrorData,
       recordsOutPortsData
     } = cloneDeep(this.state);
 
     if (!this.state.aggregate) {
-      let numOfDataPoints = this.getNumOfDataPoints(recordsInData, recordsOutData, recordsErrorData, recordsOutPortsData);
-      recordsOutData = this.formatData(recordsOutData, numOfDataPoints);
-      recordsErrorData = this.formatData(recordsErrorData, numOfDataPoints);
+      recordsOutData = this.formatData(recordsOutData, Array.isArray(recordsOutData) ? recordsOutData.length : 0);
+      recordsErrorData = this.formatData(recordsErrorData, Array.isArray(recordsErrorData) ? recordsErrorData.length : 0);
       for (let i = 0; i < recordsOutPortsData.length; i++) {
-        recordsOutPortsData[i] = this.formatData(recordsOutPortsData[i], numOfDataPoints);
+        recordsOutPortsData[i] = this.formatData(recordsOutPortsData[i], Array.isArray(recordsOutPortsData[i]) ? recordsOutPortsData[i].length : 0);
       }
     } else {
       recordsOutData = (recordsOutData.data || []).length ? recordsOutData.data[0].value : 0;
@@ -225,15 +226,12 @@ export default class PipelineNodeMetricsGraph extends Component {
   getInputRecordsForCharting() {
     let {
       recordsInData,
-      recordsOutData,
-      recordsErrorData,
-      recordsOutPortsData
+      recordsErrorData
     } = cloneDeep(this.state);
 
     if (!this.state.aggregate) {
-      let numOfDataPoints = this.getNumOfDataPoints(recordsInData, recordsOutData, recordsErrorData, recordsOutPortsData);
-      recordsInData = this.formatData(recordsInData, numOfDataPoints);
-      recordsErrorData = this.formatData(recordsErrorData, numOfDataPoints);
+      recordsInData = this.formatData(recordsInData, Array.isArray(recordsInData) ? recordsInData.length : 0);
+      recordsErrorData = this.formatData(recordsErrorData, Array.isArray(recordsErrorData) ? recordsErrorData.length : 0);
     } else {
       recordsInData = (recordsInData.data || []).length ? recordsInData.data[0].value : 0;
       recordsErrorData = (recordsErrorData.data || []).length ? recordsErrorData.data[0].value : 0;
@@ -257,26 +255,6 @@ export default class PipelineNodeMetricsGraph extends Component {
       };
     }
     return inputRecordsObj;
-  }
-
-  getNumOfDataPoints(recordsInData, recordsOutData, recordsErrorData, recordsOutPortsData) {
-    let maxRecordsOutDataPoints = 0;
-    if (recordsOutData && recordsOutData.data && Array.isArray(recordsOutData.data)) {
-      maxRecordsOutDataPoints = recordsOutData.data.length;
-    } else if (recordsOutPortsData.length) {
-      let portWithMaxDataPoints = maxBy(recordsOutPortsData, (portData) => portData.data.length);
-      if (portWithMaxDataPoints && portWithMaxDataPoints.data && Array.isArray(portWithMaxDataPoints.data)) {
-        maxRecordsOutDataPoints = portWithMaxDataPoints.data.length;
-      }
-    }
-
-    let numOfDataPoints = Math.max(
-      Array.isArray(recordsInData.data) ? recordsInData.data.length : 0,
-      Array.isArray(recordsErrorData.data) ? recordsErrorData.data.length : 0,
-      maxRecordsOutDataPoints
-    );
-
-    return numOfDataPoints;
   }
 
   fetchProcessTimeMetrics = () => {
@@ -423,27 +401,7 @@ export default class PipelineNodeMetricsGraph extends Component {
       return <EmptyMessageContainer message={T.translate(`${PREFIX}.nodata`)} />;
     }
 
-    if (!Array.isArray(data) && typeof data === 'object') {
-      return (
-        <div className="node-metrics-single-datapoint">
-          {
-            Object.keys(data).map(key => {
-              return (
-                <span>
-                  <small>{data[key].label}</small>
-                  <span>{isNil(data[key].data) ? T.translate('commons.notAvailable') : data[key].data}</span>
-                </span>
-              );
-            })
-          }
-        </div>
-      );
-    }
-    return (
-      <div className="node-metrics-single-datapoint">
-        {data}
-      </div>
-    );
+    return <NodeMetricsSingleDatapoint data={data} />;
   }
 
   /*
@@ -612,7 +570,7 @@ export default class PipelineNodeMetricsGraph extends Component {
                 <div className="title"> {T.translate(`${PREFIX}.recordsInTitle`)}</div>
                 <div className="total-records">
                   {
-                    this.state.aggregate ?
+                    this.state.aggregate || isDataSeriesHaveSingleDatapoint(this.getInputRecordsForCharting()) ?
                       null
                     :
                       <strong>
@@ -643,7 +601,7 @@ export default class PipelineNodeMetricsGraph extends Component {
                 <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`)} </div>
                 <div className="total-records">
                   {
-                    this.state.aggregate ?
+                    this.state.aggregate || isDataSeriesHaveSingleDatapoint(this.getOutputRecordsForCharting()) ?
                       null
                     :
                       <span>

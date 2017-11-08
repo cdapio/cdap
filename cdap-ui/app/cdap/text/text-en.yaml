@@ -1338,6 +1338,15 @@ features:
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
+      NodeMetricsGraph:
+        accumulatedRecords: Accumulated Records
+        numOfRecordsError: 'Number of Error Records'
+        numOfRecordsIn: 'Number of Records In'
+        numOfRecordsOut: 'Number of Records Out'
+        recordsError: 'Error Records'
+        recordsIn: 'Records In'
+        recordsOut: 'Records Out'
+        ts: Timestamp
       portRecordsCountPopover:
         hide: Hide All
         title: Total Records Out

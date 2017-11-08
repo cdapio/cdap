@@ -14,10 +14,11 @@
  * the License.
 */
 
+@import '../PipelineSummary/GraphHint.scss';
+
 $graph_container_border_color: lightgray;
 $table_header_border: #c9ccd6;
 $error_records_label_color: #a40403;
-$legend-checkbox-bg-color: rgb(88, 183, 286);
 
 .pipeline-node-metrics-graph {
   height: 100%;
@@ -130,61 +131,16 @@ $legend-checkbox-bg-color: rgb(88, 183, 286);
             left: 50%;
           }
           .ports-legend-popover-with-errors {
-            width: 100%;
-            min-width: 200px;
-            padding-top: 10px;
-
-            .ports-legend-popover {
-              width: 70%;
-              max-width: 170px;
-              position: relative;
-              display: inline-block;
-
-              .legend-popover-toggle {
-                cursor: pointer;
-                border-bottom: 1px solid;
-                padding-bottom: 2px;
-                display: flex;
-                align-items: center;
-
-                .rv-discrete-color-legend {
-                  padding: 0;
-                }
-
-                .toggle-caret {
-                  margin-left: auto;
-                  font-size: 18px;
-                }
-              }
-
-              .legend-popover {
-                position: absolute;
-                background: white;
-                border: 1px solid black;
-                top: 35px;
-              }
-
-              .popover-content.rv-discrete-color-legend {
-                padding: 10px 0 15px 15px;
-
-                .rv-discrete-color-legend-item.vertical {
-                  margin-top: 5px;
-
-                  .legend-item-checkbox {
-                    margin-right: 10px;
-                    transform: translateY(1px);
-                  }
-                }
-              }
+            .ports-legend-popover .popover-content.rv-discrete-color-legend {
+              padding: 10px 0 15px 15px;
             }
-
             .rv-discrete-color-legend.error-item {
-              padding: 0;
               width: initial;
-              display: inline-block;
-              float: right;
+              padding: 0;
             }
-
+            > .rv-discrete-color-legend > .rv-discrete-color-legend-item {
+              margin: 0;
+            }
           }
           .rv-discrete-color-legend {
             width: 100%;
@@ -201,16 +157,6 @@ $legend-checkbox-bg-color: rgb(88, 183, 286);
 
               &.pointer {
                 cursor: pointer;
-              }
-
-              .legend-item-checkbox {
-                font-size: 20px;
-                width: 17px;
-                margin-right: 5px;
-
-                &.fa-check-square {
-                  color: $legend-checkbox-bg-color;
-                }
               }
 
               .rv-discrete-color-legend-item__title {
@@ -234,6 +180,7 @@ $legend-checkbox-bg-color: rgb(88, 183, 286);
       }
       .node-metrics-single-datapoint {
         font-size: 3em;
+        width: 100%;
         height: calc(100% - 50px);
         display: flex;
         flex-direction: column;
@@ -262,6 +209,17 @@ $legend-checkbox-bg-color: rgb(88, 183, 286);
         justify-content: center;
         display: flex;
         border: 1px solid $graph_container_border_color;
+      }
+      .graph-plot-container {
+        &.single-datapoint-graph {
+          padding: 0;
+          .node-metrics-single-datapoint {
+            height: 100%;
+          }
+        }
+
+        @include GraphHint(auto, 0 10px 0 0);
+
       }
     }
   }
