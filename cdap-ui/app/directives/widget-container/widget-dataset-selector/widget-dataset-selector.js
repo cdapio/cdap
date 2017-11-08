@@ -75,7 +75,14 @@ angular.module(PKG.name + '.commons')
           confirmModal.result.then((confirm) => {
             if (confirm) {
               isCurrentlyExistingDataset = true;
-              EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
+
+              if (!schema) {
+                $scope.schemaError = true;
+                EventPipe.emit('schema.clear');
+              } else {
+                $scope.schemaError = false;
+                EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
+              }
             } else {
               $scope.model = oldDatasetName;
             }
@@ -119,6 +126,7 @@ angular.module(PKG.name + '.commons')
         $scope.$watch('model', function (newDatasetName, oldDatasetName) {
           oldDataset = oldDatasetName;
           newDataset = newDatasetName;
+          $scope.schemaError = false;
 
           if (debouncedPopup) {
             debouncedPopup.cancel();
@@ -155,7 +163,10 @@ angular.module(PKG.name + '.commons')
                     }
                   } else {
                     initialized = true;
-                    EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
+
+                    if (schema) {
+                      EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
+                    }
                   }
                 }
             });
