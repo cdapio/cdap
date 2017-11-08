@@ -18,14 +18,12 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
@@ -51,10 +49,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A default implementation of {@link ApplicationManager}.

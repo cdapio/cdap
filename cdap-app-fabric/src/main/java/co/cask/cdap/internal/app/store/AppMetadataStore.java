@@ -686,6 +686,19 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     return activeRuns;
   }
 
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
+    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId).build();
+    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                            Integer.MAX_VALUE, timePredicate));
+
+    key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    key = getProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    return activeRuns;
+  }
+
   private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
     Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
     for (String type : Arrays.asList(TYPE_RUN_RECORD_STARTING, TYPE_RUN_RECORD_STARTED,

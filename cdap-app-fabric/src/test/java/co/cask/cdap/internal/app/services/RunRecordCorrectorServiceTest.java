@@ -56,6 +56,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -84,7 +85,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testFixProgram() {
+  public void testFixProgram() throws Exception {
     final AtomicInteger sourceId = new AtomicInteger(0);
 
     // Write 10 services with starting state
@@ -209,10 +210,11 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     }
   }
 
-  private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) {
-    RunRecordMeta runRecord = store.getRun(programRunId.getParent(), programRunId.getRun());
-    Assert.assertNotNull(runRecord);
-    Assert.assertEquals(expectedStatus, runRecord.getStatus());
+  private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) throws Exception {
+    Tasks.waitFor(true, () -> {
+      RunRecordMeta runRecord = store.getRun(programRunId.getParent(), programRunId.getRun());
+      return runRecord != null && Objects.equals(expectedStatus, runRecord.getStatus());
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
