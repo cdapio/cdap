@@ -499,6 +499,21 @@ CDAP Authentication Server
 Enabling Spark2
 ---------------
 In order to use Spark2, you must first install Spark2 on your cluster. If both Spark1
-and Spark2 are installed, you must set SPARK_MAJOR_VERSION to 2 in cdap-env.
+and Spark2 are installed, you must modify cdap-env to set SPARK_MAJOR_VERSION and SPARK_HOME::
+
+  export SPARK_MAJOR_VERSION=2
+  export SPARK_HOME=/usr/hdp/{{hdp_version}}/spark2
+
 When Spark2 is in use, Spark1 programs cannot be run. Similarly, when Spark1 is in use,
 Spark2 programs cannot be run.
+
+When CDAP starts up, it detects the spark version and uploads the corresponding pipeline
+system artifact. If you have already started CDAP with Spark1,
+you will also need to delete the pipeline system artifacts, then reload them in order
+to use the spark2 versions. After CDAP has been restarted with Spark2, use the RESTful API:
+
+.. parsed-literal::
+  |$| DELETE /v3/namespaces/system/artifacts/cdap-data-pipeline/versions/|release|
+  |$| DELETE /v3/namespaces/system/artifacts/cdap-data-streams/versions/|release|
+  |$| POST /v3/namespaces/system/artifacts
+

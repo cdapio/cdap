@@ -765,3 +765,14 @@ As the master is starting up, you should see a line with 'SPARK_COMPAT=spark2_2.
 
 When Spark2 is in use, Spark1 programs cannot be run. Similarly, when Spark1 is in use,
 Spark2 programs cannot be run.
+
+When CDAP starts up, it detects the spark version and uploads the corresponding pipeline
+system artifact. If you have already started CDAP with Spark1,
+you will also need to delete the pipeline system artifacts, then reload them in order
+to use the spark2 versions. After CDAP has been restarted with Spark2, use the RESTful API:
+
+.. parsed-literal::
+  |$| DELETE /v3/namespaces/system/artifacts/cdap-data-pipeline/versions/|release|
+  |$| DELETE /v3/namespaces/system/artifacts/cdap-data-streams/versions/|release|
+  |$| POST /v3/namespaces/system/artifacts
+
