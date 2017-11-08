@@ -23,7 +23,7 @@ import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
@@ -39,12 +39,11 @@ import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpRequest;
-import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -60,11 +59,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
@@ -93,13 +100,13 @@ import javax.ws.rs.Path;
  *     @literal @GET
  *     @literal @Path("/path")
  *     public void userMethod(HttpRequest request, HttpResponder responder) {
- *       // see generateTransactionalDelegateBody() for generated method body.
+ *       // see generateDelegateBody() for generated method body.
  *     }
  *
  *     @literal @PUT
  *     @literal @Path("/upload")
  *     public HttpContentConsumer userUpload(HttpRequest request, HttpResponder responder) {
- *       // see generateTransactionalDelegateBody() for generated method body.
+ *       // see generateDelegateBody() for generated method body.
  *     }
  *   }
  * }</pre>
@@ -116,6 +123,23 @@ final class HttpHandlerGenerator {
 
   private static final Type TX_POLICY_TYPE = Type.getType(TransactionPolicy.class);
   private static final Type TX_CONTROL_TYPE = Type.getType(TransactionControl.class);
+  private static final Type ATOMIC_REFERENCE_TYPE = Type.getType(AtomicReference.class);
+  private static final Type THROWING_RUNNABLE_TYPE = Type.getType(ThrowingRunnable.class);
+  private static final Type EXCEPTION_TYPE = Type.getType(Exception.class);
+  private static final Type DELAYED_HTTP_SERVICE_RESPONDER_TYPE = Type.getType(DelayedHttpServiceResponder.class);
+  private static final Type HTTP_CONTENT_CONSUMER_TYPE = Type.getType(HttpContentConsumer.class);
+
+  // Method descriptor of the LambdaMetafactory.metafactory method.
+  private static final String LAMBDA_META_FACTORY_METHOD_DESC =
+    MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class,
+                          MethodType.class, MethodHandle.class, MethodType.class).toMethodDescriptorString();
+
+
+  private final TransactionControl defaultTxControl;
+
+  HttpHandlerGenerator(TransactionControl defaultTxControl) {
+    this.defaultTxControl = defaultTxControl;
+  }
 
   /**
    * Generates a new class that implements {@link HttpHandler} by copying methods signatures from the given
@@ -139,7 +163,7 @@ final class HttpHandlerGenerator {
 
     // Generate the class
     Type classType = Type.getObjectType(className);
-    classWriter.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
+    classWriter.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
                       className, getClassSignature(delegateType),
                       Type.getInternalName(AbstractHttpHandlerDelegator.class), null);
 
@@ -388,7 +412,7 @@ final class HttpHandlerGenerator {
       // If any annotations of the method is one of those HttpMethod,
       // this is a handler process, hence need to copy.
       boolean handlerMethod = false;
-      TransactionControl txCtrl = TransactionControl.IMPLICIT;
+      TransactionControl txCtrl = defaultTxControl;
       for (AnnotationNode annotation : annotations) {
         if (isHandlerMethod(Type.getType(annotation.desc))) {
           handlerMethod = true;
@@ -448,7 +472,7 @@ final class HttpHandlerGenerator {
       String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
       MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc,
                                                             rewriteMethodSignature(signature), exceptions);
-      final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
+      GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, methodDesc);
 
       // Replay all annotations before generating the body.
       for (AnnotationNode annotation : annotations) {
@@ -460,8 +484,8 @@ final class HttpHandlerGenerator {
         annotation.accept(mg.visitParameterAnnotation(entry.getKey(), annotation.desc, true));
       }
 
-      // Each request method is wrapped by a transaction lifecycle.
-      generateTransactionalDelegateBody(mg, new Method(name, desc), txCtrl);
+      // Generate the method body
+      generateDelegateBody(classWriter, mg, new Method(name, desc), txCtrl);
 
       super.visitEnd();
     }
@@ -527,217 +551,184 @@ final class HttpHandlerGenerator {
     }
 
     /**
-     * Wrap the user written Handler method in a transaction.
-     * The transaction begins before calling the user method, and commit after the user method returns.
-     * On errors the transaction is aborted and rolledback.
+     * Generate the handle method body.
+     * For handler that doesn't return {@link HttpContentConsumer}, it has the following form:
      *
-     * The generated handler method body has the form:
+     * <pre>
+     * public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *   T handler = getHandler();
+     *   DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, defaultTxControl);
+     *   try {
+     *     execute(context -> handler.handle(wrapRequest(request), wrappedResponder, ...), useTx);
+     *   } catch (Exception e) {
+     *     wrappedResponder.setFailure(e);
+     *   }
+     *   wrappedResponder.execute();
+     * }
+     * </pre>
      *
-     * <pre>{@code
-     *   public void|BodyConsumer handle(HttpRequest request, HttpResponder responder, ...) {
-     *     T handler = getHandler();
-     *     HttpContentConsumer contentConsumer = null;
-     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
-     *     try {
-     *       // only start tx if transaction control is IMPLICIT
-     *       TransactionContext txContext = startTransactionContext();
-     *       // only generate this try catch block if transaction control is IMPLICIT
-     *       try {
-     *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(getHandlerContextClassLoader());
-     *         try {
-     *           // Only do assignment if handler method returns HttpContentConsumer
-     *           [contentConsumer = ]handler.handle(wrapRequest(request), wrappedResponder, ...);
-     *         } finally {
-     *           ClassLoaders.setContextClassLoader(classLoader);
-     *         }
-     *       // only generate this try catch block if transaction control is IMPLICIT
-     *       } catch (Throwable t) {
-     *         LOG.error("User handler exception", t);
-     *         txContext.abort(new TransactionFailureException("User handler exception", t));
-     *       }
-     *       // only finish tx if transaction control is IMPLICIT
-     *       txContext.finish();
-     *     } catch (TransactionFailureException e) { // generate only if transaction constrol is IMPLICIT
-     *        LOG.error("Transaction failure: ", e);
-     *        wrappedResponder.setTransactionFailureResponse(e);
-     *        contentConsumer = null;
-     *     } catch (Throwable t) { // generate only if transaction constrol is EXPLICIT
-     *        LOG.error("User Handler exception", t);
-     *        wrappedResponder.setTransactionFailureResponse(t);
-     *        contentConsumer = null;
-     *     }
-     *     if (contentConsumer == null) {
-     *       wrappedResponder.execute();
-     *       // Only return null if handler method returns HttpContentConsumer
-     *       [return null;]
-     *     }
+     * For handler that returns {@link HttpContentConsumer}, it has the following form:
      *
-     *     // Only generated if handler method returns HttpContentConsumer
-     *     [return wrapContentConsumer(httpContentConsumer, wrappedResponder);]
+     * <pre>
+     * public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *   T handler = getHandler();
+     *   DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, defaultTxControl);
+     *   AtomicReference consumerRef = new AtomicReference();
+     *   try {
+     *     execute(context -> consumerRef.set(handler.handle(wrapRequest(request), wrappedResponder, ...)), useTx);
+     *   } catch (Exception e) {
+     *     wrappedResponder.setFailure(e);
+     *     consumerRef.set(null);
+     *   }
+     *   HttpContentConsumer consumer = (HttpContentConsumer) consumerRef.get();
+     *   if (consumer == null) {
+     *     wrappedResponder.execute();
+     *   } else {
+     *     return wrapContentConsumer(consumer, wrappedResponder, defaultTxControl);
      *   }
      * }
      * </pre>
      */
-    private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method, TransactionControl txCtrl) {
+    private void generateDelegateBody(ClassWriter classWriter, GeneratorAdapter mg,
+                                      Method method, TransactionControl txControl) {
+      boolean useBodyConsumer = method.getReturnType().getSort() == Type.OBJECT;
+
+      // Generate the synthetic static method for lambda invoke first
+      Method lambdaMethod = generateRunnableLambda(classWriter, method, useBodyConsumer);
+
       Type handlerType = Type.getType(delegateType.getRawType());
-      Type txContextType = Type.getType(TransactionContext.class);
-      Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
-      Type loggerType = Type.getType(Logger.class);
-      Type throwableType = Type.getType(Throwable.class);
-      Type delayedHttpServiceResponderType = Type.getType(DelayedHttpServiceResponder.class);
-      Type httpContentConsumerType = Type.getType(HttpContentConsumer.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
       Label txCatch = mg.newLabel();
       Label txFinish = mg.newLabel();
 
-      Label handlerTryBegin = mg.newLabel();
-      Label handlerTryEnd = mg.newLabel();
-      Label handlerCatch = mg.newLabel();
-      Label handlerFinish = mg.newLabel();
-
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, txFailureExceptionType.getInternalName());
-        mg.visitTryCatchBlock(handlerTryBegin, handlerTryEnd, handlerCatch, throwableType.getInternalName());
-      } else {
-        mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, throwableType.getInternalName());
-      }
+      mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, EXCEPTION_TYPE.getInternalName());
 
       // T handler = getHandler();
       int handler = mg.newLocal(handlerType);
       mg.loadThis();
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceHandler.class, "getHandler"));
+      mg.invokeVirtual(classType, Methods.getMethod(HttpServiceHandler.class, "getHandler"));
       mg.checkCast(handlerType);
       mg.storeLocal(handler, handlerType);
 
-      // HttpContentConsumer contentConsumer = null;
-      int contentConsumer = mg.newLocal(httpContentConsumerType);
-      mg.visitInsn(Opcodes.ACONST_NULL);
-      mg.storeLocal(contentConsumer, httpContentConsumerType);
-
-      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);;
-      int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
+      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, defaultTxControl);
+      int wrappedResponder = mg.newLocal(DELAYED_HTTP_SERVICE_RESPONDER_TYPE);
       mg.loadThis();
       mg.loadArg(1);
+      mg.getStatic(TX_CONTROL_TYPE, defaultTxControl.name(), TX_CONTROL_TYPE);
       mg.invokeVirtual(classType,
-                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder", HttpResponder.class));
-      mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
+                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder",
+                                         HttpResponder.class, TransactionControl.class));
+      mg.storeLocal(wrappedResponder, DELAYED_HTTP_SERVICE_RESPONDER_TYPE);
 
-      // try {  // Outer try for transaction failure
+      int consumerRef = 0;
+      if (useBodyConsumer) {
+        // AtomicReference<HttpContentConsumer> consumerRef = new AtomicReference<>();
+        consumerRef = mg.newLocal(ATOMIC_REFERENCE_TYPE);
+        mg.newInstance(ATOMIC_REFERENCE_TYPE);
+        mg.dup();
+        mg.invokeConstructor(ATOMIC_REFERENCE_TYPE, new Method("<init>", Type.VOID_TYPE, new Type[0]));
+        mg.storeLocal(consumerRef);
+      }
+
+      // try {
       mg.mark(txTryBegin);
 
-      // only start tx if transaction control is IMPLICIT
-      int txContext = 0;
-      if (TransactionControl.IMPLICIT == txCtrl) {
-
-        // TransactionContext txContext = startTransactionContext();
-        txContext = mg.newLocal(txContextType);
-        mg.loadThis();
-        mg.invokeVirtual(classType,
-                         Methods.getMethod(TransactionContext.class, "startTransactionContext"));
-        mg.storeLocal(txContext, txContextType);
-
-        // only generate this try catch block if transaction control is IMPLICIT
-        // try { // Inner try for user handler failure
-        mg.mark(handlerTryBegin);
-      }
-      // If no body consumer, generates:
-      // this.getHandler(wrapRequest(request), wrappedResponder, ...);
+      // Generate
+      // execute(context -> handler.handle(wrapRequest(request), wrappedResponder, ...), useTx);
+      //     or
+      // execute(context -> consumerRef.set(handler.handle(wrapRequest(request), wrappedResponder, ...)), useTx);
       //
-      // otherwise, generates:
-      // contentConsumer = this.getHandler(wrapRequest(reuqest), wrappedResponder, ...);
-      generateInvokeDelegate(mg, handler, method, wrappedResponder);
-      if (method.getReturnType().getSort() == Type.OBJECT) {
-        mg.storeLocal(contentConsumer, httpContentConsumerType);
+      // The generated code is using lambda, which is basically a invokeDynamic call to
+      // LambdaMetafactory.metafactory to get a CallSite that can call the generated private static lambda method,
+      // which is the one who actually calls the handler.handle method.
+
+      // Load "this" first. This is for calling the execute() method using invokeVirtual.
+      mg.loadThis();
+
+      // Populate the parameters needed for the lambda method. See generateRunnableLambda for the signature.
+      if (useBodyConsumer) {
+        mg.loadLocal(consumerRef);
+      }
+      mg.loadLocal(handler);
+
+      // wrapRequest(request)
+      mg.loadThis();
+      mg.loadArg(0);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
+
+      mg.loadLocal(wrappedResponder);
+
+      // Load all arguments after the HttpResponder
+      for (int i = 2; i < method.getArgumentTypes().length; i++) {
+        mg.loadArg(i);
       }
 
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        // } // end of inner try
-        mg.mark(handlerTryEnd);
-        mg.goTo(handlerFinish);
+      // Perform the lambda invocation.
+      Handle metaFactoryHandle = new Handle(Opcodes.H_INVOKESTATIC,
+                                            Type.getType(LambdaMetafactory.class).getInternalName(),
+                                            "metafactory", LAMBDA_META_FACTORY_METHOD_DESC);
+      Handle lambdaMethodHandle = new Handle(Opcodes.H_INVOKESTATIC, classType.getInternalName(),
+                                             lambdaMethod.getName(), lambdaMethod.getDescriptor());
 
-        // } catch (Throwable t) {  // inner try-catch
-        mg.mark(handlerCatch);
-        int throwable = mg.newLocal(throwableType);
-        mg.storeLocal(throwable);
+      // Signature of the ThrowingRunnable.run() method
+      Type samMethodType = Type.getType(Type.getMethodDescriptor(Type.VOID_TYPE));
+      // Use invokeDynamic to call the static lambda method, which to the invokeDynamic command, it is as if
+      // calling a method that returns a ThrowingRunnable.
+      mg.invokeDynamic("run", Type.getMethodDescriptor(THROWING_RUNNABLE_TYPE, lambdaMethod.getArgumentTypes()),
+                       metaFactoryHandle, samMethodType, lambdaMethodHandle, samMethodType);
 
-        // LOG.error("User handler exception", e);
-        mg.getStatic(classType, "LOG", loggerType);
-        mg.visitLdcInsn("User handler exception: ");
-        mg.loadLocal(throwable);
-        mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
+      // Second argument to the execute method
+      mg.push(txControl == TransactionControl.IMPLICIT);
+      mg.invokeVirtual(classType, new Method("execute", Type.VOID_TYPE,
+                                             new Type[] { THROWING_RUNNABLE_TYPE, Type.BOOLEAN_TYPE }));
 
-        // transactionContext.abort(new TransactionFailureException("User handler exception: ", e));
-        mg.loadLocal(txContext, txContextType);
-        mg.newInstance(txFailureExceptionType);
-        mg.dup();
-        mg.visitLdcInsn("User handler exception: ");
-        mg.loadLocal(throwable);
-        mg.invokeConstructor(txFailureExceptionType,
-                             Methods.getMethod(void.class, "<init>", String.class, Throwable.class));
-        mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
-
-        // } // end of inner catch
-        mg.mark(handlerFinish);
-
-        // only finish tx if transaction control is IMPLICIT
-        // txContext.finish()
-        mg.loadLocal(txContext, txContextType);
-        mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
-      }
       mg.goTo(txTryEnd);
 
-      // } // end of outer try
+      // } // end of try
       mg.mark(txTryEnd);
       mg.goTo(txFinish);
 
-      // } catch
+      // } catch (Exception e) {
       mg.mark(txCatch);
 
-      // } catch (TransactionFailureException e) {  // IMPLICIT
-      // } catch (Throwable t) { // EXPLICIT
+      int throwable = mg.newLocal(EXCEPTION_TYPE);
+      mg.storeLocal(throwable, EXCEPTION_TYPE);
 
-      Type caughtType = TransactionControl.IMPLICIT == txCtrl ? txFailureExceptionType : throwableType;
-      String message = TransactionControl.IMPLICIT == txCtrl ? "Transaction Failure: " : "User Handler failure: ";
-
-      int throwable = mg.newLocal(caughtType);
-      mg.storeLocal(throwable, caughtType);
-
-      // LOG.error("Transaction failure: ", e);
-      mg.getStatic(classType, "LOG", loggerType);
-      mg.visitLdcInsn(message);
-      mg.loadLocal(throwable);
-      mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
-                                                       Throwable.class));
-
-      // wrappedResponder.setTransactionFailureResponse(e);
+      // wrappedResponder.setFailure(e);
       mg.loadLocal(wrappedResponder);
       mg.loadLocal(throwable);
-      mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse",
-                                                                          Throwable.class));
+      mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE,
+                       Methods.getMethod(void.class, "setFailure", Throwable.class));
 
-      // contentConsumer = null;
-      mg.visitInsn(Opcodes.ACONST_NULL);
-      mg.storeLocal(contentConsumer);
+      if (useBodyConsumer) {
+        // consumerRef.set(null);
+        mg.loadLocal(consumerRef);
+        mg.visitInsn(Opcodes.ACONST_NULL);
+        mg.invokeVirtual(ATOMIC_REFERENCE_TYPE, Methods.getMethod(void.class, "set", Object.class));
+      }
 
-      // } // end of outer catch
+      // } // End of the whole try-catch block
       mg.mark(txFinish);
 
-      // If body consumer is used, generates:
-      //
-      // if (httpContentConsumer == null) {
-      //   wrappedResponder.execute();
-      //   return null;
-      // }
-      // return wrapContentConsumer(httpContentConsumer, wrappedResponder);
-      //
-      // Otherwise, generates
-      // wrappedResponder.execute();
-      if (method.getReturnType().getSort() == Type.OBJECT) {
+      if (useBodyConsumer) {
+        // HttpContentConsumer consumer = consumerRef.get();
+        // if (consumer == null) {
+        //   wrappedResponder.execute();
+        // } else {
+        //   return wrapContentConsumer(consumer, wrappedResponder, defaultTxControl);
+        // }
         Label hasContentConsumer = mg.newLabel();
-        mg.loadLocal(contentConsumer);
+
+        int consumer = mg.newLocal(HTTP_CONTENT_CONSUMER_TYPE);
+        mg.loadLocal(consumerRef);
+        mg.invokeVirtual(ATOMIC_REFERENCE_TYPE, Methods.getMethod(Object.class, "get"));
+        mg.checkCast(HTTP_CONTENT_CONSUMER_TYPE);
+        mg.storeLocal(consumer);
+
+        mg.loadLocal(consumer);
 
         // if contentConsumer != null, goto label hasContentConsumer
         mg.ifNonNull(hasContentConsumer);
@@ -745,7 +736,7 @@ final class HttpHandlerGenerator {
         //   wrappedResponder.execute();
         //   return null;
         mg.loadLocal(wrappedResponder);
-        mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
+        mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE, Methods.getMethod(void.class, "execute"));
         mg.visitInsn(Opcodes.ACONST_NULL);
         mg.returnValue();
 
@@ -755,100 +746,85 @@ final class HttpHandlerGenerator {
         // the last thing to do in this generated method since the current context will be captured
         // return wrapContentConsumer(httpContentConsumer, wrappedResponder);
         mg.loadThis();
-        mg.loadLocal(contentConsumer);
+        mg.loadLocal(consumer);
         mg.loadLocal(wrappedResponder);
+        mg.getStatic(TX_CONTROL_TYPE, defaultTxControl.name(), TX_CONTROL_TYPE);
         mg.invokeVirtual(classType, Methods.getMethod(BodyConsumer.class, "wrapContentConsumer",
                                                       HttpContentConsumer.class,
-                                                      DelayedHttpServiceResponder.class));
+                                                      DelayedHttpServiceResponder.class,
+                                                      TransactionControl.class));
         mg.returnValue();
       } else {
-        // wrappedResponder.execute()
+        // wrappedResponder.execute();
         mg.loadLocal(wrappedResponder);
-        mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
-
+        mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE, Methods.getMethod(void.class, "execute"));
         mg.returnValue();
       }
-
       mg.endMethod();
     }
 
     /**
-     * Generates the code block for setting context ClassLoader, calling user handler method
-     * and resetting context ClassLoader.
+     * Generates a synthetic static method for lambda dynamic invocation.
+     * For handler method that doesn't return {@link HttpContentConsumer}, it has the following form:
+     *
+     * <pre>
+     *   private static [synthetic] void methodName(T handler, HttpServiceRequest request,
+     *                                              HttpServiceResponder responder, ...) throws Exception {
+     *     handler.methodName(request, responder, ...);
+     *   }
+     * </pre>
+     *
+     * For handler method that returns {@link HttpContentConsumer}, it has the following form:
+     *
+     * <pre>
+     *   private static [synthetic] void methodName(AtomicReference consumerRef, T handler, HttpServiceRequest request,
+     *                                              HttpServiceResponder responder, ...) throws Exception {
+     *     consumerRef.set(handler.methodName(request, responder, ...);
+     *   }
+     * </pre>
+     *
      */
-    private void generateInvokeDelegate(GeneratorAdapter mg, int handler, Method method, int responder) {
-      Type classLoaderType = Type.getType(ClassLoader.class);
+    private Method generateRunnableLambda(ClassWriter classWriter, Method handlerMethod, boolean useBodyConsumer) {
       Type handlerType = Type.getType(delegateType.getRawType());
 
-      Label contextTryBegin = mg.newLabel();
-      Label contextTryEnd = mg.newLabel();
-      Label contextCatch = mg.newLabel();
-      Label contextEnd = mg.newLabel();
-      Label contextCatchEnd = mg.newLabel();
+      // Setup the method argument types
+      List<Type> argumentTypes = new ArrayList<>();
+      if (useBodyConsumer) {
+        argumentTypes.add(ATOMIC_REFERENCE_TYPE);
+      }
+      argumentTypes.add(handlerType);
+      argumentTypes.addAll(Arrays.asList(handlerMethod.getArgumentTypes()));
 
-      // For the try-finally block
-      // In bytecode, it's done by two try-catch instructions. The finally code are in both
-      // the tryEnd and catchEnd blocks.
-      mg.visitTryCatchBlock(contextTryBegin, contextTryEnd, contextCatch, null);
-      mg.visitTryCatchBlock(contextCatch, contextCatchEnd, contextCatch, null);
+      // Generate the method
+      Method lambdaMethod = new Method(generateMethodName(handlerMethod), Type.VOID_TYPE,
+                                       argumentTypes.toArray(new Type[argumentTypes.size()]));
+      GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+                                                 lambdaMethod, null, new Type[] { Type.getType(Exception.class) },
+                                                 classWriter);
 
-      int throwable = mg.newLocal(Type.getType(Throwable.class));
+      // Load all the arguments and call the handler method.
+      // handler.methodName(request, responder, ...);
+      mg.loadArgs();
+      mg.invokeVirtual(handlerType, handlerMethod);
 
-      // ClassLoader classLoader = ClassLoaders.setContextClassLoader(getHandlerContextClassLoader());
-      int classLoader = mg.newLocal(classLoaderType);
-      mg.loadThis();
-      mg.invokeVirtual(classType, Methods.getMethod(ClassLoader.class, "getHandlerContextClassLoader"));
-      mg.invokeStatic(Type.getType(ClassLoaders.class),
-                      Methods.getMethod(ClassLoader.class, "setContextClassLoader", ClassLoader.class));
-      mg.storeLocal(classLoader, classLoaderType);
-
-      // try {
-      mg.mark(contextTryBegin);
-
-      // handler.method(wrapRequest(request), responder, ...);
-      mg.loadLocal(handler);
-
-      mg.loadThis();
-      mg.loadArg(0);
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
-
-      mg.loadLocal(responder);
-
-      for (int i = 2; i < method.getArgumentTypes().length; i++) {
-        mg.loadArg(i);
+      if (useBodyConsumer) {
+        // consumerRef.set([top_of_stack])
+        mg.invokeVirtual(ATOMIC_REFERENCE_TYPE, Methods.getMethod(void.class, "set", Object.class));
       }
 
-      mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
+      mg.returnValue();
+      mg.endMethod();
 
-      // }
-      mg.mark(contextTryEnd);
-
-      // Reset ClassLoader, like in finally {}
-      // ClassLoaders.setContextClassLoader(classLoader);
-      setClassLoader(mg, classLoader);
-      mg.goTo(contextEnd);
-
-      // } catch and rethrow
-      mg.mark(contextCatch);
-      mg.storeLocal(throwable);
-
-      mg.mark(contextCatchEnd);
-
-      // A duplicate of finally block is needed in bytecode so that it gets executed when there is exception
-      // ClassLoaders.setContextClassLoader(classLoader);
-      setClassLoader(mg, classLoader);
-      mg.loadLocal(throwable);
-      mg.throwException();
-
-      mg.mark(contextEnd);
+      return lambdaMethod;
     }
+  }
 
-    private void setClassLoader(GeneratorAdapter mg, int classLoader) {
-      mg.loadLocal(classLoader);
-      mg.invokeStatic(Type.getType(ClassLoaders.class),
-                      Methods.getMethod(ClassLoader.class, "setContextClassLoader", ClassLoader.class));
-      mg.pop();
-    }
+  /**
+   * Generates a legal Java method name from the given method descriptor.
+   */
+  private String generateMethodName(Method method) {
+    return "lambda$" + method.toString().codePoints().map(c -> Character.isJavaIdentifierPart(c) ? c : '_')
+      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+      .toString();
   }
 }

@@ -70,7 +70,7 @@ final class FieldAccessorGenerator {
 
     // Generate the class
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    classWriter.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
+    classWriter.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
                       className, null, Type.getInternalName(AbstractFieldAccessor.class), new String[0]);
 
     generateConstructor(field);

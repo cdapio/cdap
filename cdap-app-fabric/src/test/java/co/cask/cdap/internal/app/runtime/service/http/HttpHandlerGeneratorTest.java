@@ -58,8 +58,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -154,6 +152,19 @@ public class HttpHandlerGeneratorTest {
       }
 
       responder.sendStatus(200, headers);
+    }
+
+    @Path("/exception")
+    @GET
+    public void exception(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
+      throw new Exception("exception");
+    }
+
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    @Path("/exceptionNoTx")
+    @GET
+    public void exceptionNoTx(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
+      throw new Exception("exceptionNoTx");
     }
   }
 
@@ -561,6 +572,20 @@ public class HttpHandlerGeneratorTest {
       urlConn.setReadTimeout(2000);
 
       Assert.assertEquals("OK", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
+
+      // Call to a method that raise exception
+      urlConn = new URL(String.format("http://%s:%d/prefix/p2/exception",
+                                      bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      Assert.assertEquals(500, ((HttpURLConnection) urlConn).getResponseCode());
+      Assert.assertEquals("Exception occurred while handling request: exception",
+                          new String(ByteStreams.toByteArray(((HttpURLConnection) urlConn).getErrorStream()), "UTF-8"));
+
+      urlConn = new URL(String.format("http://%s:%d/prefix/p2/exceptionNoTx",
+                                      bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      Assert.assertEquals(500, ((HttpURLConnection) urlConn).getResponseCode());
+      Assert.assertEquals("Exception occurred while handling request: exceptionNoTx",
+                          new String(ByteStreams.toByteArray(((HttpURLConnection) urlConn).getErrorStream()), "UTF-8"));
+
     } finally {
       service.stop();
     }
@@ -602,7 +627,7 @@ public class HttpHandlerGeneratorTest {
   /**
    * An no-op implementation of {@link HttpServiceContext} that implements no-op transactional operations.
    */
-  private static class NoOpHttpServiceContext implements TransactionalHttpServiceContext {
+  private static class NoOpHttpServiceContext implements HttpServiceContext {
 
     @Override
     public HttpServiceHandlerSpecification getSpecification() {
@@ -675,52 +700,6 @@ public class HttpHandlerGeneratorTest {
     @Override
     public void discardDataset(Dataset dataset) {
       // nop-op
-    }
-
-    @Override
-    public TransactionContext newTransactionContext() {
-      return new TransactionContext(null, ImmutableList.<TransactionAware>of()) {
-
-        @Override
-        public boolean addTransactionAware(TransactionAware txAware) {
-          return false;
-        }
-
-        @Override
-        public void start() throws TransactionFailureException {
-          System.setProperty(IN_TX, "true");
-        }
-
-        @Override
-        public void start(int timeout) throws TransactionFailureException {
-          start();
-        }
-
-        @Override
-        public void finish() throws TransactionFailureException {
-          System.clearProperty(IN_TX);
-        }
-
-        @Override
-        public void abort() throws TransactionFailureException {
-          System.clearProperty(IN_TX);
-        }
-
-        @Override
-        public void abort(TransactionFailureException cause) throws TransactionFailureException {
-          System.clearProperty(IN_TX);
-        }
-      };
-    }
-
-    @Override
-    public void dismissTransactionContext() {
-      // no-op
-    }
-
-    @Override
-    public int getDefaultTxTimeout() {
-      return 30;
     }
 
     @Override
@@ -822,7 +801,7 @@ public class HttpHandlerGeneratorTest {
           }
         });
       } catch (Exception e) {
-        throw new UnsupportedOperationException();
+        throw new TransactionFailureException(e.getMessage(), e);
       } finally {
         System.clearProperty(IN_TX);
       }

@@ -16,9 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -32,22 +31,30 @@ import org.slf4j.LoggerFactory;
 /**
  * An adapter class to delegate calls from {@link HttpContentProducer} to {@link BodyProducer}
  */
-public class BodyProducerAdapter extends BodyProducer {
+final class BodyProducerAdapter extends BodyProducer {
 
   private static final Logger LOG = LoggerFactory.getLogger(BodyProducerAdapter.class);
 
   private final HttpContentProducer delegate;
   private final ClassLoader programContextClassloader;
-  private final TransactionalHttpServiceContext serviceContext;
+  private final Transactional transactional;
   private final Cancellable contextReleaser;
+  private final TransactionControl onFinishTxControl;
+  private final TransactionControl onErrorTxControl;
+
   private boolean completed;
 
-  public BodyProducerAdapter(HttpContentProducer delegate, TransactionalHttpServiceContext serviceContext,
-                             ClassLoader programContextClassLoader, Cancellable contextReleaser) {
+  BodyProducerAdapter(HttpContentProducer delegate, Transactional transactional,
+                      ClassLoader programContextClassLoader, Cancellable contextReleaser,
+                      TransactionControl defaultTxControl) {
     this.delegate = delegate;
     this.programContextClassloader = programContextClassLoader;
-    this.serviceContext = serviceContext;
+    this.transactional = transactional;
     this.contextReleaser = contextReleaser;
+    this.onFinishTxControl = Transactions.getTransactionControl(defaultTxControl, HttpContentProducer.class,
+                                                                delegate, "onFinish");
+    this.onErrorTxControl = Transactions.getTransactionControl(defaultTxControl, HttpContentProducer.class,
+                                                               delegate, "onError", Throwable.class);
   }
 
   @Override
@@ -64,7 +71,7 @@ public class BodyProducerAdapter extends BodyProducer {
   public ByteBuf nextChunk() throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassloader);
     try {
-      return Unpooled.copiedBuffer(delegate.nextChunk(serviceContext));
+      return Unpooled.copiedBuffer(delegate.nextChunk(transactional));
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
@@ -72,44 +79,30 @@ public class BodyProducerAdapter extends BodyProducer {
 
   @Override
   public void finished() throws Exception {
-    TransactionControl txCtrl = Transactions.getTransactionControl(
-      TransactionControl.IMPLICIT, HttpContentProducer.class, delegate, "onFinish");
-    if (TransactionControl.IMPLICIT == txCtrl) {
-      serviceContext.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          delegate.onFinish();
-        }
-      });
+    if (TransactionControl.IMPLICIT == onFinishTxControl) {
+      transactional.execute(context -> delegate.onFinish());
     } else {
       delegate.onFinish();
     }
+
     try {
-      serviceContext.dismissTransactionContext();
+      contextReleaser.cancel();
     } finally {
       completed = true;
-      contextReleaser.cancel();
     }
   }
 
   @Override
-  public void handleError(final Throwable throwable) {
+  public void handleError(Throwable throwable) {
     if (completed) {
       return;
     }
 
     // To the HttpContentProducer, if there is error, no other methods will be triggered
     completed = true;
-    TransactionControl txCtrl = Transactions.getTransactionControl(
-      TransactionControl.IMPLICIT, HttpContentProducer.class, delegate, "onError", Throwable.class);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        serviceContext.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            delegate.onError(throwable);
-          }
-        });
+      if (TransactionControl.IMPLICIT == onErrorTxControl) {
+        transactional.execute(context -> delegate.onError(throwable));
       } else {
         delegate.onError(throwable);
       }
@@ -118,11 +111,6 @@ public class BodyProducerAdapter extends BodyProducer {
       // nothing much can be done. Simply emit a debug log.
       LOG.warn("Exception in calling HttpContentProducer.onError.", t);
     }
-
-    try {
-      serviceContext.dismissTransactionContext();
-    } finally {
-      contextReleaser.cancel();
-    }
+    contextReleaser.cancel();
   }
 }

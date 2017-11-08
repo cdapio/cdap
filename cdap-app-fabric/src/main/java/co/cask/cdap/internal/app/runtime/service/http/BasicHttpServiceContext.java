@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -33,8 +34,6 @@ import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.NamespaceId;
-import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -50,7 +49,7 @@ import javax.annotation.Nullable;
  * Default implementation of HttpServiceContext which simply stores and retrieves the
  * spec provided when this class is instantiated
  */
-public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
+public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext {
 
   private final HttpServiceHandlerSpecification spec;
   private final int instanceId;
@@ -71,7 +70,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
    * @param pluginInstantiator {@link PluginInstantiator}
-   * @param secureStore
+   * @param secureStore The {@link SecureStore} for this context
    */
   public BasicHttpServiceContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                                  @Nullable HttpServiceHandlerSpecification spec,
@@ -82,7 +81,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
                                  MessagingService messagingService,
                                  DefaultArtifactManager defaultArtifactManager) {
-    super(program, programOptions, cConf, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
+    super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
@@ -124,40 +123,14 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   @Override
-  public TransactionContext newTransactionContext() throws TransactionFailureException {
-    return getDatasetCache().newTransactionContext();
-  }
-
-  @Override
-  public void dismissTransactionContext() {
-    getDatasetCache().dismissTransactionContext();
-  }
-
-  // this implements TransactionalHttpServiceContext.getDefaultTxTimeout,
-  // by calling the same method from super class AbstractContext.
-  @Override
-  public int getDefaultTxTimeout() {
-    return super.getDefaultTxTimeout();
-  }
-
-  @Override
   public List<ArtifactInfo> listArtifacts() throws IOException {
-    return Retries.callWithRetries(new Retries.Callable<List<ArtifactInfo>, IOException>() {
-      @Override
-      public List<ArtifactInfo> call() throws IOException {
-        return defaultArtifactManager.listArtifacts(namespaceId);
-      }
-    }, retryStrategy);
+    return Retries.callWithRetries(() -> defaultArtifactManager.listArtifacts(namespaceId), retryStrategy);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(final ArtifactInfo artifactInfo,
                                                 @Nullable  final ClassLoader parentClassLoader) throws IOException {
-    return Retries.callWithRetries(new Retries.Callable<CloseableClassLoader, IOException>() {
-      @Override
-      public CloseableClassLoader call() throws IOException {
-        return defaultArtifactManager.createClassLoader(namespaceId, artifactInfo, parentClassLoader);
-      }
-    }, retryStrategy);
+    return Retries.callWithRetries(() -> defaultArtifactManager.createClassLoader(namespaceId, artifactInfo,
+                                                                                  parentClassLoader), retryStrategy);
   }
 }

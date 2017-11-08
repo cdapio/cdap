@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
@@ -54,13 +55,13 @@ public final class HttpHandlerFactory {
       @Override
       public Class<?> load(TypeToken<? extends HttpServiceHandler> key) throws Exception {
         // Generate the new class if it hasn't before and load it through a ByteCodeClassLoader.
-        ClassDefinition classDefinition = new HttpHandlerGenerator().generate(key, pathPrefix);
+        ClassDefinition classDef = new HttpHandlerGenerator(TransactionControl.IMPLICIT).generate(key, pathPrefix);
 
         // The ClassLoader of the generated HttpHandler has CDAP system ClassLoader as parent.
         // The ClassDefinition contains list of classes that should not be loaded by the generated class ClassLoader
         ByteCodeClassLoader classLoader = new ByteCodeClassLoader(HttpHandlerFactory.class.getClassLoader());
-        classLoader.addClass(classDefinition);
-        return classLoader.loadClass(classDefinition.getClassName());
+        classLoader.addClass(classDef);
+        return classLoader.loadClass(classDef.getClassName());
       }
     });
   }

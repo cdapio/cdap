@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpContentProducer;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.http.BodyProducer;
 
 /**
@@ -30,8 +31,7 @@ interface BodyProducerFactory {
    * Creates a {@link BodyProducer} from the given {@link HttpContentProducer}.
    *
    * @param contentProducer the content producer to delegate to
-   * @param serviceContext the {@link TransactionalHttpServiceContext} to be dismissed
-   *                       when the content producing completed
+   * @param serviceContext the {@link HttpServiceContext} for the service call
    */
-  BodyProducer create(HttpContentProducer contentProducer, TransactionalHttpServiceContext serviceContext);
+  BodyProducer create(HttpContentProducer contentProducer, HttpServiceContext serviceContext);
 }

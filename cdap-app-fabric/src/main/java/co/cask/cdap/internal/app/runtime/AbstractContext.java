@@ -555,7 +555,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
-  public void executeChecked(final ThrowingRunnable runnable) throws Exception {
+  public void executeChecked(ThrowingRunnable runnable) throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       runnable.run();
@@ -567,7 +567,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
-  public void executeUnchecked(final Runnable runnable) {
+  public void executeUnchecked(Runnable runnable) {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       runnable.run();
@@ -577,16 +577,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Runnable that can throw an exception.
-   */
-  public interface ThrowingRunnable {
-    void run() throws Exception;
-  }
-
-  /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
-  public <T> T executeChecked(final Callable<T> callable) throws Exception {
+  public <T> T executeChecked(Callable<T> callable) throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       return callable.call();
@@ -609,26 +602,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                            TransactionControl txControl,
                                                            boolean retryOnConflict) throws Exception {
     if (TransactionControl.IMPLICIT == txControl) {
-      execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          //noinspection unchecked
-          program.initialize((T) AbstractContext.this);
-        }
+      execute(context -> {
+        //noinspection unchecked
+        program.initialize((T) AbstractContext.this);
       }, retryOnConflict);
     } else {
-      executeChecked(new ThrowingRunnable() {
-        @Override
-        public void run() throws Exception {
-          try {
-            //noinspection unchecked
-            program.initialize((T) AbstractContext.this);
-          } catch (Error e) {
-            // Need to wrap Error. Otherwise, listeners of this Guava Service may not be called if the
-            // initialization of the user program is missing dependencies (CDAP-2543).
-            // Guava 15.0+ have this condition fixed, hence wrapping is no longer needed if upgrade to later Guava.
-            throw new Exception(e.getMessage(), e);
-          }
+      executeChecked(() -> {
+        try {
+          //noinspection unchecked
+          program.initialize((T) AbstractContext.this);
+        } catch (Error e) {
+          // Need to wrap Error. Otherwise, listeners of this Guava Service may not be called if the
+          // initialization of the user program is missing dependencies (CDAP-2543).
+          // Guava 15.0+ have this condition fixed, hence wrapping is no longer needed if upgrade to later Guava.
+          throw new Exception(e.getMessage(), e);
         }
       });
     }
@@ -655,12 +642,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
             }
           }, retryOnConflict);
         } else {
-          executeChecked(new ThrowingRunnable() {
-            @Override
-            public void run() throws Exception {
-              program.destroy();
-            }
-          });
+          executeChecked(program::destroy);
         }
       } catch (TransactionConflictException e) {
         // For Tx conflict, use it as is.

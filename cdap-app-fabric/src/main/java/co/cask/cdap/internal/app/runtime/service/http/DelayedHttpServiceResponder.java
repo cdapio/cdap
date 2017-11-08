@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpContentProducer;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -49,7 +50,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
   private final HttpResponder responder;
   private final BodyProducerFactory bodyProducerFactory;
-  private final TransactionalHttpServiceContext serviceContext;
+  private final HttpServiceContext serviceContext;
   private final MetricsContext metricsContext;
   private BufferedResponse bufferedResponse;
   private boolean closed;
@@ -60,7 +61,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
    * @param responder the responder which will be bound to
    */
   public DelayedHttpServiceResponder(HttpResponder responder, BodyProducerFactory bodyProducerFactory,
-                                     TransactionalHttpServiceContext serviceContext, MetricsContext metricsContext) {
+                                     HttpServiceContext serviceContext, MetricsContext metricsContext) {
     this.responder = responder;
     this.serviceContext = serviceContext;
     this.metricsContext = metricsContext;
@@ -113,7 +114,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
    * Since calling one of the send methods multiple times logs a warning, upon transaction failures this
    * method is called to allow setting the failure response without an additional warning.
    */
-  public void setTransactionFailureResponse(Throwable t) {
+  public void setFailure(Throwable t) {
     LOG.error("Exception occurred while handling request:", t);
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     ByteBuf content = Unpooled.copiedBuffer("Exception occurred while handling request: "
@@ -143,16 +144,6 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
     try {
       HttpContentProducer contentProducer = bufferedResponse.getContentProducer();
-
-      if (contentProducer == null) {
-        // If content producer is not used, we can dismiss the transaction context since all
-        // transactional operations are completed at this point.
-        // If content producer is used, the user provided content producer might have closure over datasets so that
-        // we cannot dismiss the transaction context here. The dismissal will be done on the completion of
-        // the content producer.
-        serviceContext.dismissTransactionContext();
-      }
-
       HttpHeaders headers = new DefaultHttpHeaders().add(bufferedResponse.getHeaders());
       headers.set(HttpHeaderNames.CONNECTION, keepAlive ? HttpHeaderValues.KEEP_ALIVE : HttpHeaderValues.CLOSE);
       if (!headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
