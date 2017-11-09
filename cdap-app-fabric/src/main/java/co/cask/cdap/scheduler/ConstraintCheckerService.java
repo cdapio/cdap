@@ -17,7 +17,7 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -30,7 +30,6 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.internal.app.runtime.schedule.TaskExecutionException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
@@ -94,7 +93,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     this.cConf = cConf;
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), txClient,
-      NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null);
+      NamespaceId.SYSTEM, ImmutableMap.of(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(multiThreadDatasetCache),
       RetryStrategies.retryOnConflict(20, 100)
@@ -174,11 +173,8 @@ class ConstraintCheckerService extends AbstractIdleService {
     private long checkJobQueue() {
       boolean emptyFetch = false;
       try {
-        emptyFetch = Transactions.execute(transactional, new TxCallable<Boolean>() {
-          @Override
-          public Boolean call(DatasetContext context) throws Exception {
-            return checkJobConstraints();
-          }
+        emptyFetch = Transactionals.execute(transactional, context -> {
+          return checkJobConstraints();
         });
 
         // run any ready jobs
@@ -261,16 +257,11 @@ class ConstraintCheckerService extends AbstractIdleService {
       while (readyJobsIter.hasNext() && !stopping) {
         final Job job = readyJobsIter.next();
         try {
-          Transactions.execute(transactional, new TxCallable<Void>() {
-            @Override
-            public Void call(DatasetContext context) throws Exception {
-              if (runReadyJob(job)) {
-                readyJobsIter.remove();
-              }
-              return null;
+          transactional.execute(context -> {
+            if (runReadyJob(job)) {
+              readyJobsIter.remove();
             }
           });
-
         } catch (TransactionFailureException e) {
           LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
                    job.getSchedule().getProgramId(), job.getSchedule().getName(), e);

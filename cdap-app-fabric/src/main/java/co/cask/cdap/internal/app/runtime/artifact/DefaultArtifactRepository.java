@@ -51,6 +51,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -200,9 +201,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
     NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
-    com.google.common.base.Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
+    Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
     int limit, ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName, pluginPredicate, limit, order);
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName,
+                                          pluginPredicate::apply, limit, order);
   }
 
   public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, ArtifactRange artifactRange,

@@ -282,50 +282,44 @@ public abstract class DynamicDatasetCacheTest {
   @Test
   public void testThatDatasetsStayInTransaction() throws TransactionFailureException {
     final AtomicReference<Object> ref = new AtomicReference<>();
-    Transactions.execute(cache.newTransactionContext(), "foo", new Runnable() {
-      @Override
-      public void run() {
-        try {
-          // this writes the value "x" to row "key"
-          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
-          ds.write();
-          // this would close and discard ds, but the transaction is going on, so we should get the
-          // identical instance of the dataset again
-          cache.discardDataset(ds);
-          TestDataset ds2 = cache.getDataset("a", X_ARGUMENTS);
-          Assert.assertSame(ds, ds2);
-          ref.set(ds);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-        try {
-          // get the same dataset again. It should be the same object
-          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
-          Assert.assertSame(ref.get(), ds);
-          cache.discardDataset(ds);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
+    Transactions.execute(cache.newTransactionContext(), "foo", () -> {
+      try {
+        // this writes the value "x" to row "key"
+        TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
+        ds.write();
+        // this would close and discard ds, but the transaction is going on, so we should get the
+        // identical instance of the dataset again
+        cache.discardDataset(ds);
+        TestDataset ds2 = cache.getDataset("a", X_ARGUMENTS);
+        Assert.assertSame(ds, ds2);
+        ref.set(ds);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+      try {
+        // get the same dataset again. It should be the same object
+        TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
+        Assert.assertSame(ref.get(), ds);
+        cache.discardDataset(ds);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
     });
 
     // now validate that the dataset did participate in the commit of the tx
-    Transactions.execute(cache.newTransactionContext(), "foo", new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
-          Assert.assertEquals("x", ds.read());
-          // validate that we now have a different instance because the old one was discarded
-          Assert.assertNotSame(ref.get(), ds);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-        // validate that only the new instance of the dataset remained active
-        Assert.assertEquals(1,
-                            Iterables.size(cache.getTransactionAwares())
-                              - Iterables.size(cache.getStaticTransactionAwares()));
+    Transactions.execute(cache.newTransactionContext(), "foo", () -> {
+      try {
+        TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
+        Assert.assertEquals("x", ds.read());
+        // validate that we now have a different instance because the old one was discarded
+        Assert.assertNotSame(ref.get(), ds);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
+      // validate that only the new instance of the dataset remained active
+      Assert.assertEquals(1,
+                          Iterables.size(cache.getTransactionAwares())
+                            - Iterables.size(cache.getStaticTransactionAwares()));
     });
   }
 

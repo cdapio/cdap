@@ -18,7 +18,6 @@ package co.cask.cdap.logging.meta;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -27,7 +26,6 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -38,7 +36,6 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -53,6 +50,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static co.cask.cdap.api.Transactionals.execute;
 
 /**
  * class to read log meta data table
@@ -101,25 +100,17 @@ public class FileMetaDataReader {
    */
   public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier,
                                      final long startTimestampMs, final long endTimestampMs) throws Exception {
-    try {
-      List<LogLocation> endTimestampFilteredList =
-        Transactions.execute(transactional, new TxCallable<List<LogLocation>>() {
-          @Override
-          public List<LogLocation> call(DatasetContext context) throws Exception {
-            Table table = LoggingStoreTableUtil.getMetadataTable(datasetFramework, context);
-            List<LogLocation> files = new ArrayList<>();
-            // get and add files in old format
-            files.addAll(getFilesInOldFormat(table, logPathIdentifier, endTimestampMs));
-            // get add files from new format
-            files.addAll(getFilesInNewFormat(table, logPathIdentifier, endTimestampMs));
-            return files;
-          }
-        });
-      // performing extra filtering (based on start timestamp) outside the transaction
-      return getFilesInRange(endTimestampFilteredList, startTimestampMs);
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, Exception.class);
-    }
+    List<LogLocation> endTimestampFilteredList = execute(transactional, context -> {
+      Table table = LoggingStoreTableUtil.getMetadataTable(datasetFramework, context);
+      List<LogLocation> files = new ArrayList<>();
+      // get and add files in old format
+      files.addAll(getFilesInOldFormat(table, logPathIdentifier, endTimestampMs));
+      // get add files from new format
+      files.addAll(getFilesInNewFormat(table, logPathIdentifier, endTimestampMs));
+      return files;
+    }, Exception.class);
+    // performing extra filtering (based on start timestamp) outside the transaction
+    return getFilesInRange(endTimestampFilteredList, startTimestampMs);
   }
 
   private List<LogLocation> getFilesInOldFormat(

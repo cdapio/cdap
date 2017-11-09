@@ -17,7 +17,7 @@
 package co.cask.cdap.route.store;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -30,7 +30,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -39,7 +38,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
@@ -75,55 +73,32 @@ public class LocalRouteStore implements RouteStore  {
 
   @Override
   public void store(final ProgramId serviceId, final RouteConfig routeConfig) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getRouteTable(context).write(ServiceDiscoverable.getName(serviceId), GSON.toJson(routeConfig.getRoutes()));
-        }
-      });
-    } catch (TransactionFailureException ex) {
-      throw Transactions.propagate(ex);
-    }
+    Transactionals.execute(transactional, context -> {
+      getRouteTable(context).write(ServiceDiscoverable.getName(serviceId), GSON.toJson(routeConfig.getRoutes()));
+    });
   }
 
   @Override
   public void delete(final ProgramId serviceId) throws NotFoundException {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          byte[] key = Bytes.toBytes(ServiceDiscoverable.getName(serviceId));
-          KeyValueTable kvTable = getRouteTable(context);
-          if (kvTable.read(key) == null) {
-            throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
-          }
-          kvTable.delete(key);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, NotFoundException.class);
-    }
+    Transactionals.execute(transactional, context -> {
+      byte[] key = Bytes.toBytes(ServiceDiscoverable.getName(serviceId));
+      KeyValueTable kvTable = getRouteTable(context);
+      if (kvTable.read(key) == null) {
+        throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
+      }
+      kvTable.delete(key);
+    }, NotFoundException.class);
   }
 
   @Override
   public RouteConfig fetch(final ProgramId serviceId) {
-    try {
-      return Transactions.execute(transactional, new TxCallable<RouteConfig>() {
-        @Override
-        public RouteConfig call(DatasetContext context) throws Exception {
-          byte[] value = getRouteTable(context).read(ServiceDiscoverable.getName(serviceId));
-          if (value == null) {
-            return new RouteConfig(Collections.<String, Integer>emptyMap());
-          }
-
-          Map<String, Integer> routeConfigs = GSON.fromJson(Bytes.toString(value), MAP_STRING_INTEGER_TYPE);
-          return new RouteConfig(routeConfigs);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+    return Transactionals.execute(transactional, context -> {
+      byte[] value = getRouteTable(context).read(ServiceDiscoverable.getName(serviceId));
+      if (value == null) {
+        return new RouteConfig(Collections.emptyMap());
+      }
+      return new RouteConfig(GSON.fromJson(Bytes.toString(value), MAP_STRING_INTEGER_TYPE));
+    });
   }
 
   @Override

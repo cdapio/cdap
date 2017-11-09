@@ -20,12 +20,9 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import com.google.common.base.Functions;
-import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.tephra.RetryStrategy;
@@ -42,7 +39,6 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Helper class for interacting with {@link Transaction} and {@link TransactionSystemClient}.
@@ -134,12 +130,9 @@ public final class Transactions {
    */
   public static void execute(TransactionContext txContext, String name,
                              final Runnable runnable) throws TransactionFailureException {
-    execute(txContext, name, new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        runnable.run();
-        return null;
-      }
+    execute(txContext, name, (Callable<Void>) () -> {
+      runnable.run();
+      return null;
     });
   }
 
@@ -243,29 +236,6 @@ public final class Transactions {
   }
 
   /**
-   * Executes the given {@link TxCallable} using the given {@link Transactional}.
-   *
-   * @param transactional the {@link Transactional} to use for transactional execution.
-   * @param callable the {@link TxCallable} to be executed inside a transaction
-   * @param <V> type of the result
-   * @return value returned by the given {@link TxCallable}.
-   * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a transaction
-   *
-   * TODO: CDAP-6103 Move this to {@link Transactional} when revamping tx supports in program.
-   */
-  public static <V> V execute(Transactional transactional,
-                              final TxCallable<V> callable) throws TransactionFailureException {
-    final AtomicReference<V> result = new AtomicReference<>();
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        result.set(callable.call(context));
-      }
-    });
-    return result.get();
-  }
-
-  /**
    * Creates a new {@link Transactional} that will automatically retry upon transaction failure.
    *
    * @param transactional The {@link Transactional} to delegate the transaction execution to
@@ -318,59 +288,6 @@ public final class Transactions {
         }
       }
     };
-  }
-
-  /**
-   * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
-   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
-   * throw the failure exception as-is if it is a {@link RuntimeException}. Otherwise, the exception will be wrapped
-   * with inside a {@link RuntimeException}.
-   * This method will always throw and the returned exception is for satisfying Java static analysis only.
-   *
-   * @param e the {@link TransactionFailureException} to propagate
-   * @return a {@link RuntimeException}
-   */
-  public static RuntimeException propagate(TransactionFailureException e) {
-    throw Throwables.propagate(Objects.firstNonNull(e.getCause(), e));
-  }
-
-  /**
-   * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
-   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
-   * throw the failure exception as-is the given propagated type if the type matches or as {@link RuntimeException}.
-   * This method will always throw and the returned exception is for satisfying Java static analysis only.
-   *
-   * @param e the {@link TransactionFailureException} to propagate
-   * @param propagateType if the exception is an instance of this type, it will be rethrown as is
-   * @param <X> exception type of propagate type
-   * @return a exception of type X.
-   */
-  public static <X extends Throwable> X propagate(TransactionFailureException e,
-                                                  Class<X> propagateType) throws X {
-    Throwable cause = Objects.firstNonNull(e.getCause(), e);
-    Throwables.propagateIfPossible(cause, propagateType);
-    throw Throwables.propagate(cause);
-  }
-
-  /**\
-   * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
-   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
-   * throw the failure exception as-is the given propagated types if the type matches or as {@link RuntimeException}.
-   * This method will always throw and the returned exception is for satisfying Java static analysis only.
-   *
-   * @param e the {@link TransactionFailureException} to propagate
-   * @param propagateType1 if the exception is an instance of this type, it will be rethrown as is
-   * @param propagateType2 if the exception is an instance of this type, it will be rethrown as is
-   * @param <X1> exception type of first propagate type
-   * @param <X2> exception type of second propagate type
-   * @return a exception of type X1.
-   */
-  public static <X1 extends Throwable, X2 extends Throwable> X1 propagate(TransactionFailureException e,
-                                                                          Class<X1> propagateType1,
-                                                                          Class<X2> propagateType2) throws X1, X2 {
-    Throwable cause = Objects.firstNonNull(e.getCause(), e);
-    Throwables.propagateIfPossible(cause, propagateType1, propagateType2);
-    throw Throwables.propagate(cause);
   }
 
   private Transactions() {
@@ -427,56 +344,4 @@ public final class Transactions {
     return null;
   }
 
-  /**
-   * Executes the given callable with a transaction. Think twice before you call this. Usages of this method
-   * likely indicate poor exception handling.
-   *
-   * @param transactional the {@link Transactional} used to submit the task
-   * @param callable the task
-   * @param <V> type of result
-   * @return value returned by the given {@link TxCallable}.
-   * @throws RuntimeException for any errors that occur
-   */
-  public static <V> V executeUnchecked(Transactional transactional, final TxCallable<V> callable) {
-    try {
-      return execute(transactional, callable);
-    } catch (TransactionFailureException e) {
-      throw propagate(e);
-    }
-  }
-
-  /**
-   * Executes the given runnable with a transaction. Think twice before you call this. Usages of this method
-   * likely indicate poor exception handling.
-   *
-   * @param transactional the {@link Transactional} used to submit the task
-   * @param runnable task
-   * @throws RuntimeException for errors that occur
-   */
-  public static void executeUnchecked(Transactional transactional, final TxRunnable runnable) {
-    executeUnchecked(transactional, new TxCallable<Void>() {
-      @Override
-      public Void call(DatasetContext context) throws Exception {
-        runnable.run(context);
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Executes the given runnable with a transaction and timeout in seconds. Think twice before you call this.
-   * Usages of this method likely indicates poor exception handling.
-   *
-   * @param transactional the {@link Transactional} used to submit the task
-   * @param timeoutInSeconds transaction timeout in seconds
-   * @param runnable task
-   * @throws RuntimeException for errors that occur
-   */
-  public static void executeUnchecked(Transactional transactional, int timeoutInSeconds, final TxRunnable runnable) {
-    try {
-      transactional.execute(timeoutInSeconds, runnable);
-    } catch (TransactionFailureException e) {
-      throw propagate(e);
-    }
-  }
 }
