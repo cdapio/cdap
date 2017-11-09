@@ -16,6 +16,7 @@
 language: java
 
 jdk:
+  - oraclejdk7
   - oraclejdk8
 
 branches:
@@ -31,7 +32,7 @@ script: mvn -Dhadoop.version="$HADOOP_VERSION" test -fae -P examples,templates,u
 install: mvn -Dhadoop.version="$HADOOP_VERSION" install -B -P examples,unit-tests -DskipTests=true -Drat.ignoreErrors=true
 
 env:
-  - MAVEN_OPTS="-Xmx4096m HADOOP_VERSION=2.4.1"
+  - MAVEN_OPTS="-Xmx4096m" HADOOP_VERSION="2.4.1"
 
 sudo: false
 
