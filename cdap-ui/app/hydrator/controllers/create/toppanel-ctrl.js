@@ -688,41 +688,25 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   importFile(files) {
-    if (files[0].name.indexOf('.json') === -1) {
+    if (!files.length) {
+      return;
+    }
+
+    let uploadedFile = files[0];
+    if (uploadedFile.type !== 'application/json') {
       this.myAlertOnValium.show({
         type: 'danger',
-        content: 'Pipeline configuration should be JSON.'
+        content: "There was a problem with the pipeline you were trying to upload: File should be in JSON format. Please upload a file with '.json' extension."
       });
       return;
     }
 
-    var reader = new FileReader();
-    reader.readAsText(files[0], 'UTF-8');
+    let reader = new FileReader();
+    reader.readAsText(uploadedFile, 'UTF-8');
 
     reader.onload =  (evt) => {
-      var data = evt.target.result;
-      var jsonData;
-      try {
-        jsonData = JSON.parse(data);
-      } catch (e) {
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: 'Syntax Error. Ill-formed pipeline configuration.'
-        });
-        return;
-      }
-
-      let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
-
-      if (isNotValid) {
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: isNotValid
-        });
-        return;
-      }
-
-      this.HydratorUpgradeService.validateAndUpgradeConfig(jsonData);
+      let fileData = evt.target.result;
+      this.HydratorUpgradeService.validateAndUpgradeConfig(fileData);
     };
   }
 

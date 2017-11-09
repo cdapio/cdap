@@ -16,9 +16,9 @@
 
 class HydratorPlusPlusStudioCtrl {
   // Holy cow. Much DI. Such angular.
-  constructor(HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts, myLocalStorage, HydratorPlusPlusConfigStore, $window, HydratorPlusPlusConsoleTabService) {
+  constructor(HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts, myLocalStorage, HydratorPlusPlusConfigStore, $window, HydratorPlusPlusConsoleTabService, HydratorUpgradeService) {
+    'ngInject';
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
-
     this.myLocalStorage = myLocalStorage;
     this.myLocalStorage
         .get('hydrator++-leftpanel-isExpanded')
@@ -63,6 +63,15 @@ class HydratorPlusPlusStudioCtrl {
       let config = {};
       config.artifact = artifact;
       HydratorPlusPlusConfigActions.initializeConfigStore(config);
+    }
+
+    if ($stateParams.resourceCenterId) {
+      let inputFile = $window.localStorage.getItem($stateParams.resourceCenterId);
+      if (inputFile) {
+        HydratorUpgradeService.validateAndUpgradeConfig(inputFile);
+        $window.localStorage.removeItem($stateParams.resourceCenterId);
+      }
+
     }
 
     function customConfirm(message) {
@@ -120,8 +129,6 @@ class HydratorPlusPlusStudioCtrl {
     this.myLocalStorage.set('hydrator++-leftpanel-isExpanded', this.isExpanded);
   }
 }
-
-HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts', 'myLocalStorage', 'HydratorPlusPlusConfigStore', '$window', 'HydratorPlusPlusConsoleTabService'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusStudioCtrl', HydratorPlusPlusStudioCtrl);

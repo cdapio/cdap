@@ -1521,8 +1521,10 @@ features:
       modalheadertitle: Add Driver
     HydratorPipeline:
       actionbtn0: Create
+      actionbtn1: Import
       description: A pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       label: Pipeline
+      nonJSONError: "There was a problem with the pipeline you were trying to upload: File should be in JSON format. Please upload a file with '.json' extension."
     Library:
       actionbtn0: Upload
       description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).
@@ -1542,12 +1544,7 @@ features:
       actionbtn0: Create
       description: A stream is used to ingest data into HDFS in real-time or batch.
       label: Stream
-    Stream-View:
-      actionbtn0: Create
-      description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
-      label: Stream View
   RulesEngine:
-
     AddRulesEngineToPipelineModal:
       batchPipelineBtn: Batch Pipeline
       error: Unable to find Rules Engine Plugin. Please install Rules Engine plugin before adding to pipeline

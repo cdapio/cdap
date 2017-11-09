@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ $height-of-image: 75px;
 
 .resourcecenter-entity-card {
   width: 280px;
-  height: 130px;
+  height: 140px;
   padding: 10px;
   padding-bottom: 0;
   margin: 10px 5px;
@@ -30,22 +30,11 @@ $height-of-image: 75px;
   .image-button-container {
     display: inline-flex;
     flex-direction: column;
-    .entity-image {
-      width: $height-of-image;
-      height: $height-of-image;
-      display: inline-block;
-      vertical-align: top;
-      font-size: $height-of-image;
-      &.empty {
-        background: gray;
-      }
+    position: relative;
 
-      .icon-svg {
-        vertical-align: inherit;
-      }
-    }
     .btn.btn-primary {
-      margin-top: 5px;
+      position: absolute;
+      bottom: 8px;
       width: 100%;
     }
   }
@@ -67,6 +56,20 @@ $height-of-image: 75px;
     .content-action-label {
       color: $cdap-orange;
       cursor: pointer;
+    }
+  }
+  .entity-image {
+    width: $height-of-image;
+    height: $height-of-image;
+    display: inline-block;
+    vertical-align: top;
+    font-size: $height-of-image;
+    &.empty {
+      background: gray;
+    }
+
+    .icon-svg {
+      vertical-align: inherit;
     }
   }
 }
