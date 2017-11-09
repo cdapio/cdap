@@ -49,7 +49,7 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
   private final TaskAttemptContext job;
   private final String outputName;
   private final Partitioning partitioning;
-  private final FileOutputFormat<K, V> fileOutputFormat;
+  private final String fileOutputFormatName;
 
   @SuppressWarnings("unchecked")
   final DynamicPartitioner<K, V> dynamicPartitioner;
@@ -81,7 +81,9 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
     this.partitioning = outputDataset.getPartitioning();
 
     this.dynamicPartitioner.initialize(taskContext);
-    this.fileOutputFormat = createFileOutputFormat(job);
+    this.fileOutputFormatName = job.getConfiguration()
+      .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class)
+      .getName();
   }
 
   // returns a TaskAttemptContext whose configuration will reflect the specified partitionKey's path as the output path
@@ -102,7 +104,9 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
    * @throws IOException
    */
   RecordWriter<K, V> getBaseRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
-    return fileOutputFormat.getRecordWriter(job);
+    // Get a new FileOutputFormat object when creating a RecordWriter, so that different RecordWriter's can have
+    // different underlying objects such as WriteSupport. This is a fix for CDAP-12823.
+    return createFileOutputFormat().getRecordWriter(job);
   }
 
   // returns a TaskAttemptContext whose configuration will reflect the specified newOutputName as the output path
@@ -112,7 +116,7 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
     DynamicPartitioningOutputFormat.setOutputName(job, newOutputName);
     // CDAP-4806 We must set this parameter in addition to calling FileOutputFormat#setOutputName, because
     // AvroKeyOutputFormat/AvroKeyValueOutputFormat use a different parameter for the output name than FileOutputFormat.
-    if (isAvroOutputFormat(fileOutputFormat)) {
+    if (isAvroOutputFormat(fileOutputFormatName)) {
       job.getConfiguration().set("avro.mo.config.namedOutput", newOutputName);
     }
 
@@ -123,7 +127,7 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
     return new TaskAttemptContextImpl(job.getConfiguration(), context.getTaskAttemptID());
   }
 
-  private FileOutputFormat<K, V> createFileOutputFormat(TaskAttemptContext job) {
+  private FileOutputFormat<K, V> createFileOutputFormat() {
     Class<? extends FileOutputFormat> delegateOutputFormat = job.getConfiguration()
       .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
 
@@ -133,10 +137,9 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
     return fileOutputFormat;
   }
 
-  private static boolean isAvroOutputFormat(FileOutputFormat fileOutputFormat) {
-    String className = fileOutputFormat.getClass().getName();
+  private static boolean isAvroOutputFormat(String fileOutputFormatName) {
     // use class name String in order avoid having a dependency on the Avro libraries here
-    return "org.apache.avro.mapreduce.AvroKeyOutputFormat".equals(className)
-      || "org.apache.avro.mapreduce.AvroKeyValueOutputFormat".equals(className);
+    return "org.apache.avro.mapreduce.AvroKeyOutputFormat".equals(fileOutputFormatName)
+      || "org.apache.avro.mapreduce.AvroKeyValueOutputFormat".equals(fileOutputFormatName);
   }
 }
