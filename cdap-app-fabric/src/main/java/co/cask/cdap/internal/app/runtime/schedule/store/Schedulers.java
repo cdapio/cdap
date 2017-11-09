@@ -43,13 +43,13 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
-import joptsimple.internal.Strings;
 import org.quartz.CronExpression;
 
 import java.io.IOException;
@@ -196,7 +196,7 @@ public class Schedulers {
       List<String> partsList = new ArrayList<>(Arrays.asList(parts));
       // add "0" to seconds in Quartz format without changing the meaning of the original cron expression
       partsList.add(0, "0");
-      return Strings.join(partsList, " ");
+      return Joiner.on(" ").join(partsList);
     } else {
       //Use the given cronExpression
       return cronEntry;
