@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Modal, ModalHeader, ModalBody } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
 import MyDataPrepApi from 'api/dataprep';
@@ -31,6 +31,7 @@ import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers'
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import CardActionFeedback from 'components/CardActionFeedback';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -38,13 +39,14 @@ const mapErrorToMessage = (e) => {
     let splitMessage = e.message.split("field name: ");
     let fieldName = objectQuery(splitMessage, 1) || e.message;
     return {
-      message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
-      remedies: `${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}`
+      message: T.translate(`${PREFIX}.invalidFieldNameMessage`, {fieldName}),
+      remedies: `${T.translate(`${PREFIX}.invalidFieldNameRemedies1`)}`
     };
   }
   return {message: e.message};
 };
 
+const PREFIX = 'features.DataPrep.TopPanel';
 export default class AddToHydratorModal extends Component {
   constructor(props) {
     super(props);
@@ -131,6 +133,14 @@ export default class AddToHydratorModal extends Component {
     let batchArtifact = find(artifactsList, { 'name': 'core-plugins' });
     let realtimeArtifact = find(artifactsList, { 'name': 'spark-plugins' });
 
+    if (!batchArtifact) {
+      return T.translate(`${PREFIX}.filePipeline.pipelineErrorBatch`);
+    }
+
+    if (!realtimeArtifact) {
+      return T.translate(`${PREFIX}.filePipeline.pipelineErrorRealtime`);
+    }
+
     batchArtifact.version = '[1.7.0, 3.0.0)';
     realtimeArtifact.version = '[1.7.0, 3.0.0)';
 
@@ -171,6 +181,9 @@ export default class AddToHydratorModal extends Component {
     if (!dbInfo) { return null; }
 
     let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
+    if (!batchArtifact) {
+      return T.translate(`${PREFIX}.databasePipeline.pipelineError`);
+    }
     batchArtifact.version = '[1.7.0, 3.0.0)';
 
     let plugin = objectQuery(dbInfo, 'values', 0, 'Database');
@@ -206,8 +219,10 @@ export default class AddToHydratorModal extends Component {
     // This is a hack.. should not do this
     // We are still shipping kafka-plugins with hydrator-plugins 1.7 but
     // it doesn't contain the streamingsource or batchsource plugins
-    let pluginArtifact = artifactsList.filter((artifact) => artifact.name === 'kafka-plugins');
-    pluginArtifact = pluginArtifact[pluginArtifact.length - 1];
+    let pluginArtifact = find(artifactsList, {name: 'kafka-plugins'});
+    if (!pluginArtifact) {
+      return T.translate(`${PREFIX}.kafkaPipeline.pipelineError`);
+    }
 
     plugin = plugin[pluginName];
 
@@ -252,7 +267,7 @@ export default class AddToHydratorModal extends Component {
     let batchArtifact = find(artifactsList, {name: 'amazon-s3-plugins'});
     if (!batchArtifact) {
       this.setState({
-        error: T.translate('features.DataPrep.TopPanel.S3Pipeline.error'),
+        error: T.translate(`${PREFIX}.S3Pipeline.pipelineError`),
         loading: false
       });
       return;
@@ -279,6 +294,47 @@ export default class AddToHydratorModal extends Component {
     };
   }
 
+  constructGCSSource(artifactsList, gcsInfo) {
+    if (!gcsInfo) { return null; }
+
+    let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+    if (!batchArtifact) {
+      this.setState({
+        error: T.translate(`${PREFIX}.GCSPipeline.pipelineError`),
+        loading: false
+      });
+      return;
+    }
+
+    batchArtifact.version = '[0.9.0, 3.0.0)';
+    let plugin = objectQuery(gcsInfo, 'values', 0);
+
+    let pluginName = Object.keys(plugin)[0]; // this is because the plugin can be GCSFile or GCSFileBlob
+
+    plugin = plugin[pluginName];
+
+    let batchPluginInfo = {
+      name: plugin.name,
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: batchArtifact,
+      properties: plugin.properties
+    };
+
+    let batchStage = {
+      name: 'GCS',
+      plugin: batchPluginInfo
+    };
+
+    return {
+      batchSource: batchStage,
+      connections: [{
+        from: 'GCS',
+        to: 'Wrangler'
+      }]
+    };
+  }
+
   constructProperties(pluginVersion) {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
@@ -297,7 +353,7 @@ export default class AddToHydratorModal extends Component {
       MyDataPrepApi.getSchema(requestObj, requestBody)
     ];
 
-    if (state.workspaceUri && state.workspaceUri.length > 0) {
+    if (state.workspaceInfo.properties.connection === 'file') {
       let specParams = {
         namespace,
         path: state.workspaceUri
@@ -329,6 +385,14 @@ export default class AddToHydratorModal extends Component {
       };
 
       rxArray.push(MyDataPrepApi.getS3Specification(specParams));
+    } else if (state.workspaceInfo.properties.connection === 'gcs') {
+      let specParams = {
+        namespace,
+        connectionId: state.workspaceInfo.properties.connectionid,
+        wid: workspaceId
+      };
+
+      rxArray.push(MyDataPrepApi.getGCSSpecification(specParams));
     }
 
     MyArtifactApi.list({ namespace })
@@ -411,9 +475,16 @@ export default class AddToHydratorModal extends Component {
           sourceConfigs = this.constructKafkaSource(res[0], res[2]);
         } else if (state.workspaceInfo.properties.connection === 's3') {
           sourceConfigs = this.constructS3Source(res[0], res[2]);
-          if (!sourceConfigs) {
-            return;
-          }
+        } else if (state.workspaceInfo.properties.connection === 'gcs') {
+          sourceConfigs = this.constructGCSSource(res[0], res[2]);
+        }
+
+        if (typeof sourceConfigs === 'string') {
+          this.setState({
+            error: sourceConfigs,
+            loading: false
+          });
+          return;
         }
 
         if (sourceConfigs) {
@@ -448,7 +519,7 @@ export default class AddToHydratorModal extends Component {
           }
         });
 
-        if (['database', 's3'].indexOf(state.workspaceInfo.properties.connection) !== -1) {
+        if (['database', 's3', 'gcs'].indexOf(state.workspaceInfo.properties.connection) !== -1) {
           realtimeUrl = null;
         }
 
@@ -474,7 +545,7 @@ export default class AddToHydratorModal extends Component {
         console.log('err', err);
 
         this.setState({
-          error: objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'),
+          error: objectQuery(err, 'response', 'message')  || T.translate(`${PREFIX}.PipelineModal.defaultErrorMessage`),
           loading: false
         });
       });
@@ -516,14 +587,14 @@ export default class AddToHydratorModal extends Component {
           }
         </div>
         <span>
-          {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
+          {T.translate(`${PREFIX}.invalidFieldNameRemedies2`)}
           <span
             className="btn-link"
             onClick={this.applyDirective.bind(this, 'cleanse-column-names')}
           >
-            {T.translate('features.DataPrep.TopPanel.cleanseLinkLabel')}
+            {T.translate(`${PREFIX}.cleanseLinkLabel`)}
           </span>
-          {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies3')}
+          {T.translate(`${PREFIX}.invalidFieldNameRemedies3`)}
         </span>
       </pre>
     );
@@ -540,45 +611,36 @@ export default class AddToHydratorModal extends Component {
           </h4>
         </div>
       );
-    } else if (this.state.error) {
-      content = (
-        <div>
-          <div className="text-danger error-message-container loading-container">
-            <span className="fa fa-exclamation-triangle"></span>
-            <span>
-              {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
-            </span>
-            {this.renderInvalidFieldError()}
-          </div>
-        </div>
-      );
     } else {
       let realtimeDisabledTooltip;
 
       if (!this.state.realtimeUrl) {
-        realtimeDisabledTooltip = T.translate('features.DataPrep.TopPanel.realtimeDisabledTooltip');
+        realtimeDisabledTooltip = T.translate(`${PREFIX}.realtimeDisabledTooltip`);
       }
 
       content = (
         <div>
           <div className="message">
-            Choose the type of pipeline to create
+            {T.translate(`${PREFIX}.addToPipelineModal.title`)}
           </div>
           <div className="action-buttons">
             <a
-              href={this.state.batchUrl}
-              className="btn btn-secondary"
+              href={this.state.error ? null : this.state.batchUrl}
+              className={classnames('btn btn-secondary', {
+                'inactive': this.state.error
+              })}
               onClick={(() => {
+                if (this.state.error) { return; }
                 window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.batchConfig));
               }).bind(this)}
             >
               <i className="fa icon-ETLBatch"/>
-              <span>Batch Pipeline</span>
+              <span>{T.translate(`${PREFIX}.addToPipelineModal.batchPipelineBtn`)}</span>
             </a>
             <a
               href={this.state.realtimeUrl}
               className={classnames('btn btn-secondary', {
-                'inactive': !this.state.realtimeUrl
+                'inactive': !this.state.realtimeUrl || this.state.error
               })}
               onClick={(() => {
                 if (!this.state.realtimeUrl) { return; }
@@ -587,7 +649,7 @@ export default class AddToHydratorModal extends Component {
               title={realtimeDisabledTooltip}
             >
               <i className="fa icon-sparkstreaming"/>
-              <span>Realtime Pipeline</span>
+              <span>{T.translate(`${PREFIX}.addToPipelineModal.realtimePipelineBtn`)}</span>
             </a>
           </div>
         </div>
@@ -603,7 +665,7 @@ export default class AddToHydratorModal extends Component {
       >
         <ModalHeader>
           <span>
-            Add to Pipeline
+            {T.translate(`${PREFIX}.addToPipelineBtnLabel`)}
           </span>
 
           <div
@@ -615,7 +677,20 @@ export default class AddToHydratorModal extends Component {
         </ModalHeader>
         <ModalBody>
           {content}
+          {this.renderInvalidFieldError()}
         </ModalBody>
+        {
+          this.state.error ?
+            <ModalFooter className="dataset-copy-error-container">
+              <CardActionFeedback
+                type='DANGER'
+                message={T.translate(`${PREFIX}.addToPipelineModal.errorTitle`)}
+                extendedMessage={this.state.error}
+              />
+            </ModalFooter>
+          :
+            null
+        }
       </Modal>
     );
   }

@@ -36,6 +36,7 @@ import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import cloneDeep from 'lodash/cloneDeep';
 import Rx from 'rx';
+import CardActionFeedback from 'components/CardActionFeedback';
 
 require('./CreateDatasetBtn.scss');
 
@@ -185,6 +186,8 @@ export default class CreateDatasetBtn extends Component {
     let dbStage = pipelineConfig.config.stages.find(stage => stage.name === 'Database');
     let kafkaStage = pipelineConfig.config.stages.find(stage => stage.name === 'Kafka');
     let databaseConfig = objectQuery(workspaceInfo, 'properties', 'databaseConfig');
+    let s3Stage = pipelineConfig.config.stages.find(stage => stage.name === 'S3');
+    let gcsStage = pipelineConfig.config.stages.find(stage => stage.name === 'GCS');
     let macroMap = {};
     if (databaseConfig) {
       try {
@@ -205,7 +208,13 @@ export default class CreateDatasetBtn extends Component {
       password: objectQuery(dbStage, 'plugin', 'properties', 'password') || '',
       userName: objectQuery(dbStage, 'plugin', 'properties', 'user') || '',
       topic: objectQuery(kafkaStage, 'plugin', 'properties', 'topic') || '',
-      kafkaBrokers: objectQuery(kafkaStage, 'plugin', 'properties', 'kafkaBrokers') || ''
+      kafkaBrokers: objectQuery(kafkaStage, 'plugin', 'properties', 'kafkaBrokers') || '',
+      accessID: objectQuery(s3Stage, 'plugin', 'properties', 'accessID') || '',
+      path: objectQuery(s3Stage, 'plugin', 'properties', 'path') || objectQuery(gcsStage, 'plugin', 'properties', 'path') || '', // This is Goofed
+      accessKey: objectQuery(s3Stage, 'plugin', 'properties', 'accessKey') || '',
+      bucket: objectQuery(gcsStage, 'plugin', 'properties', 'bucket') || '',
+      serviceFilePath: objectQuery(gcsStage, 'plugin', 'properties', 'serviceFilePath') || '',
+      project: objectQuery(gcsStage, 'plugin', 'properties', 'project') || ''
     });
   }
 
@@ -251,7 +260,25 @@ export default class CreateDatasetBtn extends Component {
       },
       'TPFSOrc': dataFormatProperties,
       'TPFSParquet': dataFormatProperties,
-      'TPFSAvro': dataFormatProperties
+      'TPFSAvro': dataFormatProperties,
+      'S3': {
+        accessID: '${accessID}',
+        path: '${path}',
+        accessKey: '${accessKey}',
+        authenticationMethod: 'Access Credentials',
+        schema: "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+        recursive: 'false'
+      },
+      'GCS': {
+        bucket: '${bucket}',
+        filenameOnly: 'false',
+        path: '${path}',
+        serviceFilePath: '${serviceFilePath}',
+        project: '${project}',
+        recursive: 'false',
+        schema: "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+        ignoreNonExistingFolders: "false"
+      }
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {
       if (!isNil(pluginsMap[stage.name])) {
@@ -314,6 +341,10 @@ export default class CreateDatasetBtn extends Component {
         pipelineName = `one_time_copy_to_fs_from_${dbStage.plugin.properties.jdbcPluginName}`;
       } else if (workspaceProps.connection === 'kafka') {
         pipelineName = 'one_time_copy_to_fs_from_kafka';
+      } else if (workspaceProps.connection === 's3') {
+        pipelineName = 'one_time_copy_to_fs_from_s3';
+      } else if (workspaceProps.connection === 'gcs') {
+        pipelineName = 'one_time_copy_to_fs_from_gcs';
       }
     } else {
       pipelineName = `one_time_copy_to_table`;
@@ -321,6 +352,10 @@ export default class CreateDatasetBtn extends Component {
         pipelineName = `one_time_copy_to_table_from_${dbStage.plugin.properties.jdbcPluginName}`;
       } else if (workspaceProps.connection === 'kafka') {
         pipelineName = 'one_time_copy_to_table_from_kafka';
+      } else if (workspaceProps.connection === 's3') {
+        pipelineName = 'one_time_copy_to_table_from_s3';
+      } else if (workspaceProps.connection === 'gcs') {
+        pipelineName = 'one_time_copy_to_table_from_gcs';
       }
     }
 
@@ -595,7 +630,7 @@ export default class CreateDatasetBtn extends Component {
     let {dataprep} = DataPrepStore.getState();
     let isTableOptionDisabled = objectQuery(dataprep, 'workspaceInfo', 'properties', 'databaseConfig');
     return (
-      <div>
+      <fieldset disabled={this.state.error ? true : false}>
         <p>{T.translate(`${PREFIX}.description`)}</p>
         <Form onSubmit={this.handleOnSubmit}>
           <FormGroup row>
@@ -657,11 +692,22 @@ export default class CreateDatasetBtn extends Component {
           </FormGroup>
           {this.renderDatasetSpecificContent()}
         </Form>
-      </div>
+      </fieldset>
     );
   }
 
   renderFooter() {
+    if (this.state.error) {
+      return (
+        <ModalFooter className="dataset-copy-error-container">
+          <CardActionFeedback
+            type='DANGER'
+            message={T.translate(`${PREFIX}.ingestFailMessage`)}
+            extendedMessage={this.state.error}
+          />
+        </ModalFooter>
+      );
+    }
     if (!this.state.copyInProgress) {
       return (
         <ModalFooter>
@@ -681,17 +727,6 @@ export default class CreateDatasetBtn extends Component {
           {
             this.renderSteps()
           }
-        </ModalFooter>
-      );
-    }
-    if (this.state.error) {
-      return (
-        <ModalFooter className="dataset-copy-error-container">
-          <div className="step-error-container">
-            {
-              this.state.error
-            }
-          </div>
         </ModalFooter>
       );
     }

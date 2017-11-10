@@ -14,14 +14,14 @@
  * the License.
 */
 
+@import './GraphHint.scss';
+
 $pipeline-summary-bg: white;
 $summary_titlebar_bg: #f5f5f5;
 $summary_border_color: #e1e1e1;
 $option-hover-bg-color: #eeeeee;
 $run_menu_bg_color: gray;
 $graph_containers_border_color: lightgray;
-$hint_body_font_color: black;
-$hint_bg_color: white;
 $min_height_of_graph: 340px;
 
 .pipeline-summary {
@@ -81,39 +81,8 @@ $min_height_of_graph: 340px;
           font-size: 8.5px;
         }
       }
-      .rv-hint {
-        background: $hint_bg_color;
-        padding: 10px;
-        box-shadow: 0px 10px 15px -5px rgba(0, 0, 0, 0.4);
-        color: $hint_body_font_color;
-        pointer-events: auto;
 
-        .title {
-          display: flex;
-          justify-content: space-between;
-
-          .icon-close {
-            cursor: pointer;
-          }
-        }
-
-        h4 {
-          margin: 0;
-          font-weight: bold;
-          color: $hint_body_font_color;
-        }
-        .log-stats {
-          margin: 5px 0;
-          > div {
-            > span {
-              &:first-child {
-                width: 40%;
-                display: inline-block;
-              }
-            }
-          }
-        }
-      }
+      @include GraphHint();
     }
   }
   .top-title-bar {

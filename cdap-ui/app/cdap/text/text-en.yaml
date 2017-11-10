@@ -346,6 +346,23 @@ features:
           1: '{context} Table'
           _: "{context} Tables"
         title: Select Table
+      GCSBrowser:
+        BrowserData:
+          Content:
+            directory: Directory
+            EmptymessageContainer:
+              suggestion1: your search
+          Headers:
+            LastModified: Last Modified
+            Name: Name
+            Size: Size
+            Type: Type
+        Search:
+          placeholder: Search this directory
+        TopPanel:
+          ListingInfo:
+            label: "{dirsCount} Directories and {filesCount} Files"
+          selectData: Select Data
       KafkaBrowser:
         EmptyMessage:
           clearLabel: Clear
@@ -810,6 +827,11 @@ features:
       expand: Expand the side panel
     TopPanel:
       addToPipelineBtnLabel: Create a Pipeline
+      addToPipelineModal:
+        title: Choose the type of pipeline to create
+        batchPipelineBtn: Batch Pipeline
+        realtimePipelineBtn: Realtime Pipeline
+        errorTitle: Unable to create pipeline
       applyBtnLabel: Apply
       cleanseLinkLabel: "cleanse "
       copyToCDAPDatasetBtn:
@@ -829,7 +851,7 @@ features:
           formatTooltip: Format of data
           requiredLabel: Required
           rowKeyLabel: Row Key
-          rowKeyTooltip: Its a rowkey
+          rowKeyTooltip: The name of the record field that should be used as the row key when writing to the table.
           typeLabel: Type
           tableBtnlabel: Table
         Formats:
@@ -838,20 +860,38 @@ features:
           parquet: Parquet
         modalTitle: Ingest Data
         monitorBtnLabel: Explore Data
+        ingestFailMessage: Unable to Ingest Data
         uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
       database: Database
+      databasePipeline:
+        ingestDataError: Unable to find Database Plugins. Please make sure Database Plugins are available before ingesting data.
+        pipelineError: Unable to find Database Plugins. Please make sure Database Plugins are available before creating a pipeline.
       databaseTitle: "Table: {name}"
       file: File System
+      filePipeline:
+        ingestDataerrorBatch: Unable to find Core Plugins. Please make sure Core Plugins are available before ingesting data.
+        ingestDataerrorRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available before ingesting data.
+        pipelineErrorBatch: Unable to find Core Plugins. Please make sure Core Plugins are available before creating a pipeline.
+        pipelineErrorRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available before creating a pipeline.
+      gcs: GCS
+      GCSPipeline:
+        ingestDataerror: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market before ingesting data.
+        pipelineError: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market before creating a pipeline.
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
       invalidFieldNameRemedies3: column names.
       kafka: Kafka
+      kafkaPipeline:
+        ingestDataError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before ingesting data.
+        pipelineError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before creating a pipeline.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      s3: S3
       S3Pipeline:
-        error: Cannot find S3 plugin. Please install Amazon S3 plugins before creating a pipeline
+        ingestDataError: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market before ingesting data.
+        pipelineError: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market before creating a pipeline.
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       Tabs:
@@ -919,6 +959,25 @@ features:
           ADD: "Add Connection: Database"
           DUPLICATE: "Duplicate Connection: {connection}"
           EDIT: "Edit Connection: {connection}"
+      GCS:
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to Google Cloud Service
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add Connection: GCS"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+        name: Name
+        projectId: Project ID
+        required: Required
+        serviceAccountKeyfile: Service Account Keyfile Location
+        testConnection: Test Connection
       Kafka:
         brokersList: Broker Host
         Buttons:
@@ -979,6 +1038,7 @@ features:
       duplicate: Duplicate
       edit: Edit
     database: Database ({count})
+    gcs: Google Cloud Service ({count})
     hdfs: File System
     kafka: Kafka ({count})
     s3: S3 ({count})
@@ -1295,10 +1355,24 @@ features:
       xAxisTitle: "Pipeline run #"
       yAxisTitle: "Number of Records"
     pipelineNodesMetricsGraph:
+      checkedPortLegendsCount: "{selected} of {total} Metrics Displayed"
       hours: Hours
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
+      NodeMetricsGraph:
+        accumulatedRecords: Accumulated Records
+        numOfRecordsError: 'Number of Error Records'
+        numOfRecordsIn: 'Number of Records In'
+        numOfRecordsOut: 'Number of Records Out'
+        recordsError: 'Error Records'
+        recordsIn: 'Records In'
+        recordsOut: 'Records Out'
+        ts: Timestamp
+      portRecordsCountPopover:
+        hide: Hide All
+        title: Total Records Out
+        view: View All
       processTimeTable:
         avgProcessTime: Average Processing Time
         minProcessTime: Min Process Time (one record)
@@ -1308,11 +1382,12 @@ features:
         stddevProcessTime: Standard Deviation
       recordsInTitle: Records In
       recordsOutTitle: Records Out
-      recordsErrorTitle: Records Error # Error Records??
+      recordsErrorTitle: Errors
       runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
       totalRecordsIn: "Total Records In: {totalRecordsIn}"
       totalRecordsOut: "Total Records Out: {totalRecordsOut}"
+      totalRecordsOutPorts: "{port}: {recordCount}"
       totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:
@@ -1644,7 +1719,6 @@ features:
         name-label: "Name"
         name-placeholder: "Namespace name"
         scheduler-queue-label: "Scheduler Queue"
-        scheduler-queue-placeholder: "Specify the Yarn queue name to be used for programs in this namespace"
         sld-desc:  "Specify the name and the description of the namespace."
         ssd-label: "General Information"
       Step2:
@@ -1654,6 +1728,8 @@ features:
         hdfs-root-directory-placeholder: "Base directory on HDFS for this namespace"
         hive-db-name-label: "Hive Database Name"
         hive-db-name-placeholder: "Hive database for this namespace"
+        scheduler-queue-name: "Scheduler Queue Name"
+        scheduler-queue-placeholder: "Yarn queue name to be used to submit programs in this namespace"
         sld-label: "Specify mapping of namespace resources to the existing underlying storage resources."
         ssd-label: "Namespace Mapping"
       Step3:

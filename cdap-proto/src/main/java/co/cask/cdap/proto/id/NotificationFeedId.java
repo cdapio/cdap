@@ -97,7 +97,7 @@ public class NotificationFeedId extends NamespacedEntityId implements ParentedId
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, category, feed));
   }
 

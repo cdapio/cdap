@@ -15,25 +15,37 @@
 */
 
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
 import {MyMetricApi} from 'api/metric';
 import T from 'i18n-react';
 import Rx from 'rx';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
-import NodeMetricsGraph from 'components/PipelineNodeGraphs/NodeMetricsGraph';
+import NodeMetricsGraph, {isDataSeriesHaveSingleDatapoint} from 'components/PipelineNodeGraphs/NodeMetricsGraph';
 import isNil from 'lodash/isNil';
-require('./PipelineNodeMetricsGraph.scss');
 import findIndex from 'lodash/findIndex';
+import capitalize from 'lodash/capitalize';
+import cloneDeep from 'lodash/cloneDeep';
 import {getGapFilledAccumulatedData} from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 import {humanReadableDuration, isPluginSource, isPluginSink} from 'services/helpers';
+import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
 
+require('./PipelineNodeMetricsGraph.scss');
 const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph`;
 const RECORDS_OUT_PATH_COLOR = '#97A0BA';
 const RECORDS_ERROR_PATH_COLOR = '#A40403';
 const RECORDS_IN_PATH_COLOR = '#58B7F6';
+const RECORDS_OUT_PORTS_PATH_COLORS = [
+  '#979FBB',
+  '#FFBA01',
+  '#5C6788',
+  '#FA6600',
+  '#7CD2EB',
+  '#999999',
+  '#FFA727'
+];
+
 const REGEXTOLABELLIST = [
   {
     id: 'processmintime',
@@ -52,6 +64,7 @@ const REGEXTOLABELLIST = [
     regex: /user.*.time.stddev$/
   }
 ];
+
 export default class PipelineNodeMetricsGraph extends Component {
 
   static propTypes = {
@@ -68,20 +81,24 @@ export default class PipelineNodeMetricsGraph extends Component {
       programId: PropTypes.string
     }),
     metrics: PropTypes.arrayOf(PropTypes.string),
-    plugin: PropTypes.object
+    plugin: PropTypes.object,
+    portsToShow: PropTypes.arrayOf(PropTypes.string)
   };
 
   state = {
     recordsInData: [],
     recordsOutData: [],
     recordsErrorData: [],
+    recordsOutPortsData: [],
     totalRecordsIn: null,
     totalRecordsOut: null,
     totalRecordsError: null,
+    totalRecordsOutPorts: null,
     processTimeMetrics: {},
     resolution: 'hours',
     aggregate: false,
-    loading: true
+    loading: true,
+    showPortsRecordsCountPopover: false
   };
 
   componentDidMount() {
@@ -100,107 +117,144 @@ export default class PipelineNodeMetricsGraph extends Component {
     }
   }
 
-  constructData = ({qid: data}) => {
+  formatData = (records, numOfDataPoints) => {
+    let totalRecords = 0;
+    let formattedRecords = [];
+    if (Array.isArray(records.data)) {
+      formattedRecords = records.data.map((d) => {
+        totalRecords += d.value;
+        return {
+          x: d.time,
+          y: totalRecords,
+          actualRecords: d.value
+        };
+      });
+      formattedRecords = getGapFilledAccumulatedData(formattedRecords, numOfDataPoints)
+        .map((data, i) => ({
+          x: i,
+          y: data.y,
+          time: data.x * 1000,
+          actualRecords: data.actualRecords
+        }));
+    }
+    return formattedRecords;
+  };
+
+  filterData = ({qid: data}) => {
     let resolution = this.getResolution(data.resolution);
     let recordsInRegex = new RegExp(/user.*.records.in/);
     let recordsOutRegex = new RegExp(/user.*.records.out/);
     let recordsErrorRegex = new RegExp(/user.*.records.error/);
+    let recordsOutPortsRegex = new RegExp(/user.*.records.out./);
+
     let recordsInData = data.series.find(d => recordsInRegex.test (d.metricName)) || [];
     let recordsOutData = data.series.find(d => recordsOutRegex.test(d.metricName)) || [];
     let recordsErrorData = data.series.find(d => recordsErrorRegex.test(d.metricName)) || [];
-    const formatData = (records, numOfDataPoints) => {
-      let totalRecords = 0;
-      let formattedRecords = [];
-      if (Array.isArray(records.data)) {
-        formattedRecords = records.data.map((d) => {
-          totalRecords += d.value;
-          return {
-            x: d.time,
-            y: totalRecords
-          };
-        });
-        formattedRecords = getGapFilledAccumulatedData(formattedRecords, numOfDataPoints)
-          .map((data, i) => ({
-            x: i,
-            y: data.y
-          }));
-      }
-      return formattedRecords;
-    };
-    let numOfDataPoints = Math.max(
-      Array.isArray(recordsOutData.data) ? recordsOutData.data.length : 0,
-      Array.isArray(recordsInData.data) ? recordsInData.data.length : 0,
-      Array.isArray(recordsErrorData.data) ? recordsErrorData.data.length : 0
-    );
-    recordsOutData = formatData(recordsOutData, numOfDataPoints);
-    recordsInData = formatData(recordsInData, numOfDataPoints);
-    recordsErrorData = formatData(recordsErrorData, numOfDataPoints);
+    let recordsOutPortsData = data.series.filter(d => recordsOutPortsRegex.test(d.metricName)) || [];
 
-    this.setState({
+    let newState = {
       recordsInData,
-      recordsOutData,
       recordsErrorData,
       resolution
-    });
-  }
-
-  getRecordsInOut({qid: data}) {
-    let recordsInRegex = new RegExp(/user.*.records.in/);
-    let recordsOutRegex = new RegExp(/user.*.records.out/);
-    let recordsErrorRegex = new RegExp(/user.*.records.error/);
-    if (!data.series.length) {
-      return {
-        recordsInData: null,
-        recordsOutData: null
-      };
-    }
-    let recordsInData = data.series.find(d => recordsInRegex.test (d.metricName)) || {};
-    let recordsOutData = data.series.find(d => recordsOutRegex.test(d.metricName)) || {};
-    let recordsErrorData = data.series.find(d => recordsErrorRegex.test(d.metricName)) || {};
-    recordsInData = (recordsInData.data || []).length ? recordsInData.data[0].value : 0;
-    recordsOutData = (recordsOutData.data || []).length ? recordsOutData.data[0].value : 0;
-    recordsErrorData = (recordsErrorData.data || []).length ? recordsErrorData.data[0].value : 0;
-
-    return {
-      recordsInData,
-      recordsOutData,
-      recordsErrorData
     };
+
+    if (!recordsOutPortsData.length) {
+      newState.recordsOutData = recordsOutData;
+    } else {
+      newState.recordsOutPortsData = recordsOutPortsData;
+    }
+
+    return newState;
   }
 
   getOutputRecordsForCharting() {
-    return {
-      'recordsOut': {
-        data: this.state.recordsOutData,
-        label: T.translate(`${PREFIX}.recordsOutTitle`),
-        color: RECORDS_OUT_PATH_COLOR
-      },
+    let {
+      recordsOutData,
+      recordsErrorData,
+      recordsOutPortsData
+    } = cloneDeep(this.state);
+
+    if (!this.state.aggregate) {
+      recordsOutData = this.formatData(recordsOutData, Array.isArray(recordsOutData) ? recordsOutData.length : 0);
+      recordsErrorData = this.formatData(recordsErrorData, Array.isArray(recordsErrorData) ? recordsErrorData.length : 0);
+      for (let i = 0; i < recordsOutPortsData.length; i++) {
+        recordsOutPortsData[i] = this.formatData(recordsOutPortsData[i], Array.isArray(recordsOutPortsData[i]) ? recordsOutPortsData[i].length : 0);
+      }
+    } else {
+      recordsOutData = (recordsOutData.data || []).length ? recordsOutData.data[0].value : 0;
+      recordsErrorData = (recordsErrorData.data || []).length ? recordsErrorData.data[0].value : 0;
+      for (let i = 0; i < recordsOutPortsData.length; i++) {
+        let portData = recordsOutPortsData[i];
+        recordsOutPortsData[i] = (portData.data || []).length ? portData.data[0].value : 0;
+      }
+    }
+
+    let outputRecordsObj = {
       'recordsError': {
-        data: this.state.recordsErrorData,
+        data: recordsErrorData,
         label: T.translate(`${PREFIX}.recordsErrorTitle`),
         color: RECORDS_ERROR_PATH_COLOR
       }
     };
+
+    if ((typeof recordsOutData === 'number' && recordsOutData !== 0) || (Array.isArray(recordsOutData) && recordsOutData.length)) {
+      return {
+        ...outputRecordsObj,
+        'recordsOut': {
+          data: recordsOutData,
+          label: T.translate(`${PREFIX}.recordsOutTitle`),
+          color: RECORDS_OUT_PATH_COLOR
+        }
+      };
+    }
+
+    for (let i = 0; i < recordsOutPortsData.length; i++) {
+      let portData = this.state.recordsOutPortsData[i];
+      let portName = capitalize(portData.metricName.split('.').pop());
+      outputRecordsObj = {
+        ...outputRecordsObj,
+        [portName]: {
+          data: recordsOutPortsData[i],
+          label: portName,
+          color: this.state.totalRecordsOutPorts[portName].color
+        }
+      };
+    }
+    return outputRecordsObj;
   }
 
-  getInputRecordsForCharting () {
-    let defaultMap = {
+  getInputRecordsForCharting() {
+    let {
+      recordsInData,
+      recordsErrorData
+    } = cloneDeep(this.state);
+
+    if (!this.state.aggregate) {
+      recordsInData = this.formatData(recordsInData, Array.isArray(recordsInData) ? recordsInData.length : 0);
+      recordsErrorData = this.formatData(recordsErrorData, Array.isArray(recordsErrorData) ? recordsErrorData.length : 0);
+    } else {
+      recordsInData = (recordsInData.data || []).length ? recordsInData.data[0].value : 0;
+      recordsErrorData = (recordsErrorData.data || []).length ? recordsErrorData.data[0].value : 0;
+    }
+
+    let inputRecordsObj = {
       'recordsIn': {
-        data: this.state.recordsInData,
+        data: recordsInData,
         label: T.translate(`${PREFIX}.recordsInTitle`),
         color: RECORDS_IN_PATH_COLOR
       }
     };
     if (isPluginSink(this.props.plugin.type)) {
-      return Object.assign({}, defaultMap, {
+      return {
+        ...inputRecordsObj,
         'recordsError': {
-          data: this.state.recordsErrorData,
+          data: recordsErrorData,
           label: T.translate(`${PREFIX}.recordsErrorTitle`),
           color: RECORDS_ERROR_PATH_COLOR
         }
-      });
+      };
     }
-    return defaultMap;
+    return inputRecordsObj;
   }
 
   fetchProcessTimeMetrics = () => {
@@ -224,28 +278,41 @@ export default class PipelineNodeMetricsGraph extends Component {
       .subscribe(
         (res) => {
           let data = res.qid.series;
-          let recordsOut, recordsIn, recordsError;
+          let recordsOut, recordsIn, recordsError, recordsOutPorts;
+          recordsOut = recordsIn = recordsError = 0;
+          recordsOutPorts = {};
           let processTimeMetrics = {};
           data.forEach(d => {
             let metricName = d.metricName;
+            let dataValue = (d.data || []).length ? d.data[0].value : 0;
             let specificMetric = REGEXTOLABELLIST.find(metricObj => metricObj.regex.test(d.metricName));
             if (specificMetric) {
               metricName = specificMetric.id;
             }
             if (d.metricName.match(/user.*records.in/)) {
-              recordsIn = d.data[0].value;
+              recordsIn += dataValue;
             } else if (d.metricName.match(/user.*records.out/)) {
-              recordsOut = d.data[0].value;
+              recordsOut += dataValue;
             } else if (d.metricName.match(/user.*.records.error/)) {
-              recordsError = d.data[0].value;
+              recordsError += dataValue;
             }
-            processTimeMetrics[metricName] = d.data[0].value;
+            if (d.metricName.match(/user.*records.out./)) {
+              let portName = capitalize(d.metricName.split('.').pop());
+              let portColor = RECORDS_OUT_PORTS_PATH_COLORS[Object.keys(recordsOutPorts).length % 7];
+
+              recordsOutPorts[portName] = {
+                value: dataValue,
+                color: portColor
+              };
+            }
+            processTimeMetrics[metricName] = dataValue;
           });
           this.setState({
             processTimeMetrics,
             totalRecordsIn: recordsIn,
             totalRecordsOut: recordsOut,
-            totalRecordsError: recordsError
+            totalRecordsError: recordsError,
+            totalRecordsOutPorts: recordsOutPorts
           });
         }
       );
@@ -278,7 +345,7 @@ export default class PipelineNodeMetricsGraph extends Component {
             return MyMetricApi.query(null, postBody);
           }
           this.setState({
-            data: this.constructData(res),
+            ...this.filterData(res),
             loading: false
           });
           return Rx.Observable.create((observer) => {
@@ -292,7 +359,7 @@ export default class PipelineNodeMetricsGraph extends Component {
           }
           this.setState({
             aggregate: true,
-            ...this.getRecordsInOut(res),
+            ...this.filterData(res),
             loading: false
           });
         },
@@ -302,19 +369,29 @@ export default class PipelineNodeMetricsGraph extends Component {
           });
         }
       );
+  };
 
+  togglePortsRecordsCountPopover = () => {
+    this.setState({
+      showPortsRecordsCountPopover: !this.state.showPortsRecordsCountPopover
+    });
   };
 
   renderChart = (data, type) => {
     if (Array.isArray(data) && !data.length) {
       return <EmptyMessageContainer message={T.translate(`${PREFIX}.nodata`)} />;
     }
+
+    let isMultiplePorts = type === 'recordsout' && Object.keys(this.state.totalRecordsOutPorts).length > 0;
+
     return (
       <NodeMetricsGraph
         xAxisTitle={this.state.resolution}
         yAxisTitle={T.translate(`${PREFIX}.numberOfRecords`)}
         data={data}
         metricType={type}
+        isMultiplePorts={isMultiplePorts}
+        portsToShow={this.props.portsToShow}
       />
     );
   }
@@ -324,27 +401,7 @@ export default class PipelineNodeMetricsGraph extends Component {
       return <EmptyMessageContainer message={T.translate(`${PREFIX}.nodata`)} />;
     }
 
-    if (!Array.isArray(data) && typeof data === 'object') {
-      return (
-        <div className="node-metrics-single-datapoint">
-          {
-            Object.keys(data).map(key => {
-              return (
-                <span>
-                  <small>{data[key].label}</small>
-                  <span>{isNil(data[key].data) ? T.translate('commons.notAvailable') : data[key].data}</span>
-                </span>
-              );
-            })
-          }
-        </div>
-      );
-    }
-    return (
-      <div className="node-metrics-single-datapoint">
-        {data}
-      </div>
-    );
+    return <NodeMetricsSingleDatapoint data={data} />;
   }
 
   /*
@@ -437,6 +494,70 @@ export default class PipelineNodeMetricsGraph extends Component {
     });
   };
 
+  renderPortsRecordsCount() {
+    if (Object.keys(this.state.totalRecordsOutPorts).length <= 2) {
+      return (
+        Object.keys(this.state.totalRecordsOutPorts)
+          .map(key => {
+            return (
+              <span>
+                { this.renderPortCount(key) }
+              </span>
+            );
+          })
+      );
+    }
+
+    return (
+      <a className="toggle-records-count-popover"
+          onClick={this.togglePortsRecordsCountPopover}
+      >
+        {
+          this.state.showPortsRecordsCountPopover ?
+            <span>{T.translate(`${PREFIX}.portRecordsCountPopover.hide`)}</span>
+          :
+            <span>{T.translate(`${PREFIX}.portRecordsCountPopover.view`)}</span>
+        }
+      </a>
+    );
+  }
+
+  rendePortsRecordsCountPopover() {
+    if (!this.state.showPortsRecordsCountPopover) {
+      return null;
+    }
+
+    return (
+      <div className="port-records-count-popover">
+        <div className="popover-content">
+          <strong>{T.translate(`${PREFIX}.portRecordsCountPopover.title`)}</strong>
+          {
+            Object.keys(this.state.totalRecordsOutPorts)
+              .map(key => {
+                let colorStyle = { backgroundColor: this.state.totalRecordsOutPorts[key].color };
+                return (
+                  <div className="port-count-container">
+                    <span
+                      className="port-legend-circle"
+                      style={colorStyle}
+                    />
+                    { this.renderPortCount(key) }
+                  </div>
+                );
+              })
+          }
+        </div>
+      </div>
+    );
+  }
+
+  renderPortCount = (port) => {
+    return T.translate(`${PREFIX}.totalRecordsOutPorts`, {
+      port,
+      recordCount: this.state.totalRecordsOutPorts[port].value || '0'
+    });
+  };
+
   renderContent() {
     return (
       <div className="node-metrics-container">
@@ -449,7 +570,7 @@ export default class PipelineNodeMetricsGraph extends Component {
                 <div className="title"> {T.translate(`${PREFIX}.recordsInTitle`)}</div>
                 <div className="total-records">
                   {
-                    this.state.aggregate ?
+                    this.state.aggregate || isDataSeriesHaveSingleDatapoint(this.getInputRecordsForCharting()) ?
                       null
                     :
                       <strong>
@@ -480,17 +601,19 @@ export default class PipelineNodeMetricsGraph extends Component {
                 <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`)} </div>
                 <div className="total-records">
                   {
-                    this.state.aggregate ?
+                    this.state.aggregate || isDataSeriesHaveSingleDatapoint(this.getOutputRecordsForCharting()) ?
                       null
                     :
-                      <strong>
-                        <span>
+                      <span>
+                        <strong>
                           { this.renderRecordsCount('totalRecordsOut') }
-                        </span>
-                        <span className="error-records-count">
+                        </strong>
+                        { this.renderPortsRecordsCount() }
+                        <strong className="error-records-count">
                           { this.renderRecordsCount('totalRecordsError') }
-                        </span>
-                      </strong>
+                        </strong>
+                        { this.rendePortsRecordsCountPopover() }
+                      </span>
                   }
                 </div>
               </div>

@@ -87,6 +87,7 @@ $max_height_error_container: 200px;
     .modal-footer {
       &.dataset-copy-error-container {
         padding: 0;
+        text-align: left;
         .step-error-container {
           background: $error-bg-color;
           color: $error-font-color;

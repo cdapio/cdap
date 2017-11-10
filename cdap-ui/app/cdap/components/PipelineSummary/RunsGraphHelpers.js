@@ -178,6 +178,7 @@ export function getGapFilledAccumulatedData(data, numOfDataPoints) {
       lasty = matchInActualData.y;
     }
     return {
+      ...matchInActualData,
       x: minx + index,
       y: lasty
     };
@@ -187,6 +188,7 @@ export function getGapFilledAccumulatedData(data, numOfDataPoints) {
     let lastDataPoint = finalData[finalData.length - 1];
     for (var i = 0; i < diff; i++) {
       let currDataPoint = {
+        ...lastDataPoint,
         x: lastDataPoint.x + i,
         y: lastDataPoint.y
       };

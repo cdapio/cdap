@@ -14,6 +14,8 @@
  * the License.
 */
 
+@import '../PipelineSummary/GraphHint.scss';
+
 $graph_container_border_color: lightgray;
 $table_header_border: #c9ccd6;
 $error_records_label_color: #a40403;
@@ -36,7 +38,11 @@ $error_records_label_color: #a40403;
       cursor: pointer;
     }
     .total-records {
-      strong {
+      > strong,
+      > span {
+        position: relative;
+
+        strong,
         span {
           margin: 0 10px 0 0;
           &.error-records-count {
@@ -50,6 +56,39 @@ $error_records_label_color: #a40403;
     }
     > div:not(.title) {
       font-size: 14px;
+    }
+
+    .port-records-count-popover {
+      position: absolute;
+      background: white;
+      z-index: 1;
+      border: 1px solid black;
+
+      .popover-content {
+        padding: 10px 15px 15px 15px;
+
+        .port-count-container {
+          display: flex;
+          align-items: center;
+          margin-top: 3px;
+
+          .port-legend-circle {
+            margin: 0 3px 0 0;
+            height: 15px;
+            width: 15px;
+            display: inline-block;
+            border-radius: 50%;
+          }
+        }
+      }
+    }
+
+    a.toggle-records-count-popover {
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: none;
+      }
     }
   }
   .node-metrics-container {
@@ -91,22 +130,46 @@ $error_records_label_color: #a40403;
             bottom: -10px;
             left: 50%;
           }
-          .rv-discrete-color-legend.horizontal {
+          .ports-legend-popover-with-errors {
+            .ports-legend-popover .popover-content.rv-discrete-color-legend {
+              padding: 10px 0 15px 15px;
+            }
+            .rv-discrete-color-legend.error-item {
+              width: initial;
+              padding: 0;
+            }
+            > .rv-discrete-color-legend > .rv-discrete-color-legend-item {
+              margin: 0;
+            }
+          }
+          .rv-discrete-color-legend {
             width: 100%;
             padding: 10px 0 0;
-            .rv-discrete-color-legend-item.horizontal {
-              display: inline-block;
+
+            .rv-discrete-color-legend-item {
+              display: inline-flex;
+              align-items: center;
               margin: 0 40px 0 0;
+
+              &.vertical {
+                display: flex;
+              }
+
+              &.pointer {
+                cursor: pointer;
+              }
+
               .rv-discrete-color-legend-item__title {
                 font-size: 14px;
               }
               .rv-discrete-color-legend-item__color {
                 display: inline-block;
                 vertical-align: bottom;
-                width: 30px;
+                width: 18px;
+                height: 18px;
                 border: 1px solid $graph_container_border_color;
-                height: 20px;
                 margin: 0 5px 0 0;
+                border-radius: 50%;
               }
             }
           }
@@ -116,10 +179,12 @@ $error_records_label_color: #a40403;
         }
       }
       .node-metrics-single-datapoint {
-        font-size: 4em;
+        font-size: 3em;
+        width: 100%;
         height: calc(100% - 50px);
         display: flex;
         flex-direction: column;
+        flex-wrap: wrap;
 
         > span {
           display: flex;
@@ -144,6 +209,17 @@ $error_records_label_color: #a40403;
         justify-content: center;
         display: flex;
         border: 1px solid $graph_container_border_color;
+      }
+      .graph-plot-container {
+        &.single-datapoint-graph {
+          padding: 0;
+          .node-metrics-single-datapoint {
+            height: 100%;
+          }
+        }
+
+        @include GraphHint(auto, 0 10px 0 0);
+
       }
     }
   }

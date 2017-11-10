@@ -79,7 +79,7 @@ public class DatasetTypeId extends NamespacedEntityId implements ParentedId<Name
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, type));
   }
 

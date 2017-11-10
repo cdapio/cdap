@@ -111,7 +111,7 @@ public class FlowletQueueId extends NamespacedEntityId implements ParentedId<Flo
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, application, flow, flowlet, queue));
   }
 

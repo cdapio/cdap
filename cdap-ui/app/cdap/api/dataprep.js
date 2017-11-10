@@ -73,6 +73,12 @@ const MyDataPrepApi = {
   readS3File: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/s3/buckets/:activeBucket/read`),
   getS3Specification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/s3/buckets/:activeBucket/specification`),
 
+  // GCS
+  gcsTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/gcs/test`),
+  exploreGCSBucketDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/explore`),
+  readGCSFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/buckets/:activeBucket/read`),
+  getGCSSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/specification`),
+
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),

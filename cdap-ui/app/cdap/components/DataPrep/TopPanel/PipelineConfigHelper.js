@@ -86,6 +86,13 @@ function constructFileSource(artifactsList, properties) {
   plugin = plugin[pluginName];
   let batchArtifact = find(artifactsList, { 'name': 'core-plugins' });
   let realtimeArtifact = find(artifactsList, { 'name': 'spark-plugins' });
+  if (!batchArtifact) {
+    return T.translate('features.DataPrep.TopPanel.filePipeline.ingestDataerrorBatch');
+  }
+
+  if (!realtimeArtifact) {
+    return T.translate('features.DataPrep.TopPanel.filePipeline.ingestDataerrorRealtime');
+  }
 
   batchArtifact.version = '[1.7.0, 3.0.0)';
   realtimeArtifact.version = '[1.7.0, 3.0.0)';
@@ -129,6 +136,9 @@ function constructDatabaseSource(artifactsList, dbInfo) {
 
   let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
 
+  if (!batchArtifact) {
+    return T.translate('features.DataPrep.TopPanel.databasePipeline.ingestDataError');
+  }
   batchArtifact.version = '[1.7.0, 3.0.0)';
   let pluginName = 'Database';
 
@@ -169,8 +179,10 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
   // This is a hack.. should not do this
   // We are still shipping kafka-plugins with hydrator-plugins 1.7 but
   // it doesn't contain the streamingsource or batchsource plugins
-  let pluginArtifact = artifactsList.filter((artifact) => artifact.name === 'kafka-plugins');
-  pluginArtifact = pluginArtifact[pluginArtifact.length - 1];
+  let pluginArtifact = find(artifactsList, {name: 'kafka-plugins'});
+  if (!pluginArtifact) {
+    return T.translate('features.DataPrep.TopPanel.kafkaPipeline.ingestDataError');
+  }
 
   plugin = plugin[pluginName];
 
@@ -218,6 +230,72 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
   };
 }
 
+function constructS3Source(artifactsList, s3Info) {
+  if (!s3Info) {
+    return null;
+  }
+  let batchArtifact = find(artifactsList, {name: 'amazon-s3-plugins'});
+  if (!batchArtifact) {
+    return T.translate('features.DataPrep.TopPanel.S3Pipeline.ingestDataError');
+  }
+  batchArtifact.version = '[1.7.0, 3.0.0)';
+  let plugin = objectQuery(s3Info, 'values', 0, 'S3');
+  let batchPluginInfo = {
+    name: plugin.name,
+    label: plugin.name,
+    type: 'batchsource',
+    artifact: batchArtifact,
+    properties: {...plugin.properties, referenceName: plugin.name}
+  };
+  let batchStage = {
+    name: 'S3',
+    plugin: batchPluginInfo
+  };
+  return {
+    batchSource: batchStage,
+    connections: [{
+      from: 'S3',
+      to: 'Wrangler'
+    }]
+  };
+}
+
+function constructGCSSource(artifactsList, gcsInfo) {
+  if (!gcsInfo) { return null; }
+  let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+  if (!batchArtifact) {
+    return T.translate('features.DataPrep.TopPanel.GCSPipeline.ingestDataerror');
+  }
+
+  batchArtifact.version = '[0.9.0, 3.0.0)';
+  let plugin = objectQuery(gcsInfo, 'values', 0);
+
+  let pluginName = Object.keys(plugin)[0]; // this is because the plugin can be GCSFile or GCSFileBlob
+
+  plugin = plugin[pluginName];
+
+  let batchPluginInfo = {
+    name: plugin.name,
+    label: plugin.name,
+    type: 'batchsource',
+    artifact: batchArtifact,
+    properties: plugin.properties
+  };
+
+  let batchStage = {
+    name: 'GCS',
+    plugin: batchPluginInfo
+  };
+
+  return {
+    batchSource: batchStage,
+    connections: [{
+      from: 'GCS',
+      to: 'Wrangler'
+    }]
+  };
+}
+
 function constructProperties(workspaceInfo, pluginVersion) {
   let observable = new Rx.Subject();
   let namespace = NamespaceStore.getState().selectedNamespace;
@@ -236,8 +314,9 @@ function constructProperties(workspaceInfo, pluginVersion) {
   let rxArray = [
     MyDataPrepApi.getSchema(requestObj, requestBody)
   ];
+  let connectionId = objectQuery(state, 'workspaceInfo', 'properties', 'connectionid');
 
-  if (state.workspaceUri && state.workspaceUri.length > 0) {
+  if (state.workspaceInfo.properties.connection === 'file') {
     let specParams = {
       namespace,
       path: state.workspaceUri
@@ -247,7 +326,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
   } else if (state.workspaceInfo.properties.connection === 'database') {
     let specParams = {
       namespace,
-      connectionId: state.workspaceInfo.properties.connectionid,
+      connectionId,
       tableId: state.workspaceInfo.properties.id
     };
     rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
@@ -256,11 +335,28 @@ function constructProperties(workspaceInfo, pluginVersion) {
   } else if (state.workspaceInfo.properties.connection === 'kafka') {
     let specParams = {
       namespace,
-      connectionId: state.workspaceInfo.properties.connectionid,
+      connectionId,
       topic: state.workspaceInfo.properties.topic
     };
 
     rxArray.push(MyDataPrepApi.getKafkaSpecification(specParams));
+  } else if (state.workspaceInfo.properties.connection === 's3') {
+    let activeBucket = state.workspaceInfo.properties['bucket-name'];
+    let key = state.workspaceInfo.properties.key;
+    let specParams = {
+      namespace,
+      connectionId,
+      activeBucket,
+      key
+    };
+    rxArray.push(MyDataPrepApi.getS3Specification(specParams));
+  } else if (state.workspaceInfo.properties.connection === 'gcs') {
+    let specParams = {
+      namespace,
+      connectionId: state.workspaceInfo.properties.connectionid,
+      wid: workspaceId
+    };
+    rxArray.push(MyDataPrepApi.getGCSSpecification(specParams));
   }
 
   try {
@@ -341,8 +437,16 @@ function constructProperties(workspaceInfo, pluginVersion) {
         delete sourceConfigs.batchSource.plugin.properties.schema;
       } else if (state.workspaceInfo.properties.connection === 'kafka') {
         sourceConfigs = constructKafkaSource(res[0], res[2]);
+      } else if (state.workspaceInfo.properties.connection === 's3') {
+        sourceConfigs = constructS3Source(res[0], res[2]);
+      } else if (state.workspaceInfo.properties.connection === 'gcs') {
+        sourceConfigs = constructGCSSource(res[0], res[2]);
       }
 
+      if (typeof sourceConfigs === 'string') {
+        observable.onError(sourceConfigs);
+        return;
+      }
       if (sourceConfigs) {
         realtimeStages.push(sourceConfigs.realtimeSource);
         batchStages.push(sourceConfigs.batchSource);
@@ -354,7 +458,15 @@ function constructProperties(workspaceInfo, pluginVersion) {
         config: {
           stages: realtimeStages,
           batchInterval: '10s',
-          connections
+          connections,
+          "resources": {
+            "memoryMB": 1024,
+            "virtualCores": 1
+          },
+          "driverResources": {
+            "memoryMB": 1024,
+            "virtualCores": 1
+          },
         }
       };
 
@@ -362,14 +474,22 @@ function constructProperties(workspaceInfo, pluginVersion) {
         artifact: batchArtifact,
         config: {
           stages: batchStages,
-          connections
+          connections,
+          "resources": {
+            "memoryMB": 1024,
+            "virtualCores": 1
+          },
+          "driverResources": {
+            "memoryMB": 1024,
+            "virtualCores": 1
+          },
         }
       };
 
       observable.onNext({realtimeConfig, batchConfig});
 
     }, (err) => {
-      observable.onError(objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'));
+      observable.onError(objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'));
     });
   } catch (e) {
     observable.onError(objectQuery(e, 'message') || e);

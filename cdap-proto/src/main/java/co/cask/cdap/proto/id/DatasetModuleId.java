@@ -84,7 +84,7 @@ public class DatasetModuleId extends NamespacedEntityId implements ParentedId<Na
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, module));
   }
 

@@ -81,6 +81,24 @@ const mapDispatchToHBASENamespaceNameProps = (dispatch) => {
   };
 };
 
+const mapStateToSchedulerQueueNameProps = (state) => {
+  return {
+    value: state.mapping.schedulerQueueName,
+    type: 'text',
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-placeholder')
+  };
+};
+const mapDispatchToSchedulerQueueNameProps = (dispatch) => {
+  return {
+    onChange: (e) => {
+      dispatch({
+        type: AddNamespaceActions.setSchedulerQueueName,
+        payload: { schedulerQueueName: e.target.value }
+      });
+    }
+  };
+};
+
 const InputRootDirectory = connect(
   mapStateToHDFSRootDirectoryProps,
   mapDispatchToHDFSRootDirectoryProps
@@ -96,6 +114,7 @@ const InputHbaseNamespace = connect(
   mapDispatchToHBASENamespaceNameProps
 )(InputWithValidations);
 
+const InputSchedulerQueueName = connect(mapStateToSchedulerQueueNameProps, mapDispatchToSchedulerQueueNameProps)(InputWithValidations);
 export default function MappingStep() {
   return (
     <Provider store={AddNamespaceStore}>
@@ -134,6 +153,16 @@ export default function MappingStep() {
           </Col>
           <Col xs="7">
             <InputHbaseNamespace />
+          </Col>
+        </FormGroup>
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">
+              {T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-name')}
+            </Label>
+          </Col>
+          <Col xs="7">
+            <InputSchedulerQueueName />
           </Col>
         </FormGroup>
       </Form>

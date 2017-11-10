@@ -60,7 +60,8 @@ const getTemplatesWithAddedInfo = (templates = [], extension = '') => {
       pluginName: template.pluginName,
       type: extension,
       icon: _DAGPlusPlusFactory.getIcon(template.pluginName),
-      template: popoverTemplate
+      template: popoverTemplate,
+      allArtifacts: [template.artifact]
     });
   });
 };
@@ -89,7 +90,7 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
            .map( plug => Object.assign({}, plug, getExtraProperties(plug, extension)));
   };
   const getArtifact = (_pluginToArtifactArrayMap = {}, plugin = {}) => {
-    if(!Object.keys(plugin).length) { return {}; }
+    if (!Object.keys(plugin).length) { return {}; }
     return _myHelpers.objectQuery(_pluginToArtifactArrayMap, (plugin.name || plugin.pluginName), 0, 'artifact') || plugin.artifact;
   };
   return Object.keys(pluginToArtifactArrayMap).map( pluginName => {
@@ -103,7 +104,7 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
 };
 
 const getDefaultVersionForPlugin = (plugin = {}, defaultVersionMap = {}) => {
-  if([Object.keys(plugin), Object.keys(defaultVersionMap)].indexOf(0) !== -1) {
+  if ([Object.keys(plugin), Object.keys(defaultVersionMap)].indexOf(0) !== -1) {
     return {};
   }
   let defaultVersionsList = Object.keys(defaultVersionMap);
@@ -119,8 +120,8 @@ const getDefaultVersionForPlugin = (plugin = {}, defaultVersionMap = {}) => {
 
 var plugins = (state = getInitialState().plugins, action = {}) => {
   let stateCopy;
-  switch(action.type) {
-    case leftpanelactions.PLUGINS_FETCH:
+  switch (action.type) {
+    case leftpanelactions.PLUGINS_FETCH: {
       stateCopy = Object.assign({}, state);
       const { extension, plugins } = action.payload;
 
@@ -136,14 +137,14 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
 
       stateCopy.pluginTypes = Object.assign({}, state.pluginTypes, stateCopy.pluginTypes);
       return Object.assign({}, state, stateCopy);
-
+    }
     case leftpanelactions.FETCH_ALL_PLUGINS:
       stateCopy = Object.assign({}, state);
 
       stateCopy.pluginTypes = Object.assign({}, action.payload.pluginTypes);
       return Object.assign({}, state, stateCopy);
 
-    case leftpanelactions.PLUGIN_TEMPLATE_FETCH:
+    case leftpanelactions.PLUGIN_TEMPLATE_FETCH: {
       stateCopy = Object.assign({}, state);
       const { pipelineType, namespace, res } = action.payload;
       const templatesList = _myHelpers.objectQuery(res, namespace, pipelineType);
@@ -156,8 +157,8 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
       });
 
       return Object.assign({}, state, stateCopy);
-
-    case leftpanelactions.PLUGINS_DEFAULT_VERSION_FETCH:
+    }
+    case leftpanelactions.PLUGINS_DEFAULT_VERSION_FETCH: {
       const defaultPluginVersionsMap = action.payload.res || {};
       stateCopy = Object.assign({}, getInitialState().plugins);
       if (Object.keys(defaultPluginVersionsMap).length) {
@@ -175,8 +176,8 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
         return Object.assign({}, state, stateCopy);
       }
       return state;
-
-    case leftpanelactions.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE:
+    }
+    case leftpanelactions.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE: {
       let pluginTypes = Object.keys(state.pluginTypes);
       if (!pluginTypes.length) {
         return state;
@@ -196,7 +197,7 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
           });
         });
         return Object.assign({}, state, {pluginToVersionMap});
-
+    }
     case leftpanelactions.RESET:
       return getInitialState().plugins;
 
@@ -205,8 +206,8 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
   }
 };
 var extensions = (state = getInitialState().extensions, action = {}) => {
-  switch(action.type) {
-    case leftpanelactions.EXTENSIONS_FETCH:
+  switch (action.type) {
+    case leftpanelactions.EXTENSIONS_FETCH: {
       const uiSupportedExtension = (extension) => {
         const pipelineType = action.payload.pipelineType;
         const extensionMap = _GLOBALS.pluginTypes[pipelineType];
@@ -216,6 +217,7 @@ var extensions = (state = getInitialState().extensions, action = {}) => {
         ...state,
         ...action.payload.extensions.filter(uiSupportedExtension)
       ];
+    }
     case leftpanelactions.FETCH_ALL_PLUGINS:
       return [
         ...state,

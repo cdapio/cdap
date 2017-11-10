@@ -19,9 +19,12 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'A',
       scope: {
-        nodeName: '=',
+        node: '=',
         ports: '=',
-        isDisabled: '='
+        isDisabled: '=',
+        onMetricsClick: '=',
+        disableMetricsClick: '=',
+        metricsData: '='
       },
       templateUrl: 'splitter-popover/splitter-popover.html',
       controller: function ($scope) {

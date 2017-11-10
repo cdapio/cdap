@@ -202,11 +202,10 @@ export default class ColumnActionsDropdown extends Component {
     ];
     this.eventEmitter = ee(ee);
     this.eventEmitter.on('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
+    this.dropdownId = shortid.generate();
   }
 
-  componentWillMount() {
-    this.dropdownId = shortid.generate();
-    this.eventEmitter.off('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
+  componentDidMount() {
     this.singleWorkspaceMode = DataPrepStore.getState().dataprep.singleWorkspaceMode;
 
     this.sub = DataPrepStore.subscribe(() => {
@@ -220,6 +219,7 @@ export default class ColumnActionsDropdown extends Component {
   }
 
   componentWillUnmount() {
+    this.eventEmitter.off('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
     if (this.documentClick$ && this.documentClick$.dispose) {
       this.documentClick$.dispose();
     }
@@ -229,7 +229,8 @@ export default class ColumnActionsDropdown extends Component {
   }
 
   toggleDropdown(toggleState) {
-    if (this.unmounted) {
+    // Since this will get triggered on all the columns we could avoid setting state if its already the same.
+    if (this.unmounted || toggleState === this.state.dropdownOpen) {
       return;
     }
     let newState = typeof toggleState === 'boolean' ? toggleState : !this.state.dropdownOpen;
