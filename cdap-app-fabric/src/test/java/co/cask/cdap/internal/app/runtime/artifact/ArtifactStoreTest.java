@@ -44,7 +44,6 @@ import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -72,6 +71,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 
 /**
  */
@@ -746,15 +746,12 @@ public class ArtifactStoreTest {
     Assert.assertEquals(expectedMap, new TreeMap<>(actualMap).descendingMap());
 
     // test Predicate
-    Predicate<ArtifactId> predicate = new Predicate<ArtifactId>() {
-      @Override
-      public boolean apply(ArtifactId input) {
-        try {
-          return input.getParent().equals(NamespaceId.DEFAULT) && input.getArtifact().equals("artifactX")
-            && ArtifactVersionRange.parse("[1.0.0, 1.1.0)").versionIsInRange(new ArtifactVersion(input.getVersion()));
-        } catch (InvalidArtifactRangeException e) {
-          return false;
-        }
+    Predicate<ArtifactId> predicate = input -> {
+      try {
+        return input.getParent().equals(NamespaceId.DEFAULT) && input.getArtifact().equals("artifactX")
+          && ArtifactVersionRange.parse("[1.0.0, 1.1.0)").versionIsInRange(new ArtifactVersion(input.getVersion()));
+      } catch (InvalidArtifactRangeException e) {
+        return false;
       }
     };
     expectedMap = Maps.newHashMap();

@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.meta;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -27,12 +28,10 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +66,7 @@ public final class DefaultCheckpointManager implements CheckpointManager {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }
@@ -83,67 +82,46 @@ public final class DefaultCheckpointManager implements CheckpointManager {
       return;
     }
 
-    try {
-      lastCheckpoint = Transactions.execute(transactional, new TxCallable<Map<Integer, Checkpoint>>() {
-        @Override
-        public Map<Integer, Checkpoint> call(DatasetContext context) throws Exception {
-          Map<Integer, Checkpoint> result = new HashMap<>();
+    lastCheckpoint = Transactionals.execute(transactional, context -> {
+      Map<Integer, Checkpoint> result = new HashMap<>();
 
-          Table table = getCheckpointTable(context);
-          for (Map.Entry<Integer, ? extends Checkpoint> entry : checkpoints.entrySet()) {
-            byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
-            Checkpoint checkpoint = entry.getValue();
-            table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));
-            table.put(key, NEXT_TIME_COL_NAME, Bytes.toBytes(checkpoint.getNextEventTime()));
-            table.put(key, MAX_TIME_COL_NAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
-            result.put(entry.getKey(), new Checkpoint(checkpoint.getNextOffset(), checkpoint.getNextEventTime(),
-                                                      checkpoint.getMaxEventTime()));
-          }
-          return result;
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ServiceUnavailableException.class);
-    }
+      Table table = getCheckpointTable(context);
+      for (Map.Entry<Integer, ? extends Checkpoint> entry : checkpoints.entrySet()) {
+        byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
+        Checkpoint checkpoint = entry.getValue();
+        table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));
+        table.put(key, NEXT_TIME_COL_NAME, Bytes.toBytes(checkpoint.getNextEventTime()));
+        table.put(key, MAX_TIME_COL_NAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
+        result.put(entry.getKey(), new Checkpoint(checkpoint.getNextOffset(), checkpoint.getNextEventTime(),
+                                                  checkpoint.getMaxEventTime()));
+      }
+      return result;
+    }, ServiceUnavailableException.class);
 
     LOG.trace("Saved checkpoints for partitions {}", checkpoints);
   }
 
   @Override
   public Map<Integer, Checkpoint> getCheckpoint(final Set<Integer> partitions) throws Exception {
-    try {
-      return Transactions.execute(transactional, new TxCallable<Map<Integer, Checkpoint>>() {
-        @Override
-        public Map<Integer, Checkpoint> call(DatasetContext context) throws Exception {
-          Table table = getCheckpointTable(context);
-          Map<Integer, Checkpoint> checkpoints = new HashMap<>();
-          for (final int partition : partitions) {
-            Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-            checkpoints.put(partition, createFromRow(result));
-          }
-          return checkpoints;
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ServiceUnavailableException.class);
-    }
+    return Transactionals.execute(transactional, context -> {
+      Table table = getCheckpointTable(context);
+      Map<Integer, Checkpoint> checkpoints = new HashMap<>();
+      for (final int partition : partitions) {
+        Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
+        checkpoints.put(partition, createFromRow(result));
+      }
+      return checkpoints;
+    }, ServiceUnavailableException.class);
   }
 
   @Override
   public Checkpoint getCheckpoint(final int partition) throws Exception {
-    try {
-      Checkpoint checkpoint = Transactions.execute(transactional, new TxCallable<Checkpoint>() {
-        @Override
-        public Checkpoint call(DatasetContext context) throws Exception {
-          Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-          return createFromRow(result);
-        }
-      });
-      LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
-      return checkpoint;
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ServiceUnavailableException.class);
-    }
+    Checkpoint checkpoint = Transactionals.execute(transactional, context -> {
+      Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
+      return createFromRow(result);
+    }, ServiceUnavailableException.class);
+    LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
+    return checkpoint;
   }
 
   /**

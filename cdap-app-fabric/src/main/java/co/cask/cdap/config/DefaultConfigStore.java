@@ -17,7 +17,7 @@
 package co.cask.cdap.config;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -32,7 +32,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
@@ -41,7 +40,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
@@ -69,7 +67,7 @@ public class DefaultConfigStore implements ConfigStore {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }
@@ -86,119 +84,77 @@ public class DefaultConfigStore implements ConfigStore {
 
   @Override
   public void create(final String namespace, final String type, final Config config) throws ConfigExistsException {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          boolean success = getConfigTable(context).compareAndSwap(rowKey(namespace, type, config.getId()),
-                                                                   PROPERTY_COLUMN, null,
-                                                                   Bytes.toBytes(GSON.toJson(config.getProperties())));
-          if (!success) {
-            throw new ConfigExistsException(namespace, type, config.getId());
-          }
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ConfigExistsException.class);
-    }
+    Transactionals.execute(transactional, context -> {
+      boolean success = getConfigTable(context).compareAndSwap(rowKey(namespace, type, config.getId()),
+                                                               PROPERTY_COLUMN, null,
+                                                               Bytes.toBytes(GSON.toJson(config.getProperties())));
+      if (!success) {
+        throw new ConfigExistsException(namespace, type, config.getId());
+      }
+    }, ConfigExistsException.class);
   }
 
   @Override
   public void createOrUpdate(final String namespace, final String type, final Config config) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getConfigTable(context).put(rowKey(namespace, type, config.getId()), PROPERTY_COLUMN,
-                                      Bytes.toBytes(GSON.toJson(config.getProperties())));
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+    Transactionals.execute(transactional, context -> {
+      getConfigTable(context).put(rowKey(namespace, type, config.getId()), PROPERTY_COLUMN,
+                                  Bytes.toBytes(GSON.toJson(config.getProperties())));
+    });
   }
 
   @Override
   public void delete(final String namespace, final String type, final String id) throws ConfigNotFoundException {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          byte[] rowKey = rowKey(namespace, type, id);
-          Table configTable = getConfigTable(context);
-          if (configTable.get(rowKey).isEmpty()) {
-            throw new ConfigNotFoundException(namespace, type, id);
-          }
-          configTable.delete(rowKey);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ConfigNotFoundException.class);
-    }
+    Transactionals.execute(transactional, context -> {
+      byte[] rowKey = rowKey(namespace, type, id);
+      Table configTable = getConfigTable(context);
+      if (configTable.get(rowKey).isEmpty()) {
+        throw new ConfigNotFoundException(namespace, type, id);
+      }
+      configTable.delete(rowKey);
+    }, ConfigNotFoundException.class);
   }
 
   @Override
   public List<Config> list(final String namespace, final String type) {
-    try {
-      return Transactions.execute(transactional, new TxCallable<List<Config>>() {
-        @Override
-        public List<Config> call(DatasetContext context) throws Exception {
-          List<Config> configList = Lists.newArrayList();
-          byte[] prefixBytes = rowKeyPrefix(namespace, type);
-          try (Scanner rows = getConfigTable(context).scan(prefixBytes, Bytes.stopKeyForPrefix(prefixBytes))) {
-            Row row;
-            while ((row = rows.next()) != null) {
-              Map<String, String> properties = GSON.fromJson(Bytes.toString(row.get(PROPERTY_COLUMN)),
-                                                             MAP_STRING_STRING_TYPE);
-              configList.add(new Config(getPart(row.getRow(), prefixBytes.length), properties));
-            }
-            return configList;
-          }
+    return Transactionals.execute(transactional, context -> {
+      List<Config> configList = Lists.newArrayList();
+      byte[] prefixBytes = rowKeyPrefix(namespace, type);
+      try (Scanner rows = getConfigTable(context).scan(prefixBytes, Bytes.stopKeyForPrefix(prefixBytes))) {
+        Row row;
+        while ((row = rows.next()) != null) {
+          Map<String, String> properties = GSON.fromJson(Bytes.toString(row.get(PROPERTY_COLUMN)),
+                                                         MAP_STRING_STRING_TYPE);
+          configList.add(new Config(getPart(row.getRow(), prefixBytes.length), properties));
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+        return configList;
+      }
+    });
   }
 
   @Override
   public Config get(final String namespace, final String type, final String id) throws ConfigNotFoundException {
-    try {
-      return Transactions.execute(transactional, new TxCallable<Config>() {
-        @Override
-        public Config call(DatasetContext context) throws Exception {
-          Row row = getConfigTable(context).get(rowKey(namespace, type, id));
-          if (row.isEmpty()) {
-            throw new ConfigNotFoundException(namespace, type, id);
-          }
-          Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(row.get(PROPERTY_COLUMN)),
-                                                          MAP_STRING_STRING_TYPE);
-          return new Config(id, propertyMap);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ConfigNotFoundException.class);
-    }
+    return Transactionals.execute(transactional, context -> {
+      Row row = getConfigTable(context).get(rowKey(namespace, type, id));
+      if (row.isEmpty()) {
+        throw new ConfigNotFoundException(namespace, type, id);
+      }
+      Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(row.get(PROPERTY_COLUMN)),
+                                                      MAP_STRING_STRING_TYPE);
+      return new Config(id, propertyMap);
+    }, ConfigNotFoundException.class);
   }
 
   @Override
   public void update(final String namespace, final String type, final Config config) throws ConfigNotFoundException {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          Table configTable = getConfigTable(context);
-          byte[] rowKey = rowKey(namespace, type, config.getId());
-          if (configTable.get(rowKey).isEmpty()) {
-            throw new ConfigNotFoundException(namespace, type, config.getId());
-          }
-          configTable.put(rowKey, PROPERTY_COLUMN,
-                          Bytes.toBytes(GSON.toJson(config.getProperties())));
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, ConfigNotFoundException.class);
-    }
+    Transactionals.execute(transactional, context -> {
+      Table configTable = getConfigTable(context);
+      byte[] rowKey = rowKey(namespace, type, config.getId());
+      if (configTable.get(rowKey).isEmpty()) {
+        throw new ConfigNotFoundException(namespace, type, config.getId());
+      }
+      configTable.put(rowKey, PROPERTY_COLUMN,
+                      Bytes.toBytes(GSON.toJson(config.getProperties())));
+    }, ConfigNotFoundException.class);
   }
 
   private byte[] rowKey(String namespace, String type, String id) {

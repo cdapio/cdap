@@ -17,7 +17,7 @@
 package co.cask.cdap.store;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -29,7 +29,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -71,31 +70,25 @@ public class DefaultNamespaceStore implements NamespaceStore {
   @Nullable
   public NamespaceMeta create(final NamespaceMeta metadata) {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    return Transactions.executeUnchecked(transactional, new TxCallable<NamespaceMeta>() {
-      @Override
-      public NamespaceMeta call(DatasetContext context) throws Exception {
-        NamespaceMDS mds = getNamespaceMDS(context);
-        NamespaceMeta existing = mds.get(metadata.getNamespaceId());
-        if (existing != null) {
-          return existing;
-        }
-        mds.create(metadata);
-        return null;
+    return Transactionals.execute(transactional, context -> {
+      NamespaceMDS mds = getNamespaceMDS(context);
+      NamespaceMeta existing = mds.get(metadata.getNamespaceId());
+      if (existing != null) {
+        return existing;
       }
+      mds.create(metadata);
+      return null;
     });
   }
 
   @Override
   public void update(final NamespaceMeta metadata) {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    Transactions.executeUnchecked(transactional, new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        NamespaceMDS mds = getNamespaceMDS(context);
-        NamespaceMeta existing = mds.get(metadata.getNamespaceId());
-        if (existing != null) {
-          mds.create(metadata);
-        }
+    Transactionals.execute(transactional, context -> {
+      NamespaceMDS mds = getNamespaceMDS(context);
+      NamespaceMeta existing = mds.get(metadata.getNamespaceId());
+      if (existing != null) {
+        mds.create(metadata);
       }
     });
   }
@@ -104,11 +97,8 @@ public class DefaultNamespaceStore implements NamespaceStore {
   @Nullable
   public NamespaceMeta get(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    return Transactions.executeUnchecked(transactional, new TxCallable<NamespaceMeta>() {
-      @Override
-      public NamespaceMeta call(DatasetContext context) throws Exception {
-        return getNamespaceMDS(context).get(id);
-      }
+    return Transactionals.execute(transactional, context -> {
+      return getNamespaceMDS(context).get(id);
     });
   }
 
@@ -116,26 +106,20 @@ public class DefaultNamespaceStore implements NamespaceStore {
   @Nullable
   public NamespaceMeta delete(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    return Transactions.executeUnchecked(transactional, new TxCallable<NamespaceMeta>() {
-      @Override
-      public NamespaceMeta call(DatasetContext context) throws Exception {
-        NamespaceMDS mds = getNamespaceMDS(context);
-        NamespaceMeta existing = mds.get(id);
-        if (existing != null) {
-          mds.delete(id);
-        }
-        return existing;
+    return Transactionals.execute(transactional, context -> {
+      NamespaceMDS mds = getNamespaceMDS(context);
+      NamespaceMeta existing = mds.get(id);
+      if (existing != null) {
+        mds.delete(id);
       }
+      return existing;
     });
   }
 
   @Override
   public List<NamespaceMeta> list() {
-    return Transactions.executeUnchecked(transactional, new TxCallable<List<NamespaceMeta>>() {
-      @Override
-      public List<NamespaceMeta> call(DatasetContext context) throws Exception {
-        return getNamespaceMDS(context).list();
-      }
+    return Transactionals.execute(transactional, context -> {
+      return getNamespaceMDS(context).list();
     });
   }
 }

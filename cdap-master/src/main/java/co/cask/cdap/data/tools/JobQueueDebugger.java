@@ -17,9 +17,8 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -45,7 +44,6 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -132,7 +130,7 @@ public class JobQueueDebugger extends AbstractIdleService {
     this.datasetFramework = datasetFramework;
     multiThreadDatasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), txClient,
-      NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null);
+      NamespaceId.SYSTEM, ImmutableMap.of(), null, null);
     transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(multiThreadDatasetCache),
       RetryStrategies.retryOnConflict(20, 100)
@@ -165,7 +163,7 @@ public class JobQueueDebugger extends AbstractIdleService {
     getJobQueueScanner().scanPartitions(trace);
   }
 
-  private JobStatistics scanPartition(int partition, boolean trace) throws TransactionFailureException {
+  private JobStatistics scanPartition(int partition, boolean trace) {
     return getJobQueueScanner().scanPartition(partition, trace);
   }
 
@@ -188,18 +186,15 @@ public class JobQueueDebugger extends AbstractIdleService {
     }
 
     private void printTopicMessageIds() throws TransactionFailureException {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          System.out.printf("Getting notification subscriber messageIds.\n");
-          List<String> topics = ImmutableList.of(cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
-                                                 cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
-          for (String topic : topics) {
-            String messageIdString = jobQueue.retrieveSubscriberState(topic);
-            String publishTimestampString = messageIdString == null ? "n/a" :
-              Long.toString(new MessageId(Bytes.fromHexString(messageIdString)).getPublishTimestamp());
-            System.out.println(String.format("Topic: %s, Publish Timestamp: %s", topic, publishTimestampString));
-          }
+      transactional.execute(context -> {
+        System.out.printf("Getting notification subscriber messageIds.\n");
+        List<String> topics = ImmutableList.of(cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
+                                               cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
+        for (String topic : topics) {
+          String messageIdString = jobQueue.retrieveSubscriberState(topic);
+          String publishTimestampString = messageIdString == null ? "n/a" :
+            Long.toString(new MessageId(Bytes.fromHexString(messageIdString)).getPublishTimestamp());
+          System.out.println(String.format("Topic: %s, Publish Timestamp: %s", topic, publishTimestampString));
         }
       });
     }
@@ -216,17 +211,14 @@ public class JobQueueDebugger extends AbstractIdleService {
       System.out.printf("\nTotal statistics:\n%s\n", totalStats.getReport());
     }
 
-    private JobStatistics scanPartition(final int partition, boolean trace) throws TransactionFailureException {
+    private JobStatistics scanPartition(final int partition, boolean trace) {
       Preconditions.checkArgument(partition >= 0 && partition < numPartitions);
       System.out.printf("Scanning partition id %s.\n", partition);
       final JobStatistics jobStatistics = new JobStatistics(trace);
       boolean moreJobs = true;
       while (moreJobs) {
-        moreJobs = Transactions.execute(transactional, new TxCallable<Boolean>() {
-          @Override
-          public Boolean call(DatasetContext context) throws Exception {
-            return scanJobQueue(jobQueue, partition, jobStatistics);
-          }
+        moreJobs = Transactionals.execute(transactional, context -> {
+          return scanJobQueue(jobQueue, partition, jobStatistics);
         });
       }
       if (0 == jobStatistics.getTotal()) {

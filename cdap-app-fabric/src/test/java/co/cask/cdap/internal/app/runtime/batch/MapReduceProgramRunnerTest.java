@@ -263,13 +263,10 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     // clear the counters in case a previous test case left behind some values
     if (counterTableName != null) {
-      Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", new Runnable() {
-        @Override
-        public void run() {
-          KeyValueTable counters = datasetCache.getDataset(counterTableName);
-          counters.delete(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS);
-          counters.delete(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS);
-        }
+      Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", () -> {
+        KeyValueTable counters = datasetCache.getDataset(counterTableName);
+        counters.delete(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS);
+        counters.delete(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS);
       });
     }
 
@@ -319,14 +316,11 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     if (counterTableName != null) {
       final long totalInputRecords = inputRecords;
-      Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", new Runnable() {
-        @Override
-        public void run() {
-          KeyValueTable counters = datasetCache.getDataset(counterTableName);
-          Assert.assertEquals(totalInputRecords,
-                              counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
-          Assert.assertEquals(1L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS, 0L));
-        }
+      Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", () -> {
+        KeyValueTable counters = datasetCache.getDataset(counterTableName);
+        Assert.assertEquals(totalInputRecords,
+                            counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
+        Assert.assertEquals(1L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS, 0L));
       });
     }
   }

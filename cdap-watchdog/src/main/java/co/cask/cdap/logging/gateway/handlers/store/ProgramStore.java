@@ -17,7 +17,7 @@
 package co.cask.cdap.logging.gateway.handlers.store;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
@@ -26,7 +26,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -34,7 +33,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
@@ -54,7 +52,7 @@ public class ProgramStore {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }
@@ -67,19 +65,12 @@ public class ProgramStore {
    * @return run record for runid
    */
   public RunRecordMeta getRun(final ProgramId id, final String runId) {
-    try {
-      return Transactions.execute(transactional, new TxCallable<RunRecordMeta>() {
-        @Override
-        public RunRecordMeta call(DatasetContext context) throws Exception {
-          Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
-                                                        Table.class.getName(), DatasetProperties.EMPTY);
-          AppMetadataStore metaStore = new AppMetadataStore(table);
-          return metaStore.getRun(id, runId);
+    return Transactionals.execute(transactional, context -> {
+      Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
+                                                    Table.class.getName(), DatasetProperties.EMPTY);
+      AppMetadataStore metaStore = new AppMetadataStore(table);
+      return metaStore.getRun(id, runId);
 
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+    });
   }
 }

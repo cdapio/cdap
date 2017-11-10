@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -374,7 +375,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
       if (t instanceof TransactionFailureException) {
-        throw Transactions.propagate((TransactionFailureException) t, Exception.class);
+        throw Transactionals.propagate((TransactionFailureException) t, Exception.class);
       }
       throw t;
     }
