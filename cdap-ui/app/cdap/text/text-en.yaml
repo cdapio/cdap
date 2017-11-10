@@ -827,6 +827,11 @@ features:
       expand: Expand the side panel
     TopPanel:
       addToPipelineBtnLabel: Create a Pipeline
+      addToPipelineModal:
+        title: Choose the type of pipeline to create
+        batchPipelineBtn: Batch Pipeline
+        realtimePipelineBtn: Realtime Pipeline
+        errorTitle: Unable to create pipeline
       applyBtnLabel: Apply
       cleanseLinkLabel: "cleanse "
       copyToCDAPDatasetBtn:
@@ -846,7 +851,7 @@ features:
           formatTooltip: Format of data
           requiredLabel: Required
           rowKeyLabel: Row Key
-          rowKeyTooltip: Its a rowkey
+          rowKeyTooltip: The name of the record field that should be used as the row key when writing to the table.
           typeLabel: Type
           tableBtnlabel: Table
         Formats:
@@ -855,22 +860,38 @@ features:
           parquet: Parquet
         modalTitle: Ingest Data
         monitorBtnLabel: Explore Data
+        ingestFailMessage: Unable to Ingest Data
         uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
       database: Database
+      databasePipeline:
+        ingestDataError: Unable to find Database Plugins. Please make sure Database Plugins are available before ingesting data.
+        pipelineError: Unable to find Database Plugins. Please make sure Database Plugins are available before creating a pipeline.
       databaseTitle: "Table: {name}"
       file: File System
+      filePipeline:
+        ingestDataerrorBatch: Unable to find Core Plugins. Please make sure Core Plugins are available before ingesting data.
+        ingestDataerrorRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available before ingesting data.
+        pipelineErrorBatch: Unable to find Core Plugins. Please make sure Core Plugins are available before creating a pipeline.
+        pipelineErrorRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available before creating a pipeline.
       gcs: GCS
+      GCSPipeline:
+        ingestDataerror: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market before ingesting data.
+        pipelineError: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market before creating a pipeline.
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
       invalidFieldNameRemedies3: column names.
       kafka: Kafka
+      kafkaPipeline:
+        ingestDataError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before ingesting data.
+        pipelineError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before creating a pipeline.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       s3: S3
       S3Pipeline:
-        error: Cannot find S3 plugin. Please install Amazon S3 plugins before creating a pipeline
+        ingestDataError: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market before ingesting data.
+        pipelineError: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market before creating a pipeline.
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       Tabs:
