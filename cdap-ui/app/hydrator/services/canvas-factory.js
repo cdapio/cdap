@@ -73,6 +73,61 @@
       All the backend requires is list of nodes and list of connections and this functionaity will be moved there.
     */
     function orderConnections(connections, appType, nodes) {
+      const orderConditionConnections = (conditionNodes) => {
+        angular.forEach(conditionNodes, (conditionNode) => {
+          let trueConnIndex = _.findIndex(finalConnections, (conn) => conn.from === conditionNode && conn.condition === true);
+          let falseConnIndex = _.findIndex(finalConnections, (conn) => conn.from === conditionNode && conn.condition === false);
+
+          if (trueConnIndex === -1 || falseConnIndex === -1 || trueConnIndex === falseConnIndex - 1) {
+            return;
+          }
+
+          let falseConn = finalConnections.splice(falseConnIndex, 1)[0];
+          if (falseConnIndex < trueConnIndex) {
+            finalConnections.splice(trueConnIndex, 0, falseConn);
+          } else {
+            finalConnections.splice(trueConnIndex + 1, 0, falseConn);
+          }
+        });
+      };
+
+      const orderAlertErrorConnections = (alertOrErrorNodes, isErrorNodes = true) => {
+
+        angular.forEach(alertOrErrorNodes, (node) => {
+          let lastConnToThisNodeIndex = _.findLastIndex(finalConnections, conn => conn.to === node);
+
+          if (lastConnToThisNodeIndex === -1) {
+            return;
+          }
+
+          let lastConnToThisNode = finalConnections[lastConnToThisNodeIndex];
+          let lastNodeToThisNode = lastConnToThisNode.from;
+
+
+          let nodesToExclude;
+
+          if (isErrorNodes) {
+            nodesToExclude = errorNodes.concat(alertNodes);
+          } else {
+            nodesToExclude = alertNodes;
+          }
+
+          let lastNonAlertErrorConnectionFromPrevNodeIndex = _.findLastIndex(finalConnections, conn => conn.from === lastNodeToThisNode && nodesToExclude.indexOf(conn.to) === -1);
+
+          if (lastNonAlertErrorConnectionFromPrevNodeIndex === -1|| lastNonAlertErrorConnectionFromPrevNodeIndex === lastConnToThisNodeIndex - 1) {
+            return;
+          }
+
+          finalConnections.splice(lastConnToThisNodeIndex, 1);
+
+          if (lastConnToThisNodeIndex < lastNonAlertErrorConnectionFromPrevNodeIndex) {
+            finalConnections.splice(lastNonAlertErrorConnectionFromPrevNodeIndex, 0, lastConnToThisNode);
+          } else {
+            finalConnections.splice(lastNonAlertErrorConnectionFromPrevNodeIndex + 1, 0, lastConnToThisNode);
+          }
+        });
+      };
+
       var originalConnections = angular.copy(connections);
       if (!originalConnections.length) {
         return originalConnections;
@@ -80,8 +135,19 @@
       var finalConnections = [];
       var parallelConnections = [];
       var nodesMap = {};
+      var conditionNodes = [];
+      var alertNodes = [];
+      var errorNodes = [];
       nodes.forEach(function(n) {
-        nodesMap[n.name] = n;
+        let nodeName = n.name;
+        nodesMap[nodeName] = n;
+        if (n.type === 'condition') {
+          conditionNodes.push(nodeName);
+        } else if (n.type === 'alertpublisher') {
+          alertNodes.push(nodeName);
+        } else if (n.type === 'errortransform') {
+          errorNodes.push(nodeName);
+        }
       });
       var source = connections.filter(function(conn) {
         if (nodesMap[conn.from].type === GLOBALS.pluginTypes[appType].source) {
@@ -103,6 +169,11 @@
         });
         finalConnections = finalConnections.concat(parallelConnections);
       }
+
+      orderConditionConnections(conditionNodes);
+      orderAlertErrorConnections(errorNodes);
+      orderAlertErrorConnections(alertNodes, false);
+
       return finalConnections.map(function (conn) { delete conn.visited; return conn; });
     }
 

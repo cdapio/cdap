@@ -127,25 +127,11 @@ my-dag-plus {
             top: 41px;
           }
         }
-
-        &.condition {
-          .node {
-            .endpoint-circle-bottom {
-              top: initial;
-            }
-          }
-        }
       }
 
-      .jsplumb-connector {
-        cursor: initial;
-      }
-
+      .jsplumb-connector,
       .jsplumb-endpoint {
-        &.condition-endpoint,
-        &.splitter-endpoint {
-          cursor: initial;
-        }
+        cursor: initial;
       }
     }
 
@@ -175,8 +161,7 @@ my-dag-plus {
         background-clip: border-box;
         z-index: 1;
 
-        .endpoint-circle,
-        .endpoint-circle-bottom {
+        .endpoint-circle {
           width: @endpoint-circle-radius * 2;
           height: @endpoint-circle-radius * 2;
           background-color: @endpoint-circle-bg-color;
@@ -238,6 +223,33 @@ my-dag-plus {
               color: @endpoint-caret-bg-color;
             }
           }
+
+          &.endpoint-circle-bottom {
+            bottom: -@endpoint-circle-radius;
+            right: 43px;
+
+            &:before {
+              left: 6px;
+              top: 100%;
+              border-bottom: none;
+              border-left: 2px solid;
+              height: 5px;
+            }
+
+            &:after {
+              border-top: @endpoint-circle-radius solid @endpoint-connection-hover-stroke-color;
+              border-left: @endpoint-circle-radius solid transparent;
+              border-right: @endpoint-circle-radius solid transparent;
+              transform: translate(-4px, 19px);
+            }
+
+            .endpoint-caret {
+              border-left: 4px solid transparent;
+              border-right: 4px solid transparent;
+              border-top: @endpoint-circle-radius solid @endpoint-caret-bg-color;
+              transform: translateY(3px);
+            }
+          }
         }
 
         .node-info {
@@ -288,13 +300,36 @@ my-dag-plus {
           width: ~"calc(100% - 24px)";
         }
 
+        .node-alerts-errors {
+          position: absolute;
+          bottom: 3px;
+          color: @hamburger-menu-color;
+
+          .node-alerts,
+          .node-errors {
+            display: inline-block;
+            position: relative;
+
+            .endpoint-circle {
+              &.endpoint-circle-bottom {
+                right: 6px;
+                top: 16px;
+                bottom: 0;
+              }
+            }
+          }
+
+          .node-errors {
+            margin-left: 5px;
+          }
+        }
+
         .node-actions {
           display: flex;
           position: absolute;
-          width: 100%;
           bottom: 0;
+          right: 0;
           padding-bottom: 10px;
-          padding-right: 12px;
           align-items: center;
 
           .menu-icon-node {
@@ -387,16 +422,19 @@ my-dag-plus {
         left: 10vw;
       }
 
-      &.errortransform {
-        color: @error-transform;
-        left: 30vw;
-      }
-
       &.realtimesink,
       &.batchsink,
-      &.alertpublisher,
       &.sparksink {
         color: @sink-plugins-color;
+      }
+
+      &.errortransform {
+        color: @error-transform;
+        left: 50vw;
+      }
+
+      &.alertpublisher {
+        color: @alertpublisher-plugins-color;
         left: 50vw;
       }
 
@@ -443,41 +481,27 @@ my-dag-plus {
                 background-color: @condition-true-endpoint-bg-color;
               }
             }
-          }
 
-          .endpoint-circle-bottom {
-            top: initial;
-            bottom: -@endpoint-circle-radius;
-            right: 43px;
-            background-color: @condition-false-endpoint-bg-color;
+            &.endpoint-circle-bottom {
+              top: initial;
+              background-color: @condition-false-endpoint-bg-color;
 
-            &:before {
-              left: 6px;
-              top: 100%;
-              border-bottom: none;
-              border-left: 2px solid @condition-false-endpoint-bg-color;
-              height: 5px;
-            }
-
-            &:after {
-              border-top: 7px solid @condition-false-endpoint-bg-color;
-              border-left: 7px solid transparent;
-              border-right: 7px solid transparent;
-              transform: translate(-4px, 19px);
-            }
-
-            &:hover,
-            &.hover {
-              &:not(.disabled) {
-                background-color: @condition-false-endpoint-bg-color;
+              &:before {
+                border-left-color: @condition-false-endpoint-bg-color;
+                border-bottom-color: transparent;
               }
-            }
 
-            .endpoint-caret {
-              border-left: 4px solid transparent;
-              border-right: 4px solid transparent;
-              border-top: @endpoint-circle-radius solid @endpoint-caret-bg-color;
-              transform: translateY(2px);
+              &:after {
+                border-top-color: @condition-false-endpoint-bg-color;
+                border-left-color: transparent;
+              }
+
+              &:hover,
+              &.hover {
+                &:not(.disabled) {
+                  background-color: @condition-false-endpoint-bg-color;
+                }
+              }
             }
           }
 
@@ -636,13 +660,8 @@ my-dag-plus {
     }
 
     .jsplumb-endpoint {
-      z-index: 1;
-
-      &.condition-endpoint,
-      &.splitter-endpoint {
-        cursor: pointer;
-        z-index: 2;
-      }
+      cursor: pointer;
+      z-index: 2;
 
       svg * {
         fill: transparent;

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusDetailNonRunsStore) {
 
     var vm = this;
 
@@ -39,10 +39,9 @@ angular.module(PKG.name + '.commons')
 
     var metricsPopovers = {};
     var selectedConnections = [];
-    var endpointClicked = false;
-    var connectionDropped = false;
     var dagMenu;
     let conditionNodes = [];
+    let normalNodes = [];
     let splitterNodesPorts = {};
 
     vm.pluginsMap = {};
@@ -164,9 +163,7 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', removeConnection);
       vm.instance.bind('connectionMoved', moveConnection);
-      vm.instance.bind('beforeStartDetach', onStartDetach);
       vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
-      vm.instance.bind('beforeDrag', onBeforeDrag);
       // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
       // but seems like the 'click' event is triggered both when clicking on an endpoint &&
       // clicking on a connection
@@ -275,92 +272,44 @@ angular.module(PKG.name + '.commons')
     }
 
     function initNodes() {
-      vm.instance.unmakeEverySource();
-      vm.instance.unmakeEveryTarget();
-
-      // This is to handle special case when we open a pipeline with only one node,
-      // thought not sure why jsPlumb behaves differently in this case. Exclude
-      // condition nodes since we add endpoints differently for those
-      if ($scope.nodes.length === 1 && $scope.nodes[0].type !== 'condition') {
-        vm.instance.deleteEveryEndpoint();
-      }
-
       angular.forEach($scope.nodes, function (node) {
         if (node.type === 'condition') {
           initConditionNode(node.name);
         } else if (node.type === 'splittertransform') {
           initSplitterNode(node);
         } else {
-          initNormalNode(node.name);
+          initNormalNode(node);
         }
 
-        vm.instance.makeTarget(node.name, {
-          isTarget: true,
-          dropOptions: { hoverClass: 'drag-hover' },
-          anchor: 'ContinuousLeft',
-          allowLoopback: false
-        });
+        if (!vm.instance.isTarget(node.name)) {
+          let targetOptions = Object.assign({}, vm.targetNodeOptions);
+          if (node.type === 'alertpublisher') {
+            targetOptions.scope = 'alertScope';
+          } else if (node.type === 'errortransform') {
+            targetOptions.scope = 'errorScope';
+          }
+          vm.instance.makeTarget(node.name, targetOptions);
+        }
       });
     }
 
-    function initNormalNode(nodeName) {
-      let sourceObj = {
-        isSource: true,
-        filter: function(event) {
-          // we need this variable because when the user clicks on the endpoint circle, multiple
-          // 'mousedown' events are fired
-          if (event.target.className.indexOf('endpoint-circle') !== -1 && !endpointClicked) {
-            endpointClicked = true;
-          }
-
-          return event.target.className.indexOf('endpoint-circle') !== -1;
-        },
-        connectionType: 'basic'
-      };
-      if (vm.isDisabled) {
-        sourceObj.enabled = false;
+    function initNormalNode(node) {
+      if (normalNodes.indexOf(node.name) !== -1) {
+        return;
       }
-
-      vm.instance.makeSource(nodeName, sourceObj);
+      addEndpointForNormalNode('endpoint_' + node.name);
+      if (!_.isEmpty(vm.pluginsMap) && !vm.isDisabled) {
+        addErrorAlertEndpoints(node);
+      }
+      normalNodes.push(node.name);
     }
 
     function initConditionNode(nodeName) {
       if (conditionNodes.indexOf(nodeName) !== -1) {
         return;
       }
-      let trueEndpointDOMElId = nodeName + '_condition_true';
-      let trueEndpointDOMEl = document.querySelector(`#${trueEndpointDOMElId}`);
-      let newTrueEndpoint = vm.instance.addEndpoint(trueEndpointDOMElId, {
-        anchor: 'Right',
-        cssClass: 'condition-endpoint condition-endpoint-true',
-        isSource: true,
-        maxConnections: -1,
-        endpoint: 'Dot',
-        connectorStyle: vm.conditionTrueConnectionStyle,
-        overlays: [
-          [ 'Label', { label: 'Yes', id: 'yesLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
-        ]
-      });
-      newTrueEndpoint.hideOverlay('yesLabel');
-
-      let falseEndpointDOMElId = nodeName + '_condition_false';
-      let falseEndpointDOMEl = document.querySelector(`#${falseEndpointDOMElId}`);
-      let newFalseEndpoint = vm.instance.addEndpoint(falseEndpointDOMElId, {
-        anchor: 'Bottom',
-        cssClass: 'condition-endpoint condition-endpoint-false',
-        isSource: true,
-        maxConnections: -1,
-        endpoint: 'Dot',
-        connectorStyle: vm.conditionFalseConnectionStyle,
-        overlays: [
-          [ 'Label', { label: 'No', id: 'noLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
-        ]
-      });
-      newFalseEndpoint.hideOverlay('noLabel');
-
-      addListenersForEndpoint(newTrueEndpoint, trueEndpointDOMEl, 'yesLabel');
-      addListenersForEndpoint(newFalseEndpoint, falseEndpointDOMEl, 'noLabel');
-
+      addEndpointForConditionNode('endpoint_' + nodeName + '_condition_true', vm.conditionTrueEndpointStyle, 'yesLabel');
+      addEndpointForConditionNode('endpoint_' + nodeName + '_condition_false', vm.conditionFalseEndpointStyle, 'noLabel');
       conditionNodes.push(nodeName);
     }
 
@@ -369,7 +318,7 @@ angular.module(PKG.name + '.commons')
         let splitterPorts = splitterNodesPorts[node.name];
         if (!_.isEmpty(splitterPorts)) {
           angular.forEach(splitterPorts, (port) => {
-            let portElId = node.name + '_port_' + port;
+            let portElId = 'endpoint_' + node.name + '_port_' + port;
             deleteEndpoints(portElId);
           });
           DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
@@ -390,30 +339,42 @@ angular.module(PKG.name + '.commons')
       }
 
       angular.forEach(splitterPorts, (port) => {
-        let portElId = node.name + '_port_' + port;
+        let portElId = 'endpoint_' + node.name + '_port_' + port;
         deleteEndpoints(portElId);
       });
 
       angular.forEach(node.outputSchema, (outputSchema) => {
-        let domCircleElId = node.name + '_port_' + outputSchema.name;
-        let splitterEndpoint;
-
-        let domCircleEl = document.getElementsByClassName(domCircleElId);
-        domCircleEl = domCircleEl[domCircleEl.length - 1];
-
-        splitterEndpoint = vm.instance.addEndpoint(domCircleEl, {
-          anchor: 'Right',
-          cssClass: 'splitter-endpoint',
-          isSource: true,
-          maxConnections: -1,
-          endpoint: 'Dot',
-          uuid: domCircleElId
-        });
-        addListenersForEndpoint(splitterEndpoint, domCircleEl);
+        addEndpointForSplitterNode('endpoint_' + node.name + '_port_' + outputSchema.name);
       });
 
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
       splitterNodesPorts[node.name] = newPorts;
+    }
+
+    function addEndpointForNormalNode(endpointDOMId, customConfig) {
+      let endpointDOMEl = document.getElementById(endpointDOMId);
+      let endpointObj = Object.assign({}, { isSource: true }, customConfig);
+      if (vm.isDisabled) {
+        endpointObj.enabled = false;
+      }
+      let endpoint = vm.instance.addEndpoint(endpointDOMEl, endpointObj);
+      addListenersForEndpoint(endpoint, endpointDOMEl);
+    }
+
+    function addEndpointForConditionNode(endpointDOMId, endpointStyle, overlayLabel) {
+      let endpointDOMEl = document.getElementById(endpointDOMId);
+      let newEndpoint = vm.instance.addEndpoint(endpointDOMEl, endpointStyle);
+      newEndpoint.hideOverlay(overlayLabel);
+      addListenersForEndpoint(newEndpoint, endpointDOMEl, overlayLabel);
+    }
+
+    function addEndpointForSplitterNode(endpointDOMId) {
+      let endpointDOMEl = document.getElementsByClassName(endpointDOMId);
+      endpointDOMEl = endpointDOMEl[endpointDOMEl.length - 1];
+
+      let splitterEndpointStyleWithUUID = Object.assign({}, vm.splitterEndpointStyle, { uuid: endpointDOMId });
+      let splitterEndpoint = vm.instance.addEndpoint(endpointDOMEl, splitterEndpointStyleWithUUID);
+      addListenersForEndpoint(splitterEndpoint, endpointDOMEl);
     }
 
     function getPortEndpointClass(splitterNodeClassList) {
@@ -432,20 +393,86 @@ angular.module(PKG.name + '.commons')
         }
 
         let connObj = {
-          source: conn.from,
           target: conn.to
         };
 
         if (conn.hasOwnProperty('condition')) {
-          connObj.source = vm.instance.getEndpoints(`${conn.from}_condition_${conn.condition}`)[0];
+          connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}_condition_${conn.condition}`)[0];
         } else if (conn.hasOwnProperty('port')) {
-          connObj.source = vm.instance.getEndpoint(`${conn.from}_port_${conn.port}`);
+          connObj.source = vm.instance.getEndpoint(`endpoint_${conn.from}_port_${conn.port}`);
+        } else if (targetNode.type === 'errortransform' || targetNode.type === 'alertpublisher') {
+          if (!_.isEmpty(vm.pluginsMap) && !vm.isDisabled) {
+            addConnectionToErrorsAlerts(conn, sourceNode, targetNode);
+            return;
+          }
+        } else {
+          connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}`)[0];
         }
 
-        let newConn = vm.instance.connect(connObj);
-        if (targetNode.type === 'condition' || sourceNode.type === 'action' || targetNode.type === 'action') {
-          newConn.setType('dashed');
+        if (connObj.source && connObj.target) {
+          let newConn = vm.instance.connect(connObj);
+          if (targetNode.type === 'condition' || sourceNode.type === 'action' || targetNode.type === 'action') {
+            newConn.setType('dashed');
+          }
         }
+      });
+    }
+
+    function addErrorAlertEndpoints(node) {
+      if (vm.shouldShowAlertsPort(node)) {
+        addEndpointForNormalNode('endpoint_' + node.name + '_alert', vm.alertEndpointStyle);
+      }
+      if (vm.shouldShowErrorsPort(node)) {
+        addEndpointForNormalNode('endpoint_' + node.name + '_error', vm.errorEndpointStyle);
+      }
+    }
+
+    const addConnectionToErrorsAlerts = (conn, sourceNode, targetNode) => {
+      let connObj = {
+        target: conn.to
+      };
+
+      if (targetNode.type === 'errortransform' && vm.shouldShowErrorsPort(sourceNode)) {
+        connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}_error`)[0];
+      } else if (targetNode.type === 'alertpublisher' && vm.shouldShowAlertsPort(sourceNode)) {
+        connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}_alert`)[0];
+      } else {
+        connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}`)[0];
+        // this is for backwards compability with old pipelines where we don't specify
+        // emit-alerts and emit-error in the plugin config yet. In those cases we should
+        // still connect to the Error Collector/Alert Publisher using the normal endpoint
+        let scopeString = vm.instance.getDefaultScope() + ' alertScope errorScope';
+        connObj.source.scope = scopeString;
+      }
+      let defaultConnectorSettings = vm.defaultDagSettings.Connector;
+      connObj.connector = [defaultConnectorSettings[0], Object.assign({}, defaultConnectorSettings[1], { midpoint: 0 })];
+
+      vm.instance.connect(connObj);
+    };
+
+    function addErrorAlertsEndpointsAndConnections() {
+      // Need the timeout because it takes an Angular tick for the Alert and Error port DOM elements
+      // to show up after vm.pluginsMap is populated
+      let addErrorAlertEndpointsTimeout = $timeout(() => {
+        angular.forEach($scope.nodes, (node) => {
+          addErrorAlertEndpoints(node);
+        });
+        vm.instance.unbind('connection');
+        angular.forEach($scope.connections, (conn) => {
+          var sourceNode = $scope.nodes.find(node => node.name === conn.from);
+          var targetNode = $scope.nodes.find(node => node.name === conn.to);
+
+          if (!sourceNode || !targetNode) {
+            return;
+          }
+
+          if (targetNode.type === 'errortransform' || targetNode.type === 'alertpublisher') {
+            addConnectionToErrorsAlerts(conn, sourceNode, targetNode);
+          }
+        });
+        vm.instance.bind('connection', addConnection);
+        repaintEverything();
+        $timeout.cancel(addErrorAlertEndpointsTimeout);
       });
     }
 
@@ -470,17 +497,18 @@ angular.module(PKG.name + '.commons')
 
       let sourceIdSplit;
 
-      if (sourceIsCondition || sourceIsPort) {
-        if (sourceIsCondition) {
-          sourceIdSplit = newConnObj.sourceId.split('_');
-          connection.condition = sourceIdSplit[2] === 'true';
-        } else {
-          let portClass = getPortEndpointClass(newConnObj.source.classList);
-          sourceIdSplit = portClass.split('_');
-          connection.port = sourceIdSplit[2];
-        }
-        connection.from = sourceIdSplit[0];
+      if (sourceIsPort) {
+        let portClass = getPortEndpointClass(newConnObj.source.classList);
+        sourceIdSplit = portClass.split('_');
+        connection.port = sourceIdSplit[3];
+      } else if (sourceIsCondition) {
+        sourceIdSplit = newConnObj.sourceId.split('_');
+        connection.condition = sourceIdSplit[3] === 'true';
+      } else {
+        sourceIdSplit = newConnObj.sourceId.split('_');
       }
+
+      connection.from = sourceIdSplit[1];
 
       $scope.connections.push(connection);
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
@@ -489,10 +517,12 @@ angular.module(PKG.name + '.commons')
     function removeConnection(detachedConnObj, updateStore = true) {
       let connObj = Object.assign({}, detachedConnObj);
       if (myHelpers.objectQuery(detachedConnObj, 'sourceId') && detachedConnObj.sourceId.indexOf('_condition_') !== -1) {
-        connObj.sourceId = detachedConnObj.sourceId.split('_')[0];
+        connObj.sourceId = detachedConnObj.sourceId.split('_')[1];
       } else if (myHelpers.objectQuery(detachedConnObj, 'source', 'className') && detachedConnObj.source.className.indexOf('_port_') !== -1) {
         let portClass = getPortEndpointClass(detachedConnObj.source.classList);
-        connObj.sourceId = portClass.split('_')[0];
+        connObj.sourceId = portClass.split('_')[1];
+      } else {
+        connObj.sourceId = detachedConnObj.sourceId.split('_')[1];
       }
       var connectionIndex = _.findIndex($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
@@ -554,19 +584,7 @@ angular.module(PKG.name + '.commons')
         return;
       }
 
-      let connectionsToToggle;
-
-      // If it's an endpoint on a condition node, then only toggle connections
-      // from that endpoint. For other nodes, toggle all the connections of the
-      // source that this endpoint belongs to
-
-      if (selectedObj.endpoint.canvas.classList.contains('condition-endpoint')) {
-        connectionsToToggle = selectedObj.connections;
-      } else {
-        connectionsToToggle = vm.instance.getConnections({
-          source: selectedObj.connections[0].sourceId
-        });
-      }
+      let connectionsToToggle = selectedObj.connections;
 
       let notYetSelectedConnections = _.difference(connectionsToToggle, selectedConnections);
 
@@ -636,26 +654,28 @@ angular.module(PKG.name + '.commons')
     function disableAllEndpoints() {
       angular.forEach($scope.nodes, function (node) {
         if (node.plugin.type === 'condition') {
-          let endpoints = [`${node.name}_condition_true`, `${node.name}_condition_false`];
+          let endpoints = [`endpoint_${node.name}_condition_true`, `endpoint_${node.name}_condition_false`];
           angular.forEach(endpoints, (endpoint) => {
             disableEndpoints(endpoint);
           });
         } else if (node.plugin.type === 'splittertransform')  {
           let portNames = node.outputSchema.map(port => port.name);
-          let endpoints = portNames.map(portName => `${node.name}_port_${portName}`);
+          let endpoints = portNames.map(portName => `endpoint_${node.name}_port_${portName}`);
           angular.forEach(endpoints, (endpoint) => {
             // different from others because the name here is the uuid of the splitter endpoint,
             // not the id of DOM element
             disableEndpoint(endpoint);
           });
         } else {
-          disableEndpoints(node.name);
+          disableEndpoints('endpoint_' + node.name);
+          if (vm.shouldShowAlertsPort(node)) {
+            disableEndpoints('endpoint_' + node.name + '_alert');
+          }
+          if (vm.shouldShowErrorsPort(node)) {
+            disableEndpoints('endpoint_' + node.name + '_error');
+          }
         }
       });
-    }
-
-    function onStartDetach() {
-      connectionDropped = false;
     }
 
     function addHoverListener(endpoint, domCircleEl, labelId) {
@@ -676,28 +696,21 @@ angular.module(PKG.name + '.commons')
       }
     }
 
-    function enableEndpointClickFlag() {
-      endpointClicked = true;
-    }
-
     function addListenersForEndpoint(endpoint, domCircleEl, labelId) {
       endpoint.canvas.removeEventListener('mouseover', addHoverListener);
       endpoint.canvas.removeEventListener('mouseout', removeHoverListener);
-      endpoint.canvas.removeEventListener('mousedown', enableEndpointClickFlag);
       endpoint.canvas.addEventListener('mouseover', addHoverListener.bind(null, endpoint, domCircleEl, labelId));
       endpoint.canvas.addEventListener('mouseout', removeHoverListener.bind(null, endpoint, domCircleEl, labelId));
-      endpoint.canvas.addEventListener('mousedown', enableEndpointClickFlag);
     }
 
     function checkIfConnectionExistsOrValid(connObj) {
       // return false if connection already exists, which will prevent the connecton from being formed
-      if (connectionDropped) { return false; }
 
-      if (connObj.sourceId.indexOf('_condition_') !== -1) {
-        connObj.sourceId = connObj.sourceId.split('_')[0];
-      } else if (connObj.connection.source.className.indexOf('_port_') !== -1) {
+      if (connObj.connection.source.className.indexOf('_port_') !== -1) {
         let portClass = getPortEndpointClass(connObj.connection.source.classList);
-        connObj.sourceId = portClass.split('_')[0];
+        connObj.sourceId = portClass.split('_')[1];
+      } else {
+        connObj.sourceId = connObj.sourceId.split('_')[1];
       }
 
       var exists = _.find($scope.connections, function (conn) {
@@ -707,7 +720,6 @@ angular.module(PKG.name + '.commons')
       var sameNode = connObj.sourceId === connObj.targetId;
 
       if (exists || sameNode) {
-        connectionDropped = true;
         return false;
       }
 
@@ -720,8 +732,6 @@ angular.module(PKG.name + '.commons')
       NonStorePipelineErrorFactory.connectionIsValid(sourceNode, targetNode, function(invalidConnection) {
         if (invalidConnection) { valid = false; }
       });
-      connectionDropped = true;
-
 
       if (!valid) {
         return valid;
@@ -751,14 +761,8 @@ angular.module(PKG.name + '.commons')
         }
       }
 
+      repaintEverything();
       return valid;
-    }
-
-    function onBeforeDrag() {
-      if (endpointClicked) {
-        endpointClicked = false;
-        connectionDropped = false;
-      }
     }
 
     function resetEndpointsAndConnections() {
@@ -768,6 +772,7 @@ angular.module(PKG.name + '.commons')
 
       resetTimeout = $timeout(function () {
         vm.instance.reset();
+        normalNodes = [];
         conditionNodes = [];
         splitterNodesPorts = {};
 
@@ -871,7 +876,6 @@ angular.module(PKG.name + '.commons')
     vm.selectEndpoint = function(event, node) {
       if (event.target.className.indexOf('endpoint-circle') === -1) { return; }
 
-      endpointClicked = false;
       let sourceElem = node.name;
       let endpoints = vm.instance.getEndpoints(sourceElem);
 
@@ -904,13 +908,16 @@ angular.module(PKG.name + '.commons')
 
     jsPlumb.ready(function() {
       var dagSettings = DAGPlusPlusFactory.getSettings();
-      var dagSettingsDefault = dagSettings.default;
-      var {defaultConnectionStyle, selectedConnectionStyle, dashedConnectionStyle, solidConnectionStyle, conditionTrueConnectionStyle, conditionFalseConnectionStyle} = dagSettings;
-      vm.conditionTrueConnectionStyle = conditionTrueConnectionStyle;
-      vm.conditionFalseConnectionStyle = conditionFalseConnectionStyle;
+      var {defaultDagSettings, defaultConnectionStyle, selectedConnectionStyle, dashedConnectionStyle, solidConnectionStyle, conditionTrueConnectionStyle, conditionTrueEndpointStyle, conditionFalseConnectionStyle, conditionFalseEndpointStyle, splitterEndpointStyle, alertEndpointStyle, errorEndpointStyle, targetNodeOptions} = dagSettings;
+      vm.defaultDagSettings = defaultDagSettings;
+      vm.conditionTrueEndpointStyle = conditionTrueEndpointStyle;
+      vm.conditionFalseEndpointStyle = conditionFalseEndpointStyle;
+      vm.splitterEndpointStyle = splitterEndpointStyle;
+      vm.alertEndpointStyle = alertEndpointStyle;
+      vm.errorEndpointStyle = errorEndpointStyle;
+      vm.targetNodeOptions = targetNodeOptions;
 
-      jsPlumb.setContainer('dag-container');
-      vm.instance = jsPlumb.getInstance(dagSettingsDefault);
+      vm.instance = jsPlumb.getInstance(defaultDagSettings);
       vm.instance.registerConnectionType('basic', defaultConnectionStyle);
       vm.instance.registerConnectionType('selected', selectedConnectionStyle);
       vm.instance.registerConnectionType('dashed', dashedConnectionStyle);
@@ -992,7 +999,7 @@ angular.module(PKG.name + '.commons')
       let nodeType = node.plugin.type || node.type;
       if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
         let portNames = node.outputSchema.map(port => port.name);
-        let endpoints = portNames.map(portName => `${node.name}_port_${portName}`);
+        let endpoints = portNames.map(portName => `endpoint_${node.name}_port_${portName}`);
         angular.forEach(endpoints, (endpoint) => {
           deleteEndpoints(endpoint);
         });
@@ -1005,7 +1012,6 @@ angular.module(PKG.name + '.commons')
         }
         return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
       });
-      vm.instance.unmakeSource(node.name);
       vm.instance.unmakeTarget(node.name);
 
       vm.instance.remove(node.name);
@@ -1015,38 +1021,57 @@ angular.module(PKG.name + '.commons')
     vm.cleanUpGraph = function () {
       if ($scope.nodes.length === 0) { return; }
 
-      // If graph has a condition node, then have to make sure/rearrange connections from that
-      // node so that the 'true' connection always comes before the 'false' one, otherweise
-      // the algorithm will mess up
-      if (conditionNodes.length > 0) {
-        let swappedConnections = false;
-
-        angular.forEach(conditionNodes, (conditionNode) => {
-          let trueConnIndex = _.findIndex($scope.connections, (conn) => {
-            return conn.from === conditionNode && conn.condition === true;
-          });
-          let falseConnIndex = _.findIndex($scope.connections, (conn) => {
-            return conn.from === conditionNode && conn.condition === false;
-          });
-
-          if (trueConnIndex === -1 || falseConnIndex === -1 || trueConnIndex === falseConnIndex - 1) { return; }
-
-          let falseConn = $scope.connections.splice(falseConnIndex, 1)[0];
-          $scope.connections.splice(trueConnIndex + 1, 0, falseConn);
-          swappedConnections = true;
-        });
-
-        if (swappedConnections) {
-          DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+      let newConnections = HydratorPlusPlusCanvasFactory.orderConnections($scope.connections, HydratorPlusPlusConfigStore.getAppType() || HydratorPlusPlusDetailNonRunsStore.getAppType(), $scope.nodes);
+      let connectionsSwapped = false;
+      for (let i = 0; i < newConnections.length; i++) {
+        if (newConnections[i].from !== $scope.connections[i].from || newConnections[i].to !== $scope.connections[i].to) {
+          connectionsSwapped = true;
+          break;
         }
+      }
+
+      if (connectionsSwapped) {
+        $scope.connections = newConnections;
+        DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
       }
 
       var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation)._nodes;
       angular.forEach($scope.nodes, function (node) {
         var location = graphNodes[node.name];
+
+        var locationX = location.x;
+        var locationY = location.y;
+
+        if (node.type === 'alertpublisher' || node.type === 'errortransform') {
+
+          // If the node connecting to this alert publisher/error transform node only has connections
+          // to these types of nodes, then have to push the alert publisher/error transform down a bit more
+          let connToThisNode = $scope.connections.find(conn => conn.to === node.name);
+          if (connToThisNode) {
+            let sourceNode = connToThisNode.from;
+            let onlyConnectedToErrorsAlerts = true;
+            for (let i = 0; i < $scope.connections.length; i++) {
+              let conn = $scope.connections[i];
+              if (conn.from === sourceNode) {
+                let targetNode = $scope.nodes.find(node => node.name === conn.to);
+                if (targetNode.type !== 'alertpublisher' && targetNode.type !== 'errortransform') {
+                  onlyConnectedToErrorsAlerts = false;
+                  break;
+                }
+              }
+            }
+            if (onlyConnectedToErrorsAlerts) {
+              locationY += 200;
+            } else {
+              locationY += 70;
+            }
+            locationX -= 150;
+          }
+        }
+
         node._uiPosition = {
-          left: location.x - 50 + 'px',
-          top: location.y + 'px'
+          left: locationX - 50 + 'px',
+          top: locationY + 'px'
         };
       });
 
@@ -1219,6 +1244,17 @@ angular.module(PKG.name + '.commons')
       }
     };
 
+    vm.shouldShowAlertsPort = (node) => {
+      let key = generatePluginMapKey(node);
+
+      return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'emit-alerts');
+    };
+
+    vm.shouldShowErrorsPort = (node) => {
+      let key = generatePluginMapKey(node);
+
+      return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'emit-errors');
+    };
 
     // CUSTOM ICONS CONTROL
     function generatePluginMapKey(node) {
@@ -1247,16 +1283,21 @@ angular.module(PKG.name + '.commons')
       return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'icon', 'arguments', 'url');
     };
 
-
     let subAvailablePlugins = AvailablePluginsStore.subscribe(() => {
       vm.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
+      if (!_.isEmpty(vm.pluginsMap)) {
+        addErrorAlertsEndpointsAndConnections();
+        subAvailablePlugins();
+      }
     });
 
     $scope.$on('$destroy', function () {
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
 
-      subAvailablePlugins();
+      if (subAvailablePlugins) {
+        subAvailablePlugins();
+      }
 
       angular.element($window).off('resize', vm.instance.repaintEverything);
 
