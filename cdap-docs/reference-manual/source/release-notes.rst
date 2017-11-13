@@ -30,6 +30,46 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+
+`Release 4.3.2 <http://docs.cask.co/cdap/4.3.2/index.html>`__
+=============================================================
+New Features
+------------
+
+- :cask-issue:`CDAP-12771` - Added GCS connection to Data Prep.
+
+- :cask-issue:`CDAP-12018` - Added S3 connection to Data Prep.
+
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-11805` - Added support for EMR 5.4 through 5.7.
+
+- :cask-issue:`CDAP-12727` - Added support for CDH 5.13.0.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CCDAP-6032` - Minimize master's local storage usage by deleting the temporary directories created on the cdap-master for programs as soon as programs are launched on the cluster.
+
+- :cask-issue:`CDAP-12682` - Fixed an issue where UI was looking for the wrong property for SSL port.
+
+- :cask-issue:`CDAP-12693` - Fixed a bug that causes PySpark to fail to run with Spark 2 in local sandbox.
+
+- :cask-issue:`CDAP-12701` - Fixed a bug that causes deployment of pipelines with condition plugins to fail on Apache Ambari clusters.
+
+- :cask-issue:`CDAP-12731` - Fixed an issue that caused HBase Sink to fail when used alongside other sinks, using the Spark execution engine.
+
+- :cask-issue:`CDAP-12743` - Fixed a bug where the Scala Spark compiler has missing classes from Classloader, causing compilation failure.
+
+- :cask-issue:`CDAP-12752` - Fixed a bug where Spark programs failed to run when Spark authentication is turned on.
+
+- :cask-issue:`CDAP-12769` - Fixed an issue with running the dynamic Scala Spark plugin on Windows. Directory which is used to store the compiled scala classes now contains '.' as a separator instead of ':' which was causing failure on Windows machines.
+
+- :cask-issue:`CDAP-12843` - Fixed an issue that prevented auto-fill of schema for Datasets created by an ORC sink plugin.
+
 `Release 4.3.1 <http://docs.cask.co/cdap/4.3.1/index.html>`__
 =============================================================
 
