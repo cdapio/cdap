@@ -454,6 +454,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.previewLoading = true;
     let previewId = this.previewStore.getState().preview.previewId;
     let previousStageIsCondition = false;
+    let previousStagePort;
 
     if (!previewId) {
       this.previewLoading = false;
@@ -472,13 +473,19 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     if (previousStageName) {
       let previousStage = stages.find(stage => stage.name === previousStageName);
-
-      // In case we have multiple condition nodes in a row, we have to keep traversing back
-      // until we find a node that actually has records out
-      while (previousStage && previousStage.plugin.type === 'condition') {
-        previousStageIsCondition = true;
-        previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(previousStageName) !== -1);
-        previousStage = stages.find(stage => stage.name === previousStageName);
+      if (previousStage.plugin.type === 'splittertransform') {
+        let previousStageConnection = connections.find((connection) => connection.from === previousStageName && connection.to === this.state.node.plugin.label);
+        if (previousStageConnection) {
+          previousStagePort = previousStageConnection.port;
+        }
+      } else {
+        // In case we have multiple condition nodes in a row, we have to keep traversing back
+        // until we find a node that actually has records out
+        while (previousStage && previousStage.plugin.type === 'condition') {
+          previousStageIsCondition = true;
+          previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(previousStageName) !== -1);
+          previousStage = stages.find(stage => stage.name === previousStageName);
+        }
       }
       postBody.push(previousStageName);
     }
@@ -488,10 +495,14 @@ class HydratorPlusPlusNodeConfigCtrl {
     })
       .$promise
       .then((res) => {
+        delete res.$promise;
+        delete res.$resolved;
+
         this.previewData = {
           input: {},
           output: {},
-          numInputStages: 0
+          numInputStages: 0,
+          numOutputStages: 0
         };
         let recordsOut = {};
         let recordsIn = {};
@@ -500,24 +511,40 @@ class HydratorPlusPlusNodeConfigCtrl {
         // usually that's the stage the user is clicking on and the last stage connecting to it that
         // has output records
         angular.forEach(res, (stageMetrics, stageName) => {
+          let recordsOutPorts = Object.keys(stageMetrics).filter(metricName => metricName.indexOf('records.out.') !== -1);
           if (stageName === this.state.node.plugin.label) {
-            recordsOut = stageMetrics['records.out'];
+            if (!recordsOutPorts.length) {
+              recordsOut[stageName] = this.formatMultipleRecords(stageMetrics['records.out']);
+            } else {
+              angular.forEach(recordsOutPorts, (recordsOutPort) => {
+                let portName = _.capitalize(recordsOutPort.split('.').pop());
+                recordsOut[portName] = this.formatMultipleRecords(stageMetrics[recordsOutPort]);
+              });
+            }
+
           } else { // set the records in of current stage to records out of previous stage with data
-            recordsIn[stageName] = this.formatMultipleRecords(stageMetrics['records.out']);
+            let correctMetricsName;
+            if (!recordsOutPorts.length) {
+              correctMetricsName = 'records.out';
+            } else {
+              correctMetricsName = recordsOutPorts.find(port => port.split('.').pop() === previousStagePort);
+            }
+            recordsIn[stageName] = this.formatMultipleRecords(stageMetrics[correctMetricsName]);
           }
         });
 
         if (!this.state.isSink) {
-          this.previewData.output = this.formatMultipleRecords(recordsOut);
+          this.previewData.output = recordsOut;
+          this.previewData.numOutputStages = Object.keys(recordsOut).length;
         }
         if (!this.state.isSource) {
           this.previewData.input = recordsIn;
-          this.previewData.numInputStages = Object.keys(res).length;
+          this.previewData.numInputStages = Object.keys(recordsIn).length;
         }
 
         // set current stage's input records to null only if its output records are null AND if the previous
         // stage is a Condition, since that means data didn't flow through to that branch
-        if (_.isEmpty(recordsOut) && previousStageIsCondition) {
+        if (_.isEmpty(recordsOut[Object.keys(recordsOut)[0]]) && previousStageIsCondition) {
           this.previewData.input = {};
           this.previewData.numInputStages = 0;
         }
@@ -534,6 +561,10 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   formatMultipleRecords(records) {
+    if (_.isEmpty(records)) {
+      return records;
+    }
+
     let mapInputs = {
       schema: {},
       records: []

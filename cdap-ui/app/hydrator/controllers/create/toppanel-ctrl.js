@@ -148,6 +148,9 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.togglePreviewMode(false)
       );
+      this.previewStore.dispatch(
+        this.previewActions.resetPreview()
+      );
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
       this.$timeout.cancel(this.fetchMacrosTimeout);
