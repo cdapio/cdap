@@ -69,7 +69,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
           let rulebook = res[1].values[0];
           let batchArtifacts = artifacts.filter(artifact => artifact.name === 'cdap-data-pipeline');
           let realtimeArtifacts = artifacts.filter(artifact => artifact.name === 'cdap-data-streams');
-          let yareArtifact = artifacts.filter(artifact => artifact.name === 'yare-plugins');
+          let yareArtifact = artifacts.filter(artifact => artifact.name === 'dre-plugins');
           if (!yareArtifact.length) {
             this.setState({
               error: T.translate(`${PREFIX}.error`)

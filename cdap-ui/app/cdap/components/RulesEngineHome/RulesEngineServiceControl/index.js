@@ -51,7 +51,7 @@ export default class RulesEngineServiceControl extends Component {
     });
     enableDataPreparationService({
       shouldStopService: false,
-      artifactName: 'yare-service',
+      artifactName: 'dre-service',
       api: MyRuleEngineApi,
       i18nPrefix: ''
     })
@@ -72,7 +72,7 @@ export default class RulesEngineServiceControl extends Component {
       .list({ namespace })
       .subscribe(
         (artifacts) => {
-          let isYareServicePresent = artifacts.find(artifact => artifact.name === 'yare-service');
+          let isYareServicePresent = artifacts.find(artifact => artifact.name === 'dre-service');
           if (!isYareServicePresent) {
             this.setState({
               rulesEngineNotAvailable: true
