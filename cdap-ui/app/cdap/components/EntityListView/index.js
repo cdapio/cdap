@@ -40,6 +40,7 @@ import Page404 from 'components/404';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import queryString from 'query-string';
+import Helmet from 'react-helmet';
 
 import {
   DEFAULT_SEARCH_FILTERS, DEFAULT_SEARCH_SORT,
@@ -345,6 +346,7 @@ export default class EntityListView extends Component {
 
     return (
       <div>
+        <Helmet title={T.translate('features.EntityListView.Title')} />
         <EntityListHeader />
         <div className="entity-list-view">
           {

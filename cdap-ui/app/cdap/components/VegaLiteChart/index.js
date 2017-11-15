@@ -65,7 +65,7 @@ export default class GroupedBarChart extends Component {
       const dimension = el.getBoundingClientRect();
       const vlSpec = {
         ...this.props.spec,
-        "width": (dimension.width - 200) / (this.state.data.length / 2), // FIXME: This will not be generic. See if we can abstract this out.
+        "width": (dimension.width - 250) / (this.state.data.length / 2), // FIXME: This will not be generic. See if we can abstract this out.
         data: {
           name: this.state.id
         }

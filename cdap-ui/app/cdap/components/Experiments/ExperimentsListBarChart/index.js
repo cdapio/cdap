@@ -33,26 +33,37 @@ const customEncoding = {
     "header": {"title": ""}
   },
   "x": {
-    "field": "type", "type": "nominal",
+    "field": "type",
+    "type": "nominal",
     "axis": {
       "labels": false,
       "title": ""
+    }
+  },
+  "y": {
+    "field": "count",
+    "type": "quantitative",
+    "axis": {
+      "title": "Models",
+      "grid": false
     }
   }
 };
 export default function ExperimentsListBarChart({data}) {
   return (
-    <GroupedBarChart
-      data={data}
-      customEncoding={customEncoding}
-    />
+    <div className="experiment-list-chart">
+      <h5>Models Created and Deployed </h5>
+      <GroupedBarChart
+        data={data}
+        customEncoding={customEncoding}
+      />
+    </div>
   );
 }
 
 ExperimentsListBarChart.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
-    type: PropTypes.string,
-    count: PropTypes.number
+    type: PropTypes.string
   })).isRequired
 };

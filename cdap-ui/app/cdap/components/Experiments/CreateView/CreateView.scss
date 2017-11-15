@@ -1,0 +1,90 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import "../../../styles/variables.scss";
+
+.experiments-create-view {
+  height: 100%;
+  overflow-y: hidden;
+  position: relative;
+  .experiments-toppanel {
+    margin-left: 0;
+    margin-right: 0;
+    border-bottom: 1px solid $grey-04;
+    .icon-svg.icon-close {
+      font-size: 20px;
+      cursor: pointer;
+      color: black;
+    }
+  }
+  .dataprep-connections-container {
+    height: calc(100% - 50px);
+    overflow-y: auto;
+    .file-browser-container {
+      height: 100%;
+    }
+  }
+  .dataprephome-wrapper {
+    height: calc(100vh - 154px); // header + footer + workspace tab
+    .dataprep-container {
+      .dataprep-body {
+        height: calc(100% - 50px);
+      }
+    }
+    .dataprep-container {
+      .top-section {
+        .top-section-content {
+          .top-panel {
+            .action-buttons {
+              > .btn.btn-primary {
+                visibility: hidden;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  .experiments-model-panel {
+    height: 50px;
+    position: absolute;
+    right: 80px;
+    top: 59px;
+    > .btn.btn-primary {
+      padding-right: 30px;
+      padding-left: 30px;
+    }
+  }
+  .algorithm-selection-step {
+    .experiment-metadata {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 20px;
+      > div {
+        margin: 0 20px 0 0;
+        &.grayed {
+          color: $grey-05;
+        }
+        > * {
+          margin: 0 5px;
+        }
+      }
+    }
+  }
+  > :not([class*="experiments-"]) {
+    height: calc(100% - 50px);
+  }
+}

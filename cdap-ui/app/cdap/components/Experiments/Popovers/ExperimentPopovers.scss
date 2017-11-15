@@ -1,0 +1,86 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import "../../../styles/variables.scss";
+
+$popover_container_border_color: $grey-05;
+
+.new-experiment-popover {
+  padding: 0;
+  min-width: 270px;
+  .popover-container {
+    margin: 10px;
+    border: 1px solid $popover_container_border_color;
+    padding: 0 10px 10px;
+    .popover-heading {
+      padding: 10px;
+      display: block;
+      margin: 0 -10px 10px -10px;
+      background: $cdap-gray;
+      font-size: 14px;
+    }
+    .form-control {
+      &.btn {
+        margin: 0;
+      }
+    }
+    .form-group {
+      .control-label {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      textarea {
+        min-height: 100px;
+        max-height: 250px;
+      }
+    }
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.new-model-popover {
+  padding: 20px;
+  .form-group {
+    .control-label {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    textarea {
+      min-height: 100px;
+      max-height: 250px;
+    }
+  }
+  .experiment-metadata {
+    color: $popover_container_border_color;
+    .btn-link {
+      cursor: pointer;
+    }
+  }
+  button {
+    width: 100%;
+  }
+}
+.popover {
+  &.create_new_experiment_popover-element {
+    margin: 10px;
+    &:before,
+    &after {
+      display: none;
+    }
+  }
+}

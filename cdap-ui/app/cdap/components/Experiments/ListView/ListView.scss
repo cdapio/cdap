@@ -20,10 +20,39 @@ $listview-padding: 20px;
 
 .experiments-listview {
   padding: 0 $listview-padding;
+  height: 100%;
+  overflow: hidden;
+
+  .empty-search-container {
+    a[href] {
+      color: $cdap-orange;
+    }
+  }
+  .experiments-toppanel {
+    position: relative;
+
+    .experiments-plus-btn {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 58px;
+    }
+  }
+  .experiment-list-chart {
+    margin-top: 20px;
+  }
   > .clearfix {
     margin-top: 20px;
+    height: calc(100% - 380px); // 50px (top panel) + 307 for chart + 20px margin top in this element
     .pagination-with-title {
       margin-right: 0;
+    }
+    .table-container {
+      height: 100%;
+    }
+    .table-scroll {
+      height: calc(100% - 70px); // 70px for pagination + table header. .table-scroll is the table body
+      overflow-y: auto;
     }
   }
   .table {
