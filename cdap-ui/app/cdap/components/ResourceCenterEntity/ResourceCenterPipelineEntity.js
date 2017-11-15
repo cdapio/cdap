@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
 import NamespaceStore from 'services/NamespaceStore';
+import {validateImportJSON} from 'services/PipelineErrorFactory';
 import {objectQuery} from 'services/helpers';
 import IconSVG from 'components/IconSVG';
 import { Input, Label } from 'reactstrap';
@@ -71,17 +72,22 @@ export default function ResourceCenterPipelineEntity({onError}) {
     let uploadedFile = event.target.files[0];
 
     if (uploadedFile.type !== 'application/json') {
-      onError(T.translate(`${PREFIX}.nonJSONError`));
+      onError(T.translate(`${PREFIX}.errorLabel`), T.translate(`${PREFIX}.nonJSONError`));
       return;
     }
 
-    // still have to do this because JSON.stringify(uploadedFile) doesn't work
-    onError(null);
     let reader = new FileReader();
     reader.readAsText(uploadedFile, 'UTF-8');
 
     reader.onload =  (evt) => {
       let fileDataString = evt.target.result;
+      let error = validateImportJSON(fileDataString);
+      if (error) {
+        onError(T.translate(`${PREFIX}.errorLabel`), error);
+        return;
+      }
+
+      onError(null, null);
       window.localStorage.setItem(resourceCenterId, fileDataString);
       window.location.href = hydratorImportLink;
     };
