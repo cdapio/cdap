@@ -26,6 +26,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.http.NettyHttpService;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
 import org.slf4j.Logger;
@@ -43,19 +44,32 @@ public final class SystemArguments {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemArguments.class);
 
+  // Keys for container resources
   public static final String MEMORY_KEY = "system.resources.memory";
   public static final String CORES_KEY = "system.resources.cores";
   public static final String RESERVED_MEMORY_KEY_OVERRIDE = "system.resources.reserved.memory.override";
+
+  // Keys for log levels
   private static final String LOG_LEVEL = "system.log.level";
   private static final String LOGGER_LOG_LEVEL_PREFIX = LOG_LEVEL + ".";
+
+  // Keys for retry policy
   private static final String RETRY_POLICY_TYPE = "system." + Constants.Retry.TYPE;
   private static final String RETRY_POLICY_MAX_TIME_SECS = "system." + Constants.Retry.MAX_TIME_SECS;
   private static final String RETRY_POLICY_MAX_RETRIES = "system." + Constants.Retry.MAX_RETRIES;
   private static final String RETRY_POLICY_DELAY_BASE_MS = "system." + Constants.Retry.DELAY_BASE_MS;
   private static final String RETRY_POLICY_DELAY_MAX_MS = "system." + Constants.Retry.DELAY_MAX_MS;
+
+  // Keys for transaction
   public static final String TRANSACTION_TIMEOUT = "system.data.tx.timeout";
+
+  // Keys for metrics system
   public static final String METRICS_ENABLED = "system.metrics.enabled";
   public static final String METRICS_CONTEXT_TASK_INCLUDED = "system.metrics.context.task.included";
+
+  // Keys for http service
+  public static final String SERVICE_THREADS = "system.service.threads";
+  public static final String SERVICE_THREAD_KEEPALIVE_SECS = "system.service.thread.keepalive.secs";
 
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
@@ -278,6 +292,26 @@ public final class SystemArguments {
   }
 
   /**
+   * Configures a {@link NettyHttpService.Builder} based on the given arguments.
+   *
+   * @param args the arguments to use for looking up http service configurations
+   * @param builder a {@link NettyHttpService.Builder} to configure
+   * @param <T> type of the {@link NettyHttpService.Builder}
+   * @return the builder instance as provided through the {@code builder} argument
+   */
+  public static <T extends NettyHttpService.Builder> T configureNettyHttpService(Map<String, String> args, T builder) {
+    Integer threads = getInt(args, SERVICE_THREADS, "http service executor thread pool size");
+    if (threads != null) {
+      builder.setExecThreadPoolSize(threads);
+    }
+    Long keepAliveSecs = getLong(args, SERVICE_THREAD_KEEPALIVE_SECS, "http service executor keep alive seconds");
+    if (keepAliveSecs != null) {
+      builder.setExecThreadKeepAliveSeconds(keepAliveSecs);
+    }
+    return builder;
+  }
+
+  /**
    * Gets a positive integer value from the given map using the given key.
    * If there is no such key or if the value is not positive, returns {@code null}.
    */
@@ -323,6 +357,7 @@ public final class SystemArguments {
     return val;
   }
 
+  @Nullable
   private static Integer getInt(Map<String, String> map, String key, String description) {
     String value = map.get(key);
     if (value == null) {
@@ -341,6 +376,7 @@ public final class SystemArguments {
     return null;
   }
 
+  @Nullable
   private static Long getLong(Map<String, String> map, String key, String description) {
     String value = map.get(key);
     if (value == null) {

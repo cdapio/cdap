@@ -38,6 +38,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
@@ -55,7 +56,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -85,9 +85,7 @@ import javax.annotation.Nullable;
  */
 public class ServiceHttpServer extends AbstractIdleService {
 
-  // The following three are system property keys for unit-test to alter behavior of the server to have faster test
-  @VisibleForTesting
-  public static final String THREAD_POOL_SIZE = "cdap.service.http.thread.pool.size";
+  // The following system property key is for unit-test to alter behavior of the server to have faster test
   @VisibleForTesting
   public static final String HANDLER_CLEANUP_PERIOD_MILLIS = "cdap.service.http.handler.cleanup.millis";
 
@@ -192,37 +190,24 @@ public class ServiceHttpServer extends AbstractIdleService {
       .setPort(0)
       .setHttpHandlers(nettyHttpHandlers);
 
-    // These properties are for unit-test only. Currently they are not controllable by the user program
-    String threadPoolSize = System.getProperty(THREAD_POOL_SIZE);
-    if (threadPoolSize != null) {
-      builder.setExecThreadPoolSize(Integer.parseInt(threadPoolSize));
-    }
-
-    return builder.build();
+    return SystemArguments.configureNettyHttpService(context.getRuntimeArguments(), builder).build();
   }
 
-  private BasicHttpServiceContextFactory createContextFactory(final Program program,
-                                                              final ProgramOptions programOptions,
-                                                              final int instanceId, final AtomicInteger instanceCount,
-                                                              final MetricsCollectionService metricsCollectionService,
-                                                              final DatasetFramework datasetFramework,
-                                                              final DiscoveryServiceClient discoveryServiceClient,
-                                                              final TransactionSystemClient txClient,
-                                                              @Nullable final PluginInstantiator pluginInstantiator,
-                                                              final SecureStore secureStore,
-                                                              final SecureStoreManager secureStoreManager,
-                                                              final MessagingService messagingService,
-                                                              final DefaultArtifactManager defaultArtifactManager) {
-    return new BasicHttpServiceContextFactory() {
-      @Override
-      public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
-                                           metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                           txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                           messagingService,
-                                           defaultArtifactManager);
-      }
-    };
+  private BasicHttpServiceContextFactory createContextFactory(Program program, ProgramOptions programOptions,
+                                                              int instanceId, final AtomicInteger instanceCount,
+                                                              MetricsCollectionService metricsCollectionService,
+                                                              DatasetFramework datasetFramework,
+                                                              DiscoveryServiceClient discoveryServiceClient,
+                                                              TransactionSystemClient txClient,
+                                                              @Nullable PluginInstantiator pluginInstantiator,
+                                                              SecureStore secureStore,
+                                                              SecureStoreManager secureStoreManager,
+                                                              MessagingService messagingService,
+                                                              DefaultArtifactManager defaultArtifactManager) {
+    return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
+                                               metricsCollectionService, datasetFramework, discoveryServiceClient,
+                                               txClient, pluginInstantiator, secureStore, secureStoreManager,
+                                               messagingService, defaultArtifactManager);
   }
 
   /**
@@ -385,19 +370,16 @@ public class ServiceHttpServer extends AbstractIdleService {
       }
 
       final AtomicBoolean cancelled = new AtomicBoolean(false);
-      return new Cancellable() {
-        @Override
-        public void cancel() {
-          if (cancelled.compareAndSet(false, true)) {
-            contextPairPool.offer(contextPair);
-            // offer never return false for ConcurrentLinkedQueue
-            context.getProgramMetrics().gauge("context.pool.size", contextPairPoolSize.incrementAndGet());
-          } else {
-            // This shouldn't happen, unless there is bug in the platform.
-            // Since the context capture and release is a complicated logic, it's better throwing exception
-            // to guard against potential future bug.
-            throw new IllegalStateException("Captured context cannot be released twice.");
-          }
+      return () -> {
+        if (cancelled.compareAndSet(false, true)) {
+          contextPairPool.offer(contextPair);
+          // offer never return false for ConcurrentLinkedQueue
+          context.getProgramMetrics().gauge("context.pool.size", contextPairPoolSize.incrementAndGet());
+        } else {
+          // This shouldn't happen, unless there is bug in the platform.
+          // Since the context capture and release is a complicated logic, it's better throwing exception
+          // to guard against potential future bug.
+          throw new IllegalStateException("Captured context cannot be released twice.");
         }
       };
     }
@@ -437,19 +419,16 @@ public class ServiceHttpServer extends AbstractIdleService {
     private LoadingCache<Thread, HandlerContextPair> createContextPairCache() {
       return CacheBuilder.newBuilder()
         .weakKeys()
-        .removalListener(new RemovalListener<Thread, HandlerContextPair>() {
-          @Override
-          public void onRemoval(RemovalNotification<Thread, HandlerContextPair> notification) {
-            Thread thread = notification.getKey();
-            HandlerContextPair contextPair = notification.getValue();
-            if (contextPair == null) {
-              return;
-            }
-            // If the removal is due to eviction (expired or GC'ed) or
-            // if the thread is no longer active, close the associated context.
-            if (shutdown || notification.wasEvicted() || thread == null || !thread.isAlive()) {
-              contextPair.close();
-            }
+        .removalListener((RemovalListener<Thread, HandlerContextPair>) notification -> {
+          Thread thread = notification.getKey();
+          HandlerContextPair contextPair = notification.getValue();
+          if (contextPair == null) {
+            return;
+          }
+          // If the removal is due to eviction (expired or GC'ed) or
+          // if the thread is no longer active, close the associated context.
+          if (shutdown || notification.wasEvicted() || thread == null || !thread.isAlive()) {
+            contextPair.close();
           }
         })
         .build(new CacheLoader<Thread, HandlerContextPair>() {

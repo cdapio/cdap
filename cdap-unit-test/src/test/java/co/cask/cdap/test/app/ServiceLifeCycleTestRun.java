@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ApplicationManager;
@@ -46,7 +47,6 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -83,18 +83,17 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     artifactJar = createArtifactJar(ServiceLifecycleApp.class);
   }
 
-  // TODO CDAP-12765: Due to changes in netty executor, this test doesn't apply. Need to rework on it.
-  @Ignore
   @Test
   public void testLifecycleWithThreadTerminates() throws Exception {
     // Set the http server properties to speed up test
-    System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
     System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
 
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
-      serviceManager = appManager.getServiceManager("test").start();
+      serviceManager = appManager.getServiceManager("test")
+        .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1",
+                               SystemArguments.SERVICE_THREAD_KEEPALIVE_SECS, "1"));
 
       // Make a call to the service, expect an init state
       Multimap<Integer, String> states = getStates(serviceManager);
@@ -124,23 +123,21 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
       // Reset the http server properties to speed up test
-      System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
       System.clearProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
     }
   }
 
-  // TODO: Due to changes in netty executor, this test doesn't apply. Need to rework on it.
-  @Ignore
   @Test
   public void testLifecycleWithGC() throws Exception {
     // Set the http server properties to speed up test
-    System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
     System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
 
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
-      serviceManager = appManager.getServiceManager("test").start();
+      serviceManager = appManager.getServiceManager("test")
+        .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1",
+                               SystemArguments.SERVICE_THREAD_KEEPALIVE_SECS, "1"));
 
       // Make 5 consecutive calls, there should be one handler instance being created,
       // since there is only one handler thread.
@@ -185,20 +182,18 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
       // Reset the http server properties to speed up test
-      System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
       System.clearProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
     }
   }
 
   @Test
   public void testContentConsumerLifecycle() throws Exception {
-    // Set to have one thread only for testing context capture and release
-    System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
-
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
-      serviceManager = appManager.getServiceManager("test").start();
+      // Set to have one thread only for testing context capture and release
+      serviceManager = appManager.getServiceManager("test")
+        .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1"));
       CountDownLatch uploadLatch = new CountDownLatch(1);
 
       // Create five concurrent upload
@@ -287,18 +282,17 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     } finally {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
-      System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
     }
   }
 
   @Test
   public void testContentProducerLifecycle() throws Exception {
-    // Set to have one thread only for testing context capture and release
-    System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
-
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
-      serviceManager = appManager.getServiceManager("test").start();
+
+      // Set to have one thread only for testing context capture and release
+      serviceManager = appManager.getServiceManager("test")
+        .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1"));
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
       // Clean up the dataset first to avoid being affected by other tests
       datasetManager.get().delete(Bytes.toBytes("called"));
@@ -341,18 +335,17 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     } finally {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
-      System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
     }
   }
 
   @Test
   public void testContentConsumerProducerLifecycle() throws Exception {
-    // Set to have one thread only for testing context capture and release
-    System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
-
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
-      serviceManager = appManager.getServiceManager("test").start();
+
+      // Set to have one thread only for testing context capture and release
+      serviceManager = appManager.getServiceManager("test")
+        .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1"));
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
       // Clean up the dataset first to avoid being affected by other tests
       datasetManager.get().delete(Bytes.toBytes("called"));
@@ -415,7 +408,6 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     } finally {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
-      System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
     }
   }
 

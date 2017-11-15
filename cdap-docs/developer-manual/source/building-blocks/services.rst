@@ -211,10 +211,28 @@ If both the memory and the number of cores needs to be set, this can be done usi
 
     setResources(new Resources(1024, 2));
 
+The resource requirements can also be altered through runtime arguments,
+as explained in :ref:`Configuring Resources <advanced-configuring-resources>`.
+
 An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
 <examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
 
 .. _services-routing:
+
+Service Thread Model
+====================
+An HTTP server is started for each Service instance, which by default starts 60 threads to handle
+client requests. Each thread is basically tied to one active client request and each thread would
+have its own instance of ``HttpServiceHandler``\s. This guarantees there will be no concurrent
+calls to each ``HttpServiceHandler`` object instance. Also, by default, when a thread is idled
+for more than 60 seconds, it will be terminated automatically, with the ``HttpServiceHandler.destroy``
+method being called to release resources.
+
+Both the number of service threads and the thread keep-alive time can be altered by these runtime arguments:
+
+- ``system.service.threads``: Number of threads to use in the HTTP server
+- ``system.service.thread.keepalive.secs``: Number of seconds a thread can sit idle before getting terminated
+
 
 Service Routing
 ===============
