@@ -53,6 +53,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   public void testFlowManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
     FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
+    flowManager.waitForStatus(true);
     flowManager.stop();
   }
 
@@ -64,7 +65,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     ClientConfig clientConfig = new ClientConfig.Builder(getClientConfig()).build();
     deployApplication(namespace, TestApplication.class);
 
-    // Check the default namespaces applications to see whether the application wasnt made in the default namespace
+    // Check the default namespaces applications to see whether the application wasn't made in the default namespace
     ClientConfig defaultClientConfig = new ClientConfig.Builder(getClientConfig()).build();
     Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(NamespaceId.DEFAULT).size());
 
@@ -123,6 +124,6 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
                    String value) throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = new URL(serviceManager.getServiceURL(), key);
     getRestClient().execute(HttpMethod.PUT, url, value,
-                            ImmutableMap.<String, String>of(), getClientConfig().getAccessToken());
+                            ImmutableMap.of(), getClientConfig().getAccessToken());
   }
 }
