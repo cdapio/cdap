@@ -15,7 +15,7 @@
  */
 
 class HydratorUpgradeService {
-  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, $q, PipelineAvailablePluginsActions) {
+  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, $q, PipelineAvailablePluginsActions, myAlertOnValium, NonStorePipelineErrorFactory) {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
@@ -24,6 +24,8 @@ class HydratorUpgradeService {
     this.leftPanelStore = HydratorPlusPlusLeftPanelStore;
     this.$q = $q;
     this.PipelineAvailablePluginsActions = PipelineAvailablePluginsActions;
+    this.myAlertOnValium = myAlertOnValium;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
   }
 
   _checkVersionIsInRange(range, version) {
@@ -74,7 +76,7 @@ class HydratorUpgradeService {
       this.PipelineAvailablePluginsActions.fetchPluginsForUpgrade(
         {
           namespace: this.$state.params.namespace,
-          pipelineType: 'cdap-data-streams',
+          pipelineType: pipelineConfig.artifact.name,
           version: this.$rootScope.cdapVersion
         }
       ).then((res) => {
@@ -83,7 +85,20 @@ class HydratorUpgradeService {
       });
     } else {
       let plugins = this.leftPanelStore.getState().plugins.pluginTypes;
-      this._formatPluginsMap(plugins, pipelineConfig, deferred);
+      // If this is empty that means we haven't finished fetching all the plugins yet,
+      // so needs to subscribe to the store
+      if (_.isEmpty(plugins)) {
+        this.leftPanelStoreSub = this.leftPanelStore.subscribe(() => {
+          plugins = this.leftPanelStore.getState().plugins.pluginTypes;
+          if (!_.isEmpty(plugins)) {
+            this.leftPanelStoreSub();
+            this._formatPluginsMap(plugins, pipelineConfig, deferred);
+          }
+        });
+      } else {
+        this._formatPluginsMap(plugins, pipelineConfig, deferred);
+      }
+
     }
 
     return deferred.promise;
@@ -225,7 +240,28 @@ class HydratorUpgradeService {
     return configClone;
   }
 
-  validateAndUpgradeConfig(pipelineConfig) {
+  validateAndUpgradeConfig(fileData) {
+    var jsonData;
+    try {
+      jsonData = JSON.parse(fileData);
+    } catch (e) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Syntax Error. Ill-formed pipeline configuration.'
+      });
+      return;
+    }
+
+    let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+
+    if (isNotValid) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: isNotValid
+      });
+      return;
+    }
+
     this.$uibModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/pipeline-upgrade-modal.html',
       size: 'lg',
@@ -236,11 +272,10 @@ class HydratorUpgradeService {
       controller: 'PipelineUpgradeModalController',
       resolve: {
         rPipelineConfig: function () {
-          return pipelineConfig;
+          return jsonData;
         }
       }
     });
-
   }
 }
 

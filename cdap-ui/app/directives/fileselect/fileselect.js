@@ -37,7 +37,7 @@ angular.module(PKG.name + '.commons')
 
         scope.isDropdown = attrs.dropdown;
 
-        var fileElement = angular.element('<input class="sr-only" type="file" multiple="true">');
+        var fileElement = angular.element('<input class="sr-only" type="file" accept=".json">');
         element.append(fileElement);
         element.bind('click', function() {
           fileElement[0].click();

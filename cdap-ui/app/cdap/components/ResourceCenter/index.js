@@ -13,47 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from 'components/ResourceCenterEntity';
+import ResourceCenterPipelineEntity from 'components/ResourceCenterEntity/ResourceCenterPipelineEntity';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
-import NamespaceStore from 'services/NamespaceStore';
 import AbstractWizard from 'components/AbstractWizard';
+import CardActionFeedback from 'components/CardActionFeedback';
 import T from 'i18n-react';
 import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
 
 require('./ResourceCenter.scss');
-/*
-  TODO: Stream views:
-  {
-    title: T.translate('features.Resource-Center.Stream-View.label'),
-    description: T.translate('features.Resource-Center.Stream-View.description'),
-    actionLabel: T.translate('features.Resource-Center.Stream-View.actionbtn0'),
-    iconClassName: 'fa icon-streamview',
-    disabled: true
-  }
-*/
+
 export default class ResourceCenter extends Component {
   constructor(props) {
     super(props);
     this.state = {
       createStreamWizard: false,
+      error: null,
       entities: [
-        {
-          // Pipeline
-          title: T.translate('features.Resource-Center.HydratorPipeline.label'),
-          description: T.translate('features.Resource-Center.HydratorPipeline.description'),
-          actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
-          iconClassName: 'icon-pipelines',
-          disabled: false,
-          actionLink: window.getHydratorUrl({
-            stateName: 'hydrator.create',
-            stateParams: {
-              namespace: NamespaceStore.getState().selectedNamespace,
-              artifactType: 'cdap-data-pipeline'
-            }
-          })
-        },
         {
           // Application
           title: T.translate('features.Resource-Center.Application.label'),
@@ -105,9 +84,15 @@ export default class ResourceCenter extends Component {
       ]
     };
   }
+  onError = (error) => {
+    this.setState({
+      error
+    });
+  };
   toggleWizard(wizardName) {
     this.setState({
-      [wizardName]: !this.state[wizardName]
+      [wizardName]: !this.state[wizardName],
+      error: null
     });
   }
   closeWizard(wizardContainer) {
@@ -175,10 +160,23 @@ export default class ResourceCenter extends Component {
       );
     }
   }
+  renderError() {
+    if (!this.state.error) { return null; }
+
+    return (
+      <CardActionFeedback
+        type="DANGER"
+        message={this.state.error}
+      />
+    );
+  }
   render() {
     return (
       <div>
         <div className="cask-resource-center">
+          <ResourceCenterPipelineEntity
+            onError={this.onError}
+          />
           {
             this.state
               .entities
@@ -189,13 +187,12 @@ export default class ResourceCenter extends Component {
                   actionLabel={entity.actionLabel}
                   iconClassName={entity.iconClassName}
                   key={index}
-                  disabled={entity.disabled}
                   onClick={this.toggleWizard.bind(this, entity.wizardId)}
-                  actionLink={entity.actionLink}
                 />
               ))
           }
         </div>
+        {this.renderError()}
         { this.getWizardToBeDisplayed() }
       </div>
     );

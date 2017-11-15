@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       })
         .state('hydrator.create', {
-          url: '/studio?artifactType&draftId&workspaceId&configParams&rulesengineid',
+          url: '/studio?artifactType&draftId&workspaceId&configParams&rulesengineid&resourceCenterId',
           onEnter: function() {
             document.title = 'CDAP | Studio';
           },
