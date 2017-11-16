@@ -76,6 +76,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
@@ -85,6 +89,11 @@
                            but clashes with the one from Spark -->
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-lang3</artifactId>
+        </exclusion>
+        <!-- required so that paranamer will be bundled in app jar. Can remove once avro dependency is removed -->
+        <exclusion>
+          <groupId>com.thoughtworks.paranamer</groupId>
+          <artifactId>paranamer</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
