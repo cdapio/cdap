@@ -29,7 +29,7 @@ import ColumnHighlighter from 'components/DataPrep/ColumnHighlighter';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
-import captialize from 'lodash/capitalize';
+import DataType from 'components/DataPrep/DataPrepTable/DataType';
 import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
 // Lazy load polyfill in safari as InteresectionObservers are not implemented there yet.
 (async function() {
@@ -58,12 +58,6 @@ export default class DataPrepTable extends Component {
     };
 
     this.eventEmitter = ee(ee);
-    this.openUploadData = this.openUploadData.bind(this);
-    this.openCreateWorkspaceModal = this.openCreateWorkspaceModal.bind(this);
-    this.switchToEditColumnName = this.switchToEditColumnName.bind(this);
-    this.toggleColumnSelect = this.toggleColumnSelect.bind(this);
-    this.columnIsSelected = this.columnIsSelected.bind(this);
-    this.columnDropdownOpened = this.columnDropdownOpened.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState();
@@ -105,7 +99,8 @@ export default class DataPrepTable extends Component {
         this.io.observe(entry);
       });
   }
-  toggleColumnSelect(columnName) {
+
+  toggleColumnSelect = (columnName) => {
     let currentSelectedHeaders = this.state.selectedHeaders.slice();
     if (!this.columnIsSelected(columnName)) {
       currentSelectedHeaders.push(columnName);
@@ -122,9 +117,9 @@ export default class DataPrepTable extends Component {
         selectedHeaders: currentSelectedHeaders
       }
     });
-  }
+  };
 
-  columnDropdownOpened(columnDropdown, openState) {
+  columnDropdownOpened = (columnDropdown, openState) => {
     if (openState) {
       this.setState({
         columnDropdownOpen: columnDropdown
@@ -134,21 +129,21 @@ export default class DataPrepTable extends Component {
         columnDropdownOpen: null
       });
     }
-  }
+  };
 
-  columnIsSelected(columnName) {
+  columnIsSelected = (columnName) => {
     return this.state.selectedHeaders.indexOf(columnName) !== -1;
-  }
+  };
 
-  openCreateWorkspaceModal() {
+  openCreateWorkspaceModal = () => {
     this.eventEmitter.emit('DATAPREP_CREATE_WORKSPACE');
-  }
+  };
 
-  openUploadData() {
+  openUploadData = () => {
     this.eventEmitter.emit('DATAPREP_OPEN_UPLOAD');
-  }
+  };
 
-  switchToEditColumnName(head) {
+  switchToEditColumnName = (head) => {
     let newHeaders = this.state.headers.map(header => {
       if (header.name === head.name) {
         return Object.assign({}, header, {
@@ -164,7 +159,7 @@ export default class DataPrepTable extends Component {
     this.setState({
       headers: newHeaders
     });
-  }
+  };
 
   showWarningMessage(index, currentValue) {
     let showWarning = this.state.headers
@@ -254,7 +249,6 @@ export default class DataPrepTable extends Component {
   renderDataprepTable() {
     let headers = [...this.state.headers];
     let data = this.state.data;
-    let types = DataPrepStore.getState().dataprep.types;
     return (
       <table className="table table-bordered" id="dataprep-table">
         <thead className="thead-inverse">
@@ -273,7 +267,7 @@ export default class DataPrepTable extends Component {
                   >
                     <DataQuality columnInfo={this.state.columns[head.name]} />
                     <div className="column-wrapper-container">
-                      <div className="col-type">{captialize(types[head.name] || 'unknown')}</div>
+                      <DataType columnName={head.name} />
                       <div
                         className="clearfix column-wrapper"
                       >
