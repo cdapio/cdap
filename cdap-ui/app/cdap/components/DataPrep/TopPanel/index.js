@@ -31,6 +31,7 @@ import {Switch} from 'components/DataPrep/DataPrepContentWrapper';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
+import DataPrepPlusButton from 'components/DataPrep/TopPanel/PlusButton';
 
 
 const SchemaModal = Loadable({
@@ -306,10 +307,9 @@ export default class DataPrepTopPanel extends Component {
   };
   renderMenu() {
     return (
-      <UncontrolledDropdown>
+      <UncontrolledDropdown className="more-dropdown">
         <DropdownToggle>
-          <IconSVG name="icon-bars" />
-          <IconSVG name="icon-caret-down" />
+          <span>{T.translate('features.DataPrep.TopPanel.more')}</span>
         </DropdownToggle>
         <DropdownMenu right>
         {
@@ -394,6 +394,7 @@ export default class DataPrepTopPanel extends Component {
               null
           }
           {this.renderMenu()}
+          <DataPrepPlusButton />
           {this.renderAddToPipelineModal()}
           {this.renderSchemaModal()}
         </div>

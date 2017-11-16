@@ -24,7 +24,8 @@ import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 import PublishPipelineUsecaseWizard from 'components/CaskWizards/PublishPipelineUsecase';
 import InformationalWizard from 'components/CaskWizards/Informational';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
-import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
+import PluginUploadWizard from 'components/CaskWizards/PluginArtifactUpload/PluginUploadWizard';
+import DirectiveUploadWizard from 'components/CaskWizards/PluginArtifactUpload/DirectiveUploadWizard';
 import ApplicationUploadWizard from 'components/CaskWizards/ApplicationUpload';
 import LibraryUploadWizard from 'components/CaskWizards/LibraryUpload';
 import MicroserviceUploadWizard from 'components/CaskWizards/MicroserviceUpload';
@@ -73,7 +74,7 @@ const WizardTypesMap = {
     store: ArtifactUploadStore
   },
   'create_plugin_artifact_rc': {
-    tag: PluginArtifactUploadWizard,
+    tag: PluginUploadWizard,
     store: ArtifactUploadStore
   },
   'create_app_rc': {
@@ -127,6 +128,10 @@ const WizardTypesMap = {
   'create_microservice_rc': {
     tag: MicroserviceUploadWizard,
     store: MicroserviceUploadStore
+  },
+  'create_directive_artifact_rc': {
+    tag: DirectiveUploadWizard,
+    store: ArtifactUploadStore
   }
 };
 

@@ -26,12 +26,39 @@ import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWit
 
 require('./ResourceCenter.scss');
 
+const WIZARD_MAP = {
+  createApplicationWizard: {
+    wizardType: 'create_app_rc',
+    input: {headerLabel: T.translate('features.Resource-Center.Application.modalheadertitle')}
+  },
+  createArtifactWizard: {
+    wizardType: 'create_artifact_rc',
+    input: {headerLabel: T.translate('features.Resource-Center.Artifact.modalheadertitle')}
+  },
+  createPluginArtifactWizard: {
+    wizardType: 'create_plugin_artifact_rc',
+    input: {headerLabel: T.translate('features.Resource-Center.Plugins.modalheadertitle')}
+  },
+  createLibraryWizard: {
+    wizardType: 'create_library_rc',
+    input: {headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle')}
+  },
+  createMicroserviceWizard: {
+    wizardType: 'create_microservice_rc',
+    input: {headerLabel: T.translate('features.Resource-Center.Microservice.modalheadertitle')}
+  },
+  createDirectiveArtifactWizard: {
+    wizardType: 'create_directive_artifact_rc',
+    input: {headerLabel: T.translate('features.Resource-Center.Directive.modalheadertitle')}
+  }
+};
+
 export default class ResourceCenter extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      createStreamWizard: false,
       error: null,
+      activeWizard: null,
       entities: [
         {
           // Application
@@ -80,6 +107,14 @@ export default class ResourceCenter extends Component {
           actionLabel: T.translate('features.Resource-Center.Microservice.actionbtn0'),
           iconClassName: 'icon-app',
           wizardId: 'createMicroserviceWizard'
+        },
+        {
+          // Directives
+          title: T.translate('features.Resource-Center.Directive.label'),
+          description: T.translate('features.Resource-Center.Directive.description'),
+          actionLabel: T.translate('features.Resource-Center.Directive.actionbtn0'),
+          iconClassName: 'icon-directives',
+          wizardId: 'createDirectiveArtifactWizard'
         }
       ]
     };
@@ -91,7 +126,7 @@ export default class ResourceCenter extends Component {
   };
   toggleWizard(wizardName) {
     this.setState({
-      [wizardName]: !this.state[wizardName],
+      activeWizard: wizardName,
       error: null
     });
   }
@@ -99,66 +134,29 @@ export default class ResourceCenter extends Component {
     ReactDOM.unmountComponentAtNode(wizardContainer);
   }
   getWizardToBeDisplayed() {
-    if (this.state.createStreamWizard) {
+    if (!this.state.activeWizard) {
+      return null;
+    } else if (this.state.activeWizard === 'createStreamWizard') {
       return (
         <StreamCreateWithUploadWizard
-          isOpen={this.state.createStreamWizard}
+          isOpen={true}
           store={CreateStreamWithUploadStore}
-          onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
+          onClose={this.toggleWizard.bind(this, null)}
           withUploadStep
         />
       );
     }
-    if (this.state.createApplicationWizard) {
-      return (
-        <AbstractWizard
-          wizardType="create_app_rc"
-          isOpen={true}
-          input={{headerLabel: T.translate('features.Resource-Center.Application.modalheadertitle')}}
-          onClose={this.toggleWizard.bind(this, 'createApplicationWizard')}
-        />
-      );
-    }
-    if (this.state.createArtifactWizard) {
-      return (
-        <AbstractWizard
-          isOpen={true}
-          wizardType="create_artifact_rc"
-          input={{headerLabel: T.translate('features.Resource-Center.Artifact.modalheadertitle')}}
-          onClose={this.toggleWizard.bind(this, 'createArtifactWizard')}
-        />
-      );
-    }
-    if (this.state.createPluginArtifactWizard) {
-      return (
-        <AbstractWizard
-          isOpen={true}
-          wizardType="create_plugin_artifact_rc"
-          input={{headerLabel: T.translate('features.Resource-Center.Plugins.modalheadertitle')}}
-          onClose={this.toggleWizard.bind(this, 'createPluginArtifactWizard')}
-        />
-      );
-    }
-    if (this.state.createLibraryWizard) {
-      return (
-        <AbstractWizard
-          isOpen={true}
-          wizardType="create_library_rc"
-          input={{headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle')}}
-          onClose={this.toggleWizard.bind(this, 'createLibraryWizard')}
-        />
-      );
-    }
-    if (this.state.createMicroserviceWizard) {
-      return (
-        <AbstractWizard
-          isOpen={true}
-          wizardType="create_microservice_rc"
-          input={{headerLabel: T.translate('features.Resource-Center.Microservice.modalheadertitle')}}
-          onClose={this.toggleWizard.bind(this, 'createMicroserviceWizard')}
-        />
-      );
-    }
+
+    let activeWizardConfig = WIZARD_MAP[this.state.activeWizard];
+
+    return (
+      <AbstractWizard
+        wizardType={activeWizardConfig.wizardType}
+        isOpen={true}
+        input={activeWizardConfig.input}
+        onClose={this.toggleWizard.bind(this, null)}
+      />
+    );
   }
   renderError() {
     if (!this.state.error) { return null; }

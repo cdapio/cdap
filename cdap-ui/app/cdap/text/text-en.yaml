@@ -889,8 +889,12 @@ features:
       kafkaPipeline:
         ingestDataError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before ingesting data.
         pipelineError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before creating a pipeline.
+      more: More
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+      PlusButton:
+        addDirective: Add a Custom Directive
+        successMessage: You successfully added a custom directive to CDAP. Apply that directive by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       s3: S3
       S3Pipeline:
@@ -1220,6 +1224,7 @@ features:
       dashboards: Dashboards
       datapacks: Datapacks
       datasets: Datasets
+      directives: Directives
       edwOffload: EDW Offload
       emptyTab: No Entities found
       examples: Applications
@@ -1520,6 +1525,11 @@ features:
       description: A driver is a JAR file that contains third-party code to communicate with systems such as MySQL, Oracle, and PostgreSQL using JDBC.
       label: Driver
       modalheadertitle: Add Driver
+    Directive:
+      actionbtn0: Upload
+      description: A directive is a data manipulation instruction that can be used to perform data cleansing, transformation and filtering.
+      label: Directive
+      modalheadertitle: Upload Directive Artifact
     HydratorPipeline:
       actionbtn0: Create
       actionbtn1: Import
@@ -1777,6 +1787,23 @@ features:
         title: Configure Driver
       success: You have successfully uploaded the driver "{artifactName}".
       subtitle: You can now create a pipeline to extract data from Database using the driver.
+    DirectiveUpload:
+      callToAction: Go to Preparation
+      footertitle: Upload Directive Artifact
+      Step1:
+        description: Upload your Directive JAR.
+        errorMessage: Invalid directive. Directive must be a JAR file.
+        filePathLabel: Choose File
+        shorttitle: Upload Directive JAR
+        title: Upload Directive JAR
+      Step2:
+        description: Upload the directive configuration JSON.
+        errorMessage: Invalid directive JSON. Plugin configuration should be in JSON format.
+        errorMessageParentArtifacts: Invalid directive JSON. Please specify parent artifacts.
+        shorttitle: Upload Directive Configuration JSON
+        title: Upload Directive Configuration JSON
+      subtitle: Start preparing data with the directive.
+      success: You have successfully uploaded the directive "{pluginName}".
     Done: Done
     FailedMessage: Failed to {step}
     GoToHomePage: Go to Homepage
