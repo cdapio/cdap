@@ -51,7 +51,7 @@ RUN curl -vL http://chef.io/chef/install.sh | bash -s -- -v 12.19.36 && \
       /var/lib/apt/lists/* \
       /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 
-ENV PATH /opt/cdap/sdk/bin:${PATH}
+ENV PATH /opt/cdap/sandbox/bin:${PATH}
 
 # Copy entrypoint
 COPY docker-entrypoint.sh /
@@ -61,4 +61,4 @@ EXPOSE 11011 11015
 
 # start CDAP in the background and tail in the foreground
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["cdap","sdk","start","--foreground"]
+CMD ["cdap","sandbox","start","--foreground"]
