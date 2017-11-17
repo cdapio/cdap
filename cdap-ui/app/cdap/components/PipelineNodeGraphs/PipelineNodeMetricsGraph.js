@@ -509,8 +509,9 @@ export default class PipelineNodeMetricsGraph extends Component {
     }
 
     return (
-      <a className="toggle-records-count-popover"
-          onClick={this.togglePortsRecordsCountPopover}
+      <a
+        className="toggle-records-count-popover"
+        onClick={this.togglePortsRecordsCountPopover}
       >
         {
           this.state.showPortsRecordsCountPopover ?
@@ -546,6 +547,18 @@ export default class PipelineNodeMetricsGraph extends Component {
                 );
               })
           }
+          {/* When we show all the ports metrics instead of just View All/Hide All, the Total Errors
+          might overflow and be hidden. This is to show the user in case that happens */}
+          {
+            Object.keys(this.state.totalRecordsOutPorts).length <= 2 ?
+              (
+                <strong className="error-records-count">
+                  {this.renderRecordsCount('totalRecordsError')}
+                </strong>
+              )
+            :
+              null
+          }
         </div>
       </div>
     );
@@ -559,6 +572,9 @@ export default class PipelineNodeMetricsGraph extends Component {
   };
 
   renderContent() {
+    let numPorts = Object.keys(this.state.totalRecordsOutPorts).length;
+    let onHoverFn = numPorts > 0 && numPorts <= 2 ? this.togglePortsRecordsCountPopover : null;
+
     return (
       <div className="node-metrics-container">
         {
@@ -599,7 +615,11 @@ export default class PipelineNodeMetricsGraph extends Component {
             <div>
               <div className="title-container graph-title">
                 <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`)} </div>
-                <div className="total-records">
+                <div
+                  className="total-records"
+                  onMouseEnter={onHoverFn}
+                  onMouseLeave={onHoverFn}
+                >
                   {
                     this.state.aggregate || isDataSeriesHaveSingleDatapoint(this.getOutputRecordsForCharting()) ?
                       null
@@ -612,10 +632,10 @@ export default class PipelineNodeMetricsGraph extends Component {
                         <strong className="error-records-count">
                           { this.renderRecordsCount('totalRecordsError') }
                         </strong>
-                        { this.rendePortsRecordsCountPopover() }
                       </span>
                   }
                 </div>
+                { this.rendePortsRecordsCountPopover() }
               </div>
               {this.renderMetrics(this.getOutputRecordsForCharting(), 'recordsout')}
             </div>

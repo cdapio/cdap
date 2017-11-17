@@ -47,6 +47,14 @@ class HydratorPlusPlusPreviewActions {
     };
   }
 
+  resetPreview()  {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.PREVIEW_RESET
+      });
+    };
+  }
+
   setMacros (macrosMap) {
     return (dispatch) => {
       dispatch({

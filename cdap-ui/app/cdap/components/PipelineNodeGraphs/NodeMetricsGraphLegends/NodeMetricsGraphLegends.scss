@@ -14,68 +14,56 @@
  * the License.
 */
 
-$legend-checkbox-bg-color: rgb(88, 183, 286);
-
-.ports-legend-popover-with-errors {
-  width: 100%;
-  min-width: 200px;
-  padding-top: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  > .rv-discrete-color-legend {
-    > .rv-discrete-color-legend-item {
-      .legend-item-checkbox {
-        font-size: 20px;
-        width: 17px;
-        margin-right: 5px;
-
-        &.fa-check-square {
-          color: $legend-checkbox-bg-color;
-        }
-      }
-    }
-  }
-
-  .ports-legend-popover {
-    width: 70%;
-    max-width: 170px;
-    position: relative;
-
-    .legend-popover-toggle {
-      cursor: pointer;
-      border-bottom: 1px solid;
-      padding-bottom: 2px;
+.pipeline-node-metrics-graph {
+  .node-metrics-container {
+    .ports-legend-popover-with-errors {
+      width: 100%;
+      min-width: 200px;
+      padding-top: 10px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
 
-      .rv-discrete-color-legend {
-        padding: 0;
-      }
+      .ports-legend-popover {
+        width: 70%;
+        max-width: 170px;
+        position: relative;
 
-      .toggle-caret {
-        margin-left: auto;
-        font-size: 18px;
-      }
-    }
+        .legend-popover-toggle {
+          cursor: pointer;
+          border-bottom: 1px solid;
+          padding-bottom: 2px;
+          display: flex;
+          align-items: center;
 
-    .legend-popover {
-      position: absolute;
-      background: white;
-      border: 1px solid black;
-      top: 35px;
-    }
-    .popover-content.rv-discrete-color-legend {
+          .rv-discrete-color-legend {
+            padding: 0;
+          }
 
-      .rv-discrete-color-legend-item.vertical {
-        margin-top: 5px;
+          .toggle-caret {
+            margin-left: auto;
+            font-size: 18px;
+          }
+        }
 
-        .legend-item-checkbox {
-          margin-right: 10px;
-          transform: translateY(1px);
+        .legend-popover {
+          position: absolute;
+          background: white;
+          border: 1px solid black;
+          top: 35px;
+        }
+        .popover-content.rv-discrete-color-legend {
+
+          .rv-discrete-color-legend-item.vertical {
+            margin-top: 5px;
+
+            .legend-item-checkbox {
+              margin-right: 10px;
+              transform: translateY(1px);
+            }
+          }
         }
       }
     }
   }
-
 }

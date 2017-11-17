@@ -77,8 +77,20 @@ my-dag-plus {
         filter: drop-shadow(0 0 10px @preview-outline-color);
       }
     }
-    .box .node {
-      box-shadow: 0 0 0 2px @preview-outline-color;
+    .box {
+      .node {
+        box-shadow: 0 0 0 2px @preview-outline-color;
+
+        .node-splitter-popover {
+          > .arrow {
+            border-right-color: @preview-outline-color;
+          }
+
+          .popover-content {
+            box-shadow: 0 0 0 2px @preview-outline-color;
+          }
+        }
+      }
     }
   }
 

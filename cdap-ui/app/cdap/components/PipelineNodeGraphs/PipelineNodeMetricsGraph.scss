@@ -19,6 +19,7 @@
 $graph_container_border_color: lightgray;
 $table_header_border: #c9ccd6;
 $error_records_label_color: #a40403;
+$legend-checkbox-bg-color: rgb(88, 183, 285);
 
 .pipeline-node-metrics-graph {
   height: 100%;
@@ -26,6 +27,7 @@ $error_records_label_color: #a40403;
     display: flex;
     align-items: center;
     padding: 10px;
+    position: relative;
 
     &.graph-title {
       flex-direction: column;
@@ -38,6 +40,11 @@ $error_records_label_color: #a40403;
       cursor: pointer;
     }
     .total-records {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+
       > strong,
       > span {
         position: relative;
@@ -45,15 +52,13 @@ $error_records_label_color: #a40403;
         strong,
         span {
           margin: 0 10px 0 0;
-          &.error-records-count {
-            color: $error_records_label_color;
-          }
         }
       }
     }
     .title {
       font-size: 18px;
     }
+
     > div:not(.title) {
       font-size: 14px;
     }
@@ -63,6 +68,7 @@ $error_records_label_color: #a40403;
       background: white;
       z-index: 1;
       border: 1px solid black;
+      top: 50px;
 
       .popover-content {
         padding: 10px 15px 15px 15px;
@@ -80,6 +86,11 @@ $error_records_label_color: #a40403;
             border-radius: 50%;
           }
         }
+
+        .error-records-count {
+          margin-top: 5px;
+          display: inline-block;
+        }
       }
     }
 
@@ -89,6 +100,10 @@ $error_records_label_color: #a40403;
       &:hover {
         text-decoration: none;
       }
+    }
+
+    .error-records-count {
+      color: $error_records_label_color;
     }
   }
   .node-metrics-container {
@@ -157,6 +172,16 @@ $error_records_label_color: #a40403;
 
               &.pointer {
                 cursor: pointer;
+              }
+
+              .legend-item-checkbox {
+                font-size: 20px;
+                width: 17px;
+                margin-right: 5px;
+
+                &.fa-check-square {
+                  color: $legend-checkbox-bg-color;
+                }
               }
 
               .rv-discrete-color-legend-item__title {
