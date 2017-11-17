@@ -21,9 +21,9 @@ $loading_bar_color: white;
 $rule-book-metadata-color: #999999;
 $header-bg-color: #f5f5f5;
 $rule-book-create-fields-required-color: $cdap-red-text;
+$rule-book-name-header-height: 100px;
 
 .rule-book-details {
-  padding: $tab_header_height;
   height: 100%;
 
   &.empty {
@@ -98,6 +98,13 @@ $rule-book-create-fields-required-color: $cdap-red-text;
       margin-top: -10px;
     }
   }
+
+  .rule-book-content {
+    height: calc(100% - #{$rule-book-name-header-height});
+    overflow-y: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
 }
 
 .rule-book-create {
@@ -145,9 +152,8 @@ $rule-book-create-fields-required-color: $cdap-red-text;
 }
 
 .rule-book-name-header {
-  height: 100px;
+  height: $rule-book-name-header-height;
   background-color: $header-bg-color;
-  margin: -40px -40px 0 -40px;
   padding: 40px 40px 0 40px;
   display: flex;
   justify-content: space-between;
