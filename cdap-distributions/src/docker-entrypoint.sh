@@ -28,8 +28,8 @@ fi
 # Drop root privileges if we are running cdap script
 # allow the container to be started with `--user`
 if [ "${1}" = 'cdap' -a "$(id -u)" = '0' ]; then
-  # Change the ownership of /opt/cdap/sdk to cdap
-  chown -R cdap:cdap /opt/cdap/sdk
+  # Change the ownership of /opt/cdap/sandbox to cdap
+  chown -R cdap:cdap /opt/cdap/sandbox
   set -- gosu cdap "$@"
 fi
 
