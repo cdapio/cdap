@@ -842,7 +842,7 @@ public class SparkClassRewriter implements ClassRewriter {
   @Nullable
   private byte[] rewriteSparkNetworkClass(InputStream byteCodeStream) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
-    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
     // Scan for class type and methods to see if the rewriting is needed
     final AtomicBoolean rewritten = new AtomicBoolean(false);
