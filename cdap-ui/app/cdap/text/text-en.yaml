@@ -221,6 +221,10 @@ features:
   ConfirmationModal:
     cancelDefaultText: Cancel
     confirmDefaultText: OK
+  CopyableID:
+    label: RunID
+    copiedLabel: Copied
+    notAvailable: ID Not Available
   EntityListView:
     Cards:
       type: "Type: "
@@ -1298,9 +1302,6 @@ features:
   Pagination:
     dropdown-label: Page
   PipelineSummary:
-    CopyableRunID:
-      label: RunID
-      copiedLabel: Copied
     filterContainer:
       view: View
     graphs:

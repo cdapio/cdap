@@ -17,7 +17,7 @@
 $tooltip_text_color: white;
 $tooltip_bg_color: #000000;
 
-.tooltip.run-id-tooltip-element {
+.tooltip.copyable-id-tooltip-element {
   .tooltip-inner {
     background-color: $tooltip_bg_color;
     color: $tooltip_text_color;
@@ -43,7 +43,7 @@ $tooltip_bg_color: #000000;
       border-style: solid;
     }
   }
-  &.run-id-tooltip-target-attached-right {
+  &.copyable-id-tooltip-target-attached-right {
     .tooltip-inner {
       &:before {
         bottom: 0;

@@ -1,0 +1,71 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import "../../styles/variables.scss";
+
+.sortable-sticky-grid {
+  margin-top: 15px;
+  .table {
+    margin-bottom: 0;
+  }
+  .grid-header {
+    display: flex;
+    border-bottom: 1px solid $grey-05;
+    padding-bottom: 5px;
+    font-weight: bold;
+    .grid-header-item {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      > span {
+        width: 100%;
+        display: inline-block;
+        > span {
+          width: 80%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: inline-block;
+          vertical-align: top;
+        }
+      }
+      .fa-caret-down {
+        margin-left: 5px;
+      }
+    }
+  }
+  .grid-body-item,
+  .grid-header-item {
+    padding: 0 0 0 0.5rem;
+  }
+  .grid-body-row {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .grid-body {
+    .grid-body-row {
+      border-bottom: 1px solid $grey-05;
+      .grid-body-item {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        display: inline;
+        padding: 0.7rem 0 0.7rem 0.5rem;
+      }
+    }
+  }
+}

@@ -14,24 +14,22 @@
  * the License.
 */
 
-import PropTypes from 'prop-types';
-import React from 'react';
-import classnames from 'classnames';
+.pie-chart-with-legends {
+  > div {
+    &.pie-chart-legends {
+      > div {
+        margin: 10px 0;
+        line-height: 1;
 
-require('./TopPanel.scss');
-
-export default function TopPanel({message, children, className}) {
-  return (
-    <div className={classnames("experiments-toppanel", className)}>
-      {
-        children ? children : <h4>{message}</h4>
+        .pie-legend-color {
+          width: 15px;
+          height: 15px;
+          display: inline-block;
+          margin: 0px 10px;
+          vertical-align: top;
+          border-radius: 50%;
+        }
       }
-    </div>
-  );
+    }
+  }
 }
-
-TopPanel.propTypes = {
-  message: PropTypes.string,
-  children: PropTypes.node,
-  className: PropTypes.string
-};

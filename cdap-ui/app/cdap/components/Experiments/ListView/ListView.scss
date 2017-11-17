@@ -59,9 +59,21 @@ $listview-padding: 20px;
     &:first-child {
       margin-bottom: 0;
     }
+    tbody > tr > a {
+      display: table;
+      width: 100%;
+      text-decoration: none;
+      color: inherit;
+      outline: none;
+
+      &:hover {
+        background-color: $grey-06;
+      }
+    }
     th,
     td {
       width: 20%;
+      vertical-align: middle;
     }
     td {
       small {

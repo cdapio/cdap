@@ -31,7 +31,7 @@ import {
   getYAxisProps
 } from 'components/PipelineSummary/RunsGraphHelpers';
 import {humanReadableDuration} from 'services/helpers';
-import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import CopyableID from 'components/CopyableID';
 import SortableStickyTable from 'components/SortableStickyTable';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
@@ -317,8 +317,8 @@ export default class RunsHistoryGraph extends Component {
                 <tr>
                   <td>
                     <span>{runsLength - run.index + 1}</span>
-                    <CopyableRunID
-                      runid={run.runid}
+                    <CopyableID
+                      id={run.runid}
                       idprefix="runs-history"
                     />
                   </td>

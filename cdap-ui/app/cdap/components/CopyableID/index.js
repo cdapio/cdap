@@ -22,34 +22,42 @@ import Clipboard from 'clipboard';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
-require('./CopyableRunID.scss');
+require('./CopyableID.scss');
 
-const PREFIX = `features.PipelineSummary.CopyableRunID`;
+const PREFIX = `features.CopyableID`;
 
-export default class CopyableRunID extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showTooltip: false
-    };
-  }
+export default class CopyableID extends Component {
+  static propTypes = {
+    id: PropTypes.string.isRequired,
+    idprefix: PropTypes.string,
+    label: PropTypes.string
+  };
+
+  static defaultProps = {
+    label: T.translate(`${PREFIX}.label`)
+  };
+
+  state = {
+    showTooltip: false
+  };
+
   onIDClickHandler() {
     this.setState({
       showTooltip: !this.state.showTooltip
     });
   }
   render() {
-    let runidlabel = `A-${this.props.runid}`;
+    let idlabel = `A-${this.props.id}`;
     if (this.props.idprefix) {
-      runidlabel = `${this.props.idprefix}-${this.props.runid}`;
+      idlabel = `${this.props.idprefix}-${this.props.id}`;
     }
     // FIXME: Not sure how else to do this. Looks adhoc. Need this for copy to clipboard.
-    new Clipboard(`#${runidlabel}`);
+    new Clipboard(`#${idlabel}`);
     let tetherConfig = {
-      classPrefix: 'run-id-tooltip'
+      classPrefix: 'copyable-id-tooltip'
     };
     let tooltipProps = {
-      target: runidlabel,
+      target: idlabel,
       placement: 'right',
       tether: tetherConfig,
       delay: 0
@@ -60,18 +68,18 @@ export default class CopyableRunID extends Component {
     return (
       <span
         className="btn-link"
-        id={runidlabel}
-        onClick={this.onIDClickHandler.bind(this, this.props.runid)}
+        id={idlabel}
+        onClick={this.onIDClickHandler.bind(this, this.props.id)}
         onMouseOut={() => {
           this.state.showTooltip ? this.onIDClickHandler() : null;
         }}
-        data-clipboard-text={this.props.runid}
+        data-clipboard-text={this.props.id}
       >
-        <span>{T.translate(`${PREFIX}.label`)}</span>
+        <span>{this.props.label}</span>
         <UncontrolledTooltip
           {...tooltipProps}
         >
-          <span>{this.props.runid}</span>
+          <span>{this.props.id || T.translate(`${PREFIX}.notAvailable`)}</span>
           {
             this.state.showTooltip ?
               <span className="copied-label text-success">
@@ -86,7 +94,3 @@ export default class CopyableRunID extends Component {
     );
   }
 }
-CopyableRunID.propTypes = {
-  runid: PropTypes.string.isRequired,
-  idprefix: PropTypes.string
-};

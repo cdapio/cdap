@@ -98,6 +98,7 @@ const renderTableBody = (entities) => {
       algorithmTypes: getAlgoDistribution(models)
     };
   });
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
   return (
     <table className="table">
       <tbody>
@@ -105,16 +106,18 @@ const renderTableBody = (entities) => {
           list.map(entity => {
             return (
               <tr>
-                <td>
-                  <h5>
-                    <div>{entity.name}</div>
-                    <small>{entity.description}</small>
-                  </h5>
-                </td>
-                <td>{entity.numOfModels}</td>
-                <td>{entity.numOfDeployedModels}</td>
-                <td>{!entity.algorithmTypes ? null : <PieChart data={entity.algorithmTypes} />}</td>
-                <td>{entity.testData}</td>
+                <Link to={`/ns/${namespace}/experiments/${entity.name}`}>
+                  <td>
+                    <h5>
+                      <div>{entity.name}</div>
+                      <small>{entity.description}</small>
+                    </h5>
+                  </td>
+                  <td>{entity.numOfModels}</td>
+                  <td>{entity.numOfDeployedModels}</td>
+                  <td>{!entity.algorithmTypes ? null : <PieChart data={entity.algorithmTypes} />}</td>
+                  <td>{entity.testData}</td>
+                </Link>
               </tr>
             );
           })

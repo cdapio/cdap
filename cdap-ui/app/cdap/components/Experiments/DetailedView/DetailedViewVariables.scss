@@ -14,24 +14,5 @@
  * the License.
 */
 
-import PropTypes from 'prop-types';
-import React from 'react';
-import classnames from 'classnames';
-
-require('./TopPanel.scss');
-
-export default function TopPanel({message, children, className}) {
-  return (
-    <div className={classnames("experiments-toppanel", className)}>
-      {
-        children ? children : <h4>{message}</h4>
-      }
-    </div>
-  );
-}
-
-TopPanel.propTypes = {
-  message: PropTypes.string,
-  children: PropTypes.node,
-  className: PropTypes.string
-};
+$visualization-width: 450px;
+$toppanel-height: 200px;
