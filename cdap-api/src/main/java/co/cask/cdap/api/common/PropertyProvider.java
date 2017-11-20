@@ -16,6 +16,7 @@
 package co.cask.cdap.api.common;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents classes that provides properties.
@@ -32,5 +33,6 @@ public interface PropertyProvider {
    * @param key for getting specific property value.
    * @return The value associated with the key or {@code null} if not such key exists.
    */
+  @Nullable
   String getProperty(String key);
 }

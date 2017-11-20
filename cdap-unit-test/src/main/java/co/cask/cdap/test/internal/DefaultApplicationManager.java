@@ -84,8 +84,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public SparkManager getSparkManager(String jobName) {
-    Id.Program programId = Id.Program.from(application.toId(), ProgramType.SPARK, jobName);
-    return new DefaultSparkManager(programId, this);
+    return new DefaultSparkManager(application.spark(jobName), this, discoveryServiceClient);
   }
 
   @Override

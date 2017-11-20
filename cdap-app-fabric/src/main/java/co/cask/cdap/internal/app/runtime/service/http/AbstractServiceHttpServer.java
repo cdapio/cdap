@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.app.program.Program;
@@ -64,19 +65,21 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
   private final ServiceAnnouncer serviceAnnouncer;
   private final List<AbstractDelegatorContext<T>> delegatorContexts;
   private final int instanceId;
+  private final TransactionControl defaultTxControl;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public AbstractServiceHttpServer(String host, Program program, ProgramOptions programOptions,
-                                   int instanceId, ServiceAnnouncer serviceAnnouncer) {
+  public AbstractServiceHttpServer(String host, Program program, ProgramOptions programOptions, int instanceId,
+                                   ServiceAnnouncer serviceAnnouncer, TransactionControl defaultTxControl) {
     this.host = host;
     this.program = program;
     this.programOptions = programOptions;
     this.serviceAnnouncer = serviceAnnouncer;
     this.delegatorContexts = new ArrayList<>();
     this.instanceId = instanceId;
+    this.defaultTxControl = defaultTxControl;
   }
 
   protected Program getProgram() {
@@ -116,8 +119,8 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
                                                program.getName());
 
     // Create HttpHandlers which delegate to the HttpServiceHandlers
-    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix);
-    HttpHandlerFactory versionedFactory = new HttpHandlerFactory(versionedPathPrefix);
+    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, defaultTxControl);
+    HttpHandlerFactory versionedFactory = new HttpHandlerFactory(versionedPathPrefix, defaultTxControl);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (AbstractDelegatorContext<T> context : delegatorContexts) {

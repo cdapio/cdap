@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractPluginConfigurable<T extends PluginConfigurer>
   extends AbstractProgramDatasetConfigurable {
 
+  @Override
   protected abstract T getConfigurer();
 
   @Nullable

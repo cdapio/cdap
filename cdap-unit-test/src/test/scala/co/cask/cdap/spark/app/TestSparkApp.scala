@@ -17,6 +17,8 @@
 package co.cask.cdap.spark.app
 
 
+import co.cask.cdap.api.Config
+import co.cask.cdap.api.ProgramStatus
 import co.cask.cdap.api.annotation.Property
 import co.cask.cdap.api.annotation.UseDataSet
 import co.cask.cdap.api.app.AbstractApplication
@@ -28,8 +30,6 @@ import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.AbstractWorkflow
-import co.cask.cdap.api.Config
-import co.cask.cdap.api.ProgramStatus
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._
@@ -72,6 +72,8 @@ class TestSparkApp extends AbstractApplication[Config] {
     addSpark(new KafkaSparkStreaming)
 
     addSpark(new ScalaDynamicSpark)
+
+    addSpark(new SparkServiceProgram)
 
     addSpark(new ForkSpark("ForkSpark1"))
     addSpark(new ForkSpark("ForkSpark2"))

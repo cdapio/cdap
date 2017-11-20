@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -26,6 +27,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -52,6 +54,8 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     serializeResources(jsonObj, "driver", context, src.getDriverResources());
     serializeResources(jsonObj, "executor", context, src.getExecutorResources());
 
+    jsonObj.add("handlers", serializeList(src.getHandlers(), context, SparkHttpServiceHandlerSpecification.class));
+
     return jsonObj;
   }
 
@@ -71,8 +75,11 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
-    return new SparkSpecification(className, name, description, mainClassName,
-                                  datasets, properties, clientResources, driverResources, executorResources);
+    List<SparkHttpServiceHandlerSpecification> handlers = deserializeList(jsonObj.get("handlers"), context,
+                                                                          SparkHttpServiceHandlerSpecification.class);
+
+    return new SparkSpecification(className, name, description, mainClassName, datasets,
+                                  properties, clientResources, driverResources, executorResources, handlers);
   }
 
   /**

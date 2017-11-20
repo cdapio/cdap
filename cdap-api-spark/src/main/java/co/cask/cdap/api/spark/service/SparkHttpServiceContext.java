@@ -14,17 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package co.cask.cdap.api.spark.service;
 
-import org.apache.spark.sql.SparkSession;
+import co.cask.cdap.api.spark.SparkExecutionContext;
+import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaSparkContext;
 
 /**
- * Context interface for providing access to {@link SparkSession} and CDAP functionality.
+ * Context interface for providing access to {@link SparkContext} and CDAP functionality.
  */
-public interface SparkHttpServiceContext extends SparkHttpServiceContextBase {
+public interface SparkHttpServiceContext extends SparkExecutionContext {
 
   /**
-   * Returns the {@link SparkSession} created in the Spark driver.
+   * Returns the {@link SparkContext} object created in the Spark driver.
    */
-  SparkSession getSparkSession();
+  SparkContext getSparkContext();
+
+  /**
+   * Returns the {@link JavaSparkContext} wrapper for the {@link SparkContext} object created in the Spark driver.
+   */
+  JavaSparkContext getJavaSparkContext();
 }

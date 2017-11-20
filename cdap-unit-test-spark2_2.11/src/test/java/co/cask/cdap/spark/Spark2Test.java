@@ -38,6 +38,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaCrossNSProgram;
+import co.cask.cdap.spark.app.ScalaSparkServiceProgram;
+import co.cask.cdap.spark.app.Spark2TestApp;
 import co.cask.cdap.spark.app.SparkAppUsingLocalFiles;
 import co.cask.cdap.spark.app.SparkAppUsingObjectStore;
 import co.cask.cdap.test.ApplicationManager;
@@ -47,7 +49,9 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,8 +61,12 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -85,6 +93,24 @@ public class Spark2Test extends TestBaseWithSpark2 {
   public static void init() throws IOException {
     ARTIFACTS.put(SparkAppUsingObjectStore.class, createArtifactJar(SparkAppUsingObjectStore.class));
     ARTIFACTS.put(SparkAppUsingLocalFiles.class, createArtifactJar(SparkAppUsingLocalFiles.class));
+    ARTIFACTS.put(Spark2TestApp.class, createArtifactJar(Spark2TestApp.class));
+  }
+
+  @Test
+  public void testSpark2Service() throws Exception {
+    ApplicationManager applicationManager = deploy(NamespaceId.DEFAULT, Spark2TestApp.class);
+    SparkManager manager = applicationManager.getSparkManager(ScalaSparkServiceProgram.class.getSimpleName()).start();
+
+    URL url = manager.getServiceURL(5, TimeUnit.MINUTES);
+    Assert.assertNotNull(url);
+
+    // GET request to sum n numbers.
+    URL sumURL = url.toURI().resolve("sum?n=" + Joiner.on("&n=").join(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)).toURL();
+    HttpURLConnection urlConn = (HttpURLConnection) sumURL.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, urlConn.getResponseCode());
+    try (InputStream is = urlConn.getInputStream()) {
+      Assert.assertEquals(55, Integer.parseInt(new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8)));
+    }
   }
 
   @Test

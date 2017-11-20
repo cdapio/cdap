@@ -17,8 +17,8 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ProgramId;
@@ -27,28 +27,16 @@ import co.cask.cdap.test.MetricsManager;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ServiceManager}.
  */
 public class DefaultServiceManager extends AbstractProgramManager<ServiceManager> implements ServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
-
-  private final String namespace;
-  private final String applicationId;
-  private final String serviceName;
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final AppFabricClient appFabricClient;
@@ -59,9 +47,6 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager, MetricsManager metricsManager) {
     super(programId, applicationManager);
-    this.namespace = programId.getNamespace();
-    this.applicationId = programId.getApplication();
-    this.serviceName = programId.getProgram();
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
@@ -72,7 +57,8 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
   public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setServiceInstances(namespace, applicationId, serviceName, instances);
+      appFabricClient.setServiceInstances(programId.getNamespace(), programId.getApplication(),
+                                          programId.getProgram(), instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -92,7 +78,8 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
 
   private ServiceInstances getInstances() {
     try {
-      return appFabricClient.getServiceInstances(namespace, applicationId, serviceName);
+      return appFabricClient.getServiceInstances(programId.getNamespace(), programId.getApplication(),
+                                                 programId.getProgram());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -105,32 +92,14 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    String discoveryName = String.format("service.%s.%s.%s", namespace, applicationId, serviceName);
-    ServiceDiscovered discovered = discoveryServiceClient.discover(discoveryName);
-    return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
+    ServiceDiscovered discovered = discoveryServiceClient.discover(ServiceDiscoverable.getName(programId));
+    return ServiceDiscoverable.createServiceBaseURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit),
+                                                    programId);
   }
 
   @Override
   public RuntimeMetrics getMetrics() {
-    return metricsManager.getServiceMetrics(namespace, applicationId, serviceName);
-  }
-
-  @Nullable
-  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceName) {
-    if (discoverable == null) {
-      return null;
-    }
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    String path = String.format("%s%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/", scheme,
-                                address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, namespace, applicationId, serviceName);
-    try {
-      return new URL(path);
-    } catch (MalformedURLException e) {
-      LOG.error("Got exception while creating serviceURL", e);
-      return null;
-    }
+    return metricsManager.getServiceMetrics(programId.getNamespace(), programId.getApplication(),
+                                            programId.getProgram());
   }
 }

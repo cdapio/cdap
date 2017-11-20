@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.NettyHttpService;
 import com.google.common.reflect.TypeToken;
@@ -80,7 +81,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            SecureStore secureStore, SecureStoreManager secureStoreManager,
                            MessagingService messagingService,
                            DefaultArtifactManager defaultArtifactManager) {
-    super(host, program, programOptions, instanceId, serviceAnnouncer);
+    super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
     this.serviceSpecification = spec;
@@ -114,7 +115,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
 
   @Override
   protected String getRoutingPathName() {
-    return "services";
+    return ProgramType.SERVICE.getCategoryName();
   }
 
   @Override

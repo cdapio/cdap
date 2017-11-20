@@ -314,7 +314,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHeaders() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", TransactionControl.IMPLICIT);
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
@@ -366,7 +366,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testContentConsumer() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/content");
+    HttpHandlerFactory factory = new HttpHandlerFactory("/content", TransactionControl.IMPLICIT);
 
     // Create the file upload handler and starts a netty server with it
     final File outputDir = TEMP_FOLDER.newFolder();
@@ -433,7 +433,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testContentProducer() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/content");
+    HttpHandlerFactory factory = new HttpHandlerFactory("/content", TransactionControl.IMPLICIT);
 
     // Create the file upload handler and starts a netty server with it
     final File outputDir = TEMP_FOLDER.newFolder();
@@ -515,7 +515,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", TransactionControl.IMPLICIT);
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {

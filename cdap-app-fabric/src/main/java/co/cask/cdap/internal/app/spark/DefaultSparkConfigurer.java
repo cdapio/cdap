@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.spark;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
+import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -29,8 +30,10 @@ import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,6 +103,13 @@ public class DefaultSparkConfigurer extends DefaultPluginConfigurer implements S
                       new DataSetFieldExtractor(datasets));
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, datasets, properties,
-                                  clientResources, driverResources, executorResources);
+                                  clientResources, driverResources, executorResources, getHandlers());
+  }
+
+  /**
+   * Returns a list of {@link SparkHttpServiceHandlerSpecification} to be included.
+   */
+  protected List<SparkHttpServiceHandlerSpecification> getHandlers() {
+    return Collections.emptyList();
   }
 }
