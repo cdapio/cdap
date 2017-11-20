@@ -16,7 +16,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
@@ -46,17 +46,17 @@ export default class MicroserviceUploadWizard extends Component {
   componentWillMount() {
     return MicroserviceUploadActionCreator
       .findMicroserviceArtifact()
-      .flatMap((artifact) => {
+      .mergeMap((artifact) => {
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setMicroserviceArtifact,
           payload: { artifact }
         });
         if (isEmpty(artifact)) {
-          return Rx.Observable.of([]);
+          return Observable.of([]);
         }
         return MicroserviceUploadActionCreator.listMicroservicePlugins(artifact);
       })
-      .flatMap((plugins) => {
+      .mergeMap((plugins) => {
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setDefaultMicroservicePlugins,
           payload: { plugins }
@@ -91,13 +91,13 @@ export default class MicroserviceUploadWizard extends Component {
   onSubmit() {
     return MicroserviceUploadActionCreator
       .uploadArtifact()
-      .flatMap(() => {
+      .mergeMap(() => {
         return MicroserviceUploadActionCreator.uploadConfigurationJson();
       })
-      .flatMap(() => {
+      .mergeMap(() => {
         return MicroserviceUploadActionCreator.createApplication();
       })
-      .flatMap((res) => {
+      .mergeMap((res) => {
         this.buildSuccessInfo();
         this.eventEmitter.emit(globalEvents.APPUPLOAD);
         return res;

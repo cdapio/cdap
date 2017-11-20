@@ -48,7 +48,7 @@ export default class ExploreModal extends Component {
   }
   componentWillUnmount() {
     this._mounted = false;
-    this.subscriptions.map(subscriber => subscriber.dispose());
+    this.subscriptions.map(subscriber => subscriber.unsubscribe());
   }
   componentWillReceiveProps(nextProps) {
     let {databaseName:existingDatabaseName, tableName:existingTableName} = this.props.entity;
@@ -112,7 +112,7 @@ export default class ExploreModal extends Component {
     });
     let queriesSubscription$ = myExploreApi
       .submitQuery({namespace}, {query: this.state.queryString})
-      .flatMap((res) => {
+      .mergeMap((res) => {
         this.sessionQueryHandles.push(res.handle);
         return myExploreApi.fetchQueries({namespace});
       })
@@ -180,7 +180,7 @@ export default class ExploreModal extends Component {
     }
     let previewSubscription$ = myExploreApi
       .getQuerySchema({queryHandle})
-      .flatMap(res => {
+      .mergeMap(res => {
         queries = insertAt(queries, matchIndex, {
           schema: res.map(s => {
             if (s.name.indexOf('.') !== -1) {

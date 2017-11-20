@@ -61,7 +61,7 @@ export default class ArtifactMetrics extends Component {
       });
   }
   componentWillUnmount() {
-    this.unsub.dispose();
+    this.unsub.unsubscribe();
   }
 
   render () {

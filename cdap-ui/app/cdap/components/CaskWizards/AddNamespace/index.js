@@ -24,7 +24,7 @@ import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardC
 import NamespaceStore from 'services/NamespaceStore';
 import { PublishNamespace, PublishPreferences } from 'services/WizardStores/AddNamespace/ActionCreator';
 import T from 'i18n-react';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
@@ -41,10 +41,10 @@ export default class AddNamespaceWizard extends Component {
   }
   createNamespace() {
     return PublishNamespace()
-      .flatMap(
+      .mergeMap(
         (res) => {
           if (res.includes('already exists')) {
-            return Rx.Observable.throw(res);
+            return Observable.throw(res);
           } else {
             this.buildSuccessInfo(res);
             return PublishPreferences();

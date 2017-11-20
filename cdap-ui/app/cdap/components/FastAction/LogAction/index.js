@@ -56,7 +56,7 @@ export default class LogAction extends Component {
 
   componentWillUnmount() {
     if (this.pollRuns$) {
-      this.pollRuns$.dispose();
+      this.pollRuns$.unsubscribe();
     }
   }
 

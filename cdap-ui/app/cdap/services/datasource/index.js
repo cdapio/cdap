@@ -16,7 +16,19 @@
 
 import Socket from '../socket';
 import uuid from 'uuid/v4';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
+import {Subject} from 'rxjs/Subject';
+import 'rxjs/add/observable/combineLatest';
+import 'rxjs/add/observable/throw';
+import 'rxjs/add/observable/of';
+import 'rxjs/add/observable/fromEvent';
+import 'rxjs/add/observable/merge';
+import 'rxjs/add/observable/interval';
+import 'rxjs/add/observable/fromPromise';
+import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/combineLatest';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/map';
 
 export default class Datasource {
   constructor(genericResponseHandlers = [() => true]) {
@@ -31,19 +43,19 @@ export default class Datasource {
         genericResponseHandlers.forEach(handler => handler(data));
 
         if (data.statusCode > 299 || data.warning) {
-          this.bindings[hash].rx.onError({
+          this.bindings[hash].rx.error({
             statusCode: data.statusCode,
             response: data.response || data.body || data.error
           });
         } else {
-          this.bindings[hash].rx.onNext(data.response);
+          this.bindings[hash].rx.next(data.response);
         }
 
         // Adding check if bindings[hash] exist because if a Poll that gets cancelled
         // within 1 tick, the bindings[hash] will already be deleted
         if (this.bindings[hash] && this.bindings[hash].type === 'REQUEST') {
-          this.bindings[hash].rx.onCompleted();
-          this.bindings[hash].rx.dispose();
+          this.bindings[hash].rx.complete();
+          this.bindings[hash].rx.unsubscribe();
           delete this.bindings[hash];
         }
       }
@@ -76,7 +88,7 @@ export default class Datasource {
 
     generatedResource.url = this.buildUrl(resource.url, resource.params);
 
-    let subject = new Rx.Subject();
+    let subject = new Subject();
 
     this.bindings[generatedResource.id] = {
       rx: subject,
@@ -117,21 +129,21 @@ export default class Datasource {
 
     generatedResource.url = this.buildUrl(resource.url, resource.params);
 
-    let subject = new Rx.Subject();
+    let subject = new Subject();
 
-    let observable = Rx.Observable.create((obs) => {
+    let observable = Observable.create((obs) => {
       subject.subscribe(
         (data) => {
-          obs.onNext(data);
+          obs.next(data);
         },
         (err) => {
-          obs.onError(err);
+          obs.error(err);
         }
       );
 
       return () => {
         this.stopPoll(generatedResource.id);
-        subject.dispose();
+        subject.unsubscribe();
       };
     });
 
@@ -164,13 +176,13 @@ export default class Datasource {
         resource: this.bindings[id].resource
       });
 
-      this.bindings[id].rx.dispose();
+      this.bindings[id].rx.unsubscribe();
       delete this.bindings[id];
     }
   }
 
   destroy() {
-    this.socketSubscription.dispose();
+    this.socketSubscription.unsubscribe();
 
     // stopping existing polls
     for (let key in this.bindings) {

@@ -193,7 +193,7 @@ function createExperimentAndModel() {
     .combineLatest(
       MyDataPrepApi.getSchema({ namespace, workspaceId}, requestBody)
     )
-    .flatMap((res) => {
+    .mergeMap((res) => {
       let tempSchema = {
         name: 'avroSchema',
         type: 'record',
@@ -208,7 +208,7 @@ function createExperimentAndModel() {
       };
       return myExperimentsApi.createSplit({namespace, experimentId: experiments_create.name}, splitInfo);
     })
-    .flatMap(({id: split}) => createModel(experiment, {...model, split}))
+    .mergeMap(({id: split}) => createModel(experiment, {...model, split}))
     .subscribe(() => {
       let {selectedNamespace: namespace} = NamespaceStore.getState();
       window.location.href = `${window.location.origin}/cdap/ns/${namespace}/experiments/${experiment.name}`;

@@ -61,7 +61,7 @@ export default class UploadDataWizard extends Component {
     }
     return MyStreamApi
       .list({namespace: currentNamespace})
-      .flatMap((streamsList) => {
+      .mergeMap((streamsList) => {
         let matchingStream = streamsList
           .map(stream => stream.name)
           .find(stream => stream === streamId);
@@ -71,14 +71,14 @@ export default class UploadDataWizard extends Component {
               namespace: currentNamespace,
               streamId
             })
-            .flatMap(() => {
+            .mergeMap(() => {
               this.eventEmitter.emit(globalEvents.STREAMCREATE);
               return Promise.resolve();
             });
         }
         return Promise.resolve();
       })
-      .flatMap(() => {
+      .mergeMap(() => {
         return UploadDataActionCreator.uploadData({
           url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
           fileContents,

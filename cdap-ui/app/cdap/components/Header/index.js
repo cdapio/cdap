@@ -76,7 +76,7 @@ export default class Header extends Component {
   componentWillUnmount() {
     this.nsSubscription();
     if (this.namespacesubscription) {
-      this.namespacesubscription.dispose();
+      this.namespacesubscription.unsubscribe();
     }
   }
   toggleNavbar() {

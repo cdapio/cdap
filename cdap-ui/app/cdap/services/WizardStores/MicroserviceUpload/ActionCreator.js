@@ -16,7 +16,7 @@
 
 import UploadFile from 'services/upload-file';
 import cookie from 'react-cookie';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import NamespaceStore from 'services/NamespaceStore';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
 import {defaultQueueTypes} from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueStore';
@@ -30,7 +30,7 @@ import isEmpty from 'lodash/isEmpty';
 const uploadArtifact = () => {
   const state = MicroserviceUploadStore.getState();
   if (!state.general.showNewMicroserviceTextbox) {
-    return Rx.Observable.of([]);
+    return Observable.of([]);
   }
 
   let {name, version} = state.uploadjar.fileMetadataObj;
@@ -53,7 +53,7 @@ const uploadArtifact = () => {
 const uploadConfigurationJson = () => {
   const state = MicroserviceUploadStore.getState();
   if (!state.general.showNewMicroserviceTextbox) {
-    return Rx.Observable.of([]);
+    return Observable.of([]);
   }
 
   let {name: artifactId, version} = state.uploadjar.fileMetadataObj;
@@ -72,13 +72,13 @@ const findMicroserviceArtifact = () => {
 
   return MyArtifactApi
     .list({ namespace })
-    .flatMap((artifacts) => {
+    .mergeMap((artifacts) => {
       let microserviceArtifacts = artifacts.filter((artifact) => {
         return artifact.name === 'microservice-core';
       });
 
       if (microserviceArtifacts.length === 0) {
-        return Rx.Observable.of({});
+        return Observable.of({});
       }
 
       let highestVersion = findHighestVersion(microserviceArtifacts.map((artifact) => {
@@ -97,13 +97,13 @@ const findMicroserviceArtifact = () => {
         returnArtifact.scope = 'USER';
       }
 
-      return Rx.Observable.of(returnArtifact);
+      return Observable.of(returnArtifact);
     });
 };
 
 const listMicroservicePlugins = (artifact) => {
   if (isEmpty(artifact)) {
-    return Rx.Observable.of([]);
+    return Observable.of([]);
   }
   let namespace = NamespaceStore.getState().selectedNamespace;
   let {name: artifactId, version, scope} = artifact;

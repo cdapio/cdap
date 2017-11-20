@@ -98,7 +98,7 @@ export default class SetPreferenceModal extends Component {
     if (this.subscription) {
       this.subscription();
     }
-    this.apiSubscriptions.forEach(apiSubscription => apiSubscription.dispose());
+    this.apiSubscriptions.forEach(apiSubscription => apiSubscription.unsubscribe());
   }
 
   onKeyValueChange(keyValues) {

@@ -14,7 +14,7 @@
  * the License.
 */
 
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 const MyArtifactApi = {
   __artifactDetail: {},
@@ -30,16 +30,16 @@ function setArtifactDetail(__artifactDetail) {
 }
 
 MyArtifactApi.get = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.__artifactDetail);
+    subject.next(this.__artifactDetail);
   });
   return subject;
 };
 MyArtifactApi.listExtensions = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.__extensions);
+    subject.next(this.__extensions);
   });
   return subject;
 };

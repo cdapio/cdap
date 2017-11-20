@@ -22,7 +22,7 @@ import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDep
 import NamespaceStore from 'services/NamespaceStore';
 import {constructCdapUrl} from 'services/cdap-url-builder';
 import 'whatwg-fetch';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import cookie from 'react-cookie';
 import T from 'i18n-react';
@@ -110,7 +110,7 @@ export default class OneStepDeployApp extends Component {
 
     let fetchUrl = `/forwardMarketToCdap?source=${marketPath}&target=${cdapPath}`;
 
-    return Rx.Observable.create((observer) => {
+    return Observable.create((observer) => {
       fetch(fetchUrl, {
         method: 'GET',
         headers,
@@ -120,7 +120,7 @@ export default class OneStepDeployApp extends Component {
           if (res.status > 299) {
             res.text()
               .then((err) => {
-                observer.onError(err);
+                observer.error(err);
               });
           } else {
             // need to do this, because app name is returned in the response text
@@ -132,13 +132,13 @@ export default class OneStepDeployApp extends Component {
                   successInfo = this.props.buildSuccessInfo();
                 }
                 this.eventEmitter.emit(globalEvents.APPUPLOAD);
-                observer.onNext(successInfo);
-                observer.onCompleted();
+                observer.next(successInfo);
+                observer.complete();
               });
           }
         })
         .catch((err) => {
-          observer.onError(err);
+          observer.error(err);
         });
     });
   }

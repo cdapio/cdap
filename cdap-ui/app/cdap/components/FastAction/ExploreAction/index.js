@@ -113,7 +113,7 @@ export default class ExploreAction extends Component {
   componentWillUnmount() {
     this.subscription();
     if (this.explroeQueriesSubscription$) {
-      this.explroeQueriesSubscription$.dispose();
+      this.explroeQueriesSubscription$.unsubscribe();
     }
   }
   render() {

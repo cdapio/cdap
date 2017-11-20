@@ -22,7 +22,7 @@ import FileDataUpload from 'components/FileDataUpload';
 import classnames from 'classnames';
 import {MyStreamApi} from 'api/stream';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
@@ -83,7 +83,7 @@ export default class SendEventModal extends Component {
       this.setState({
         loading: true
       });
-      let mergedOb = Rx.Observable.merge.apply(null, subscriptions);
+      let mergedOb = Observable.merge.apply(null, subscriptions);
       mergedOb.subscribe(
         () => {
           this.setState(Object.assign({}, this.getDefaultState(), {

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 const MyDatasetApi = {
   __list: [],
   __programs: [],
@@ -22,13 +22,13 @@ const MyDatasetApi = {
 
 MyDatasetApi.generalGetter = function(property) {
   return function() {
-    let subject = new Rx.Subject();
+    let subject = new Subject();
     setTimeout(() => {
       if (this.__isError) {
-        subject.onError(this[property]);
+        subject.error(this[property]);
         return;
       }
-      subject.onNext(this[property]);
+      subject.next(this[property]);
     });
     return subject;
   }.bind(this);

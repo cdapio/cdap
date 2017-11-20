@@ -18,7 +18,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
@@ -61,10 +61,10 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
   let requestBody = directiveRequestBodyCreator(updatedDirectives);
   requestBody.properties = properties;
 
-  return Rx.Observable.create((observer) => {
+  return Observable.create((observer) => {
     MyDataPrepApi.execute(params, requestBody)
       .subscribe((res) => {
-        observer.onNext(res);
+        observer.next(res);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setDirectives,
@@ -78,7 +78,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
 
         fetchColumnsInformation(params, requestBody, res.header);
       }, (err) => {
-        observer.onError(err);
+        observer.error(err);
         DataPrepStore.dispatch({
           type: DataPrepActions.disableLoading
         });
@@ -111,7 +111,7 @@ function setWorkspaceRetry(params, observer, workspaceId) {
 
       MyDataPrepApi.execute(params, requestBody)
         .subscribe((response) => {
-          observer.onNext(response);
+          observer.next(response);
 
           DataPrepStore.dispatch({
             type: DataPrepActions.setWorkspace,
@@ -135,7 +135,7 @@ function setWorkspaceRetry(params, observer, workspaceId) {
             workspaceRetries += 1;
             setWorkspaceRetry(params, observer, workspaceId);
           } else {
-            observer.onNext(err);
+            observer.next(err);
             DataPrepStore.dispatch({
               type: DataPrepActions.disableLoading
             });
@@ -159,7 +159,7 @@ function setWorkspaceRetry(params, observer, workspaceId) {
             errorMessage: true
           }
         });
-        observer.onError(err);
+        observer.error(err);
       }
     });
 }
@@ -206,7 +206,7 @@ export function setWorkspace(workspaceId) {
 
   workspaceRetries = 0;
 
-  return Rx.Observable.create((observer) => {
+  return Observable.create((observer) => {
     setWorkspaceRetry(params, observer, workspaceId);
   });
 }

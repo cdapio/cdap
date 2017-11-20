@@ -76,7 +76,7 @@ export default class MarketHydratorPluginUpload extends Component {
     this.buildSuccessInfo();
     return ArtifactUploadActionCreator
       .uploadArtifact()
-      .flatMap(() => {
+      .mergeMap(() => {
         this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
         return ArtifactUploadActionCreator.uploadConfigurationJson();
       });

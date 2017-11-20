@@ -128,7 +128,7 @@ export default class PublishPipelineWizard extends Component {
     if (this.props.input.action.type === 'create_pipeline_draft') {
       return MyUserStoreApi
         .get()
-        .flatMap((res) => {
+        .mergeMap((res) => {
           draftId = shortid.generate();
           draftConfig.__ui__.draftId = draftId;
           res = res || {};

@@ -20,9 +20,10 @@ import React, { Component } from 'react';
 import {Popover, PopoverContent} from 'reactstrap';
 import {isDescendant} from 'services/helpers';
 import Mousetrap from 'mousetrap';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import classnames from 'classnames';
 import shortid from 'shortid';
+
 export default class UncontrolledPopover extends Component {
   constructor(props) {
     super(props);
@@ -34,7 +35,7 @@ export default class UncontrolledPopover extends Component {
   }
   componentWillUnmount() {
     if (this.documentClick$) {
-      this.documentClick$.dispose();
+      this.documentClick$.unsubscribe();
     }
   }
   togglePopover() {
@@ -44,7 +45,7 @@ export default class UncontrolledPopover extends Component {
     });
 
     if (this.props.documentElement && newState) {
-      this.documentClick$ = Rx.Observable.fromEvent(this.props.documentElement, 'click')
+      this.documentClick$ = Observable.fromEvent(this.props.documentElement, 'click')
       .subscribe((e) => {
         if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
           return;
@@ -55,7 +56,7 @@ export default class UncontrolledPopover extends Component {
       Mousetrap.bind('esc', this.togglePopover);
     } else {
       if (this.documentClick$) {
-        this.documentClick$.dispose();
+        this.documentClick$.unsubscribe();
       }
       Mousetrap.unbind('esc');
     }

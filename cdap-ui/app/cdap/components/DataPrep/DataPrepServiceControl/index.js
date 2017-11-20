@@ -42,8 +42,8 @@ export default class DataPrepServiceControl extends Component {
   }
 
   componentWillUnmount() {
-    if (this.servicePoll && this.servicePoll.dispose) {
-      this.servicePoll.dispose();
+    if (this.servicePoll && this.servicePoll.unsubscribe) {
+      this.servicePoll.unsubscribe();
     }
   }
 

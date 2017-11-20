@@ -18,7 +18,7 @@
   TODO: This is just a stub(mock) for jest to not invoke the actual socket connection.
   This needs to be exported as a singleton class. Will do when we actually need to mock a function.
 */
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 const MyMetadataApi = {
   __metadata: {},
@@ -44,13 +44,13 @@ MyMetadataApi.__setTags = function(tags, isError) {
 
 MyMetadataApi.generalGetter = function(property) {
   return function() {
-    let subject = new Rx.Subject();
+    let subject = new Subject();
     setTimeout(() => {
       if (this.__isError) {
-        subject.onError(this[property]);
+        subject.error(this[property]);
         return;
       }
-      subject.onNext(this[property]);
+      subject.next(this[property]);
     });
     return subject;
   }.bind(this);

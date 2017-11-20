@@ -60,7 +60,7 @@ export default class ProgramMetrics extends Component {
   }
 
   componentWillUnmount() {
-    this.programMetrics$.dispose();
+    this.programMetrics$.unsubscribe();
   }
 
   render () {

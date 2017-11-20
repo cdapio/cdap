@@ -14,7 +14,7 @@
  * the License.
 */
 
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 const MyMarketApi = {
   __eDetail: {}
@@ -30,9 +30,9 @@ function setEntityDetail(entityDetail) {
 }
 
 MyMarketApi.get = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.__eDetail);
+    subject.next(this.__eDetail);
   });
   return subject;
 };

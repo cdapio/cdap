@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import classnames from 'classnames';
 import shortid from 'shortid';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import intersection from 'lodash/intersection';
 
 require('../DataPrepTable/DataPrepTable.scss');
@@ -43,7 +43,7 @@ export default class ColumnTextSelection extends Component {
     this.applyDirective = this.applyDirective.bind(this);
   }
   componentDidMount() {
-    this.documentClick$ = Rx.DOM.fromEvent(document.body, 'click', false)
+    this.documentClick$ = Observable.fromEvent(document.body, 'click', false)
       .subscribe((e) => {
         let matchingClass = intersection(e.target.className.split(' '), this.props.classNamesToExclude.concat([CELLHIGHLIGHTCLASSNAME]));
         if (
@@ -67,7 +67,7 @@ export default class ColumnTextSelection extends Component {
   }
   componentWillUnmount() {
     if (this.documentClick$) {
-      this.documentClick$.dispose();
+      this.documentClick$.unsubscribe();
     }
   }
   applyDirective() {

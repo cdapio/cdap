@@ -26,8 +26,6 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import NamespaceStore from 'services/NamespaceStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-
-
 import CreateStreamWizardConfig, {CreateStreamUploadWizardConfig} from 'services/WizardConfigs/CreateStreamWizardConfig';
 import T from 'i18n-react';
 
@@ -86,7 +84,7 @@ export default class StreamCreateWizard extends Component {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     // FIXME: How to handle empty error messages???
     return PublishStream()
-      .flatMap(
+      .mergeMap(
         () => {
           if (this.props.withUploadStep) {
             // FIXME: I think we can chain this to the next step. TL;DR - will do.
