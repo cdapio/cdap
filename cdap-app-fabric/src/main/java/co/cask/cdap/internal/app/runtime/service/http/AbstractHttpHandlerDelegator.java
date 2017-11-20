@@ -82,7 +82,7 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
 
     // Non-tx execution
     if (serviceContext instanceof AbstractContext) {
-      ((AbstractContext) serviceContext).executeChecked(runnable);
+      ((AbstractContext) serviceContext).execute(runnable);
     } else {
       // This is for unit-tests
       ClassLoader oldCl = ClassLoaders.setContextClassLoader(

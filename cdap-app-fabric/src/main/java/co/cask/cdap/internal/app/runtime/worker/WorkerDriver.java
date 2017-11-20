@@ -25,7 +25,6 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.reflect.TypeToken;
@@ -79,7 +78,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    context.executeChecked(worker::run);
+    context.execute(worker::run);
   }
 
   @Override
@@ -99,12 +98,11 @@ public class WorkerDriver extends AbstractExecutionThreadService {
       return;
     }
     LOG.debug("Stopping Worker Program {}", program.getId());
-    context.executeUnchecked(new Runnable() {
-      @Override
-      public void run() {
-        worker.stop();
-      }
-    });
+    try {
+      context.execute(worker::stop);
+    } catch (Exception e) {
+      LOG.warn("Exception raised when stopping Worker Program {}", program.getId());
+    }
   }
 
   @Override
