@@ -31,13 +31,10 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.tephra.TransactionExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -70,12 +67,7 @@ public class DatasetInstanceManager {
    */
   public void add(final NamespaceId namespaceId, final DatasetSpecification spec) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-    txExecutorFactory.createExecutor(datasetCache).executeUnchecked(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        instanceMDS.write(namespaceId, spec);
-      }
-    });
+    txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.write(namespaceId, spec));
   }
 
   /**
@@ -85,12 +77,7 @@ public class DatasetInstanceManager {
   @Nullable
   public DatasetSpecification get(final DatasetId datasetInstanceId) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(new Callable<DatasetSpecification>() {
-      @Override
-      public DatasetSpecification call() throws Exception {
-        return instanceMDS.get(datasetInstanceId);
-      }
-    });
+    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.get(datasetInstanceId));
   }
 
   /**
@@ -99,13 +86,7 @@ public class DatasetInstanceManager {
    */
   public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-    return txExecutorFactory.createExecutor(datasetCache)
-      .executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
-        @Override
-        public Collection<DatasetSpecification> call() throws Exception {
-          return instanceMDS.getAll(namespaceId);
-        }
-      });
+    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.getAll(namespaceId));
   }
 
   /**
@@ -117,12 +98,7 @@ public class DatasetInstanceManager {
   public Collection<DatasetSpecification> get(final NamespaceId namespaceId, final Map<String, String> properties) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     return txExecutorFactory.createExecutor(datasetCache)
-      .executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
-        @Override
-        public Collection<DatasetSpecification> call() throws Exception {
-          return instanceMDS.get(namespaceId, properties);
-        }
-      });
+      .executeUnchecked(() -> instanceMDS.get(namespaceId, properties));
   }
 
   /**
@@ -132,11 +108,6 @@ public class DatasetInstanceManager {
    */
   public boolean delete(final DatasetId datasetInstanceId) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return instanceMDS.delete(datasetInstanceId);
-      }
-    });
+    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.delete(datasetInstanceId));
   }
 }

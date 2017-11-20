@@ -22,7 +22,6 @@ import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import com.google.common.base.Functions;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.tephra.RetryStrategy;
@@ -89,12 +88,8 @@ public final class Transactions {
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
                                                               final TransactionSystemClient txClient,
                                                               final Iterable<? extends TransactionAware> txAwares) {
-    return factory.createExecutor(new Supplier<TransactionContext>() {
-      @Override
-      public TransactionContext get() {
-        return new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
-      }
-    });
+    return factory.createExecutor(
+      () -> new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity())));
   }
 
   /**
