@@ -21,9 +21,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when a user is not authenticated.
- * Note: This extends {@link UnauthorizedException} for backwards compatibility.
  */
-public class UnauthenticatedException extends UnauthorizedException implements HttpErrorStatusProvider {
+public class UnauthenticatedException extends Exception implements HttpErrorStatusProvider {
 
   public UnauthenticatedException() {
     super();

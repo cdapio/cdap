@@ -77,42 +77,9 @@ public class AuthServerAnnounceTest {
   }
 
   @Test
-  public void testAnnounceAddressWithPortConfig() throws Exception {
-    HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
-    routerService.cConf.set(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED, ANNOUNCE_ADDRESS_WITH_PORT);
-    routerService.startUp();
-    try {
-      Assert.assertEquals(
-        Collections.singletonList(String.format("http://%s/%s", ANNOUNCE_ADDRESS_WITH_PORT,
-                                                GrantAccessToken.Paths.GET_TOKEN)),
-        getAuthURI(routerService));
-    } finally {
-      routerService.shutDown();
-    }
-  }
-
-  @Test
-  public void testAnnounceAddressWithoutPortConfig() throws Exception {
-    HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
-    routerService.cConf.set(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED, ANNOUNCE_ADDRESS_WITHOUT_PORT);
-    routerService.startUp();
-    try {
-      Assert.assertEquals(
-        Collections.singletonList(String.format("http://%s:%d/%s", ANNOUNCE_ADDRESS_WITHOUT_PORT,
-                                                routerService.cConf.getInt(Constants.Security.AUTH_SERVER_BIND_PORT),
-                                                GrantAccessToken.Paths.GET_TOKEN)),
-        getAuthURI(routerService));
-    } finally {
-      routerService.shutDown();
-    }
-  }
-
-  @Test
   public void testAnnounceURLsConfig() throws Exception {
     HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
     routerService.cConf.set(Constants.Security.AUTH_SERVER_ANNOUNCE_URLS, ANNOUNCE_URLS);
-    // Deprecated property AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED is not used since AUTH_SERVER_ANNOUNCE_URLS is set
-    routerService.cConf.set(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED, ANNOUNCE_ADDRESS_WITHOUT_PORT);
     routerService.startUp();
     try {
       List<String> expected = Lists.transform(Arrays.asList(ANNOUNCE_URLS.split(",")), new Function<String, String>() {
