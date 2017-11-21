@@ -26,7 +26,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
@@ -58,10 +58,10 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -160,23 +160,20 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       // TTL for the thread is 1 second, hence sleep for 2 second to make sure the thread is gone
       TimeUnit.SECONDS.sleep(2);
 
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          // Force a gc to have weak references cleanup
-          System.gc();
-          Multimap<Integer, String> newStates = getStates(serviceManager);
+      Tasks.waitFor(true, () -> {
+        // Force a gc to have weak references cleanup
+        System.gc();
+        Multimap<Integer, String> newStates = getStates(serviceManager);
 
-          // Should expect size be 3. An INIT and a DESTROY from the collected handler
-          // and an INIT for the new handler that just handle the getState call
-          if (newStates.size() != 3) {
-            return false;
-          }
-
-          // A INIT and a DESTROY is expected for the old handler
-          return ImmutableList.of("INIT", "DESTROY")
-            .equals(ImmutableList.copyOf(newStates.get(lastStates.keySet().iterator().next())));
+        // Should expect size be 3. An INIT and a DESTROY from the collected handler
+        // and an INIT for the new handler that just handle the getState call
+        if (newStates.size() != 3) {
+          return false;
         }
+
+        // A INIT and a DESTROY is expected for the old handler
+        return ImmutableList.of("INIT", "DESTROY")
+          .equals(ImmutableList.copyOf(newStates.get(lastStates.keySet().iterator().next())));
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       serviceManager.stop();
@@ -204,12 +201,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
       // Get the states, there should be six handler instances initialized.
       // Five for the in-progress upload, one for the getStates call
-      Tasks.waitFor(6, new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          return getStates(serviceManager).size();
-        }
-      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(6, () -> getStates(serviceManager).size(), 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Finish the upload
       uploadLatch.countDown();
@@ -234,22 +226,19 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       // Get the states, there should be seven handler instances initialized.
       // Six for the in-progress upload, one for the getStates call
       // Out of the 7 states, six of them should be the same as the old one
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          Multimap<Integer, String> newStates = getStates(serviceManager);
-          if (newStates.size() != 7) {
+      Tasks.waitFor(true, () -> {
+        Multimap<Integer, String> newStates = getStates(serviceManager);
+        if (newStates.size() != 7) {
+          return false;
+        }
+
+        for (Map.Entry<Integer, String> entry : states.entries()) {
+          if (!newStates.containsEntry(entry.getKey(), entry.getValue())) {
             return false;
           }
-
-          for (Map.Entry<Integer, String> entry : states.entries()) {
-            if (!newStates.containsEntry(entry.getKey(), entry.getValue())) {
-              return false;
-            }
-          }
-
-          return true;
         }
+
+        return true;
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Complete the upload
@@ -264,19 +253,16 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       // Query the queue size metrics. Expect the maximum be 6.
       // This is because only the six from the concurrent upload will get captured added back to the queue,
       // while the one created for the getState() call will be stated in the thread cache, but not in the queue.
-      Tasks.waitFor(6L, new Callable<Long>() {
-        @Override
-        public Long call() throws Exception {
-          Map<String, String> context = ImmutableMap.of(
-              Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
-              Constants.Metrics.Tag.APP, ServiceLifecycleApp.class.getSimpleName(),
-              Constants.Metrics.Tag.SERVICE, "test");
-          MetricDataQuery metricQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
-                                                            "system.context.pool.size", AggregationFunction.MAX,
-                                                            context, ImmutableList.<String>of());
-          Iterator<MetricTimeSeries> result = getMetricsManager().query(metricQuery).iterator();
-          return result.hasNext() ? result.next().getTimeValues().get(0).getValue() : 0L;
-        }
+      Tasks.waitFor(6L, () -> {
+        Map<String, String> context = ImmutableMap.of(
+          Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace(),
+            Constants.Metrics.Tag.APP, ServiceLifecycleApp.class.getSimpleName(),
+            Constants.Metrics.Tag.SERVICE, "test");
+        MetricDataQuery metricQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                                                          "system.context.pool.size", AggregationFunction.MAX,
+                                                          context, Collections.emptyList());
+        Iterator<MetricTimeSeries> result = getMetricsManager().query(metricQuery).iterator();
+        return result.hasNext() ? result.next().getTimeValues().get(0).getValue() : 0L;
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     } finally {
@@ -306,16 +292,10 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       }
 
       // Make sure all producers has produced something
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          byte[] value = datasetManager.get().read("called");
-          datasetManager.flush();
-          if (value == null || value.length != Bytes.SIZEOF_LONG) {
-            return false;
-          }
-          return Bytes.toLong(value) > 5;
-        }
+      Tasks.waitFor(true, () -> {
+        byte[] value = datasetManager.get().read("called");
+        datasetManager.flush();
+        return value != null && value.length == Bytes.SIZEOF_LONG && Bytes.toLong(value) > 5;
       }, 10L , TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Get the states, there should be 6 handler instances instantiated, 5 the downloads, one for getState.
@@ -362,27 +342,16 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
       // Get the states, there should be six handler instances initialized.
       // Five for the in-progress upload, one for the getStates call
-      Tasks.waitFor(6, new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          return getStates(serviceManager).size();
-        }
-      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(6, () -> getStates(serviceManager).size(), 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Complete the upload
       uploadLatch.countDown();
 
       // Make sure the download through content producer has started
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          byte[] value = datasetManager.get().read("called");
-          datasetManager.flush();
-          if (value == null || value.length != Bytes.SIZEOF_LONG) {
-            return false;
-          }
-          return Bytes.toLong(value) > 5;
-        }
+      Tasks.waitFor(true, () -> {
+        byte[] value = datasetManager.get().read("called");
+        datasetManager.flush();
+        return value != null && value.length == Bytes.SIZEOF_LONG && Bytes.toLong(value) > 5;
       }, 10L , TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Get the states, there should still be six handler instances since the ContentConsumer should
@@ -493,40 +462,37 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
                                                final String endpoint,
                                                final CountDownLatch latch) throws Exception {
     final SettableFuture<Integer> completion = SettableFuture.create();
-    Thread t = new Thread() {
-      @Override
-      public void run() {
+    Thread t = new Thread(() -> {
+      try {
+        URL url = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI().resolve(endpoint).toURL();
+        HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
         try {
-          URL url = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI().resolve(endpoint).toURL();
-          HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-          try {
-            urlConn.setChunkedStreamingMode(5);
-            urlConn.setDoOutput(true);
-            urlConn.setRequestMethod(method);
+          urlConn.setChunkedStreamingMode(5);
+          urlConn.setDoOutput(true);
+          urlConn.setRequestMethod(method);
 
-            try (OutputStream os = urlConn.getOutputStream()) {
-              // Write some chunks
-              os.write("Testing".getBytes(Charsets.UTF_8));
-              os.flush();
-              latch.await();
-            }
-
-            int sc = urlConn.getResponseCode();
-            if (sc == 200) {
-              ByteStreams.toByteArray(urlConn.getInputStream());
-            } else {
-              ByteStreams.toByteArray(urlConn.getErrorStream());
-            }
-            completion.set(sc);
-
-          } finally {
-            urlConn.disconnect();
+          try (OutputStream os = urlConn.getOutputStream()) {
+            // Write some chunks
+            os.write("Testing".getBytes(Charsets.UTF_8));
+            os.flush();
+            latch.await();
           }
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
+
+          int sc = urlConn.getResponseCode();
+          if (sc == 200) {
+            ByteStreams.toByteArray(urlConn.getInputStream());
+          } else {
+            ByteStreams.toByteArray(urlConn.getErrorStream());
+          }
+          completion.set(sc);
+
+        } finally {
+          urlConn.disconnect();
         }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
-    };
+    });
     t.start();
 
     return completion;
@@ -534,22 +500,19 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
   private ListenableFuture<String> download(final ServiceManager serviceManager) {
     final SettableFuture<String> completion = SettableFuture.create();
-    Thread t = new Thread() {
-      @Override
-      public void run() {
+    Thread t = new Thread(() -> {
+      try {
+        URL url = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI().resolve("download").toURL();
+        HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
         try {
-          URL url = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI().resolve("download").toURL();
-          HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-          try {
-            completion.set(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
-          } finally {
-            urlConn.disconnect();
-          }
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
+          completion.set(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
+        } finally {
+          urlConn.disconnect();
         }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
-    };
+    });
     t.start();
     return completion;
   }

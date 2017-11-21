@@ -18,12 +18,10 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionContext;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -125,46 +123,27 @@ class CustomActionExecutor {
       executeCustomAction();
       return;
     }
-    workflowContext.executeChecked(new AbstractContext.ThrowingRunnable() {
-      @Override
-      public void run() throws Exception {
+    workflowContext.executeChecked(() -> {
+      try {
+        workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+        workflowContext.execute(context -> action.initialize(workflowContext));
+        workflowContext.execute(context -> action.run());
+        workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+      } catch (Throwable t) {
+        Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof InterruptedException) {
+          workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
+        } else {
+          workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
+        }
+        throw Throwables.propagate(rootCause);
+
+      } finally {
         try {
-          workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-          workflowContext.execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              action.initialize(workflowContext);
-            }
-          });
-          workflowContext.execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              action.run();
-            }
-          });
-          workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
-
+          workflowContext.execute(context -> action.destroy());
         } catch (Throwable t) {
-          Throwable rootCause = Throwables.getRootCause(t);
-          if (rootCause instanceof InterruptedException) {
-            workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
-          } else {
-            workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
-          }
-          throw Throwables.propagate(rootCause);
-
-        } finally {
-          try {
-            workflowContext.execute(new TxRunnable() {
-              @Override
-              public void run(DatasetContext context) throws Exception {
-                action.destroy();
-              }
-            });
-          } catch (Throwable t) {
-            LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
-                      workflowContext.getSpecification().getName(), workflowRunId, t);
-          }
+          LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
+                    workflowContext.getSpecification().getName(), workflowRunId, t);
         }
       }
     });
@@ -184,12 +163,7 @@ class CustomActionExecutor {
       customActionContext.initializeProgram(customAction, txControl, false);
 
       customActionContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
-      customActionContext.executeChecked(new AbstractContext.ThrowingRunnable() {
-        @Override
-        public void run() throws Exception {
-          customAction.run();
-        }
-      });
+      customActionContext.executeChecked(customAction::run);
       customActionContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
 
     } catch (Throwable t) {

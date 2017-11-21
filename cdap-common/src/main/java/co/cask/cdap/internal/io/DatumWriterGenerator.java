@@ -153,7 +153,7 @@ final class DatumWriterGenerator {
     // Generate the class
     String className = getClassName(interfaceType, schema);
     classType = Type.getObjectType(className);
-    classWriter.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
+    classWriter.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
                       className, Signatures.getClassSignature(interfaceType),
                       Type.getInternalName(Object.class),
                       new String[]{Type.getInternalName(interfaceType.getRawType())});

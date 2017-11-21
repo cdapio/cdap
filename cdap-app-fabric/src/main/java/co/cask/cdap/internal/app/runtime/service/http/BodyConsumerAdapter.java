@@ -17,11 +17,10 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -49,6 +48,8 @@ final class BodyConsumerAdapter extends BodyConsumer {
   private final Transactional transactional;
   private final ClassLoader programContextClassLoader;
   private final Cancellable contextReleaser;
+  private final TransactionControl onFinishTxControl;
+  private final TransactionControl onErrorTxControl;
 
   private boolean completed;
 
@@ -62,23 +63,29 @@ final class BodyConsumerAdapter extends BodyConsumer {
    * @param contextReleaser A {@link Cancellable} for returning the context back to the http server
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      Transactional transactional, ClassLoader programContextClassLoader, Cancellable contextReleaser) {
+                      Transactional transactional, ClassLoader programContextClassLoader,
+                      Cancellable contextReleaser, TransactionControl defaultTxControl) {
     this.responder = responder;
     this.delegate = delegate;
     this.transactional = transactional;
     this.programContextClassLoader = programContextClassLoader;
     this.contextReleaser = contextReleaser;
+    this.onFinishTxControl = Transactions.getTransactionControl(defaultTxControl, HttpContentConsumer.class,
+                                                                delegate, "onFinish", HttpServiceResponder.class);
+    this.onErrorTxControl = Transactions.getTransactionControl(defaultTxControl,
+                                                               HttpContentConsumer.class, delegate, "onError",
+                                                               HttpServiceResponder.class, Throwable.class);
   }
 
   @Override
-  public void chunk(final ByteBuf chunk, HttpResponder responder) {
+  public void chunk(ByteBuf chunk, HttpResponder responder) {
     // Due to async nature of netty, chunk might get called even we try to close the connection in onError.
     if (completed) {
       return;
     }
 
     try {
-      final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
       try {
         delegate.onReceived(chunk.nioBuffer(), transactional);
       } finally {
@@ -91,16 +98,9 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
   @Override
   public void finished(HttpResponder responder) {
-    TransactionControl txCtrl = Transactions.getTransactionControl(
-      TransactionControl.IMPLICIT, HttpContentConsumer.class, delegate, "onFinish", HttpServiceResponder.class);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        transactional.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            delegate.onFinish(BodyConsumerAdapter.this.responder);
-          }
-        });
+      if (TransactionControl.IMPLICIT == onFinishTxControl) {
+        transactional.execute(context -> delegate.onFinish(BodyConsumerAdapter.this.responder));
       } else {
         delegate.onFinish(BodyConsumerAdapter.this.responder);
       }
@@ -121,7 +121,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   }
 
   @Override
-  public void handleError(final Throwable cause) {
+  public void handleError(Throwable cause) {
     // When this method is called from netty-http, the response has already been sent, hence uses a no-op
     // DelayedHttpServiceResponder for the onError call.
     onError(cause, new DelayedHttpServiceResponder(responder, new ErrorBodyProducerFactory()) {
@@ -134,7 +134,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
       }
 
       @Override
-      public void setTransactionFailureResponse(Throwable t) {
+      public void setFailure(Throwable t) {
         // no-op
       }
 
@@ -154,29 +154,21 @@ final class BodyConsumerAdapter extends BodyConsumer {
   /**
    * Calls the {@link HttpContentConsumer#onError(HttpServiceResponder, Throwable)} method from a transaction.
    */
-  private void onError(final Throwable cause, final DelayedHttpServiceResponder responder) {
+  private void onError(Throwable cause, DelayedHttpServiceResponder responder) {
     if (completed) {
       return;
     }
 
     // To the HttpContentConsumer, once onError is called, no other methods will be triggered
     completed = true;
-    TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
-                                                                   HttpContentConsumer.class, delegate, "onError",
-                                                                   HttpServiceResponder.class, Throwable.class);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        transactional.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            delegate.onError(responder, cause);
-          }
-        });
+      if (TransactionControl.IMPLICIT == onErrorTxControl) {
+        transactional.execute(context -> delegate.onError(responder, cause));
       } else {
         delegate.onError(responder, cause);
       }
     } catch (Throwable t) {
-      responder.setTransactionFailureResponse(t);
+      responder.setFailure(t);
       LOG.warn("Exception in calling HttpContentConsumer.onError", t);
     } finally {
       try {
@@ -195,7 +187,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   private static final class ErrorBodyProducerFactory implements BodyProducerFactory {
 
     @Override
-    public BodyProducer create(HttpContentProducer contentProducer, TransactionalHttpServiceContext serviceContext) {
+    public BodyProducer create(HttpContentProducer contentProducer, HttpServiceContext serviceContext) {
       // It doesn't matter what it returns as it'll never get used
       // Returning a body producer that gives empty content
       return new BodyProducer() {

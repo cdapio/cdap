@@ -79,12 +79,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    context.executeChecked(new AbstractContext.ThrowingRunnable() {
-      @Override
-      public void run() throws Exception {
-        worker.run();
-      }
-    });
+    context.executeChecked(worker::run);
   }
 
   @Override

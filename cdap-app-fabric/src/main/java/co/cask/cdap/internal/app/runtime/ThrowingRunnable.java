@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.asm;
 
-import org.objectweb.asm.commons.Method;
-
-import java.lang.invoke.MethodType;
+package co.cask.cdap.internal.app.runtime;
 
 /**
- * Util class containing helper functions to interact with ASM {@link Method}.
+ * Runnable that can throw an exception.
  */
-public final class Methods {
-
-  public static Method getMethod(Class<?> returnType, String name, Class<?>...args) {
-    return new Method(name, MethodType.methodType(returnType, args).toMethodDescriptorString());
-  }
-
-  private Methods() {}
+public interface ThrowingRunnable {
+  void run() throws Exception;
 }

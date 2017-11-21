@@ -121,6 +121,8 @@ class ConstraintCheckerService extends AbstractIdleService {
     stopping = true;
     LOG.info("Stopping ConstraintCheckerService.");
     try {
+      // Shutdown the executor and wait for all pending task to be completed for max of 5 seconds
+      taskExecutorService.shutdown();
       taskExecutorService.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
