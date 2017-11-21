@@ -215,10 +215,13 @@ final class SparkTransactional implements Transactional {
         txDatasetContext.discardDatasets();
       }
     } catch (Throwable t) {
-      // Any exception will cause invalidation of the transaction
-      activeDatasetContext.remove();
-      txDatasetContext.rollbackWithoutFailure();
-      Transactions.invalidateQuietly(txClient, transaction);
+      // Only need to rollback and invalidate transaction if the current call needs to commit.
+      if (needCommit) {
+        // Any exception will cause invalidation of the transaction
+        activeDatasetContext.remove();
+        txDatasetContext.rollbackWithoutFailure();
+        Transactions.invalidateQuietly(txClient, transaction);
+      }
       throw Transactions.asTransactionFailure(t);
     }
   }
