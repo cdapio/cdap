@@ -21,7 +21,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -50,13 +49,12 @@ import javax.annotation.Nullable;
 final class BasicWorkflowContext extends AbstractContext implements WorkflowContext {
 
   private final WorkflowSpecification workflowSpec;
-  private final WorkflowActionSpecification specification;
   private final ConditionSpecification conditionSpecification;
   private final WorkflowToken token;
   private final Map<String, WorkflowNodeState> nodeStates;
   private ProgramState state;
 
-  BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
+  BasicWorkflowContext(WorkflowSpecification workflowSpec,
                        WorkflowToken token, Program program, ProgramOptions programOptions, CConfiguration cConf,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
@@ -64,13 +62,12 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        @Nullable PluginInstantiator pluginInstantiator,
                        SecureStore secureStore, SecureStoreManager secureStoreManager,
                        MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification) {
-    super(program, programOptions, cConf, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
+    super(program, programOptions, cConf, new HashSet<String>(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
     this.workflowSpec = workflowSpec;
-    this.specification = spec;
     this.conditionSpecification = conditionSpecification;
     this.token = token;
     this.nodeStates = nodeStates;
@@ -79,14 +76,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public WorkflowSpecification getWorkflowSpecification() {
     return workflowSpec;
-  }
-
-  @Override
-  public WorkflowActionSpecification getSpecification() {
-    if (specification == null) {
-      throw new UnsupportedOperationException("Operation not allowed.");
-    }
-    return specification;
   }
 
   @Override

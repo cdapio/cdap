@@ -21,7 +21,6 @@ import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
