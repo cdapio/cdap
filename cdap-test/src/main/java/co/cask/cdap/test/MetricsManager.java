@@ -28,6 +28,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.ServiceId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -92,9 +94,8 @@ public class MetricsManager {
    */
   public RuntimeMetrics getFlowletMetrics(String namespace, String appName,
                                           String flowName, String flowletName) {
-
-    Id.Program id = Id.Program.from(namespace, appName, ProgramType.FLOW, flowName);
-    return getMetrics(MetricsTags.flowlet(id, flowletName),
+    FlowletId flowletId = new FlowletId(namespace, appName, flowName, flowletName);
+    return getMetrics(MetricsTags.flowlet(flowletId),
                       Constants.Metrics.Name.Flow.FLOWLET_INPUT,
                       Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
                       Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
@@ -108,8 +109,8 @@ public class MetricsManager {
    * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
    */
   public RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
-    return getMetrics(MetricsTags.service(id),
+    ServiceId service = new ServiceId(namespace, applicationId, serviceId);
+    return getMetrics(MetricsTags.service(service),
                       Constants.Metrics.Name.Service.SERVICE_INPUT,
                       Constants.Metrics.Name.Service.SERVICE_PROCESSED,
                       Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
