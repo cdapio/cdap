@@ -33,9 +33,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.AbstractCondition;
 import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
@@ -68,12 +66,12 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
@@ -311,18 +309,17 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
-    WorkflowActionSpecification actionSpec = getActionSpecification(node, node.getProgram().getProgramType());
     status.put(node.getNodeId(), node);
 
-    BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token);
-
-    ProgramWorkflowRunner programWorkflowRunner =
-      workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, node.getNodeId(), nodeStates);
-
-    final WorkflowAction action = new ProgramWorkflowAction(node.getProgram().getProgramName(),
-                                                            node.getProgram().getProgramType(),
-                                                            programWorkflowRunner);
-    action.initialize(workflowContext);
+//    BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token);
+//
+//    ProgramWorkflowRunner programWorkflowRunner =
+//      workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, node.getNodeId(), nodeStates);
+//
+//    final WorkflowAction action = new ProgramWorkflowAction(node.getProgram().getProgramName(),
+//                                                            node.getProgram().getProgramType(),
+//                                                            programWorkflowRunner);
+//    action.initialize(workflowContext);
 
     CountDownLatch executorTerminateLatch = new CountDownLatch(1);
     ExecutorService executorService = createExecutor(1, executorTerminateLatch, "action-" + node.getNodeId() + "-%d");
@@ -332,7 +329,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       Future<?> future = executorService.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          action.run();
+          SchedulableProgramType programType = node.getProgram().getProgramType();
+          String programName = node.getProgram().getProgramName();
+          String prettyProgramType = ProgramType.valueOf(programType.name()).getPrettyName();
+          ProgramWorkflowRunner programWorkflowRunner =
+            workflowProgramRunnerFactory.getProgramWorkflowRunner(programType, token, node.getNodeId(), nodeStates);
+
+          // this should not happen, since null is only passed in from WorkflowDriver, only when calling configure
+          if (programWorkflowRunner == null) {
+            throw new UnsupportedOperationException("Operation not allowed.");
+          }
+
+          Runnable programRunner = programWorkflowRunner.create(programName);
+          LOG.info("Starting {} Program '{}' in workflow", prettyProgramType, programName);
+          programRunner.run();
+
+          // TODO (terence) : Put something back to context.
+
+          LOG.info("{} Program '{}' in workflow completed", prettyProgramType, programName);
           return null;
         }
       });
@@ -348,7 +362,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     runtimeStore.updateWorkflowToken(workflowRunId, token);
   }
 
-  private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
+/*  private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
                                                              SchedulableProgramType programType) {
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (programType) {
@@ -362,7 +376,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         throw new IllegalStateException(String.format("Unknown Program Type '%s', Program '%s' in the Workflow",
                                                       actionInfo.getProgramType(), actionInfo.getProgramName()));
     }
-  }
+  }*/
 
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
                            final InstantiatorFactory instantiator, final ClassLoader classLoader,
@@ -434,7 +448,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     txClient, discoveryServiceClient,
                                                                     pluginInstantiator, secureStore,
                                                                     secureStoreManager, messagingService);
-    customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
+    customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
     runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;

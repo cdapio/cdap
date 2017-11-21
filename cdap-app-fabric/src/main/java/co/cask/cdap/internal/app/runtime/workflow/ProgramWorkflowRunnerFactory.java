@@ -93,4 +93,30 @@ final class ProgramWorkflowRunnerFactory {
     }
     return null;  // if no workflow program runner was found for this program
   }
+
+  /**
+   * Gives the appropriate instance of {@link ProgramWorkflowRunner} depending upon the program type found in the
+   * properties of the {@link WorkflowActionSpecification}.
+   *
+   * @param programType the programType
+   * @param token the {@link WorkflowToken}
+   * @param nodeStates the map of node ids to node states
+   * @return the appropriate concrete implementation of {@link ProgramWorkflowRunner} for the program
+   */
+  ProgramWorkflowRunner getProgramWorkflowRunner(SchedulableProgramType programType, WorkflowToken token,
+                                                 String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+    switch (programType) {
+      case MAPREDUCE:
+        return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
+                                                workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE,
+                                                programStateWriter);
+      case SPARK:
+        return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
+                                                workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK,
+                                                programStateWriter);
+      default:
+        LOG.debug("No workflow program runner found for this program");
+    }
+    return null;  // if no workflow program runner was found for this program
+  }
 }
