@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data2.audit.payload.builder;
 
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 
 import java.util.HashMap;

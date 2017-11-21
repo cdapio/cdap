@@ -22,29 +22,17 @@ package co.cask.cdap.proto;
 public class DatasetRecord {
 
   private final String type;
-  private final String id;
   private final String name;
   private final String classname;
 
-  public DatasetRecord(String name, String classname) {
-    this("Dataset", name, name, classname);
-  }
-
-  @Deprecated
   public DatasetRecord(String type, String id, String name, String classname) {
-    this.type = type;
-    this.id = id;
+    this.type = "Dataset";
     this.name = name;
     this.classname = classname;
   }
 
   public String getType() {
     return type;
-  }
-
-  @Deprecated
-  public String getId() {
-    return id;
   }
 
   public String getName() {

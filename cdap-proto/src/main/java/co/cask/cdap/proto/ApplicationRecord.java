@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
  */
 public class ApplicationRecord {
   private final String type;
-  private final String id;
   private final String name;
   private final String version;
   private final String description;
@@ -48,7 +47,6 @@ public class ApplicationRecord {
     this.name = appId.getApplication();
     this.description = description;
     this.version = appId.getVersion();
-    this.id = appId.getApplication();
     this.ownerPrincipal = ownerPrincipal;
   }
 
@@ -62,11 +60,6 @@ public class ApplicationRecord {
 
   public String getType() {
     return type;
-  }
-
-  @Deprecated
-  public String getId() {
-    return id;
   }
 
   public String getName() {

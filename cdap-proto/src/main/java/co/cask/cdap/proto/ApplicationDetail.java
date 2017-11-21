@@ -102,16 +102,6 @@ public class ApplicationDetail {
     return appVersion;
   }
 
-  /**
-   * @deprecated use {@link #getArtifact()} instead
-   *
-   * @return the artifactVersion of the artifact used to create the application
-   */
-  @Deprecated
-  public String getArtifactVersion() {
-    return artifactVersion;
-  }
-
   public String getDescription() {
     return description;
   }

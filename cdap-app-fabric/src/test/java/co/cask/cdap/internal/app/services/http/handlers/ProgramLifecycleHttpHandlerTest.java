@@ -941,7 +941,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                       WORDCOUNT_FLOW_NAME);
     Assert.assertEquals(WORDCOUNT_APP_NAME, liveInfo.get("app").getAsString());
     Assert.assertEquals(ProgramType.FLOW.getPrettyName(), liveInfo.get("type").getAsString());
-    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("id").getAsString());
+    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("name").getAsString());
 
     // start flow
     Id.Program wordcountFlow1 =
@@ -953,7 +953,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                            WORDCOUNT_FLOW_NAME);
     Assert.assertEquals(WORDCOUNT_APP_NAME, liveInfo.get("app").getAsString());
     Assert.assertEquals(ProgramType.FLOW.getPrettyName(), liveInfo.get("type").getAsString());
-    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("id").getAsString());
+    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("name").getAsString());
     Assert.assertEquals("in-memory", liveInfo.get("runtime").getAsString());
 
     // should not delete queues while running

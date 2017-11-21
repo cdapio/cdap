@@ -19,8 +19,7 @@ package co.cask.cdap.proto.codec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.metadata.MetadataRecord;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.Metadata;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
@@ -79,7 +78,7 @@ public class NamespacedIdCodecTest {
   }
 
   @Test
-  public void testWithMetadataRecord() {
+  public void testWithMetadata() {
     Map<String, String> properties = new HashMap<>();
     properties.put("key1", "value1");
     properties.put("k1", "v1");
@@ -87,45 +86,45 @@ public class NamespacedIdCodecTest {
     tags.add("tag1");
     tags.add("t1");
     // verify with Id.Application
-    MetadataRecord appRecord = new MetadataRecord(app.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata appRecord = new Metadata(properties, tags);
     String appRecordJson = GSON.toJson(appRecord);
-    Assert.assertEquals(appRecord, GSON.fromJson(appRecordJson, MetadataRecord.class));
+    Assert.assertEquals(appRecord, GSON.fromJson(appRecordJson, Metadata.class));
     // verify with Id.Program
-    MetadataRecord programRecord = new MetadataRecord(program.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata programRecord = new Metadata(properties, tags);
     String programRecordJson = GSON.toJson(programRecord);
-    Assert.assertEquals(programRecord, GSON.fromJson(programRecordJson, MetadataRecord.class));
+    Assert.assertEquals(programRecord, GSON.fromJson(programRecordJson, Metadata.class));
     // verify with Id.Flow
-    MetadataRecord flowRecord = new MetadataRecord(flow.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata flowRecord = new Metadata(properties, tags);
     String flowRecordJson = GSON.toJson(flowRecord);
-    Assert.assertEquals(flowRecord, GSON.fromJson(flowRecordJson, MetadataRecord.class));
+    Assert.assertEquals(flowRecord, GSON.fromJson(flowRecordJson, Metadata.class));
     // verify with Id.Flow.Flowlet
-    MetadataRecord flowletRecord = new MetadataRecord(flowlet.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata flowletRecord = new Metadata(properties, tags);
     String flowletRecordJson = GSON.toJson(flowletRecord);
-    Assert.assertEquals(flowletRecord, GSON.fromJson(flowletRecordJson, MetadataRecord.class));
+    Assert.assertEquals(flowletRecord, GSON.fromJson(flowletRecordJson, Metadata.class));
     // verify with Id.Service
-    MetadataRecord serviceRecord = new MetadataRecord(service.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata serviceRecord = new Metadata(properties, tags);
     String serviceRecordJson = GSON.toJson(serviceRecord);
-    Assert.assertEquals(serviceRecord, GSON.fromJson(serviceRecordJson, MetadataRecord.class));
+    Assert.assertEquals(serviceRecord, GSON.fromJson(serviceRecordJson, Metadata.class));
     // verify with Id.Schedule
-    MetadataRecord scheduleRecord = new MetadataRecord(schedule.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata scheduleRecord = new Metadata(properties, tags);
     String scheduleRecordJson = GSON.toJson(scheduleRecord);
-    Assert.assertEquals(scheduleRecord, GSON.fromJson(scheduleRecordJson, MetadataRecord.class));
+    Assert.assertEquals(scheduleRecord, GSON.fromJson(scheduleRecordJson, Metadata.class));
     // verify with Id.Worker
-    MetadataRecord workerRecord = new MetadataRecord(worker.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata workerRecord = new Metadata(properties, tags);
     String workerRecordJson = GSON.toJson(workerRecord);
-    Assert.assertEquals(workerRecord, GSON.fromJson(workerRecordJson, MetadataRecord.class));
+    Assert.assertEquals(workerRecord, GSON.fromJson(workerRecordJson, Metadata.class));
     // verify with Id.Workflow
-    MetadataRecord workflowRecord = new MetadataRecord(workflow.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata workflowRecord = new Metadata(properties, tags);
     String workflowRecordJson = GSON.toJson(workflowRecord);
-    Assert.assertEquals(workflowRecord, GSON.fromJson(workflowRecordJson, MetadataRecord.class));
+    Assert.assertEquals(workflowRecord, GSON.fromJson(workflowRecordJson, Metadata.class));
     // verify with Id.DatasetInstance
-    MetadataRecord datasetRecord = new MetadataRecord(dataset.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata datasetRecord = new Metadata(properties, tags);
     String datasetRecordJson = GSON.toJson(datasetRecord);
-    Assert.assertEquals(datasetRecord, GSON.fromJson(datasetRecordJson, MetadataRecord.class));
+    Assert.assertEquals(datasetRecord, GSON.fromJson(datasetRecordJson, Metadata.class));
     // verify with Id.Stream
-    MetadataRecord streamRecord = new MetadataRecord(stream.toEntityId(), MetadataScope.USER, properties, tags);
+    Metadata streamRecord = new Metadata(properties, tags);
     String streamRecordJson = GSON.toJson(streamRecord);
-    Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, MetadataRecord.class));
+    Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, Metadata.class));
   }
 
   @Test(expected = UnsupportedOperationException.class)
