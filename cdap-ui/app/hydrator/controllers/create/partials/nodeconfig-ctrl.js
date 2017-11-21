@@ -114,6 +114,26 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.setStateTimeout = null;
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.setStateTimeout);
+      this.EventPipe.cancelEvent('dataset.selected');
+    });
+
+    let vm = this;
+
+    this.EventPipe.on('dataset.selected', (schema, format, datasetAlreadyExists, datasetId) => {
+      if (datasetAlreadyExists) {
+        vm.datasetAlreadyExists = datasetAlreadyExists;
+      } else {
+        vm.datasetAlreadyExists = false;
+      }
+
+      // if this plugin is having an existing dataset with a macro, then don't change anything.
+      // else if the user is changing to another existing dataset, then show basic mode.
+      if (this.myHelpers.objectQuery(vm, 'defaultState', 'node', 'plugin', 'properties', 'name') && vm.defaultState.node.plugin.properties.name !== datasetId) {
+        vm.state.schemaAdvance = false;
+      }
+      if (datasetId) {
+        vm.datasetId = datasetId;
+      }
     });
 
   }
@@ -177,16 +197,24 @@ class HydratorPlusPlusNodeConfigCtrl {
     let propertiesSchema = this.myHelpers.objectQuery(this.state.node, 'plugin', 'properties', 'schema');
     let schemaArr = propertiesSchema || this.state.node.outputSchema;
 
-    if (schemaArr && Array.isArray(schemaArr)) {
-      angular.forEach(schemaArr, (schemaObj) => {
-        if (schemaObj.schema) {
-          try {
-            this.avsc.parse(schemaObj.schema);
-          } catch (e) {
-            this.state.schemaAdvance = true;
+    if (schemaArr) {
+      if (Array.isArray(schemaArr)) {
+        angular.forEach(schemaArr, (schemaObj) => {
+          if (schemaObj.schema) {
+            try {
+              this.avsc.parse(schemaObj.schema);
+            } catch (e) {
+              this.state.schemaAdvance = true;
+            }
           }
+        });
+      } else {
+        try {
+          this.avsc.parse(schemaArr);
+        } catch (e) {
+          this.state.schemaAdvance = true;
         }
-      });
+      }
     }
 
     this.showPropagateConfirm = false;
@@ -590,7 +618,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       try {
         this.avsc.parse(this.state.node.outputSchema[0].schema);
       } catch (e) {
-        this.state.node.outputSchema = [];
+        this.state.node.outputSchema = [this.HydratorPlusPlusNodeService.getOutputSchemaObj('')];
       }
     }
 

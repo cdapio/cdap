@@ -150,7 +150,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     }
   }
 
-  EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
+  let datasetSelectedEvtListner = EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
     if (watchProperty && format) {
       vm.pluginProperties[watchProperty] = format;
     }
@@ -166,6 +166,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
     if (!_.isEmpty(schema) || (_.isEmpty(schema) && vm.isDisabled)) {
       vm.schemas[0].schema = schema;
+      vm.formatOutput();
     } else {
       // if dataset name is changed to a non-existing dataset, the schemaObj will be empty,
       // so assign to it the value of the input schema
@@ -240,7 +241,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   });
 
   $scope.$on('$destroy', () => {
-    EventPipe.cancelEvent('dataset.selected');
+    datasetSelectedEvtListner();
     EventPipe.cancelEvent('schema.export');
     EventPipe.cancelEvent('schema.import');
     EventPipe.cancelEvent('schema.clear');
