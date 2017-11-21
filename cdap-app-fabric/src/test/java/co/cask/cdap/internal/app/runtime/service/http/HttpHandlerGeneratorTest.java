@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
@@ -30,7 +32,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStoreData;
@@ -43,9 +45,9 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.test.NoopAdmin;
 import co.cask.cdap.internal.app.preview.NoopDataTracerFactory;
+import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Charsets;
@@ -80,9 +82,9 @@ import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -312,9 +314,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHeaders() throws Exception {
-    MetricsContext noOpsMetricsContext =
-      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsContext);
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
@@ -322,7 +322,7 @@ public class HttpHandlerGeneratorTest {
         protected MyHttpHandler createHandler() {
           return new MyHttpHandler();
         }
-      });
+      }, new NoopMetricsContext());
 
     NettyHttpService service = NettyHttpService.builder("test-headers")
       .setHttpHandlers(httpHandler)
@@ -366,9 +366,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testContentConsumer() throws Exception {
-    MetricsContext noOpsMetricsContext =
-      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("/content", noOpsMetricsContext);
+    HttpHandlerFactory factory = new HttpHandlerFactory("/content");
 
     // Create the file upload handler and starts a netty server with it
     final File outputDir = TEMP_FOLDER.newFolder();
@@ -378,7 +376,7 @@ public class HttpHandlerGeneratorTest {
         protected FileHandler createHandler() {
           return new FileHandler(outputDir);
         }
-      });
+      }, new NoopMetricsContext());
 
     // Creates a Netty http server with 1K request buffer
     NettyHttpService service = NettyHttpService.builder("test-content-consumer")
@@ -435,9 +433,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testContentProducer() throws Exception {
-    MetricsContext noOpsMetricsContext =
-      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("/content", noOpsMetricsContext);
+    HttpHandlerFactory factory = new HttpHandlerFactory("/content");
 
     // Create the file upload handler and starts a netty server with it
     final File outputDir = TEMP_FOLDER.newFolder();
@@ -447,7 +443,7 @@ public class HttpHandlerGeneratorTest {
         protected FileHandler createHandler() {
           return new FileHandler(outputDir);
         }
-      });
+      }, new NoopMetricsContext());
 
     NettyHttpService service = NettyHttpService.builder("test-content-producer")
       .setHttpHandlers(httpHandler)
@@ -519,9 +515,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    MetricsContext noOpsMetricsContext =
-      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsContext);
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
@@ -529,7 +523,7 @@ public class HttpHandlerGeneratorTest {
       protected MyHttpHandler createHandler() {
         return new MyHttpHandler();
       }
-    });
+    }, new NoopMetricsContext());
 
     HttpHandler httpHandlerWithoutAnnotation = factory.createHttpHandler(
       TypeToken.of(NoAnnotationHandler.class), new AbstractDelegatorContext<NoAnnotationHandler>() {
@@ -537,7 +531,7 @@ public class HttpHandlerGeneratorTest {
       protected NoAnnotationHandler createHandler() {
         return new NoAnnotationHandler();
       }
-    });
+    }, new NoopMetricsContext());
 
     NettyHttpService service = NettyHttpService.builder("test-handler-generator")
       .setHttpHandlers(httpHandler, httpHandlerWithoutAnnotation)
@@ -606,18 +600,38 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public final HttpServiceContext getServiceContext() {
-      return new NoOpHttpServiceContext();
+    public ServiceTaskExecutor getServiceTaskExecutor() {
+      NoOpHttpServiceContext context = new NoOpHttpServiceContext();
+      return new ServiceTaskExecutor() {
+        @Override
+        public void execute(ThrowingRunnable runnable, boolean transactional) throws Exception {
+          if (transactional) {
+            context.execute(datasetContext -> runnable.run());
+          } else {
+            runnable.run();
+          }
+        }
+
+        @Override
+        public <T> T execute(Callable<T> callable, boolean transactional) throws Exception {
+          if (transactional) {
+            return Transactionals.execute(context, (TxCallable<T>) datasetContext -> callable.call(), Exception.class);
+          }
+          return callable.call();
+        }
+
+        @Override
+        public Transactional getTransactional() {
+          return context;
+        }
+      };
     }
 
     @Override
     public Cancellable capture() {
       threadLocal.remove();
-      return new Cancellable() {
-        @Override
-        public void cancel() {
-          // no-op
-        }
+      return () -> {
+        // no-op
       };
     }
 

@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpContentProducer;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.http.BodyProducer;
 
 /**
@@ -31,7 +30,7 @@ interface BodyProducerFactory {
    * Creates a {@link BodyProducer} from the given {@link HttpContentProducer}.
    *
    * @param contentProducer the content producer to delegate to
-   * @param serviceContext the {@link HttpServiceContext} for the service call
+   * @param taskExecutor the {@link ServiceTaskExecutor} for executing user code
    */
-  BodyProducer create(HttpContentProducer contentProducer, HttpServiceContext serviceContext);
+  BodyProducer create(HttpContentProducer contentProducer, ServiceTaskExecutor taskExecutor);
 }

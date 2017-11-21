@@ -17,19 +17,18 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.cdap.internal.app.runtime.service.http.ServiceTaskExecutor;
 import co.cask.cdap.proto.Id;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -42,7 +41,6 @@ import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -154,12 +152,10 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
   }
 
   private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
-    MetricsContext noOpsMetricsContext =
-      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("", noOpsMetricsContext);
+    HttpHandlerFactory factory = new HttpHandlerFactory("");
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
-    return factory.createHttpHandler(type, new VerificationDelegateContext<>(handler));
+    return factory.createHttpHandler(type, new VerificationDelegateContext<>(handler), new NoopMetricsContext());
   }
 
   private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {
@@ -176,7 +172,7 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
     }
 
     @Override
-    public HttpServiceContext getServiceContext() {
+    public ServiceTaskExecutor getServiceTaskExecutor() {
       // Never used. (It's only used during server runtime, which we don't verify).
       return null;
     }
