@@ -366,6 +366,15 @@ angular.module(PKG.name + '.commons')
 
     function initSplitterNode(node) {
       if (!node.outputSchema || !Array.isArray(node.outputSchema) || (Array.isArray(node.outputSchema) && node.outputSchema[0].name === GLOBALS.defaultSchemaName)) {
+        let splitterPorts = splitterNodesPorts[node.name];
+        if (!_.isEmpty(splitterPorts)) {
+          angular.forEach(splitterPorts, (port) => {
+            let portElId = node.name + '_port_' + port;
+            deleteEndpoints(portElId);
+          });
+          DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+          delete splitterNodesPorts[node.name];
+        }
         return;
       }
 

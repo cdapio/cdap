@@ -225,6 +225,21 @@
                 </configuration>
               </execution>
               <execution>
+                <id>bower-cache-clean</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <executable>${project.basedir}/node_modules/bower/bin/bower</executable>
+                    <argument>cache clean</argument>
+                    <argument>--allow-root</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
                 <id>bower-install</id>
                 <phase>process-resources</phase>
                 <goals>

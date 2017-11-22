@@ -39,7 +39,8 @@
 <div ng-if="schemaAdvance">
   <textarea
     class="form-control"
-    schemas="MyOutputSchemaCtrl.outputSchemas"
+    ng-model="MyOutputSchemaCtrl.outputSchemaString"
+    ng-change="MyOutputSchemaCtrl.onOutputSchemaChange(MyOutputSchemaCtrl.outputSchemaString)"
     ng-disabled="isDisabled">
   </textarea>
   <span class="badge macro-indicator pull-right"
