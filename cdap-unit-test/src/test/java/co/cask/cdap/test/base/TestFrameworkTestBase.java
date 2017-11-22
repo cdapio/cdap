@@ -109,7 +109,7 @@ public class TestFrameworkTestBase extends TestBase {
     addArtifact(artifactId, artifactJar);
     AppRequest<T> appRequest = new AppRequest<>(new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
                                                 config);
-    return deployApplication(namespaceId.app(appClass.getSimpleName()).toId(), appRequest);
+    return deployApplication(namespaceId.app(appClass.getSimpleName()), appRequest);
   }
 
   protected void reset() {

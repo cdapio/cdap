@@ -194,7 +194,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("AlertTest-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     Schema schema = Schema.recordOf("x", Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.LONG))));
     StructuredRecord record1 = StructuredRecord.builder(schema).set("id", 1L).build();
@@ -394,7 +394,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(pipelineName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
@@ -541,7 +541,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("ErrTransformTest-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     List<StructuredRecord> input = ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("name", "Leo").set("id", 1).build(),
@@ -641,7 +641,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MyActionOnlyApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
@@ -723,7 +723,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MyApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
@@ -802,7 +802,7 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
 
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -895,7 +895,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -969,7 +969,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1049,7 +1049,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1124,7 +1124,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1199,7 +1199,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1303,7 +1303,7 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
 
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1366,7 +1366,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     for (String branch : Arrays.asList("true", "false")) {
       String table = branch.equals("true") ? trueActionTable : falseActionTable;
@@ -1421,7 +1421,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start(ImmutableMap.of("condition2.branch.to.execute", "true",
@@ -1460,7 +1460,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("NoConnectorForSourceConditionApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1498,7 +1498,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("SinglePhaseApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -1554,7 +1554,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("SimpleMultiSourceApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
@@ -1647,7 +1647,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MultiSourceApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
@@ -1734,7 +1734,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("LinearAggApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -1804,7 +1804,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // write few records to each source
     DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
@@ -1885,7 +1885,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ActionApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -1932,7 +1932,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("SparkSinkApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
 
     // set up five spam messages and five non-spam messages to be used for classification
@@ -2005,7 +2005,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("SparkComputeApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
 
     // write some some messages to be classified
@@ -2111,7 +2111,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("InnerJoinApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     Schema outSchema = Schema.recordOf(
       "join.output",
@@ -2239,7 +2239,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("OuterJoinApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     Schema outSchema = Schema.recordOf(
       "join.output",
@@ -2399,7 +2399,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
       .set("customer_name", "samuel").build();
@@ -2484,7 +2484,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("App-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
 
@@ -2556,7 +2556,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ExternalDatasetApp-" + suffix);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -2605,7 +2605,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MRApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.of("runtime", "mockRuntime",
@@ -2647,7 +2647,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("SparkApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.of("runtime", "mockRuntime",
@@ -2690,7 +2690,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MRApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.of("runtime", "mockRuntime",
@@ -2786,7 +2786,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("RuntimeArgApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
@@ -2930,7 +2930,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ServiceUrl-" + engine);
-    appManager = deployApplication(appId.toId(), appRequest);
+    appManager = deployApplication(appId, appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -3007,7 +3007,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("SplitConTest-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // write input data
     DataSetManager<Table> inputManager = getDataset(sourceName);
@@ -3096,7 +3096,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("SplitJoinTest-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // write signups data
     DataSetManager<Table> signupsManager = getDataset(signupsName);

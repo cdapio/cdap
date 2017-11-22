@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.remote;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.WorkflowClient;
@@ -56,15 +55,6 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     this.workflowId = programId;
     this.workflowClient = new WorkflowClient(clientConfig, restClient);
     this.scheduleClient = new ScheduleClient(clientConfig, restClient);
-  }
-
-  @Override
-  public List<ScheduleSpecification> getSchedules() {
-    try {
-      return scheduleClient.list(workflowId);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   @Override

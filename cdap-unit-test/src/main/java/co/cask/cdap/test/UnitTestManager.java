@@ -43,8 +43,6 @@ import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -279,11 +277,6 @@ public class UnitTestManager extends AbstractTestManager {
   }
 
   @Override
-  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
-    artifactRepository.deleteArtifact(artifactId);
-  }
-
-  @Override
   public void clear() throws Exception {
     try {
       appFabricClient.reset();
@@ -396,16 +389,6 @@ public class UnitTestManager extends AbstractTestManager {
                                          namespace.getNamespace());
 
     return DriverManager.getConnection(connectString);
-  }
-
-  @Override
-  public void createNamespace(NamespaceMeta namespaceMeta) throws Exception {
-    namespaceAdmin.create(namespaceMeta);
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespace) throws Exception {
-    namespaceAdmin.delete(namespace.toEntityId());
   }
 
   @Override

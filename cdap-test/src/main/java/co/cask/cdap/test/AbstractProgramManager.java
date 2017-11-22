@@ -71,14 +71,6 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   }
 
   @Override
-  @Deprecated
-  public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-    // Min sleep time is 10ms, max sleep time is 1 seconds
-    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
-    waitForStatus(false, sleepMillis, timeoutUnit.toMillis(timeout), TimeUnit.MILLISECONDS);
-  }
-
-  @Override
   public void waitForRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
     waitForRuns(status, 1, timeout, timeoutUnit);
