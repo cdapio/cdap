@@ -38,11 +38,6 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext
   }
 
   @Override
-  public Map<String, String> getRuntimeArguments() {
-    return arguments.asMap();
-  }
-
-  @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     throw new UnsupportedOperationException("Not supported");
   }

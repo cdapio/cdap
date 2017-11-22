@@ -22,14 +22,11 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import co.cask.cdap.etl.proto.UpgradeableConfig;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * ETL Batch Configuration. Public constructors are deprecated. Use the builder instead.
@@ -54,54 +51,11 @@ public final class ETLBatchConfig extends ETLConfig
                          List<Connection> connections, Resources resources,
                          Resources driverResources,
                          List<ETLStage> actions) {
-    super(source, sinks, transforms, connections, resources);
+    super(source, sinks, transforms, connections, resources, true);
     this.engine = engine;
     this.schedule = schedule;
     this.actions = actions;
     this.driverResources = driverResources;
-  }
-
-  @Deprecated
-  public ETLBatchConfig(Engine engine, String schedule,
-                        ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                        List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    this(engine, schedule, source, sinks, transforms, connections, resources, new Resources(), actions);
-  }
-
-  @Deprecated
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                        List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    this(Engine.MAPREDUCE, schedule, source, ImmutableList.of(sink), transforms, connections, resources, actions);
-  }
-
-  @Deprecated
-  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                        List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    this(Engine.MAPREDUCE, schedule, source, sinks, transforms, connections, resources, actions);
-  }
-
-  @Deprecated
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
-                        List<ETLStage> transforms, List<ETLStage> actions) {
-    this(schedule, source, sink, transforms, new ArrayList<Connection>(), null, actions);
-  }
-
-  @VisibleForTesting
-  @Deprecated
-  public ETLBatchConfig(Engine engine, String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    this(engine, schedule, source, ImmutableList.of(sink), transforms, new ArrayList<Connection>(), null, null);
-  }
-
-  @VisibleForTesting
-  @Deprecated
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    this(schedule, source, sink, transforms, new ArrayList<Connection>(), null, null);
-  }
-
-  @VisibleForTesting
-  @Deprecated
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink) {
-    this(schedule, source, sink, null);
   }
 
   public Engine getEngine() {
@@ -129,7 +83,7 @@ public final class ETLBatchConfig extends ETLConfig
   public co.cask.cdap.etl.proto.v2.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
     co.cask.cdap.etl.proto.v2.ETLBatchConfig.Builder builder =
       co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
-        .setEngine(co.cask.cdap.etl.proto.Engine.valueOf(getEngine().name()))
+        .setEngine(co.cask.cdap.etl.api.Engine.valueOf(getEngine().name()))
         .setDriverResources(getDriverResources());
 
     return upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE).build();

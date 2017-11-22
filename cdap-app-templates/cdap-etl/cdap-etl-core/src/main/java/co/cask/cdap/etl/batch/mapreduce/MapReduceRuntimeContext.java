@@ -58,11 +58,6 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   }
 
   @Override
-  public Map<String, String> getRuntimeArguments() {
-    return arguments.asMap();
-  }
-
-  @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
     return CALLER.callUnchecked(new Callable<T>() {
       @Override

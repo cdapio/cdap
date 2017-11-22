@@ -58,18 +58,6 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   }
 
   @Override
-  public Map<String, String> getRuntimeArguments() {
-    return arguments.asMap();
-  }
-
-  @Override
-  public void setRuntimeArgument(String key, String value, boolean overwrite) {
-    if (overwrite || !arguments.has(key)) {
-      arguments.set(key, value);
-    }
-  }
-
-  @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
     return CALLER.callUnchecked(new Callable<T>() {
       @Override

@@ -81,37 +81,6 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   @Override
-  public void addOutput(final String datasetName) {
-    addOutput(datasetName, Collections.<String, String>emptyMap());
-  }
-
-  @Override
-  public void addOutput(final String datasetName, final Map<String, String> arguments) {
-    String alias = CALLER.callUnchecked(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        Output output = suffixOutput(getOutput(Output.ofDataset(datasetName, arguments)));
-        mrContext.addOutput(output);
-        return output.getAlias();
-      }
-    });
-    outputNames.add(alias);
-  }
-
-  @Override
-  public void addOutput(final String outputName, final OutputFormatProvider outputFormatProvider) {
-    String alias = CALLER.callUnchecked(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        Output output = suffixOutput(getOutput(Output.of(outputName, outputFormatProvider)));
-        mrContext.addOutput(output);
-        return output.getAlias();
-      }
-    });
-    outputNames.add(alias);
-  }
-
-  @Override
   public void addOutput(final Output output) {
     final Output actualOutput = suffixOutput(getOutput(output));
     Output trackableOutput = CALLER.callUnchecked(new Callable<Output>() {
