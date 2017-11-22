@@ -18,17 +18,10 @@ package co.cask.cdap.api.flow;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.flow.DefaultFlowletConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.OutputEmitterFieldExtractor;
-import co.cask.cdap.internal.specification.ProcessMethodExtractor;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -46,9 +39,6 @@ public final class FlowletDefinition {
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;
-  private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> datasetModules;
-  private final Map<String, DatasetCreationSpec> datasetSpecs;
   private int instances;
   private final Set<String> datasets;
 
@@ -57,31 +47,17 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  public FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
-    FlowletSpecification flowletSpec;
-    DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
-    flowlet.configure(flowletConfigurer);
-    flowletSpec = flowletConfigurer.createSpecification();
-
+  public FlowletDefinition(String flowletName, Map<String, Set<Type>> inputTypes, Map<String, Set<Type>> outputTypes,
+                           FlowletSpecification flowletSpec, int instances) {
     this.instances = instances;
-
-    Map<String, Set<Type>> inputTypes = new HashMap<>();
-    Map<String, Set<Type>> outputTypes = new HashMap<>();
-    Reflections.visit(flowlet, flowlet.getClass(),
-                      new OutputEmitterFieldExtractor(outputTypes),
-                      new ProcessMethodExtractor(inputTypes));
-
     this.datasets = Collections.unmodifiableSet(new HashSet<>(flowletSpec.getDataSets()));
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
-    this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
+    this.flowletSpec = new DefaultFlowletSpecification(flowletSpec.getClassName(),
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
                                                        flowletSpec.getDataSets(), flowletSpec.getProperties(),
                                                        flowletSpec.getResources());
-    this.streams = Collections.unmodifiableMap(flowletConfigurer.getStreams());
-    this.datasetModules = Collections.unmodifiableMap(flowletConfigurer.getDatasetModules());
-    this.datasetSpecs = Collections.unmodifiableMap(flowletConfigurer.getDatasetSpecs());
   }
 
   /**
@@ -143,9 +119,6 @@ public final class FlowletDefinition {
     this.outputTypes = definition.outputTypes;
     this.inputs = definition.inputs;
     this.outputs = definition.outputs;
-    this.streams = definition.streams;
-    this.datasetSpecs = definition.datasetSpecs;
-    this.datasetModules = definition.datasetModules;
   }
 
   /**
@@ -187,32 +160,6 @@ public final class FlowletDefinition {
       throw new IllegalStateException("Output schemas not yet generated.");
     }
     return outputs;
-  }
-
-  // TODO: Remove the getStreams, getDatasetModules, getDatasetSpecs methods once
-  // https://issues.cask.co/browse/CDAP-2943 is fixed and the classes are moved to cdap-app-fabric
-  /**
-   * @return Map of Stream name and {@link StreamSpecification} created in this Flowlet.
-   */
-  @Deprecated
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
-  }
-
-  /**
-   * @return Dataset modules added in this Flowlet.
-   */
-  @Deprecated
-  public Map<String, String> getDatasetModules() {
-    return datasetModules;
-  }
-
-  /**
-   * @return Map of Dataset names and {@link DatasetCreationSpec} created in this Flowlet.
-   */
-  @Deprecated
-  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return datasetSpecs;
   }
 
   /**

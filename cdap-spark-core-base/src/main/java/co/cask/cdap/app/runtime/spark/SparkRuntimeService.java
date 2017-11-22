@@ -161,8 +161,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Use the BasicSparkClientContext to call user method.
         if (spark instanceof ProgramLifecycle) {
           ((ProgramLifecycle) spark).initialize(context);
-        } else {
-          spark.beforeSubmit(context);
         }
       }
 
@@ -170,12 +168,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       public void destroy() {
         if (spark instanceof ProgramLifecycle) {
           ((ProgramLifecycle) spark).destroy();
-        } else {
-          try {
-            spark.onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
-          } catch (Exception e) {
-            throw new UncheckedExecutionException(e);
-          }
         }
       }
     };

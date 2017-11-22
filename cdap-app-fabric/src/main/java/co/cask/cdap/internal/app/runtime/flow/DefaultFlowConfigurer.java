@@ -22,16 +22,23 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
+import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.OutputEmitterFieldExtractor;
+import co.cask.cdap.internal.specification.ProcessMethodExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -78,23 +85,34 @@ public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements F
   }
 
   private String getFlowletName(Flowlet flowlet) {
-    FlowletDefinition flowletDef = new FlowletDefinition(null, flowlet, 1);
-    return flowletDef.getFlowletSpec().getName();
+    DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
+    flowlet.configure(flowletConfigurer);
+    FlowletSpecification flowletSpecification = flowletConfigurer.createSpecification();
+    return flowletSpecification.getName();
   }
 
   @Override
   public void addFlowlet(String name, Flowlet flowlet, int instances) {
     Preconditions.checkNotNull(flowlet, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
-    FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
+    DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
+    flowlet.configure(flowletConfigurer);
+    FlowletSpecification flowletSpecification = flowletConfigurer.createSpecification();
+    Map<String, Set<Type>> inputTypes = new HashMap<>();
+    Map<String, Set<Type>> outputTypes = new HashMap<>();
+    Reflections.visit(flowlet, flowlet.getClass(),
+                      new OutputEmitterFieldExtractor(outputTypes),
+                      new ProcessMethodExtractor(inputTypes));
+    FlowletDefinition flowletDef = new FlowletDefinition(name, inputTypes, outputTypes,
+                                                         flowletSpecification, instances);
     String flowletName = flowletDef.getFlowletSpec().getName();
     Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
                                                              flowletName, instances));
     Preconditions.checkArgument(!flowlets.containsKey(flowletName),
                                 UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
     flowlets.put(flowletName, flowletDef);
-    addStreams(flowletDef.getStreams());
-    addDatasetSpecs(flowletDef.getDatasetSpecs());
-    addDatasetModules(flowletDef.getDatasetModules());
+    addStreams(flowletConfigurer.getStreams());
+    addDatasetSpecs(flowletConfigurer.getDatasetSpecs());
+    addDatasetModules(flowletConfigurer.getDatasetModules());
   }
 
   @Override
