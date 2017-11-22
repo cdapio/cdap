@@ -25,7 +25,7 @@ require('../../styles/fonts/symbol-defs_new.svg');
 export default function IconSVG(props) {
   const {name, className, ...moreProps} = props;
   const iconClassName = classnames('icon-svg', name, className);
-  const path = `${window.location.href}#${name}`;
+  const path = `${window.location.href}#symbol-defs_${name}`;
 
   return (
     <svg

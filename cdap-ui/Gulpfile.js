@@ -14,7 +14,6 @@
  * the License.
  */
 
-require('es6-promise').polyfill();
 var gulp = require('gulp'),
     plug = require('gulp-load-plugins')(),
     pkg = require('./package.json'),

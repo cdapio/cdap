@@ -14,7 +14,7 @@
  * the License.
  */
 
-import uuid from 'node-uuid';
+import uuid from 'uuid/v4';
 import cdapavsc from 'cdap-avsc';
 const SCHEMA_TYPES = {
   'types': [
@@ -82,7 +82,7 @@ function getParsedSchema(schema) {
     type: 'string',
     displayType: 'string',
     nullable: false,
-    id: 'a' + uuid.v4().split('-').join(''),
+    id: 'a' + uuid().split('-').join(''),
     nested: false
   };
   const isEmptySchema = (schema) => {
@@ -109,7 +109,7 @@ function getParsedSchema(schema) {
     let partialObj = parseType(type);
 
     return Object.assign({}, partialObj, {
-      id: 'a' + uuid.v4().split('-').join(''),
+      id: 'a' + uuid().split('-').join(''),
       name: field.getName()
     });
 
@@ -126,7 +126,7 @@ function getParsedSchemaForDataPrep(schema) {
     type: 'string',
     displayType: 'string',
     nullable: false,
-    id: 'a' + uuid.v4().split('-').join(''),
+    id: 'a' + uuid().split('-').join(''),
     nested: false
   };
   const isEmptySchema = (schema) => {
@@ -150,7 +150,7 @@ function getParsedSchemaForDataPrep(schema) {
     let partialObj = parseType(type);
 
     return Object.assign({}, partialObj, {
-      id: 'a' + uuid.v4().split('-').join(''),
+      id: 'a' + uuid().split('-').join(''),
       name: field.getName()
     });
 

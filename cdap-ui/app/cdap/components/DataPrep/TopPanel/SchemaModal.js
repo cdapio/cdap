@@ -24,7 +24,7 @@ import Loadable from 'react-loadable';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
-import fileDownload from 'react-file-download';
+import fileDownload from 'js-file-download';
 import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';

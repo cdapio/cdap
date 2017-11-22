@@ -18,7 +18,7 @@ import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import shortid from 'shortid';
 import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTab/DirectivesTabRow';
-import fileDownload from 'react-file-download';
+import fileDownload from 'js-file-download';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import T from 'i18n-react';
 
