@@ -25,7 +25,7 @@ if [ -f /tmp/mavenrepo.tar.bz2 ]; then
 fi
 
 chown -R cdap ${__tmpdir} ~cdap
-su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx3072m -XX:MaxPermSize=256m' mvn package -DskipTests" || exit 1
+su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx4096m -XX:MaxPermSize=256m' mvn package -DskipTests" || exit 1
 rm -rf ${__tmpdir}
 
 exit 0
