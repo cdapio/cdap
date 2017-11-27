@@ -23,8 +23,6 @@ public final class LoggingConfiguration {
   // Common between Distributed and Single Node
   public static final String LOG_PATTERN = "log.pattern";
   public static final String LOG_BASE_DIR = "log.base.dir";
-  @Deprecated
-  public static final String LOG_FILE_SYNC_INTERVAL_BYTES = "log.file.sync.interval.bytes";
 
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";

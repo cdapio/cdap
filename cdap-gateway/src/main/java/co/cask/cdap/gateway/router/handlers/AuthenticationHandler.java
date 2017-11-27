@@ -288,32 +288,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
   private static List<String> getConfiguredAuthServerURLs(CConfiguration cConf) {
     List<String> urls = new ArrayList<>();
-
     // Get it from the configuration
     for (String url : cConf.getTrimmedStrings(Constants.Security.AUTH_SERVER_ANNOUNCE_URLS)) {
       urls.add(url + "/" + GrantAccessToken.Paths.GET_TOKEN);
     }
-    if (!urls.isEmpty()) {
-      return Collections.unmodifiableList(urls);
-    }
-
-    // Get it from the old configuration for backward compatibility
-    String protocol = getProtocol(cConf);
-    int port = getPort(cConf);
-
-    String announceAddress = cConf.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED);
-    if (announceAddress != null) {
-      LOG.warn("Deprecated configuration '{}' is used. Please upgrade to use '{}' instead.",
-               Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED,
-               Constants.Security.AUTH_SERVER_ANNOUNCE_URLS);
-      if (announceAddress.matches(".+:[0-9]+")) {
-        // announceAddress already contains port
-        urls.add(String.format("%s://%s/%s", protocol, announceAddress, GrantAccessToken.Paths.GET_TOKEN));
-      } else {
-        urls.add(String.format("%s://%s:%d/%s", protocol, announceAddress, port, GrantAccessToken.Paths.GET_TOKEN));
-      }
-    }
-
     return Collections.unmodifiableList(urls);
   }
 

@@ -43,23 +43,12 @@ public final class MetricsTags {
     return tagMap;
   }
 
-  // TODO: Use Id.Flow.Flowlet
-  @Deprecated
-  public static Map<String, String> flowlet(Id.Program flowId, String flowletId) {
-    return flowlet(flowId.toEntityId().flowlet(flowletId));
-  }
-
   public static Map<String, String> flowlet(FlowletId flowletId) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, flowletId.getNamespace(),
       Constants.Metrics.Tag.APP, flowletId.getApplication(),
       Constants.Metrics.Tag.FLOW, flowletId.getFlow(),
       Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet());
-  }
-
-  @Deprecated
-  public static Map<String, String> service(Id.Program id) {
-    return service(id.getApplication().toEntityId().service(id.getId()));
   }
 
   public static Map<String, String> service(ServiceId serviceId) {
