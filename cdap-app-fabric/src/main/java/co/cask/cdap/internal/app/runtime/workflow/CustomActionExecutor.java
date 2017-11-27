@@ -22,19 +22,13 @@ import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionContext;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -46,62 +40,20 @@ import org.slf4j.LoggerFactory;
  */
 class CustomActionExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(CustomActionExecutor.class);
-  private final ProgramRunId workflowRunId;
-  private final BasicWorkflowContext workflowContext;
-  private final WorkflowAction action;
   private final CustomAction customAction;
   private final BasicCustomActionContext customActionContext;
 
   /**
    * Creates instance which will be used to initialize, run, and destroy the custom action.
-   * @param workflowRunId the Workflow run which started the execution of this custom action.
-   * @param workflowContext an instance of context
-   * @param instantiator to instantiates the custom action class
-   * @param classLoader used to load the custom action class
-   * @throws Exception when failed to instantiate the custom action
-   * @deprecated Deprecated as of 3.5.0
-   */
-  @Deprecated
-  CustomActionExecutor(ProgramRunId workflowRunId, BasicWorkflowContext workflowContext,
-                       InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
-    this.workflowRunId = workflowRunId;
-    this.workflowContext = workflowContext;
-    this.action = createAction(workflowContext, instantiator, classLoader);
-    this.customAction = null;
-    this.customActionContext = null;
-  }
-
-  /**
-   * Creates instance which will be used to initialize, run, and destroy the custom action.
-   * @param workflowRunId the Workflow run which started the execution of this custom action.
    * @param customActionContext an instance of context
    * @param instantiator to instantiates the custom action class
    * @param classLoader used to load the custom action class
    * @throws Exception when failed to instantiate the custom action
    */
-  CustomActionExecutor(ProgramRunId workflowRunId, BasicCustomActionContext customActionContext,
+  CustomActionExecutor(BasicCustomActionContext customActionContext,
                        InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
-    this.workflowRunId = workflowRunId;
     this.customActionContext = customActionContext;
     this.customAction = createCustomAction(customActionContext, instantiator, classLoader);
-    this.action = null;
-    this.workflowContext = null;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Deprecated
-  private WorkflowAction createAction(BasicWorkflowContext context, InstantiatorFactory instantiator,
-                                      ClassLoader classLoader) throws Exception {
-    Class<?> clz = Class.forName(context.getSpecification().getClassName(), true, classLoader);
-    Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
-    WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
-    Metrics metrics = new ProgramUserMetrics(
-      context.getProgramMetrics().childContext(Constants.Metrics.Tag.NODE, context.getSpecification().getName()));
-    Reflections.visit(action, action.getClass(),
-                      new PropertyFieldSetter(context.getSpecification().getProperties()),
-                      new DataSetFieldSetter(context),
-                      new MetricsFieldSetter(metrics));
-    return action;
   }
 
   @SuppressWarnings("unchecked")
@@ -118,38 +70,6 @@ class CustomActionExecutor {
   }
 
   void execute() throws Exception {
-    if (action == null) {
-      // Execute the new CustomAction
-      executeCustomAction();
-      return;
-    }
-    workflowContext.executeChecked(() -> {
-      try {
-        workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-        workflowContext.execute(context -> action.initialize(workflowContext));
-        workflowContext.execute(context -> action.run());
-        workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
-      } catch (Throwable t) {
-        Throwable rootCause = Throwables.getRootCause(t);
-        if (rootCause instanceof InterruptedException) {
-          workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
-        } else {
-          workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
-        }
-        throw Throwables.propagate(rootCause);
-
-      } finally {
-        try {
-          workflowContext.execute(context -> action.destroy());
-        } catch (Throwable t) {
-          LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
-                    workflowContext.getSpecification().getName(), workflowRunId, t);
-        }
-      }
-    });
-  }
-
-  private void executeCustomAction() throws Exception {
     try {
       customActionContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
       // AbstractCustomAction implements final initialize(context) and requires subclass to

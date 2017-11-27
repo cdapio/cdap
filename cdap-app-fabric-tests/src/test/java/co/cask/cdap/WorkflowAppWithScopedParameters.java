@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -25,7 +26,6 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
@@ -206,21 +206,11 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     }
   }
 
-  public static class OneAction extends AbstractWorkflowAction {
+  public static class OneAction extends AbstractCustomAction {
 
     @Override
     public void run() {
-      Map<String, WorkflowNodeState> nodeStates = getContext().getNodeStates();
-      Preconditions.checkArgument(2 == nodeStates.size());
-      WorkflowNodeState nodeState = nodeStates.get(ONE_MR);
-      Preconditions.checkArgument(ONE_MR.equals(nodeState.getNodeId()));
-      Preconditions.checkArgument(nodeState.getRunId() != null);
-      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
-
-      nodeState = nodeStates.get(ONE_SPARK);
-      Preconditions.checkArgument(ONE_SPARK.equals(nodeState.getNodeId()));
-      Preconditions.checkArgument(nodeState.getRunId() != null);
-      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      // no-op
     }
   }
 }

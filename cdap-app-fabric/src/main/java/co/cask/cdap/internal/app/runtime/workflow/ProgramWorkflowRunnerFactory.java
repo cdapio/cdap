@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -64,32 +63,26 @@ final class ProgramWorkflowRunnerFactory {
   }
 
   /**
-   * Gives the appropriate instance of {@link ProgramWorkflowRunner} depending upon the program type found in the
-   * properties of the {@link WorkflowActionSpecification}.
+   * Gives the appropriate instance of {@link ProgramWorkflowRunner} depending upon the passed programType
    *
-   * @param actionSpec the {@link WorkflowActionSpecification}
+   * @param programType the programType
    * @param token the {@link WorkflowToken}
    * @param nodeStates the map of node ids to node states
    * @return the appropriate concrete implementation of {@link ProgramWorkflowRunner} for the program
    */
-  ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec, WorkflowToken token,
+  ProgramWorkflowRunner getProgramWorkflowRunner(SchedulableProgramType programType, WorkflowToken token,
                                                  String nodeId, Map<String, WorkflowNodeState> nodeStates) {
-
-    if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
-      switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
-        case MAPREDUCE:
-          return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
-                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE,
-                                                  programStateWriter);
-        case SPARK:
-          return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
-                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK,
-                                                  programStateWriter);
-        default:
-          LOG.debug("No workflow program runner found for this program");
-      }
-    } else {
-      LOG.debug("ProgramType key not found in Workflow Action Specification Properties");
+    switch (programType) {
+      case MAPREDUCE:
+        return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
+                                                workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE,
+                                                programStateWriter);
+      case SPARK:
+        return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
+                                                workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK,
+                                                programStateWriter);
+      default:
+        LOG.debug("No workflow program runner found for this program");
     }
     return null;  // if no workflow program runner was found for this program
   }

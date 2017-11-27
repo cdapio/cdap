@@ -97,16 +97,6 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
   /**
    * Adds a custom action to the {@link Workflow}.
    * @param action the action to be added
-   * @deprecated Deprecated as of 3.5.0. Please use {@link AbstractWorkflow#addAction(CustomAction)} instead.
-   */
-  @Deprecated
-  protected final void addAction(WorkflowAction action) {
-    configurer.addAction(action);
-  }
-
-  /**
-   * Adds a custom action to the {@link Workflow}.
-   * @param action the action to be added
    */
   protected final void addAction(CustomAction action) {
     configurer.addAction(action);

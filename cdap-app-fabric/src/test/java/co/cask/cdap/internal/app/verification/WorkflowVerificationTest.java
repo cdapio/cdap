@@ -262,7 +262,6 @@ public class WorkflowVerificationTest {
     actionNode = (WorkflowActionNode) fork1Branch1.get(0);
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "DummyMR")));
-    Assert.assertNull(actionNode.getActionSpecification());
 
     WorkflowForkNode fork2 = (WorkflowForkNode) fork1Branch1.get(1);
     List<WorkflowNode> fork2Branch1 = fork2.getBranches().get(0);
@@ -290,7 +289,6 @@ public class WorkflowVerificationTest {
     actionNode = (WorkflowActionNode) fork4Branch1.get(0);
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "DummyMR")));
-    Assert.assertNull(actionNode.getActionSpecification());
 
     actionNode = (WorkflowActionNode) fork4Branch1.get(1);
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
