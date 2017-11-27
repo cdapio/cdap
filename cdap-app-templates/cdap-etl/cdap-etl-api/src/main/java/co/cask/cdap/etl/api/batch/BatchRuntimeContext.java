@@ -20,8 +20,6 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.api.TransformContext;
 
-import java.util.Map;
-
 /**
  * Context passed to Batch Source and Sink.
  */
@@ -36,13 +34,4 @@ public interface BatchRuntimeContext extends DatasetContext, TransformContext {
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
   long getLogicalStartTime();
-
-  /**
-   * Returns runtime arguments of the Batch Job.
-   *
-   * @return runtime arguments of the Batch Job.
-   * @deprecated use {@link #getArguments()} instead
-   */
-  @Deprecated
-  Map<String, String> getRuntimeArguments();
 }

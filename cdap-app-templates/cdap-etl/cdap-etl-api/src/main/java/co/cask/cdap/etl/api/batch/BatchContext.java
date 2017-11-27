@@ -17,16 +17,12 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
-import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
-
-import java.util.Map;
 
 /**
  * Context passed to Batch Source and Sink.
@@ -62,26 +58,4 @@ public interface BatchContext extends DatasetContext, TransformContext {
    */
   @Override
   SettableArguments getArguments();
-
-  /**
-   * Returns runtime arguments of the Batch Job.
-   *
-   * @return runtime arguments of the Batch Job.
-   * @deprecated use {@link #getArguments()} instead
-   */
-  @Deprecated
-  Map<String, String> getRuntimeArguments();
-
-  /**
-   * Updates an entry in the runtime arguments.
-   *
-   * @param key key to update
-   * @param value value to update to
-   * @param overwrite if {@code true} and if the key exists in the runtime arguments, it will get overwritten to
-   *                  the given value; if {@code false}, the existing value of the key won't get updated.
-   * @deprecated use {@link #getArguments()} instead
-   */
-  @Deprecated
-  void setRuntimeArgument(String key, String value, boolean overwrite);
-
 }

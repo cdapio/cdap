@@ -40,15 +40,6 @@ public class ETLConfig extends Config {
   private final List<Connection> connections;
   private final Resources resources;
 
-  /**
-   * @deprecated use builders from subclasses instead.
-   */
-  @Deprecated
-  public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                   List<Connection> connections, Resources resources) {
-    this(source, sinks, transforms, connections, resources, true);
-  }
-
   protected ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                       List<Connection> connections, Resources resources, boolean stageLoggingEnabled) {
     this.source = source;
@@ -89,7 +80,7 @@ public class ETLConfig extends Config {
 
   public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms,
                    List<Connection> connections, Resources resources) {
-    this(source, ImmutableList.of(sink), transforms, connections, resources);
+    this(source, ImmutableList.of(sink), transforms, connections, resources, true);
   }
 
   public ETLConfig getCompatibleConfig() {
@@ -108,7 +99,7 @@ public class ETLConfig extends Config {
       sinkStages.add(sink.getCompatibleStage("sink." + sink.getName() + "." + pluginNum));
     }
     List<Connection> connectionList = connections == null ? new ArrayList<Connection>() : connections;
-    return new ETLConfig(sourceStage, sinkStages, transformStages, connectionList, resources);
+    return new ETLConfig(sourceStage, sinkStages, transformStages, connectionList, resources, true);
   }
 
   public ETLStage getSource() {

@@ -84,7 +84,7 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
       output.alias(config.alias);
       context.addOutput(output);
     } else {
-      context.addOutput(config.alias, outputFormatProvider);
+      context.addOutput(Output.of(config.alias, outputFormatProvider));
     }
   }
 

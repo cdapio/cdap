@@ -161,12 +161,6 @@ public final class ETLBatchConfig extends ETLConfig {
       this.endingActions = new ArrayList<>();
     }
 
-    @Deprecated
-    public Builder setEngine(co.cask.cdap.etl.proto.Engine engine) {
-      this.engine = engine.toEngine();
-      return this;
-    }
-
     public Builder setEngine(Engine engine) {
       this.engine = engine;
       return this;

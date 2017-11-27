@@ -18,7 +18,6 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
@@ -28,8 +27,6 @@ import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -51,21 +48,6 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
     super(pipelineRuntime, stageSpec, datasetContext, sec.getAdmin());
     this.sinkFactory = sinkFactory;
     this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
-  }
-
-  @Override
-  public void addOutput(String datasetName) {
-    addOutput(datasetName, Collections.<String, String>emptyMap());
-  }
-
-  @Override
-  public void addOutput(String datasetName, Map<String, String> arguments) {
-    sinkFactory.addOutput(getStageName(), suffixOutput(getOutput(Output.ofDataset(datasetName, arguments))));
-  }
-
-  @Override
-  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
-    sinkFactory.addOutput(getStageName(), suffixOutput(getOutput(Output.of(outputName, outputFormatProvider))));
   }
 
   @Override

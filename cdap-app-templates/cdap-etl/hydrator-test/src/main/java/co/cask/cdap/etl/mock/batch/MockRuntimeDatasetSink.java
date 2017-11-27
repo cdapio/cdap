@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -85,7 +86,7 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
-    context.addOutput(config.tableName);
+    context.addOutput(Output.ofDataset(config.tableName));
     if (!context.datasetExists(config.runtimeDatasetName)) {
       context.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(), DatasetProperties.EMPTY);
     }
