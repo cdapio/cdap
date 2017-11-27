@@ -624,6 +624,34 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.state.schemaAdvance = !this.state.schemaAdvance;
   }
+
+  // TOOLTIPS FOR DISABLED SCHEMA ACTIONS
+  getImportDisabledTooltip() {
+    if (this.datasetAlreadyExists) {
+      return `The dataset '${this.datasetId}' already exists. Its schema cannot be modified.`;
+    } else if (this.state.schemaAdvance) {
+      return 'Importing a schema in Advanced mode is not supported';
+    }
+    return '';
+  }
+
+  getPropagateDisabledTooltip() {
+    if (this.state.node.type === 'splittertransform') {
+      return 'Propagating a schema with Splitter plugins is currently not supported';
+    } else if (this.state.schemaAdvance) {
+      return 'Propagating a schema in Advanced mode is not supported';
+    }
+    return '';
+  }
+
+  getClearDisabledTooltip() {
+    if (this.datasetAlreadyExists) {
+      return `The dataset '${this.datasetId}' already exists. Its schema cannot be cleared.`;
+    } else if (this.state.schemaAdvance) {
+      return 'Clearing a schema in Advanced mode is not supported';
+    }
+    return '';
+  }
 }
 
 angular.module(PKG.name + '.feature.hydrator')

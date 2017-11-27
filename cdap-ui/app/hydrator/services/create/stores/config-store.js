@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG, EventPipe, myPipelineApi, myAppsApi) {
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, MY_CONFIG, EventPipe, myPipelineApi, myAppsApi, HydratorPlusPlusNodeService) {
     'ngInject';
     this.state = {};
     this.mySettings = mySettings;
@@ -26,12 +26,12 @@ class HydratorPlusPlusConfigStore {
     this.$stateParams = $stateParams;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.$q = $q;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.uuid = uuid;
     this.$state = $state;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
-    this.avsc = avsc;
     this.EventPipe = EventPipe;
     this.myPipelineApi = myPipelineApi;
     this.myAppsApi = myAppsApi;
@@ -641,37 +641,14 @@ class HydratorPlusPlusConfigStore {
       }
     });
 
-    let traverseMap = (node, outputSchema, inputSchema) => {
-      if (!node) {
-        return;
-      }
-      // If we encounter an implicit schema down the stream while propagation stop there and return.
-      if (nodesMap[node] && nodesMap[node].implicitSchema) {
+    let traverseMap = (targetNodes, outputSchema, inputSchema) => {
+      if (!targetNodes) {
         return;
       }
 
-      // Stop propagating if outputSchema is a macro schema
-      if (outputSchema && outputSchema.length > 0) {
-        try {
-          this.avsc.parse(outputSchema);
-        } catch (e) {
+      targetNodes.forEach( n => {
+        if (!this.HydratorPlusPlusNodeService.shouldPropagateSchemaToNode(nodesMap[n])) {
           return;
-        }
-      }
-
-      node.forEach( n => {
-        // If we encounter an implicit schema down the stream while propagation stop there and return.
-        if (nodesMap[n].implicitSchema) {
-          return;
-        }
-
-        // If we encounter a macro schema, stop propagataion
-        if (nodesMap[n].outputSchema && nodesMap[n].outputSchema.length > 0) {
-          try {
-            this.avsc.parse(this.state.node.outputSchema);
-          } catch (e) {
-            return;
-          }
         }
 
         let schemaToPropagate = outputSchema;
@@ -685,20 +662,35 @@ class HydratorPlusPlusConfigStore {
         if (nodesMap[n].outputSchemaProperty) {
           nodesMap[n].plugin.properties[nodesMap[n].outputSchemaProperty] = schemaToPropagate;
         }
-        traverseMap(adjacencyMap[n], schemaToPropagate);
+        traverseMap(adjacencyMap[n], schemaToPropagate, schemaToPropagate);
       });
     };
+
     outputSchema = nodesMap[pluginId].outputSchema;
-    let inputSchema = nodesMap[pluginId].inputSchema && Array.isArray(nodesMap[pluginId].inputSchema) ? nodesMap[pluginId].inputSchema[0].schema : nodesMap[pluginId].inputSchema;
+
+    let inputSchema = nodesMap[pluginId].inputSchema && Array.isArray(nodesMap[pluginId].inputSchema) && nodesMap[pluginId].inputSchema.length ? nodesMap[pluginId].inputSchema[0].schema : nodesMap[pluginId].inputSchema;
 
     try {
-      schema = JSON.parse(outputSchema);
+      // We need this type check because of the way we store schemas right now.
+      // After we refactor then there should be a consistent format for all the schemas.
+      if (Array.isArray(outputSchema)) {
+        schema = JSON.parse(outputSchema[0].schema);
+      } else if (typeof outputSchema === 'string') {
+        schema = JSON.parse(outputSchema);
+      }
+
       schema.fields = schema.fields.map(field => {
         delete field.readonly;
         return field;
       });
-      outputSchema = JSON.stringify(schema);
+
+      if (nodesMap[pluginId].plugin.name === 'Stream') {
+        schema.fields = this.HydratorPlusPlusNodeService.getStreamSchemaPrefix(schema).concat(schema.fields);
+      }
+
+      outputSchema = [this.HydratorPlusPlusNodeService.getOutputSchemaObj(JSON.stringify(schema))];
     } catch (e) {}
+
     traverseMap(adjacencyMap[pluginId], outputSchema, inputSchema);
   }
   getNodes() {

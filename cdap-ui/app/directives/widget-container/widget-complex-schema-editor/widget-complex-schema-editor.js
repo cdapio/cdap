@@ -196,6 +196,9 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
     if (!Array.isArray(schemas)) {
       schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(schemas)];
+    // this is for converting old schemas (pre 4.3.2) to new format
+    } else if (Array.isArray(schemas) && schemas.length && !schemas[0].hasOwnProperty('schema')) {
+      schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(HydratorPlusPlusNodeService.getSchemaObj(schemas))];
     }
 
     vm.schemas = schemas.map((schema) => {
