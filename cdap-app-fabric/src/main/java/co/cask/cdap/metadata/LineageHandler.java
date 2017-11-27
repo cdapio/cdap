@@ -18,6 +18,7 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
@@ -29,7 +30,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.http.AbstractHttpHandler;

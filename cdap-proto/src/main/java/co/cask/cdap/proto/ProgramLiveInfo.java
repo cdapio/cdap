@@ -25,14 +25,12 @@ import co.cask.cdap.proto.id.ProgramId;
 public abstract class ProgramLiveInfo {
   private final String app;
   private final String type;
-  private final String id;
   private final String name;
   private final String runtime;
 
   public ProgramLiveInfo(ProgramId programId, String runtime) {
     this.app = programId.getApplication();
     this.type = programId.getType().getPrettyName();
-    this.id = programId.getProgram();
     this.name = programId.getProgram();
     this.runtime = runtime;
   }
@@ -43,11 +41,6 @@ public abstract class ProgramLiveInfo {
 
   public ProgramType getType() {
     return ProgramType.valueOfPrettyName(type);
-  }
-
-  @Deprecated
-  public String getId() {
-    return id;
   }
 
   public String getName() {

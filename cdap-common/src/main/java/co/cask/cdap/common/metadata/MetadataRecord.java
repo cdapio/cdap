@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata;
+package co.cask.cdap.common.metadata;
 
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 
 import java.util.Collections;
 import java.util.Map;
@@ -26,8 +27,8 @@ import java.util.Set;
 /**
  * Represents the complete metadata of a {@link NamespacedEntityId} including its properties, tags in a given
  * {@link MetadataScope}
+ * this class was in cdap-api earlier and has been moved from cdap-common as its used only internally
  */
-@Deprecated
 public class MetadataRecord {
   private final NamespacedEntityId entityId;
   private final MetadataScope scope;
