@@ -23,7 +23,6 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.id.FlowletId;

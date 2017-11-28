@@ -35,7 +35,6 @@ import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;

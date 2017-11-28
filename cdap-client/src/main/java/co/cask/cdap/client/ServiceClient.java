@@ -26,7 +26,6 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -137,24 +136,6 @@ public class ServiceClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
       throw new ServiceUnavailableException(service.getProgram());
     }
-  }
-
-  /**
-   * Gets a {@link URL} to call methods for a {@link Service}. If multiple versions exist, traffic to the {@link URL}
-   * will be distributed to each version according to routing strategy. If only one version exists, this version
-   * will always be reached with the {@link URL}.
-   *
-   * @param service ID of the service
-   * @return a URL to call methods of the service
-   * @throws NotFoundException @throws NotFoundException if the app or service could not be found
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Please use {@link #getServiceURL(ServiceId)} or
-   *             {@link #getVersionedServiceURL(ServiceId)} instead
-   */
-  public URL getServiceURL(Id.Service service)
-    throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
-    return getServiceURL(service.toEntityId());
   }
 
   /**

@@ -21,9 +21,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -51,7 +49,6 @@ import javax.inject.Inject;
 public class LineageClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
 
