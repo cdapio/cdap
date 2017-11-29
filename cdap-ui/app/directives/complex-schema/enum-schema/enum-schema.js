@@ -68,7 +68,7 @@ function EnumSchemaController (avsc, $timeout, $scope, uuid) {
 
     // Validate
     try {
-      avsc.parse(obj);
+      avsc.parse(obj, { wrapUnions: true });
     } catch (e) {
       vm.error = '' + e;
       return;

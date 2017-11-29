@@ -76,7 +76,7 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
 
     // Validate
     try {
-      avsc.parse(obj);
+      avsc.parse(obj, { wrapUnions: true });
     } catch (e) {
       let err = '' + e;
       err = err.split(':');
