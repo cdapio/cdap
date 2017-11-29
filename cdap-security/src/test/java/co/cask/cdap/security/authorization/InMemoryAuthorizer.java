@@ -30,7 +30,7 @@ import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
+import co.cask.cdap.security.spi.authorization.NotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
@@ -138,27 +138,27 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void dropRole(Role role) throws RoleNotFoundException {
+  public void dropRole(Role role) throws NotFoundException {
     Set<Principal> removed = roleToPrincipals.remove(role);
     if (removed == null) {
-      throw new RoleNotFoundException(role);
+      throw new NotFoundException(role);
     }
   }
 
   @Override
-  public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+  public void addRoleToPrincipal(Role role, Principal principal) throws NotFoundException {
     Set<Principal> principals = roleToPrincipals.get(role);
     if (principals == null) {
-      throw new RoleNotFoundException(role);
+      throw new NotFoundException(role);
     }
     principals.add(principal);
   }
 
   @Override
-  public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+  public void removeRoleFromPrincipal(Role role, Principal principal) throws NotFoundException {
     Set<Principal> principals = roleToPrincipals.get(role);
     if (principals == null) {
-      throw new RoleNotFoundException(role);
+      throw new NotFoundException(role);
     }
     principals.remove(principal);
   }

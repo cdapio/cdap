@@ -479,7 +479,8 @@ public class TestBase {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal, ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                                         principal, ImmutableSet.of(Action.ADMIN));
     }
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);

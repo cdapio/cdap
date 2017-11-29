@@ -16,9 +16,7 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -26,20 +24,12 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Abstract Class that implements common methods for the {@link AuthorizationEnforcer} interface.
  */
 public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnforcer {
-
-  private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
-    @Override
-    public boolean apply(EntityId entityId) {
-      return true;
-    }
-  };
 
   private final boolean securityAuthorizationEnabled;
 
@@ -66,30 +56,6 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
     if (!disallowed.isEmpty()) {
       throw new UnauthorizedException(principal, disallowed, entity, unauthorizedException);
     }
-  }
-
-  @Override
-  public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    if (!isSecurityAuthorizationEnabled()) {
-      return ALLOW_ALL;
-    }
-    return new Predicate<EntityId>() {
-      @Override
-      public boolean apply(EntityId entityId) {
-        for (Action action : Action.values()) {
-          try {
-            enforce(entityId, principal, action);
-            return true;
-          } catch (UnauthorizedException ignored) {
-            // The principal does not have this particular privilege but for filter as long as they have any privilege
-            // we return true, so ignoring this exception.
-          } catch (Exception ex) {
-            throw new RuntimeException(ex);
-          }
-        }
-        return false;
-      }
-    };
   }
 
   protected boolean isSecurityAuthorizationEnabled() {

@@ -34,7 +34,6 @@ import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -139,7 +138,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void dropRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthorizedException, NotFoundException, co.cask.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
@@ -159,7 +158,8 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthenticatedException, UnauthorizedException, NotFoundException,
+    co.cask.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
@@ -168,7 +168,8 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthenticatedException, UnauthorizedException, NotFoundException,
+    co.cask.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
@@ -196,11 +197,11 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   private void executeExistingRolesRequest(Role role, HttpRequest request) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, RoleNotFoundException,
-    NotFoundException {
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException,
+    co.cask.cdap.security.spi.authorization.NotFoundException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new RoleNotFoundException(role);
+      throw new co.cask.cdap.security.spi.authorization.NotFoundException(role);
     }
   }
 
