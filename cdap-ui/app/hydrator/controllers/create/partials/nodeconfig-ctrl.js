@@ -202,7 +202,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         angular.forEach(schemaArr, (schemaObj) => {
           if (schemaObj.schema) {
             try {
-              this.avsc.parse(schemaObj.schema);
+              this.avsc.parse(schemaObj.schema, { wrapUnions: true });
             } catch (e) {
               this.state.schemaAdvance = true;
             }
@@ -210,7 +210,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         });
       } else {
         try {
-          this.avsc.parse(schemaArr);
+          this.avsc.parse(schemaArr, { wrapUnions: true });
         } catch (e) {
           this.state.schemaAdvance = true;
         }
@@ -616,7 +616,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   toggleAdvance() {
     if (this.state.node.outputSchema.length > 0) {
       try {
-        this.avsc.parse(this.state.node.outputSchema[0].schema);
+        this.avsc.parse(this.state.node.outputSchema[0].schema, { wrapUnions: true });
       } catch (e) {
         this.state.node.outputSchema = [this.HydratorPlusPlusNodeService.getOutputSchemaObj('')];
       }

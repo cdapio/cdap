@@ -148,10 +148,10 @@ class HydratorPlusPlusNodeService {
     try {
       if (Array.isArray(schema)) {
         if (!_.isEmpty(schema[0].schema)) {
-          this.avsc.parse(schema[0].schema);
+          this.avsc.parse(schema[0].schema, { wrapUnions: true });
         }
       } else if (typeof schema === 'string') {
-        this.avsc.parse(schema);
+        this.avsc.parse(schema, { wrapUnions: true });
       }
     } catch (e) {
       return false;
