@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -112,33 +111,13 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
-  }
-
-  @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    grant(Authorizable.fromEntityId(entity), principal, actions);
-  }
-
-  @Override
   public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     getActions(authorizable, principal).addAll(actions);
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    revoke(Authorizable.fromEntityId(entity), principal, actions);
-  }
-
-  @Override
   public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     getActions(authorizable, principal).removeAll(actions);
-  }
-
-  @Override
-  public void revoke(EntityId entity) throws Exception {
-    revoke(Authorizable.fromEntityId(entity));
   }
 
   @Override

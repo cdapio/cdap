@@ -173,21 +173,21 @@ public class AuthorizationHandlerTest {
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+          client.grant(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
         }
       }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
+          client.revoke(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
         }
       }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.revoke(ns1);
+          client.revoke(Authorizable.fromEntityId(ns1));
         }
       }, feature, configSetting);
 
@@ -242,10 +242,10 @@ public class AuthorizationHandlerTest {
     // grant() and revoke(EntityId, String, Set<Action>)
     verifyAuthFailure(ns1, admin, Action.READ);
 
-    client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
     verifyAuthSuccess(ns1, admin, Action.READ);
 
-    client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
+    client.revoke(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
     verifyAuthFailure(ns1, admin, Action.READ);
   }
 
@@ -255,12 +255,12 @@ public class AuthorizationHandlerTest {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId, String)
-    client.grant(ns1, adminGroup, ImmutableSet.of(Action.READ));
-    client.grant(ns1, bob, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), adminGroup, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), bob, ImmutableSet.of(Action.READ));
     verifyAuthSuccess(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
 
-    client.revoke(ns1, adminGroup, EnumSet.allOf(Action.class));
+    client.revoke(Authorizable.fromEntityId(ns1), adminGroup, EnumSet.allOf(Action.class));
     verifyAuthFailure(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
   }
@@ -271,14 +271,14 @@ public class AuthorizationHandlerTest {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId)
-    client.grant(ns1, adminGroup, ImmutableSet.of(Action.READ));
-    client.grant(ns1, bob, ImmutableSet.of(Action.READ));
-    client.grant(ns2, adminGroup, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), adminGroup, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), bob, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns2), adminGroup, ImmutableSet.of(Action.READ));
     verifyAuthSuccess(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
     verifyAuthSuccess(ns2, adminGroup, Action.READ);
 
-    client.revoke(ns1);
+    client.revoke(Authorizable.fromEntityId(ns1));
     verifyAuthFailure(ns1, adminGroup, Action.READ);
     verifyAuthFailure(ns1, bob, Action.READ);
     verifyAuthSuccess(ns2, adminGroup, Action.READ);
@@ -339,7 +339,7 @@ public class AuthorizationHandlerTest {
     verifyAuthFailure(ns1, spiderman, Action.READ);
 
     // give a permission to engineers role
-    client.grant(ns1, engineers, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), engineers, ImmutableSet.of(Action.READ));
 
     // check that a spiderman who has engineers role has access
     verifyAuthSuccess(ns1, spiderman, Action.READ);
@@ -348,7 +348,7 @@ public class AuthorizationHandlerTest {
     Assert.assertEquals(Sets.newHashSet(new Privilege(ns1, Action.READ)), client.listPrivileges(spiderman));
 
     // revoke action from the role
-    client.revoke(ns1, engineers, ImmutableSet.of(Action.READ));
+    client.revoke(Authorizable.fromEntityId(ns1), engineers, ImmutableSet.of(Action.READ));
 
     // now the privileges for spiderman should be empty
     Assert.assertEquals(new HashSet<>(), client.listPrivileges(spiderman));
@@ -376,7 +376,7 @@ public class AuthorizationHandlerTest {
   @Test
   public void testGrantOnNonExistingEntity() throws Exception {
     // should be able to grant on non existing entities
-    client.grant(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
+    client.grant(Authorizable.fromEntityId(Ids.namespace("ns3")), admin, ImmutableSet.of(Action.ADMIN));
     verifyAuthSuccess(Ids.namespace("ns3"), admin, Action.ADMIN);
   }
 
@@ -384,14 +384,13 @@ public class AuthorizationHandlerTest {
   public void testRevokeOnNonExistingEntity()
     throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
     // revoke on non exiting entities should work fine
-    client.revoke(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
+    client.revoke(Authorizable.fromEntityId(Ids.namespace("ns3")), admin, ImmutableSet.of(Action.ADMIN));
   }
 
   @Test
-  public void testRevokeAllOnNonExistingEntity()
-    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+  public void testRevokeAllOnNonExistingEntity() throws Exception {
     // revoke on non existing entities should work fine
-    client.revoke(Ids.namespace("ns3"));
+    client.revoke(Authorizable.fromEntityId(Ids.namespace("ns3")));
   }
 
   @Test

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
@@ -42,28 +41,13 @@ public class DelegatingPrivilegeManager implements PrivilegesManager {
   }
 
   @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    delegateAuthorizer.grant(entity, principal, actions);
-  }
-
-  @Override
   public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     delegateAuthorizer.grant(authorizable, principal, actions);
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    delegateAuthorizer.revoke(entity, principal, actions);
-  }
-
-  @Override
   public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     delegateAuthorizer.revoke(authorizable, principal, actions);
-  }
-
-  @Override
-  public void revoke(EntityId entity) throws Exception {
-    delegateAuthorizer.revoke(entity);
   }
 
   @Override

@@ -93,7 +93,7 @@ public class MetadataAdminAuthorizationTest {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
 
@@ -102,39 +102,48 @@ public class MetadataAdminAuthorizationTest {
     SecurityRequestContext.setUserId(ALICE.getName());
     ApplicationId applicationId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     // grant all the privileges needed to deploy the app
-    authorizer.grant(applicationId, ALICE, Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1.0-SNAPSHOT"),
+    authorizer.grant(Authorizable.fromEntityId(applicationId), ALICE, Collections.singleton(Action.ADMIN));
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(),
+                                                                            "1.0-SNAPSHOT")),
                      ALICE, Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME)), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2)), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3)), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME)), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME)), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName()), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName()), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(NamespaceId.DEFAULT.datasetType(ObjectMappedTable.class.getName()), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(ObjectMappedTable.class.getName())),
+                     ALICE,
                      Collections.singleton(Action.ADMIN));
     // no auto grant now, need to have privileges on the program to be able to see the programs
-    authorizer.grant(applicationId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME)),
+                     ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
+                                                                     AllProgramsApp.NoOpService.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKER,
+                                                                     AllProgramsApp.NoOpWorker.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SPARK,
+                                                                     AllProgramsApp.NoOpSpark.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                     AllProgramsApp.NoOpMR.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                     AllProgramsApp.NoOpMR2.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKFLOW,
+                                                                     AllProgramsApp.NoOpWorkflow.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
 
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);

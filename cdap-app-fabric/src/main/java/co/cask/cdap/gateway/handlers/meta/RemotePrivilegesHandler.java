@@ -20,6 +20,7 @@ import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.AuthorizationPrivilege;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -107,7 +108,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Principal principal = deserializeNext(arguments);
     Set<Action> actions = deserializeNext(arguments, SET_OF_ACTIONS);
     LOG.trace("Granting {} on {} to {}", actions, entityId, principal);
-    privilegesManager.grant(entityId, principal, actions);
+    privilegesManager.grant(Authorizable.fromEntityId(entityId), principal, actions);
     LOG.info("Granted {} on {} to {} successfully", actions, entityId, principal);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -120,7 +121,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Principal principal = deserializeNext(arguments);
     Set<Action> actions = deserializeNext(arguments, SET_OF_ACTIONS);
     LOG.trace("Revoking {} on {} from {}", actions, entityId, principal);
-    privilegesManager.revoke(entityId, principal, actions);
+    privilegesManager.revoke(Authorizable.fromEntityId(entityId), principal, actions);
     LOG.info("Revoked {} on {} from {} successfully", actions, entityId, principal);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -131,7 +132,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     LOG.trace("Revoking all actions on {}", entityId);
-    privilegesManager.revoke(entityId);
+    privilegesManager.revoke(Authorizable.fromEntityId(entityId));
     LOG.info("Revoked all actions on {} successfully", entityId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

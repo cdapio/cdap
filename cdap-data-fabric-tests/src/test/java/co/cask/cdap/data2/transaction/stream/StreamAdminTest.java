@@ -43,6 +43,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -189,8 +190,8 @@ public abstract class StreamAdminTest {
     Assert.assertFalse(streamAdmin.exists(streamId));
 
     // clean up privilege
-    getAuthorizer().revoke(streamId);
-    getAuthorizer().revoke(otherStreamId);
+    getAuthorizer().revoke(Authorizable.fromEntityId(streamId));
+    getAuthorizer().revoke(Authorizable.fromEntityId(otherStreamId));
   }
 
   @Test
@@ -518,7 +519,7 @@ public abstract class StreamAdminTest {
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Authorizer authorizer = getAuthorizer();
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.grant(entityId, principal, actions);
+    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
     ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Action action : actions) {
       expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
@@ -530,7 +531,7 @@ public abstract class StreamAdminTest {
   private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Authorizer authorizer = getAuthorizer();
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.revoke(entityId, principal, actions);
+    authorizer.revoke(Authorizable.fromEntityId(entityId), principal, actions);
     Set<Privilege> revokedPrivileges = new HashSet<>();
     for (Action action : actions) {
       revokedPrivileges.add(new Privilege(entityId, action));

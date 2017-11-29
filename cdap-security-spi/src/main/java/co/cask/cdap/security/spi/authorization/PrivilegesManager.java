@@ -28,16 +28,6 @@ import java.util.Set;
  * Interface for managing privileges on {@link EntityId entities}.
  */
 public interface PrivilegesManager {
-  /**
-   * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} to whom {@link Action actions} are to be granted
-   * @param principal the {@link Principal} that performs the actions. This could be a user, or role
-   * @param actions the set of {@link Action actions} to grant.
-   * @deprecated As of release 4.3.0, replaced by {@link #grant(Authorizable, Principal, Set)}
-   */
-  @Deprecated
-  void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
 
   /**
    * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on {@link EntityId}
@@ -51,18 +41,6 @@ public interface PrivilegesManager {
   void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception;
 
   /**
-   * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on
-   * an {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} whose {@link Action actions} are to be revoked
-   * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
-   * @param actions the set of {@link Action actions} to revoke
-   * @deprecated As of release 4.3.0, replaced by {@link #revoke(Authorizable, Principal, Set)}
-   */
-  @Deprecated
-  void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
-
-  /**
    * Revokes a {@link Principal} authorization to perform a set of {@link Action actions} on {@link EntityId}
    * represented by the {@link Authorizable}
    * Note: this revoke is used to support wildcard privilege management.
@@ -72,16 +50,6 @@ public interface PrivilegesManager {
    * @param actions the set of {@link Action actions} to revoke
    */
   void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception;
-
-  /**
-   * Revokes all {@link Principal principals'} authorization to perform any {@link Action} on the given
-   * {@link EntityId}.
-   *
-   * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
-   * @deprecated As of release 4.3.0, replaced by {@link #revoke(Authorizable)}
-   */
-  @Deprecated
-  void revoke(EntityId entity) throws Exception;
 
   /**
    * Revokes all {@link Principal}s authorization to perform any set of {@link Action actions} on {@link EntityId}

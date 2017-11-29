@@ -19,6 +19,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
@@ -47,14 +48,14 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
+    authorizer.grant(Authorizable.fromEntityId(namespace), user, Collections.singleton(Action.READ));
     authorizer.enforce(namespace, user, Action.READ);
 
     Set<Privilege> expectedPrivileges = new HashSet<>();
     expectedPrivileges.add(new Privilege(namespace, Action.READ));
     Assert.assertEquals(expectedPrivileges, authorizer.listPrivileges(user));
 
-    authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
+    authorizer.revoke(Authorizable.fromEntityId(namespace), user, Collections.singleton(Action.READ));
     verifyAuthFailure(namespace, user, Action.READ);
   }
 
@@ -64,13 +65,13 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.grant(Authorizable.fromEntityId(namespace), user, EnumSet.allOf(Action.class));
     authorizer.enforce(namespace, user, Action.READ);
     authorizer.enforce(namespace, user, Action.WRITE);
     authorizer.enforce(namespace, user, Action.ADMIN);
     authorizer.enforce(namespace, user, Action.EXECUTE);
 
-    authorizer.revoke(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.revoke(Authorizable.fromEntityId(namespace), user, EnumSet.allOf(Action.class));
     verifyAuthFailure(namespace, user, Action.READ);
   }
 
@@ -80,19 +81,19 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.grant(Authorizable.fromEntityId(namespace), user, EnumSet.allOf(Action.class));
     authorizer.enforce(namespace, user, Action.READ);
     authorizer.enforce(namespace, user, Action.WRITE);
     authorizer.enforce(namespace, user, Action.ADMIN);
     authorizer.enforce(namespace, user, Action.EXECUTE);
 
-    authorizer.revoke(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.revoke(Authorizable.fromEntityId(namespace), user, EnumSet.allOf(Action.class));
     verifyAuthFailure(namespace, user, Action.READ);
 
     Principal role = new Principal("admins", Principal.PrincipalType.ROLE);
-    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
-    authorizer.grant(namespace, role, EnumSet.allOf(Action.class));
-    authorizer.revoke(namespace);
+    authorizer.grant(Authorizable.fromEntityId(namespace), user, Collections.singleton(Action.READ));
+    authorizer.grant(Authorizable.fromEntityId(namespace), role, EnumSet.allOf(Action.class));
+    authorizer.revoke(Authorizable.fromEntityId(namespace));
     verifyAuthFailure(namespace, user, Action.READ);
     verifyAuthFailure(namespace, role, Action.ADMIN);
     verifyAuthFailure(namespace, role, Action.READ);
@@ -163,7 +164,7 @@ public abstract class AuthorizerTest {
     verifyAuthFailure(ns1, spiderman, Action.READ);
 
     // give a permission to engineers role
-    authorizer.grant(ns1, engineers, Collections.singleton(Action.READ));
+    authorizer.grant(Authorizable.fromEntityId(ns1), engineers, Collections.singleton(Action.READ));
 
     // check that a spiderman who has engineers role has access
     authorizer.enforce(ns1, spiderman, Action.READ);
@@ -173,7 +174,7 @@ public abstract class AuthorizerTest {
                         authorizer.listPrivileges(spiderman));
 
     // revoke action from the role
-    authorizer.revoke(ns1, engineers, Collections.singleton(Action.READ));
+    authorizer.revoke(Authorizable.fromEntityId(ns1), engineers, Collections.singleton(Action.READ));
 
     // now the privileges for spiderman should be empty
     Assert.assertEquals(Collections.EMPTY_SET, authorizer.listPrivileges(spiderman));

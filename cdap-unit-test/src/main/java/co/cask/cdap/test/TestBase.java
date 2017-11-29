@@ -101,6 +101,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -341,8 +342,10 @@ public class TestBase {
       SecurityRequestContext.setUserId(user);
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(user, Principal.PrincipalType.USER);
-      authorizerInstantiator.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(NamespaceId.DEFAULT, principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+                                         ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
+                                         ImmutableSet.of(Action.ADMIN));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
@@ -475,8 +478,8 @@ public class TestBase {
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
-      authorizerInstantiator.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(NamespaceId.DEFAULT, principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal, ImmutableSet.of(Action.ADMIN));
     }
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);

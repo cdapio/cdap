@@ -113,7 +113,7 @@ public class DefaultSecureStoreServiceTest {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
 
@@ -208,7 +208,7 @@ public class DefaultSecureStoreServiceTest {
 
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.grant(entityId, principal, actions);
+    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
     ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Action action : actions) {
       expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
@@ -219,7 +219,7 @@ public class DefaultSecureStoreServiceTest {
 
   private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.revoke(entityId, principal, actions);
+    authorizer.revoke(Authorizable.fromEntityId(entityId), principal, actions);
     Set<Privilege> revokedPrivileges = new HashSet<>();
     for (Action action : actions) {
       revokedPrivileges.add(new Privilege(entityId, action));
