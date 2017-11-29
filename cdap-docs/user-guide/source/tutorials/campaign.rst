@@ -3,6 +3,8 @@
     :copyright: Copyright © 2017 Cask Data, Inc.
     :description: The CDAP User Guide: Getting Started
 
+.. _tutorials-campaign:
+
 :hide-toc: true
 
 ==========================================================

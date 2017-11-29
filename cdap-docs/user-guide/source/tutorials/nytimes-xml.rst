@@ -5,6 +5,8 @@
 
 :hide-toc: true
 
+.. _tutorials-nytimes:
+
 ==================================================
 Example: Working with New York Times XML Feed Data
 ==================================================
