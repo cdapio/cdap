@@ -20,7 +20,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.metadata.AbstractMetadataClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -59,8 +59,8 @@ public class MetadataClient extends AbstractMetadataClient {
   }
 
   @Override
-  protected URL resolve(Id.Namespace namespace, String resource) throws MalformedURLException {
-    return config.resolveNamespacedURLV3(namespace.toEntityId(), resource);
+  protected URL resolve(NamespaceId namespace, String resource) throws MalformedURLException {
+    return config.resolveNamespacedURLV3(namespace, resource);
   }
 
 }
