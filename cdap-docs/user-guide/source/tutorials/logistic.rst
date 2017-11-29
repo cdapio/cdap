@@ -5,6 +5,8 @@
 
 :hide-toc: true
 
+.. _tutorials-logistic:
+
 ===============================================================
 Example: Building a Fraud Classification Machine Learning Model
 ===============================================================

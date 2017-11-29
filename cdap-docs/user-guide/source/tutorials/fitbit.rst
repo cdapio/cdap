@@ -5,6 +5,7 @@
 
 :hide-toc: true
 
+.. _tutorials-fitbit:
 ============================================== 
 Example: Analyzing and Masking IoT Device Data
 ==============================================
