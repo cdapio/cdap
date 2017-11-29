@@ -71,15 +71,6 @@ public final class StreamInputSplit extends FileSplit implements Writable {
     this.endTime = endTime;
   }
 
-  /**
-   * @deprecated Use {@link #getEventPath()} instead.
-   */
-  @Deprecated
-  @Override
-  public Path getPath() {
-    return super.getPath();
-  }
-
   public Path getEventPath() {
     return eventPath;
   }
