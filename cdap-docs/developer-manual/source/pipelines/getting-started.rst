@@ -8,12 +8,10 @@
 Getting Started
 ===============
 
-This is a quick tutorial, covering the basics of CDAP pipelines. It assumes that you are familiar with
-CDAP, the concepts of streams, datasets, and applications in CDAP and basic operations
-in the CDAP UI, such as entering events into a stream and exploring a dataset:
+This is a quick tutorial, covering the basics of CDAP pipelines:
 
   1. `Install CDAP`_
-  #. `Start CDAP Pipelines`_
+  #. `Creating CDAP Pipelines`_
   #. `Start CDAP Studio`_
   #. `Quick Tour of CDAP Studio`_
   #. `Creating a Simple Pipeline`_
@@ -29,8 +27,8 @@ Install CDAP
 
 .. _cdap-pipelines-getting-started-start:
 
-Start CDAP Pipelines
-====================
+Creating CDAP Pipelines
+=======================
 
 - To start creating a CDAP pipeline, either select *Pipelines* from the pull-down menu in the upper
   left, or go to the :cdap-studio:`CDAP Pipelines URL <>`.
