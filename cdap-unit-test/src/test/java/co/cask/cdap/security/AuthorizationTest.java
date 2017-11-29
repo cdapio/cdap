@@ -410,7 +410,7 @@ public class AuthorizationTest extends TestBase {
     ProgramId mrId = AUTH_NAMESPACE.app(StreamAuthApp.APP).mr(StreamAuthApp.MAPREDUCE);
     authorizer.grant(Authorizable.fromEntityId(mrId.getNamespaceId()), BOB, ImmutableSet.of(Action.ADMIN));
 
-    authorizer.grant(Authorizable.fromEntityId(mrId.getNamespaceId()), BOB, EnumSet.of(Action.EXECUTE));
+    authorizer.grant(Authorizable.fromEntityId(mrId), BOB, EnumSet.of(Action.EXECUTE));
     authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM)),
                      BOB, EnumSet.of(Action.ADMIN));
     authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE)),
