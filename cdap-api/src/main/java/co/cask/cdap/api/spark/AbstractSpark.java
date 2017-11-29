@@ -17,7 +17,6 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.annotation.TransactionControl;
@@ -126,18 +125,6 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   @Override
-  @Deprecated
-  public void beforeSubmit(SparkClientContext context) throws Exception {
-    // Do nothing by default
-  }
-
-  @Override
-  @Deprecated
-  public void onFinish(boolean succeeded, SparkClientContext context) throws Exception {
-    // Do nothing by default
-  }
-
-  @Override
   @TransactionPolicy(TransactionControl.IMPLICIT)
   public final void initialize(SparkClientContext context) throws Exception {
     this.context = context;
@@ -147,24 +134,18 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   /**
    * Classes derived from {@link AbstractSpark} can override this method to initialize the {@link Spark}.
    * {@link SparkClientContext} will be available in this method using {@link AbstractSpark#getContext}.
-   * Default implementation of this method calls the deprecated {@link AbstractSpark#beforeSubmit} method.
    * @throws Exception if there is any error in initializing the Spark
    */
   @TransactionPolicy(TransactionControl.IMPLICIT)
   protected void initialize() throws Exception {
-    beforeSubmit(context);
+    // do nothing by default
   }
 
 
   @Override
   @TransactionPolicy(TransactionControl.IMPLICIT)
   public void destroy() {
-    try {
-      onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
-    } catch (Throwable t) {
-      LOG.warn("Error executing the onFinish method of the Spark program {}",
-               context.getSpecification().getName(), t);
-    }
+    // do nothing by default
   }
 
   /**

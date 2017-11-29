@@ -78,7 +78,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
@@ -194,8 +193,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         if (mapReduce instanceof ProgramLifecycle) {
           //noinspection unchecked
           ((ProgramLifecycle) mapReduce).initialize(context);
-        } else {
-          mapReduce.beforeSubmit(context);
         }
       }
 
@@ -204,12 +201,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         if (mapReduce instanceof ProgramLifecycle) {
           //noinspection unchecked
           ((ProgramLifecycle) mapReduce).destroy();
-        } else {
-          try {
-            mapReduce.onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
-          } catch (Exception e) {
-            throw new UncheckedExecutionException(e);
-          }
         }
       }
     };
@@ -1241,7 +1232,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       double minHeapRatio = cConf.getDouble(Configs.Keys.HEAP_RESERVED_MIN_RATIO);
       String maxHeapSource =
         "from system configuration " + Configs.Keys.JAVA_RESERVED_MEMORY_MB +
-        " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
+          " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
 
       // Optionally overrides the settings from the runtime arguments
       Map<String, String> configs = SystemArguments.getTwillContainerConfigs(runtimeArgs, memoryMB);

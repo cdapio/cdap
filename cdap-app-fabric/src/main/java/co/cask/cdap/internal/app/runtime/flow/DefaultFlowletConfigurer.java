@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.flow;
+package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;

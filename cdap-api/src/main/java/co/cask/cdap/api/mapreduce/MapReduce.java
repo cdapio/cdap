@@ -28,38 +28,4 @@ public interface MapReduce {
    * Configures a {@link MapReduce} job using the given {@link MapReduceConfigurer}.
    */
   void configure(MapReduceConfigurer configurer);
-
-  /**
-   * Invoked before starting a MapReduce job.
-   * <p>
-   * Users can access and modify the job configuration via {@link MapReduceContext#getHadoopJob()}, which returns
-   * an instance of {@link <a href="http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/Job.html">
-   * org.apache.hadoop.mapreduce.Job</a>}.
-   *
-   * @param context job execution context
-   * @throws Exception if there's an error during this method invocation
-   * @deprecated Deprecated as of 3.5.0. Please use {@link ProgramLifecycle#initialize} instead, to initialize
-   * the MapReduce program.
-   */
-  @Deprecated
-  void beforeSubmit(MapReduceContext context) throws Exception;
-
-  /**
-   * Invoked after a MapReduce job finishes.
-   * <p>
-   *   Will not be called if: 
-   *   <ul>
-   *     <li>
-   *       Job failed to start
-   *     </li>
-   *   </ul>
-   * </p>
-   * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
-   * @param context job execution context
-   * @throws Exception if there's an error during this method invocation.
-   * @deprecated Deprecated as of 3.5.0. Please use {@link ProgramLifecycle#destroy} instead to execute the code once
-   * MapReduce program is completed either successfully or on failure.
-   */
-  @Deprecated
-  void onFinish(boolean succeeded, MapReduceContext context) throws Exception;
 }

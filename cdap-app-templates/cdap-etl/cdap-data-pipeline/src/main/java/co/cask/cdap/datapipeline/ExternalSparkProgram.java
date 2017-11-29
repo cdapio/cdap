@@ -16,7 +16,6 @@
 
 package co.cask.cdap.datapipeline;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.AbstractSpark;
@@ -114,8 +113,6 @@ public class ExternalSparkProgram extends AbstractSpark {
       if (delegateSpark instanceof AbstractSpark) {
         //noinspection unchecked
         ((AbstractSpark) delegateSpark).initialize(context);
-      } else {
-        delegateSpark.beforeSubmit(context);
       }
     }
   }
@@ -125,12 +122,6 @@ public class ExternalSparkProgram extends AbstractSpark {
     if (delegateSpark != null) {
       if (delegateSpark instanceof AbstractSpark) {
         ((AbstractSpark) delegateSpark).destroy();
-      } else {
-        try {
-          delegateSpark.onFinish(getContext().getState().getStatus() == ProgramStatus.COMPLETED, getContext());
-        } catch (Exception e) {
-          LOG.warn("Exception on calling onFinish on {}", delegateSpark.getClass(), e);
-        }
       }
     }
   }
