@@ -21,11 +21,9 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
@@ -35,13 +33,10 @@ import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -73,7 +68,6 @@ public class Schedulers {
   public static final DatasetId JOB_QUEUE_DATASET_ID = NamespaceId.SYSTEM.dataset("job.queue");
 
   public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
-  public static final Type SCHEDULE_SPECS_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
 
   public static final long JOB_QUEUE_TIMEOUT_MILLIS = TimeUnit.DAYS.toMillis(1);
 
@@ -129,26 +123,6 @@ public class Schedulers {
       ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
     return new ScheduleCreationSpec(schedule.getName(), schedule.getDescription(), programName, properties,
                                     trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
-  }
-
-  public static ProgramSchedule toProgramSchedule(ApplicationId appId, ScheduleSpecification spec) {
-    Schedule schedule = spec.getSchedule();
-    ProgramType programType = ProgramType.valueOfSchedulableType(spec.getProgram().getProgramType());
-    ProgramId programId = appId.program(programType, spec.getProgram().getProgramName());
-    Trigger trigger;
-    if (schedule instanceof TimeSchedule) {
-      TimeSchedule timeSchedule = (TimeSchedule) schedule;
-      trigger = new TimeTrigger(timeSchedule.getCronEntry());
-    } else {
-      StreamSizeSchedule streamSchedule = (StreamSizeSchedule) schedule;
-      StreamId streamId = programId.getNamespaceId().stream(streamSchedule.getStreamName());
-      trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
-    }
-    Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
-    List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
-      ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
-    return new ProgramSchedule(schedule.getName(), schedule.getDescription(),
-                               programId, spec.getProperties(), trigger, constraints);
   }
 
   /**

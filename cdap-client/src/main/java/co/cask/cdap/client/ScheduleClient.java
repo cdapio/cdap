@@ -18,7 +18,6 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -32,7 +31,6 @@ import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleInstanceConfiguration;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -59,7 +57,6 @@ import javax.inject.Inject;
 public class ScheduleClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
     .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())

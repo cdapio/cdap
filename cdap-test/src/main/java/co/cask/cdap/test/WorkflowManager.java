@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduleDetail;

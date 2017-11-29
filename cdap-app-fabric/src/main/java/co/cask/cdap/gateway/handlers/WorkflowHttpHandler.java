@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
@@ -54,7 +53,6 @@ import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -105,7 +103,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private static final Type STRING_TO_NODESTATEDETAIL_MAP_TYPE
     = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
@@ -258,7 +255,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @QueryParam("trigger-type") String triggerType,
                                    @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, format, triggerType,
+    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, triggerType,
                    scheduleStatus);
   }
 
@@ -276,7 +273,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @QueryParam("trigger-type") String triggerType,
                                    @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, version, workflow, format, triggerType, scheduleStatus);
+    doGetSchedules(responder, namespace, application, version, workflow, triggerType, scheduleStatus);
   }
 
   @GET

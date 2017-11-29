@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -40,9 +39,8 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
   private final CountDownLatch startUpLatch;
 
   @Inject
-  public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
-                                     Store store) {
-    super(timeScheduler, streamSizeScheduler, store);
+  public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler) {
+    super(timeScheduler, streamSizeScheduler);
     this.startUpLatch = new CountDownLatch(1);
     this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override

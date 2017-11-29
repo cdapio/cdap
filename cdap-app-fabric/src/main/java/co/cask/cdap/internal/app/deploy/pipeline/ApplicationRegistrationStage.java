@@ -21,28 +21,21 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -63,9 +56,6 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
     ApplicationSpecification applicationSpecification = input.getSpecification();
-    if (!input.canUpdateSchedules()) {
-      applicationSpecification = getApplicationSpecificationWithExistingSchedules(input);
-    }
     Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     try {
@@ -80,46 +70,6 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     }
     registerDatasets(input);
     emit(input);
-  }
-
-  /**
-   * uses the existing app spec schedules, however if workflows are deleted in the new app spec,
-   * we want to remove the schedules assigned to those deleted workflow from the existing app spec schedules.
-   * construct and return a app spec based on this filtered schedules and programs from new app spec.
-   * @param input
-   * @return {@link ApplicationSpecification} updated spec.
-   */
-  private ApplicationSpecification getApplicationSpecificationWithExistingSchedules(ApplicationWithPrograms input) {
-    Map<String, ScheduleSpecification> filteredExistingSchedules = new HashMap<>();
-
-    if (input.getExistingAppSpec() != null) {
-      final Set<String> deletedWorkflows =
-        Maps.difference(input.getExistingAppSpec().getWorkflows(), input.getSpecification().getWorkflows()).
-          entriesOnlyOnLeft().keySet();
-
-      // predicate to filter schedules if their workflow is deleted
-      Predicate<Map.Entry<String, ScheduleSpecification>> byScheduleProgramStatus =
-        new Predicate<Map.Entry<String, ScheduleSpecification>>() {
-          @Override
-          public boolean apply(Map.Entry<String, ScheduleSpecification> input) {
-            return !deletedWorkflows.contains(input.getValue().getProgram().getProgramName());
-          }
-        };
-
-      filteredExistingSchedules = Maps.filterEntries(input.getExistingAppSpec().getSchedules(),
-                                                     byScheduleProgramStatus);
-    }
-
-    ApplicationSpecification newSpecification = input.getSpecification();
-    return new DefaultApplicationSpecification(newSpecification.getName(), newSpecification.getAppVersion(),
-                                               newSpecification.getDescription(), newSpecification.getConfiguration(),
-                                               newSpecification.getArtifactId(), newSpecification.getStreams(),
-                                               newSpecification.getDatasetModules(), newSpecification.getDatasets(),
-                                               newSpecification.getFlows(), newSpecification.getMapReduce(),
-                                               newSpecification.getSpark(), newSpecification.getWorkflows(),
-                                               newSpecification.getServices(), filteredExistingSchedules,
-                                               newSpecification.getProgramSchedules(),
-                                               newSpecification.getWorkers(), newSpecification.getPlugins());
   }
 
   // adds owner information for the application if this is the first version of the application

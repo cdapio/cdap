@@ -60,10 +60,4 @@ public class NoOpScheduler implements Scheduler {
     throws SchedulerException {
     return Collections.emptyList();
   }
-
-  @Override
-  public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
-                                             String scheduleName) throws ScheduleNotFoundException {
-    throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
-  }
 }

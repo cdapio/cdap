@@ -351,18 +351,6 @@ public class StreamSizeScheduler implements Scheduler {
     }
   }
 
-  @Override
-  public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
-                                             String scheduleName)
-    throws SchedulerException, ScheduleNotFoundException {
-    StreamSubscriber subscriber = scheduleSubscribers.get(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                                                 scheduleName));
-    if (subscriber != null) {
-      return subscriber.scheduleTaskState(program, programType, scheduleName);
-    }
-    throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
-  }
-
   /**
    * Create or retrieve the {@link StreamSubscriber} object corresponding to the Stream contained in the
    * {@code streamSizeSchedule}.

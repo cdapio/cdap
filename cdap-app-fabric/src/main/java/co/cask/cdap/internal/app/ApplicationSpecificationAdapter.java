@@ -24,7 +24,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -45,7 +44,6 @@ import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.codec.FlowSpecificationCodec;
 import co.cask.cdap.proto.codec.FlowletSpecificationCodec;
 import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.SparkSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowNodeCodec;
@@ -99,7 +97,6 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(WorkflowNode.class, new WorkflowNodeCodec())
       .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
       .registerTypeAdapter(ConditionSpecification.class, new ConditionSpecificationCodec())
-      .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
       .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())

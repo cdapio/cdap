@@ -24,7 +24,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -62,7 +61,6 @@ public class MapReduceContextConfigTest {
       Collections.<String, SparkSpecification>emptyMap(),
       Collections.<String, WorkflowSpecification>emptyMap(),
       Collections.<String, ServiceSpecification>emptyMap(),
-      Collections.<String, ScheduleSpecification>emptyMap(),
       Collections.<String, ScheduleCreationSpec>emptyMap(),
       Collections.<String, WorkerSpecification>emptyMap(),
       Collections.<String, Plugin>emptyMap()

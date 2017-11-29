@@ -16,20 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
@@ -38,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Abstract scheduler service common scheduling functionality. For each {@link Schedule} implementation, there is
@@ -51,12 +43,10 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
   private final TimeScheduler timeScheduler;
   private final StreamSizeScheduler streamSizeScheduler;
-  private final Store store;
 
-  public AbstractSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler, Store store) {
+  public AbstractSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler) {
     this.timeScheduler = timeScheduler;
     this.streamSizeScheduler = streamSizeScheduler;
-    this.store = store;
   }
 
   /**
@@ -169,32 +159,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     return timeScheduler.nextScheduledRuntime(program, programType);
   }
 
-  @Override
-  public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
-                                             String scheduleName)
-    throws SchedulerException, NotFoundException {
-    Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
-    ProgramScheduleStatus status;
-    try {
-      status = scheduler.scheduleState(program, programType, scheduleName);
-    } catch (NotFoundException e) {
-      // Directly throw the NotFoundException if scheduler has already been started
-      if (scheduler instanceof TimeScheduler) {
-        if (((TimeScheduler) scheduler).isStarted()) {
-          throw e;
-        }
-      } else {
-        if (((StreamSizeScheduler) scheduler).isStarted()) {
-          throw e;
-        }
-      }
-      // Schedules may not be all read into memory before scheduler fully starts,
-      // throw ServiceUnavailableException to retry next time
-      throw new ServiceUnavailableException(this.getClass().getSimpleName());
-    }
-    return status;
-  }
-
   public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {
     return String.format("%s:%s", programIdFor(program, programType), scheduleName);
   }
@@ -207,31 +171,5 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public static String programIdFor(ProgramId program, SchedulableProgramType programType) {
     return String.format("%s:%s:%s:%s:%s", program.getNamespace(), program.getApplication(), program.getVersion(),
                          programType.name(), program.getProgram());
-  }
-
-  private Scheduler getSchedulerForSchedule(ProgramId program, String scheduleName) throws NotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(program.getParent());
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(program.getParent());
-    }
-
-    Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
-    if (schedules == null || !schedules.containsKey(scheduleName)) {
-      throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
-    }
-
-    ScheduleSpecification scheduleSpec = schedules.get(scheduleName);
-    Schedule schedule = scheduleSpec.getSchedule();
-    return getScheduler(schedule);
-  }
-
-  private Scheduler getScheduler(Schedule schedule) {
-    if (schedule instanceof TimeSchedule) {
-      return timeScheduler;
-    } else if (schedule instanceof StreamSizeSchedule) {
-      return streamSizeScheduler;
-    } else {
-      throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
-    }
   }
 }

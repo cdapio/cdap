@@ -162,12 +162,6 @@ public final class AppFabricTestModule extends AbstractModule {
       public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }
-
-      @Override
-      public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
-                                                 String scheduleName) throws ScheduleNotFoundException {
-        throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
-      }
     };
   }
 }

@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -65,7 +64,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("sparks", serializeMap(src.getSpark(), context, SparkSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
-    jsonObj.add("schedules", serializeMap(src.getSchedules(), context, ScheduleSpecification.class));
     jsonObj.add("programSchedules", serializeMap(src.getProgramSchedules(), context, ScheduleCreationSpec.class));
     jsonObj.add("workers", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
     jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
@@ -110,9 +108,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, ServiceSpecification> services = deserializeMap(jsonObj.get("services"),
                                                                 context, ServiceSpecification.class);
 
-    Map<String, ScheduleSpecification> schedules = deserializeMap(jsonObj.get("schedules"),
-                                                                  context, ScheduleSpecification.class);
-
     Map<String, ScheduleCreationSpec> programSchedules = deserializeMap(jsonObj.get("programSchedules"),
                                                                         context, ScheduleCreationSpec.class);
 
@@ -123,6 +118,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     return new DefaultApplicationSpecification(name, appVersion, description, configuration, artifactId, streams,
                                                datasetModules, datasetInstances,
                                                flows, mapReduces, sparks,
-                                               workflows, services, schedules, programSchedules, workers, plugins);
+                                               workflows, services, programSchedules, workers, plugins);
   }
 }

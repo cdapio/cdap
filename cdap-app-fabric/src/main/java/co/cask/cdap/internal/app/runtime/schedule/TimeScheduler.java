@@ -326,31 +326,6 @@ public final class TimeScheduler implements Scheduler {
     return scheduledRuntimes;
   }
 
-  @Override
-  public synchronized ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
-                                                          String scheduleName)
-    throws SchedulerException, ScheduleNotFoundException {
-    try {
-      // No need of including cron entry in the name since this method is used only for migrating schedules
-      // from app meta store and will never be called for schedule with composite trigger
-      String triggerName = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
-      Trigger.TriggerState state = scheduler.getTriggerState(triggerKeyForName(triggerName));
-      // Map trigger state to schedule state.
-      // This method is only interested in returning if the scheduler is
-      // Paused, Scheduled or NotFound.
-      switch (state) {
-        case NONE:
-          throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
-        case PAUSED:
-          return ProgramScheduleStatus.SUSPENDED;
-        default:
-          return ProgramScheduleStatus.SCHEDULED;
-      }
-    } catch (org.quartz.SchedulerException e) {
-      throw new SchedulerException(e);
-    }
-  }
-
   private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {
     return new JobKey(AbstractSchedulerService.programIdFor(program, programType));
   }

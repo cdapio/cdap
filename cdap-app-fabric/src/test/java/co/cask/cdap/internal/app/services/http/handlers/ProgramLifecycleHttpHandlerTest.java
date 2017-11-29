@@ -27,10 +27,7 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
@@ -54,7 +51,6 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
@@ -66,10 +62,8 @@ import co.cask.cdap.proto.ProtoConstraint;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -119,7 +113,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandlerTest.class);
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
   private static final Type LIST_OF_RUN_RECORD = new TypeToken<List<RunRecord>>() { }.getType();
@@ -1023,11 +1016,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                        AppWithMultipleSchedules.SOME_WORKFLOW);
     Assert.assertEquals(2, someSchedules1.size());
     assertProgramInSchedules(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules1);
-    // validate backward-compatible API
-    List<ScheduleSpecification> someSpecs1 = getScheduleSpecs(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                              VERSION1, AppWithMultipleSchedules.SOME_WORKFLOW);
-    Assert.assertEquals(2, someSpecs1.size());
-    assertProgramInScheduleSpecs(AppWithMultipleSchedules.SOME_WORKFLOW, someSpecs1);
 
     // Schedule details from versioned API filtered by Trigger type
     filteredTimeSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
@@ -1088,12 +1076,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private void assertProgramInSchedules(String programName, List<ScheduleDetail> schedules) {
     for (ScheduleDetail scheduleDetail : schedules) {
-      Assert.assertEquals(programName, scheduleDetail.getProgram().getProgramName());
-    }
-  }
-
-  private void assertProgramInScheduleSpecs(String programName, List<ScheduleSpecification> schedules) {
-    for (ScheduleSpecification scheduleDetail : schedules) {
       Assert.assertEquals(programName, scheduleDetail.getProgram().getProgramName());
     }
   }
@@ -1222,13 +1204,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
     Assert.assertEquals(1, schedulesForApp.size());
     Assert.assertEquals(schedules, schedulesForApp);
-    // validate backward compatible api
-    List<ScheduleSpecification> specsForApp = listScheduleSpecs(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
-    Assert.assertEquals(1, specsForApp.size());
-    ScheduleSpecification spec = specsForApp.get(0);
-    Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, spec.getProgram().getProgramName());
-    Assert.assertTrue(spec.getSchedule() instanceof TimeSchedule);
-    Assert.assertEquals("0/15 * * * * ?", ((TimeSchedule) spec.getSchedule()).getCronEntry());
 
     List<ScheduleDetail> schedules2 =
       getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, AppWithSchedule.WORKFLOW_NAME);
@@ -1334,48 +1309,40 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private void testAddSchedule(String scheduleName) throws Exception {
     String partitionScheduleName = scheduleName + "Partition";
     String orScheduleName = scheduleName + "Or";
-    TimeSchedule timeSchedule = (TimeSchedule) Schedules.builder(scheduleName)
-      .setDescription("Something")
-      .createTimeSchedule("0 * * * ?");
     ProtoTrigger.TimeTrigger protoTime = new ProtoTrigger.TimeTrigger("0 * * * ?");
     ProtoTrigger.PartitionTrigger protoPartition =
       new ProtoTrigger.PartitionTrigger(NamespaceId.DEFAULT.dataset("data"), 5);
     ProtoTrigger.OrTrigger protoOr = ProtoTrigger.or(protoTime, protoPartition);
+    String description = "Something";
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
                                                               AppWithSchedule.WORKFLOW_NAME);
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
-    TimeTrigger timeTrigger = new TimeTrigger(timeSchedule.getCronEntry());
-    ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
+    TimeTrigger timeTrigger = new TimeTrigger("0 * * * ?");
     ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                                                   scheduleName, specification.getSchedule().getDescription(),
-                                                   specification.getProgram(), specification.getProperties(),
+                                                   scheduleName, description, programInfo, properties,
                                                    timeTrigger, Collections.<Constraint>emptyList(),
                                                    Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
     PartitionTrigger partitionTrigger =
       new PartitionTrigger(protoPartition.getDataset(), protoPartition.getNumPartitions());
     ScheduleDetail expectedPartitionDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         partitionScheduleName, specification.getSchedule().getDescription(),
-                         specification.getProgram(), specification.getProperties(), partitionTrigger,
+                         partitionScheduleName, description, programInfo, properties, partitionTrigger,
                          Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestPartitionDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         partitionScheduleName, specification.getSchedule().getDescription(),
-                         specification.getProgram(), specification.getProperties(), protoPartition,
+                         partitionScheduleName, description, programInfo, properties, protoPartition,
                          Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail expectedOrDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         orScheduleName, specification.getSchedule().getDescription(),
-                         specification.getProgram(), specification.getProperties(),
+                         orScheduleName, description, programInfo, properties,
                          new OrTrigger(timeTrigger, partitionTrigger),
                          Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestOrDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         orScheduleName, specification.getSchedule().getDescription(),
-                         specification.getProgram(), specification.getProperties(), protoOr,
+                         orScheduleName, description, programInfo, properties, protoOr,
                          Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
@@ -1383,7 +1350,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     // adding a schedule to a non-existing app should fail
-    response = addSchedule(TEST_NAMESPACE1, "nonExistingApp", null, scheduleName, specification);
+    response = addSchedule(TEST_NAMESPACE1, "nonExistingApp", null, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
     // adding a schedule to invalid type of program type should fail
@@ -1394,24 +1361,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     // adding a schedule for a program that does not exist
-    ScheduleSpecification nonExistingSpecification = new ScheduleSpecification(
-      timeSchedule, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"), properties);
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, nonExistingSpecification);
+    ScheduleDetail nonExistingDetail =
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         scheduleName, description, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"),
+                         properties, timeTrigger, Collections.<Constraint>emptyList(),
+                         Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, nonExistingDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
-    // adding a schedule with invalid schedule details should fail
-    TimeSchedule invalidTimeSchedule = (TimeSchedule) Schedules.builder("invalidTimeSchedule")
-      .setDescription("Something")
-      .createTimeSchedule("0 * ? * ?"); // invalid cron expression
-    // Intentionally keep this ScheduleSpecification to test backward compatibility
-    ScheduleSpecification invalidSpecification =
-      new ScheduleSpecification(invalidTimeSchedule, programInfo, properties);
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "invalidTimeSchedule",
-                           invalidSpecification);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
-
     // test adding a schedule
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, specification);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, partitionScheduleName, requestPartitionDetail);
@@ -1460,9 +1419,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
     Assert.assertEquals("schedule-100", detail100.getName());
     Assert.assertEquals(detail2.getTimeoutMillis(), detail100.getTimeoutMillis());
-    // test backward-compatible api
-    ScheduleSpecification spec100 = getScheduleSpec(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
-    Assert.assertEquals(detail100.toScheduleSpec(), spec100);
   }
 
   private void testDeleteSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {
@@ -1503,14 +1459,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void testUpdateSchedule(ApplicationId appV2Id) throws Exception {
-    // intentionally keep two ScheduleUpdateDetail's to test backward compatibility
-    ScheduleUpdateDetail scheduleUpdateDetail = new ScheduleUpdateDetail("updatedDescription", new RunConstraints(5),
-                                                                         "0 4 * * *", null, null,
-                                                                         ImmutableMap.of("twoKey", "twoValue",
-                                                                                         "someKey", "newValue"));
+    ScheduleDetail updateDetail = new ScheduleDetail(AppWithSchedule.SCHEDULE, "updatedDescription", null,
+                                                     ImmutableMap.of("twoKey", "twoValue", "someKey", "newValue"),
+                                                     new TimeTrigger("0 4 * * *"),
+                                                     ImmutableList.of(new ConcurrencyConstraint(5)), null);
 
-    ScheduleUpdateDetail invalidUpdateDetail = new ScheduleUpdateDetail("updatedDescription", null, null, "streamName",
-                                                                        null, ImmutableMap.<String, String>of());
     ScheduleDetail validScheduleDetail = new ScheduleDetail(
       AppWithSchedule.SCHEDULE, "updatedDescription", null, ImmutableMap.<String, String>of(),
       new ProtoTrigger.StreamSizeTrigger(new NamespaceId(TEST_NAMESPACE1).stream(AppWithSchedule.STREAM), 10),
@@ -1518,18 +1471,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // trying to update schedule for a non-existing app should fail
     HttpResponse response = updateSchedule(TEST_NAMESPACE1, "nonExistingApp", null, AppWithSchedule.SCHEDULE,
-                                           scheduleUpdateDetail);
+                                           updateDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
     // trying to update a non-existing schedule should fail
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null,
-                              "NonExistingSchedule", scheduleUpdateDetail);
+                              "NonExistingSchedule", updateDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
-
-    // trying to update a time schedule with stream schedule detail containing null dataTriggerMB should fail
-    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
-                              invalidUpdateDetail);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
 
     // trying to update a time schedule with stream schedule detail containing both
     // stream name and dataTriggerMB should succeed
@@ -1539,7 +1487,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // should be able to update an existing stream size schedule with a valid new time schedule
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
-                              scheduleUpdateDetail);
+                              updateDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
     // verify that the schedule information for updated

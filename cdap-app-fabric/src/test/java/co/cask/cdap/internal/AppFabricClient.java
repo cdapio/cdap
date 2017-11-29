@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.BadRequestException;
@@ -48,7 +47,6 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -94,7 +92,6 @@ import javax.annotation.Nullable;
 public class AppFabricClient {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricClient.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
@@ -324,17 +321,6 @@ public class AppFabricClient {
     List<ScheduleDetail> schedules = responder.decodeResponseContent(SCHEDULE_DETAILS_TYPE, GSON);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
-  }
-
-  /**
-   * Return the specifications of all schedules of a workflow.
-   *
-   * @deprecated since release 4.2. Use {@link #getProgramSchedules(String, String, String)} instead.
-   */
-  @Deprecated
-  public List<ScheduleSpecification> getSchedules(String namespace, String app, String workflow)
-    throws NotFoundException {
-    return ScheduleDetail.toScheduleSpecs(getProgramSchedules(namespace, app, workflow));
   }
 
   public WorkflowTokenDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,

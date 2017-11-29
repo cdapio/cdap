@@ -102,18 +102,4 @@ public interface Scheduler {
    */
   List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException;
-
-  /**
-   * Get state of a particular schedule.
-   *
-   * @param program the program for which the state of the schedule is queried
-   * @param programType the type of the program
-   * @param scheduleName the name of the schedule
-   * @return State of the schedule.
-   * @throws SchedulerException on unforeseen error.
-   * @throws NotFoundException if the schedule is not found.
-   */
-  ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws SchedulerException, NotFoundException;
-
 }

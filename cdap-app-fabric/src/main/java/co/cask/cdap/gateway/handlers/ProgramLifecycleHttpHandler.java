@@ -21,8 +21,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.schedule.RunConstraints;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -55,13 +53,9 @@ import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
@@ -78,11 +72,9 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoConstraint;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
@@ -90,7 +82,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.scheduler.Scheduler;
@@ -615,26 +606,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Get schedules containing {@link ProgramStatusTrigger} filtered by triggering program, and optionally by
    * triggering program statuses or schedule status
-   *
-   * @param format format of the returned schedules. Use "detail" to return {@link ScheduleDetail}
-   *               or "spec" to return {@link ScheduleSpecification}
-   * @param triggerNamespaceId namespace of the triggering program in {@link ProgramStatusTrigger}
+   *  @param triggerNamespaceId namespace of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerAppName application name of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerAppVersion application version of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramType program type of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramName program name of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramStatuses comma separated {@link ProgramStatus} in {@link ProgramStatusTrigger}.
-   *                               Schedules with {@link ProgramStatusTrigger} triggered by none of the
-   *                               {@link ProgramStatus} in triggerProgramStatuses will be filtered out.
-   *                               If not specified, schedules will be returned regardless of triggering program status.
+*                               Schedules with {@link ProgramStatusTrigger} triggered by none of the
+*                               {@link ProgramStatus} in triggerProgramStatuses will be filtered out.
+*                               If not specified, schedules will be returned regardless of triggering program status.
    * @param scheduleStatus status of the schedule. Can only be one of "SCHEDULED" or "SUSPENDED".
-   *                       If specified, only schedules with matching status will be returned.
-   *                       If not specified, schedules will be returned regardless of schedule status.
+*                       If specified, only schedules with matching status will be returned.
    */
   @GET
   @Path("schedules/trigger-type/program-status")
   public void getProgramStatusSchedules(HttpRequest request, HttpResponder responder,
-                                        @QueryParam("format") String format,
                                         @QueryParam("trigger-namespace-id") String triggerNamespaceId,
                                         @QueryParam("trigger-app-name") String triggerAppName,
                                         @QueryParam("trigger-app-version") String triggerAppVersion,
@@ -643,7 +629,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         @QueryParam("trigger-program-statuses") String triggerProgramStatuses,
                                         @QueryParam("schedule-status") String scheduleStatus)
     throws BadRequestException {
-    boolean asScheduleSpec = returnScheduleAsSpec(format);
     if (triggerNamespaceId == null && triggerAppName == null && triggerAppVersion == null
       && triggerProgramType == null && triggerProgramName == null) {
       throw new BadRequestException("Must specify the triggering program to find schedules " +
@@ -677,12 +662,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       schedules.addAll(programScheduler.findSchedules(triggerKey));
     }
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(filterSchedulesByStatus(schedules, scheduleStatus));
-    if (asScheduleSpec) {
-      List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(specs, Schedulers.SCHEDULE_SPECS_TYPE));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
-    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
   }
 
   @GET
@@ -690,10 +670,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getSchedule(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
-                          @PathParam("schedule-name") String scheduleName,
-                          @QueryParam("format") String format)
+                          @PathParam("schedule-name") String scheduleName)
     throws NotFoundException, SchedulerException, BadRequestException {
-    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName, format);
+    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
   }
 
   @GET
@@ -702,46 +681,33 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("app-version") String appVersion,
-                          @PathParam("schedule-name") String scheduleName,
-                          @QueryParam("format") String format)
+                          @PathParam("schedule-name") String scheduleName)
     throws NotFoundException, SchedulerException, BadRequestException {
-    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName, format);
+    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName);
   }
 
   private void doGetSchedule(HttpResponder responder, String namespace,
-                             String app, String version, String scheduleName, String format)
+                             String app, String version, String scheduleName)
     throws NotFoundException, BadRequestException {
 
-    boolean asScheduleSpec = returnScheduleAsSpec(format);
     ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
     ProgramSchedule schedule = programScheduler.getSchedule(scheduleId);
     ScheduleDetail detail = schedule.toScheduleDetail();
-    if (asScheduleSpec) {
-      ScheduleSpecification spec = detail.toScheduleSpec();
-      if (spec == null) {
-        // this is for supporting old-style schedules. If the schedule has a trigger that can't be expressed
-        // then this application must be using new APIs and the schedule can't be returned in old form.
-        throw new NotFoundException(scheduleId);
-      }
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec, ScheduleSpecification.class));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
-    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
   }
 
   /**
-   * See {@link #getAllSchedules(HttpRequest, HttpResponder, String, String, String, String, String, String)}
+   * See {@link #getAllSchedules(HttpRequest, HttpResponder, String, String, String, String)}
    */
   @GET
   @Path("apps/{app-name}/schedules")
   public void getAllSchedules(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-name") String appName,
-                              @QueryParam("format") String format,
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, format, triggerType,
+    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, triggerType,
                    scheduleStatus);
   }
 
@@ -751,12 +717,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param namespaceId namespace of the application to get schedules from
    * @param appName name of the application to get schedules from
    * @param appVersion version of the application to get schedules from
-   * @param format format of the returned schedules. Use "detail" to return {@link ScheduleDetail}
-   *               or "spec" to return {@link ScheduleSpecification}
    * @param triggerType trigger type of returned schedules. If not specified, all schedules
-   *                    are returned regardless of trigger type
+*                    are returned regardless of trigger type
    * @param scheduleStatus the status of the schedule, must be values in {@link ProgramScheduleStatus}.
-   *                       If not specified, all schedules are returned regardless of status
    */
   @GET
   @Path("apps/{app-name}/versions/{app-version}/schedules")
@@ -764,18 +727,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-name") String appName,
                               @PathParam("app-version") String appVersion,
-                              @QueryParam("format") String format,
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespaceId, appName, appVersion, null, format, triggerType, scheduleStatus);
+    doGetSchedules(responder, namespaceId, appName, appVersion, null, triggerType, scheduleStatus);
   }
 
   protected void doGetSchedules(HttpResponder responder, String namespace, String app, String version,
-                                @Nullable String workflow, @Nullable String format, @Nullable String triggerType,
+                                @Nullable String workflow, @Nullable String triggerType,
                                 String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    boolean asScheduleSpec = returnScheduleAsSpec(format);
     ApplicationId applicationId = new ApplicationId(namespace, app, version);
     ApplicationSpecification appSpec = store.getApplication(applicationId);
     if (appSpec == null) {
@@ -805,12 +766,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     schedules = filterSchedulesByStatus(schedules, scheduleStatus);
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
-    if (asScheduleSpec) {
-      List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(specs, Schedulers.SCHEDULE_SPECS_TYPE));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
-    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
   }
 
   private Collection<ProgramScheduleRecord> filterSchedulesByStatus(Collection<ProgramScheduleRecord> scheduleRecords,
@@ -856,14 +812,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     final ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
     authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
-    ScheduleDetail scheduleFromRequest = readScheduleDetailBody(
-      request, scheduleName, false, new Function<JsonElement, ScheduleDetail>() {
-        @Override
-        public ScheduleDetail apply(@Nullable JsonElement input) {
-          ScheduleSpecification scheduleSpec = DECODE_GSON.fromJson(input, ScheduleSpecification.class);
-          return toScheduleDetail(applicationId, scheduleSpec);
-        }
-      });
+    ScheduleDetail scheduleFromRequest = readScheduleDetailBody(request, scheduleName);
 
     if (scheduleFromRequest.getProgram() == null) {
       throw new BadRequestException("No program was specified for the schedule");
@@ -923,24 +872,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ScheduleId scheduleId = new ApplicationId(namespaceId, appId, appVersion).schedule(scheduleName);
     authorizationEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), Action.ADMIN);
     final ProgramSchedule existingSchedule = programScheduler.getSchedule(scheduleId);
-    ScheduleDetail scheduleDetail = readScheduleDetailBody(
-      request, scheduleName, true, new Function<JsonElement, ScheduleDetail>() {
-        @Override
-        public ScheduleDetail apply(@Nullable JsonElement input) {
-          ScheduleUpdateDetail updateDetail = DECODE_GSON.fromJson(input, ScheduleUpdateDetail.class);
-          return toScheduleDetail(updateDetail, existingSchedule);
-        }
-      });
+    ScheduleDetail scheduleDetail = readScheduleDetailBody(request, scheduleName);
     ProgramSchedule updatedSchedule = combineForUpdate(scheduleDetail, existingSchedule);
     programScheduler.updateSchedule(updatedSchedule);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private ScheduleDetail readScheduleDetailBody(FullHttpRequest request, String scheduleName, boolean isUpdate,
-                                                Function<JsonElement, ScheduleDetail> toScheduleDetail)
+  private ScheduleDetail readScheduleDetailBody(FullHttpRequest request, String scheduleName)
     throws BadRequestException, IOException {
 
-    // TODO: remove backward compatibility with ScheduleSpecification, use fromJson(ScheduleDetail.class)
     JsonElement json;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), Charsets.UTF_8)) {
       // The schedule spec in the request body does not contain the program information
@@ -954,22 +894,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Expected a json object in the request body but received " + GSON.toJson(json));
     }
     ScheduleDetail scheduleDetail;
-    if (((JsonObject) json).get("schedule") != null) { // field only exists in legacy ScheduleSpec/UpdateDetail
-      try {
-        scheduleDetail = toScheduleDetail.apply(json);
-      } catch (JsonSyntaxException e) {
-        throw new BadRequestException("Error parsing request body as a schedule "
-                                        + (isUpdate ? "update details" : "specification") +
-                                        " (in backward compatibility mode): " + e.getMessage());
-      } catch (IllegalArgumentException e) {
-        throw new BadRequestException(e);
-      }
-    } else {
-      try {
-        scheduleDetail = DECODE_GSON.fromJson(json, ScheduleDetail.class);
-      } catch (JsonSyntaxException e) {
-        throw new BadRequestException("Error parsing request body as a schedule specification: " + e.getMessage());
-      }
+    try {
+      scheduleDetail = DECODE_GSON.fromJson(json, ScheduleDetail.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Error parsing request body as a schedule specification: " + e.getMessage());
     }
 
     // If the schedule name is present in the request body, it should match the name in path params
@@ -979,75 +907,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         scheduleDetail.getName(), scheduleName));
     }
     return scheduleDetail;
-  }
-
-  private ScheduleDetail toScheduleDetail(ApplicationId appId, ScheduleSpecification scheduleSpec) {
-    if (scheduleSpec.getSchedule() == null) {
-      throw new IllegalArgumentException("Schedule specification must contain schedule");
-    }
-    Trigger trigger;
-    if (scheduleSpec.getSchedule() instanceof TimeSchedule) {
-      trigger = new TimeTrigger(((TimeSchedule) scheduleSpec.getSchedule()).getCronEntry());
-    } else {
-      StreamSizeSchedule streamSchedule = (StreamSizeSchedule) scheduleSpec.getSchedule();
-      StreamId streamId = appId.getParent().stream(streamSchedule.getStreamName());
-      trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
-    }
-    List<Constraint> runConstraints = toConstraints(scheduleSpec.getSchedule().getRunConstraints());
-    return new ScheduleDetail(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
-                              scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
-                              scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints,
-                              null, null);
-  }
-
-  private ScheduleDetail toScheduleDetail(ScheduleUpdateDetail updateDetail, ProgramSchedule existing) {
-    ScheduleUpdateDetail.Schedule scheduleUpdate = updateDetail.getSchedule();
-    ProgramId programId = existing.getProgramId();
-    NamespaceId namespaceId = programId.getNamespaceId();
-    if (scheduleUpdate == null) {
-      return new ScheduleDetail(programId.getNamespace(), programId.getApplication(), programId.getVersion(),
-                                null, null, null, updateDetail.getProperties(), null, null, null, null);
-    }
-    Trigger trigger = null;
-    if (scheduleUpdate.getCronExpression() != null
-      && (scheduleUpdate.getStreamName() != null || scheduleUpdate.getDataTriggerMB() != null)) {
-      throw new IllegalArgumentException(
-        String.format("Cannot define time trigger with cron expression and define stream size trigger with" +
-                        " stream name and data trigger configuration in the same schedule update details %s. " +
-                        "Schedule update detail must contain only one trigger.", updateDetail));
-    }
-    if (scheduleUpdate.getCronExpression() != null) {
-      trigger = new TimeTrigger(updateDetail.getSchedule().getCronExpression());
-    } else if (existing.getTrigger() instanceof StreamSizeTrigger) {
-      // if the existing trigger is StreamSizeTrigger, use the field in the existing trigger if the corresponding field
-      // in schedule update detail is null
-      StreamSizeTrigger existingTrigger = (StreamSizeTrigger) existing.getTrigger();
-      String streamName = Objects.firstNonNull(scheduleUpdate.getStreamName(),
-                                               existingTrigger.getStreamId().getStream());
-      int dataTriggerMB = Objects.firstNonNull(scheduleUpdate.getDataTriggerMB(), existingTrigger.getTriggerMB());
-      trigger = new StreamSizeTrigger(namespaceId.stream(streamName), dataTriggerMB);
-    } else if (scheduleUpdate.getStreamName() != null && scheduleUpdate.getDataTriggerMB() != null) {
-      trigger = new StreamSizeTrigger(namespaceId.stream(scheduleUpdate.getStreamName()),
-                                      scheduleUpdate.getDataTriggerMB());
-    } else if (scheduleUpdate.getStreamName() != null || scheduleUpdate.getDataTriggerMB() != null) {
-      throw new IllegalArgumentException(
-        String.format("Only one of stream name and data trigger MB is defined in schedule update details %s. " +
-                        "Must provide both stream name and data trigger MB to update the existing schedule with " +
-                        "trigger of type %s to a schedule with stream size trigger.",
-                      updateDetail, existing.getTrigger().getClass()));
-    }
-    List<Constraint> constraints = toConstraints(scheduleUpdate.getRunConstraints());
-    return new ScheduleDetail(programId.getNamespace(), programId.getApplication(), programId.getVersion(),
-                              null, scheduleUpdate.getDescription(), null,
-                              updateDetail.getProperties(), trigger, constraints, null, null);
-  }
-
-  private List<Constraint> toConstraints(RunConstraints runConstraints) {
-    if (runConstraints == null || runConstraints.getMaxConcurrentRuns() == null) {
-      return null;
-    }
-    return Collections.<Constraint>singletonList(
-      new ProtoConstraint.ConcurrencyConstraint(runConstraints.getMaxConcurrentRuns()));
   }
 
   private ProgramSchedule combineForUpdate(ScheduleDetail scheduleDetail, ProgramSchedule existing)
@@ -2059,19 +1918,4 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     return namespaceId;
   }
-
-  /**
-   * Parses the URL parameter "format" to determine whether schedules should be returned as {@link ScheduleDetail}
-   * or as {@link ScheduleSpecification}, for backward-compatible response format.
-   */
-  protected boolean returnScheduleAsSpec(@Nullable String format) throws BadRequestException {
-    if (format == null || "detail".equals(format)) {
-      return false;
-    }
-    if ("spec".equals(format)) {
-      return true;
-    }
-    throw new BadRequestException("Parameter 'format' must be 'spec' or 'detail' but is '" + format + "'");
-  }
-
 }

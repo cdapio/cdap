@@ -30,7 +30,6 @@ import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
@@ -51,7 +50,6 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -92,7 +90,6 @@ import javax.annotation.Nullable;
 public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
@@ -869,12 +866,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getName();
     Assert.assertFalse(scheduleName.isEmpty());
-
-    // get schedules in backward-compatible ScheduleSpecification form
-    List<ScheduleSpecification> specs = getScheduleSpecs(TEST_NAMESPACE2, appName, workflowName);
-    Assert.assertEquals(1, specs.size());
-    String specName = specs.get(0).getSchedule().getName();
-    Assert.assertEquals(scheduleName, specName);
 
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
     // List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");

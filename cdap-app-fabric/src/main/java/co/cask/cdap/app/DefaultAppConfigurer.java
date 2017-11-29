@@ -29,7 +29,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -37,7 +36,6 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -84,7 +82,6 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, SparkSpecification> sparks = new HashMap<>();
   private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
   private final Map<String, ServiceSpecification> services = new HashMap<>();
-  private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
   private final Map<String, ScheduleCreationSpec> scheduleSpecs = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
   private final TriggerFactory triggerFactory;
@@ -221,19 +218,12 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
     Preconditions.checkNotNull(programName, "Program name cannot be null.");
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
-    Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
+    Preconditions.checkArgument(!scheduleSpecs.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
     if (schedule instanceof StreamSizeSchedule) {
       Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
                                   "Schedule data trigger must be greater than 0.");
     }
-
-    // TODO: [CDAP-11575] Temporary solution before REST API is merged. ScheduleSpecification will be removed and
-    // the block of code below will be refactored
-    ScheduleSpecification spec =
-      new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
-
-    schedules.put(schedule.getName(), spec);
     ScheduleCreationSpec scheduleCreationSpec = Schedulers.toScheduleCreationSpec(deployNamespace.toEntityId(),
                                                                                   schedule, programName,
                                                                                   properties);
@@ -306,7 +296,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, builtScheduleSpecs, workers, getPlugins());
+                                               builtScheduleSpecs, workers, getPlugins());
   }
 
   private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {
