@@ -7,9 +7,9 @@
 
 .. _getting-started-index:
 
-=====================
-Getting Started  CDAP
-=====================
+=========================
+Getting Started With CDAP
+=========================
 
 .. toctree::
    :maxdepth: 1
