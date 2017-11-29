@@ -27,9 +27,9 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
+import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Splitter;
@@ -126,14 +126,14 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void createRole(Role role) throws RoleAlreadyExistsException {
+  public void createRole(Role role) throws AlreadyExistsException {
     if (roleToPrincipals.containsKey(role)) {
-      throw new RoleAlreadyExistsException(role);
+      throw new AlreadyExistsException(role);
     }
     // NOTE: A concurrent put might happen, hence it should still result as RoleAlreadyExistsException.
     Set<Principal> principals = Collections.newSetFromMap(new ConcurrentHashMap<Principal, Boolean>());
     if (roleToPrincipals.putIfAbsent(role, principals) != null) {
-      throw new RoleAlreadyExistsException(role);
+      throw new AlreadyExistsException(role);
     }
   }
 

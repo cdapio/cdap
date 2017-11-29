@@ -123,7 +123,7 @@ public abstract class AuthorizerTest {
     try {
       authorizer.createRole(admins);
       Assert.fail(String.format("Created a role %s which already exists. Should have failed.", admins.getName()));
-    } catch (RoleAlreadyExistsException expected) {
+    } catch (AlreadyExistsException expected) {
       // expected
     }
 

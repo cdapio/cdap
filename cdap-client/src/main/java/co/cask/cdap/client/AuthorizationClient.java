@@ -33,7 +33,7 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
+import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
@@ -128,12 +128,12 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void createRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleAlreadyExistsException, NotFoundException {
+    UnauthorizedException, AlreadyExistsException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_CONFLICT);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new RoleAlreadyExistsException(role);
+      throw new AlreadyExistsException(role);
     }
   }
 

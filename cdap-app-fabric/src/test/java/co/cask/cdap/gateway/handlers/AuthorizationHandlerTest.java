@@ -42,8 +42,8 @@ import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.authorization.NoOpAuthorizationContextFactory;
+import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.ChannelPipelineModifier;
@@ -301,7 +301,7 @@ public class AuthorizationHandlerTest {
     try {
       client.createRole(admins);
       Assert.fail(String.format("Created a role %s which already exists. Should have failed.", admins.getName()));
-    } catch (RoleAlreadyExistsException expected) {
+    } catch (AlreadyExistsException expected) {
       // expected
     }
 
