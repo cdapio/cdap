@@ -21,7 +21,6 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ProgramId;
@@ -42,11 +41,9 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
   private final TimeScheduler timeScheduler;
-  private final StreamSizeScheduler streamSizeScheduler;
 
-  public AbstractSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler) {
+  public AbstractSchedulerService(TimeScheduler timeScheduler) {
     this.timeScheduler = timeScheduler;
-    this.streamSizeScheduler = streamSizeScheduler;
   }
 
   /**
@@ -61,15 +58,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       Throwables.propagateIfPossible(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
-
-    try {
-      streamSizeScheduler.init();
-      streamSizeScheduler.start();
-      LOG.info("Started stream size scheduler");
-    } catch (Throwable t) {
-      Throwables.propagateIfPossible(t, SchedulerException.class);
-      throw new SchedulerException(t);
-    }
   }
 
   /**
@@ -77,21 +65,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
    */
   protected final void stopScheduler() throws SchedulerException {
     try {
-      streamSizeScheduler.stop();
-      LOG.info("Stopped stream size scheduler");
+      timeScheduler.stop();
+      LOG.info("Stopped time scheduler");
     } catch (Throwable t) {
-      LOG.error("Error stopping stream size scheduler", t);
+      LOG.error("Error stopping time scheduler", t);
       Throwables.propagateIfPossible(t, SchedulerException.class);
       throw new SchedulerException(t);
-    } finally {
-      try {
-        timeScheduler.stop();
-        LOG.info("Stopped time scheduler");
-      } catch (Throwable t) {
-        LOG.error("Error stopping time scheduler", t);
-        Throwables.propagateIfPossible(t, SchedulerException.class);
-        throw new SchedulerException(t);
-      }
     }
   }
 
@@ -100,18 +79,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     if (containsTimeTrigger(schedule)) {
       timeScheduler.addProgramSchedule(schedule);
     }
-    if (containsStreamSizeTrigger(schedule)) {
-      streamSizeScheduler.addProgramSchedule(schedule);
-    }
   }
 
   @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     if (containsTimeTrigger(schedule)) {
       timeScheduler.deleteProgramSchedule(schedule);
-    }
-    if (containsStreamSizeTrigger(schedule)) {
-      streamSizeScheduler.deleteProgramSchedule(schedule);
     }
   }
 
@@ -120,9 +93,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     if (containsTimeTrigger(schedule)) {
       timeScheduler.suspendProgramSchedule(schedule);
     }
-    if (containsStreamSizeTrigger(schedule)) {
-      streamSizeScheduler.suspendProgramSchedule(schedule);
-    }
   }
 
   @Override
@@ -130,21 +100,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     if (containsTimeTrigger(schedule)) {
       timeScheduler.resumeProgramSchedule(schedule);
     }
-    if (containsStreamSizeTrigger(schedule)) {
-      streamSizeScheduler.resumeProgramSchedule(schedule);
-    }
   }
 
   private boolean containsTimeTrigger(ProgramSchedule schedule) {
     // A composite trigger may contain a TimeTrigger
     return schedule.getTrigger() instanceof TimeTrigger
       || schedule.getTrigger() instanceof AbstractSatisfiableCompositeTrigger;
-  }
-
-  private boolean containsStreamSizeTrigger(ProgramSchedule schedule) {
-    // A composite trigger won't contain a StreamSizeTrigger since StreamSizeTrigger is no longer supported
-    // in the new API introduced by 4.3
-    return schedule.getTrigger() instanceof StreamSizeTrigger;
   }
 
   @Override

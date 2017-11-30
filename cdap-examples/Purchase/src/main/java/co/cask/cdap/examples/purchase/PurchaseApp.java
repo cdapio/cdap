@@ -75,15 +75,6 @@ public class PurchaseApp extends AbstractApplication {
       .triggerByTime("0 4 * * *")
     );
 
-    // Schedule the workflow based on the data coming in the purchaseStream stream
-    scheduleWorkflow(
-      Schedules.builder("DataSchedule")
-        .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
-        .setMaxConcurrentRuns(1)
-        .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
-      "PurchaseHistoryWorkflow"
-    );
-
     createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties("History dataset"));
     try {
       createDataset("purchases", ObjectMappedTable.class, ObjectMappedTableProperties.builder().setType(Purchase.class)

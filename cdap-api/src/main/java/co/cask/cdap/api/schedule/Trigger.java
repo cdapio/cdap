@@ -29,7 +29,6 @@ public interface Trigger {
   enum Type {
     TIME("time"),
     PARTITION("partition"),
-    STREAM_SIZE("stream-size"),
     PROGRAM_STATUS("program-status"),
     AND("and"),
     OR("or");

@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
@@ -35,7 +34,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
@@ -48,7 +46,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
@@ -216,17 +213,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
         throw new RuntimeException(String.format("Schedule '%s' is invalid: Workflow '%s' is not configured " +
                                                    "in application '%s'",
                                                  entry.getValue().getName(), programName, specification.getName()));
-      }
-
-      // TODO StreamSizeSchedules should be resilient to stream inexistence [CDAP-1446]
-      Trigger trigger = entry.getValue().getTrigger();
-      if (trigger instanceof StreamSizeTrigger) {
-        StreamId streamId = ((StreamSizeTrigger) trigger).getStreamId();
-        if (!specification.getStreams().containsKey(streamId.getStream()) &&
-          store.getStream(streamId.getParent(), streamId.getStream()) == null) {
-          throw new RuntimeException(String.format("Schedule '%s' uses a Stream '%s' that does not exit",
-                                                   entry.getValue().getName(), streamId));
-        }
       }
     }
   }

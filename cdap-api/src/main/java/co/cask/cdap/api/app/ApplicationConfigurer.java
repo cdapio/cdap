@@ -95,19 +95,6 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
   void addWorker(Worker worker);
 
   /**
-   * Adds a {@link Schedule} to the specified program in the Application.
-   *
-   * @param schedule the schedule to be included for the program
-   * @param programType the type of the program
-   * @param programName the name of the program
-   * @param properties the properties for the schedule
-   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
-   */
-  @Deprecated
-  void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
-                   Map<String, String> properties);
-
-  /**
    * Get a ScheduleBuilder for the specified program.
    * @param scheduleName the name of the schedule
    * @param programType the type of the program; currently, only ProgramType.WORKFLOW can be scheduled

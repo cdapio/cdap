@@ -290,15 +290,10 @@ public final class Constants {
      * Topic name for publishing time events from time scheduler to the messaging system
      */
     public static final String TIME_EVENT_TOPIC = "time.event.topic";
-    /**
-     * Topic name for publishing time events from stream size scheduler to the messaging system
-     */
-    public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
 
     public static final String EVENT_POLL_DELAY_MILLIS = "scheduler.event.poll.delay.millis";
 
     public static final String TIME_EVENT_FETCH_SIZE = "scheduler.time.event.fetch.size";
-    public static final String STREAM_SIZE_EVENT_FETCH_SIZE = "scheduler.stream.size.event.fetch.size";
     public static final String DATA_EVENT_FETCH_SIZE = "scheduler.data.event.fetch.size";
     public static final String PROGRAM_STATUS_EVENT_FETCH_SIZE = "scheduler.program.status.event.fetch.size";
   }
@@ -1119,7 +1114,6 @@ public final class Constants {
       public static final String STREAM_FEED_CATEGORY = "stream";
       public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
       public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
-      public static final String STREAM_SIZE_SCHEDULE_POLLING_DELAY = "stream.size.schedule.polling.delay";
     }
   }
 

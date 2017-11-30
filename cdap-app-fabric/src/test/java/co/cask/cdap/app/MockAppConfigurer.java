@@ -27,8 +27,6 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
@@ -40,7 +38,6 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.id.NamespaceId;
 
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -100,12 +97,6 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
 
   @Override
   public void addWorker(Worker worker) {
-
-  }
-
-  @Override
-  public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
-                          Map<String, String> properties) {
 
   }
 

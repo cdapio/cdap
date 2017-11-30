@@ -26,8 +26,6 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
@@ -47,14 +45,12 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.annotations.VisibleForTesting;
@@ -208,26 +204,6 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();
     workers.put(spec.getName(), spec);
-  }
-
-  @Override
-  public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
-                          Map<String, String> properties) {
-    Preconditions.checkNotNull(schedule, "Schedule cannot be null.");
-    Preconditions.checkNotNull(schedule.getName(), "Schedule name cannot be null.");
-    Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
-    Preconditions.checkNotNull(programName, "Program name cannot be null.");
-    Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
-    Preconditions.checkArgument(!scheduleSpecs.containsKey(schedule.getName()), "Schedule with the name '" +
-      schedule.getName()  + "' already exists.");
-    if (schedule instanceof StreamSizeSchedule) {
-      Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
-                                  "Schedule data trigger must be greater than 0.");
-    }
-    ScheduleCreationSpec scheduleCreationSpec = Schedulers.toScheduleCreationSpec(deployNamespace.toEntityId(),
-                                                                                  schedule, programName,
-                                                                                  properties);
-    doAddSchedule(scheduleCreationSpec);
   }
 
   private void doAddSchedule(ScheduleCreationSpec scheduleSpec) {

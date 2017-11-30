@@ -75,27 +75,14 @@ public class ScheduleClientTestRun extends ClientTestBase {
   @Test
   public void testAll() throws Exception {
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
-    Assert.assertEquals(2, list.size());
+    Assert.assertEquals(1, list.size());
 
-    ScheduleDetail timeSchedule;
-    ScheduleDetail streamSchedule;
-    if (list.get(0).getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-      timeSchedule = list.get(0);
-      streamSchedule = list.get(1);
-    } else {
-      streamSchedule = list.get(0);
-      timeSchedule = list.get(1);
-    }
+    ScheduleDetail timeSchedule = list.get(0);
     ProtoTrigger.TimeTrigger timeTrigger = (ProtoTrigger.TimeTrigger) timeSchedule.getTrigger();
-    ProtoTrigger.StreamSizeTrigger streamSizeTrigger = (ProtoTrigger.StreamSizeTrigger) streamSchedule.getTrigger();
 
     Assert.assertEquals(FakeApp.TIME_SCHEDULE_NAME, timeSchedule.getName());
 
     Assert.assertEquals(FakeApp.SCHEDULE_CRON, timeTrigger.getCronExpression());
-
-    Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, streamSchedule.getName());
-    Assert.assertEquals(FakeApp.STREAM_NAME, streamSizeTrigger.getStreamId().getStream());
-    Assert.assertEquals(FakeApp.STREAM_TRIGGER_MB, streamSizeTrigger.getTriggerMB());
 
     String status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SUSPENDED", status);
@@ -139,14 +126,14 @@ public class ScheduleClientTestRun extends ClientTestBase {
     File appJar = createAppJarFile(FakeApp.class);
 
     // deploy the app with time and stream size schedule
-    FakeApp.AppConfig config = new FakeApp.AppConfig(true, true, null, null, null);
+    FakeApp.AppConfig config = new FakeApp.AppConfig(true, null, null);
     appClient.deploy(namespace, appJar, config);
     // now there should be two schedule
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(2, list.size());
 
     // re-deploy the app with only time schedule i.e. we deleted the stream size schedule
-    config = new FakeApp.AppConfig(true, false, null, null, null);
+    config = new FakeApp.AppConfig(true, null, null);
     appClient.deploy(namespace, appJar, config);
     // now there should be one schedule
     list = scheduleClient.listSchedules(workflow);
@@ -154,17 +141,17 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
     // Try to redeploy the app with stream size schedule and with the name of existing time schedule i.e we are trying
     // to change the schedule type
-    config = new FakeApp.AppConfig(false, true, null, FakeApp.TIME_SCHEDULE_NAME, null);
+    config = new FakeApp.AppConfig(false, null, null);
     appClient.deploy(namespace, appJar, config);
 
     // Try to change the schedule type from stream size to time again
-    config = new FakeApp.AppConfig(true, false, FakeApp.TIME_SCHEDULE_NAME, null, null);
+    config = new FakeApp.AppConfig(true, FakeApp.TIME_SCHEDULE_NAME, null);
     appClient.deploy(namespace, appJar, config);
     list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());
 
     // test updating the schedule cron
-    config = new FakeApp.AppConfig(true, false, FakeApp.TIME_SCHEDULE_NAME, null, "0 2 1 1 *");
+    config = new FakeApp.AppConfig(true, FakeApp.TIME_SCHEDULE_NAME, "0 2 1 1 *");
     appClient.deploy(namespace, appJar, config);
     list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());

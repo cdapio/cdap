@@ -28,8 +28,8 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
   private static final Logger LOG = LoggerFactory.getLogger(LocalSchedulerService.class);
 
   @Inject
-  public LocalSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler) {
-    super(timeScheduler, streamSizeScheduler);
+  public LocalSchedulerService(TimeScheduler timeScheduler) {
+    super(timeScheduler);
   }
 
   @Override

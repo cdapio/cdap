@@ -157,30 +157,6 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   }
 
   /**
-   * Schedules the specified {@link Workflow}
-   * @param schedule the schedule to be added for the Workflow
-   * @param workflowName the name of the Workflow
-   * @deprecated since 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
-   */
-  @Deprecated
-  protected void scheduleWorkflow(Schedule schedule, String workflowName) {
-    scheduleWorkflow(schedule, workflowName, Collections.emptyMap());
-  }
-
-
-  /**
-   * Schedule the specified {@link Workflow}
-   * @param schedule the schedule to be added for the Workflow
-   * @param workflowName the name of the Workflow
-   * @param properties properties to be added for the Schedule
-   * @deprecated since 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
-   */
-  @Deprecated
-  protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
-    configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
-  }
-
-  /**
    * Get a ScheduleBuilder for the specified program.
    * @param scheduleName the name of the schedule
    * @param programType the type of the program; currently, only ProgramType.WORKFLOW can be scheduled

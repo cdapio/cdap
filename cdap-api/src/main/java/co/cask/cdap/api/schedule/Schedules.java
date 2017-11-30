@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.schedule;
 
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 
 /**
@@ -99,23 +98,6 @@ public final class Schedules {
      */
     public Schedule createTimeSchedule(String cronExpression) {
       return new TimeSchedule(name, description, cronExpression, new RunConstraints(maxConcurrentRuns));
-    }
-
-    /**
-     * Create a data schedule that runs where a certain amount of data is available.
-     *
-     * @param source source of data the schedule is based on
-     * @param sourceName name of the source of data the schedule is based on
-     * @param dataTriggerMB the size of data, in MB, that the source has to receive to trigger an execution
-     * @return a schedule based on data availability in the given {@code dataSourceName}
-     */
-    public Schedule createDataSchedule(Source source, String sourceName, int dataTriggerMB) {
-      switch (source) {
-        case STREAM:
-          return new StreamSizeSchedule(name, description, sourceName, dataTriggerMB,
-                                        new RunConstraints(maxConcurrentRuns));
-      }
-      throw new IllegalArgumentException("Unhandled source of " + source);
     }
   }
 }

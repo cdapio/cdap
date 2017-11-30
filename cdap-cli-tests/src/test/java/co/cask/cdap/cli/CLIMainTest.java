@@ -866,8 +866,6 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type stream", FAKE_STREAM_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.TIME_SCHEDULE_NAME),
                               FAKE_APP_ID.toString());
-    testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.STREAM_SCHEDULE_NAME),
-                              FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type app", PingService.NAME),
                               FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type program",

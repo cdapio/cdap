@@ -39,8 +39,8 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
   private final CountDownLatch startUpLatch;
 
   @Inject
-  public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler) {
-    super(timeScheduler, streamSizeScheduler);
+  public DistributedSchedulerService(TimeScheduler timeScheduler) {
+    super(timeScheduler);
     this.startUpLatch = new CountDownLatch(1);
     this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override

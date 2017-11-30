@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.Schedules;
@@ -113,9 +114,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     }
 
     addWorkflow(new ETLWorkflow(spec, config.getEngine()));
-    scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
-                       .setDescription("ETL Batch schedule")
-                       .createTimeSchedule(config.getSchedule()),
-                     ETLWorkflow.NAME);
+    buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, ETLWorkflow.NAME)
+      .setDescription("ETL Batch schedule")
+      .triggerByTime(config.getSchedule());
   }
 }

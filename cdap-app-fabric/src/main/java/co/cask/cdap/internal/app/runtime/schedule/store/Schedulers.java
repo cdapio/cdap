@@ -20,19 +20,10 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -41,7 +32,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
@@ -54,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -106,23 +95,6 @@ public class Schedulers {
     } catch (DatasetManagementException | IOException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  public static ScheduleCreationSpec toScheduleCreationSpec(NamespaceId deployNamespace, Schedule schedule,
-                                                            String programName, Map<String, String> properties) {
-    Trigger trigger;
-    if (schedule instanceof TimeSchedule) {
-      trigger = new TimeTrigger(((TimeSchedule) schedule).getCronEntry());
-    } else {
-      StreamSizeSchedule streamSizeSchedule = ((StreamSizeSchedule) schedule);
-      trigger = new StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
-                                                    streamSizeSchedule.getDataTriggerMB());
-    }
-    Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
-    List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
-      ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
-    return new ScheduleCreationSpec(schedule.getName(), schedule.getDescription(), programName, properties,
-                                    trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
   }
 
   /**

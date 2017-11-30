@@ -1464,11 +1464,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                      new TimeTrigger("0 4 * * *"),
                                                      ImmutableList.of(new ConcurrencyConstraint(5)), null);
 
-    ScheduleDetail validScheduleDetail = new ScheduleDetail(
-      AppWithSchedule.SCHEDULE, "updatedDescription", null, ImmutableMap.<String, String>of(),
-      new ProtoTrigger.StreamSizeTrigger(new NamespaceId(TEST_NAMESPACE1).stream(AppWithSchedule.STREAM), 10),
-      ImmutableList.<Constraint>of(new ConcurrencyConstraint(5)), null);
-
     // trying to update schedule for a non-existing app should fail
     HttpResponse response = updateSchedule(TEST_NAMESPACE1, "nonExistingApp", null, AppWithSchedule.SCHEDULE,
                                            updateDetail);
@@ -1479,13 +1474,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                               "NonExistingSchedule", updateDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
-    // trying to update a time schedule with stream schedule detail containing both
-    // stream name and dataTriggerMB should succeed
-    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
-                              validScheduleDetail);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
-
-    // should be able to update an existing stream size schedule with a valid new time schedule
+    // should be able to update an existing schedule with a valid new time schedule
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
                               updateDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
