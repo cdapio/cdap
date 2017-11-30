@@ -16,7 +16,6 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -76,9 +75,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
   @Test
   public void testAll() throws Exception {
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
-    List<ScheduleSpecification> specs = scheduleClient.list(workflow);
     Assert.assertEquals(2, list.size());
-    Assert.assertEquals(specs, ScheduleDetail.toScheduleSpecs(list));
 
     ScheduleDetail timeSchedule;
     ScheduleDetail streamSchedule;

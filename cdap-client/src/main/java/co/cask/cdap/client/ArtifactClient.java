@@ -32,7 +32,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
@@ -98,43 +97,10 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the namespace could not be found
-   * @deprecated since 4.0.0. Use {@link #list(NamespaceId)} instead.
-   */
-  @Deprecated
-  public List<ArtifactSummary> list(Id.Namespace namespace)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return list(namespace.toEntityId());
-  }
-
-  /**
-   * Lists all artifacts in the given namespace, including all system artifacts.
-   *
-   * @param namespace the namespace to list artifacts in
-   * @return list of {@link ArtifactSummary}
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the namespace could not be found
    */
   public List<ArtifactSummary> list(NamespaceId namespace)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     return list(namespace, null);
-  }
-
-  /**
-   * Lists all artifacts in the given namespace, optionally including system artifacts.
-   *
-   * @param namespace the namespace to list artifacts in
-   * @param scope the scope of the artifacts to get. If null, both user and system artifacts are listed
-   * @return list of {@link ArtifactSummary}
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the namespace could not be found
-   * @deprecated since 4.0.0. Use {@link #list(NamespaceId, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<ArtifactSummary> list(Id.Namespace namespace, @Nullable ArtifactScope scope)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return list(namespace.toEntityId(), scope);
   }
 
   /**
@@ -170,45 +136,10 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @deprecated since 4.0.0. Use {@link #listVersions(NamespaceId, String)} instead.
-   */
-  @Deprecated
-  public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName)
-    throws UnauthenticatedException, IOException, ArtifactNotFoundException, UnauthorizedException {
-    return listVersions(namespace.toEntityId(), artifactName);
-  }
-
-  /**
-   * Lists all versions of the given artifact in the given namespace.
-   *
-   * @param namespace the namespace to list artifact versions in
-   * @param artifactName the name of the artifact
-   * @return list of {@link ArtifactSummary}
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   public List<ArtifactSummary> listVersions(NamespaceId namespace, String artifactName)
     throws UnauthenticatedException, IOException, ArtifactNotFoundException, UnauthorizedException {
     return listVersions(namespace, artifactName, null);
-  }
-
-  /**
-   * Lists all versions of the given artifact in the given namespace.
-   *
-   * @param namespace the namespace to list artifact versions in
-   * @param artifactName the name of the artifact
-   * @param scope the scope of artifacts to get. If none is given, the scope defaults to the user scope
-   * @return list of {@link ArtifactSummary}
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @deprecated since 4.0.0. Use {@link #listVersions(NamespaceId, String, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName, @Nullable ArtifactScope scope)
-    throws UnauthenticatedException, IOException, ArtifactNotFoundException, UnauthorizedException {
-    return listVersions(namespace.toEntityId(), artifactName, scope);
   }
 
   /**
@@ -244,22 +175,6 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @deprecated since 4.0.0. Use {@link #getArtifactInfo(ArtifactId)} instead.
-   */
-  @Deprecated
-  public ArtifactInfo getArtifactInfo(Id.Artifact artifactId)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
-    return getArtifactInfo(artifactId.toEntityId());
-  }
-
-  /**
-   * Gets information about a specific artifact version.
-   *
-   * @param artifactId the id of the artifact to get
-   * @return information about the given artifact
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   public ArtifactInfo getArtifactInfo(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
@@ -270,23 +185,6 @@ public class ArtifactClient {
       info = getArtifactInfo(artifactId, ArtifactScope.USER);
     }
     return info;
-  }
-
-  /**
-   * Gets information about a specific artifact version.
-   *
-   * @param artifactId the id of the artifact to get
-   * @param scope the scope of the artifact
-   * @return information about the given artifact
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @deprecated since 4.0.0. Use {@link #getArtifactInfo(ArtifactId, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public ArtifactInfo getArtifactInfo(Id.Artifact artifactId, ArtifactScope scope)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
-    return getArtifactInfo(artifactId.toEntityId(), scope);
   }
 
   /**
@@ -321,43 +219,10 @@ public class ArtifactClient {
    * @return summaries of all application classes in the given namespace, including classes from system artifacts
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getApplicationClasses(NamespaceId)} instead.
-   */
-  @Deprecated
-  public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    return getApplicationClasses(namespace.toEntityId());
-  }
-
-  /**
-   * Get summaries of all application classes in the given namespace, including classes from system artifacts.
-   *
-   * @param namespace the namespace to list application classes from
-   * @return summaries of all application classes in the given namespace, including classes from system artifacts
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationClassSummary> getApplicationClasses(NamespaceId namespace)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     return getApplicationClasses(namespace, (ArtifactScope) null);
-  }
-
-  /**
-   * Get summaries of all application classes in the given namespace,
-   * optionally including classes from system artifacts.
-   *
-   * @param namespace the namespace to list application classes from
-   * @param scope the scope to list application classes in. If null, classes from all scopes are returned
-   * @return summaries of all application classes in the given namespace, including classes from system artifacts
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getApplicationClasses(NamespaceId, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace,
-                                                             @Nullable ArtifactScope scope)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    return getApplicationClasses(namespace.toEntityId(), scope);
   }
 
   /**
@@ -389,41 +254,10 @@ public class ArtifactClient {
    * @return summaries of all application classes in the given namespace, including classes from system artifacts
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getApplicationClasses(NamespaceId, String)} instead.
-   */
-  @Deprecated
-  public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace, String className)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    return getApplicationClasses(namespace.toEntityId(), className);
-  }
-
-  /**
-   * Get information about all application classes in the specified namespace, of the specified class name.
-   *
-   * @param namespace the namespace to list application classes from
-   * @return summaries of all application classes in the given namespace, including classes from system artifacts
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationClassInfo> getApplicationClasses(NamespaceId namespace, String className)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     return getApplicationClasses(namespace, className, ArtifactScope.USER);
-  }
-
-  /**
-   * Get information about all application classes in the specified namespace, of the specified class name.
-   *
-   * @param namespace the namespace to list application classes from
-   * @param scope the scope to list application classes in
-   * @return summaries of all application classes in the given namespace, including classes from system artifacts
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getApplicationClasses(NamespaceId, String, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace, String className, ArtifactScope scope)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    return getApplicationClasses(namespace.toEntityId(), className, scope);
   }
 
   /**
@@ -454,22 +288,6 @@ public class ArtifactClient {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getPluginTypes(ArtifactId)} instead.
-   */
-  @Deprecated
-  public List<String> getPluginTypes(Id.Artifact artifactId)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
-    return getPluginTypes(artifactId.toEntityId());
-  }
-
-  /**
-   * Gets all the plugin types available to a specific artifact.
-   *
-   * @param artifactId the id of the artifact to get
-   * @return list of plugin types available to the given artifact.
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<String> getPluginTypes(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
@@ -480,23 +298,6 @@ public class ArtifactClient {
       pluginTypes = getPluginTypes(artifactId, ArtifactScope.USER);
     }
     return pluginTypes;
-  }
-
-  /**
-   * Gets all the plugin types available to a specific artifact.
-   *
-   * @param artifactId the id of the artifact to get
-   * @param scope the scope of the artifact
-   * @return list of plugin types available to the given artifact.
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getPluginTypes(ArtifactId, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<String> getPluginTypes(Id.Artifact artifactId, ArtifactScope scope)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
-    return getPluginTypes(artifactId.toEntityId(), scope);
   }
 
   /**
@@ -533,23 +334,6 @@ public class ArtifactClient {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getPluginSummaries(ArtifactId, String)} instead.
-   */
-  @Deprecated
-  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
-    return getPluginSummaries(artifactId.toEntityId(), pluginType);
-  }
-
-  /**
-   * Gets all the plugins of the given type available to the given artifact.
-   *
-   * @param artifactId the id of the artifact to get
-   * @param pluginType the type of plugins to get
-   * @return list of {@link PluginSummary}
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginSummary> getPluginSummaries(ArtifactId artifactId, String pluginType)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
@@ -560,24 +344,6 @@ public class ArtifactClient {
       pluginSummary = getPluginSummaries(artifactId, pluginType, ArtifactScope.USER);
     }
     return pluginSummary;
-  }
-
-  /**
-   * Gets all the plugins of the given type available to the given artifact.
-   *
-   * @param artifactId the id of the artifact to get
-   * @param pluginType the type of plugins to get
-   * @param scope the scope of the artifact
-   * @return list of {@link PluginSummary}
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getPluginSummaries(ArtifactId, String, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType, ArtifactScope scope)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
-    return getPluginSummaries(artifactId.toEntityId(), pluginType, scope);
   }
 
   /**
@@ -616,24 +382,6 @@ public class ArtifactClient {
    * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getPluginInfo(ArtifactId, String, String)} instead.
-   */
-  @Deprecated
-  public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return getPluginInfo(artifactId.toEntityId(), pluginType, pluginName);
-  }
-
-  /**
-   * Gets all the plugins of the given type and name available to the given artifact.
-   *
-   * @param artifactId the id of the artifact to get
-   * @param pluginType the type of plugins to get
-   * @param pluginName the name of the plugins to get
-   * @return list of {@link PluginInfo}
-   * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginInfo> getPluginInfo(ArtifactId artifactId, String pluginType, String pluginName)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
@@ -644,26 +392,6 @@ public class ArtifactClient {
       pluginInfo = getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.USER);
     }
     return pluginInfo;
-  }
-
-  /**
-   * Gets all the plugins of the given type and name available to the given artifact.
-   *
-   * @param artifactId the id of the artifact to get
-   * @param pluginType the type of plugins to get
-   * @param pluginName the name of the plugins to get
-   * @param scope the scope of the artifact
-   * @return list of {@link PluginInfo}
-   * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #getPluginInfo(ArtifactId, String, String, ArtifactScope)} instead.
-   */
-  @Deprecated
-  public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName,
-                                        ArtifactScope scope)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    return getPluginInfo(artifactId.toEntityId(), pluginType, pluginName, scope);
   }
 
   /**
@@ -706,27 +434,6 @@ public class ArtifactClient {
    * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #add(ArtifactId, Set, InputSupplier)} instead.
-   */
-  @Deprecated
-  public void add(Id.Artifact artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
-                  InputSupplier<? extends InputStream> artifactContents)
-    throws UnauthenticatedException, BadRequestException, ArtifactRangeNotFoundException,
-    ArtifactAlreadyExistsException, IOException, UnauthorizedException {
-    add(artifactId.toEntityId(), parentArtifacts, artifactContents);
-  }
-
-  /**
-   * Add an artifact.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param parentArtifacts the set of artifacts this artifact extends
-   * @param artifactContents an input supplier for the contents of the artifact
-   * @throws ArtifactAlreadyExistsException if the artifact already exists
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(ArtifactId artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
                   InputSupplier<? extends InputStream> artifactContents)
@@ -735,31 +442,6 @@ public class ArtifactClient {
 
     add(artifactId.getParent(), artifactId.getArtifact(), artifactContents,
         artifactId.getVersion(), parentArtifacts);
-  }
-
-  /**
-   * Add an artifact.
-   *
-   * @param namespace the namespace to add the artifact to
-   * @param artifactName the name of the artifact to add
-   * @param artifactContents an input supplier for the contents of the artifact
-   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
-   *                        manifest of the artifact.
-   * @throws ArtifactAlreadyExistsException if the artifact already exists
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #add(NamespaceId, String, InputSupplier, String)} instead.
-   */
-  @Deprecated
-  public void add(Id.Namespace namespace, String artifactName,
-                  InputSupplier<? extends InputStream> artifactContents,
-                  @Nullable String artifactVersion)
-    throws ArtifactAlreadyExistsException, BadRequestException, IOException,
-    UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
-
-    add(namespace.toEntityId(), artifactName, artifactContents, artifactVersion);
   }
 
   /**
@@ -799,31 +481,6 @@ public class ArtifactClient {
    * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #add(NamespaceId, String, InputSupplier, String, Set)} insetad.
-   */
-  @Deprecated
-  public void add(Id.Namespace namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
-                  @Nullable String artifactVersion, @Nullable Set<ArtifactRange> parentArtifacts)
-    throws ArtifactAlreadyExistsException, BadRequestException, IOException,
-    UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
-
-    add(namespace.toEntityId(), artifactName, artifactContents, artifactVersion, parentArtifacts);
-  }
-
-  /**
-   * Add an artifact.
-   *
-   * @param namespace the namespace to add the artifact to
-   * @param artifactName the name of the artifact to add
-   * @param artifactContents an input supplier for the contents of the artifact
-   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
-   *                        manifest of the artifact
-   * @param parentArtifacts the set of artifacts this artifact extends
-   * @throws ArtifactAlreadyExistsException if the artifact already exists
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(NamespaceId namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion, @Nullable Set<ArtifactRange> parentArtifacts)
@@ -831,38 +488,6 @@ public class ArtifactClient {
     UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
 
     add(namespace, artifactName, artifactContents, artifactVersion, parentArtifacts, null);
-  }
-
-  /**
-   * Add an artifact.
-   *
-   * @param namespace the namespace to add the artifact to
-   * @param artifactName the name of the artifact to add
-   * @param artifactContents an input supplier for the contents of the artifact
-   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
-   *                        manifest of the artifact
-   * @param parentArtifacts the set of artifacts this artifact extends
-   * @param additionalPlugins the set of plugins contained in the artifact that cannot be determined
-   *                          through jar inspection. This set should include any classes that are plugins but could
-   *                          not be annotated as such. For example, 3rd party classes like jdbc drivers fall into
-   *                          this category.
-   * @throws ArtifactAlreadyExistsException if the artifact already exists
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #add(NamespaceId, String, InputSupplier, String, Set, Set)} instead.
-   */
-  @Deprecated
-  public void add(Id.Namespace namespace, String artifactName,
-                  InputSupplier<? extends InputStream> artifactContents,
-                  @Nullable String artifactVersion,
-                  @Nullable Set<ArtifactRange> parentArtifacts,
-                  @Nullable Set<PluginClass> additionalPlugins)
-    throws ArtifactAlreadyExistsException, BadRequestException, IOException,
-    UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
-
-    add(namespace.toEntityId(), artifactName, artifactContents, artifactVersion, parentArtifacts, additionalPlugins);
   }
 
   /**
@@ -927,22 +552,6 @@ public class ArtifactClient {
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Use {@link #delete(ArtifactId)} instead.
-   */
-  @Deprecated
-  public void delete(Id.Artifact artifactId)
-    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
-    delete(artifactId.toEntityId());
-  }
-
-  /**
-   * Delete an artifact.
-   *
-   * @param artifactId the artifact to delete
-   *
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void delete(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
@@ -958,24 +567,6 @@ public class ArtifactClient {
     if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
-  }
-
-  /**
-   * Write properties for an artifact. Any existing properties will be overwritten.
-   *
-   * @param artifactId the artifact to add properties to
-   * @param properties the properties to add
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the artifact does not exist
-   * @throws IOException if a network error occurred
-   * @deprecated since 4.0.0. Use {@link #writeProperties(ArtifactId, Map)} instead.
-   */
-  @Deprecated
-  public void writeProperties(Id.Artifact artifactId, Map<String, String> properties)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException,
-    BadRequestException, UnauthorizedException {
-    writeProperties(artifactId.toEntityId(), properties);
   }
 
   /**
@@ -1007,23 +598,6 @@ public class ArtifactClient {
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
-  }
-
-  /**
-   * Delete all properties for an artifact. If no properties exist, this will be a no-op.
-   *
-   * @param artifactId the artifact to delete properties from
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the artifact does not exist
-   * @throws IOException if a network error occurred
-   * @deprecated since 4.0.0. Use {@link #deleteProperties(ArtifactId)} instead.
-   */
-  @Deprecated
-  public void deleteProperties(Id.Artifact artifactId)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException,
-    BadRequestException, UnauthorizedException {
-    deleteProperties(artifactId.toEntityId());
   }
 
   /**
@@ -1067,26 +641,6 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
-   * @deprecated since 4.0.0. Use {@link #writeProperty(ArtifactId, String, String)} instead.
-   */
-  @Deprecated
-  public void writeProperty(Id.Artifact artifactId, String key, String value)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException,
-    BadRequestException, UnauthorizedException {
-    writeProperty(artifactId.toEntityId(), key, value);
-  }
-
-  /**
-   * Write a property for an artifact. If the property already exists, it will be overwritten. If the property
-   * does not exist, it will be added.
-   *
-   * @param artifactId the artifact to write the property to
-   * @param key the property key to write
-   * @param value the property value to write
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the artifact does not exist
-   * @throws IOException if a network error occurred
    */
   public void writeProperty(ArtifactId artifactId, String key, String value)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException,
@@ -1108,24 +662,6 @@ public class ArtifactClient {
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
-  }
-
-  /**
-   * Delete a property for an artifact. If the property does not exist, this will be a no-op.
-   *
-   * @param artifactId the artifact to delete a property from
-   * @param key the property to delete
-   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws ArtifactNotFoundException if the artifact does not exist
-   * @throws IOException if a network error occurred
-   * @deprecated since 4.0.0. Use {@link #deleteProperty(ArtifactId, String)} instead.
-   */
-  @Deprecated
-  public void deleteProperty(Id.Artifact artifactId, String key)
-    throws IOException, UnauthenticatedException, ArtifactNotFoundException,
-    BadRequestException, UnauthorizedException {
-    deleteProperty(artifactId.toEntityId(), key);
   }
 
   /**

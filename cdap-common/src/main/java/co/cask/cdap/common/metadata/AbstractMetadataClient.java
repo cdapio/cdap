@@ -23,6 +23,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
@@ -67,7 +68,7 @@ public abstract class AbstractMetadataClient {
   /**
    * Resolves the specified URL.
    */
-  protected abstract URL resolve(Id.Namespace namesapace, String resource) throws IOException;
+  protected abstract URL resolve(NamespaceId namesapace, String resource) throws IOException;
 
   /**
    * Searches entities in the specified namespace whose metadata matches the specified query.
@@ -141,7 +142,7 @@ public abstract class AbstractMetadataClient {
     if (showHidden) {
       path += "&showHidden=" + true;
     }
-    URL searchURL = resolve(namespace, path);
+    URL searchURL = resolve(namespace.toEntityId(), path);
     HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.code());
     if (HttpResponseStatus.BAD_REQUEST.code() == response.getResponseCode()) {
       throw new BadRequestException(response.getResponseBodyAsString());
@@ -1152,7 +1153,7 @@ public abstract class AbstractMetadataClient {
   private HttpResponse makeRequest(Id.NamespacedId namespacedId, String path,
                                    HttpMethod httpMethod, @Nullable String body)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    URL url = resolve(namespacedId.getNamespace(), path);
+    URL url = resolve(namespacedId.getNamespace().toEntityId(), path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {
       builder.withBody(body);

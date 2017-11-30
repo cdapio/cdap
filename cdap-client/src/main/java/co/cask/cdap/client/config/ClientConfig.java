@@ -18,7 +18,6 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpRequestConfig;
@@ -113,20 +112,6 @@ public class ClientConfig {
    */
   public URL resolveURLNoVersion(String path) throws MalformedURLException {
     return getConnectionConfig().resolveURI(path).toURL();
-  }
-
-  /**
-   * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
-   *
-   * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:11015/v3/&lt;namespace&gt;/apps".
-   * @return URL of the resolved path
-   * @throws MalformedURLException
-   * @deprecated since 4.0.0. Please use {@link #resolveNamespacedURLV3(NamespaceId, String)} instead
-   */
-  @Deprecated
-  public URL resolveNamespacedURLV3(Id.Namespace namespace, String path) throws MalformedURLException {
-    return resolveNamespacedURLV3(namespace.toEntityId(), path);
   }
 
   /**
