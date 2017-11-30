@@ -158,7 +158,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
       angular.forEach($scope.apps, function (app) {
         angular.forEach(r.series, function (s) {
-          if(app.id === s.grouping.app) {
+          if(app.name === s.grouping.app) {
             myHelpers.deepSet(
               app,
               'metric.' + s.metricName.split('.').pop(),

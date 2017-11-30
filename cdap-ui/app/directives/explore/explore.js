@@ -77,7 +77,7 @@ angular.module(PKG.name + '.commons')
                   }
                   defer.resolve();
                 },
-                (err) => defer.resolve()
+                () => defer.resolve()
               );
           }
           return defer.promise;
