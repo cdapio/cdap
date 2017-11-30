@@ -11,7 +11,7 @@ Getting Started
 This is a quick tutorial, covering the basics of CDAP pipelines:
 
   1. `Install CDAP`_
-  #. `Start CDAP Pipelines`_
+  #. `Creating CDAP Pipelines`_
   #. `Start CDAP Studio`_
   #. `Quick Tour of CDAP Studio`_
   #. `Creating a Simple Pipeline`_
