@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
@@ -407,16 +406,6 @@ public class DatasetClassRewriterTest {
     public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
       return entityIds;
     }
-
-    @Override
-    public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-      return new Predicate<EntityId>() {
-        @Override
-        public boolean apply(@Nullable EntityId input) {
-          return true;
-        }
-      };
-    }
   }
 
   private static final class AuthorizationRecorder implements AuthorizationEnforcer {
@@ -443,16 +432,6 @@ public class DatasetClassRewriterTest {
     @Override
     public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
       return entityIds;
-    }
-
-    @Override
-    public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-      return new Predicate<EntityId>() {
-        @Override
-        public boolean apply(EntityId input) {
-          return true;
-        }
-      };
     }
 
     List<Privilege> getPrivileges() {

@@ -55,11 +55,6 @@ public class RemotePrivilegesManager extends RemoteOpsClient implements Privileg
   }
 
   @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    grant(Authorizable.fromEntityId(entity), principal, actions);
-  }
-
-  @Override
   public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     LOG.trace("Making request to grant {} on {} to {}", actions, authorizable, principal);
     executeRequest("grant", authorizable, principal, actions);
@@ -67,20 +62,10 @@ public class RemotePrivilegesManager extends RemoteOpsClient implements Privileg
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    revoke(Authorizable.fromEntityId(entity), principal, actions);
-  }
-
-  @Override
   public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     LOG.trace("Making request to revoke {} on {} to {}", actions, authorizable, principal);
     executeRequest("revoke", authorizable, principal, actions);
     LOG.debug("Revoked {} on {} to {} successfully", actions, authorizable, principal);
-  }
-
-  @Override
-  public void revoke(EntityId entity) throws Exception {
-    revoke(Authorizable.fromEntityId(entity));
   }
 
   @Override

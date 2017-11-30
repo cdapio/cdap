@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -28,10 +27,10 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
+import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
+import co.cask.cdap.security.spi.authorization.NotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
@@ -112,23 +111,8 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
-  }
-
-  @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    grant(Authorizable.fromEntityId(entity), principal, actions);
-  }
-
-  @Override
   public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     getActions(authorizable, principal).addAll(actions);
-  }
-
-  @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    revoke(Authorizable.fromEntityId(entity), principal, actions);
   }
 
   @Override
@@ -137,49 +121,44 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void revoke(EntityId entity) throws Exception {
-    revoke(Authorizable.fromEntityId(entity));
-  }
-
-  @Override
   public void revoke(Authorizable authorizable) throws Exception {
     privileges.remove(authorizable);
   }
 
   @Override
-  public void createRole(Role role) throws RoleAlreadyExistsException {
+  public void createRole(Role role) throws AlreadyExistsException {
     if (roleToPrincipals.containsKey(role)) {
-      throw new RoleAlreadyExistsException(role);
+      throw new AlreadyExistsException(role);
     }
     // NOTE: A concurrent put might happen, hence it should still result as RoleAlreadyExistsException.
     Set<Principal> principals = Collections.newSetFromMap(new ConcurrentHashMap<Principal, Boolean>());
     if (roleToPrincipals.putIfAbsent(role, principals) != null) {
-      throw new RoleAlreadyExistsException(role);
+      throw new AlreadyExistsException(role);
     }
   }
 
   @Override
-  public void dropRole(Role role) throws RoleNotFoundException {
+  public void dropRole(Role role) throws NotFoundException {
     Set<Principal> removed = roleToPrincipals.remove(role);
     if (removed == null) {
-      throw new RoleNotFoundException(role);
+      throw new NotFoundException(role);
     }
   }
 
   @Override
-  public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+  public void addRoleToPrincipal(Role role, Principal principal) throws NotFoundException {
     Set<Principal> principals = roleToPrincipals.get(role);
     if (principals == null) {
-      throw new RoleNotFoundException(role);
+      throw new NotFoundException(role);
     }
     principals.add(principal);
   }
 
   @Override
-  public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+  public void removeRoleFromPrincipal(Role role, Principal principal) throws NotFoundException {
     Set<Principal> principals = roleToPrincipals.get(role);
     if (principals == null) {
-      throw new RoleNotFoundException(role);
+      throw new NotFoundException(role);
     }
     principals.remove(principal);
   }

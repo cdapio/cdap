@@ -92,7 +92,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
 
@@ -122,19 +122,26 @@ public class ProgramLifecycleServiceAuthorizationTest {
     }
 
     // no auto grant now, need to have privileges on the program to be able to see the programs
-    authorizer.grant(applicationId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.FLOW,
+                                                                     AllProgramsApp.NoOpFlow.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
+                                                                     AllProgramsApp.NoOpService.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKER,
+                                                                     AllProgramsApp.NoOpWorker.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SPARK,
+                                                                     AllProgramsApp.NoOpSpark.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                     AllProgramsApp.NoOpMR.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                     AllProgramsApp.NoOpMR2.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
-    authorizer.grant(applicationId.program(ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), ALICE,
+    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKFLOW,
+                                                                     AllProgramsApp.NoOpWorkflow.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
 
     for (ProgramType type : ProgramType.values()) {
@@ -168,7 +175,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
   private void setUpPrivilegesAndExpectFailedDeploy(Map<EntityId, Set<Action>> neededPrivileges) throws Exception {
     int count = 0;
     for (Map.Entry<EntityId, Set<Action>> privilege : neededPrivileges.entrySet()) {
-      authorizer.grant(privilege.getKey(), ALICE, privilege.getValue());
+      authorizer.grant(Authorizable.fromEntityId(privilege.getKey()), ALICE, privilege.getValue());
       count++;
       if (count < neededPrivileges.size()) {
         try {

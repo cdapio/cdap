@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -120,16 +121,16 @@ public abstract class RemotePrivilegesTestBase {
     // In this test, grants and revokes happen via PrivilegesManager, privilege listing and enforcement happens via
     // Authorizer. Also, since grants and revokes go directly to master and don't need a proxy, the
     // RemoteSystemOperationsService does not need to be started in this release.
-    privilegesManager.grant(NS, ALICE, EnumSet.allOf(Action.class));
-    privilegesManager.grant(APP, ALICE, Collections.singleton(Action.ADMIN));
-    privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
+    privilegesManager.grant(Authorizable.fromEntityId(NS), ALICE, EnumSet.allOf(Action.class));
+    privilegesManager.grant(Authorizable.fromEntityId(APP), ALICE, Collections.singleton(Action.ADMIN));
+    privilegesManager.grant(Authorizable.fromEntityId(PROGRAM), ALICE, Collections.singleton(Action.EXECUTE));
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
     authorizationEnforcer.enforce(APP, ALICE, Collections.singleton(Action.ADMIN));
-    privilegesManager.revoke(PROGRAM);
-    privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
-    privilegesManager.revoke(NS, ALICE, EnumSet.allOf(Action.class));
+    privilegesManager.revoke(Authorizable.fromEntityId(PROGRAM));
+    privilegesManager.revoke(Authorizable.fromEntityId(APP), ALICE, EnumSet.allOf(Action.class));
+    privilegesManager.revoke(Authorizable.fromEntityId(NS), ALICE, EnumSet.allOf(Action.class));
     Set<Privilege> privileges = privilegesManager.listPrivileges(ALICE);
     Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
                       privileges.isEmpty());
@@ -137,9 +138,9 @@ public abstract class RemotePrivilegesTestBase {
 
   @Test
   public void testAuthorizationEnforcer() throws Exception {
-    privilegesManager.grant(NS, ALICE, EnumSet.allOf(Action.class));
-    privilegesManager.grant(APP, ALICE, Collections.singleton(Action.ADMIN));
-    privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
+    privilegesManager.grant(Authorizable.fromEntityId(NS), ALICE, EnumSet.allOf(Action.class));
+    privilegesManager.grant(Authorizable.fromEntityId(APP), ALICE, Collections.singleton(Action.ADMIN));
+    privilegesManager.grant(Authorizable.fromEntityId(PROGRAM), ALICE, Collections.singleton(Action.EXECUTE));
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
@@ -150,9 +151,9 @@ public abstract class RemotePrivilegesTestBase {
       // expected
     }
 
-    privilegesManager.revoke(PROGRAM);
-    privilegesManager.revoke(APP);
-    privilegesManager.revoke(NS);
+    privilegesManager.revoke(Authorizable.fromEntityId(PROGRAM));
+    privilegesManager.revoke(Authorizable.fromEntityId(APP));
+    privilegesManager.revoke(Authorizable.fromEntityId(NS));
   }
 
   @Test
@@ -172,14 +173,14 @@ public abstract class RemotePrivilegesTestBase {
     StreamId stream2 = NS.stream("stream2");
 
     // Grant privileges on non-numbered entities to ALICE
-    privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
-    privilegesManager.grant(ds, ALICE, EnumSet.of(Action.READ, Action.WRITE));
-    privilegesManager.grant(stream, ALICE, EnumSet.of(Action.READ));
+    privilegesManager.grant(Authorizable.fromEntityId(PROGRAM), ALICE, Collections.singleton(Action.EXECUTE));
+    privilegesManager.grant(Authorizable.fromEntityId(ds), ALICE, EnumSet.of(Action.READ, Action.WRITE));
+    privilegesManager.grant(Authorizable.fromEntityId(stream), ALICE, EnumSet.of(Action.READ));
 
     // Grant privileges on entities ending with 2 to BOB
-    privilegesManager.grant(program2, BOB, Collections.singleton(Action.ADMIN));
-    privilegesManager.grant(ds2, BOB, EnumSet.of(Action.READ, Action.WRITE));
-    privilegesManager.grant(stream2, BOB, EnumSet.allOf(Action.class));
+    privilegesManager.grant(Authorizable.fromEntityId(program2), BOB, Collections.singleton(Action.ADMIN));
+    privilegesManager.grant(Authorizable.fromEntityId(ds2), BOB, EnumSet.of(Action.READ, Action.WRITE));
+    privilegesManager.grant(Authorizable.fromEntityId(stream2), BOB, EnumSet.allOf(Action.class));
 
     Set<? extends EntityId> allEntities = ImmutableSet.of(NS,
                                                           APP, PROGRAM, ds, stream,
@@ -202,7 +203,7 @@ public abstract class RemotePrivilegesTestBase {
                         authorizationEnforcer.isVisible(ImmutableSet.of(ds, APP), ALICE));
 
     for (EntityId entityId : allEntities) {
-      privilegesManager.revoke(entityId);
+      privilegesManager.revoke(Authorizable.fromEntityId(entityId));
     }
   }
 

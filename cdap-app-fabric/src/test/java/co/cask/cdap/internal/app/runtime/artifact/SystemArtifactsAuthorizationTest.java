@@ -31,6 +31,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -110,7 +111,7 @@ public class SystemArtifactsAuthorizationTest {
       // expected
     }
     // grant alice admin privileges on the CDAP system namespace
-    authorizer.grant(NamespaceId.SYSTEM, ALICE, Collections.singleton(Action.ADMIN));
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM), ALICE, Collections.singleton(Action.ADMIN));
     Assert.assertEquals(
       Collections.singleton(new Privilege(NamespaceId.SYSTEM, Action.ADMIN)), authorizer.listPrivileges(ALICE));
     // refreshing system artifacts should succeed now
@@ -128,7 +129,7 @@ public class SystemArtifactsAuthorizationTest {
     // grant alice admin privileges on test namespace
     SecurityRequestContext.setUserId(ALICE.getName());
     NamespaceId namespaceId = new NamespaceId("test");
-    authorizer.grant(namespaceId, ALICE, Collections.singleton(Action.ADMIN));
+    authorizer.grant(Authorizable.fromEntityId(namespaceId), ALICE, Collections.singleton(Action.ADMIN));
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId.getNamespace()).build());
 
     // test that system artifacts are available to everyone
@@ -162,17 +163,17 @@ public class SystemArtifactsAuthorizationTest {
       // expected
     }
     // deleting system artifact should succeed if alice has ADMIN on the artifact
-    authorizer.grant(SYSTEM_ARTIFACT, ALICE, EnumSet.of(Action.ADMIN));
+    authorizer.grant(Authorizable.fromEntityId(SYSTEM_ARTIFACT), ALICE, EnumSet.of(Action.ADMIN));
     artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
 
     // clean up privilege
-    authorizer.revoke(SYSTEM_ARTIFACT);
-    authorizer.revoke(namespaceId);
+    authorizer.revoke(Authorizable.fromEntityId(SYSTEM_ARTIFACT));
+    authorizer.revoke(Authorizable.fromEntityId(namespaceId));
   }
 
   @AfterClass
   public static void cleanup() throws Exception {
-    authorizer.revoke(NamespaceId.SYSTEM);
+    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.SYSTEM));
     Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));
     SecurityRequestContext.setUserId(OLD_USER_ID);
   }

@@ -23,6 +23,7 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -129,7 +130,8 @@ public class AuthorizationCLITest extends CLITestBase {
     // SecurityRequestContext to a non-null value. Having a null user name is fine, but when it is used as null via a
     // CLI command, the null is serialized to the String "null" which causes issues during enforcement, when the user
     // is received as null, and not the String "null".
-    authorizationClient.grant(INSTANCE_ID, SecurityRequestContext.toPrincipal(), Collections.singleton(Action.ADMIN));
+    authorizationClient.grant(Authorizable.fromEntityId(INSTANCE_ID),
+                              SecurityRequestContext.toPrincipal(), Collections.singleton(Action.ADMIN));
   }
 
   @Test
@@ -214,6 +216,6 @@ public class AuthorizationCLITest extends CLITestBase {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    authorizationClient.revoke(INSTANCE_ID);
+    authorizationClient.revoke(Authorizable.fromEntityId(INSTANCE_ID));
   }
 }

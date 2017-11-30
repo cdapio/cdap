@@ -28,6 +28,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -368,7 +369,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   private static void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions)
     throws Exception {
     Set<Privilege> existingPrivileges = new HashSet<>(authorizer.listPrivileges(principal));
-    authorizer.grant(entityId, principal, actions);
+    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
     ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Action action : actions) {
       expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
@@ -380,7 +381,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   private static void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions)
     throws Exception {
     Set<Privilege> existingPrivileges = new HashSet<>(authorizer.listPrivileges(principal));
-    authorizer.revoke(entityId, principal, actions);
+    authorizer.revoke(Authorizable.fromEntityId(entityId), principal, actions);
     for (Action action : actions) {
       existingPrivileges.remove(new Privilege(entityId, action));
     }

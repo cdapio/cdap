@@ -16,7 +16,6 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -34,8 +33,7 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
-import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
+import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -94,17 +92,6 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    throw new UnsupportedOperationException("Filtering is not supported via Java Client.");
-  }
-
-  @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
-    grant(Authorizable.fromEntityId(entity), principal, actions);
-  }
-
-  @Override
   public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws IOException,
     UnauthorizedException, UnauthenticatedException, NotFoundException, FeatureDisabledException {
     GrantRequest grantRequest = new GrantRequest(authorizable, principal, actions);
@@ -115,20 +102,8 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   @Override
-  public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
-    UnauthorizedException, NotFoundException {
-    revoke(Authorizable.fromEntityId(entity), null, null);
-  }
-
-  @Override
   public void revoke(Authorizable authorizable) throws Exception {
     revoke(authorizable, null, null);
-  }
-
-  @Override
-  public void revoke(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
-    revoke(Authorizable.fromEntityId(entity), principal, actions);
   }
 
   @Override
@@ -152,18 +127,18 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void createRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleAlreadyExistsException, NotFoundException {
+    UnauthorizedException, AlreadyExistsException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_CONFLICT);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new RoleAlreadyExistsException(role);
+      throw new AlreadyExistsException(role);
     }
   }
 
   @Override
   public void dropRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthorizedException, NotFoundException, co.cask.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
@@ -183,7 +158,8 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthenticatedException, UnauthorizedException, NotFoundException,
+    co.cask.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
@@ -192,7 +168,8 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
+    UnauthenticatedException, UnauthorizedException, NotFoundException,
+    co.cask.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
@@ -220,11 +197,11 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   private void executeExistingRolesRequest(Role role, HttpRequest request) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, RoleNotFoundException,
-    NotFoundException {
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException,
+    co.cask.cdap.security.spi.authorization.NotFoundException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new RoleNotFoundException(role);
+      throw new co.cask.cdap.security.spi.authorization.NotFoundException(role);
     }
   }
 

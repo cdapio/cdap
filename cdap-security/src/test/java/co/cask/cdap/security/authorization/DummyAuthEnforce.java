@@ -22,6 +22,7 @@ import co.cask.cdap.common.security.AuthEnforceRewriter;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * A Dummy class which is just an wrapper and have different inner classes with {@link AuthEnforce} annotations.
@@ -45,7 +46,7 @@ public class DummyAuthEnforce {
       throw new EnforceNotCalledException();
     }
 
-    @Deprecated // tests that the presence of other annotations does not affect class rewrite
+    @VisibleForTesting // NOTE : tests that the presence of other annotations does not affect class rewrite
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
     public void testMultipleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.

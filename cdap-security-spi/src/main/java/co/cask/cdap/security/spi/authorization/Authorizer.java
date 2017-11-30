@@ -65,7 +65,7 @@ public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, Author
    * Create a role.
    *
    * @param role the {@link Role} to create
-   * @throws RoleAlreadyExistsException if the the role to be created already exists
+   * @throws AlreadyExistsException if the the role to be created already exists
    */
   void createRole(Role role) throws Exception;
 
@@ -73,7 +73,7 @@ public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, Author
    * Drop a role.
    *
    * @param role the {@link Role} to drop
-   * @throws RoleNotFoundException if the role to be dropped is not found
+   * @throws AlreadyExistsException if the role to be dropped is not found
    */
   void dropRole(Role role) throws Exception;
 
@@ -82,7 +82,7 @@ public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, Author
    *
    * @param role the {@link Role} to add to the specified group
    * @param principal the {@link Principal} to add the role to
-   * @throws RoleNotFoundException if the role to be added to the principals is not found
+   * @throws AlreadyExistsException if the role to be added to the principals is not found
    */
   void addRoleToPrincipal(Role role, Principal principal) throws Exception;
 
@@ -91,7 +91,7 @@ public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, Author
    *
    * @param role the {@link Role} to remove from the specified group
    * @param principal the {@link Principal} to remove the role from
-   * @throws RoleNotFoundException if the role to be removed to the principals is not found
+   * @throws AlreadyExistsException if the role to be removed to the principals is not found
    */
   void removeRoleFromPrincipal(Role role, Principal principal) throws Exception;
 

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.spi.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
@@ -65,15 +64,4 @@ public interface AuthorizationEnforcer {
    */
   Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception;
 
-  /**
-   * Returns a {@link Predicate} that can be used to filter a set of entities to only return the entities that the
-   * specified {@link Principal} has access (READ/WRITE/ADMIN/ALL) to.
-   *
-   * @deprecated this method has been deprecated since 4.3, please use {@link #isVisible(Set, Principal)} instead.
-   *
-   * @param principal the {@link Principal} for which to filter
-   * @return a set of {@link EntityId entities} that the specified user has access to
-   */
-  @Deprecated
-  Predicate<EntityId> createFilter(Principal principal) throws Exception;
 }

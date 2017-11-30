@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -382,7 +383,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
   @After
   public void cleanup() throws Exception {
-    authorizer.revoke(NamespaceId.DEFAULT);
+    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT));
   }
 
   private Set<DatasetId> summaryToDatasetIdSet(Collection<DatasetSpecificationSummary> datasetSpecs) {
@@ -398,7 +399,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.grant(entityId, principal, actions);
+    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
     ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Action action : actions) {
       expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));

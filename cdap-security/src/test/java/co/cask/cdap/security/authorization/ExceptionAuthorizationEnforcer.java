@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -45,11 +44,6 @@ public class ExceptionAuthorizationEnforcer implements AuthorizationEnforcer {
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
     return Collections.emptySet();
-  }
-
-  @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    return null;
   }
 
   class ExpectedException extends Exception {

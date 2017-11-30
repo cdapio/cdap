@@ -24,6 +24,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -81,7 +82,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
                                                                                     AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcer authorizationEnforcer =
         new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
-      authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(Action.ADMIN));
       authorizationEnforcer.enforce(NS, ALICE, Action.ADMIN);
       try {
         authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
@@ -103,8 +104,8 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
 
       // grant some test privileges
       DatasetId ds = NS.dataset("ds");
-      authorizer.grant(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
-      authorizer.grant(ds, BOB, ImmutableSet.of(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds), BOB, ImmutableSet.of(Action.ADMIN));
 
       // auth enforcement for alice should succeed on ns for actions read and write
       authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
@@ -118,7 +119,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       // bob enforcement should succeed since we grant him admin privilege
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
       // revoke all of alice's privileges
-      authorizer.revoke(NS, ALICE, ImmutableSet.of(Action.READ));
+      authorizer.revoke(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(Action.READ));
       try {
         authEnforcementService.enforce(NS, ALICE, Action.READ);
         Assert.fail(String.format("Expected %s to not have '%s' privilege on %s but it does.",
@@ -126,7 +127,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       } catch (UnauthorizedException ignored) {
         // expected
       }
-      authorizer.revoke(NS);
+      authorizer.revoke(Authorizable.fromEntityId(NS));
 
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.READ);
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.WRITE);
@@ -147,16 +148,16 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       DatasetId ds23 = ns2.dataset("ds33");
       Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
       // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
-      authorizer.grant(ns1, ALICE, Collections.singleton(Action.WRITE));
-      authorizer.grant(ns2, ALICE, Collections.singleton(Action.ADMIN));
-      authorizer.grant(ds11, ALICE, Collections.singleton(Action.READ));
-      authorizer.grant(ds11, BOB, Collections.singleton(Action.ADMIN));
-      authorizer.grant(ds21, ALICE, Collections.singleton(Action.WRITE));
-      authorizer.grant(ds12, BOB, Collections.singleton(Action.WRITE));
-      authorizer.grant(ds12, BOB, EnumSet.allOf(Action.class));
-      authorizer.grant(ds21, ALICE, Collections.singleton(Action.WRITE));
-      authorizer.grant(ds23, ALICE, Collections.singleton(Action.ADMIN));
-      authorizer.grant(ds22, BOB, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ns1), ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ns2), ALICE, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ds11), ALICE, Collections.singleton(Action.READ));
+      authorizer.grant(Authorizable.fromEntityId(ds11), BOB, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ds21), ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds12), BOB, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds12), BOB, EnumSet.allOf(Action.class));
+      authorizer.grant(Authorizable.fromEntityId(ds21), ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds23), ALICE, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ds22), BOB, Collections.singleton(Action.ADMIN));
       DefaultAuthorizationEnforcer authEnforcementService =
         new DefaultAuthorizationEnforcer(CCONF, authorizerInstantiator);
       Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, ALICE).size());
@@ -198,7 +199,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
         new DefaultAuthorizationEnforcer(cConf, authorizerInstantiator);
       DatasetId ds = NS.dataset("ds");
       // All enforcement operations should succeed, since authorization is disabled
-      authorizerInstantiator.get().grant(ds, BOB, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiator.get().grant(Authorizable.fromEntityId(ds), BOB, ImmutableSet.of(Action.ADMIN));
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
       Assert.assertEquals(2, authEnforcementService.isVisible(ImmutableSet.<EntityId>of(NS, ds), BOB).size());

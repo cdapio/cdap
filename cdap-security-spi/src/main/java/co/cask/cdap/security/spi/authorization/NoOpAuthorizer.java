@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.spi.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
@@ -43,33 +42,13 @@ public class NoOpAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    return ALLOW_ALL;
-  }
-
-  @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-    //no-op
-  }
-
-  @Override
   public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     // no-op
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-    //no-op
-  }
-
-  @Override
   public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
     // no-op
-  }
-
-  @Override
-  public void revoke(EntityId entity) {
-    //no-op
   }
 
   @Override

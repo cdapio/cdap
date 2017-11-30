@@ -266,8 +266,8 @@ public class AuthorizationTest extends TestBase {
     flowManager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
 
     // Now revoke the privileges for ALICE on the stream and grant her ADMIN and WRITE
-    authorizer.revoke(streamId1, ALICE, EnumSet.allOf(Action.class));
-    authorizer.grant(streamId1, ALICE, EnumSet.of(Action.WRITE, Action.ADMIN));
+    authorizer.revoke(Authorizable.fromEntityId(streamId1), ALICE, EnumSet.allOf(Action.class));
+    authorizer.grant(Authorizable.fromEntityId(streamId1), ALICE, EnumSet.of(Action.WRITE, Action.ADMIN));
     streamManager.send("Security");
     streamManager2.send("Safety");
     try {
@@ -277,7 +277,7 @@ public class AuthorizationTest extends TestBase {
     }
     flowManager.waitForStatus(false);
 
-    authorizer.grant(streamId1, ALICE, ImmutableSet.of(Action.READ));
+    authorizer.grant(Authorizable.fromEntityId(streamId1), ALICE, ImmutableSet.of(Action.READ));
     flowManager.start();
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -315,7 +315,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
 
     // Now revoke write permission for Alice on that stream
-    authorizer.revoke(streamId, ALICE, EnumSet.of(Action.WRITE));
+    authorizer.revoke(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.WRITE));
     workerManager.start();
     workerManager.waitForRuns(ProgramRunStatus.FAILED, 1, 60, TimeUnit.SECONDS);
 
@@ -353,7 +353,7 @@ public class AuthorizationTest extends TestBase {
 
     streamManager.send("World");
     // Revoke READ permission on STREAM for Alice
-    authorizer.revoke(streamId, ALICE, EnumSet.of(Action.READ));
+    authorizer.revoke(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.READ));
     sparkManager.start();
     sparkManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
 
@@ -364,7 +364,7 @@ public class AuthorizationTest extends TestBase {
     }
 
     // Grant ALICE READ permission on STREAM and now Spark job should run successfully
-    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ));
+    authorizer.grant(Authorizable.fromEntityId(streamId), ALICE, ImmutableSet.of(Action.READ));
     sparkManager.start();
     sparkManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
 
@@ -408,11 +408,13 @@ public class AuthorizationTest extends TestBase {
     }
 
     ProgramId mrId = AUTH_NAMESPACE.app(StreamAuthApp.APP).mr(StreamAuthApp.MAPREDUCE);
-    authorizer.grant(mrId.getNamespaceId(), BOB, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(Authorizable.fromEntityId(mrId.getNamespaceId()), BOB, ImmutableSet.of(Action.ADMIN));
 
-    authorizer.grant(mrId, BOB, EnumSet.of(Action.EXECUTE));
-    authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, EnumSet.of(Action.ADMIN));
-    authorizer.grant(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), BOB, EnumSet.of(Action.READ, Action.WRITE));
+    authorizer.grant(Authorizable.fromEntityId(mrId), BOB, EnumSet.of(Action.EXECUTE));
+    authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM)),
+                     BOB, EnumSet.of(Action.ADMIN));
+    authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE)),
+                     BOB, EnumSet.of(Action.READ, Action.WRITE));
     streamManager.send("World");
 
     // Switch user to Bob. Note that he doesn't have READ access on the stream.
@@ -427,7 +429,8 @@ public class AuthorizationTest extends TestBase {
     }
 
     // Now grant Bob, READ access on the stream. MR job should execute successfully now.
-    authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, ImmutableSet.of(Action.READ));
+    authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM)),
+                     BOB, ImmutableSet.of(Action.READ));
     mrManager.start();
     mrManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
 
@@ -1604,7 +1607,7 @@ public class AuthorizationTest extends TestBase {
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Authorizer authorizer = getAuthorizer();
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.grant(entityId, principal, actions);
+    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
     ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Action action : actions) {
       expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
@@ -1615,7 +1618,7 @@ public class AuthorizationTest extends TestBase {
 
   private void revokeAndAssertSuccess(final EntityId entityId) throws Exception {
     Authorizer authorizer = getAuthorizer();
-    authorizer.revoke(entityId);
+    authorizer.revoke(Authorizable.fromEntityId(entityId));
     assertNoAccess(entityId);
   }
 
