@@ -17,14 +17,12 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ProgramId;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Interfaces that defines all methods related to scheduling, un-scheduling jobs.
@@ -76,7 +74,7 @@ public interface Scheduler {
   /**
    * Get the previous run time for the program. A program may contain one or more schedules
    * the method returns the previous runtimes for all the schedules. This method only takes
-   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
    * @param program program to fetch the previous runtime.
@@ -91,7 +89,7 @@ public interface Scheduler {
   /**
    * Get the next scheduled run time of the program. A program may contain multiple schedules.
    * This method returns the next scheduled runtimes for all the schedules. This method only takes
-   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
    * @param program program to fetch the next runtime.

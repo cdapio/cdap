@@ -31,7 +31,6 @@ import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;

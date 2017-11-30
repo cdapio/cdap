@@ -30,7 +30,7 @@ public class RunConstraints {
   private final Integer maxConcurrentRuns;
 
   /**
-   * Create run constraints for a {@link Schedule}. When a schedule is triggered, the constraints will be checked
+   * Create run constraints for. When a schedule is triggered, the constraints will be checked
    * before launching a run.
    *
    * @param maxConcurrentRuns the maximum number of concurrent active runs for a schedule.

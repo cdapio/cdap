@@ -19,8 +19,6 @@ package co.cask.cdap.api.app;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.BasicService;
@@ -31,9 +29,6 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in

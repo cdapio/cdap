@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
@@ -32,8 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * Abstract scheduler service common scheduling functionality. For each {@link Schedule} implementation, there is
- * a scheduler that this class will delegate the work to.
+ * Abstract scheduler service common scheduling functionality. Actual work will be delegated to {@link TimeScheduler}.
  * The extending classes should implement prestart and poststop hooks to perform any action before starting all
  * underlying schedulers and after stopping them.
  */

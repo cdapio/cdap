@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.cli.command.schedule;
 
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -26,15 +26,19 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ScheduleClient;
-import co.cask.cdap.proto.ScheduleInstanceConfiguration;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -68,25 +72,15 @@ public final class UpdateTimeScheduleCommand extends AbstractCommand {
     NamespaceId namespaceId = cliConfig.getCurrentNamespace();
     ApplicationId applicationId = (version == null) ? namespaceId.app(appId) : namespaceId.app(appId, version);
     ScheduleId scheduleId = applicationId.schedule(scheduleName);
-
-    Schedules.Builder builder = Schedules.builder(scheduleName);
-    if (scheduleRunConcurrencyString != null) {
-      builder.setMaxConcurrentRuns(Integer.valueOf(scheduleRunConcurrencyString));
-    }
-    if (scheduleDescription != null) {
-      builder.setDescription(scheduleDescription);
-    }
-    Schedule schedule = builder.createTimeSchedule(cronExpression);
-
-    Map<String, String> programMap = ImmutableMap.of("programName", programIdParts[1],
-                                                     "programType", ElementType.WORKFLOW.name().toUpperCase());
+    String description = scheduleDescription == null ? null : scheduleDescription;
+    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programIdParts[1]);
+    List<Constraint> constraints = scheduleRunConcurrencyString == null ? ImmutableList.of() :
+      ImmutableList.of(new ProtoConstraint.ConcurrencyConstraint(Integer.valueOf(scheduleRunConcurrencyString)));
     Map<String, String> propertiesMap = ArgumentParser.parseMap(schedulePropertiesString,
                                                                 ArgumentName.SCHEDULE_PROPERTIES.toString());
-
-    ScheduleInstanceConfiguration configuration =
-      new ScheduleInstanceConfiguration("TIME", schedule, programMap, propertiesMap);
-
-    scheduleClient.update(scheduleId, configuration);
+    ScheduleDetail scheduleDetail = new ScheduleDetail(scheduleName, description, programInfo, propertiesMap,
+                                                       new ProtoTrigger.TimeTrigger(cronExpression), constraints, null);
+    scheduleClient.update(scheduleId, scheduleDetail);
     printStream.printf("Successfully updated schedule '%s' in app '%s'\n", scheduleName, appId);
   }
 
