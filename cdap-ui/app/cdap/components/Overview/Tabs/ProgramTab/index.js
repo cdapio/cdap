@@ -68,22 +68,22 @@ export default class ProgramsTab extends Component {
             namespace,
             appId: program.app,
             programType: convertProgramToApi(program.type),
-            programId: program.id
+            programId: program.name
           };
           let subscription =  MyProgramApi
             .pollRuns(params)
             .combineLatest(MyProgramApi.pollStatus(params))
             .subscribe(res => {
               let runningPrograms = this.state.runningPrograms;
-              let programState = runningPrograms.filter(prog => prog.name === program.id && prog.app === program.app);
+              let programState = runningPrograms.filter(prog => prog.name === program.name && prog.app === program.app);
               if (programState.length) {
-                runningPrograms = runningPrograms.filter(prog => prog.name !== program.id || (prog.name === program.id && prog.app !== program.app));
+                runningPrograms = runningPrograms.filter(prog => prog.name !== program.name || (prog.name === program.name && prog.app !== program.app));
               }
               runningPrograms.push(Object.assign({}, !isEmpty(programState) ? programState[0] : {}, {
                 latestRun: objectQuery(res, 0, 0) || {},
                 status: res[1].status === 'RUNNING' ? 1 : 0,
                 backendStatus: res[1].status,
-                name: program.id,
+                name: program.name,
                 app: program.app
               }));
               this.setState({
@@ -102,7 +102,7 @@ export default class ProgramsTab extends Component {
         .map(runningProgram => runningProgram.status)
         .reduce((prev, curr) => prev + curr);
       programsForTable = this.state.entity.programs.map(program => {
-        let matchedProg = this.state.runningPrograms.find(prog => prog.name === program.id && prog.app === program.app) || null;
+        let matchedProg = this.state.runningPrograms.find(prog => prog.name === program.name && prog.app === program.app) || null;
         return !matchedProg ?
           program
         :

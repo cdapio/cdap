@@ -141,7 +141,7 @@ angular.module(PKG.name + '.feature.hydrator')
     function fetchRunsInfo(app) {
       var params = {
         namespace: $state.params.namespace,
-        appId: app.id,
+        appId: app.name,
         scope: $scope
       };
 
@@ -154,7 +154,7 @@ angular.module(PKG.name + '.feature.hydrator')
         params.workflowId = workflowId;
 
         batch.push({
-          appId: app.id,
+          appId: app.name,
           programType: 'Workflow',
           programId: workflowId
         });
@@ -162,7 +162,7 @@ angular.module(PKG.name + '.feature.hydrator')
         api = mySparkApi;
         params.sparkId = 'DataStreamsSparkStreaming';
         realtime.push({
-          appId: app.id,
+          appId: app.name,
           programType: 'Spark',
           programId: 'DataStreamsSparkStreaming'
         });
@@ -172,7 +172,7 @@ angular.module(PKG.name + '.feature.hydrator')
         params.workerId = 'ETLWorker';
 
         realtime.push({
-          appId: app.id,
+          appId: app.name,
           programType: 'Worker',
           programId: 'ETLWorker'
         });
@@ -187,13 +187,13 @@ angular.module(PKG.name + '.feature.hydrator')
             var currentRun = runs[0];
             setDuration(app, currentRun);
             app._latest = currentRun;
-            statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
+            statusMap[app.name] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
             if (currentRun.status === 'RUNNING') {
               vm.statusCount.running += 1;
             }
           } else {
             app._stats.numRuns = 0;
-            statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
+            statusMap[app.name] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
           }
           updateStatusAppObject();
         });
@@ -233,7 +233,7 @@ angular.module(PKG.name + '.feature.hydrator')
           .then(function (res) {
           if (res && res.length) {
             vm.pipelineList.forEach(function (app) {
-              if (app.id === batchParams.appId) {
+              if (app.name === batchParams.appId) {
                 app._stats.nextRun = res[0].time;
               }
             });
@@ -255,7 +255,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function updateStatusAppObject() {
       angular.forEach(vm.pipelineList, function (app) {
-        app._status = app._status || statusMap[app.id];
+        app._status = app._status || statusMap[app.name];
         app.displayStatus = app._status;
       });
     }

@@ -82,7 +82,7 @@ export default class ProgramTable extends Component {
         applicationId: prog.app,
         programType: prog.type,
         type: 'program',
-        id: prog.id,
+        id: prog.name,
         uniqueId: shortid.generate()
       });
     });

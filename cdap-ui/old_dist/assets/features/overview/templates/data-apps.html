@@ -97,14 +97,14 @@
 
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5" ng-if="!app.name.startsWith('_')">
-          <a ui-sref="apps.detail.overview.programs({appId: app.id})" ng-if="AppsSectionCtrl.myHydratorFactory.isCustomApp(app.artifact.name)" ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.programs({appId: app.name})" ng-if="AppsSectionCtrl.myHydratorFactory.isCustomApp(app.artifact.name)" ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.name)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
               <span> Application </span>
             </div>
           </a>
-          <a ui-sref="apps.detail.overview.status({appId: app.id})" ng-if="AppsSectionCtrl.myHydratorFactory.isETLApp(app.artifact.name)" ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({appId: app.name})" ng-if="AppsSectionCtrl.myHydratorFactory.isETLApp(app.artifact.name)" ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.name)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-{{ AppsSectionCtrl.GLOBALS.iconArtifact[app.artifact.name] }}"></span>

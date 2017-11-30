@@ -63,7 +63,7 @@ export default class HistoryTab extends Component {
         .programs
         .forEach(program => {
           let programType = convertProgramToApi(program.type);
-          let programId = program.id;
+          let programId = program.name;
           let appId = program.app;
           let namespace = NamespaceStore.getState().selectedNamespace;
           this.pollSubscriptions.push(
