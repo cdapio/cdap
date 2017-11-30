@@ -101,7 +101,7 @@ public class DataStreamsSparkSinkTest  extends HydratorTestBase {
 
     ApplicationId appId = NamespaceId.DEFAULT.app("sparksinkapp");
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
     testSparkSink(appManager, "output1");
     testSparkSink(appManager, "output2");
   }

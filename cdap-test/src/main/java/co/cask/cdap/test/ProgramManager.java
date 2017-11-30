@@ -57,20 +57,6 @@ public interface ProgramManager<T extends ProgramManager> {
   boolean isRunning();
 
   /**
-   * Blocks until program is finished or given timeout is reached
-   *
-   * @param timeout amount of time units to wait
-   * @param timeoutUnit time unit type
-   * @throws java.util.concurrent.TimeoutException if timeout reached
-   * @throws InterruptedException if execution is interrupted
-   *
-   * This method is deprecated as of 4.1. Please use {@link #waitForRun} or
-   * {@link #waitForRuns} instead.
-   */
-  @Deprecated
-  void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
-
-  /**
    * Wait for the status of the program with 5 seconds timeout.
    * @param status true if waiting for started, false if waiting for stopped.
    * @throws InterruptedException if the method is interrupted while waiting for the status.

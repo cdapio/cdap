@@ -71,7 +71,7 @@ public class WikipediaPipelineAppTest extends TestBase {
   public void test() throws Exception {
     WikipediaPipelineApp.WikipediaAppConfig appConfig = new WikipediaPipelineApp.WikipediaAppConfig();
     AppRequest<WikipediaPipelineApp.WikipediaAppConfig> appRequest = new AppRequest<>(ARTIFACT_SUMMARY, appConfig);
-    ApplicationManager appManager = deployApplication(APP_ID.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(APP_ID, appRequest);
     // Setup input streams with test data
     createTestData();
 
@@ -85,7 +85,7 @@ public class WikipediaPipelineAppTest extends TestBase {
     // Test K-Means
     appConfig = new WikipediaPipelineApp.WikipediaAppConfig("kmeans");
     appRequest = new AppRequest<>(ARTIFACT_SUMMARY, appConfig);
-    appManager = deployApplication(APP_ID.toId(), appRequest);
+    appManager = deployApplication(APP_ID, appRequest);
     workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
     testWorkflow(workflowManager, appConfig, 3, 1);
   }

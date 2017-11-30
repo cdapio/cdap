@@ -129,7 +129,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     ApplicationId appId = NamespaceId.DEFAULT.app("simpleApp");
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     final Set<StructuredRecord> expected = new HashSet<>();
     expected.add(samuelRecord);
@@ -228,7 +228,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // run it once with this set of macros
     Map<String, String> arguments = new HashMap<>();
@@ -379,7 +379,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -480,7 +480,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("WindowerApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -609,7 +609,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -718,7 +718,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("ErrTransformTest");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -813,7 +813,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("SplitterTest");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // run pipeline
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
@@ -898,7 +898,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app("AlertTest");
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();

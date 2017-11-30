@@ -85,18 +85,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
     }
   }
 
-  @Deprecated
-  protected String determineDeprecatedPattern(String action) {
-
-    switch (action) {
-      case "set":
-        return determineDeprecatedPatternSetHelper();
-      case "load":
-        return determineDeprecatedPatternLoadHelper();
-    }
-    throw new RuntimeException("Unrecognized action: " + action);
-  }
-
   protected String determinePattern(String action) {
 
     switch (action) {
@@ -142,47 +130,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case SPARK:
         return String.format("load %s preferences <%s> <%s> <%s>", type.getShortName(), type.getArgumentName(),
                              ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
-    }
-    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
-  }
-
-  @Deprecated
-  private String determineDeprecatedPatternSetHelper() {
-    switch (type) {
-      case INSTANCE:
-      case NAMESPACE:
-        return String.format("set preferences %s <%s>",
-                             type.getShortName(), ArgumentName.RUNTIME_ARGS);
-      case APP:
-      case FLOW:
-      case MAPREDUCE:
-      case WORKFLOW:
-      case SERVICE:
-      case WORKER:
-      case SPARK:
-        return String.format("set preferences %s <%s> <%s>", type.getShortName(), ArgumentName.RUNTIME_ARGS,
-                             type.getArgumentName());
-    }
-    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
-  }
-
-  @Deprecated
-  private String determineDeprecatedPatternLoadHelper() {
-    switch (type) {
-      case INSTANCE:
-      case NAMESPACE:
-        return String.format("load preferences %s <%s> <%s>", type.getShortName(),
-                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
-      case APP:
-      case FLOW:
-      case MAPREDUCE:
-      case WORKFLOW:
-      case SERVICE:
-      case WORKER:
-      case SPARK:
-        return String.format("load preferences %s <%s> <%s> <%s>", type.getShortName(),
-                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
-                             type.getArgumentName());
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }

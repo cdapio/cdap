@@ -55,25 +55,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
     printStream.print(joinMapEntries(parsePreferences(arguments)));
   }
 
-  @Deprecated
-  protected String determineDeprecatedPattern() {
-    String action = resolved ? "get resolved" : "get";
-      switch (type) {
-        case INSTANCE:
-        case NAMESPACE:
-          return String.format("%s preferences %s", action, type.getShortName());
-        case APP:
-        case FLOW:
-        case MAPREDUCE:
-        case WORKFLOW:
-        case SERVICE:
-        case WORKER:
-        case SPARK:
-          return String.format("%s preferences %s <%s>", action, type.getShortName(), type.getArgumentName());
-      }
-      throw new RuntimeException("Unrecognized element type: " + type.getShortName());
-  }
-
   protected String determinePattern() {
     String action = resolved ? "get resolved" : "get";
     switch (type) {

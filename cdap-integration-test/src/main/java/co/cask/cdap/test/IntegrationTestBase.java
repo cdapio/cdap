@@ -39,7 +39,6 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -368,21 +367,6 @@ public abstract class IntegrationTestBase {
 
   protected DatasetClient getDatasetClient() {
     return new DatasetClient(getClientConfig(), getRestClient());
-  }
-
-  @Deprecated
-  protected Id.Namespace createNamespace(String name) throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(name);
-    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
-    getNamespaceClient().create(namespaceMeta);
-    return namespace;
-  }
-
-  @Deprecated
-  protected ApplicationManager deployApplication(Id.Namespace namespace,
-                                                 Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws IOException {
-    return deployApplication(namespace.toEntityId(), applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(NamespaceId namespace,

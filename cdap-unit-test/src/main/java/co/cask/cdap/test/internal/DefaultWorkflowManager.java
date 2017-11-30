@@ -62,19 +62,6 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
     }
   }
 
-  @Deprecated
-  @Override
-  public List<ScheduleSpecification> getSchedules() {
-    try {
-      //noinspection deprecation
-      return appFabricClient.getSchedules(
-        programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
-    } catch (NotFoundException e) {
-      // this can only happen if the workflow was deleted, unlikely during a test but if so, empty list is correct
-      return Collections.emptyList();
-    }
-  }
-
   @Override
   public WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
                                       @Nullable String key) throws NotFoundException {

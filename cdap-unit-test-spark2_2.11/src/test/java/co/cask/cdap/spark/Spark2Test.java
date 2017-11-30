@@ -245,7 +245,7 @@ public class Spark2Test extends TestBaseWithSpark2 {
     addArtifact(artifactId, ARTIFACTS.get(appClass));
     AppRequest<?> appRequest = new AppRequest<>(new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
                                                 null);
-    return deployApplication(namespaceId.app(appClass.getSimpleName()).toId(), appRequest);
+    return deployApplication(namespaceId.app(appClass.getSimpleName()), appRequest);
   }
 
   private void testSparkWithLocalFiles(Class<? extends Application> appClass,

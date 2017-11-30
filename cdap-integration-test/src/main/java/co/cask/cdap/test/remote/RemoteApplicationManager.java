@@ -20,7 +20,6 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
@@ -45,13 +44,10 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@link AbstractApplicationManager} for use in integration tests.
@@ -61,11 +57,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   private final ProgramClient programClient;
   private final ApplicationClient applicationClient;
   private final RESTClient restClient;
-
-  @Deprecated
-  public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig, RESTClient restClient) {
-    this(application.toEntityId(), clientConfig, restClient);
-  }
 
   public RemoteApplicationManager(ApplicationId application, ClientConfig clientConfig, RESTClient restClient) {
     super(application);

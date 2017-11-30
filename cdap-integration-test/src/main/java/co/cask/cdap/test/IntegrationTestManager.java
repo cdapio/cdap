@@ -48,7 +48,6 @@ import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -312,11 +311,6 @@ public class IntegrationTestManager extends AbstractTestManager {
   }
 
   @Override
-  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
-    artifactClient.delete(artifactId.toEntityId());
-  }
-
-  @Override
   public void clear() throws Exception {
     for (NamespaceMeta namespace : namespaceClient.list()) {
       programClient.stopAll(namespace.getNamespaceId());
@@ -377,16 +371,6 @@ public class IntegrationTestManager extends AbstractTestManager {
     String url = String.format("%s%s:%d?%s", Constants.Explore.Jdbc.URL_PREFIX, connConfig.getHostname(),
                                connConfig.getPort(), Joiner.on("&").withKeyValueSeparator("=").join(connParams));
     return new ExploreDriver().connect(url, new Properties());
-  }
-
-  @Override
-  public void createNamespace(NamespaceMeta namespaceMeta) throws Exception {
-    namespaceClient.create(namespaceMeta);
-  }
-
-  @Override
-  public void deleteNamespace(Id.Namespace namespace) throws Exception {
-    namespaceClient.delete(namespace.toEntityId());
   }
 
   @Override

@@ -178,9 +178,6 @@ public class TestBase {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-  @Deprecated
-  @SuppressWarnings("unused")
-  public static TemporaryFolder tmpFolder = TMP_FOLDER;
 
   private static CConfiguration cConf;
   private static int nestedStartCount;
@@ -512,45 +509,6 @@ public class TestBase {
   }
 
   /**
-   * Creates a Namespace.
-   *
-   * @param namespace the namespace to create
-   * @deprecated since 3.4.0. Use {@link #getNamespaceAdmin()} to perform namespace operations instead.
-   */
-  @Deprecated
-  protected static void createNamespace(Id.Namespace namespace) throws Exception {
-    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(namespace).build());
-  }
-
-  /**
-   * Deletes a Namespace.
-   *
-   * @param namespace the namespace to delete
-   * @deprecated since 3.4.0. Use {@link #getNamespaceAdmin()} to perform namespace operations instead.
-   */
-  @Deprecated
-  protected static void deleteNamespace(Id.Namespace namespace) throws Exception {
-    getNamespaceAdmin().delete(namespace.toEntityId());
-  }
-
-  /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application must be in the same or children package as the application.
-   *
-   * @param namespace the namespace to deploy the application to
-   * @param applicationClz the application class
-   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
-   * @return An {@link ApplicationManager} to manage the deployed application.
-   * @deprecated since 4.0.0. Use {@link #deployApplication(NamespaceId, Class, File...)} instead.
-   */
-  @Deprecated
-  protected static ApplicationManager deployApplication(Id.Namespace namespace,
-                                                        Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) {
-    return deployApplication(namespace.toEntityId(), applicationClz, null, bundleEmbeddedJars);
-  }
-
-  /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * other programs defined in the application must be in the same or children package as the application.
    *
@@ -565,23 +523,6 @@ public class TestBase {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 
-  /**
-   * Deploys an {@link Application} with a config. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application must be in the same or children package as the application.
-   *
-   * @param namespace the namespace to deploy the application to
-   * @param applicationClz the application class
-   * @param appConfig the application config
-   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
-   * @return An {@link ApplicationManager} to manage the deployed application.
-   * @deprecated since 4.0.0. Use {@link #deployApplication(NamespaceId, Class, Config, File...)} instead.
-   */
-  @Deprecated
-  protected static ApplicationManager deployApplication(Id.Namespace namespace,
-                                                        Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) {
-    return deployApplication(namespace.toEntityId(), applicationClz, appConfig, bundleEmbeddedJars);
-  }
 
   /**
    * Deploys an {@link Application} with a config. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -630,20 +571,6 @@ public class TestBase {
   }
 
   /**
-   * Deploys an {@link Application}. The application artifact must already exist.
-   *
-   * @param appId the id of the application to create
-   * @param appRequest the application create or update request
-   * @return An {@link ApplicationManager} to manage the deployed application
-   */
-  protected static ApplicationManager deployApplication(Id.Application appId,
-                                                        AppRequest appRequest) throws Exception {
-    ApplicationManager appManager = getTestManager().deployApplication(appId.toEntityId(), appRequest);
-    applicationManagers.add(appManager);
-    return appManager;
-  }
-
-  /**
    * Deploys an {@link Application} with version. The application artifact must already exist.
    *
    * @param appId the id of the application to create
@@ -662,18 +589,6 @@ public class TestBase {
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
-   * @deprecated since 3.4.0. Use {@link #addArtifact(ArtifactId, File)}
-   */
-  @Deprecated
-  protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    addArtifact(artifactId.toEntityId(), artifactFile);
-  }
-
-  /**
-   * Add the specified artifact.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
    * @throws Exception
    */
   protected static ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
@@ -685,37 +600,10 @@ public class TestBase {
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
-   * @deprecated since 3.4.0. Use {@link #addArtifact(ArtifactId, File)}.
-   */
-  @Deprecated
-  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
-    getTestManager().addAppArtifact(artifactId.toEntityId(), appClass);
-  }
-
-  /**
-   * Build an application artifact from the specified class and then add it.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param appClass the application class to build the artifact from
    * @return an {@link ArtifactManager} to manage the added artifact
    */
   protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass);
-  }
-
-  /**
-   * Build an application artifact from the specified class and then add it.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param appClass the application class to build the artifact from
-   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
-   *                       packages that contain classes that plugins for the application will implement.
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, String...)}
-   */
-  @Deprecated
-  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
-                                       String... exportPackages) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass, exportPackages);
   }
 
   /**
@@ -738,47 +626,11 @@ public class TestBase {
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @param manifest the manifest to use when building the jar
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, Manifest)}
-   */
-  @Deprecated
-  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass, manifest);
-  }
-
-  /**
-   * Build an application artifact from the specified class and then add it.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param appClass the application class to build the artifact from
-   * @param manifest the manifest to use when building the jar
    * @return an {@link ArtifactManager} to manage the added artifact
    */
   protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                                   Manifest manifest) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass, manifest);
-  }
-
-  /**
-   * Build an artifact from the specified plugin classes and then add it. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param parent the parent artifact it extends
-   * @param pluginClass the plugin class to build the jar from
-   * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, ArtifactId, Class, Class[])}
-   */
-  @Deprecated
-  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
-                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), pluginClass, pluginClasses);
   }
 
   /**
@@ -821,62 +673,12 @@ public class TestBase {
    *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use
-   * {@link #addPluginArtifact(ArtifactId, ArtifactId, Set, Class, Class[])}
-   */
-  @Deprecated
-  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
-                                          Set<PluginClass> additionalPlugins,
-                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), additionalPlugins, pluginClass, pluginClasses);
-  }
-
-  /**
-   * Build an artifact from the specified plugin classes and then add it. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param parent the parent artifact it extends
-   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
-   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
-   * @param pluginClass the plugin class to build the jar from
-   * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
   protected static ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                                      Set<PluginClass> additionalPlugins,
                                                      Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     return getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
-  }
-
-  /**
-   * Build an artifact from the specified plugin classes and then add it. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param parentArtifacts the parent artifacts it extends
-   * @param pluginClass the plugin class to build the jar from
-   * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, Set, Class, Class[])}
-   */
-  @Deprecated
-  protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
-                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parentArtifacts, pluginClass, pluginClasses);
   }
 
   /**
@@ -918,21 +720,6 @@ public class TestBase {
   /**
    * Deploys {@link DatasetModule}.
    *
-   * @param namespace namespace to deploy to
-   * @param moduleName name of the module
-   * @param datasetModule module class
-   * @throws Exception
-   * @deprecated since 4.0.0. Use {@link #deployDatasetModule(DatasetModuleId, Class)} instead.
-   */
-  @Deprecated
-  protected static void deployDatasetModule(Id.Namespace namespace, String moduleName,
-                                            Class<? extends DatasetModule> datasetModule) throws Exception {
-    getTestManager().deployDatasetModule(namespace.toEntityId().datasetModule(moduleName), datasetModule);
-  }
-
-  /**
-   * Deploys {@link DatasetModule}.
-   *
    * @param datasetModuleId the module id
    * @param datasetModule module class
    * @throws Exception
@@ -952,24 +739,6 @@ public class TestBase {
   protected static void deployDatasetModule(String moduleName,
                                             Class<? extends DatasetModule> datasetModule) throws Exception {
     deployDatasetModule(NamespaceId.DEFAULT.datasetModule(moduleName), datasetModule);
-  }
-
-  /**
-   * Adds an instance of a dataset.
-   *
-   * @param namespace namespace for the dataset
-   * @param datasetTypeName dataset type name
-   * @param datasetInstanceName instance name
-   * @param props properties
-   * @param <T> type of the dataset admin
-   * @return a DatasetAdmin to manage the dataset instance
-   * @deprecated since 4.0.0. Use {@link #addDatasetInstance(String, DatasetId, DatasetProperties)} instead.
-   */
-  @Deprecated
-  protected static <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace, String datasetTypeName,
-                                                                 String datasetInstanceName,
-                                                                 DatasetProperties props) throws Exception {
-    return addDatasetInstance(datasetTypeName, namespace.toEntityId().dataset(datasetInstanceName), props);
   }
 
   /**
@@ -999,23 +768,6 @@ public class TestBase {
                                                                  String datasetInstanceName,
                                                                  DatasetProperties props) throws Exception {
     return addDatasetInstance(datasetTypeName, NamespaceId.DEFAULT.dataset(datasetInstanceName), props);
-  }
-
-
-  /**
-   * Adds an instance of dataset.
-   *
-   * @param namespace namespace for the dataset
-   * @param datasetTypeName dataset type name
-   * @param datasetInstanceName instance name
-   * @param <T> type of the dataset admin
-   * @return a DatasetAdmin to manage the dataset instance
-   * @deprecated since 4.0.0. Use {@link #addDatasetInstance(DatasetId, String)} instead.
-   */
-  @Deprecated
-  protected final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace, String datasetTypeName,
-                                                                String datasetInstanceName) throws Exception {
-    return addDatasetInstance(namespace.toEntityId().dataset(datasetInstanceName), datasetTypeName);
   }
 
   /**
@@ -1048,37 +800,10 @@ public class TestBase {
   /**
    * Deletes an instance of dataset.
    *
-   * @param namespaceId namespace for the dataset
-   * @param datasetInstanceName instance name
-   * @deprecated since 4.0.0. Use {@link #deleteDatasetInstance(DatasetId)} instead.
-   */
-  @Deprecated
-  protected void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
-    deleteDatasetInstance(namespaceId.dataset(datasetInstanceName));
-  }
-
-  /**
-   * Deletes an instance of dataset.
-   *
    * @param datasetId the dataset to delete
    */
   protected void deleteDatasetInstance(DatasetId datasetId) throws Exception {
     getTestManager().deleteDatasetInstance(datasetId);
-  }
-
-  /**
-   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
-   *
-   * @param namespace namespace for the dataset
-   * @param datasetInstanceName instance name of dataset
-   * @return Dataset Manager of Dataset instance of type <T>
-   * @throws Exception
-   * @deprecated since 4.0.0. Use {@link #getDataset(DatasetId)} instead.
-   */
-  @Deprecated
-  protected final <T> DataSetManager<T> getDataset(Id.Namespace namespace,
-                                                   String datasetInstanceName) throws Exception {
-    return getDataset(namespace.toEntityId().dataset(datasetInstanceName));
   }
 
   /**
@@ -1144,18 +869,6 @@ public class TestBase {
 
   /**
    * Returns a JDBC connection that allows the running of SQL queries over data sets.
-   * 
-   * @param namespace namespace for the connection
-   * @return Connection to use to run queries
-   * @deprecated since 4.0.0. Use {@link #getQueryClient(NamespaceId)} instead.
-   */
-  @Deprecated
-  protected final Connection getQueryClient(Id.Namespace namespace) throws Exception {
-    return getQueryClient(namespace.toEntityId());
-  }
-
-  /**
-   * Returns a JDBC connection that allows the running of SQL queries over data sets.
    *
    * @param namespace namespace for the connection
    * @return Connection to use to run queries
@@ -1187,19 +900,6 @@ public class TestBase {
   /**
    * Returns a {@link StreamManager} for the specified stream in the specified namespace
    *
-   * @param namespace namespace for the stream
-   * @param streamName the specified stream
-   * @return {@link StreamManager} for the specified stream in the specified namespace
-   * @deprecated since 4.0.0. Use {@link #getStreamManager(StreamId)} instead.
-   */
-  @Deprecated
-  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) {
-    return getStreamManager(namespace.toEntityId().stream(streamName));
-  }
-
-  /**
-   * Returns a {@link StreamManager} for the specified stream in the specified namespace
-   *
    * @param streamId the stream to get
    * @return {@link StreamManager} for the specified stream in the specified namespace
    */
@@ -1223,17 +923,6 @@ public class TestBase {
 
   protected static MessagingAdmin getMessagingAdmin(NamespaceId namespace) {
     return new BasicMessagingAdmin(messagingService, namespace);
-  }
-
-  /**
-   * Returns the transaction manager.
-   *
-   * @deprecated as of 5.0.0. Use {@link DataSetManager} instead in order to interact
-   * with transactional datasets. 
-   */
-  @Deprecated
-  protected TransactionManager getTxService() {
-    return txService;
   }
 
   /**
