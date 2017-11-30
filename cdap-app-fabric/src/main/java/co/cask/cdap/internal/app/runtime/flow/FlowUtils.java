@@ -43,7 +43,6 @@ import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -89,16 +88,6 @@ public final class FlowUtils {
   public static final String FLOWLET_SCOPE = "flowlet";
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowUtils.class);
-
-  /**
-   * Generates a queue consumer groupId for the given flowlet in the given program id.
-   *
-   * @deprecated Use {@link #generateConsumerGroupId(ProgramId, String)} instead.
-   */
-  @Deprecated
-  public static long generateConsumerGroupId(Id.Program program, String flowletId) {
-    return generateConsumerGroupId(program.toEntityId(), flowletId);
-  }
 
   /**
    * Generates a queue consumer groupId for the given flowlet in the given program id.

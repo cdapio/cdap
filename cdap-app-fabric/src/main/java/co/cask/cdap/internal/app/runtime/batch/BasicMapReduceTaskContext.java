@@ -248,15 +248,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return workflowProgramInfo;
   }
 
-  @Nullable
-  @Override
-  public String getInputName() {
-    if (inputContext == null) {
-      return null;
-    }
-    return inputContext.getInputName();
-  }
-
   @Override
   public InputContext getInputContext() {
     return inputContext;

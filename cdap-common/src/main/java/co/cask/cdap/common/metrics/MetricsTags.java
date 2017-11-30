@@ -17,7 +17,6 @@
 package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ServiceId;
 import com.google.common.base.Preconditions;
@@ -56,11 +55,6 @@ public final class MetricsTags {
       Constants.Metrics.Tag.NAMESPACE, serviceId.getNamespace(),
       Constants.Metrics.Tag.APP, serviceId.getApplication(),
       Constants.Metrics.Tag.SERVICE, serviceId.getProgram());
-  }
-
-  @Deprecated
-  public static Map<String, String> serviceHandler(Id.Program id, String handlerId) {
-    return serviceHandler(id.getApplication().toEntityId().service(id.getId()), handlerId);
   }
 
   public static Map<String, String> serviceHandler(ServiceId id, String handlerId) {

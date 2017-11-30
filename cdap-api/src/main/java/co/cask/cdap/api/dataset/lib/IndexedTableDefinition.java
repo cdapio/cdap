@@ -38,10 +38,6 @@ import java.util.TreeSet;
 public class IndexedTableDefinition
   extends CompositeDatasetDefinition<IndexedTable> {
 
-  @Deprecated
-  @SuppressWarnings("unused")
-  public static final String INDEX_COLUMNS_CONF_KEY = IndexedTable.INDEX_COLUMNS_CONF_KEY;
-
   public IndexedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name, "d", tableDef, "i", tableDef);
   }
