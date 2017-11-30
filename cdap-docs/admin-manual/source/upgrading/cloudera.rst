@@ -83,7 +83,7 @@ CDAP:
 
    Returning::
 
-      {"defaultStore":true,"streamSizeScheduleStore":true,"timeScheduleStore":true }
+      {"defaultStore":true,"timeScheduleStore":true }
 
 
 Upgrading CDH
