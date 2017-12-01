@@ -29,6 +29,7 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -76,6 +77,10 @@ public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQu
       QueryHandle queryHandle = impersonator.doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
         @Override
         public QueryHandle call() throws Exception {
+
+          LOG.info("alianwar1: {}", UserGroupInformation.getCurrentUser().getCredentials().getAllTokens());
+          LOG.info("alianwar2: {}", UserGroupInformation.getCurrentUser().getTokens());
+          LOG.info("alianwar3: {}", UserGroupInformation.getCurrentUser().getTokenIdentifiers());
           return exploreService.execute(new NamespaceId(namespaceId), query, additionalSessionConf);
         }
       }, ImpersonatedOpType.EXPLORE);
