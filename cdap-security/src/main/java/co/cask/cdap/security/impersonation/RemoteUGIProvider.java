@@ -31,6 +31,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -77,7 +78,13 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
     Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));
     try {
-      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(principalCredentials.getPrincipal());
+      String user = principalCredentials.getPrincipal();
+      if (impersonationRequest.getImpersonatedOpType() == ImpersonatedOpType.EXPLORE) {
+        // For explore operations, we use the short name in UserGroupInformation, to avoid an incorrect
+        // check in Hive. See CDAP-12930
+        user = new KerberosName(user).getShortName();
+      }
+      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(user);
       impersonatedUGI.addCredentials(readCredentials(location));
       return new UGIWithPrincipal(principalCredentials.getPrincipal(), impersonatedUGI);
     } finally {
