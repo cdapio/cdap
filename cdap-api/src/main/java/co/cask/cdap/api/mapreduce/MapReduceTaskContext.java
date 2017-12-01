@@ -97,16 +97,6 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends SchedulableProgr
   WorkflowInfo getWorkflowInfo();
 
   /**
-   * Returns the name of the input configured for this task.
-   * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.
-   *
-   * @deprecated Instead, use {@link #getInputContext()}.
-   */
-  @Deprecated
-  @Nullable
-  String getInputName();
-
-  /**
    * Returns an {@link InputContext} of the input configured for this task. The returned object will be a
    * {@link PartitionedFileSetInputContext} if the input for this task was configured from the PartitionedFileSet APIs.
    * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.

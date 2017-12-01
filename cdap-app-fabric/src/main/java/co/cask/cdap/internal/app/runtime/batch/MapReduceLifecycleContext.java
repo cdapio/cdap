@@ -105,12 +105,6 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
     return delegate.getWorkflowInfo();
   }
 
-  @Nullable
-  @Override
-  public String getInputName() {
-    return delegate.getInputName();
-  }
-
   @Override
   public InputContext getInputContext() {
     return delegate.getInputContext();

@@ -90,7 +90,7 @@ public class ClicksAndViewsMapReduce extends AbstractMapReduce {
 
     @Override
     public void initialize(MapReduceTaskContext<LongWritable, Text> context) throws Exception {
-      inputName = context.getInputName();
+      inputName = context.getInputContext().getInputName();
       Preconditions.checkNotNull(inputName);
       Preconditions.checkArgument(ClicksAndViews.CLICKS.equals(inputName) || ClicksAndViews.VIEWS.equals(inputName));
     }

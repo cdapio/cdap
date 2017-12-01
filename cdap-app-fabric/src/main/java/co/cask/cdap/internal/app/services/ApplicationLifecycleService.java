@@ -705,7 +705,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   private void deleteApp(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
-    Id.Application idApplication = appId.toId();
+
 
     //Delete the schedules
     scheduler.deleteSchedules(appId);
@@ -718,8 +718,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
     for (final FlowSpecification flowSpecification : spec.getFlows().values()) {
-      Id.Program flowProgramId = Id.Program.from(idApplication, ProgramType.FLOW, flowSpecification.getName());
-
+      ProgramId flowProgramId = appId.program(ProgramType.FLOW, flowSpecification.getName());
       // Collects stream name to all group ids consuming that stream
       final Multimap<String, Long> streamGroups = HashMultimap.create();
       for (FlowletConnection connection : flowSpecification.getConnections()) {
@@ -729,7 +728,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         }
       }
       // Remove all process states and group states for each stream
-      final String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      final String namespace = String.format("%s.%s", flowProgramId.getApplication(), flowProgramId.getProgram());
 
       impersonator.doAs(appId, new Callable<Void>() {
 

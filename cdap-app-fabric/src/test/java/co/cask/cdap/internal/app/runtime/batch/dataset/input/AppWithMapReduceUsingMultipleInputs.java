@@ -124,7 +124,7 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
     @Override
     public void initialize(MapReduceTaskContext context) throws Exception {
       // we aliased the stream 'purchases' as 'streamPurchases'
-      Preconditions.checkArgument("streamPurchases".equals(context.getInputName()));
+      Preconditions.checkArgument("streamPurchases".equals(context.getInputContext().getInputName()));
     }
 
     @Override
@@ -141,7 +141,7 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
     @Override
     public void initialize(MapReduceTaskContext context) throws Exception {
       System.setProperty("mapper.initialized", "true");
-      source = context.getInputName();
+      source = context.getInputContext().getInputName();
 
       InputContext inputContext = context.getInputContext();
       // just want to assert that we're not getting any unexpected type of InputContext

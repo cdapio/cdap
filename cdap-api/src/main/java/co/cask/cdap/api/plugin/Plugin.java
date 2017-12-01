@@ -32,11 +32,6 @@ public final class Plugin {
   private final PluginClass pluginClass;
   private final PluginProperties properties;
 
-  @Deprecated
-  public Plugin(ArtifactId artifactId, PluginClass pluginClass, PluginProperties properties) {
-    this(new ArrayList<>(), artifactId, pluginClass, properties);
-  }
-
   /**
    * Create a Plugin
    *
