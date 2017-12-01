@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -116,11 +115,6 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(getNamespace(), getApplication(), getVersion(),
                                                       getFlow(), flowlet));
-  }
-
-  @Override
-  public Id.Flow.Flowlet toId() {
-    return Id.Flow.Flowlet.from(Id.Application.from(getNamespace(), getApplication()), getFlow(), flowlet);
   }
 
   public static FlowletId fromString(String string) {

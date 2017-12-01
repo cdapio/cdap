@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 
 /**
  * Thrown when there is a write conflict adding an artifact, such as when multiple writers are trying to

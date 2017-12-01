@@ -20,7 +20,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.base.Preconditions;
-import kafka.api.OffsetRequest;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
 import kafka.message.MessageAndOffset;

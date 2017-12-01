@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.plugin;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 

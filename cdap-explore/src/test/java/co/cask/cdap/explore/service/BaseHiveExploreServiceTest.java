@@ -260,7 +260,7 @@ public class BaseHiveExploreServiceTest {
    */
   protected static void createNamespace(NamespaceId namespaceId) throws Exception {
     namespacedLocationFactory.get(namespaceId).mkdirs();
-    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId.toId()).build();
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId).build();
     namespaceAdmin.create(namespaceMeta);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreService.createNamespace(namespaceMeta);

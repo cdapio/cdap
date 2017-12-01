@@ -19,12 +19,19 @@ package co.cask.cdap.common.metadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -55,7 +62,6 @@ public abstract class AbstractMetadataClient {
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
 
@@ -78,7 +84,7 @@ public abstract class AbstractMetadataClient {
    * @param target the target type. If null, all possible types will be searched
    * @return the {@link MetadataSearchResponse} for the given query.
    */
-  public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
+  public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
                                                @Nullable EntityTypeSimpleName target)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
     Set<EntityTypeSimpleName> targets = ImmutableSet.of();
@@ -96,7 +102,7 @@ public abstract class AbstractMetadataClient {
    * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
-  public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
+  public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
                                                Set<EntityTypeSimpleName> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
     return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
@@ -120,7 +126,7 @@ public abstract class AbstractMetadataClient {
    *                    or not.
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
-  public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
+  public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
                                                Set<EntityTypeSimpleName> targets, @Nullable String sort,
                                                int offset, int limit, int numCursors,
                                                @Nullable String cursor, boolean showHidden)
@@ -142,7 +148,7 @@ public abstract class AbstractMetadataClient {
     if (showHidden) {
       path += "&showHidden=" + true;
     }
-    URL searchURL = resolve(namespace.toEntityId(), path);
+    URL searchURL = resolve(namespace, path);
     HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.code());
     if (HttpResponseStatus.BAD_REQUEST.code() == response.getResponseCode()) {
       throw new BadRequestException(response.getResponseBodyAsString());
@@ -155,7 +161,7 @@ public abstract class AbstractMetadataClient {
    * {@link MetadataScope#USER}
    * @return The metadata for the entity.
    */
-  public Set<MetadataRecord> getMetadata(Id id)
+  public Set<MetadataRecord> getMetadata(EntityId id)
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException, UnauthorizedException {
     return getMetadata(id, null);
   }
@@ -166,23 +172,23 @@ public abstract class AbstractMetadataClient {
    *              metadata from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata for the entity.
    */
-  public Set<MetadataRecord> getMetadata(Id id, @Nullable MetadataScope scope)
+  public Set<MetadataRecord> getMetadata(EntityId id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      return getMetadata((Id.Application) id, scope);
-    } else if (id instanceof Id.Artifact) {
-      return getMetadata((Id.Artifact) id, scope);
-    } else if (id instanceof Id.DatasetInstance) {
-      return getMetadata((Id.DatasetInstance) id, scope);
-    } else if (id instanceof Id.Stream) {
-      return getMetadata((Id.Stream) id, scope);
-    } else if (id instanceof Id.Stream.View) {
-      return getMetadata((Id.Stream.View) id, scope);
-    } else if (id instanceof Id.Program) {
-      return getMetadata((Id.Program) id, scope);
-    } else if (id instanceof Id.Run) {
-      return getMetadata((Id.Run) id);
+    if (id instanceof ApplicationId) {
+      return getMetadata((Id.Application.fromEntityId((ApplicationId) id)), scope);
+    } else if (id instanceof ArtifactId) {
+      return getMetadata((Id.Artifact.fromEntityId((ArtifactId) id)), scope);
+    } else if (id instanceof DatasetId) {
+      return getMetadata((Id.DatasetInstance.fromEntityId((DatasetId) id)), scope);
+    } else if (id instanceof StreamId) {
+      return getMetadata((Id.Stream.fromEntityId((StreamId) id)), scope);
+    } else if (id instanceof StreamViewId) {
+      return getMetadata((Id.Stream.View.fromEntityId((StreamViewId) id)), scope);
+    } else if (id instanceof ProgramId) {
+      return getMetadata((Id.Program.fromEntityId((ProgramId) id)), scope);
+    } else if (id instanceof ProgramRunId) {
+      return getMetadata(Id.Run.fromEntityId((ProgramRunId) id));
     }
 
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
@@ -193,7 +199,7 @@ public abstract class AbstractMetadataClient {
    * {@link MetadataScope#USER}
    * @return The metadata properties for the entity.
    */
-  public Map<String, String> getProperties(Id id)
+  public Map<String, String> getProperties(EntityId id)
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException, UnauthorizedException {
     return getProperties(id, null);
   }
@@ -204,21 +210,21 @@ public abstract class AbstractMetadataClient {
    *              properties from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the entity.
    */
-  public Map<String, String> getProperties(Id id, @Nullable MetadataScope scope)
+  public Map<String, String> getProperties(EntityId id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      return getProperties((Id.Application) id, scope);
-    } else if (id instanceof Id.Artifact) {
-      return getProperties((Id.Artifact) id, scope);
-    } else if (id instanceof Id.DatasetInstance) {
-      return getProperties((Id.DatasetInstance) id, scope);
-    } else if (id instanceof Id.Stream) {
-      return getProperties((Id.Stream) id, scope);
-    } else if (id instanceof Id.Stream.View) {
-      return getProperties((Id.Stream.View) id, scope);
-    } else if (id instanceof Id.Program) {
-      return getProperties((Id.Program) id, scope);
+    if (id instanceof ApplicationId) {
+      return getProperties((Id.Application.fromEntityId((ApplicationId) id)), scope);
+    } else if (id instanceof ArtifactId) {
+      return getProperties((Id.Artifact.fromEntityId((ArtifactId) id)), scope);
+    } else if (id instanceof DatasetId) {
+      return getProperties((Id.DatasetInstance.fromEntityId((DatasetId) id)), scope);
+    } else if (id instanceof StreamId) {
+      return getProperties((Id.Stream.fromEntityId((StreamId) id)), scope);
+    } else if (id instanceof StreamViewId) {
+      return getProperties((Id.Stream.View.fromEntityId((StreamViewId) id)), scope);
+    } else if (id instanceof ProgramId) {
+      return getProperties((Id.Program.fromEntityId((ProgramId) id)), scope);
     }
 
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
@@ -229,7 +235,7 @@ public abstract class AbstractMetadataClient {
    * {@link MetadataScope#USER}
    * @return The metadata tags for the entity.
    */
-  public Set<String> getTags(Id id)
+  public Set<String> getTags(EntityId id)
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException, UnauthorizedException {
     return getTags(id, null);
   }
@@ -240,21 +246,20 @@ public abstract class AbstractMetadataClient {
    *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the entity.
    */
-  public Set<String> getTags(Id id, @Nullable MetadataScope scope)
+  public Set<String> getTags(EntityId id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
-
-    if (id instanceof Id.Application) {
-      return getTags((Id.Application) id, scope);
-    } else if (id instanceof Id.Artifact) {
-      return getTags((Id.Artifact) id, scope);
-    } else if (id instanceof Id.DatasetInstance) {
-      return getTags((Id.DatasetInstance) id, scope);
-    } else if (id instanceof Id.Stream) {
-      return getTags((Id.Stream) id, scope);
-    } else if (id instanceof Id.Stream.View) {
-      return getTags((Id.Stream.View) id, scope);
-    } else if (id instanceof Id.Program) {
-      return getTags((Id.Program) id, scope);
+    if (id instanceof ApplicationId) {
+      return getTags((Id.Application.fromEntityId((ApplicationId) id)), scope);
+    } else if (id instanceof ArtifactId) {
+      return getTags((Id.Artifact.fromEntityId((ArtifactId) id)), scope);
+    } else if (id instanceof DatasetId) {
+      return getTags((Id.DatasetInstance.fromEntityId((DatasetId) id)), scope);
+    } else if (id instanceof StreamId) {
+      return getTags((Id.Stream.fromEntityId((StreamId) id)), scope);
+    } else if (id instanceof StreamViewId) {
+      return getTags((Id.Stream.View.fromEntityId((StreamViewId) id)), scope);
+    } else if (id instanceof ProgramId) {
+      return getTags((Id.Program.fromEntityId((ProgramId) id)), scope);
     }
 
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
@@ -264,21 +269,21 @@ public abstract class AbstractMetadataClient {
    * @param id the entity for which to add metadata properties
    * @param properties the metadata properties
    */
-  public void addProperties(Id id, Map<String, String> properties)
+  public void addProperties(EntityId id, Map<String, String> properties)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      addProperties((Id.Application) id, properties);
-    } else if (id instanceof Id.Artifact) {
-      addProperties((Id.Artifact) id, properties);
-    } else if (id instanceof Id.DatasetInstance) {
-      addProperties((Id.DatasetInstance) id, properties);
-    } else if (id instanceof Id.Stream) {
-      addProperties((Id.Stream) id, properties);
-    } else if (id instanceof Id.Stream.View) {
-      addProperties((Id.Stream.View) id, properties);
-    } else if (id instanceof Id.Program) {
-      addProperties((Id.Program) id, properties);
+    if (id instanceof ApplicationId) {
+      addProperties((Id.Application.fromEntityId((ApplicationId) id)), properties);
+    } else if (id instanceof ArtifactId) {
+      addProperties((Id.Artifact.fromEntityId((ArtifactId) id)), properties);
+    } else if (id instanceof DatasetId) {
+      addProperties((Id.DatasetInstance.fromEntityId((DatasetId) id)), properties);
+    } else if (id instanceof StreamId) {
+      addProperties((Id.Stream.fromEntityId((StreamId) id)), properties);
+    } else if (id instanceof StreamViewId) {
+      addProperties((Id.Stream.View.fromEntityId((StreamViewId) id)), properties);
+    } else if (id instanceof ProgramId) {
+      addProperties((Id.Program.fromEntityId((ProgramId) id)), properties);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -288,21 +293,21 @@ public abstract class AbstractMetadataClient {
    * @param id the entity for which to add metadata tags
    * @param tags the metadata tags
    */
-  public void addTags(Id id, Set<String> tags)
+  public void addTags(EntityId id, Set<String> tags)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      addTags((Id.Application) id, tags);
-    } else if (id instanceof Id.Artifact) {
-      addTags((Id.Artifact) id, tags);
-    } else if (id instanceof Id.DatasetInstance) {
-      addTags((Id.DatasetInstance) id, tags);
-    } else if (id instanceof Id.Stream) {
-      addTags((Id.Stream) id, tags);
-    } else if (id instanceof Id.Stream.View) {
-      addTags((Id.Stream.View) id, tags);
-    } else if (id instanceof Id.Program) {
-      addTags((Id.Program) id, tags);
+    if (id instanceof ApplicationId) {
+      addTags((Id.Application.fromEntityId((ApplicationId) id)), tags);
+    } else if (id instanceof ArtifactId) {
+      addTags((Id.Artifact.fromEntityId((ArtifactId) id)), tags);
+    } else if (id instanceof DatasetId) {
+      addTags((Id.DatasetInstance.fromEntityId((DatasetId) id)), tags);
+    } else if (id instanceof StreamId) {
+      addTags((Id.Stream.fromEntityId((StreamId) id)), tags);
+    } else if (id instanceof StreamViewId) {
+      addTags((Id.Stream.View.fromEntityId((StreamViewId) id)), tags);
+    } else if (id instanceof ProgramId) {
+      addTags((Id.Program.fromEntityId((ProgramId) id)), tags);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -311,21 +316,21 @@ public abstract class AbstractMetadataClient {
   /**
    * @param id the entity for which to remove metadata
    */
-  public void removeMetadata(Id id)
+  public void removeMetadata(EntityId id)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      removeMetadata((Id.Application) id);
-    } else if (id instanceof Id.Artifact) {
-      removeMetadata((Id.Artifact) id);
-    } else if (id instanceof Id.DatasetInstance) {
-      removeMetadata((Id.DatasetInstance) id);
-    } else if (id instanceof Id.Stream) {
-      removeMetadata((Id.Stream) id);
-    } else if (id instanceof Id.Stream.View) {
-      removeMetadata((Id.Stream.View) id);
-    } else if (id instanceof Id.Program) {
-      removeMetadata((Id.Program) id);
+    if (id instanceof ApplicationId) {
+      removeMetadata(Id.Application.fromEntityId((ApplicationId) id));
+    } else if (id instanceof ArtifactId) {
+      removeMetadata(Id.Artifact.fromEntityId((ArtifactId) id));
+    } else if (id instanceof DatasetId) {
+      removeMetadata(Id.DatasetInstance.fromEntityId((DatasetId) id));
+    } else if (id instanceof StreamId) {
+      removeMetadata(Id.Stream.fromEntityId((StreamId) id));
+    } else if (id instanceof StreamViewId) {
+      removeMetadata(Id.Stream.View.fromEntityId((StreamViewId) id));
+    } else if (id instanceof ProgramId) {
+      removeMetadata(Id.Program.fromEntityId((ProgramId) id));
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -334,21 +339,21 @@ public abstract class AbstractMetadataClient {
   /**
    * @param id the entity for which to remove metadata properties
    */
-  public void removeProperties(Id id)
+  public void removeProperties(EntityId id)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      removeProperties((Id.Application) id);
-    } else if (id instanceof Id.Artifact) {
-      removeProperties((Id.Artifact) id);
-    } else if (id instanceof Id.DatasetInstance) {
-      removeProperties((Id.DatasetInstance) id);
-    } else if (id instanceof Id.Stream) {
-      removeProperties((Id.Stream) id);
-    } else if (id instanceof Id.Stream.View) {
-      removeProperties((Id.Stream.View) id);
-    } else if (id instanceof Id.Program) {
-      removeProperties((Id.Program) id);
+    if (id instanceof ApplicationId) {
+      removeProperties(Id.Application.fromEntityId((ApplicationId) id));
+    } else if (id instanceof ArtifactId) {
+      removeProperties(Id.Artifact.fromEntityId((ArtifactId) id));
+    } else if (id instanceof DatasetId) {
+      removeProperties(Id.DatasetInstance.fromEntityId((DatasetId) id));
+    } else if (id instanceof StreamId) {
+      removeProperties(Id.Stream.fromEntityId((StreamId) id));
+    } else if (id instanceof StreamViewId) {
+      removeProperties(Id.Stream.View.fromEntityId((StreamViewId) id));
+    } else if (id instanceof ProgramId) {
+      removeProperties(Id.Program.fromEntityId((ProgramId) id));
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -357,21 +362,21 @@ public abstract class AbstractMetadataClient {
   /**
    * @param id the entity for which to remove metadata tags
    */
-  public void removeTags(Id id)
+  public void removeTags(EntityId id)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      removeTags((Id.Application) id);
-    } else if (id instanceof Id.Artifact) {
-      removeTags((Id.Artifact) id);
-    } else if (id instanceof Id.DatasetInstance) {
-      removeTags((Id.DatasetInstance) id);
-    } else if (id instanceof Id.Stream) {
-      removeTags((Id.Stream) id);
-    } else if (id instanceof Id.Stream.View) {
-      removeTags((Id.Stream.View) id);
-    } else if (id instanceof Id.Program) {
-      removeTags((Id.Program) id);
+    if (id instanceof ApplicationId) {
+      removeTags(Id.Application.fromEntityId((ApplicationId) id));
+    } else if (id instanceof ArtifactId) {
+      removeTags(Id.Artifact.fromEntityId((ArtifactId) id));
+    } else if (id instanceof DatasetId) {
+      removeTags(Id.DatasetInstance.fromEntityId((DatasetId) id));
+    } else if (id instanceof StreamId) {
+      removeTags(Id.Stream.fromEntityId((StreamId) id));
+    } else if (id instanceof StreamViewId) {
+      removeTags(Id.Stream.View.fromEntityId((StreamViewId) id));
+    } else if (id instanceof ProgramId) {
+      removeTags(Id.Program.fromEntityId((ProgramId) id));
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -381,21 +386,21 @@ public abstract class AbstractMetadataClient {
    * @param id the entity for which to remove a metadata property
    * @param property the property to remove
    */
-  public void removeProperty(Id id, String property)
+  public void removeProperty(EntityId id, String property)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      removeProperty((Id.Application) id, property);
-    } else if (id instanceof Id.Artifact) {
-      removeProperty((Id.Artifact) id, property);
-    } else if (id instanceof Id.DatasetInstance) {
-      removeProperty((Id.DatasetInstance) id, property);
-    } else if (id instanceof Id.Stream) {
-      removeProperty((Id.Stream) id, property);
-    } else if (id instanceof Id.Stream.View) {
-      removeProperty((Id.Stream.View) id, property);
-    } else if (id instanceof Id.Program) {
-      removeProperty((Id.Program) id, property);
+    if (id instanceof ApplicationId) {
+      removeProperty(Id.Application.fromEntityId((ApplicationId) id), property);
+    } else if (id instanceof ArtifactId) {
+      removeProperty(Id.Artifact.fromEntityId((ArtifactId) id), property);
+    } else if (id instanceof DatasetId) {
+      removeProperty(Id.DatasetInstance.fromEntityId((DatasetId) id), property);
+    } else if (id instanceof StreamId) {
+      removeProperty(Id.Stream.fromEntityId((StreamId) id), property);
+    } else if (id instanceof StreamViewId) {
+      removeProperty(Id.Stream.View.fromEntityId((StreamViewId) id), property);
+    } else if (id instanceof ProgramId) {
+      removeProperty(Id.Program.fromEntityId((ProgramId) id), property);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -405,23 +410,21 @@ public abstract class AbstractMetadataClient {
    * @param id the entity for which to remove a metadata tag
    * @param tag the tag to remove
    */
-  public void removeTag(Id id, String tag)
+  public void removeTag(EntityId id, String tag)
     throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
 
-    if (id instanceof Id.Application) {
-      removeTag((Id.Application) id, tag);
-    } else if (id instanceof Id.Artifact) {
-      removeTag((Id.Artifact) id, tag);
-    } else if (id instanceof Id.DatasetInstance) {
-      removeTag((Id.DatasetInstance) id, tag);
-    } else if (id instanceof Id.Stream) {
-      removeTag((Id.Stream) id, tag);
-    } else if (id instanceof Id.Stream.View) {
-      removeTag((Id.Stream.View) id, tag);
-    } else if (id instanceof Id.Program) {
-      removeTag((Id.Program) id, tag);
-    } else if (id instanceof Id.Run) {
-      removeTag((Id.Run) id, tag);
+    if (id instanceof ApplicationId) {
+      removeTag(Id.Application.fromEntityId((ApplicationId) id), tag);
+    } else if (id instanceof ArtifactId) {
+      removeTag(Id.Artifact.fromEntityId((ArtifactId) id), tag);
+    } else if (id instanceof DatasetId) {
+      removeTag(Id.DatasetInstance.fromEntityId((DatasetId) id), tag);
+    } else if (id instanceof StreamId) {
+      removeTag(Id.Stream.fromEntityId((StreamId) id), tag);
+    } else if (id instanceof StreamViewId) {
+      removeTag(Id.Stream.View.fromEntityId((StreamViewId) id), tag);
+    } else if (id instanceof ProgramId) {
+      removeTag(Id.Program.fromEntityId((ProgramId) id), tag);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }

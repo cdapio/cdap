@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -59,12 +58,6 @@ public class TopicId extends NamespacedEntityId implements ParentedId<NamespaceI
   @Override
   public String getEntityName() {
     return getTopic();
-  }
-
-  @Override
-  public Id toId() {
-    throw new UnsupportedOperationException(
-      String.format("%s does not have old %s class", TopicId.class.getName(), Id.class.getName()));
   }
 
   @Override

@@ -21,6 +21,7 @@ import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -28,7 +29,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -115,18 +115,18 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     // start a program in one namespace
     // flow is stopped initially
-    Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1.toId()));
+    Assert.assertEquals("STOPPED", getProgramStatus(Id.Program.fromEntityId(wordcountFlow1)));
     // start a flow and check the status
-    startProgram(wordcountFlow1.toId());
-    waitState(wordcountFlow1.toId(), ProgramRunStatus.RUNNING.toString());
+    startProgram(Id.Program.fromEntityId(wordcountFlow1));
+    waitState(Id.Program.fromEntityId(wordcountFlow1), ProgramRunStatus.RUNNING.toString());
 
     // delete the app from another (default namespace)
-    deleteApp(defaultNSAppId.toId(), 200);
+    deleteApp(Id.Application.fromEntityId(defaultNSAppId), 200);
 
     // cleanup
-    stopProgram(wordcountFlow1.toId());
-    waitState(wordcountFlow1.toId(), "STOPPED");
-    deleteApp(testNSAppId.toId(), 200);
+    stopProgram(Id.Program.fromEntityId(wordcountFlow1));
+    waitState(Id.Program.fromEntityId(wordcountFlow1), "STOPPED");
+    deleteApp(Id.Application.fromEntityId(testNSAppId), 200);
   }
 
   /**
@@ -219,7 +219,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Files.copy(Locations.newInputSupplier(appJar), appJarFile);
     appJar.delete();
 
-    applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId.toId(), appJarFile,
+    applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName",
+                                                     Id.Artifact.fromEntityId(artifactId), appJarFile,
                                                      null, null, new ProgramTerminator() {
       @Override
       public void stop(ProgramId programId) throws Exception {
@@ -233,22 +234,22 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     // fail the Worker#initialize
     ProgramId worker = appId.worker(AppWithProgramsUsingGuava.NoOpWorker.NAME);
-    startProgram(worker.toId());
+    startProgram(Id.Program.fromEntityId(worker));
     waitForRuns(1, worker, ProgramRunStatus.FAILED);
 
     // fail the MapReduce#initialize
     ProgramId mapreduce = appId.mr(AppWithProgramsUsingGuava.NoOpMR.NAME);
-    startProgram(mapreduce.toId());
+    startProgram(Id.Program.fromEntityId(mapreduce));
     waitForRuns(1, mapreduce, ProgramRunStatus.FAILED);
 
     // fail the CustomAction#initialize
     ProgramId workflow = appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
-    startProgram(workflow.toId());
+    startProgram(Id.Program.fromEntityId(workflow));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
 
     // fail the Workflow#initialize
     appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
-    startProgram(workflow.toId(), ImmutableMap.of("fail.in.workflow.initialize", "true"));
+    startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("fail.in.workflow.initialize", "true"));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
   }
 
@@ -256,7 +257,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return getProgramRuns(programId.toId(), status).size();
+        return getProgramRuns(Id.Program.fromEntityId(programId), status).size();
       }
     }, 5, TimeUnit.SECONDS);
   }

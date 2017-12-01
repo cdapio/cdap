@@ -32,7 +32,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.metrics.MetricsTestBase;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;

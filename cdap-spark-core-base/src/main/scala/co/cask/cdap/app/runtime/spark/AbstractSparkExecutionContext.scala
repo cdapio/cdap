@@ -50,6 +50,7 @@ import co.cask.cdap.app.runtime.spark.service.SparkHttpServiceServer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.common.conf.Constants
+import co.cask.cdap.common.id.Id
 import co.cask.cdap.common.utils.DirUtils
 import co.cask.cdap.data.LineageDatasetContext
 import co.cask.cdap.data.stream.AbstractStreamInputFormat
@@ -571,7 +572,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   }
 
   private def recordStreamUsage(streamId: StreamId): Unit = {
-    val oldStreamId = streamId.toId
+    val oldStreamId = Id.Stream.fromEntityId(streamId)
 
     // Register for stream usage for the Spark program
     val oldProgramId = runtimeContext.getProgram.getId

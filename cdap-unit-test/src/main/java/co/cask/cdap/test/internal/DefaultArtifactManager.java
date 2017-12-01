@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.test.ArtifactManager;
@@ -40,16 +41,16 @@ public class DefaultArtifactManager implements ArtifactManager {
 
   @Override
   public void writeProperties(Map<String, String> properties) throws Exception {
-    artifactRepository.writeArtifactProperties(artifactId.toId(), properties);
+    artifactRepository.writeArtifactProperties(Id.Artifact.fromEntityId(artifactId), properties);
   }
 
   @Override
   public void removeProperties() throws Exception {
-    artifactRepository.deleteArtifactProperties(artifactId.toId());
+    artifactRepository.deleteArtifactProperties(Id.Artifact.fromEntityId(artifactId));
   }
 
   @Override
   public void delete() throws Exception {
-    artifactRepository.deleteArtifact(artifactId.toId());
+    artifactRepository.deleteArtifact(Id.Artifact.fromEntityId(artifactId));
   }
 }

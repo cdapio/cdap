@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.proto.id.ProgramRunId;

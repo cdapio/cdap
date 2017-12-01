@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FileContext;

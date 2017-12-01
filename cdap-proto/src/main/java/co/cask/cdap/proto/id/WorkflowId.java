@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 
 /**
@@ -29,11 +28,6 @@ public class WorkflowId extends ProgramId implements ParentedId<ApplicationId> {
 
   public WorkflowId(ApplicationId appId, String program) {
     super(appId, ProgramType.WORKFLOW, program);
-  }
-
-  @Override
-  public Id.Workflow toId() {
-    return Id.Workflow.from(super.getParent().toId(), super.getProgram());
   }
 
   public static WorkflowId fromString(String string) {

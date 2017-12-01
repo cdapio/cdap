@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+package co.cask.cdap.common.id;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
- * Compatibility from {@link EntityId} to {@link Id}.
+ * Compatibility from {@link Id} to {@link EntityId}.
  */
-public interface IdCompatible {
+public interface EntityIdCompatible {
   /**
-   * @return the {@link Id} corresponding to {@code this}
+   * @return the {@link EntityId} corresponding to {@code this}
    */
-  Id toId();
+  EntityId toEntityId();
 }

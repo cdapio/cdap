@@ -17,8 +17,8 @@
 package co.cask.cdap.app.stream;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.inject.assistedinject.Assisted;
 

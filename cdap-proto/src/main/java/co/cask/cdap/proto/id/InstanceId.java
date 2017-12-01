@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Collections;
@@ -50,12 +49,6 @@ public class InstanceId extends EntityId {
   @Override
   public Iterable<String> toIdParts() {
     return Collections.singletonList(instance);
-  }
-
-  @Override
-  public Id toId() {
-    throw new UnsupportedOperationException(
-      String.format("%s does not have old %s class", InstanceId.class.getName(), Id.class.getName()));
   }
 
   @SuppressWarnings("unused")

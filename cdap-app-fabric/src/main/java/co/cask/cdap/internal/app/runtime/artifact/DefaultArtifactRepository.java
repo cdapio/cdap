@@ -34,13 +34,13 @@ import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.ArtifactConfigReader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.app.spark.SparkCompat;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
@@ -133,7 +133,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @Override
   public void clear(NamespaceId namespace) throws Exception {
     for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
-      deleteArtifact(Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId()));
+      deleteArtifact(Id.Artifact.from(Id.Namespace.fromEntityId(namespace),
+                                      artifactDetail.getDescriptor().getArtifactId()));
     }
   }
 
@@ -226,7 +227,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
       namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
-    return getPluginEntries(pluginClasses, selector, new NamespaceId(artifactRange.getNamespace()).toId(),
+    return getPluginEntries(pluginClasses, selector,
+                            Id.Namespace.fromEntityId(new NamespaceId(artifactRange.getNamespace())),
                             pluginType, pluginName);
   }
 

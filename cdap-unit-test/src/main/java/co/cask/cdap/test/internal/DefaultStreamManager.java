@@ -18,13 +18,13 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.StreamManager;
 import co.cask.http.BodyConsumer;

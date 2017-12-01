@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -105,11 +104,6 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
                                               getType(), getProgram(), run);
     }
     return hashCode;
-  }
-
-  @Override
-  public Id.Program.Run toId() {
-    return new Id.Program.Run(Id.Program.from(getNamespace(), getApplication(), getType(), getProgram()), run);
   }
 
   @SuppressWarnings("unused")

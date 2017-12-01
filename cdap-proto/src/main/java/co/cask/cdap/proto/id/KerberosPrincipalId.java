@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Collections;
@@ -62,12 +61,6 @@ public class KerberosPrincipalId extends EntityId {
 
   public String getPrincipal() {
     return principal;
-  }
-
-  @Override
-  public Id toId() {
-    throw new UnsupportedOperationException(String.format("%s does not have old %s class",
-                                                          KerberosPrincipalId.class.getName(), Id.class.getName()));
   }
 
   @Override

@@ -19,8 +19,6 @@ package co.cask.cdap.data2.transaction.metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.metrics.TxMetricsCollector;
 

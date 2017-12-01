@@ -22,7 +22,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

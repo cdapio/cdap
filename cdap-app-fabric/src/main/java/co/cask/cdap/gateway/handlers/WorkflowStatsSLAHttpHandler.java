@@ -28,6 +28,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.ProgramType;
@@ -269,7 +270,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
   }
 
   private Map<String, Long> getMapreduceDetails(ProgramId mapreduceProgram, String runId) throws Exception {
-    return mrJobInfoFetcher.getMRJobInfo(mapreduceProgram.run(runId).toId()).getCounters();
+    return mrJobInfoFetcher.getMRJobInfo(Id.Run.fromEntityId(mapreduceProgram.run(runId))).getCounters();
   }
 
   private Map<String, Long> getSparkDetails(ProgramId sparkProgram, String runId) throws Exception {

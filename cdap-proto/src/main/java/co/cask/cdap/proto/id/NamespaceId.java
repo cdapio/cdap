@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Collections;
@@ -77,11 +76,6 @@ public class NamespaceId extends NamespacedEntityId {
 
   public TopicId topic(String topic) {
     return new TopicId(namespace, topic);
-  }
-
-  @Override
-  public Id.Namespace toId() {
-    return Id.Namespace.from(namespace);
   }
 
   @Override

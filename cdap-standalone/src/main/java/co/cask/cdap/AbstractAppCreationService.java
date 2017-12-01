@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -146,7 +147,8 @@ class AbstractAppCreationService extends AbstractExecutionThreadService {
       appId.getNamespaceId().artifact(artifactSummary.getName(), artifactSummary.getVersion());
 
     applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-      artifactId.toId(), appConfig, new DefaultProgramTerminator());
+                                          Id.Artifact.fromEntityId(artifactId),
+                                          appConfig, new DefaultProgramTerminator());
 
     for (Map.Entry<ProgramId, Map<String, String>> programEntry : programIdMap.entrySet()) {
       try {

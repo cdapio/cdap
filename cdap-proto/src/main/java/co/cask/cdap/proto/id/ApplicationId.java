@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -98,11 +97,6 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
 
   public ScheduleId schedule(String schedule) {
     return new ScheduleId(this, schedule);
-  }
-
-  @Override
-  public Id.Application toId() {
-    return Id.Application.from(namespace, application);
   }
 
   @Override

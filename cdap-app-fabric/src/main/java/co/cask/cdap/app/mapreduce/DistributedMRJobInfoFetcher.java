@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.mapreduce;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import com.google.inject.Inject;
 import org.slf4j.Logger;

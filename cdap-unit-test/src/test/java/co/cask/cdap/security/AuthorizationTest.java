@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
@@ -719,7 +720,7 @@ public class AuthorizationTest extends TestBase {
     final ApplicationManager dummyAppManager = deployApplication(AUTH_NAMESPACE, DummyApp.class);
 
     // alice should be able to start and stop programs in the app she deployed since she has execute privilege
-    dummyAppManager.startProgram(serviceId.toId());
+    dummyAppManager.startProgram(Id.Service.fromEntityId(serviceId));
     ServiceManager greetingService = dummyAppManager.getServiceManager(serviceId.getProgram());
     greetingService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     // alice should be able to set instances for the program
@@ -730,12 +731,12 @@ public class AuthorizationTest extends TestBase {
     greetingService.setRuntimeArgs(args);
     // Alice should be able to get runtime arguments as she has ADMIN on it
     Assert.assertEquals(args, greetingService.getRuntimeArgs());
-    dummyAppManager.stopProgram(serviceId.toId());
+    dummyAppManager.stopProgram(Id.Service.fromEntityId(serviceId));
     greetingService.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     // Bob should not be able to start programs in dummy app because he does not have privileges on it
     SecurityRequestContext.setUserId(BOB.getName());
     try {
-      dummyAppManager.startProgram(serviceId.toId());
+      dummyAppManager.startProgram(Id.Service.fromEntityId(serviceId));
       Assert.fail("Bob should not be able to start the service because he does not have execute privileges on it.");
     } catch (RuntimeException expected) {
       //noinspection ThrowableResultOfMethodCallIgnored

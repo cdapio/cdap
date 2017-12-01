@@ -17,7 +17,6 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.proto.id.StreamId;
-import com.google.common.util.concurrent.Service;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;

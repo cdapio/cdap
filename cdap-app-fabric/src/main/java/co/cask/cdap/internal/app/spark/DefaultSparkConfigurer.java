@@ -21,13 +21,13 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 
 import java.util.Collections;

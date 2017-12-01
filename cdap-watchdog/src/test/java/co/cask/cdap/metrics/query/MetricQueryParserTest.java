@@ -19,7 +19,7 @@ import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import org.junit.Assert;
 import org.junit.Test;
 

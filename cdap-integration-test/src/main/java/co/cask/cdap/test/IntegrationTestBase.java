@@ -102,7 +102,7 @@ public abstract class IntegrationTestBase {
 
     boolean deleteUponTeardown = false;
     if (!getNamespaceClient().exists(configuredNamespace)) {
-      getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace.toId()).build());
+      getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace).build());
       // if we created the configured namespace, delete it upon teardown
       deleteUponTeardown = true;
     } else {

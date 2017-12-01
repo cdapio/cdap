@@ -540,7 +540,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * For pre 3.5 MapReduce programs, calls the {@link MapReduce#beforeSubmit(MapReduceContext)} method.
    * For MapReduce programs created after 3.5, calls the initialize method of the {@link ProgramLifecycle}.
    * This method also sets up the Input/Output within the same transaction.
    */

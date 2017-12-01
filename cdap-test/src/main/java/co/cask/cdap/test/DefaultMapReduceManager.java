@@ -16,7 +16,7 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 
 /**

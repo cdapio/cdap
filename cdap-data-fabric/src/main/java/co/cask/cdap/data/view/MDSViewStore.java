@@ -24,13 +24,13 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.DatasetId;
@@ -142,7 +142,7 @@ public final class MDSViewStore implements ViewStore {
     private final ViewSpecification spec;
 
     private StreamViewEntry(StreamViewId id, ViewSpecification spec) {
-      this.id = id.toId();
+      this.id = Id.Stream.View.fromEntityId(id);
       this.spec = spec;
     }
 

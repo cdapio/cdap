@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -113,12 +112,6 @@ public class FlowletQueueId extends NamespacedEntityId implements ParentedId<Flo
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, application, flow, flowlet, queue));
-  }
-
-  @Override
-  public Id.Flow.Flowlet.Queue toId() {
-    return new Id.Flow.Flowlet.Queue(
-      Id.Flow.Flowlet.from(Id.Application.from(namespace, application), flow, flowlet), queue);
   }
 
   public static FlowletQueueId fromString(String string) {

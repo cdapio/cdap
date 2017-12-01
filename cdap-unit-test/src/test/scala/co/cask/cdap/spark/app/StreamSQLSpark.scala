@@ -17,15 +17,10 @@
 package co.cask.cdap.spark.app
 
 import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.spark.AbstractSpark
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkMain
+import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.types.DataTypes
-import org.apache.spark.sql.types.MapType
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{DataTypes, MapType, StructField, StructType}
 
 /**
   * Unit test for various functionality that involve running Spark SQL on Stream.

@@ -23,6 +23,7 @@ import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.ArtifactConfigReader;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
@@ -74,7 +75,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
                          Files.newInputStreamSupplier(artifactFile), artifactId.getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
-      ArtifactConfig artifactConfig = configReader.read(namespace.toId(), configFile);
+      ArtifactConfig artifactConfig = configReader.read(Id.Namespace.fromEntityId(namespace), configFile);
       artifactClient.add(namespace, artifactId.getEntityName(),
                          Files.newInputStreamSupplier(artifactFile), artifactId.getVersion(),
                          artifactConfig.getParents(), artifactConfig.getPlugins());

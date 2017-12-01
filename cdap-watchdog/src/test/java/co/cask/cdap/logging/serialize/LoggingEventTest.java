@@ -24,8 +24,6 @@ import co.cask.cdap.common.logging.logback.TestLoggingContext;
 import co.cask.cdap.logging.appender.LogMessage;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;

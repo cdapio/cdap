@@ -34,6 +34,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.DefaultId;
@@ -201,7 +202,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testMapReduceMetricsControl() throws Exception {
-    final ApplicationWithPrograms app = deployApp(new NamespaceId("metrics_ns").toId(), AppWithMapReduce.class);
+    final ApplicationWithPrograms app = deployApp(Id.Namespace.fromEntityId(new NamespaceId("metrics_ns")),
+                                                  AppWithMapReduce.class);
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
     // do not emit metrics for this app
@@ -336,7 +338,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
     // Deploy apps to another namespace and test cross-namespace access meanwhile
-    final ApplicationWithPrograms app = deployApp(new NamespaceId("someOtherNameSpace").toId(),
+    final ApplicationWithPrograms app = deployApp(Id.Namespace.fromEntityId(new NamespaceId("someOtherNameSpace")),
                                                   AppWithMapReduceUsingObjectStore.class);
 
     final ObjectStore<String> input = datasetCache.getDataset("someOtherNameSpace", "keys");

@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.ArrayList;
@@ -48,19 +47,11 @@ import javax.annotation.Nullable;
  *         <li>{@code fromString(String string)}, delegating to {@link EntityId#fromString(String, Class)}</li>
  *       </ol>
  *     </li>
- *     <li>
- *       Create a corresponding child class of the old {@link Id}
- *       (once {@link Id} is removed, this is no longer needed)
- *     </li>
- *     <li>
- *       Add a new entry to {@link EntityType}, associating the {@link EntityType}
- *       with both the new {@link EntityId} and old {@link Id}
- *     </li>
  *   </ol>
  * </p>
  */
 @SuppressWarnings("unchecked")
-public abstract class EntityId implements IdCompatible {
+public abstract class EntityId {
 
   public static final String IDSTRING_TYPE_SEPARATOR = ":";
   public static final String IDSTRING_PART_SEPARATOR = ".";
@@ -142,12 +133,6 @@ public abstract class EntityId implements IdCompatible {
 
   public final EntityType getEntityType() {
     return entity;
-  }
-
-  public static <T extends Id> T fromStringOld(String string, Class<T> oldIdClass) {
-    EntityType type = EntityType.valueOfOldIdClass(oldIdClass);
-    EntityId id = fromString(string, type.getIdClass());
-    return (T) id.toId();
   }
 
   public static <T extends EntityId> T fromString(String string) {

@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -86,7 +87,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addProperties(ApplicationId app, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(app.toId(), properties);
+    metadataClient.addProperties(Id.Application.fromEntityId(app), properties);
   }
 
   protected void addProperties(final ApplicationId app, @Nullable final Map<String, String> properties,
@@ -101,7 +102,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addProperties(ArtifactId artifact, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(artifact.toId(), properties);
+    metadataClient.addProperties(Id.Artifact.fromEntityId(artifact), properties);
   }
 
   protected void addProperties(final ArtifactId artifact, @Nullable final Map<String, String> properties,
@@ -116,7 +117,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addProperties(ProgramId program, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(program.toId(), properties);
+    metadataClient.addProperties(Id.Program.fromEntityId(program), properties);
   }
 
   protected void addProperties(final ProgramId program, @Nullable final Map<String, String> properties,
@@ -131,7 +132,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addProperties(DatasetId dataset, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(dataset.toId(), properties);
+    metadataClient.addProperties(Id.DatasetInstance.fromEntityId(dataset), properties);
   }
 
   protected void addProperties(final DatasetId dataset, @Nullable final Map<String, String> properties,
@@ -147,12 +148,12 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected void addProperties(StreamId stream, @Nullable Map<String, String> properties)
     throws Exception {
-    metadataClient.addProperties(stream.toId(), properties);
+    metadataClient.addProperties(Id.Stream.fromEntityId(stream), properties);
   }
 
   protected void addProperties(StreamViewId view, @Nullable Map<String, String> properties)
     throws Exception {
-    metadataClient.addProperties(view.toId(), properties);
+    metadataClient.addProperties(Id.Stream.View.fromEntityId(view), properties);
   }
 
   protected void addProperties(final StreamId stream, @Nullable final Map<String, String> properties,
@@ -202,28 +203,28 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected Set<MetadataRecord> getMetadata(ApplicationId app, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(app.toId(), scope);
+    return metadataClient.getMetadata(Id.Application.fromEntityId(app), scope);
   }
 
   protected Set<MetadataRecord> getMetadata(ArtifactId artifact, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(artifact.toId(), scope);
+    return metadataClient.getMetadata(Id.Artifact.fromEntityId(artifact), scope);
   }
 
   protected Set<MetadataRecord> getMetadata(ProgramId program, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(program.toId(), scope);
+    return metadataClient.getMetadata(Id.Program.fromEntityId(program), scope);
   }
 
   protected Set<MetadataRecord> getMetadata(DatasetId dataset,
                                             @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(dataset.toId(), scope);
+    return metadataClient.getMetadata(Id.DatasetInstance.fromEntityId(dataset), scope);
   }
 
   protected Set<MetadataRecord> getMetadata(StreamId stream, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(stream.toId(), scope);
+    return metadataClient.getMetadata(Id.Stream.fromEntityId(stream), scope);
   }
 
   protected Set<MetadataRecord> getMetadata(StreamViewId view, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(view.toId(), scope);
+    return metadataClient.getMetadata(Id.Stream.View.fromEntityId(view), scope);
   }
 
   protected Map<String, String> getProperties(ApplicationId app, MetadataScope scope) throws Exception {
@@ -295,79 +296,79 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void removeMetadata(ApplicationId app) throws Exception {
-    metadataClient.removeMetadata(app.toId());
+    metadataClient.removeMetadata(Id.Application.fromEntityId(app));
   }
 
   protected void removeMetadata(ArtifactId artifact) throws Exception {
-    metadataClient.removeMetadata(artifact.toId());
+    metadataClient.removeMetadata(Id.Artifact.fromEntityId(artifact));
   }
 
   protected void removeMetadata(ProgramId program) throws Exception {
-    metadataClient.removeMetadata(program.toId());
+    metadataClient.removeMetadata(Id.Program.fromEntityId(program));
   }
 
   protected void removeMetadata(DatasetId dataset) throws Exception {
-    metadataClient.removeMetadata(dataset.toId());
+    metadataClient.removeMetadata(Id.DatasetInstance.fromEntityId(dataset));
   }
 
   protected void removeMetadata(StreamId stream) throws Exception {
-    metadataClient.removeMetadata(stream.toId());
+    metadataClient.removeMetadata(Id.Stream.fromEntityId(stream));
   }
 
   protected void removeMetadata(StreamViewId view) throws Exception {
-    metadataClient.removeMetadata(view.toId());
+    metadataClient.removeMetadata(Id.Stream.View.fromEntityId(view));
   }
 
   protected void removeProperties(ApplicationId app) throws Exception {
-    metadataClient.removeProperties(app.toId());
+    metadataClient.removeProperties(Id.Application.fromEntityId(app));
   }
 
   private void removeProperty(ApplicationId app, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(app.toId(), propertyToRemove);
+    metadataClient.removeProperty(Id.Application.fromEntityId(app), propertyToRemove);
   }
 
   protected void removeProperties(ArtifactId artifact) throws Exception {
-    metadataClient.removeProperties(artifact.toId());
+    metadataClient.removeProperties(Id.Artifact.fromEntityId(artifact));
   }
 
   private void removeProperty(ArtifactId artifact, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(artifact.toId(), propertyToRemove);
+    metadataClient.removeProperty(Id.Artifact.fromEntityId(artifact), propertyToRemove);
   }
 
   protected void removeProperties(ProgramId program) throws Exception {
-    metadataClient.removeProperties(program.toId());
+    metadataClient.removeProperties(Id.Program.fromEntityId(program));
   }
 
   protected void removeProperty(ProgramId program, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(program.toId(), propertyToRemove);
+    metadataClient.removeProperty(Id.Program.fromEntityId(program), propertyToRemove);
   }
 
   protected void removeProperties(DatasetId dataset) throws Exception {
-    metadataClient.removeProperties(dataset.toId());
+    metadataClient.removeProperties(Id.DatasetInstance.fromEntityId(dataset));
   }
 
   protected void removeProperty(DatasetId dataset, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(dataset.toId(), propertyToRemove);
+    metadataClient.removeProperty(Id.DatasetInstance.fromEntityId(dataset), propertyToRemove);
   }
 
   protected void removeProperties(StreamId stream) throws Exception {
-    metadataClient.removeProperties(stream.toId());
+    metadataClient.removeProperties(Id.Stream.fromEntityId(stream));
   }
 
   protected void removeProperties(StreamViewId view) throws Exception {
-    metadataClient.removeProperties(view.toId());
+    metadataClient.removeProperties(Id.Stream.View.fromEntityId(view));
   }
 
   protected void removeProperty(StreamId stream, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(stream.toId(), propertyToRemove);
+    metadataClient.removeProperty(Id.Stream.fromEntityId(stream), propertyToRemove);
   }
 
   protected void removeProperty(StreamViewId view, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(view.toId(), propertyToRemove);
+    metadataClient.removeProperty(Id.Stream.View.fromEntityId(view), propertyToRemove);
   }
 
   protected void addTags(ApplicationId app, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(app.toId(), tags);
+    metadataClient.addTags(Id.Application.fromEntityId(app), tags);
   }
 
   protected void addTags(final ApplicationId app, @Nullable final Set<String> tags,
@@ -382,7 +383,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addTags(ArtifactId artifact, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(artifact.toId(), tags);
+    metadataClient.addTags(Id.Artifact.fromEntityId(artifact), tags);
   }
 
   protected void addTags(final ArtifactId artifact, @Nullable final Set<String> tags,
@@ -398,7 +399,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected void addTags(ProgramId program, @Nullable Set<String> tags)
     throws Exception {
-    metadataClient.addTags(program.toId(), tags);
+    metadataClient.addTags(Id.Program.fromEntityId(program), tags);
   }
 
   protected void addTags(final ProgramId program, @Nullable final Set<String> tags,
@@ -413,7 +414,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addTags(DatasetId dataset, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(dataset.toId(), tags);
+    metadataClient.addTags(Id.DatasetInstance.fromEntityId(dataset), tags);
   }
 
   protected void addTags(final DatasetId dataset, @Nullable final Set<String> tags,
@@ -428,11 +429,11 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addTags(StreamId stream, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(stream.toId(), tags);
+    metadataClient.addTags(Id.Stream.fromEntityId(stream), tags);
   }
 
   protected void addTags(StreamViewId view, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(view.toId(), tags);
+    metadataClient.addTags(Id.Stream.View.fromEntityId(view), tags);
   }
 
   protected void addTags(final StreamId stream, @Nullable final Set<String> tags,
@@ -461,13 +462,13 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                            Set<EntityTypeSimpleName> targets) throws Exception {
     // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
     // methods, to strip out metadata from search results for easier assertions.
-    return metadataClient.searchMetadata(namespaceId.toId(), query, targets).getResults();
+    return metadataClient.searchMetadata(namespaceId, query, targets).getResults();
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<EntityTypeSimpleName> targets,
                                                            @Nullable String sort) throws Exception {
-    return metadataClient.searchMetadata(namespaceId.toId(), query, targets,
+    return metadataClient.searchMetadata(namespaceId, query, targets,
                                          sort, 0, Integer.MAX_VALUE, 0, null, false).getResults();
   }
 
@@ -475,7 +476,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                   Set<EntityTypeSimpleName> targets,
                                                   @Nullable String sort, int offset, int limit, int numCursors,
                                                   @Nullable String cursor, boolean showHiddden) throws Exception {
-    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort, offset, limit, numCursors,
+    return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,
                                          cursor, showHiddden);
   }
 
@@ -504,51 +505,51 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void removeTags(ApplicationId app) throws Exception {
-    metadataClient.removeTags(app.toId());
+    metadataClient.removeTags(Id.Application.fromEntityId(app));
   }
 
   protected void removeTag(ApplicationId app, String tagToRemove) throws Exception {
-    metadataClient.removeTag(app.toId(), tagToRemove);
+    metadataClient.removeTag(Id.Application.fromEntityId(app), tagToRemove);
   }
 
   protected void removeTags(ArtifactId artifact) throws Exception {
-    metadataClient.removeTags(artifact.toId());
+    metadataClient.removeTags(Id.Artifact.fromEntityId(artifact));
   }
 
   protected void removeTag(ArtifactId artifact, String tagToRemove) throws Exception {
-    metadataClient.removeTag(artifact.toId(), tagToRemove);
+    metadataClient.removeTag(Id.Artifact.fromEntityId(artifact), tagToRemove);
   }
 
   protected void removeTags(ProgramId program) throws Exception {
-    metadataClient.removeTags(program.toId());
+    metadataClient.removeTags(Id.Program.fromEntityId(program));
   }
 
   private void removeTag(ProgramId program, String tagToRemove) throws Exception {
-    metadataClient.removeTag(program.toId(), tagToRemove);
+    metadataClient.removeTag(Id.Program.fromEntityId(program), tagToRemove);
   }
 
   protected void removeTags(DatasetId dataset) throws Exception {
-    metadataClient.removeTags(dataset.toId());
+    metadataClient.removeTags(Id.DatasetInstance.fromEntityId(dataset));
   }
 
   protected void removeTag(DatasetId dataset, String tagToRemove) throws Exception {
-    metadataClient.removeTag(dataset.toId(), tagToRemove);
+    metadataClient.removeTag(Id.DatasetInstance.fromEntityId(dataset), tagToRemove);
   }
 
   protected void removeTags(StreamId stream) throws Exception {
-    metadataClient.removeTags(stream.toId());
+    metadataClient.removeTags(Id.Stream.fromEntityId(stream));
   }
 
   protected void removeTags(StreamViewId view) throws Exception {
-    metadataClient.removeTags(view.toId());
+    metadataClient.removeTags(Id.Stream.View.fromEntityId(view));
   }
 
   protected void removeTag(StreamId stream, String tagToRemove) throws Exception {
-    metadataClient.removeTag(stream.toId(), tagToRemove);
+    metadataClient.removeTag(Id.Stream.fromEntityId(stream), tagToRemove);
   }
 
   protected void removeTag(StreamViewId view, String tagToRemove) throws Exception {
-    metadataClient.removeTag(view.toId(), tagToRemove);
+    metadataClient.removeTag(Id.Stream.View.fromEntityId(view), tagToRemove);
   }
 
   // expect an exception during fetching of lineage
@@ -598,7 +599,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected Set<MetadataRecord> fetchRunMetadata(ProgramRunId run) throws Exception {
-    return metadataClient.getMetadata(run.toId());
+    return metadataClient.getMetadata(run);
   }
 
   protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {

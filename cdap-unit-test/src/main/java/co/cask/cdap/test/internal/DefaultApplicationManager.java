@@ -18,9 +18,9 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -72,13 +72,14 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public FlowManager getFlowManager(String flowName) {
-    Id.Program programId = Id.Program.from(application.toId(), ProgramType.FLOW, flowName);
+    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application), ProgramType.FLOW, flowName);
     return new DefaultFlowManager(programId, appFabricClient, this, metricsManager);
   }
 
   @Override
   public MapReduceManager getMapReduceManager(String programName) {
-    Id.Program programId = Id.Program.from(application.toId(), ProgramType.MAPREDUCE, programName);
+    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application),
+                                           ProgramType.MAPREDUCE, programName);
     return new DefaultMapReduceManager(programId, this);
   }
 
@@ -89,7 +90,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
-    Id.Program programId = Id.Program.from(application.toId(), ProgramType.WORKFLOW, workflowName);
+    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application),
+                                           ProgramType.WORKFLOW, workflowName);
     return new DefaultWorkflowManager(programId, appFabricClient, this);
   }
 
@@ -101,7 +103,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
-    Id.Program programId = Id.Program.from(application.toId(), ProgramType.WORKER, workerName);
+    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application), ProgramType.WORKER, workerName);
     return new DefaultWorkerManager(programId, appFabricClient, this);
   }
 
