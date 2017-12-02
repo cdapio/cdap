@@ -5,6 +5,8 @@
 
 :hide-toc: true
 
+.. _tutorials-stocks:
+
 ============================================
 Example: Building a Stock Selection Pipeline
 ============================================
