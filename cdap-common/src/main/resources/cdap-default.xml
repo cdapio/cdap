@@ -701,17 +701,16 @@
 
   <property>
     <name>data.tx.changeset.count.limit</name>
-    <value>9223372036854775807</value>
+    <value>10000</value>
     <description>
       Hard limit for the number of entries in a transaction's change set;
-      if exceeded, the transaction fails. By default, this is unlimited
-      (that is, Long.MAX_VALUE).
+      if exceeded, the transaction fails.
     </description>
   </property>
 
   <property>
     <name>data.tx.changeset.count.warn.threshold</name>
-    <value>50000</value>
+    <value>5000</value>
     <description>
       Soft limit for the number of entries in a transaction's change set;
       if exceeded, a warning is logged.
@@ -720,17 +719,16 @@
 
   <property>
     <name>data.tx.changeset.size.limit</name>
-    <value>9223372036854775807</value>
+    <value>1000000</value>
     <description>
       Hard limit for the aggregate size in bytes of a transaction's change set;
-      if exceeded, the transaction fails. By default, this is unlimited
-      (that is, Long.MAX_VALUE).
+      if exceeded, the transaction fails.
     </description>
   </property>
 
   <property>
     <name>data.tx.changeset.size.warn.threshold</name>
-    <value>5000000</value>
+    <value>500000</value>
     <description>
       Soft limit for the aggregate size in bytes of a transaction's change set;
       if exceeded, a warning is logged.
