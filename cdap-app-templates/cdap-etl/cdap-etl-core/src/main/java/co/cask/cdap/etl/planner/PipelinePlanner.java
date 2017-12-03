@@ -301,7 +301,6 @@ public class PipelinePlanner {
           sink = dag.getSinks().iterator().next();
         }
         if (!processedControlNodes.contains(source)) {
-
           // This control node is not processed yet, because it is first in the pipeline.
           ConditionBranches branches = conditionBranches.get(source);
           Boolean condition = branches == null ? null : dag.getNodes().contains(branches.getTrueOutput());
@@ -319,7 +318,9 @@ public class PipelinePlanner {
         if (!processedControlNodes.contains(sink)) {
           // This control node is not processed yet, because it is last in the pipeline.
           // Conditions cannot be last however action nodes can be
-          phaseConnections.add(new Connection(source, sink));
+          ConditionBranches branches = conditionBranches.get(source);
+          Boolean condition = branches == null ? null : dag.getNodes().contains(branches.getTrueOutput());
+          phaseConnections.add(new Connection(source, sink, condition));
           processedControlNodes.add(sink);
         }
       }
@@ -333,6 +334,11 @@ public class PipelinePlanner {
       // Remove any control nodes from this dag
       if (!Sets.intersection(updatedDag.getNodes(), controlNodes).isEmpty()) {
         Set<String> nodes = Sets.difference(updatedDag.getNodes(), controlNodes);
+        if (nodes.size() < 2) {
+          // if the subdag only contains one non-control node, it is used purely to connect a control phase to
+          // a non-control phase.
+          continue;
+        }
         updatedDag = updatedDag.createSubDag(nodes);
       }
 
