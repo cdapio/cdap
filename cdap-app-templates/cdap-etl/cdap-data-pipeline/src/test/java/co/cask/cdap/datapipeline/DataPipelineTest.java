@@ -422,8 +422,7 @@ public class DataPipelineTest extends HydratorTestBase {
                          ImmutableMap.of(SmartWorkflow.TRIGGERING_PROPERTIES_MAPPING, GSON.toJson(propertyMapping)),
                          completeTrigger, ImmutableList.<Constraint>of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null));
     appManager.enableSchedule(scheduleId);
-    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    return manager;
+    return appManager.getWorkflowManager(SmartWorkflow.NAME);
   }
 
   private void assertTriggeredPipelinesResult(WorkflowManager workflowManager, String pipelineName, Engine engine,
