@@ -25,12 +25,10 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -138,171 +136,38 @@ public class Dag {
   }
 
   /**
-   * Split the dag based on the input control nodes.
-   * @param controlNodes set of conditions and actions based on which to split the Dag
+   * Split the dag based on the input control nodes. Control nodes represent actions or conditions.
+   * Actions can only be at the front or end of the dag. Condition nodes can be anywhere in the dag, but can only
+   * have at most 2 output branches. Output branches must never intersect.
+   *
+   * This method will break up the dag into a set of interconnected subdags, where control nodes are guaranteed to
+   * be either a source or a sink in a subdag, but not somewhere in the middle. There will be a subdag for each
+   * branch of a condition. All connected non-control nodes are guaranteed to be placed in the same subdag.
+   * Subdags are connected if a sink in one subdag is a source in another subdag.
+   *
+   * For example:
+   *                                                      |-- action1
+   *             |-- n0 --|                |-- n2 -- n3 --|
+   *   action0 --|        |-- condition0 --|              |-- action2
+   *             |-- n1 --|                |-- n4
+   *
+   * will be split into:
+   *                                                                  |-- action1
+   *             |-- n0 --|                  condition0 -- n2 -- n3 --|
+   *   action0 --|        |-- condition0                              |-- action2
+   *             |-- n1 --|                  condition0 -- n4
+   *
+   * @param conditionNodes condition nodes
+   * @param actionNodes action nodes
    * @return set of splitted dags
    */
-  public Set<Dag> splitByControlNodes(Set<String> controlNodes) {
+  public Set<Dag> splitByControlNodes(Set<String> conditionNodes, Set<String> actionNodes) {
 
     Set<Dag> dags = new HashSet<>();
-
-    Dag copy = new Dag(this);
-    /*
-        Remove control nodes from the front of the dag until there are no more
-        For example suppose we have:
-
-                   |-- n0 --|
-        control0 --|        |-- control1 -- n2 -- n3 -- control2
-                   |-- n1 --|
-
-        after this loop, we will have added subdags:
-
-        1. control0 -> n0
-        2. control0 -> n1
-
-        and the remaining dag will be:
-
-          n0 --|
-               |-- control1 -- n2 -- n3 -- control2
-          n1 --|
-     */
-    Set<String> controlSources = new HashSet<>(Sets.intersection(copy.sources, controlNodes));
-    while (!controlSources.isEmpty()) {
-      for (String controlSource : controlSources) {
-        for (String output : copy.getNodeOutputs(controlSource)) {
-          dags.add(createSubDag(ImmutableSet.of(controlSource, output)));
-        }
-        copy.removeNode(controlSource);
-      }
-      controlSources.clear();
-      controlSources.addAll(Sets.intersection(copy.sources, controlNodes));
-    }
-    /*
-        Remove control nodes from the end of the dag until there are no more
-        if the remaining dag is:
-
-          n0 --|
-               |-- control1 -- n2 -- n3 -- control2
-          n1 --|
-
-        after this loop we will have added subdag:
-
-        3. n3 -> control2
-
-        and the remaining dag will be:
-
-          n0 --|
-               |-- control1 -- n2 -- n3
-          n1 --|
-     */
-    Set<String> controlSinks = new HashSet<>(Sets.intersection(copy.sinks, controlNodes));
-    while (!controlSinks.isEmpty()) {
-      for (String controlSink : controlSinks) {
-        for (String input : copy.getNodeInputs(controlSink)) {
-          dags.add(createSubDag(ImmutableSet.of(input, controlSink)));
-        }
-        copy.removeNode(controlSink);
-      }
-      controlSinks.clear();
-      controlSinks.addAll(Sets.intersection(copy.sources, controlNodes));
-    }
+    Set<String> controlNodes = Sets.union(conditionNodes, actionNodes);
 
     /*
-       If we started out with something like:
-
-         control0 -- node -- control1
-
-       At this point we would have subdags:
-
-       1. control0 -- node
-       2. node -- control1
-
-       And the remaining 'dag' would be:
-
-         node
-
-       So if there is just one node left, we can stop here.
-     */
-    if (copy.getNodes().size() < 2) {
-      return dags;
-    }
-
-    // now we handle any control nodes in the middle of the dag
-
-    /*
-        this will get the dag from all sources to all sinks or control nodes
-        if we have dag:
-
-          n0 --|
-               |-- control1 -- n2 -- n3
-          n1 --|
-
-        we will add subdag:
-
-        4. n0 -> control1, n1 -> control1
-
-        and the remaining dag will be:
-
-          control1 -- n2 -- n3
-
-        we also need to be careful, as at this point, the copy dag might disjoint, like:
-
-          n0 -- n1
-
-          n2 -- n3
-     */
-    Set<String> remainingControlNodes = Sets.intersection(copy.nodes, controlNodes);
-    List<Set<String>> sourceSubdags = new ArrayList<>(copy.sources.size());
-    // add one subdag for each source
-    for (String source : copy.sources) {
-      sourceSubdags.add(copy.accessibleFrom(source, remainingControlNodes));
-    }
-    // merge subdags if they intersect at any point
-    boolean done = sourceSubdags.size() <= 1;
-    while (!done) {
-      List<Set<String>> mergedSubdags = new ArrayList<>();
-      Iterator<Set<String>> subdagIter = sourceSubdags.iterator();
-      mergedSubdags.add(subdagIter.next());
-
-      // check if this subdag intersects with any of the others
-      done = true;
-      while (subdagIter.hasNext()) {
-        Set<String> subdag = subdagIter.next();
-        boolean merged = false;
-        for (Set<String> mergedSubdag : mergedSubdags) {
-          if (!Sets.intersection(mergedSubdag, subdag).isEmpty()) {
-            // it intersects, merge them
-            mergedSubdag.addAll(subdag);
-            merged = true;
-            done = false;
-            break;
-          }
-        }
-        // it didn't intersect with anything, leave it on its own
-        if (!merged) {
-          mergedSubdags.add(subdag);
-        }
-      }
-
-      sourceSubdags = mergedSubdags;
-    }
-    // add all merged subdags
-    for (Set<String> sourceSubdag : sourceSubdags) {
-      dags.add(createSubDag(sourceSubdag));
-    }
-
-    /*
-        Now we need to go through all remaining control nodes (which are guaranteed to be conditions at this point)
-        and add subdags for each remaining condition.
-        If we have:
-
-          control1 -- n2 -- n3
-
-        we will add subdag:
-
-        5. control1 -- n2 -- n3
-
-        Consider a more complicated example, where c1, c2, and c3 are conditions:
+        Consider the following example, where c1, c2, and c3 are conditions:
 
                        c1 - t1---agg1--agg2---sink1
                         |
@@ -312,27 +177,74 @@ public class Dag {
 
         This next part would add subdags:
 
-        5. c1 - t1 - agg1 - agg2 - sink2
+        5. c1 - t1 - agg1 - agg2 - sink1
         6. c1 - c2
         7. c2 - sink2
         8. c2 - c3
-        9. c3 - sink
+        9. c3 - sink3
      */
-    for (String controlNode : remainingControlNodes) {
-      // For child we need to add two sub-dags corresponding to the true and false branch
-      // Condition node has at least one and at max two output nodes
-      Set<String> outputs = copy.getNodeOutputs(controlNode);
-      for (String output : outputs) {
-        if (remainingControlNodes.contains(output)) {
-          // condition is attached to the condition so just return that path
-          dags.add(createSubDag(new HashSet<>(Arrays.asList(controlNode, output))));
-          continue;
+    for (String conditionNode : conditionNodes) {
+      for (String output : getNodeOutputs(conditionNode)) {
+        if (controlNodes.contains(output)) {
+          dags.add(createSubDag(ImmutableSet.of(conditionNode, output)));
+        } else {
+          Set<String> branch = accessibleFrom(output, controlNodes);
+          branch.add(conditionNode);
+          dags.add(createSubDag(branch));
         }
-        Set<String> childNodes = accessibleFrom(output, remainingControlNodes);
-        childNodes.add(controlNode);
-        dags.add(createSubDag(childNodes));
       }
     }
+
+    Set<String> nonControlSources = Sets.difference(getSources(), conditionNodes);
+    for (String actionNode : Sets.union(actionNodes, nonControlSources)) {
+      Set<String> accessibleFrom = accessibleFrom(actionNode, controlNodes);
+      // if it's just one node, that means its a sink and was already included in another subdag, so we can skip it
+      if (accessibleFrom.size() < 2) {
+        continue;
+      }
+      Dag subdag = createSubDag(accessibleFrom);
+      /*
+          Actions are different from conditions in that the branches of an action may eventually intersect
+          Consider the following dag:
+
+                 |-- n0 --|
+            a0 --|        |--|
+                 |-- n1 --|  |
+                             |-- n2
+                             |
+            a1 -- n3 --------|
+
+          If 'actionNode' = 'a0', then subdag is:
+
+                 |-- n0 --|
+            a0 --|        |-- n2
+                 |-- n1 --|
+
+          But this subdag is incomplete, as it does not preserve all connections between non-control nodes (n3 -> n2).
+          To fix this, while there are new nodes being added to subdag:
+            For each new sink, add all parents of the sink
+            For each new source, add all children of the source
+      */
+      Set<String> newSinks = new HashSet<>(subdag.getSinks());
+      while (!newSinks.isEmpty()) {
+        Set<String> oldSources = new HashSet<>(subdag.getSources());
+        Set<String> nodes = new HashSet<>(subdag.getNodes());
+        for (String newSink : newSinks) {
+          nodes.addAll(parentsOf(newSink, controlNodes));
+        }
+        subdag = createSubDag(nodes);
+
+        Set<String> oldSinks = new HashSet<>(subdag.getSinks());
+        Set<String> newSources = Sets.difference(subdag.getSources(), oldSources);
+        for (String newSource : newSources) {
+          nodes.addAll(accessibleFrom(newSource, controlNodes));
+        }
+        subdag = createSubDag(nodes);
+        newSinks = Sets.difference(subdag.getSinks(), oldSinks);
+      }
+      dags.add(subdag);
+    }
+
     return dags;
   }
 
