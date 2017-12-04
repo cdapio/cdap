@@ -638,7 +638,7 @@ Programs using a Stream
 ========================
 You can retrieve a list of programs that are using a stream by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace-id>/data/datasets/<dataset-id>/programs
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/programs
 
 .. list-table::
    :widths: 20 80
@@ -648,8 +648,8 @@ You can retrieve a list of programs that are using a stream by issuing a HTTP GE
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``dataset-id``
-     - Dataset ID
+   * - ``stream-id``
+     - Stream ID
 
 .. rubric:: HTTP Responses
 .. list-table::
