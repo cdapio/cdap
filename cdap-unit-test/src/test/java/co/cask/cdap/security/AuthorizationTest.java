@@ -837,7 +837,7 @@ public class AuthorizationTest extends TestBase {
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in system namespace
     flowManager.start(args);
     // wait for flow to be running
-    flowManager.waitForStatus(true, 12, 10);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 12, TimeUnit.SECONDS);
 
     // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
     // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
@@ -880,7 +880,7 @@ public class AuthorizationTest extends TestBase {
     // is not accessible to BOB.
     flowManager.start(args);
     // wait for flow to be running
-    flowManager.waitForStatus(true, 12, 10);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 12, TimeUnit.SECONDS);
 
     // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
@@ -899,7 +899,7 @@ public class AuthorizationTest extends TestBase {
 
     // running the flow now should pass and write data in another namespace successfully
     flowManager.start(args);
-    flowManager.waitForStatus(true);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 12, TimeUnit.SECONDS);
     flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
     flowManager.stop();
 
