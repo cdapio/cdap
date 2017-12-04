@@ -14,6 +14,15 @@
   the License.
 -->
 <div class="clearfix">
+  <textarea
+    class="form-control"
+    ng-trim="false"
+    ng-model="model"
+    rows="{{rows}}"
+    placeholder="{{placeholder}}"
+  >
+  </textarea>
+
   <div class="wrangler-button">
     <button
       class="btn btn-primary"
@@ -23,12 +32,4 @@
       <span>Wrangle</span>
     </button>
   </div>
-  <textarea
-    class="form-control"
-    ng-trim="false"
-    ng-model="model"
-    rows="{{rows}}"
-    placeholder="{{placeholder}}"
-  >
-  </textarea>
 </div>

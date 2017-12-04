@@ -13,8 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
+
 angular.module(PKG.name + '.commons')
-  .controller('MyOutputSchemaCtrl', function($scope, GLOBALS, HydratorPlusPlusNodeService) {
+  .controller('MyOutputSchemaCtrl', function($scope, GLOBALS, HydratorPlusPlusNodeService, $timeout, HydratorPlusPlusHydratorService) {
+
+    let timeout;
+
+    const setEmptyMacro = () => {
+      this.outputSchemaString = '${}';
+
+      $timeout.cancel(timeout);
+      timeout = $timeout(() => {
+        let elem = document.getElementById('macro-input-schema');
+        angular.element(elem)[0].focus();
+
+        if (elem.createRange) {
+          let range = elem.createRange();
+          range.move('character', 2);
+          range.select();
+        } else {
+          elem.setSelectionRange(2, 2);
+        }
+      });
+    };
+
     this.formatOutputSchema = () => {
       if (!$scope.schemaAdvance) {
         if (typeof $scope.node.outputSchema === 'string') {
@@ -45,9 +67,14 @@ angular.module(PKG.name + '.commons')
           if (typeof schema !== 'string') {
             schema = JSON.stringify(schema);
           }
-          this.outputSchemaString = schema;
+
+          if (!HydratorPlusPlusHydratorService.containsMacro(schema)) {
+            setEmptyMacro();
+          } else {
+            this.outputSchemaString = schema;
+          }
         } else {
-          this.outputSchemaString = '';
+          setEmptyMacro();
         }
       }
     };
@@ -56,6 +83,10 @@ angular.module(PKG.name + '.commons')
 
     $scope.$watch('schemaAdvance', () => {
       this.formatOutputSchema();
+    });
+
+    $scope.$on('$destroy', () => {
+      $timeout.cancel(timeout);
     });
 
     this.onOutputSchemaChange = (newValue) => {
