@@ -176,7 +176,7 @@ angular.module(PKG.name + '.services')
             'PREVIEW': {
               'NO-SOURCE-SINK': 'Please add a source and sink to the pipeline'
             },
-            'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use hydrator studio.'
+            'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use pipeline studio.'
           },
           pluginDoesNotExist: 'This plugin does not exist: '
         },
