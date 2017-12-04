@@ -259,12 +259,6 @@ body.theme-cdap.state-hydrator {
     .select-wrapper {
       .select-wrapper(transparent);
     }
-    .macro-indicator {
-      font-size: 11px;
-      background-color: #c9ccd6;
-      border-radius: 0;
-      margin-top: -3px;
-    }
 
     fieldset {
       width: 100%;
@@ -275,6 +269,17 @@ body.theme-cdap.state-hydrator {
         }
         &.well .form-group {
           margin-bottom: 10px;
+        }
+
+        &.no-config {
+          .macro-indicator-container {
+            line-height: 32px;
+
+            .macro-indicator {
+              color: @hydrator-blue;
+              transform: scale(0.7);
+            }
+          }
         }
       }
       .panel-body {
@@ -490,11 +495,6 @@ body.theme-cdap.state-hydrator {
             .form-input-attr {
               position: relative;
               padding-right: 0;
-
-              .macro-indicator {
-                position: absolute;
-                right: 0;
-              }
             }
           }
         }

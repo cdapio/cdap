@@ -18,38 +18,60 @@
   <div class="col-xs-12">
     <fieldset ng-disabled="isDisabled">
       <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig">
-        <div class="well well-lg widget-group-container">
+        <div class="well well-lg widget-group-container no-config">
           <div class="form-group">
-            <label class="control-label">
-              <span>Label</span>
-              <span class="fa fa-asterisk"></span>
-              <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{::HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
-            </label>
-            <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+            <div class="row">
+              <label class="control-label col-xs-12">
+                <span>Label</span>
+                <span class="fa fa-asterisk"></span>
+                <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{::HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
+              </label>
+            </div>
+            <div class="row">
+              <div class="col-xs-11">
+                <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+              </div>
+            </div>
           </div>
           <div ng-repeat="(name, value) in HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties track by $index">
             <div class="form-group">
-              <label ng-init="title='info';description=HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].description"
-                      class="control-label">
-                <span>{{::name}}</span>
-                <span class="fa fa-info-circle"
-                      uib-tooltip="{{description}}"
-                      tooltip-placement="right"
-                      tooltip-append-to-body="true">
-                </span>
-                <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required"></span>
-                <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
-              </label>
-              <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]" ng-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && plugin.lock[name]">
+              <div class="row">
+                <label ng-init="title='info';description=HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].description"
+                        class="control-label col-xs-12">
+                  <span>{{::name}}</span>
+                  <span class="fa fa-info-circle"
+                        uib-tooltip="{{description}}"
+                        tooltip-placement="right"
+                        tooltip-append-to-body="true">
+                  </span>
+                  <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required"></span>
+                  <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
+                </label>
+              </div>
 
-              <span class="badge macro-indicator pull-right"
-                    ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].macroSupported"
-                    uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
-                    tooltip-append-to-body="true"
-                    tooltip-popup-delay="300"
-                    tooltip-placement="left">
-                Macro
-              </span>
+              <div class="row">
+                <div class="col-xs-11">
+                  <input type="text"
+                         class="form-control"
+                         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]"
+                         ng-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && plugin.lock[name]" />
+                </div>
+
+                <div class="col-xs-1 macro-indicator-container">
+                  <!-- MACRO -->
+                  <span class="macro-indicator fa-stack fa-sm"
+                        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].macroSupported"
+                        uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
+                        tooltip-append-to-body="true"
+                        tooltip-popup-delay="300"
+                        tooltip-placement="left"
+                        tooltip-delay="300">
+                    <span class="fa fa-stack-2x fa-circle-thin"></span>
+                    <span class="fa icon-M fa-stack-1x"></span>
+                  </span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
