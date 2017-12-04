@@ -16,10 +16,12 @@
 
 import experimentsStore, {ACTIONS} from 'components/Experiments/store';
 import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS} from 'components/Experiments/store/createExperimentStore';
+import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
 import {myExperimentsApi} from 'api/experiments';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import MLAlgorithmsList from 'components/Experiments/store/MLAlgorithmsList';
 
 function setExperimentsLoading() {
   experimentsStore.dispatch({
@@ -176,6 +178,7 @@ function createExperimentAndModel() {
     outcome: experiments_create.outcome,
     srcpath: experiments_create.srcpath
   };
+  setExperimentLoading();
 
   let model = {
     name: model_create.name,
@@ -208,9 +211,95 @@ function createExperimentAndModel() {
     .flatMap(({id: split}) => createModel(experiment, {...model, split}))
     .subscribe(() => {
       let {selectedNamespace: namespace} = NamespaceStore.getState();
-      window.location.href = `${window.location.origin}/cdap/ns/${namespace}/experiments`;
+      window.location.href = `${window.location.origin}/cdap/ns/${namespace}/experiments/${experiment.name}`;
+    }, (err) => {
+      console.log('ERROR: ', err); // FIXME: We should surface the errors. There will be errors
+      setExperimentLoading(false);
     });
 }
+
+function deleteExperiment(experimentId) {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  return myExperimentsApi
+    .deleteExperiment({
+      namespace,
+      experimentId
+    });
+}
+
+function getExperimentDetails(experimentId) {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  getModelsInExperiment(experimentId);
+  getSplitsInExperiment(experimentId);
+  myExperimentsApi
+    .getExperiment({
+      namespace,
+      experimentId
+    })
+    .subscribe(res => {
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_EXPERIMENT_DETAILS,
+        payload: {
+          experimentDetails: {
+            ...res
+          }
+        }
+      });
+    });
+}
+
+function getModelsInExperiment(experimentId) {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_LOADING
+  });
+  myExperimentsApi.getModelsInExperiment({
+    namespace,
+    experimentId
+  })
+  .subscribe(models => {
+    experimentDetailsStore.dispatch({
+      type: EXPERIMENTDETAILACTIONS.SET_MODELS,
+      payload: {
+        models
+      }
+    });
+  });
+}
+
+function getSplitsInExperiment(experimentId) {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  myExperimentsApi
+    .getSplitsInExperiment({
+      namespace,
+      experimentId
+    })
+    .subscribe(splits => {
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_SPLITS,
+        payload: {
+          splits
+        }
+      });
+    });
+}
+
+function setActiveModel(activeModelId) {
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_ACTIVE_MODEL,
+    payload: {
+      activeModelId
+    }
+  });
+}
+
+const getAlgorithmLabel = (algorithm) => {
+  let match = MLAlgorithmsList.find(algo => algo.name === algorithm);
+  if (match) {
+    return match.label;
+  }
+  return algorithm;
+};
 
 export {
   setExperimentsLoading,
@@ -229,6 +318,11 @@ export {
   setModelCreated,
   setModelAlgorithm,
   createExperimentAndModel,
-  setSrcPath
+  setSrcPath,
+  getExperimentDetails,
+  getModelsInExperiment,
+  setActiveModel,
+  deleteExperiment,
+  getAlgorithmLabel
 };
 

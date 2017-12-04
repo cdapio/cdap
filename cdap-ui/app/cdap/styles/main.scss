@@ -16,12 +16,12 @@
 
 body {
   .cdap-container {
-    height: 100%;
+    height: inherit;
     .container-fluid {
-      height: 100%;
+      height: inherit;
       padding: 0;
       > div {
-        height: 100%;
+        height: inherit;
       }
     }
   }

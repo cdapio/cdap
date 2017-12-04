@@ -27,7 +27,7 @@ import capitalize from 'lodash/capitalize';
 import cloneDeep from 'lodash/cloneDeep';
 import {getGapFilledAccumulatedData} from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import CopyableID from 'components/CopyableID';
 import {humanReadableDuration, isPluginSource, isPluginSink} from 'services/helpers';
 import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
 
@@ -662,7 +662,7 @@ export default class PipelineNodeMetricsGraph extends Component {
               })
             }
           </div>
-          <CopyableRunID runid={this.props.runContext.runRecord.runid} />
+          <CopyableID id={this.props.runContext.runRecord.runid} />
         </div>
         {this.renderContent()}
         {this.renderProcesstimeTable()}

@@ -37,9 +37,9 @@ export default class PieChart extends Component {
     this.drawPie();
   }
   componentWillReceiveProps(nextProps) {
-    this.setState({data: nextProps.data});
+    this.setState({data: nextProps.data}, this.drawPie);
   }
-  drawPie() {
+  drawPie = () => {
     if (isNil(this.state.data) || (Array.isArray(this.state.data) && !this.state.data.length)) {
       return;
     }
@@ -67,7 +67,7 @@ export default class PieChart extends Component {
     arc.append("path")
         .attr("d", path)
         .attr("fill", (d) => d.data.color);
-  }
+  };
   render() {
     return (
       <div id={this.state.id}>

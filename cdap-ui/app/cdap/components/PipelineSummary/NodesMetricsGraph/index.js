@@ -26,7 +26,7 @@ import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import SortableStickyTable from 'components/SortableStickyTable';
-import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import CopyableID from 'components/CopyableID';
 import moment from 'moment';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 
@@ -142,8 +142,8 @@ export default class NodesMetricsGraph extends Component {
                 <tr>
                   <td>
                     <span>{recordsLength - record.index + 1}</span>
-                    <CopyableRunID
-                      runid={record.runid}
+                    <CopyableID
+                      id={record.runid}
                       idprefix={`nodes-metrics-${this.props.recordType}`}
                     />
                   </td>

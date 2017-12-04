@@ -16,6 +16,7 @@
 
 import {createStore, combineReducers} from 'redux';
 import {defaultAction} from 'services/helpers';
+import MLAlgorithmsList from 'components/Experiments/store/MLAlgorithmsList';
 
 const ACTIONS = {
   SET_EXPERIMENT_NAME: 'SET_EXPERIMENT_NAME',
@@ -53,28 +54,7 @@ const DEFAULT_MODEL_CREATE_VALUE = {
   algorithm: {
     name: ''
   },
-  algorithmsList: [
-    {
-      name: 'linear.regression',
-      label: 'Linear Regression'
-    },
-    {
-      name: 'generalized.linear.regression',
-      label: 'Generalized Linear Regression'
-    },
-    {
-      name: 'decision.tree.regression',
-      label: 'Decision Tree Regression'
-    },
-    {
-      name: 'random.forest.regression',
-      label: 'Random Forest Regression'
-    },
-    {
-      name: 'gradient.boosted.tree.regression',
-      label: 'Gradient Boosted Tree Regression'
-    }
-  ],
+  algorithmsList: MLAlgorithmsList,
   isModelCreated: false
 };
 

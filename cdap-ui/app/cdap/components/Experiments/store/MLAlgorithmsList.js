@@ -14,24 +14,25 @@
  * the License.
 */
 
-import PropTypes from 'prop-types';
-import React from 'react';
-import classnames from 'classnames';
-
-require('./TopPanel.scss');
-
-export default function TopPanel({message, children, className}) {
-  return (
-    <div className={classnames("experiments-toppanel", className)}>
-      {
-        children ? children : <h4>{message}</h4>
-      }
-    </div>
-  );
-}
-
-TopPanel.propTypes = {
-  message: PropTypes.string,
-  children: PropTypes.node,
-  className: PropTypes.string
-};
+export default [
+  {
+    name: 'linear.regression',
+    label: 'Linear Regression'
+  },
+  {
+    name: 'generalized.linear.regression',
+    label: 'Generalized Linear Regression'
+  },
+  {
+    name: 'decision.tree.regression',
+    label: 'Decision Tree Regression'
+  },
+  {
+    name: 'random.forest.regression',
+    label: 'Random Forest Regression'
+  },
+  {
+    name: 'gradient.boosted.tree.regression',
+    label: 'Gradient Boosted Tree Regression'
+  }
+];

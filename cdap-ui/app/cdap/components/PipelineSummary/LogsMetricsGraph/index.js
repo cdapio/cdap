@@ -25,7 +25,7 @@ import classnames from 'classnames';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import {getTicksTotal, xTickFormat, getXDomain} from 'components/PipelineSummary/RunsGraphHelpers';
-import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import CopyableID from 'components/CopyableID';
 import SortableStickyTable from 'components/SortableStickyTable';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
 import ee from 'event-emitter';
@@ -301,8 +301,8 @@ export default class LogsMetricsGraph extends Component {
                 <tr>
                   <td>
                     <span>{runsLength - run.index + 1}</span>
-                    <CopyableRunID
-                      runid={runid}
+                    <CopyableID
+                      id={runid}
                       idprefix="logs-metrics"
                     />
                   </td>
