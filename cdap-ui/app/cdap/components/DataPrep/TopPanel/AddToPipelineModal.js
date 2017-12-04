@@ -577,26 +577,26 @@ export default class AddToHydratorModal extends Component {
   }
 
   renderInvalidFieldError() {
-    if (!objectQuery(this.state, 'error', 'remedies')) { return null; }
-
     return (
-      <pre>
-        <div className="remedy-message">
-          {
-            objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
-          }
-        </div>
-        <span>
-          {T.translate(`${PREFIX}.invalidFieldNameRemedies2`)}
-          <span
-            className="btn-link"
-            onClick={this.applyDirective.bind(this, 'cleanse-column-names')}
-          >
-            {T.translate(`${PREFIX}.cleanseLinkLabel`)}
+      <div className="message">
+        <pre>
+          <div className="remedy-message">
+            {
+              objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
+            }
+          </div>
+          <span>
+            {T.translate(`${PREFIX}.invalidFieldNameRemedies2`)}
+            <span
+              className="btn-link"
+              onClick={this.applyDirective.bind(this, 'cleanse-column-names')}
+            >
+              {T.translate(`${PREFIX}.cleanseLinkLabel`)}
+            </span>
+            {T.translate(`${PREFIX}.invalidFieldNameRemedies3`)}
           </span>
-          {T.translate(`${PREFIX}.invalidFieldNameRemedies3`)}
-        </span>
-      </pre>
+        </pre>
+      </div>
     );
   }
 
@@ -656,6 +656,8 @@ export default class AddToHydratorModal extends Component {
       );
     }
 
+    let showContent = !objectQuery(this.state, 'error', 'remedies');
+
     return (
       <Modal
         isOpen={true}
@@ -676,11 +678,11 @@ export default class AddToHydratorModal extends Component {
           </div>
         </ModalHeader>
         <ModalBody>
-          {content}
-          {this.renderInvalidFieldError()}
+          {showContent ? content : this.renderInvalidFieldError()}
+
         </ModalBody>
         {
-          this.state.error ?
+          this.state.error && showContent ?
             <ModalFooter className="dataset-copy-error-container">
               <CardActionFeedback
                 type='DANGER'

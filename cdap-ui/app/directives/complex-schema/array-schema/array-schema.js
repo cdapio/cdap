@@ -44,7 +44,7 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelp
 
     // Validate
     try {
-      avsc.parse(obj);
+      avsc.parse(obj, { wrapUnions: true });
     } catch (e) {
       let err = '' + e;
       err = err.split(':');

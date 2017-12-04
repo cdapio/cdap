@@ -167,7 +167,7 @@ function checkComplexType(displayType) {
 function checkParsedTypeForError(parsedTypes) {
   let error = '';
   try {
-    cdapavsc.parse(parsedTypes);
+    cdapavsc.parse(parsedTypes, { wrapUnions: true });
   } catch (e) {
     error = e.message;
   }
