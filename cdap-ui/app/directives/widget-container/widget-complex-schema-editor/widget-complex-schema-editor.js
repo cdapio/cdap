@@ -150,7 +150,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     }
   }
 
-  EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
+  let datasetSelectedEvtListner = EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
     if (watchProperty && format) {
       vm.pluginProperties[watchProperty] = format;
     }
@@ -166,6 +166,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
     if (!_.isEmpty(schema) || (_.isEmpty(schema) && vm.isDisabled)) {
       vm.schemas[0].schema = schema;
+      vm.formatOutput();
     } else {
       // if dataset name is changed to a non-existing dataset, the schemaObj will be empty,
       // so assign to it the value of the input schema
@@ -195,6 +196,9 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
     if (!Array.isArray(schemas)) {
       schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(schemas)];
+    // this is for converting old schemas (pre 4.3.2) to new format
+    } else if (Array.isArray(schemas) && schemas.length && !schemas[0].hasOwnProperty('schema')) {
+      schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj(HydratorPlusPlusNodeService.getSchemaObj(schemas))];
     }
 
     vm.schemas = schemas.map((schema) => {
@@ -240,7 +244,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   });
 
   $scope.$on('$destroy', () => {
-    EventPipe.cancelEvent('dataset.selected');
+    datasetSelectedEvtListner();
     EventPipe.cancelEvent('schema.export');
     EventPipe.cancelEvent('schema.import');
     EventPipe.cancelEvent('schema.clear');

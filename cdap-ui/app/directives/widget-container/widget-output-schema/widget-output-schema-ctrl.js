@@ -15,32 +15,50 @@
 */
 angular.module(PKG.name + '.commons')
   .controller('MyOutputSchemaCtrl', function($scope, GLOBALS, HydratorPlusPlusNodeService) {
-    if (typeof $scope.node.outputSchema === 'string') {
-      $scope.node.outputSchema = [HydratorPlusPlusNodeService.getOutputSchemaObj($scope.node.outputSchema)];
-    }
-    this.outputSchemas = $scope.node.outputSchema
-      .map((node) => {
-        var schema = node.schema;
-        if (typeof schema === 'string') {
-          try {
-            schema = JSON.parse(schema);
-          } catch(e) {
-            schema = {
-              'name': GLOBALS.defaultSchemaName,
-              'type': 'record',
-              'fields': []
-            };
-          }
+    this.formatOutputSchema = () => {
+      if (!$scope.schemaAdvance) {
+        if (typeof $scope.node.outputSchema === 'string') {
+          $scope.node.outputSchema = [HydratorPlusPlusNodeService.getOutputSchemaObj($scope.node.outputSchema)];
         }
-        return {
-          name: node.name,
-          schema: schema
-        };
-      });
+        this.outputSchemas = $scope.node.outputSchema
+          .map((node) => {
+            var schema = node.schema;
+            if (typeof schema === 'string') {
+              try {
+                schema = JSON.parse(schema);
+              } catch(e) {
+                schema = {
+                  'name': GLOBALS.defaultSchemaName,
+                  'type': 'record',
+                  'fields': []
+                };
+              }
+            }
+            return {
+              name: node.name,
+              schema: schema
+            };
+          });
+      } else {
+        if ($scope.node.outputSchema.length > 0 && $scope.node.outputSchema[0].schema) {
+          let schema = $scope.node.outputSchema[0].schema;
+          if (typeof schema !== 'string') {
+            schema = JSON.stringify(schema);
+          }
+          this.outputSchemaString = schema;
+        } else {
+          this.outputSchemaString = '';
+        }
+      }
+    };
 
-    this.currentIndex = 0;
+    this.formatOutputSchema();
 
-    this.onOutputSchemaChange = (newOutputSchemas) => {
-      $scope.node.outputSchema = newOutputSchemas;
+    $scope.$watch('schemaAdvance', () => {
+      this.formatOutputSchema();
+    });
+
+    this.onOutputSchemaChange = (newValue) => {
+      $scope.node.outputSchema = newValue;
     };
   });

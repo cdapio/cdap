@@ -115,13 +115,24 @@ body.theme-cdap {
     .dropdown-menu.output-schema-actions {
       top: 0;
 
-      & > li > a {
-        background-color: white;
-        color: #666666;
+      & > li {
+        &.disabled {
+          cursor: not-allowed;
 
-        &:hover {
-          background-color: @hydrator-blue;
-          color: white;
+          & > a {
+            pointer-events: none;
+            color: #eeeeee;
+          }
+        }
+
+        & > a {
+          background-color: white;
+          color: #666666;
+
+          &:hover {
+            background-color: @hydrator-blue;
+            color: white;
+          }
         }
       }
     }
