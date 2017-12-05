@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.scheduler.SparkListener
+import org.apache.spark.scheduler.SparkListenerApplicationStart
 import org.apache.spark.streaming.StreamingContext
 import org.slf4j.LoggerFactory
 
@@ -87,10 +88,15 @@ object SparkRuntimeEnv {
   def setupSparkConf(sparkConf: SparkConf): Unit = sparkConf.setAll(properties)
 
   /**
-    * Adds a [[org.apache.spark.scheduler.SparkListener]]. The given listener will be added to
-    * [[org.apache.spark.SparkContext]] when it becomes available.
+    * Adds a [[org.apache.spark.scheduler.SparkListener]].
     */
   def addSparkListener(listener: SparkListener): Unit = sparkListeners.add(listener)
+
+  /**
+    * Returns the current list of [[org.apache.spark.scheduler.SparkListener]] added through the
+    * `addListener` method
+    */
+  def getSparkListeners(): Seq[SparkListener] = sparkListeners.toSeq
 
   /**
     * Sets the [[org.apache.spark.SparkContext]] for the execution.
@@ -107,7 +113,17 @@ object SparkRuntimeEnv {
       }
 
       sparkContext = Some(context)
-      context.addSparkListener(new DelegatingSparkListener(sparkListeners))
+    }
+
+    // For Spark 1.2, it doesn't support `spark.extraListeners` setting.
+    // We need to add the listener here and simulate a call to the onApplicationStart.
+    if (context.version == "1.2" || context.version.startsWith("1.2.")) {
+      val listener = new DelegatingSparkListener
+      context.addSparkListener(listener)
+      val applicationStart = new SparkListenerApplicationStart(context.appName, Some(context.applicationId),
+                                                               context.startTime, context.sparkUser,
+                                                               context.applicationAttemptId, None)
+      listener.onApplicationStart(applicationStart)
     }
   }
 

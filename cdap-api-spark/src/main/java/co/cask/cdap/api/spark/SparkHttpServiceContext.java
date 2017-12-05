@@ -14,21 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package co.cask.cdap.api.spark;
 
-import org.apache.spark.scheduler.SparkListener
-import org.apache.spark.scheduler.SparkListenerEvent
+import org.apache.spark.SparkContext;
 
 /**
-  * Spark1 DelegatingSparkListener, which adds a 'onOtherEvent' method for a specific cdh version of spark.
-  */
-class DelegatingSparkListener extends DelegatingSparkListenerTrait {
-  
-  def onOtherEvent(event: SparkListenerEvent) = {
-    // no-op
-  }
+ * Context interface for providing access to {@link SparkContext} and CDAP functionality.
+ */
+public interface SparkHttpServiceContext extends SparkHttpServiceContextBase {
 
-  override def sparkListeners: Seq[SparkListener] = {
-    SparkRuntimeEnv.getSparkListeners()
-  }
+  /**
+   * Returns the {@link SparkContext} object created in the Spark driver.
+   */
+  SparkContext getSparkContext();
 }
