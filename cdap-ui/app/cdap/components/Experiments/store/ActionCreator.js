@@ -18,7 +18,7 @@ import experimentsStore, {ACTIONS} from 'components/Experiments/store';
 import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS} from 'components/Experiments/store/createExperimentStore';
 import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
 import {myExperimentsApi} from 'api/experiments';
-import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import MLAlgorithmsList from 'components/Experiments/store/MLAlgorithmsList';
@@ -264,6 +264,7 @@ function getModelsInExperiment(experimentId) {
         models
       }
     });
+    models.forEach(model => getModelStatus(experimentId, model.id));
   });
 }
 
@@ -279,6 +280,24 @@ function getSplitsInExperiment(experimentId) {
         type: EXPERIMENTDETAILACTIONS.SET_SPLITS,
         payload: {
           splits
+        }
+      });
+    });
+}
+
+function getModelStatus(experimentId, modelId) {
+  myExperimentsApi
+    .getModelStatus({
+      namespace: getCurrentNamespace(),
+      experimentId,
+      modelId
+    })
+    .subscribe(modelStatus => {
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+        payload: {
+          modelId,
+          modelStatus
         }
       });
     });
@@ -323,6 +342,7 @@ export {
   getModelsInExperiment,
   setActiveModel,
   deleteExperiment,
-  getAlgorithmLabel
+  getAlgorithmLabel,
+  getModelStatus
 };
 
