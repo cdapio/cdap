@@ -26,13 +26,14 @@ export default function IconSVG(props) {
   const {name, className, ...moreProps} = props;
   const iconClassName = classnames('icon-svg', name, className);
   const path = `${window.location.href}#symbol-defs_${name}`;
-
+  const newPath = `${window.location.href}#symbol-defs_new_${name}`;
   return (
     <svg
       className={iconClassName}
       {...moreProps}
     >
       <use xlinkHref={path} />
+      <use xlinkHref={newPath} />
     </svg>
   );
 }

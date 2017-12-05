@@ -95,6 +95,13 @@ const TabConfig = {
       icon: 'icon-aws',
       name: T.translate('features.Market.tabs.aws'),
       content: <AllTabContents />
+    },
+    {
+      id: 13,
+      filter: 'Directives',
+      icon: 'icon-directives',
+      name: T.translate('features.Market.tabs.directives'),
+      content: <AllTabContents />
     }
   ]
 };

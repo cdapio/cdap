@@ -19,8 +19,10 @@ $action-btn-inactive-color: #aaaaaa;
 
 @import '../../../styles/variables.scss';
 
-$dropdown_menu_icon_color: #999999;
+$dropdown_menu_color: $link-color;
 $dropdown_item_font_color: black;
+$success_alert_color: white;
+$success_alert_bg_color: $brand-success;
 
 .dataprep-container {
   .top-panel {
@@ -117,29 +119,21 @@ $dropdown_item_font_color: black;
         }
       }
 
-      .dropdown {
+      .more-dropdown {
         .btn.btn-secondary {
           border: 0;
           height: 31px;
           display: flex;
           align-items: flex-end;
-          color: $dropdown_menu_icon_color;
+          color: $dropdown_menu_color;
           padding: 0;
           background: transparent;
           box-shadow: none;
           &:focus,
           &:active,
-          &hover {
-            outline: none;
-          }
           &:hover {
-            color: black;
-          }
-          .icon-bars {
-            font-size: 24px;
-          }
-          .icon-caret-down {
-            font-size: 18px;
+            outline: none;
+            color: darken($dropdown_menu_color, 10%);
           }
         }
         &.open {
@@ -173,6 +167,63 @@ $dropdown_item_font_color: black;
           }
           .btn.btn-secondary {
             color: black;
+          }
+        }
+      }
+
+      .more-dropdown {
+        margin-right: 20px;
+        margin-left: 15px;
+      }
+
+      .success-alert {
+        position: absolute;
+        top: 50px;
+        left: 0;
+        right: 0;
+        border: none;
+        border-radius: 0;
+        z-index: 10;
+        color: $success_alert_color;
+        background-color: $success_alert_bg_color;
+        padding: 10px 15px;
+      }
+
+      .dataprep-plus-button {
+        position: relative;
+        top: -20px;
+        margin-right: 10px;
+
+        .btn,
+        img {
+          width: 58px;
+          height: 58px;
+          background-color: transparent;
+          border: none;
+          padding: 0;
+        }
+
+        .btn {
+          &:focus,
+          &:active {
+            outline: none;
+          }
+        }
+
+        .plus-button-dropdown {
+          width: 200px;
+          padding: 15px;
+
+          .dropdown-item {
+            padding: 0 0 0 5px;
+            cursor: pointer;
+
+            &:hover { background-color: transparent; }
+            &:focus { outline: none; }
+          }
+
+          hr {
+            border-top: 2px solid #cccccc;
           }
         }
       }

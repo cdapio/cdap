@@ -24,6 +24,8 @@ import reverse from 'lodash/reverse';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import NamespaceStore from 'services/NamespaceStore';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 require('./AutoComplete.scss');
 
@@ -37,9 +39,45 @@ export default class DataPrepAutoComplete extends Component {
       matched: false,
       activeSelectionIndex: null
     };
+
+    this.eventEmitter = ee(ee);
+
+    this.getUsage = this.getUsage.bind(this);
+
+    this.eventEmitter.on(globalEvents.DIRECTIVEUPLOAD, this.getUsage);
   }
 
   componentWillMount() {
+    this.getUsage();
+  }
+
+  componentDidMount() {
+    let directiveInput = document.getElementById('directive-input');
+    this.mousetrap = new Mousetrap(directiveInput);
+
+    this.mousetrap.bind('esc', this.props.toggle);
+    this.mousetrap.bind('up', this.handleUpArrow.bind(this));
+    this.mousetrap.bind('down', this.handleDownArrow.bind(this));
+    this.mousetrap.bind('enter', this.handleEnterKey.bind(this));
+    this.mousetrap.bind('tab', this.handleTabKey.bind(this));
+  }
+
+  componentWillUnmount() {
+    this.mousetrap.unbind('esc');
+    this.mousetrap.unbind('up');
+    this.mousetrap.unbind('down');
+    this.mousetrap.unbind('enter');
+    this.mousetrap.unbind('tab');
+    this.eventEmitter.off(globalEvents.DIRECTIVEUPLOAD, this.getUsage);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.input !== this.state.input) {
+      this.searchMatch(nextProps.input);
+    }
+  }
+
+  getUsage() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyDataPrepApi.getUsage({ namespace })
@@ -60,31 +98,6 @@ export default class DataPrepAutoComplete extends Component {
 
         this.fuse = new Fuse(res.values, fuseOptions);
       });
-  }
-
-  componentDidMount() {
-    let directiveInput = document.getElementById('directive-input');
-    this.mousetrap = new Mousetrap(directiveInput);
-
-    this.mousetrap.bind('esc', this.props.toggle);
-    this.mousetrap.bind('up', this.handleUpArrow.bind(this));
-    this.mousetrap.bind('down', this.handleDownArrow.bind(this));
-    this.mousetrap.bind('enter', this.handleEnterKey.bind(this));
-    this.mousetrap.bind('tab', this.handleTabKey.bind(this));
-  }
-
-  componentWillUnmount() {
-    this.mousetrap.unbind('esc');
-    this.mousetrap.unbind('up');
-    this.mousetrap.unbind('down');
-    this.mousetrap.unbind('enter');
-    this.mousetrap.unbind('tab');
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.input !== this.state.input) {
-      this.searchMatch(nextProps.input);
-    }
   }
 
   handleRowClick(row) {
