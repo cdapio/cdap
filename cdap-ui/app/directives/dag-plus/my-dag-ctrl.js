@@ -366,6 +366,15 @@ angular.module(PKG.name + '.commons')
 
     function initSplitterNode(node) {
       if (!node.outputSchema || !Array.isArray(node.outputSchema) || (Array.isArray(node.outputSchema) && node.outputSchema[0].name === GLOBALS.defaultSchemaName)) {
+        let splitterPorts = splitterNodesPorts[node.name];
+        if (!_.isEmpty(splitterPorts)) {
+          angular.forEach(splitterPorts, (port) => {
+            let portElId = node.name + '_port_' + port;
+            deleteEndpoints(portElId);
+          });
+          DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+          delete splitterNodesPorts[node.name];
+        }
         return;
       }
 
@@ -479,9 +488,9 @@ angular.module(PKG.name + '.commons')
 
     function removeConnection(detachedConnObj, updateStore = true) {
       let connObj = Object.assign({}, detachedConnObj);
-      if (detachedConnObj.sourceId.indexOf('_condition_') !== -1) {
+      if (myHelpers.objectQuery(detachedConnObj, 'sourceId') && detachedConnObj.sourceId.indexOf('_condition_') !== -1) {
         connObj.sourceId = detachedConnObj.sourceId.split('_')[0];
-      } else if (detachedConnObj.source.className.indexOf('_port_') !== -1) {
+      } else if (myHelpers.objectQuery(detachedConnObj, 'source', 'className') && detachedConnObj.source.className.indexOf('_port_') !== -1) {
         let portClass = getPortEndpointClass(detachedConnObj.source.classList);
         connObj.sourceId = portClass.split('_')[0];
       }
@@ -501,6 +510,12 @@ angular.module(PKG.name + '.commons')
         sourceId: moveInfo.originalSourceId,
         targetId: moveInfo.originalTargetId
       };
+      if (myHelpers.objectQuery(moveInfo, 'originalSourceEndpoint', 'element')) {
+        oldConnection.source = moveInfo.originalSourceEndpoint.element;
+      }
+      if (myHelpers.objectQuery(moveInfo, 'originalTargetEndpoint', 'element')) {
+        oldConnection.target = moveInfo.originalTargetEndpoint.element;
+      }
       // don't need to call addConnection for the new connection, since that will be done
       // automatically as part of the 'connection' event
       removeConnection(oldConnection, false);

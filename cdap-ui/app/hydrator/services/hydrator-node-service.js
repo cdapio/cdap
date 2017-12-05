@@ -15,12 +15,14 @@
  */
 
 class HydratorPlusPlusNodeService {
-  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers, GLOBALS) {
+  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers, GLOBALS, avsc) {
+    'ngInject';
     this.$q = $q;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.myHelpers = myHelpers;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.GLOBALS = GLOBALS;
+    this.avsc = avsc;
   }
   getPluginInfo(node, appType, sourceConnections, sourceNodes, artifactVersion) {
     var promise;
@@ -31,18 +33,17 @@ class HydratorPlusPlusNodeService {
     }
     return promise.then((node) => this.configurePluginInfo(node, appType, sourceConnections, sourceNodes));
   }
+  isFieldExistsInSchema(field, schema) {
+    if(angular.isObject(schema) && Array.isArray(schema.fields)) {
+      return schema.fields.filter(schemaField => schemaField.name === field.name).length;
+    }
+    return false;
+  }
   configurePluginInfo(node, appType, sourceConnections, sourceNodes) {
     const getInputSchema = (sourceNode, targetNode, sourceConnections) => {
       let schema = '';
       let isStreamSource = sourceNode.plugin.name === 'Stream';
       let inputSchema;
-
-      const isFieldExists = (field, schema) => {
-        if(angular.isObject(schema) && Array.isArray(schema.fields)) {
-          return schema.fields.filter(schemaField => schemaField.name === field.name).length;
-        }
-        return false;
-      };
 
       if (!sourceNode.outputSchema || typeof sourceNode.outputSchema === 'string') {
         sourceNode.outputSchema = [this.getOutputSchemaObj(sourceNode.outputSchema)];
@@ -78,27 +79,7 @@ class HydratorPlusPlusNodeService {
       }
 
       if (isStreamSource) {
-        let streamSchemaPrefix = [];
-        const tsField = {
-          name: 'ts',
-          type: 'long'
-        };
-        const headersField = {
-          name: 'headers',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string'
-          }
-        };
-
-        if (!isFieldExists(tsField, inputSchema)) {
-          streamSchemaPrefix.push(tsField);
-        }
-
-        if (!isFieldExists(headersField, inputSchema)) {
-          streamSchemaPrefix.push(headersField);
-        }
+        let streamSchemaPrefix = this.getStreamSchemaPrefix(inputSchema);
 
         inputSchema = this.HydratorPlusPlusHydratorService.formatSchemaToAvro({
           fields: streamSchemaPrefix.concat(this.myHelpers.objectQuery(inputSchema, 'fields') || [])
@@ -117,18 +98,68 @@ class HydratorPlusPlusNodeService {
     return node;
   }
 
-  getOutputSchemaObj(schema, schemaObjName) {
-    if (!schemaObjName) {
-      schemaObjName = this.GLOBALS.defaultSchemaName;
+  getStreamSchemaPrefix(existingSchema) {
+    let streamSchemaPrefix = [];
+    const tsField = {
+      name: 'ts',
+      type: 'long'
+    };
+    const headersField = {
+      name: 'headers',
+      type: {
+        type: 'map',
+        keys: 'string',
+        values: 'string'
+      }
+    };
+
+    if (!this.isFieldExistsInSchema(tsField, existingSchema)) {
+      streamSchemaPrefix.push(tsField);
     }
 
+    if (!this.isFieldExistsInSchema(headersField, existingSchema)) {
+      streamSchemaPrefix.push(headersField);
+    }
+    return streamSchemaPrefix;
+  }
+
+  getOutputSchemaObj(schema, schemaObjName = this.GLOBALS.defaultSchemaName) {
     return {
       name: schemaObjName,
       schema
     };
   }
+
+  getSchemaObj(fields = [], name = this.GLOBALS.defaultSchemaName, type = 'record') {
+    return {
+      type,
+      name,
+      fields
+    };
+  }
+
+  shouldPropagateSchemaToNode(targetNode) {
+    if (targetNode.implicitSchema || targetNode.type === 'batchjoiner' || targetNode.type === 'splittertransform') {
+      return false;
+    }
+
+    // If we encounter a macro schema, stop propagataion
+    let schema = targetNode.outputSchema;
+    try {
+      if (Array.isArray(schema)) {
+        if (!_.isEmpty(schema[0].schema)) {
+          this.avsc.parse(schema[0].schema, { wrapUnions: true });
+        }
+      } else if (typeof schema === 'string') {
+        this.avsc.parse(schema, { wrapUnions: true });
+      }
+    } catch (e) {
+      return false;
+    }
+
+    return true;
+  }
 }
-HydratorPlusPlusNodeService.$inject = ['$q', 'HydratorPlusPlusHydratorService', 'IMPLICIT_SCHEMA', 'myHelpers', 'GLOBALS'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .service('HydratorPlusPlusNodeService', HydratorPlusPlusNodeService);
