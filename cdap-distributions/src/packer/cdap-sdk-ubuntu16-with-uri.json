@@ -165,6 +165,11 @@
         "java": {
           "install_flavor": "openjdk",
           "jdk_version": 8
+        },
+        "maven": {
+          "mavenrc": {
+            "opts": "${MAVEN_OPTS:--Dmaven.repo.local=$HOME/.m2/repository -Xmx384m}"
+          }
         }
       },
       "only": ["cdap-sdk-vm"]
