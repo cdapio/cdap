@@ -23,7 +23,7 @@ const pluginLabels = {
   'action': 'Conditions and Actions',
   'errortransform': 'Error Handlers'
 };
-
+export const NUMBER_TYPES = ['integer', 'short', 'long', 'float', 'double'];
 const GLOBALS = {
   etlBatch: 'cdap-etl-batch',
   etlRealtime: 'cdap-etl-realtime',

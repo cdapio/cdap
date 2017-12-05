@@ -22,6 +22,7 @@ import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {setActiveModel, getAlgorithmLabel, getModelsInExperiment} from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
+import {NUMBER_TYPES} from 'services/global-constants';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
 import classnames from 'classnames';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -29,10 +30,13 @@ import { myExperimentsApi } from 'api/experiments';
 import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
+import ModelStatusIndicator from 'components/Experiments/DetailedView/ModelStatusIndicator';
+import {Link} from 'react-router-dom';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./DetailedViewModelsTable.scss');
 
-const tableHeaders = [
+let tableHeaders = [
   {
     label: '',
     width: '2%'
@@ -58,40 +62,68 @@ const tableHeaders = [
     width: '10%'
   },
   {
-    label: 'Precision',
-    property: 'precision',
-    width: '10%'
-  },
-  {
-    label: 'Recall',
-    property: 'recall',
-    width: '10%'
-  },
-  {
-    label: 'F1',
-    property: 'f1',
-    width: '8%'
-  },
-  {
-    label: 'Accuracy',
-    property: 'accuracy',
-    width: '8%'
-  },
-  {
-    label: 'RMS',
-    property: 'rms',
-    width: '5%'
-  },
-  {
     label: '',
     width: '2%'
   },
 ];
-const renderTableHeaders = (renderSortableTableHeader) => {
+const regressionMetrics = [
+  {
+    label: 'rmse',
+    property: 'rmse',
+    width: '10%'
+  },
+  {
+    label: 'r2',
+    property: 'r2',
+    width: '10%'
+  },
+  {
+    label: 'evariance',
+    property: 'evariance',
+    width: '10%'
+  },
+  {
+    label: 'mae',
+    property: 'mae',
+    width: '11%'
+  },
+];
+const categoricalMetrics = [
+  {
+    label: 'Precision',
+    property: 'precision',
+    width: '14%'
+  },
+  {
+    label: 'Recall',
+    property: 'recall',
+    width: '14%'
+  },
+  {
+    label: 'F1',
+    property: 'f1',
+    width: '12%'
+  },
+];
+
+const addMetricsToHeaders = (tableHeaders, metrics) => ([
+  ...tableHeaders.slice(0, tableHeaders.length - 1),
+  ...metrics,
+  ...tableHeaders.slice(tableHeaders.length - 1)
+]);
+const getNewHeadersBasedOnOutcome = (outcomeType) => (
+  NUMBER_TYPES.indexOf(outcomeType) !== -1 ?
+    addMetricsToHeaders(tableHeaders, regressionMetrics)
+  :
+    addMetricsToHeaders(tableHeaders, categoricalMetrics)
+);
+
+const renderTableHeaders = (outcomeType, renderSortableTableHeader) => {
+  let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   return (
     <div className="grid-header">
       {
-        tableHeaders.map(tableHeader => {
+        newHeaders.map(tableHeader => {
           return (
             <div
               className="grid-header-item"
@@ -148,15 +180,14 @@ const deleteExperiment = (experimentId, callback, errCallback) => {
     );
 };
 
-const renderTableBody = (experimentId, models) => {
+const renderTableBody = (experimentId, outcomeType, models) => {
   let list = models.map(model => {
-    let {name, algorithm, hyperparameters, trainedtime} = model;
+    let {name, algorithm, hyperparameters} = model;
     return {
       ...model,
       name,
       algorithm: getAlgorithmLabel(algorithm),
-      hyperparameters,
-      status: trainedtime === -1 ? 'Training' : 'Trained'
+      hyperparameters
     };
   });
   const renderItem = (width, content) => (
@@ -168,7 +199,17 @@ const renderTableBody = (experimentId, models) => {
       {content}
     </div>
   );
+  const renderMetrics = (newHeaders, model) => {
+    let metrics;
+    if (NUMBER_TYPES.indexOf(outcomeType) !== -1) {
+      metrics = newHeaders.slice(5, 9);
+    } else {
+      metrics = newHeaders.slice(5, 8);
+    }
+    return metrics.map(t => renderItem(t.width, model.evaluationMetrics[t.property] || '--'));
+  };
   const deleteConfimElement = (model) => <div>Are you sure you want to delete <b>{model.name}</b> model </div>;
+  let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   return (
     <div className="grid-body">
       {
@@ -181,19 +222,15 @@ const renderTableBody = (experimentId, models) => {
                 })}
                 onClick={setActiveModel.bind(null, model.id)}
               >
-                {renderItem(tableHeaders[0].width, <IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
-                {renderItem(tableHeaders[1].width, model.name)}
-                {renderItem(tableHeaders[2].width, model.status)}
-                {renderItem(tableHeaders[3].width, model.algorithm)}
-                {renderItem(tableHeaders[4].width, <IconSVG name="icon-cog" />)}
-                {renderItem(tableHeaders[5].width, '--')}
-                {renderItem(tableHeaders[6].width, '--')}
-                {renderItem(tableHeaders[7].width, '--')}
-                {renderItem(tableHeaders[8].width, '--')}
-                {renderItem(tableHeaders[9].width, '--')}
+                {renderItem(newHeaders[0].width, <IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
+                {renderItem(newHeaders[1].width, model.name)}
+                {renderItem(newHeaders[2].width, <ModelStatusIndicator status={model.status} />)}
+                {renderItem(newHeaders[3].width, model.algorithm)}
+                {renderItem(newHeaders[4].width, <IconSVG name="icon-cog" />)}
+                {renderMetrics(newHeaders, model)}
                 {
                   renderItem(
-                    tableHeaders[10].width,
+                    newHeaders[NUMBER_TYPES.indexOf(outcomeType) !== -1 ? 9 : 8].width,
                     <DeleteEntityBtn
                       confirmFn={deleteModel.bind(null, experimentId, model.id)}
                       headerTitle={"Delete Model"}
@@ -242,7 +279,7 @@ const renderTableBody = (experimentId, models) => {
   );
 };
 
-function ModelsTable({experimentId, list, loading}) {
+function ModelsTable({experimentId, list, loading, outcomeType}) {
   if (loading || isEmpty(experimentId)) {
     return (
       <LoadingSVGCentered />
@@ -252,10 +289,12 @@ function ModelsTable({experimentId, list, loading}) {
     <div className="experiment-models-table">
       <div className="experiment-table-header">
         <div className="btn-container">
-          {/* Hiding it for now. Will add this functionality in the next PR*/}
-          <div className="btn btn-secondary" style={{display: 'none'}}>
+          <Link
+            className="btn btn-secondary"
+            to={`/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}`}
+          >
             Add a Model
-          </div>
+          </Link>
           <DeleteEntityBtn
             confirmFn={deleteExperiment.bind(null, experimentId)}
             className="btn btn-link"
@@ -277,8 +316,8 @@ function ModelsTable({experimentId, list, loading}) {
       <SortableStickyGrid
         entities={list}
         tableHeaders={tableHeaders}
-        renderTableHeaders={renderTableHeaders}
-        renderTableBody={renderTableBody.bind(null, experimentId)}
+        renderTableHeaders={renderTableHeaders.bind(null, outcomeType)}
+        renderTableBody={renderTableBody.bind(null, experimentId, outcomeType)}
       />
     </div>
   );
@@ -287,13 +326,15 @@ function ModelsTable({experimentId, list, loading}) {
 ModelsTable.propTypes = {
   list: PropTypes.arrayOf,
   loading: PropTypes.bool,
-  experimentId: PropTypes.string
+  experimentId: PropTypes.string,
+  outcomeType: PropTypes.string
 };
 
 const mapStateToProps = (state) => ({
   list: state.models,
   experimentId: state.name,
-  loading: state.loading
+  loading: state.loading,
+  outcomeType: state.outcomeType
 });
 
 const ModelsTableWrapper = connect(mapStateToProps)(ModelsTable);
