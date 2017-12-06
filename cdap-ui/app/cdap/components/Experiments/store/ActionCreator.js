@@ -176,7 +176,8 @@ function createExperimentAndModel() {
     name: experiments_create.name,
     description: experiments_create.description,
     outcome: experiments_create.outcome,
-    srcpath: experiments_create.srcpath
+    srcpath: experiments_create.srcpath,
+    workspaceId: model_create.workspaceId
   };
   setExperimentLoading();
 
@@ -320,6 +321,20 @@ const getAlgorithmLabel = (algorithm) => {
   return algorithm;
 };
 
+const getExperimentForEdit = (experimentId) => {
+  myExperimentsApi
+    .getExperiment({
+      namespace: getCurrentNamespace(),
+      experimentId
+    })
+    .subscribe(experimentDetails => {
+      createExperimentStore.dispatch({
+        type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT,
+        payload: {experimentDetails}
+      });
+    });
+};
+
 export {
   setExperimentsLoading,
   getExperimentsList,
@@ -343,6 +358,7 @@ export {
   setActiveModel,
   deleteExperiment,
   getAlgorithmLabel,
-  getModelStatus
+  getModelStatus,
+  getExperimentForEdit
 };
 

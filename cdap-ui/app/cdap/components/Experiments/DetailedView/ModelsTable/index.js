@@ -30,6 +30,8 @@ import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
 import ModelStatusIndicator from 'components/Experiments/DetailedView/ModelStatusIndicator';
+import {Link} from 'react-router-dom';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./DetailedViewModelsTable.scss');
 
@@ -252,10 +254,12 @@ function ModelsTable({experimentId, list, loading}) {
     <div className="experiment-models-table">
       <div className="experiment-table-header">
         <div className="btn-container">
-          {/* Hiding it for now. Will add this functionality in the next PR*/}
-          <div className="btn btn-secondary" style={{display: 'none'}}>
+          <Link
+            className="btn btn-secondary"
+            to={`/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}`}
+          >
             Add a Model
-          </div>
+          </Link>
           <DeleteEntityBtn
             confirmFn={deleteExperiment.bind(null, experimentId)}
             className="btn btn-link"

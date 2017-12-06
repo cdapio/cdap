@@ -14,6 +14,7 @@
  * the License.
 */
 
+import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import TopPanel from 'components/Experiments/TopPanel';
 import IconSVG from 'components/IconSVG';
@@ -26,15 +27,20 @@ import NamespaceStore from 'services/NamespaceStore';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import ExperimentPopovers from 'components/Experiments/Popovers';
 import DataPrepStore from 'components/DataPrep/store';
-import {setOutcomeColumns, setDirectives, setSrcPath, setWorkspace} from 'components/Experiments/store/ActionCreator';
+import {setOutcomeColumns, setDirectives, setSrcPath, setWorkspace, getExperimentForEdit} from 'components/Experiments/store/ActionCreator';
 import MLAlgorithmSelection from 'components/Experiments/MLAlgorithmSelection';
 import ExperimentMetadata from 'components/Experiments/ExperimentMetadata';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Helmet from 'react-helmet';
+import queryString from 'query-string';
 
 require('./CreateView.scss');
 
 export default class ExperimentCreateView extends Component {
+  static propTypes = {
+    match: PropTypes.object,
+    location: PropTypes.object,
+  };
   state = {
     workspaceId: '',
     isModelCreated: createExperimentStore.getState().model_create.isModelCreated
@@ -52,16 +58,25 @@ export default class ExperimentCreateView extends Component {
     });
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
       let {model_create, experiments_create} = createExperimentStore.getState();
-      let {isModelCreated} = model_create;
+      let {isModelCreated, workspaceId} = model_create;
+      let newState = {};
       if (this.state.isModelCreated !== isModelCreated) {
-        this.setState({ isModelCreated });
+        newState = {isModelCreated};
+      }
+      if (this.state.workspaceId !== workspaceId) {
+        newState = {...newState, workspaceId};
       }
       if (experiments_create.loading) {
-        this.setState({
-          loading: true
-        });
+        newState = {...newState, loading: true};
+      }
+      if (Object.keys(newState).length > 0) {
+        this.setState(newState);
       }
     });
+    let {experimentId} = queryString.parse(this.props.location.search);
+    if (experimentId) {
+      getExperimentForEdit(experimentId);
+    }
   }
   componentWillUnmount() {
     if (this.dataprepsubscription) {

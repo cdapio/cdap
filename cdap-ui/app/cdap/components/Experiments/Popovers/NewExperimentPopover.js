@@ -25,12 +25,13 @@ import {
   setExperimentCreated
 } from 'components/Experiments/store/ActionCreator';
 
-const ExperimentName = ({name, onNameChange}) => {
+const ExperimentName = ({name, onNameChange, isEdit}) => {
   return (
     <FormGroup row>
       <Col xs="12">
         <Label className="control-label">Experiment Name</Label>
         <Input
+          disabled={isEdit}
           value={name}
           onChange={onNameChange}
           placeholder="Add a name for this Experiment"
@@ -41,7 +42,8 @@ const ExperimentName = ({name, onNameChange}) => {
 };
 ExperimentName.propTypes = {
   name: PropTypes.string,
-  onNameChange: PropTypes.func
+  onNameChange: PropTypes.func,
+  isEdit: PropTypes.bool
 };
 
 const ExperimentDescription = ({description, onDescriptionChange}) => {
@@ -64,12 +66,13 @@ ExperimentDescription.propTypes = {
   onDescriptionChange: PropTypes.func
 };
 
-const ExperimentOutcome = ({outcome, columns, onOutcomeChange}) => {
+const ExperimentOutcome = ({outcome, columns, onOutcomeChange, isEdit}) => {
   return (
     <FormGroup row>
       <Col xs="12">
         <Label className="control-label">Set Outcome for this Experiment </Label>
         <Input
+          disabled={isEdit}
           type="select"
           value={outcome}
           onChange={onOutcomeChange}
@@ -88,7 +91,8 @@ const ExperimentOutcome = ({outcome, columns, onOutcomeChange}) => {
 ExperimentOutcome.propTypes = {
   outcome: PropTypes.string,
   columns: PropTypes.arrayOf(PropTypes.object),
-  onOutcomeChange: PropTypes.func
+  onOutcomeChange: PropTypes.func,
+  isEdit: PropTypes.bool
 };
 
 const CreateExperimentBtn = ({state, setExperimentCreated}) => {
@@ -101,7 +105,7 @@ const CreateExperimentBtn = ({state, setExperimentCreated}) => {
       disabled={!isAddExperimentBtnEnabled()}
       onClick={setExperimentCreated}
     >
-      Create Experiment
+      {state.isEdit ? 'Edit Experiment' : 'Create Experiment'}
     </button>
   );
 };
@@ -134,11 +138,11 @@ NewExperimentPopoverWrapper.propTypes = {
 };
 const mapDispatchToCreateExperimentBtnProps = () => ({ setExperimentCreated});
 const mapStateToCreateExperimentBtnProps = (state) => ({ state: {...state.experiments_create} });
-const mapStateToNameProps = (state) => ({ name: state.experiments_create.name });
+const mapStateToNameProps = (state) => ({ name: state.experiments_create.name, isEdit: state.experiments_create.isEdit });
 const mapDispatchToNameProps = () => ({ onNameChange: onExperimentNameChange });
 const mapStateToDescriptionProps = (state) => ({ description: state.experiments_create.description });
 const mapDispatchToDescriptionToProps = () => ({ onDescriptionChange: onExperimentDescriptionChange });
-const mapStateToOutcomeProps = (state) => ({ outcome: state.experiments_create.outcome, columns: state.model_create.columns });
+const mapStateToOutcomeProps = (state) => ({ outcome: state.experiments_create.outcome, columns: state.model_create.columns, isEdit: state.experiments_create.isEdit });
 const mapDispatchToOutcomeProps = () => ({onOutcomeChange: onExperimentOutcomeChange});
 const mapNEPWStateToProps = (state) => ({ isExperimentCreated: state.experiments_create.isExperimentCreated });
 const mapNEPWDispatchToProps = () => ({ setExperimentCreated });
