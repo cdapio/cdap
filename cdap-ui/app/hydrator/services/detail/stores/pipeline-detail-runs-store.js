@@ -195,29 +195,29 @@ angular.module(PKG.name + '.feature.hydrator')
         case GLOBALS.etlDataPipeline:
           angular.forEach(app.programs, function (program) {
             if (program.type === 'Workflow') {
-              appLevelParams.programName = program.id;
+              appLevelParams.programName = program.name;
               appLevelParams.programType = program.type.toLowerCase() + 's';
               metricProgramType = program.type.toLowerCase();
-              logsLevelParams.programId = program.id;
+              logsLevelParams.programId = program.name;
               logsLevelParams.programType = appLevelParams.programType;
             }
           });
           break;
         case GLOBALS.etlRealtime:
           angular.forEach(app.programs, function (program) {
-            appLevelParams.programName = program.id;
+            appLevelParams.programName = program.name;
             appLevelParams.programType = program.type.toLowerCase() + 's';
             metricProgramType = program.type.toLowerCase();
-            logsLevelParams.programId = program.id;
+            logsLevelParams.programId = program.name;
             logsLevelParams.programType = program.type.toLowerCase() + 's';
           });
           break;
         case GLOBALS.etlDataStreams:
           angular.forEach(app.programs, function (program) {
-            appLevelParams.programName = program.id;
+            appLevelParams.programName = program.name;
             appLevelParams.programType = program.type.toLowerCase();
             metricProgramType = program.type.toLowerCase();
-            logsLevelParams.programId = program.id;
+            logsLevelParams.programId = program.name;
             logsLevelParams.programType = program.type.toLowerCase();
           });
           break;

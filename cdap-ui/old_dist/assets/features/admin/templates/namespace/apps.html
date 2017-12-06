@@ -39,7 +39,7 @@
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
-                      <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
+                      <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.name})">
                           <strong uib-tooltip="{{app.name}}" tooltip-enable="app.name.length > 25" tooltip-append-to-body="true">
                             {{ ::app.name | myEllipsis:25 }}
                           </strong>
@@ -64,7 +64,7 @@
                       </span>
                     </td>
                     <td class="text-center">
-                      <a href="" ng-click="caskConfirm()" cask-confirmable="deleteApp(app.id)" data-confirmable-content="Are you sure you want to delete the application '<strong>{{app.name}}</strong>'?">
+                      <a href="" ng-click="caskConfirm()" cask-confirmable="deleteApp(app.name)" data-confirmable-content="Are you sure you want to delete the application '<strong>{{app.name}}</strong>'?">
                         <span class="fa fa-trash text-danger"></span>
                       </a>
                     </td>

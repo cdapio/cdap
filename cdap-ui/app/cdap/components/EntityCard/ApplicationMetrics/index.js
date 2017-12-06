@@ -70,7 +70,7 @@ export default class ApplicationMetrics extends Component {
           return {
             appId: this.props.entity.id,
             programType: program.type.toLowerCase(),
-            programId: program.id
+            programId: program.name
           };
         });
 

@@ -60,7 +60,7 @@ class TrackerEnableController{
       return {
         appId: this.CDAP_UI_CONFIG.tracker.appId,
         programType: program.type,
-        programId: program.id
+        programId: program.name
       };
     });
 

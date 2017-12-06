@@ -31,7 +31,7 @@ export default function ProgramCards({programs}) {
             let entity = {
               entityId: {
                 id: {
-                  id: program.id,
+                  id: program.name,
                   application: {
                     applicationId: program.app
                   },

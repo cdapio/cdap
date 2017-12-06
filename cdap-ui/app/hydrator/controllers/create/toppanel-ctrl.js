@@ -699,7 +699,7 @@ class HydratorPlusPlusTopPanelCtrl {
     if (uploadedFile.type !== 'application/json') {
       this.myAlertOnValium.show({
         type: 'danger',
-        content: "There was a problem with the pipeline you were trying to upload: File should be in JSON format. Please upload a file with '.json' extension."
+        content: 'There was a problem with the pipeline you were trying to upload: File should be in JSON format. Please upload a file with \'.json\' extension.'
       });
       return;
     }
