@@ -71,7 +71,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
           payload: {
             data: res.values,
             headers: res.header,
-            directives: updatedDirectives,
+            directives: res.directives,
             types: res.types
           }
         });

@@ -39,7 +39,7 @@ import isEmpty from 'lodash/isEmpty';
 require('./DataPrep.scss');
 
 const i18nPrefix = 'features.DataPrep.Upgrade';
-const MIN_DATAPREP_VERSION = '2.1.0';
+const MIN_DATAPREP_VERSION = '3.0.3-SNAPSHOT';
 const artifactName = 'wrangler-service';
 
 export {i18nPrefix, MIN_DATAPREP_VERSION, artifactName};
