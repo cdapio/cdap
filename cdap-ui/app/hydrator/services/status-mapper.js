@@ -18,52 +18,8 @@
  */
 angular.module(PKG.name + '.feature.hydrator')
   .factory('MyPipelineStatusMapper', function() {
-
-    var statusMap = {
-      'DEPLOYED': 'Deployed',
-      'SUBMITTING': 'Submitting',
-      'RUNNING': 'Running',
-      'SUCCEEDED': 'Succeeded',
-      'FAILED': 'Failed',
-      'DRAFT': 'Draft',
-      'STOPPED': 'Stopped',
-      'COMPLETED': 'Succeeded',
-      'KILLED': 'Stopped',
-      'KILLED_BY_TIMER': 'Succeeded',
-      'DEPLOY_FAILED': 'Failed',
-      'RUN_FAILED': 'Failed',
-      'SUSPENDED': 'Deployed',
-      'SCHEDULED': 'Scheduled',
-      'STARTING': 'Starting',
-      'SCHEDULING': 'Scheduling',
-      'STOPPING': 'Stopping',
-      'SUSPENDING': 'Suspending',
-    };
-
-    function lookupDisplayStatus (systemStatus) {
-      if (systemStatus in statusMap) {
-        return statusMap[systemStatus];
-      } else {
-        return systemStatus;
-      }
-    }
-
-    function getStatusIndicatorClass (displayStatus) {
-      if (displayStatus === 'Running' || displayStatus === 'Starting') {
-        return 'status-blue';
-      } else if (displayStatus === 'Succeeded' || displayStatus === 'Starting' || displayStatus === 'Scheduling' || displayStatus === 'Stopping') {
-        return 'status-light-green';
-      } else if (displayStatus === 'Failed') {
-        return 'status-light-red';
-      } else if (displayStatus === 'Draft') {
-        return 'status-outline-grey status-thin';
-      } else {
-        return 'status-light-grey';
-      }
-    }
-
     return {
-      lookupDisplayStatus: lookupDisplayStatus,
-      getStatusIndicatorClass: getStatusIndicatorClass
+      lookupDisplayStatus: window.CaskCommon.StatusMapper.lookupDisplayStatus,
+      getStatusIndicatorClass: window.CaskCommon.StatusMapper.getStatusIndicatorClass
     };
   });

@@ -20,6 +20,7 @@ import React, { Component } from 'react';
 import {MyProgramApi} from 'api/program';
 import NamespaceStore from 'services/NamespaceStore';
 import {convertProgramToApi} from 'services/program-api-converter';
+import StatusMapper from 'services/StatusMapper';
 import T from 'i18n-react';
 
 export default class ProgramMetrics extends Component {
@@ -70,7 +71,7 @@ export default class ProgramMetrics extends Component {
       <div className="metrics-container">
         <div className="metric-item">
           <p className="metric-header">{T.translate('commons.entity.program.status')}</p>
-          <p>{this.state.loading ? loading : this.state.status}</p>
+          <p>{this.state.loading ? loading : StatusMapper.lookupDisplayStatus(this.state.status)}</p>
         </div>
         <div className="metric-item">
           <p className="metric-header">{T.translate('commons.entity.program.runs')}</p>

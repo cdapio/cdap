@@ -25,6 +25,7 @@ import LogAction from 'components/FastAction/LogAction';
 import SortableTable from 'components/SortableTable';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
+import StatusMapper from 'services/StatusMapper';
 
 require('./HistoryTab.scss');
 
@@ -127,7 +128,7 @@ export default class HistoryTab extends Component {
                   <td>{history.programName}</td>
                   <td>{humanReadableDate(history.start)}</td>
                   <td>{history.runid}</td>
-                  <td>{history.status}</td>
+                  <td>{StatusMapper.lookupDisplayStatus(history.status)}</td>
                   <td>
                     <div className="fast-actions-container">
                       <h4 className="text-xs-left btn-group">
