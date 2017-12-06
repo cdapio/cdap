@@ -282,32 +282,34 @@ export default class RuleBookDetails extends Component {
             />
           </div>
         </div>
-        <div className="rule-book-metadata">
-          <div>
+        <div className="rule-book-content">
+          <div className="rule-book-metadata">
             <div>
-              <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
-              <span> {rulebookDetails.user}</span>
+              <div>
+                <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
+                <span> {rulebookDetails.user}</span>
+              </div>
+              <div>
+                <strong>{T.translate(`${PREFIX}.lastmodified`)}: </strong>
+                <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
+              </div>
+              <p className="rule-book-description">
+                {rulebookDetails.description}
+              </p>
             </div>
             <div>
-              <strong>{T.translate(`${PREFIX}.lastmodified`)}: </strong>
-              <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
+              {
+                isNil(angles) ? null : <RadialChart data={angles} width={100} height={100}/>
+              }
             </div>
-            <p className="rule-book-description">
-              {rulebookDetails.description}
-            </p>
           </div>
-          <div>
-            {
-              isNil(angles) ? null : <RadialChart data={angles} width={100} height={100}/>
-            }
-          </div>
+          <RulesList
+            rules={rulebookDetails.rules}
+            rulebookid={rulebookDetails.id}
+            onRemove={this.removeRule}
+            onRuleBookUpdate={this.updateRulebook}
+          />
         </div>
-        <RulesList
-          rules={rulebookDetails.rules}
-          rulebookid={rulebookDetails.id}
-          onRemove={this.removeRule}
-          onRuleBookUpdate={this.updateRulebook}
-        />
       </div>
     );
   }
