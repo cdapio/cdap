@@ -119,6 +119,12 @@ $option-hover-bg-color: #eeeeee;
           padding: 0.3rem;
         }
       }
+
+      .statistics-table {
+        th:last-child {
+          min-width: 100px;
+        }
+      }
     }
 
     .columns-tab-toggle-all-dropdown {
