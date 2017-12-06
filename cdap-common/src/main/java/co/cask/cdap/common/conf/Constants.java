@@ -1118,6 +1118,10 @@ public final class Constants {
     public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
     public static final String HTTP_TIMEOUT = "explore.http.timeout";
 
+    public static final String HIVE_SERVER_JDBC_URL = "hive.server2.jdbc.url";
+    public static final String HIVE_METASTORE_TOKEN_SIG = "hive.metastore.token.signature";
+    public static final String HIVE_METASTORE_TOKEN_SERVICE_NAME = "hive.metastore.service";
+
     /**
      * Explore JDBC constants.
      */

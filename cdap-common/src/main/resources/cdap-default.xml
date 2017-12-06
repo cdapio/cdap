@@ -1194,6 +1194,16 @@
     </description>
   </property>
 
+  <property>
+    <name>hive.server2.jdbc.url</name>
+    <value></value>
+    <description>
+      The JDBC URL for the HiveServer2 in the cluster. This is needed if user programs
+      need HiveServer2 delegation token to interact with HiveServer2. It can remain empty
+      if the delegation token is not required for the user programs.
+    </description>
+  </property>
+
   <!-- Gateway Configuration -->
 
   <property>
