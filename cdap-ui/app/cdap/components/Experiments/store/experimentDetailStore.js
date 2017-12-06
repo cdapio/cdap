@@ -23,7 +23,8 @@ const ACTIONS = {
   SET_MODEL_DETAILS: 'SET_MODEL_DETAILS',
   SET_ACTIVE_MODEL: 'SET_ACTIVE_MODEL',
   SET_LOADING: 'SET_LOADING',
-  SET_SPLITS: 'SET_SPLITS'
+  SET_SPLITS: 'SET_SPLITS',
+  SET_MODEL_STATUS: 'SET_MODEL_STATUS'
 };
 
 const DEFAULT_EXPERIMENT_DETAILS = {
@@ -76,6 +77,19 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
             return {
               ...model,
               splitDetails: matchingSplit
+            };
+          }
+          return model;
+        })
+      };
+    case ACTIONS.SET_MODEL_STATUS:
+      return {
+        ...state,
+        models: state.models.map(model => {
+          if (model.id === action.payload.modelId) {
+            return {
+              ...model,
+              status: action.payload.modelStatus
             };
           }
           return model;

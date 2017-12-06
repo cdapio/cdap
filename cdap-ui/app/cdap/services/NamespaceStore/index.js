@@ -65,4 +65,10 @@ const NamespaceStore = createStore(
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 
+const getCurrentNamespace = () => {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  return namespace;
+};
+
 export default NamespaceStore;
+export {getCurrentNamespace};

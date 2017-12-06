@@ -29,6 +29,9 @@ import { myExperimentsApi } from 'api/experiments';
 import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
+import ModelStatusIndicator from 'components/Experiments/DetailedView/ModelStatusIndicator';
+import {Link} from 'react-router-dom';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./DetailedViewModelsTable.scss');
 
@@ -150,13 +153,12 @@ const deleteExperiment = (experimentId, callback, errCallback) => {
 
 const renderTableBody = (experimentId, models) => {
   let list = models.map(model => {
-    let {name, algorithm, hyperparameters, trainedtime} = model;
+    let {name, algorithm, hyperparameters} = model;
     return {
       ...model,
       name,
       algorithm: getAlgorithmLabel(algorithm),
-      hyperparameters,
-      status: trainedtime === -1 ? 'Training' : 'Trained'
+      hyperparameters
     };
   });
   const renderItem = (width, content) => (
@@ -183,7 +185,7 @@ const renderTableBody = (experimentId, models) => {
               >
                 {renderItem(tableHeaders[0].width, <IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
                 {renderItem(tableHeaders[1].width, model.name)}
-                {renderItem(tableHeaders[2].width, model.status)}
+                {renderItem(tableHeaders[2].width, <ModelStatusIndicator status={model.status} />)}
                 {renderItem(tableHeaders[3].width, model.algorithm)}
                 {renderItem(tableHeaders[4].width, <IconSVG name="icon-cog" />)}
                 {renderItem(tableHeaders[5].width, '--')}
@@ -252,10 +254,12 @@ function ModelsTable({experimentId, list, loading}) {
     <div className="experiment-models-table">
       <div className="experiment-table-header">
         <div className="btn-container">
-          {/* Hiding it for now. Will add this functionality in the next PR*/}
-          <div className="btn btn-secondary" style={{display: 'none'}}>
+          <Link
+            className="btn btn-secondary"
+            to={`/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}`}
+          >
             Add a Model
-          </div>
+          </Link>
           <DeleteEntityBtn
             confirmFn={deleteExperiment.bind(null, experimentId)}
             className="btn btn-link"
