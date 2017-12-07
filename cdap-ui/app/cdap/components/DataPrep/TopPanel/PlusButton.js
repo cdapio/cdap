@@ -128,7 +128,7 @@ export default class DataPrepPlusButton extends Component {
               <DropdownItem
                 onClick={this.onMoreClick}
               >
-                {T.translate('features.DataPrep.TopPanel.more')}
+                {T.translate('features.DataPrep.TopPanel.PlusButton.addOtherEntities')}
               </DropdownItem>
             </DropdownMenu>
           </UncontrolledDropdown>

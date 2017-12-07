@@ -893,7 +893,8 @@ features:
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
       PlusButton:
-        addDirective: Add a Custom Directive
+        addDirective: Add directive
+        addOtherEntities: Add other Entities
         successMessage: You successfully added a custom directive to CDAP. Apply that directive by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       s3: S3
