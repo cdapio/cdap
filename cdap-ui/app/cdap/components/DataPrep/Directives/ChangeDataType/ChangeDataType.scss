@@ -12,21 +12,32 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 @import '../../../../styles/variables.scss';
 
-.quality-bar {
-  > span {
-    display: inline-block;
-    height: 5px;
-  }
+.dataprep-columns-action-dropdown {
+  .change-data-type-directive {
+    &.action-item {
+      .change-data-type-options {
+        padding: 0;
 
-  .filled {
-    background-color: $green-02;
-  }
+        .option {
+          padding: 5px 10px;
+          cursor: pointer;
+          line-height: 1.5;
+          font-size: 13px;
 
-  .empty {
-    background-color: $red-02;
+          &.disabled {
+            color: $grey-04;
+            cursor: not-allowed;
+          }
+
+          &:hover:not(.disabled) {
+            background-color: $grey-06;
+          }
+        }
+      }
+    }
   }
 }

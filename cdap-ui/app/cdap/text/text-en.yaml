@@ -321,6 +321,8 @@ features:
       noDirectives: No Directives
       noColumns: No Columns
     DataPrepTable:
+      DataType:
+        unknown: unknown
       copyToNewColumn:
         inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
         inputLabel: Name New Column
@@ -436,6 +438,17 @@ features:
           SUBTRACT: Subtract
           TAN: Tan
         title: Calculate
+      ChangeDataType:
+        Options:
+          boolean: Boolean
+          bytes: Bytes
+          double: Double
+          float: Float
+          integer: Integer
+          long: Long
+          short: Short
+          string: String
+        title: Change Data Type
       ColumnActions:
         label: Column Actions
         actions:

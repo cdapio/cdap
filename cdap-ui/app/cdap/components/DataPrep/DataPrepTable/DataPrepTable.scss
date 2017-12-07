@@ -13,10 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+@import '../../../styles/variables.scss';
+
 $th-bg-color: #bcbcbc;
 $warning-container-border-color: #cccccc;
 $selected-header-bg-color: #3498db;
-
 $border-and-selected-color: #dbdbdb;
 $header-bg-color: #eeeeee;
 $col_type_font_color: gray;
@@ -50,6 +52,9 @@ $col_type_font_color: gray;
         color: $col_type_font_color;
         font-weight: 400;
         font-size: 11px;
+        &.data-type-updated {
+          color: $green-02;
+        }
       }
       td {
         border: 1px solid $border-and-selected-color;

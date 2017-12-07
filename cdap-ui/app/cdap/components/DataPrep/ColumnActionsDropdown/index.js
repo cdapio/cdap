@@ -49,6 +49,7 @@ import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
 import CustomTransform from 'components/DataPrep/Directives/CustomTransform';
 import DefineVariableDirective from 'components/DataPrep/Directives/DefineVariable';
 import SetCounterDirective from 'components/DataPrep/Directives/SetCounter';
+import ChangeDataTypeDirective from 'components/DataPrep/Directives/ChangeDataType';
 
 import ee from 'event-emitter';
 
@@ -89,6 +90,11 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: SetCharacterEncoding,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: ChangeDataTypeDirective,
         requiredColCount: 1
       },
       {
