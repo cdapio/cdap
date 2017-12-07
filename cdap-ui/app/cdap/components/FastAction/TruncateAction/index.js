@@ -25,6 +25,7 @@ import ConfirmationModal from 'components/ConfirmationModal';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 import classnames from 'classnames';
+import { getType } from 'services/metadata-parser';
 
 export default class TruncateAction extends Component {
   constructor(props) {
@@ -103,7 +104,8 @@ export default class TruncateAction extends Component {
 
   render() {
     const actionLabel = T.translate('features.FastAction.truncateLabel');
-    const headerTitle = `${actionLabel} ${this.props.entity.type}`;
+    const type = getType(this.props.entity);
+    const headerTitle = `${actionLabel} ${type}`;
     const tooltipID = `${this.props.entity.uniqueId}-truncate`;
     let truncateActionClassNames = 'icon-cut';
     return (
