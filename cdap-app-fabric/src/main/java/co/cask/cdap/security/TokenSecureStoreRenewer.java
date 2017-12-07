@@ -58,6 +58,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreRenewer.class);
 
   private final YarnConfiguration yarnConf;
+  private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final SecureStore secureStore;
   private final boolean secureExplore;
@@ -68,6 +69,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
                           LocationFactory locationFactory,
                           SecureStore secureStore) {
     this.yarnConf = yarnConf;
+    this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     this.secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
@@ -119,7 +121,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       }
 
       if (secureExplore) {
-        HiveTokenUtils.obtainToken(refreshedCredentials);
+        HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
         JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       }
 

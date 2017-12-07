@@ -127,7 +127,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     // Update the container hConf
     hConf.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
-    hConf.set("hive.metastore.token.signature", HiveAuthFactory.HS2_CLIENT_TOKEN);
+    hConf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
 
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
