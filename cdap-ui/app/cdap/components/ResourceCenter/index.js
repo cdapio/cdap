@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,13 @@
  * the License.
  */
 
+import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from 'components/ResourceCenterEntity';
 import ResourceCenterPipelineEntity from 'components/ResourceCenterEntity/ResourceCenterPipelineEntity';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
 import AbstractWizard from 'components/AbstractWizard';
-import CardActionFeedback from 'components/CardActionFeedback';
 import T from 'i18n-react';
 import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
 
@@ -119,15 +119,11 @@ export default class ResourceCenter extends Component {
       ]
     };
   }
-  onError = (error) => {
-    this.setState({
-      error
-    });
-  };
   toggleWizard(wizardName) {
     this.setState({
       activeWizard: wizardName,
-      error: null
+      error: null,
+      extendedError: null
     });
   }
   closeWizard(wizardContainer) {
@@ -158,22 +154,12 @@ export default class ResourceCenter extends Component {
       />
     );
   }
-  renderError() {
-    if (!this.state.error) { return null; }
-
-    return (
-      <CardActionFeedback
-        type="DANGER"
-        message={this.state.error}
-      />
-    );
-  }
   render() {
     return (
       <div>
         <div className="cask-resource-center">
           <ResourceCenterPipelineEntity
-            onError={this.onError}
+            onError={this.props.onError}
           />
           {
             this.state
@@ -190,9 +176,12 @@ export default class ResourceCenter extends Component {
               ))
           }
         </div>
-        {this.renderError()}
         { this.getWizardToBeDisplayed() }
       </div>
     );
   }
 }
+
+ResourceCenter.propTypes = {
+  onError: PropTypes.func
+};

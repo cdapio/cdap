@@ -696,21 +696,7 @@ class HydratorPlusPlusTopPanelCtrl {
     }
 
     let uploadedFile = files[0];
-    if (uploadedFile.type !== 'application/json') {
-      this.myAlertOnValium.show({
-        type: 'danger',
-        content: 'There was a problem with the pipeline you were trying to upload: File should be in JSON format. Please upload a file with \'.json\' extension.'
-      });
-      return;
-    }
-
-    let reader = new FileReader();
-    reader.readAsText(uploadedFile, 'UTF-8');
-
-    reader.onload =  (evt) => {
-      let fileData = evt.target.result;
-      this.HydratorUpgradeService.validateAndUpgradeConfig(fileData);
-    };
+    this.HydratorUpgradeService.validateAndUpgradeConfigFile(uploadedFile);
   }
 
   _checkAndShowConfirmationModalOnDirtyState(proceedCb) {

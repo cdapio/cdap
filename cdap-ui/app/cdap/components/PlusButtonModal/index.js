@@ -15,15 +15,13 @@
  */
 
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
-import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import Market from 'components/Market';
 import ResourceCenter from 'components/ResourceCenter';
 import IconSVG from 'components/IconSVG';
+import CardActionFeedback from 'components/CardActionFeedback';
 import classnames from 'classnames';
-
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import T from 'i18n-react';
 
@@ -33,22 +31,17 @@ export default class PlusButtonModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      viewMode: this.props.mode
+      viewMode: this.props.mode,
+      error: null
     };
 
     this.closeHandler = this.closeHandler.bind(this);
   }
-  toggleView(tab) {
-    if (this.state.viewMode === tab) {
-      return;
-    }
-    this.setState({
-      viewMode: tab
-    });
-  }
   closeHandler() {
     this.setState({
-      viewMode: this.props.mode
+      viewMode: this.props.mode,
+      error: null,
+      extendedError: null
     });
     this.props.onCloseHandler();
   }
@@ -63,6 +56,25 @@ export default class PlusButtonModal extends Component {
       return view === 'resourcecenter' ? resourceCenterClass : marketIconClass;
     }
   }
+  onError = (error, extendedError) => {
+    this.setState({
+      error,
+      extendedError
+    });
+  };
+  renderError() {
+    if (!this.state.error) { return null; }
+
+    return (
+      <ModalFooter>
+        <CardActionFeedback
+          type="DANGER"
+          message={this.state.error}
+          extendedMessage={this.state.extendedError}
+        />
+      </ModalFooter>
+    );
+  }
   render() {
     const market = T.translate('commons.market');
     const resourceCenter = T.translate('commons.resource-center');
@@ -72,7 +84,8 @@ export default class PlusButtonModal extends Component {
         isOpen={this.props.isOpen}
         toggle={this.closeHandler.bind(this)}
         className={classnames("plus-button-modal", {
-          "cask-market": this.state.viewMode === 'marketplace'
+          "cask-market": this.state.viewMode === 'marketplace',
+          "add-entity-modal": this.state.viewMode === 'resourcecenter'
         })}
         size="lg"
         backdrop='static'
@@ -106,10 +119,17 @@ export default class PlusButtonModal extends Component {
             transitionLeaveTimeout={300}
           >
             {
-              this.state.viewMode === 'marketplace' ? <Market key="1"/> : <ResourceCenter key="2"/>
+              this.state.viewMode === 'marketplace' ?
+                <Market key="1"/>
+              :
+                <ResourceCenter
+                  key="2"
+                  onError={this.onError}
+                />
             }
           </ReactCSSTransitionGroup>
         </ModalBody>
+        { this.renderError() }
       </Modal>
     );
   }

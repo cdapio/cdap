@@ -39,6 +39,8 @@
  var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
  var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
  var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
+ var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
+ var GLOBALS = require('../cdap/services/global-constants').default;
 
  export {
   Store,
@@ -63,5 +65,7 @@
   LoadingIndicator,
   StatusAlertMessage,
   RulesEngineHome,
-  PipelineTriggersSidebars
+  PipelineTriggersSidebars,
+  PipelineErrorFactory,
+  GLOBALS
 };

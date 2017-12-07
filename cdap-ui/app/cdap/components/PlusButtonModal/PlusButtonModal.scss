@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,10 @@
 
   &.cask-market {
     height: 75vh;
+  }
+
+  &.add-entity-modal {
+    height: 80vh;
   }
 
   &.modal-dialog {
@@ -144,6 +148,11 @@
           }
         }
       }
+
+      .modal-footer {
+        padding: 0;
+        text-align: initial;
+      }
     }
   }
 
@@ -168,5 +177,18 @@
   .plus-button-modal-content-leave-active {
     opacity: 0.01;
     transition: opacity 300ms ease-in;
+  }
+}
+
+.plus-button-modal {
+  &.add-entity-modal {
+    &.modal-dialog {
+      .modal-content {
+        .modal-body {
+          max-height: 60vh;
+          overflow-y: hidden;
+        }
+      }
+    }
   }
 }

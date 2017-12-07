@@ -66,12 +66,13 @@ class HydratorPlusPlusStudioCtrl {
     }
 
     if ($stateParams.resourceCenterId) {
-      let inputFile = $window.localStorage.getItem($stateParams.resourceCenterId);
-      if (inputFile) {
-        HydratorUpgradeService.validateAndUpgradeConfig(inputFile);
-        $window.localStorage.removeItem($stateParams.resourceCenterId);
+      let jsonData = $window.localStorage.getItem($stateParams.resourceCenterId);
+      if (!jsonData) {
+        return;
       }
 
+      HydratorUpgradeService.openUpgradeModal(jsonData);
+      $window.localStorage.removeItem($stateParams.resourceCenterId);
     }
 
     function customConfirm(message) {

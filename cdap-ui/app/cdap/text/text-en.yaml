@@ -1542,8 +1542,9 @@ features:
       actionbtn0: Create
       actionbtn1: Import
       description: A pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
+      errorLabel: "There was a problem with the pipeline you were trying to upload"
       label: Pipeline
-      nonJSONError: "There was a problem with the pipeline you were trying to upload: File should be in JSON format. Please upload a file with '.json' extension."
+      nonJSONError: "File should be in JSON format. Please upload a file with '.json' extension."
     Library:
       actionbtn0: Upload
       description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).

@@ -240,28 +240,42 @@ class HydratorUpgradeService {
     return configClone;
   }
 
-  validateAndUpgradeConfig(fileData) {
-    var jsonData;
-    try {
-      jsonData = JSON.parse(fileData);
-    } catch (e) {
+  validateAndUpgradeConfigFile(configFile) {
+    if (configFile.type !== 'application/json') {
       this.myAlertOnValium.show({
         type: 'danger',
-        content: 'Syntax Error. Ill-formed pipeline configuration.'
+        content: 'File should be in JSON format. Please upload a file with \'.json\' extension.'
       });
       return;
     }
 
-    let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+    let reader = new FileReader();
+    reader.readAsText(configFile, 'UTF-8');
 
-    if (isNotValid) {
-      this.myAlertOnValium.show({
-        type: 'danger',
-        content: isNotValid
-      });
-      return;
+    reader.onload =  (evt) => {
+      let fileDataString = evt.target.result;
+      let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(fileDataString);
+
+      if (isNotValid) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: isNotValid
+        });
+        return;
+      }
+
+      this.openUpgradeModal(fileDataString);
+    };
+  }
+
+  openUpgradeModal(jsonData) {
+    if (typeof jsonData === 'string') {
+      try {
+        jsonData = JSON.parse(jsonData);
+      } catch (e) {
+        return;
+      }
     }
-
     this.$uibModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/pipeline-upgrade-modal.html',
       size: 'lg',
