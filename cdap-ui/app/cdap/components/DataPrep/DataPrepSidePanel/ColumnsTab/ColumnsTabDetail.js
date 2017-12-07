@@ -26,8 +26,7 @@ export default function ColumnsTabDetail({columnInfo}) {
   let headers = Object.keys(types);
   return (
     <tr className="column-tab-details">
-      <td />
-      <td colSpan="4">
+      <td colSpan="6">
         <table className="table statistics-table">
           <thead>
             <tr>
@@ -54,7 +53,6 @@ export default function ColumnsTabDetail({columnInfo}) {
           </tbody>
         </table>
       </td>
-      <td />
     </tr>
   );
 }
