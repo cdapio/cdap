@@ -22,7 +22,7 @@ import Wizard from 'components/Wizard';
 import UploadFile from 'services/upload-file';
 import NamespaceStore from 'services/NamespaceStore';
 import {setActiveRulebook, getRuleBooks, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import ImportRulebookWizardConfig from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookWizardConfig';
 import ImportRulebookStore from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
 import T from 'i18n-react';
@@ -86,7 +86,7 @@ export default class ImportRulebookWizard extends Component {
       fileContents: data,
       headers
     })
-      .flatMap(
+      .mergeMap(
         (res) => {
           let response;
           let activeRulebook;
@@ -100,8 +100,8 @@ export default class ImportRulebookWizard extends Component {
           getRuleBooks();
           getRules();
           this.toggleWizard();
-          return Rx.Observable.create((obs) => {
-            obs.onNext();
+          return Observable.create((obs) => {
+            obs.next();
           });
         }
       );

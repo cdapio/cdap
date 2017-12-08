@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import {isDescendant} from 'services/helpers';
 import T from 'i18n-react';
 
@@ -35,7 +35,7 @@ export default class RulebooksPopover extends Component {
   };
 
   componentDidMount() {
-    this.documentClick$ = Rx.Observable.fromEvent(document, 'click')
+    this.documentClick$ = Observable.fromEvent(document, 'click')
     .subscribe((e) => {
       if (!this.popover) {
         return;

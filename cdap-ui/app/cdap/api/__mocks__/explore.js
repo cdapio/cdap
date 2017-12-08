@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 const MyExploreApi = {
   tables: [],
@@ -24,16 +24,16 @@ MyExploreApi.__setTables = function(tables) {
   this.tables = tables;
 };
 MyExploreApi.fetchTables = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.tables);
+    subject.next(this.tables);
   });
   return subject;
 };
 MyExploreApi.fetchQueries = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.queries);
+    subject.next(this.queries);
   });
   return subject;
 };

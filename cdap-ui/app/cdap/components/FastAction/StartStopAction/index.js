@@ -93,7 +93,7 @@ export default class StartStopAction extends Component {
   }
 
   componentWillUnmount() {
-    this.statusPoll$.dispose();
+    this.statusPoll$.unsubscribe();
   }
 
   doStartStop() {

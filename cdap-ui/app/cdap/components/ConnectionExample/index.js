@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import Datasource from '../../services/datasource';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import {MyNamespaceApi} from '../../api/namespace';
 
 export default class ConnectionExample extends Component {
@@ -68,7 +68,7 @@ export default class ConnectionExample extends Component {
         });
       });
 
-    let combinedData = Rx.Observable.combineLatest(streams, datasets);
+    let combinedData = Observable.combineLatest(streams, datasets);
     this.combination = combinedData.subscribe(
       (response) => {
         let combined = response[0].concat(response[1]);
@@ -101,8 +101,8 @@ export default class ConnectionExample extends Component {
   }
 
   stopPoll() {
-    // To stop the poll, just dispose the subscription
-    this.combination.dispose();
+    // To stop the poll, just unsubscribe the subscription
+    this.combination.unsubscribe();
     this.setState({isPolling: false});
   }
 

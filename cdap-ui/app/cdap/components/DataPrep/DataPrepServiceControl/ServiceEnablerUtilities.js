@@ -19,9 +19,7 @@ import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {MyArtifactApi} from 'api/artifact';
 import Version from 'services/VersionRange/Version';
 import T from 'i18n-react';
-import Rx from 'rx';
-
-
+import {Subject} from 'rxjs/Subject';
 
 export default function enableDataPreparationService({
   shouldStopService,
@@ -48,7 +46,7 @@ export default function enableDataPreparationService({
         });
 
         if (appArtifact.length === 0) {
-          observer.onError({
+          observer.error({
             error: T.translate('features.ServiceEnableUtility.serviceNotFound', {artifactName})
           });
           return;
@@ -64,7 +62,7 @@ export default function enableDataPreparationService({
           let minimumVersion = new Version(MIN_VERSION);
 
           if (minimumVersion.compareTo(new Version(highestVersion)) > 0) {
-            observer.onError({
+            observer.error({
               error: T.translate(`${i18nPrefix}.minimumVersionError`, {
                 highestVersion,
                 minimumVersion: MIN_VERSION
@@ -117,7 +115,7 @@ export default function enableDataPreparationService({
       .subscribe(() => {
         startService(observer);
       }, (err) => {
-        observer.onError({
+        observer.error({
           error: 'Failed to enable data preparation',
           extendedMessage: err.data || err
         });
@@ -131,7 +129,7 @@ export default function enableDataPreparationService({
       .subscribe(() => {
         pollServiceStatus(observer);
       }, (err) => {
-        observer.onError({
+        observer.error({
           error: 'Failed to enable data preparation',
           extendedMessage: err.data || err
         });
@@ -144,11 +142,11 @@ export default function enableDataPreparationService({
     let servicePoll = api.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'RUNNING') {
-          servicePoll.dispose();
+          servicePoll.unsubscribe();
           pingService(observer);
         }
       }, (err) => {
-        observer.onError({
+        observer.error({
           error: 'Failed to enable data preparation',
           extendedMessage: err.data || err
         });
@@ -161,7 +159,7 @@ export default function enableDataPreparationService({
     function ping() {
       api.ping({ namespace })
         .subscribe(() => {
-          observer.onNext();
+          observer.next();
         }, (err) => {
           if (err.statusCode === 503) {
             setTimeout(() => {
@@ -170,7 +168,7 @@ export default function enableDataPreparationService({
             return;
           }
 
-          observer.onError({
+          observer.error({
             error: 'Error while communicating with Data Preparation Service',
             extendedMessage: err.data || err
           });
@@ -187,7 +185,7 @@ export default function enableDataPreparationService({
       .subscribe(() => {
         pollStopServiceStatus(observer);
       }, (err) => {
-        observer.onError({
+        observer.error({
           error: 'Failed to stop Data Preparation service',
           extendedMessage: err.data || err
         });
@@ -203,10 +201,10 @@ export default function enableDataPreparationService({
         if (res.status === 'STOPPED') {
           enableService(observer);
 
-          servicePoll.dispose();
+          servicePoll.unsubscribe();
         }
       }, (err) => {
-        observer.onError({
+        observer.error({
           error: 'Failed to stop Data Preparation service',
           extendedMessage: err.data || err
         });
@@ -214,7 +212,7 @@ export default function enableDataPreparationService({
   }
 
 
-  let subject = new Rx.Subject();
+  let subject = new Subject();
 
   if (shouldStopService) {
     stopService(subject);

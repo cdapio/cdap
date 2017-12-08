@@ -14,7 +14,7 @@
  * the License.
 */
 
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 const MyAppApi = {
   __app: {
@@ -26,17 +26,17 @@ MyAppApi.__setApp = function(app) {
   this.__app = app;
 };
 MyAppApi.get = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.__app);
+    subject.next(this.__app);
   });
   return subject;
 };
 
 MyAppApi.batchStatus = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.__batchStatusStats);
+    subject.next(this.__batchStatusStats);
   });
   return subject;
 };

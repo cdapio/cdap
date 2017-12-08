@@ -83,7 +83,7 @@ export default class Tags extends Component {
     Mousetrap.unbind('return');
     Mousetrap.unbind('escape');
 
-    this.subscriptions.map(subscriber => subscriber.dispose());
+    this.subscriptions.map(subscriber => subscriber.unsubscribe());
   }
 
   toggleInputField() {

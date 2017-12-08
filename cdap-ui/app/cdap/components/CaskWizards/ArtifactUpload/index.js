@@ -60,7 +60,7 @@ export default class ArtifactUploadWizard extends Component {
     }
     return ArtifactUploadActionCreator
       .uploadArtifact()
-      .flatMap((res) => {
+      .mergeMap((res) => {
         if (this.props.displayCTA === false) {
           this.eventEmitter.emit(globalEvents.CLOSEMARKET);
         }

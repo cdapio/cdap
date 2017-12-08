@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import {MyMetricApi} from 'api/metric';
 import T from 'i18n-react';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import NodeMetricsGraph, {isDataSeriesHaveSingleDatapoint} from 'components/PipelineNodeGraphs/NodeMetricsGraph';
 import isNil from 'lodash/isNil';
@@ -338,7 +338,7 @@ export default class PipelineNodeMetricsGraph extends Component {
     };
     MyMetricApi
       .query(null, postBody)
-      .flatMap(
+      .mergeMap(
         res => {
           if (res.qid.series.length === 0) {
             postBody.qid.timeRange = {'aggregate': true};
@@ -348,8 +348,8 @@ export default class PipelineNodeMetricsGraph extends Component {
             ...this.filterData(res),
             loading: false
           });
-          return Rx.Observable.create((observer) => {
-            observer.onNext(false);
+          return Observable.create((observer) => {
+            observer.next(false);
           });
         }
       ).subscribe(

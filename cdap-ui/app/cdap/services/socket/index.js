@@ -15,12 +15,12 @@
  */
 
 import SockJS from 'sockjs-client';
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 class Socket {
   constructor() {
     this.buffer = [];
-    this.observable = new Rx.Subject();
+    this.observable = new Subject();
     this.timeout = null;
 
     this.init();
@@ -49,7 +49,7 @@ class Socket {
           console.log(data.response);
           console.groupEnd();
         }
-        this.observable.onNext(data);
+        this.observable.next(data);
       } catch (e) {
         console.log('error', e);
       }

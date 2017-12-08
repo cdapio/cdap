@@ -35,7 +35,7 @@ import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import cloneDeep from 'lodash/cloneDeep';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import CardActionFeedback from 'components/CardActionFeedback';
 
 require('./CreateDatasetBtn.scss');
@@ -365,7 +365,7 @@ export default class CreateDatasetBtn extends Component {
 
     // Get list of pipelines to check if the pipeline is already published
     MyAppApi.list({namespace})
-      .flatMap(res => {
+      .mergeMap(res => {
         let appAlreadyDeployed = res.find(app => app.id === pipelineName);
 
         if (!appAlreadyDeployed) {
@@ -382,11 +382,11 @@ export default class CreateDatasetBtn extends Component {
           return MyAppApi.deployApp(params, pipelineconfig);
         }
         // If it already exists just move to next step.
-        return Rx.Observable.create( observer => {
+        return Observable.create( observer => {
           observer.next();
         });
       })
-      .flatMap(
+      .mergeMap(
         () => {
           let copyingSteps = [...this.state.copyingSteps];
           copyingSteps[0].status = 'success';
@@ -407,7 +407,7 @@ export default class CreateDatasetBtn extends Component {
           }, macroMap);
         }
       )
-      .flatMap(
+      .mergeMap(
         () => {
           this.setState({
             copyTaskStarted: true
@@ -434,12 +434,12 @@ export default class CreateDatasetBtn extends Component {
                 }
               );
           };
-          return Rx.Observable.create((observer) => {
+          return Observable.create((observer) => {
             let successCallback = () => {
-              observer.onNext();
+              observer.next();
             };
             let errorCallback = () => {
-              observer.onError('Copy task timed out after 2 mins. Please check logs for more information.');
+              observer.error('Copy task timed out after 2 mins. Please check logs for more information.');
             };
             getDataset(successCallback, errorCallback, count);
           });

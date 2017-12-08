@@ -51,12 +51,12 @@ export default class ProgramsTab extends Component {
         entity: nextProps.entity,
         runningPrograms: []
       });
-      this.statusSubscriptions.forEach(sub => sub.dispose());
+      this.statusSubscriptions.forEach(sub => sub.unsubscribe());
       this.setRunningPrograms();
     }
   }
   componentWillUnmount() {
-    this.statusSubscriptions.forEach(sub => sub.dispose());
+    this.statusSubscriptions.forEach(sub => sub.unsubscribe());
   }
   setRunningPrograms() {
     let namespace = NamespaceStore.getState().selectedNamespace;

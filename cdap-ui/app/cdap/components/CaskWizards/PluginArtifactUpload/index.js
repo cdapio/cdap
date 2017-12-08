@@ -43,7 +43,7 @@ export default class PluginArtifactUploadWizard extends Component {
     this.buildSuccessInfo();
     return ArtifactUploadActionCreator
       .uploadArtifact()
-      .flatMap(() => {
+      .mergeMap(() => {
         this.props.onSubmit();
         return ArtifactUploadActionCreator.uploadConfigurationJson();
       });

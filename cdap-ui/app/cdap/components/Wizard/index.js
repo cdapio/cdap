@@ -16,7 +16,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import findIndex from 'lodash/findIndex';
 import first from 'lodash/head';
 import shortid from 'shortid';
@@ -158,7 +158,7 @@ export default class Wizard extends Component {
   submitForm() {
     let onSubmitReturn = this.props.onSubmit(this.props.store);
     this.setState({loading: true});
-    if (onSubmitReturn instanceof Rx.Observable) {
+    if (onSubmitReturn instanceof Observable) {
       onSubmitReturn
       .subscribe(
         () => {
@@ -212,7 +212,7 @@ export default class Wizard extends Component {
     if (this.state.callToActionInfo.buttonOnClick) {
       this.setState({loadingCTA: true});
       let buttonClickReturn = this.state.callToActionInfo.buttonOnClick();
-      if (buttonClickReturn instanceof Rx.Observable) {
+      if (buttonClickReturn instanceof Observable) {
         buttonClickReturn
         .subscribe(
           () => {

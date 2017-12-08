@@ -22,7 +22,7 @@ import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDep
 import NamespaceStore from 'services/NamespaceStore';
 import {constructCdapUrl} from 'services/cdap-url-builder';
 import 'whatwg-fetch';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import cookie from 'react-cookie';
 import T from 'i18n-react';
@@ -113,7 +113,7 @@ export default class OneStepDeployPlugin extends Component {
     cdapPath = encodeURIComponent(cdapPath);
 
 
-    return Rx.Observable.create((observer) => {
+    return Observable.create((observer) => {
       MyMarketApi.getSampleData({
         entityName: name,
         entityVersion: version,
@@ -149,7 +149,7 @@ export default class OneStepDeployPlugin extends Component {
             if (res.status > 299) {
               res.text()
                 .then((err) => {
-                  observer.onError(err);
+                  observer.error(err);
                 });
             } else {
               MyArtifactApi
@@ -165,15 +165,15 @@ export default class OneStepDeployPlugin extends Component {
                     successInfo = this.props.buildSuccessInfo();
                   }
                   this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
-                  observer.onNext(successInfo);
-                  observer.onCompleted();
+                  observer.next(successInfo);
+                  observer.complete();
                 }, (error) => {
-                  observer.onError(error);
+                  observer.error(error);
                 });
             }
           })
           .catch((err) => {
-            observer.onError(err);
+            observer.error(err);
           });
 
       });
@@ -193,8 +193,6 @@ export default class OneStepDeployPlugin extends Component {
     );
   }
 }
-
-
 
 OneStepDeployPlugin.propTypes = {
   isOpen: PropTypes.bool,

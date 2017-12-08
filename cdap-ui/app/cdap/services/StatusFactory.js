@@ -20,7 +20,7 @@ import LoadingIndicatorStore, {
 import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMessageStore';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import SystemServicesStore, {pollSystemServices} from 'services/SystemServicesStore';
 
 let pollingObservable;
@@ -121,14 +121,14 @@ const startPolling = () => {
   pollSystemServices();
   stopPolling();
   startServicePolling();
-  pollingObservable = Rx.Observable
+  pollingObservable = Observable
     .interval(2000)
-    .flatMap(() =>
-      Rx.Observable
+    .mergeMap(() =>
+      Observable
         .fromPromise(fetch('/backendstatus', getRequestInfo()))
         .catch(error => {
           dispatchNodeServerDown();
-          return Rx.Observable.of(`Error: ${error}`);
+          return Observable.of(`Error: ${error}`);
         })
     )
     .subscribe(parseAndDispatchBackendStatus, dispatchNodeServerDown);
@@ -144,7 +144,7 @@ const stopServicePolling = () => {
 const stopPolling = () => {
   stopServicePolling();
   if (pollingObservable) {
-    pollingObservable.dispose();
+    pollingObservable.unsubscribe();
   }
 };
 

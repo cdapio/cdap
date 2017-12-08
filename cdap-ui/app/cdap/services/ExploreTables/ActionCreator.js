@@ -15,15 +15,14 @@
 */
 import myExploreApi from 'api/explore';
 import {MyDatasetApi} from 'api/dataset';
-
 import ExploreTablesActions from 'services/ExploreTables/ExploreTablesActions';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 
 const fetchTables = (namespace) => {
   return (dispatch) => {
     let exploreTables$ =  myExploreApi.fetchTables({ namespace });
     let datasetsSpec$ = MyDatasetApi.list({ namespace });
-    return Rx.Observable
+    return Observable
       .combineLatest(
         exploreTables$,
         datasetsSpec$

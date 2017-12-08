@@ -58,7 +58,7 @@ export default class LibraryUploadWizard extends Component {
     }
     return ArtifactUploadActionCreator
       .uploadArtifact()
-      .flatMap((res) => {
+      .mergeMap((res) => {
         this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
         return res; // needs to return something
     });

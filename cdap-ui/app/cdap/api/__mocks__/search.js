@@ -14,18 +14,18 @@
  * the License.
 */
 
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 
 const MySearchApi = {};
 
 MySearchApi.search = function () {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
     if (this.__isError) {
-      subject.onError(this.__searchResults);
+      subject.error(this.__searchResults);
       return;
     }
-    subject.onNext(this.__searchResults);
+    subject.next(this.__searchResults);
   });
   return subject;
 };

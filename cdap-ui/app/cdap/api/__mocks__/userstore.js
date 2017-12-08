@@ -14,7 +14,7 @@
  * the License.
 */
 
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 const MyUserStoreApi = {};
 
 function setUserStore(__userStore) {
@@ -22,9 +22,9 @@ function setUserStore(__userStore) {
 }
 
 MyUserStoreApi.get  = function() {
-  let subject = new Rx.Subject();
+  let subject = new Subject();
   setTimeout(() => {
-    subject.onNext(this.__userStore);
+    subject.next(this.__userStore);
   });
   return subject;
 };

@@ -111,7 +111,7 @@ export default class HistoryTab extends Component {
   componentWillUnmount() {
     this.pollSubscriptions
       .forEach(subscription => {
-        subscription.dispose();
+        subscription.unsubscribe();
       });
   }
 

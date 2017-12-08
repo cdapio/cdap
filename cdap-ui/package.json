@@ -2,6 +2,7 @@
   "name": "cdap-ui",
   "version": "5.0.0-SNAPSHOT",
   "description": "Front-end for CDAP",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "node ./server.js",
     "cdap-prod-build": "NODE_ENV=production webpack",
@@ -144,8 +145,7 @@
     "redux-thunk": "2.0.1",
     "redux-undo": "1.0.0-beta9-9-6",
     "request": "2.83.0",
-    "rx": "4.1.0",
-    "rx-dom": "7.0.3",
+    "rxjs": "5.5.2",
     "serve-favicon": "2.3.0",
     "shortid": "2.2.6",
     "sockjs": "0.3.19",

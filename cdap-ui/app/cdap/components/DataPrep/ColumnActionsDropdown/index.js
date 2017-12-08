@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import {isDescendant} from 'services/helpers';
 import {Popover, PopoverContent} from 'reactstrap';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import shortid from 'shortid';
 import classnames from 'classnames';
 import Mousetrap from 'mousetrap';
@@ -226,8 +226,8 @@ export default class ColumnActionsDropdown extends Component {
 
   componentWillUnmount() {
     this.eventEmitter.off('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
-    if (this.documentClick$ && this.documentClick$.dispose) {
-      this.documentClick$.dispose();
+    if (this.documentClick$ && this.documentClick$.unsubscribe) {
+      this.documentClick$.unsubscribe();
     }
     this.sub();
     Mousetrap.unbind('esc');
@@ -253,7 +253,7 @@ export default class ColumnActionsDropdown extends Component {
       if (!element && this.singleWorkspaceMode) {
         element = document.getElementsByClassName('wrangler-modal')[0];
       }
-      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
+      this.documentClick$ = Observable.fromEvent(element, 'click')
         .subscribe((e) => {
           if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
             return;
@@ -265,7 +265,7 @@ export default class ColumnActionsDropdown extends Component {
       Mousetrap.bind('esc', this.toggleDropdown);
     } else {
       if (this.documentClick$) {
-        this.documentClick$.dispose();
+        this.documentClick$.unsubscribe();
       }
       Mousetrap.unbind('esc');
     }

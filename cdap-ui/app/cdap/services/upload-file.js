@@ -14,9 +14,9 @@
  * the License.
  */
 
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 const UploadFile = ({url, fileContents, headers}) => {
-  let observerable$ = Rx.Observable.create(function(observer) {
+  let observerable$ = Observable.create(function(observer) {
     let xhr = new window.XMLHttpRequest();
     let path;
     xhr.upload.addEventListener('progress', function (e) {
@@ -34,9 +34,9 @@ const UploadFile = ({url, fileContents, headers}) => {
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
         if (xhr.status > 399) {
-          observer.onError(xhr.response);
+          observer.error(xhr.response);
         } else {
-          observer.onNext(xhr.response);
+          observer.next(xhr.response);
         }
       }
     };

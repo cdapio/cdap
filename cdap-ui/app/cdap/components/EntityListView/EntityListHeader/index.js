@@ -21,7 +21,7 @@ import T from 'i18n-react';
 import debounce from 'lodash/debounce';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import {isDescendant} from 'services/helpers';
-import Rx from 'rx';
+import {Observable} from 'rxjs/Observable';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import {DEFAULT_SEARCH_SORT_OPTIONS, DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
@@ -61,8 +61,8 @@ export default class EntityListHeader extends Component {
     });
   }
   componentWillUnmount() {
-    if (this.documentClick$ && this.documentClick$.dispose) {
-      this.documentClick$.dispose();
+    if (this.documentClick$ && this.documentClick$.unsubscribe) {
+      this.documentClick$.unsubscribe();
     }
     if (this.searchStoreSubscription) {
       this.searchStoreSubscription();
@@ -77,7 +77,7 @@ export default class EntityListHeader extends Component {
     if (newState) {
       let element = document.getElementById('app-container');
 
-      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
+      this.documentClick$ = Observable.fromEvent(element, 'click')
         .subscribe((e) => {
           if (isDescendant(this.dropdownButtonRef, e.target) || !this.state.isFilterExpanded) {
             return;
@@ -86,7 +86,7 @@ export default class EntityListHeader extends Component {
           this.handleFilterToggle();
         });
     } else {
-      this.documentClick$.dispose();
+      this.documentClick$.unsubscribe();
     }
   }
 

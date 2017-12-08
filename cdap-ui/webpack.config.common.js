@@ -110,8 +110,6 @@ var webpackConfig = {
       'reactstrap',
       'i18n-react',
       'sockjs-client',
-      'rx',
-      'rx-dom',
       'react-dropzone',
       'react-redux',
       'svg4everybody',

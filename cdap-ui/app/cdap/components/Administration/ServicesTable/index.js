@@ -189,7 +189,7 @@ export default class ServicesTable extends Component {
 
     let serviceTimeout = setTimeout(() => setDefaultStatus(serviceid), WAITTIME_FOR_ALTERNATE_STATUS);
 
-    this.servicePolls.forEach(servicePoll => servicePoll.dispose());
+    this.servicePolls.forEach(servicePoll => servicePoll.unsubscribe());
     this.servicePolls.push(
       MyServiceProviderApi
         .pollServiceStatus({serviceid})
@@ -239,7 +239,7 @@ export default class ServicesTable extends Component {
         this.setState({
           services
         });
-        this.servicePolls.forEach(servicePoll => servicePoll.dispose());
+        this.servicePolls.forEach(servicePoll => servicePoll.unsubscribe());
       }
     });
   }

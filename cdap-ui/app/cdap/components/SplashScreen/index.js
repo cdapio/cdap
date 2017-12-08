@@ -72,7 +72,7 @@ class SplashScreen extends Component {
     cookie.save('show-splash-screen-for-session', true, {path: '/'});
     MyUserStoreApi
       .get()
-      .flatMap(res => {
+      .mergeMap(res => {
         res.property['user-choice-hide-welcome-message'] = this.doNotShowCheck;
         return MyUserStoreApi.set({}, res.property);
       })

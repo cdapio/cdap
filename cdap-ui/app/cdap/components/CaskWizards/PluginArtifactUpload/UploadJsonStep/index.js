@@ -22,7 +22,6 @@ import PluginArtifactUploadStore from 'services/WizardStores/PluginArtifactUploa
 import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadActions';
 import FileDnD from 'components/FileDnD';
 import T from 'i18n-react';
-import Rx from 'rx';
 
 require('./UploadJsonStep.scss');
 
@@ -35,18 +34,18 @@ const mapStateWithDNDFileProps = (state) => {
 const mapDispatchWithDNDFileProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
-      Rx.DOM
-        .fromReader(e[0])
-        .asText()
-        .subscribe((contents) => {
-          dispatch({
-            type: PluginArtifactUploadActions.setJson,
-            payload: {
-              json: contents,
-              jsonFile: e[0]
-            }
-          });
+      let reader = new FileReader();
+      reader.onload = (evt) => {
+        dispatch({
+          type: PluginArtifactUploadActions.setJson,
+          payload: {
+            json: evt.target.result,
+            jsonFile: e[0]
+          }
         });
+      };
+
+      reader.readAsText(e[0], 'UTF-8');
     }
   };
 };

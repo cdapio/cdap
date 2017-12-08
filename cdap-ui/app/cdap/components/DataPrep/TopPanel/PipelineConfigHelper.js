@@ -23,7 +23,7 @@ import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers'
 import {objectQuery} from 'services/helpers';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import T from 'i18n-react';
-import Rx from 'rx';
+import {Subject} from 'rxjs/Subject';
 import find from 'lodash/find';
 
 export default function GetPipelineConfig() {
@@ -31,7 +31,7 @@ export default function GetPipelineConfig() {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   return MyDataPrepApi.getInfo({ namespace })
-    .flatMap((res) => {
+    .mergeMap((res) => {
       if (res.statusCode === 404) {
         console.log(`can't find method; use latest wrangler-transform`);
         return constructProperties(workspaceInfo);
@@ -297,7 +297,7 @@ function constructGCSSource(artifactsList, gcsInfo) {
 }
 
 function constructProperties(workspaceInfo, pluginVersion) {
-  let observable = new Rx.Subject();
+  let observable = new Subject();
   let namespace = NamespaceStore.getState().selectedNamespace;
   let state = DataPrepStore.getState().dataprep;
   let workspaceId = state.workspaceId;
@@ -389,7 +389,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
       try {
         wranglerArtifact = findWranglerArtifacts(res[0], pluginVersion);
       } catch (e) {
-        observable.onError(e);
+        observable.error(e);
       }
 
       let tempSchema = {
@@ -410,7 +410,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
       try {
         getParsedSchemaForDataPrep(tempSchema);
       } catch (e) {
-        observable.onError(objectQuery(e, 'message'));
+        observable.error(objectQuery(e, 'message'));
       }
 
       let wranglerStage = {
@@ -444,7 +444,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
       }
 
       if (typeof sourceConfigs === 'string') {
-        observable.onError(sourceConfigs);
+        observable.error(sourceConfigs);
         return;
       }
       if (sourceConfigs) {
@@ -486,13 +486,13 @@ function constructProperties(workspaceInfo, pluginVersion) {
         }
       };
 
-      observable.onNext({realtimeConfig, batchConfig});
+      observable.next({realtimeConfig, batchConfig});
 
     }, (err) => {
-      observable.onError(objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'));
+      observable.error(objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'));
     });
   } catch (e) {
-    observable.onError(objectQuery(e, 'message') || e);
+    observable.error(objectQuery(e, 'message') || e);
   }
   return observable;
 }
