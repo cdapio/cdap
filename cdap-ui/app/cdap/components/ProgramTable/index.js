@@ -26,6 +26,7 @@ import EntityIconMap from 'services/entity-icon-map';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
 import moment from 'moment';
+import StatusMapper from 'services/StatusMapper';
 require('./ProgramTable.scss');
 
 export default class ProgramTable extends Component {
@@ -116,7 +117,7 @@ export default class ProgramTable extends Component {
                 </td>
                 <td className={statusClass}>
                   {
-                    !isEmpty(program.status) ? program.status : 'n/a'
+                    !isEmpty(program.status) ? StatusMapper.lookupDisplayStatus(program.status) : 'n/a'
                   }
                 </td>
                 <td>

@@ -37,6 +37,7 @@ import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import isEqual from 'lodash/isEqual';
 import isNil from 'lodash/isNil';
+import StatusMapper from 'services/StatusMapper';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -264,7 +265,7 @@ export default class RunsHistoryGraph extends Component {
                       <span className={classnames({
                         'text-danger': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(popOverData.status) !== -1,
                         'text-success': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(popOverData.status) === -1
-                      })}>{popOverData.status}</span>
+                      })}>{StatusMapper.lookupDisplayStatus(popOverData.status)}</span>
                     </div>
                   </div>
                   {
@@ -327,7 +328,7 @@ export default class RunsHistoryGraph extends Component {
                       'text-danger': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(run.status) !== -1,
                       'text-success': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(run.status) === -1
                     })}>
-                      {run.status}
+                      {StatusMapper.lookupDisplayStatus(run.status)}
                     </span>
                   </td>
                   <td> {startTime}</td>

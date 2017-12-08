@@ -14,35 +14,36 @@
  * the License.
  */
 
- import T from 'i18n-react';
- T.setTexts(require('../cdap/text/text-en.yaml'));
- var Store = require('../cdap/services/NamespaceStore').default;
- var Header = require('../cdap/components/Header').default;
- var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
- var DataPrepHome = require('../cdap/components/DataPrepHome').default;
- var DataPrepHelper = require('../cdap/components/DataPrep/helper');
- var globalEvents = require('../cdap/services/global-events').default;
- var ee = require('event-emitter');
- var VersionStore = require('../cdap/services/VersionStore').default;
- var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
- var Version = require('../cdap/services/VersionRange/Version').default;
- var VersionRange = require('../cdap/services/VersionRange').default;
- var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
- var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
- var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
- var PipelineSummary = require('../cdap/components/PipelineSummary').default;
- var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph').default;
- var CDAPHelpers = require('../cdap/services/helpers');
- var RulesEngineHome = require('../cdap/components/RulesEngineHome').default;
- var Mousetrap = require('mousetrap');
- var StatusFactory = require('../cdap/services/StatusFactory').default;
- var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
- var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
- var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
- var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
- var GLOBALS = require('../cdap/services/global-constants').default;
+import T from 'i18n-react';
+T.setTexts(require('../cdap/text/text-en.yaml'));
+var Store = require('../cdap/services/NamespaceStore').default;
+var Header = require('../cdap/components/Header').default;
+var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
+var DataPrepHome = require('../cdap/components/DataPrepHome').default;
+var DataPrepHelper = require('../cdap/components/DataPrep/helper');
+var globalEvents = require('../cdap/services/global-events').default;
+var ee = require('event-emitter');
+var VersionStore = require('../cdap/services/VersionStore').default;
+var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
+var Version = require('../cdap/services/VersionRange/Version').default;
+var VersionRange = require('../cdap/services/VersionRange').default;
+var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
+var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
+var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
+var PipelineSummary = require('../cdap/components/PipelineSummary').default;
+var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph').default;
+var CDAPHelpers = require('../cdap/services/helpers');
+var RulesEngineHome = require('../cdap/components/RulesEngineHome').default;
+var Mousetrap = require('mousetrap');
+var StatusFactory = require('../cdap/services/StatusFactory').default;
+var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
+var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
+var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
+var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
+var GLOBALS = require('../cdap/services/global-constants').default;
+var StatusMapper = require('../cdap/services/StatusMapper').default;
 
- export {
+export {
   Store,
   Header,
   DataPrepHome,
@@ -67,5 +68,6 @@
   RulesEngineHome,
   PipelineTriggersSidebars,
   PipelineErrorFactory,
-  GLOBALS
+  GLOBALS,
+  StatusMapper
 };
