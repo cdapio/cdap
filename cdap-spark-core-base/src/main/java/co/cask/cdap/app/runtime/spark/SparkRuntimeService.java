@@ -517,6 +517,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       configs.put("spark.local.dir", localDir.getAbsolutePath());
     }
 
+    // Add the spark listener for CDAP
+    prependConfig(configs, "spark.extraListeners", DelegatingSparkListener.class.getName(), ",");
+
     configs.put("spark.metrics.conf", metricsConfPath);
     SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
 

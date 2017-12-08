@@ -16,6 +16,10 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+
+import java.util.Arrays;
+
 /**
  * This abstract class provides extra features at configure time to {@link Spark} program through the
  * {@link ExtendedSparkConfigurer} provided by the {@link #getConfigurer()} method.
@@ -35,5 +39,19 @@ public abstract class AbstractExtendedSpark extends AbstractSpark {
           ", but get " + configurer.getClass().getName() + " instead.");
     }
     return (ExtendedSparkConfigurer) configurer;
+  }
+
+  /**
+   * Adds a list of {@link SparkHttpServiceHandler}s to runs in the Spark driver.
+   */
+  protected void addHandlers(SparkHttpServiceHandler...handlers) {
+    addHandlers(Arrays.asList(handlers));
+  }
+
+  /**
+   * Adds a list of {@link SparkHttpServiceHandler}s to runs in the Spark driver.
+   */
+  protected void addHandlers(Iterable<? extends SparkHttpServiceHandler> handlers) {
+    getConfigurer().addHandlers(handlers);
   }
 }

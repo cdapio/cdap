@@ -16,13 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.BodyConsumer;
 import co.cask.http.BodyProducer;
@@ -45,11 +42,10 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
   private final DelayedHttpServiceResponder responder;
   private final HttpContentConsumer delegate;
-  private final Transactional transactional;
-  private final ClassLoader programContextClassLoader;
+  private final ServiceTaskExecutor taskExecutor;
   private final Cancellable contextReleaser;
-  private final TransactionControl onFinishTxControl;
-  private final TransactionControl onErrorTxControl;
+  private final boolean useTxOnFinish;
+  private final boolean useTxOnError;
 
   private boolean completed;
 
@@ -58,23 +54,22 @@ final class BodyConsumerAdapter extends BodyConsumer {
    *
    * @param responder the responder used for sending response back to client
    * @param delegate the {@link HttpContentConsumer} to delegate calls to
-   * @param transactional a {@link Transactional} for executing transactional task
-   * @param programContextClassLoader the context ClassLoader to use to execute user code
+   * @param taskExecutor a {@link ServiceTaskExecutor} for executing user code
    * @param contextReleaser A {@link Cancellable} for returning the context back to the http server
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      Transactional transactional, ClassLoader programContextClassLoader,
-                      Cancellable contextReleaser, TransactionControl defaultTxControl) {
+                      ServiceTaskExecutor taskExecutor, Cancellable contextReleaser,
+                      TransactionControl defaultTxControl) {
     this.responder = responder;
     this.delegate = delegate;
-    this.transactional = transactional;
-    this.programContextClassLoader = programContextClassLoader;
+    this.taskExecutor = taskExecutor;
     this.contextReleaser = contextReleaser;
-    this.onFinishTxControl = Transactions.getTransactionControl(defaultTxControl, HttpContentConsumer.class,
-                                                                delegate, "onFinish", HttpServiceResponder.class);
-    this.onErrorTxControl = Transactions.getTransactionControl(defaultTxControl,
-                                                               HttpContentConsumer.class, delegate, "onError",
-                                                               HttpServiceResponder.class, Throwable.class);
+    this.useTxOnFinish = Transactions.getTransactionControl(
+      defaultTxControl, HttpContentConsumer.class, delegate,
+      "onFinish", HttpServiceResponder.class) == TransactionControl.IMPLICIT;
+    this.useTxOnError = Transactions.getTransactionControl(
+      defaultTxControl, HttpContentConsumer.class, delegate,
+      "onError", HttpServiceResponder.class, Throwable.class) == TransactionControl.IMPLICIT;
   }
 
   @Override
@@ -85,12 +80,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     }
 
     try {
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
-      try {
-        delegate.onReceived(chunk.nioBuffer(), transactional);
-      } finally {
-        ClassLoaders.setContextClassLoader(oldClassLoader);
-      }
+      taskExecutor.execute(() -> delegate.onReceived(chunk.nioBuffer(), taskExecutor.getTransactional()), false);
     } catch (Throwable t) {
       onError(t, this.responder);
     }
@@ -99,11 +89,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   @Override
   public void finished(HttpResponder responder) {
     try {
-      if (TransactionControl.IMPLICIT == onFinishTxControl) {
-        transactional.execute(context -> delegate.onFinish(BodyConsumerAdapter.this.responder));
-      } else {
-        delegate.onFinish(BodyConsumerAdapter.this.responder);
-      }
+      taskExecutor.execute(() -> delegate.onFinish(BodyConsumerAdapter.this.responder), useTxOnFinish);
     } catch (Throwable t) {
       onError(t, this.responder);
       return;
@@ -162,11 +148,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     // To the HttpContentConsumer, once onError is called, no other methods will be triggered
     completed = true;
     try {
-      if (TransactionControl.IMPLICIT == onErrorTxControl) {
-        transactional.execute(context -> delegate.onError(responder, cause));
-      } else {
-        delegate.onError(responder, cause);
-      }
+      taskExecutor.execute(() -> delegate.onError(responder, cause), useTxOnError);
     } catch (Throwable t) {
       responder.setFailure(t);
       LOG.warn("Exception in calling HttpContentConsumer.onError", t);
@@ -187,7 +169,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   private static final class ErrorBodyProducerFactory implements BodyProducerFactory {
 
     @Override
-    public BodyProducer create(HttpContentProducer contentProducer, HttpServiceContext serviceContext) {
+    public BodyProducer create(HttpContentProducer contentProducer, ServiceTaskExecutor taskExecutor) {
       // It doesn't matter what it returns as it'll never get used
       // Returning a body producer that gives empty content
       return new BodyProducer() {

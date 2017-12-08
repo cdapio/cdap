@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
@@ -143,15 +142,15 @@ final class HttpHandlerGenerator {
 
   /**
    * Generates a new class that implements {@link HttpHandler} by copying methods signatures from the given
-   * {@link HttpServiceHandler} class. Calls to {@link HttpServiceHandler} methods are transactional unless
+   * user service handler class. Calls to user service handler methods are transactional unless
    * the method is annotated with {@link TransactionPolicy(TransactionControl)}.
    *
-   * @param delegateType type of the {@link HttpServiceHandler}
+   * @param delegateType type of the user service handler
    * @param pathPrefix prefix for all {@code @PATH} annotation
    * @return A {@link ClassDefinition} containing information of the newly generated class.
    * @throws IOException if failed to generate the class.
    */
-  ClassDefinition generate(TypeToken<? extends HttpServiceHandler> delegateType, String pathPrefix) throws IOException {
+  ClassDefinition generate(TypeToken<?> delegateType, String pathPrefix) throws IOException {
     Class<?> rawType = delegateType.getRawType();
     List<Class<?>> preservedClasses = Lists.newArrayList();
     preservedClasses.add(rawType);
@@ -263,7 +262,7 @@ final class HttpHandlerGenerator {
   /**
    * Generates the constructor. The constructor generated has signature {@code (DelegatorContext, MetricsContext)}.
    */
-  private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
+  private void generateConstructor(TypeToken<?> delegateType, ClassWriter classWriter) {
     Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class);
     String signature = Signatures.getMethodSignature(constructor, TypeToken.of(void.class),
                                                      getContextType(delegateType),
@@ -308,7 +307,7 @@ final class HttpHandlerGenerator {
   /**
    * Returns a {@link TypeToken} that represents the type {@code HandlerDelegatorContext<UserHandlerClass>}.
    */
-  private <T extends HttpServiceHandler> TypeToken<DelegatorContext<T>> getContextType(TypeToken<T> delegateType) {
+  private <T> TypeToken<DelegatorContext<T>> getContextType(TypeToken<T> delegateType) {
     return new TypeToken<DelegatorContext<T>>() {
     }.where(new TypeParameter<T>() { }, delegateType);
   }
@@ -455,17 +454,23 @@ final class HttpHandlerGenerator {
 
       // If the return type is an instance of HttpContentConsumer, the generated method need to have
       // netty-http BodyConsumer as return type.
+      // Otherwise, the return type must be void
       if (returnType.getSort() == Type.OBJECT) {
         try {
           Class<?> returnClass = delegateType.getRawType().getClassLoader().loadClass(returnType.getClassName());
-          if (HttpContentConsumer.class.isAssignableFrom(returnClass)) {
-            returnType = Type.getType(BodyConsumer.class);
+          if (!HttpContentConsumer.class.isAssignableFrom(returnClass)) {
+            throw new IllegalArgumentException("Handler method must either return void or a "
+                                                 + HttpContentConsumer.class.getName());
           }
+          returnType = Type.getType(BodyConsumer.class);
         } catch (ClassNotFoundException e) {
           // Shouldn't happen since the delegateType (user handler class) is already loaded and the method return
           // type should be loadable through the same classloader
           throw Throwables.propagate(e);
         }
+      } else if (!returnType.equals(Type.VOID_TYPE)) {
+        throw new IllegalArgumentException("Handler method must either return void or a "
+                                             + HttpContentConsumer.class.getName());
       }
 
       // Copy the method signature with the first two parameter types changed and return type changed
@@ -608,7 +613,7 @@ final class HttpHandlerGenerator {
       // T handler = getHandler();
       int handler = mg.newLocal(handlerType);
       mg.loadThis();
-      mg.invokeVirtual(classType, Methods.getMethod(HttpServiceHandler.class, "getHandler"));
+      mg.invokeVirtual(classType, Methods.getMethod(Object.class, "getHandler"));
       mg.checkCast(handlerType);
       mg.storeLocal(handler, handlerType);
 

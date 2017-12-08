@@ -25,9 +25,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.transaction.TransactionContextFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
 import com.google.common.io.Closeables;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
  * can be added to the transaction context. This is useful for transaction-aware's that
  * do not implement a Dataset (such as queue consumers etc.).
  */
-public abstract class DynamicDatasetCache implements DatasetContext, Supplier<TransactionContext>, AutoCloseable {
+public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseable, TransactionContextFactory {
 
   protected final SystemDatasetInstantiator instantiator;
   protected final TransactionSystemClient txClient;
@@ -192,8 +192,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
                                                 boolean bypass, AccessType accessType)
     throws DatasetInstantiationException {
     // apply actual runtime arguments on top of the context's runtime arguments for this dataset
-    Map<String, String> dsArguments =
-      RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
+    Map<String, String> dsArguments = RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
     dsArguments.putAll(arguments);
 
     // Need to switch the context classloader to the CDAP system since getting dataset instance is in CDAP context
@@ -229,6 +228,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    *
    * @return a new transaction context
    */
+  @Override
   public abstract TransactionContext newTransactionContext() throws TransactionFailureException;
 
   /**
@@ -239,15 +239,6 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    * next transaction (created by {@link #newTransactionContext()}).
    */
   public abstract void dismissTransactionContext();
-
-  @Override
-  public TransactionContext get() {
-    try {
-      return newTransactionContext();
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   /**
    * @return the static datasets that are transaction-aware. This is the same independent of whether a

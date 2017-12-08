@@ -17,9 +17,9 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.data2.transaction.DynamicTransactionExecutor;
+import co.cask.cdap.data2.transaction.TransactionContextFactory;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.inject.Inject;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
@@ -47,7 +47,7 @@ public class DynamicTransactionExecutorFactory implements TransactionExecutorFac
   }
 
   @Override
-  public TransactionExecutor createExecutor(Supplier<TransactionContext> txContextSupplier) {
-    return new DynamicTransactionExecutor(txContextSupplier);
+  public TransactionExecutor createExecutor(TransactionContextFactory txContextFactory) {
+    return new DynamicTransactionExecutor(txContextFactory);
   }
 }

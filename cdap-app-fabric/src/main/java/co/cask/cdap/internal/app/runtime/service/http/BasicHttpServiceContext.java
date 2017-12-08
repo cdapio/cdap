@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -92,8 +93,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
     this.namespaceId = program.getId().getNamespaceId();
   }
 
-  private static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec,
-                                                       int instanceId) {
+  public static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec, int instanceId) {
     Map<String, String> tags = new HashMap<>();
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
     if (spec != null) {
