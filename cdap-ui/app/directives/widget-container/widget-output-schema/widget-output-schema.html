@@ -37,17 +37,9 @@
   </my-complex-schema-editor>
 </div>
 <div ng-if="schemaAdvance">
-  <textarea
-    class="form-control"
-    ng-model="MyOutputSchemaCtrl.outputSchemaString"
-    ng-change="MyOutputSchemaCtrl.onOutputSchemaChange(MyOutputSchemaCtrl.outputSchemaString)"
-    ng-disabled="isDisabled">
-  </textarea>
-  <span class="badge macro-indicator pull-right"
-        uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
-        tooltip-append-to-body="true"
-        tooltip-popup-delay="300"
-        tooltip-placement="left">
-    Macro
-  </span>
+  <input class="form-control"
+         id="macro-input-schema"
+         ng-model="MyOutputSchemaCtrl.outputSchemaString"
+         ng-change="MyOutputSchemaCtrl.onOutputSchemaChange(MyOutputSchemaCtrl.outputSchemaString)"
+         ng-disabled="isDisabled" />
 </div>

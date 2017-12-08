@@ -12,10 +12,29 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-my-wrangler-directives {
-  .wrangler-button {
-    margin-top: 5px;
+@import "../../styles/variables.less";
+
+.macro-widget-toggle {
+  &.active {
+    background-color: #dedede;
+    padding: 5px 0;
+    margin-right: -10px;
+    margin-left: -10px;
+
+    .macro-indicator .icon-M {
+      color: white;
+    }
+  }
+
+  .macro-indicator {
+    color: @hydrator-blue;
+    cursor: pointer;
+    transform: scale(0.7);
+
+    &.disabled {
+      cursor: initial;
+    }
   }
 }

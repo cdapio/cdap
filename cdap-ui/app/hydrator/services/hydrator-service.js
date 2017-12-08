@@ -440,8 +440,20 @@ class HydratorPlusPlusHydratorService {
       return currentPair.notDeletable;
     });
   }
+
+  containsMacro(value) {
+    if (!value) { return false; }
+
+    let beginIndex = value.indexOf('${');
+    let endIndex = value.indexOf('}');
+
+    if (beginIndex === -1 || endIndex === -1 || beginIndex > endIndex) {
+      return false;
+    }
+
+    return true;
+  }
 }
 
-HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorPlusPlusHydratorService', HydratorPlusPlusHydratorService);
