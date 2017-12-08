@@ -39,6 +39,8 @@ export function parseMetadata(entity) {
 export function getType(entity) {
   if (entity.type === 'program') {
     return entity.programType.toLowerCase();
+  } if (entity.type === 'datasetinstance') {
+    return 'dataset';
   } else if (entity.type !== 'application') {
     return entity.type;
   }
