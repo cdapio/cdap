@@ -26,6 +26,7 @@ auth_file=
 seconds=100
 sleep=0.01
 verbose=false
+verifyssl=true
 
 function get_auth_file() {
   local __auth_file __uri_host __tmp
@@ -53,13 +54,14 @@ function usage() {
   echo "Usage: $script [--uri <uri>] [--namespace <namespace>] [--seconds <seconds>] [--delay <delay>]"
   echo ""
   echo "  Options"
-  echo "    --uri       Specifies the uri that CDAP is running on. (Default: http://localhost:11015)"
-  echo "    --host      (deprecated, use --uri instead) Specifies the host that CDAP is running on."
-  echo "    --namespace Specifies the CDAP namespace to use. (Default: default)"
-  echo "    --seconds   How many seconds to run"
-  echo "    --delay     How many seconds to sleep between each call (e.g., 0.1 for 100 ms)"
-  echo "    --verbose   Print some information"
-  echo "    --help      This help message"
+  echo "    --uri        Specifies the uri that CDAP is running on. (Default: http://localhost:11015)"
+  echo "    --host       (deprecated, use --uri instead) Specifies the host that CDAP is running on."
+  echo "    --namespace  Specifies the CDAP namespace to use. (Default: default)"
+  echo "    --seconds    How many seconds to run"
+  echo "    --delay      How many seconds to sleep between each call (e.g., 0.1 for 100 ms)"
+  echo "    --verbose    Print some information"
+  echo "    --verify-ssl Validate CDAP Router SSL certificate. (Default: true)"
+  echo "    --help       This help message"
   echo ""
 }
 
@@ -75,9 +77,15 @@ do
     --seconds) shift; seconds="$1"; shift;;
     --delay) shift; sleep="$1"; shift;;
     --verbose) shift; verbose=true;;
+    --verify-ssl) shift; verifyssl="$1"; shift;;
     *)  usage; exit 1
    esac
 done
+
+# pass -k to curl if --verify-ssl = false
+if [ "${verifyssl}" == "false" ]; then
+  ssl_opt="-k"
+fi
 
 # get the access token file
 get_auth_file
@@ -100,7 +108,7 @@ while [ $(date "+%s") -lt $endtime ]; do
   if [ $verbose == "true" ]; then
     echo Updating last login time for user id $userid to $time
   fi
-  status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT -d$time \
+  status=`curl -qSfsw "%{http_code}\\n" ${ssl_opt} -H "Authorization: Bearer $auth_token" -X PUT -d$time \
     ${uri}/v3/namespaces/${namespace}/apps/UserProfiles/services/UserProfileService/methods/profiles/${userid}/lastLogin`
   if [ $status -ne 200 ]; then
     echo "Failed to send data."
