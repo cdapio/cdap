@@ -35,12 +35,6 @@ angular.module(PKG.name + '.commons')
         $scope.keyPlaceholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'key-placeholder') || 'key';
         $scope.valuePlaceholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-placeholder') || 'value';
 
-        $scope.showDelimiter = false;
-        var showDelimiterProperty = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showDelimiter');
-        if (($scope.config.properties && $scope.config.properties.showDelimiter === 'true') || showDelimiterProperty === 'true' ) {
-          $scope.showDelimiter = true;
-        }
-
         // Changing value field to dropdown based on config
         if ($scope.isDropdown) {
           $scope.dropdownOptions = myHelpers.objectQuery($scope.config, 'widget-attributes', 'dropdownOptions');

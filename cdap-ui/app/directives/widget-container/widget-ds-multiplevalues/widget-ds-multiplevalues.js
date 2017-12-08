@@ -33,12 +33,6 @@ angular.module(PKG.name + '.commons')
         $scope.placeholders = myHelpers
           .objectQuery($scope.config, 'widget-attributes', 'placeholders') || [];
         $scope.numValues = parseInt($scope.numValues, 10);
-        $scope.showDelimiter = false;
-        var showDelimiterProperty = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showDelimiter');
-        if (( $scope.config && $scope.config.properties && $scope.config.properties.showDelimiter === 'true') || showDelimiterProperty === 'true' ) {
-          $scope.showDelimiter = true;
-        }
-
 
         // initializing
         function initialize() {

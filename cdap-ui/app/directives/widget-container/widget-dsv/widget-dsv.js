@@ -26,12 +26,6 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-dsv/widget-dsv.html',
       controller: function($scope, myHelpers) {
-        if ($scope.type === 'csv') {
-          $scope.showDelimiter = false;
-        } else {
-          $scope.showDelimiter = true;
-        }
-
         $scope.placeholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-placeholder') || 'value';
 
         var delimiter = $scope.delimiter || ',';

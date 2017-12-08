@@ -28,26 +28,34 @@ my-ds-multiple-values {
     }
   }
   .row {
-    margin-bottom: 2px;
+    margin-bottom: 10px;
+    position: relative;
 
     > div > input.form-control,
     select.form-control {
       display: inline-block;
       width: 48%;
     }
+
+    .field-actions {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+
+      @media(max-width: 1043px) {
+        &.last {
+          bottom: -32px;
+        }
+      }
+
+      .btn {
+        padding: 6px 5px;
+      }
+    }
   }
   .labels {
     [class*="col-"] {
       margin-bottom: 10px;
-    }
-  }
-
-  .delimiter-label {
-    line-height: 26px;
-    padding-left: 17px;
-
-    > strong {
-      vertical-align: middle;
     }
   }
 }
