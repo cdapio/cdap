@@ -255,7 +255,7 @@
 
   <property>
     <name>upgrade.thread.pool.size</name>
-    <value>10</value>
+    <value>1</value>
     <description>
       Number of threads to be used running operations concurrently during a CDAP upgrade
     </description>
