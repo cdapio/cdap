@@ -244,7 +244,7 @@
                   <goal>yarn</goal>
                 </goals>
                 <configuration>
-                  <arguments>install --production</arguments>
+                  <arguments>install --production --frozen-lockfile</arguments>
                 </configuration>
               </execution>
             </executions>
