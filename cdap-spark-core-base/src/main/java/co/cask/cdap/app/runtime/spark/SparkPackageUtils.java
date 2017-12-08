@@ -26,6 +26,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.VersionInfo;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.ForwardingLocationFactory;
@@ -306,7 +307,11 @@ public final class SparkPackageUtils {
     // Look for spark-assembly.jar symlink
     Path assemblyJar = Paths.get(sparkHome, "lib", "spark-assembly.jar");
     if (Files.isSymbolicLink(assemblyJar)) {
-      return assemblyJar.toFile();
+      try {
+        return assemblyJar.toRealPath().toFile();
+      } catch (IOException e) {
+        LOG.warn("Failed to resolve symbolic link for {}.", assemblyJar);
+      }
     }
 
     // No symbolic link exists. Search for spark-assembly*.jar in the lib directory
@@ -519,7 +524,7 @@ public final class SparkPackageUtils {
     // If spark.yarn.jar is not defined or doesn't exists, get the spark-assembly jar from local FS and upload it
     File sparkAssemblyJar = Iterables.getFirst(getLocalSparkLibrary(SparkCompat.SPARK1_2_10), null);
     Location frameworkDir = locationFactory.create("/framework/spark");
-    Location frameworkLocation = frameworkDir.append(sparkAssemblyJar.getName());
+    Location frameworkLocation = frameworkDir.append(VersionInfo.getVersion() + "-" + sparkAssemblyJar.getName());
 
     // Upload assembly jar to the framework location if not exists
     if (!frameworkLocation.exists()) {
@@ -560,7 +565,7 @@ public final class SparkPackageUtils {
     String sparkVersion = System.getenv(SPARK_VERSION);
     sparkVersion = sparkVersion == null ? SparkCompat.SPARK2_2_11.getCompat() : sparkVersion;
 
-    String archiveName = "spark.archive-" + sparkVersion + ".zip";
+    String archiveName = "spark.archive-" + sparkVersion + "-" + VersionInfo.getVersion() + ".zip";
     Location frameworkDir = locationFactory.create("/framework/spark");
     Location frameworkLocation = frameworkDir.append(archiveName);
 
