@@ -24,6 +24,7 @@ auth_token=
 auth_file=
 verbose=false
 delete=false
+verifyssl=true
 
 function get_auth_file() {
   local __auth_file __uri_host __tmp
@@ -51,12 +52,13 @@ function usage() {
   echo "Usage: $script [--uri <uri>] [--namespace <namespace>] [--delete]"
   echo ""
   echo "  Options"
-  echo "    --uri       Specifies the uri that CDAP is running on. (Default: http://localhost:11015)"
-  echo "    --host      (deprecated, use --uri instead) Specifies the host that CDAP is running on."
-  echo "    --namespace Specifies the CDAP namespace to use. (Default: default)"
-  echo "    --delete    Delete the users instead of adding them"
-  echo "    --verbose   Print some information"
-  echo "    --help      This help message"
+  echo "    --uri        Specifies the uri that CDAP is running on. (Default: http://localhost:11015)"
+  echo "    --host       (deprecated, use --uri instead) Specifies the host that CDAP is running on."
+  echo "    --namespace  Specifies the CDAP namespace to use. (Default: default)"
+  echo "    --delete     Delete the users instead of adding them"
+  echo "    --verbose    Print some information"
+  echo "    --verify-ssl Validate CDAP Router SSL certificate. (Default: true)"
+  echo "    --help       This help message"
   echo ""
 }
 
@@ -70,10 +72,16 @@ do
     --uri) shift; uri="${1}"; shift;;
     --namespace) shift; namespace="$1"; shift;;
     --verbose) shift; verbose=true;;
+    --verify-ssl) shift; verifyssl="$1"; shift;;
     --delete) shift; delete=true;;
     *)  usage; exit 1
    esac
 done
+
+# pass -k to curl if --verify-ssl = false
+if [ "${verifyssl}" == "false" ]; then
+  ssl_opt="-k"
+fi
 
 # get the access token file
 get_auth_file
@@ -91,14 +99,14 @@ do
     if [ $verbose == "true" ]; then
       echo Deleting user id: $userid
     fi
-    status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X DELETE \
+    status=`curl -qSfsw "%{http_code}\\n" ${ssl_opt} -H "Authorization: Bearer $auth_token" -X DELETE \
       ${uri}/v3/namespaces/${namespace}/apps/UserProfiles/services/UserProfileService/methods/profiles/${userid}`
     expected=200;
   else
     if [ $verbose == "true" ]; then
       echo Creating user id: $userid
     fi
-    status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT -d "$line" \
+    status=`curl -qSfsw "%{http_code}\\n" ${ssl_opt} -H "Authorization: Bearer $auth_token" -X PUT -d "$line" \
       ${uri}/v3/namespaces/${namespace}/apps/UserProfiles/services/UserProfileService/methods/profiles/${userid}`
     expected=201;
   fi
