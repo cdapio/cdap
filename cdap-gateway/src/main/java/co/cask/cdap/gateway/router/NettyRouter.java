@@ -45,6 +45,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpServerExpectContinueHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.apache.twill.common.Cancellable;
@@ -193,6 +194,8 @@ public class NettyRouter extends AbstractIdleService {
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
             pipeline.addLast("audit-log", new AuditLogHandler());
           }
+          // Always let the client to continue sending the request body after the authentication passed
+          pipeline.addLast("expect-continue", new HttpServerExpectContinueHandler());
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler", new HttpRequestRouter(cConf, serviceLookup));
         }
