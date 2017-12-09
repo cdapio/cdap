@@ -84,8 +84,8 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
     addWorkflow(new FakeWorkflow());
     AppConfig config = getConfig();
     if (config.addTimeSchedule) {
-      buildSchedule(config.timeScheduleName, ProgramType.WORKFLOW, FakeWorkflow.NAME)
-        .triggerByTime(config.timeScheduleCron);
+      schedule(buildSchedule(config.timeScheduleName, ProgramType.WORKFLOW, FakeWorkflow.NAME)
+                 .triggerByTime(config.timeScheduleCron));
     }
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());

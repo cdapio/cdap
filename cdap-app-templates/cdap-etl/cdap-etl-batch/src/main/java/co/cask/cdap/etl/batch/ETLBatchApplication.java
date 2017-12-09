@@ -113,8 +113,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     }
 
     addWorkflow(new ETLWorkflow(spec, config.getEngine()));
-    buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, ETLWorkflow.NAME)
-      .setDescription("ETL Batch schedule")
-      .triggerByTime(config.getSchedule());
+    schedule(buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, ETLWorkflow.NAME)
+               .setDescription("ETL Batch schedule")
+               .triggerByTime(config.getSchedule()));
   }
 }

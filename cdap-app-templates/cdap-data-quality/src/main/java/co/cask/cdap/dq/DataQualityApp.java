@@ -135,9 +135,9 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     addService(new DataQualityService(configObj.datasetName));
     addWorkflow(new DataQualityWorkflow());
     String schedule = "*/" + scheduleMinutes + " * * * *";
-    buildSchedule("aggregatorSchedule", ProgramType.WORKFLOW, "DataQualityWorkflow")
-      .setDescription("Schedule execution every " + scheduleMinutes + " min")
-      .triggerByTime(schedule);
+    schedule(buildSchedule("aggregatorSchedule", ProgramType.WORKFLOW, "DataQualityWorkflow")
+               .setDescription("Schedule execution every " + scheduleMinutes + " min")
+               .triggerByTime(schedule));
   }
 
   /**
