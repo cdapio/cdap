@@ -53,7 +53,8 @@ var webpackConfig = {
       'react-dnd-html5-backend',
       'react-dnd',
       'event-emitter',
-      'react-loadable'
+      'react-loadable',
+      'cdap-avsc'
     ]
   },
   output: {
