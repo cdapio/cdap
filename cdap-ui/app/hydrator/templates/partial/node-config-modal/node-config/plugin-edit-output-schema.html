@@ -34,7 +34,6 @@
       </button>
 
       <ul class="output-schema-actions" uib-dropdown-menu>
-        <!-- If node is a sink and it's macro enabled -->
         <li
           ng-if="!isDisabled && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'] && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'].macroSupported"
           ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists}"
@@ -42,9 +41,11 @@
           tooltip-placement="top"
           tooltip-enable="HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists"
           tooltip-append-to-body="true">
-          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()">Toggle Advanced</a>
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()">
+            <span ng-if="!HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">Macro</span>
+            <span ng-if="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">Schema Editor</span>
+          </a>
         </li>
-
         <li
           ng-if="(!HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
           ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists || HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance}"
@@ -82,6 +83,7 @@
       </ul>
     </div>
   </h4>
+
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <div class="schema-propagation-confirm">
       <div class="well well-xs" ng-if="HydratorPlusPlusNodeConfigCtrl.showPropagateConfirm">

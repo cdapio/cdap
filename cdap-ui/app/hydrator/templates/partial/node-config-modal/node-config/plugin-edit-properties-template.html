@@ -41,107 +41,29 @@
           ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty && field['widget-type'] !== 'hidden'"
         >
 
-        <div class="form-group">
-          <div class="col-xs-offset-8 col-xs-4">
-              <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
-                <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
-                </plugin-functions>
-              </span>
-            </div>
-        </div>
-        <div class="form-group">
-            <label
-              class="col-xs-3 control-label"
-              ng-if="(['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) === -1)"
-            >
-              <span ng-class="{'required': HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required}">{{::field.label}}</span>
-            </label>
-
-            <div
-              class="form-input-attr"
-              ng-class="{
-                'col-xs-8': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) === -1),
-                'col-xs-11 code-editor': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) !== -1)
-              }"
-            >
-              <!--
-              FIXME: We need to rename this widget to code-editor and have a mode.
-              -->
-              <fieldset
-                ng-disabled="isDisabled"
-                ng-if="(['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) === -1)"
-                ng-class="{
-                  'highlight-error': !HydratorPlusPlusNodeConfigCtrl.state.node.warning &&
-                      HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required &&
-                      !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]
-                }"
-              >
-                <div data-name="field"
-                     class="my-widget-container"
-                     ng-class="{'select-wrapper': field.widget === 'select'}"
-                     data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-                     data-myconfig="field"
-                     disabled="isDisabled"
-                     data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-                     widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
-                     input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"
-                     stage-name="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"
-                     is-field-required="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required"
-                     node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                     widget-container>
-                </div>
-              </fieldset>
-
-              <!--
-                We have a separate div for javascript editor and the reason for it as follows,
-
-                ace-editor requires 'onFocus' event to enable copy paste functionality as part of the directive. When we wrap everything in <fieldset>
-                and disable it in published mode the 'onFocus' event doesn't gets propagated to its children ergo ace-editor not knowing about 'onFocus' event. This prevents the user from copying the snippet (CMD + C) from the editor in published mode. Source JIRA: https://issues.cask.co/browse/CDAP-6074
-              -->
-              <div ng-if="(['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) !== -1)">
-                <div data-name="field"
-                     class="my-widget-container"
-                     ng-class="{'select-wrapper': field.widget === 'select'}"
-                     data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-                     data-myconfig="field"
-                     disabled="isDisabled"
-                     data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
-                     widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
-                     widget-container>
-                </div>
+          <div class="form-group">
+            <div class="col-xs-offset-8 col-xs-4">
+                <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
+                  <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
+                  </plugin-functions>
+                </span>
               </div>
-
-              <span class="badge macro-indicator pull-right"
-                    ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].macroSupported"
-                    uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
-                    tooltip-append-to-body="true"
-                    tooltip-popup-delay="300"
-                    tooltip-placement="left">
-                Macro
-              </span>
-            </div>
-            <div class="col-xs-1 info-attr">
-              <span class="fa fa-info-circle" uib-tooltip="{{::field.description}}" tooltip-placement="right" tooltip-append-to-body="true"></span>
-              <span
-                class="text-danger fa fa-exclamation-triangle"
-                uib-tooltip="{{field.errorTooltip}}"
-                tooltip-append-to-body="true"
-                tooltip-placement="right"
-                tooltip-class="error-tooltip error-node-config"
-                ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]"
-              >
-              </span>
-            </div>
           </div>
-        <div class="form-group">
-          <div class="col-xs-offset-8 col-xs-4">
+
+          <macro-widget-toggle
+            node="HydratorPlusPlusNodeConfigCtrl.state.node"
+            field="field"
+            disabled="isDisabled"></macro-widget-toggle>
+
+          <div class="form-group">
+            <div class="col-xs-offset-8 col-xs-4">
               <span class="plugin-function-bottom"
                 ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
                 <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
                 </plugin-functions>
               </span>
             </div>
-        </div>
+          </div>
 
         </div>
       </div>
@@ -151,17 +73,16 @@
   <br>
 
   <div class="form-group" ng-if="HydratorPlusPlusNodeConfigCtrl.state.showErrorDataset">
-    <label class="col-xs-3 control-label">
+    <label class="col-xs-3 control-label"
+           uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}"
+           tooltip-placement="right">
       Error Dataset
     </label>
-    <div class="col-xs-8 form-input-attr">
+    <div class="col-xs-8">
       <input type="text"
              class="form-control"
              ng-disabled="isDisabled"
              ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName">
-    </div>
-    <div class="col-xs-1 info-attr">
-      <span class="fa fa-info-circle" ng-if="HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip" uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}" tooltip-placement="right"></span>
     </div>
   </div>
 </form>
