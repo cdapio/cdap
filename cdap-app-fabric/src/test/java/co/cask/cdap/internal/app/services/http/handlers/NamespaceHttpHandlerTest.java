@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppForUnrecoverableResetTest;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithStream;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -267,6 +268,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithStream.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
     deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
     DatasetId myDataset = new DatasetId(NAME, "myds");

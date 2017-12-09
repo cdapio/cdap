@@ -156,7 +156,11 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
                                                            ImmutableMap.of("pp", "p"),
                                                            new PartitionTrigger(DS1_ID, 2),
                                                            ImmutableList.<Constraint>of());
-    final ProgramSchedule sched31New = new ProgramSchedule(sched31.getName(), "program schedule", PROG3_ID,
+    final ProgramSchedule sched22New = new ProgramSchedule(sched22.getName(), "program3 failed schedule", PROG2_ID,
+                                                           ImmutableMap.of("ss", "s"),
+                                                           new ProgramStatusTrigger(PROG3_ID, ProgramStatus.FAILED),
+                                                           ImmutableList.<Constraint>of());
+    final ProgramSchedule sched31New = new ProgramSchedule(sched31.getName(), "program1 failed schedule", PROG3_ID,
                                                            ImmutableMap.of("abcd", "efgh"),
                                                            new ProgramStatusTrigger(PROG1_ID, ProgramStatus.FAILED),
                                                            ImmutableList.<Constraint>of());
@@ -166,6 +170,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
       public void apply() throws Exception {
         store.updateSchedule(sched11New);
         store.updateSchedule(sched12New);
+        store.updateSchedule(sched22New);
         store.updateSchedule(sched31New);
       }
     });
