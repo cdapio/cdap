@@ -95,7 +95,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                           MetadataStore metadataStore,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
-                          co.cask.cdap.scheduler.Scheduler programScheduler,
+                          Scheduler programScheduler,
                           AuthorizationEnforcer authorizationEnforcer) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;

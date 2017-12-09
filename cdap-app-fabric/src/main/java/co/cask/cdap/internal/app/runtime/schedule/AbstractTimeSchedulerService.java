@@ -35,12 +35,12 @@ import java.util.List;
  * The extending classes should implement prestart and poststop hooks to perform any action before starting all
  * underlying schedulers and after stopping them.
  */
-public abstract class AbstractSchedulerService extends AbstractIdleService implements SchedulerService {
+public abstract class AbstractTimeSchedulerService extends AbstractIdleService implements TimeSchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractTimeSchedulerService.class);
   private final TimeScheduler timeScheduler;
 
-  public AbstractSchedulerService(TimeScheduler timeScheduler) {
+  public AbstractTimeSchedulerService(TimeScheduler timeScheduler) {
     this.timeScheduler = timeScheduler;
   }
 

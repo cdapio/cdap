@@ -16,13 +16,10 @@
 
 package co.cask.cdap.internal.guice;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -40,11 +37,6 @@ import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -53,19 +45,13 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
-import com.google.inject.PrivateModule;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -107,12 +93,6 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
     install(new ServiceStoreModules().getInMemoryModules());
-    install(new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(Scheduler.class).annotatedWith(Assisted.class).toInstance(createNoopScheduler());
-      }
-    });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule().getModule());
     install(new LoggingModules().getInMemoryModules());
@@ -133,35 +113,5 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new AuthorizationEnforcementModule().getStandaloneModules());
     install(new SecureStoreModules().getInMemoryModules());
     install(new MessagingServerRuntimeModule().getInMemoryModules());
-  }
-
-  private Scheduler createNoopScheduler() {
-    return new Scheduler() {
-      @Override
-      public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
-      }
-
-      @Override
-      public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-      }
-
-      @Override
-      public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-      }
-
-      @Override
-      public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-      }
-
-      @Override
-      public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType) {
-        return ImmutableList.of();
-      }
-
-      @Override
-      public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType) {
-        return ImmutableList.of();
-      }
-    };
   }
 }

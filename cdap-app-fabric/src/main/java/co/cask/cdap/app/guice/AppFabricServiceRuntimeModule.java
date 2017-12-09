@@ -76,11 +76,10 @@ import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
-import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
-import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -109,6 +108,7 @@ import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.route.store.ZKRouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.DefaultUGIProvider;
@@ -167,8 +167,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
                                  .in(Scopes.SINGLETON);
-                               bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
-                               bind(Scheduler.class).to(SchedulerService.class);
+                               bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
+                                 .in(Scopes.SINGLETON);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
@@ -212,8 +212,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(AppFabricServer.class).to(StandaloneAppFabricServer.class).in(Scopes.SINGLETON);
                                bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
                                  .in(Scopes.SINGLETON);
-                               bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
-                               bind(Scheduler.class).to(SchedulerService.class);
+                               bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
+                                 .in(Scopes.SINGLETON);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
@@ -291,8 +291,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(RunRecordCorrectorService.class).to(DistributedRunRecordCorrectorService.class)
                                  .in(Scopes.SINGLETON);
-                               bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
-                               bind(Scheduler.class).to(SchedulerService.class);
+                               bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class)
+                                 .in(Scopes.SINGLETON);
                                bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
@@ -373,7 +373,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
-      bind(co.cask.cdap.scheduler.Scheduler.class).to(CoreSchedulerService.class);
+      bind(Scheduler.class).to(CoreSchedulerService.class);
       bind(ArtifactRepository.class)
         .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))
         .to(DefaultArtifactRepository.class)

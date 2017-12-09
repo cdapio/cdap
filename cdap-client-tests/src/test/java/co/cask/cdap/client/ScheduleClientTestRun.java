@@ -125,29 +125,11 @@ public class ScheduleClientTestRun extends ClientTestBase {
   public void testScheduleChanges() throws Exception {
     File appJar = createAppJarFile(FakeApp.class);
 
-    // deploy the app with time and stream size schedule
+    // deploy the app with time schedule
     FakeApp.AppConfig config = new FakeApp.AppConfig(true, null, null);
     appClient.deploy(namespace, appJar, config);
-    // now there should be two schedule
-    List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
-    Assert.assertEquals(2, list.size());
-
-    // re-deploy the app with only time schedule i.e. we deleted the stream size schedule
-    config = new FakeApp.AppConfig(true, null, null);
-    appClient.deploy(namespace, appJar, config);
     // now there should be one schedule
-    list = scheduleClient.listSchedules(workflow);
-    Assert.assertEquals(1, list.size());
-
-    // Try to redeploy the app with stream size schedule and with the name of existing time schedule i.e we are trying
-    // to change the schedule type
-    config = new FakeApp.AppConfig(false, null, null);
-    appClient.deploy(namespace, appJar, config);
-
-    // Try to change the schedule type from stream size to time again
-    config = new FakeApp.AppConfig(true, FakeApp.TIME_SCHEDULE_NAME, null);
-    appClient.deploy(namespace, appJar, config);
-    list = scheduleClient.listSchedules(workflow);
+    List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());
 
     // test updating the schedule cron
@@ -157,5 +139,12 @@ public class ScheduleClientTestRun extends ClientTestBase {
     Assert.assertEquals(1, list.size());
     ProtoTrigger.TimeTrigger trigger = (ProtoTrigger.TimeTrigger) list.get(0).getTrigger();
     Assert.assertEquals("0 2 1 1 *", trigger.getCronExpression());
+
+    // re-deploy the app without time schedule
+    config = new FakeApp.AppConfig(false, null, null);
+    appClient.deploy(namespace, appJar, config);
+    // now there should be no schedule
+    list = scheduleClient.listSchedules(workflow);
+    Assert.assertEquals(0, list.size());
   }
 }

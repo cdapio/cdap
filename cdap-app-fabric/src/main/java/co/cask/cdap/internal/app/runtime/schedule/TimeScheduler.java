@@ -67,8 +67,8 @@ import java.util.concurrent.Executors;
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
  * DefaultSchedulerService.
  */
-public final class DefaultTimeScheduler {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultTimeScheduler.class);
+public final class TimeScheduler {
+  private static final Logger LOG = LoggerFactory.getLogger(TimeScheduler.class);
   private static final String PAUSED_NEW_TRIGGERS_GROUP = "NewPausedTriggers";
 
   private org.quartz.Scheduler scheduler;
@@ -79,8 +79,8 @@ public final class DefaultTimeScheduler {
   private final TopicId topicId;
 
   @Inject
-  DefaultTimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, MessagingService messagingService,
-                       CConfiguration cConf) {
+  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, MessagingService messagingService,
+                CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
     this.messagingService = messagingService;
     this.scheduler = null;
@@ -100,15 +100,14 @@ public final class DefaultTimeScheduler {
   }
 
   /**
-   * Creates a paused group DefaultTimeScheduler#PAUSED_NEW_TRIGGERS_GROUP by adding a dummy job to it
-   * if it does not exist already. This is needed so that we can add new triggers to this paused group
-   * and they will be paused too.
+   * Creates a paused group TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP by adding a dummy job to it if it does not exist
+   * already. This is needed so that we can add new triggers to this paused group and they will be paused too.
    *
    * @throws org.quartz.SchedulerException
    */
   private void initNewPausedTriggersGroup() throws org.quartz.SchedulerException {
-    // if the dummy job does not already exists in the DefaultTimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
-    // then create a dummy job which will create the DefaultTimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
+    // if the dummy job does not already exists in the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
+    // then create a dummy job which will create the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
     if (!scheduler.checkExists(new JobKey(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP))) {
       JobDetail job = JobBuilder.newJob(EmptyJob.class)
         .withIdentity(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP)
@@ -206,7 +205,7 @@ public final class DefaultTimeScheduler {
         if (triggerKey.getGroup().equals(PAUSED_NEW_TRIGGERS_GROUP)) {
           Trigger neverScheduledTrigger = scheduler.getTrigger(triggerKey);
           TriggerBuilder<? extends Trigger> triggerBuilder = neverScheduledTrigger.getTriggerBuilder();
-          // move this key from DefaultTimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to the Key#DEFAULT_GROUP group
+          // move this key from TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to the Key#DEFAULT_GROUP group
           // (when no group name is provided default is used)
           Trigger resumedTrigger = triggerBuilder.withIdentity(triggerKey.getName()).build();
           scheduler.rescheduleJob(neverScheduledTrigger.getKey(), resumedTrigger);
@@ -225,7 +224,7 @@ public final class DefaultTimeScheduler {
    * @throws ObjectAlreadyExistsException if the corresponding schedule already exists
    */
   private void assertTriggerDoesNotExist(TriggerKey triggerKey) throws org.quartz.SchedulerException {
-    // Once the schedule is resumed we move the trigger from DefaultTimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to
+    // Once the schedule is resumed we move the trigger from TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to
     // Key#DEFAULT_GROUP so before adding check if this schedule does not exist.
     // We do not need to check for same schedule in the current list as its already checked in app configuration stage
     if (scheduler.checkExists(triggerKey)) {

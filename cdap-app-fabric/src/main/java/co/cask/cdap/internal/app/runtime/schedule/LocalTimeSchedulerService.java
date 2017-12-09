@@ -21,14 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * LocalSchedulerService - noop for pre and post hooks.
+ * LocalTimeSchedulerService - noop for pre and post hooks.
  */
-public final class LocalSchedulerService extends AbstractSchedulerService {
+public final class LocalTimeSchedulerService extends AbstractTimeSchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LocalSchedulerService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LocalTimeSchedulerService.class);
 
   @Inject
-  public LocalSchedulerService(TimeScheduler timeScheduler) {
+  public LocalTimeSchedulerService(TimeScheduler timeScheduler) {
     super(timeScheduler);
   }
 
