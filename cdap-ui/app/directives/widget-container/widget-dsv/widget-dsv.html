@@ -15,14 +15,6 @@
 -->
 
 <div class="dsv-container">
-  <div class="clearfix delimiter" ng-if="showDelimiter">
-    <div class="col-xs-1 delimiter-label">
-      <label>Delimiter</label>
-    </div>
-    <div class="col-xs-1">
-      <input type="text" class="form-control" ng-model="delimiter" />
-    </div>
-  </div>
   <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
     <div class="col-xs-10 col-lg-8">
       <input type="text" class="form-control" ng-model="property.value" placeholder="{{ placeholder }}" my-focus-watch="property.newField" />

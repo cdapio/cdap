@@ -235,37 +235,6 @@ body.theme-cdap {
         max-height: ~"-webkit-calc(100vh - 216px)";
         overflow-y: auto;
         overflow-x: hidden;
-        // FIXME: Everything below. What follows is a custom styling for hydrator
-        // key-value widget was specifically meant for hydrator plugin configuration
-        // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
-        // max space available or build a new widget for hydrator run configuration.
-        key-value-widget {
-          .key-val-directive-container {
-            padding: 0;
-            border: 0;
-            .row {
-              margin: 5px 0;
-              input.form-control {
-                height: 28px;
-                padding-top: 5px;
-                &:first-child { width: 30%; }
-                &:nth-child(2) { width: 69%; }
-              }
-              .col-xs-10.col-lg-8 {
-                padding: 0;
-                width: ~"calc(100% - 60px)";
-                width: ~"-webkit-calc(100% - 60px)";
-                width: ~"-moz-calc(100% - 60px)";
-              }
-              .col-xs-2.col-lg-4 {
-                padding: 0;
-                width: 60px;
-              }
-            }
-            .btn.btn-danger,
-            .btn.btn-info { padding: 5px; }
-          }
-        }
       }
       .clearfix { padding: 0 10px 5px 10px; }
     }
@@ -751,37 +720,6 @@ body.theme-cdap {
       max-height: ~"-webkit-calc(100vh - 216px)";
       overflow-y: auto;
       overflow-x: hidden;
-      // FIXME: Everything below. What follows is a custom styling for hydrator
-      // key-value widget was specifically meant for hydrator plugin configuration
-      // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
-      // max space available or build a new widget for hydrator run configuration.
-      key-value-widget {
-        .key-val-directive-container {
-          padding: 0;
-          border: 0;
-          .row {
-            margin: 5px 0;
-            input.form-control {
-              height: 28px;
-              padding-top: 5px;
-              &:first-child { width: 30%; }
-              &:nth-child(2) { width: 69%; }
-            }
-            .col-xs-10.col-lg-8 {
-              padding: 0;
-              width: ~"calc(100% - 60px)";
-              width: ~"-webkit-calc(100% - 60px)";
-              width: ~"-moz-calc(100% - 60px)";
-            }
-            .col-xs-2.col-lg-4 {
-              padding: 0;
-              width: 60px;
-            }
-          }
-          .btn.btn-danger,
-          .btn.btn-info { padding: 5px; }
-        }
-      }
     }
     .clearfix { padding: 10px; }
 
