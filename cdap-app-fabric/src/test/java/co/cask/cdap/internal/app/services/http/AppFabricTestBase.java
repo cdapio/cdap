@@ -827,12 +827,15 @@ public abstract class AppFabricTestBase {
   }
 
   private static void deleteNamespaces() throws Exception {
-    HttpResponse response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
-                                                   TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
-                                      TEST_NAMESPACE2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Tasks.waitFor(200, () ->
+      doDelete(String.format("%s/unrecoverable/namespaces/%s",
+                             Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1)).getStatusLine().getStatusCode(),
+                  10, TimeUnit.SECONDS);
+
+    Tasks.waitFor(200, () ->
+      doDelete(String.format("%s/unrecoverable/namespaces/%s",
+                             Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2)).getStatusLine().getStatusCode(),
+                  10, TimeUnit.SECONDS);
   }
 
   protected String getProgramStatus(Id.Program program) throws Exception {
