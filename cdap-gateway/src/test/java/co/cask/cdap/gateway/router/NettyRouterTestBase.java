@@ -84,7 +84,6 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -445,6 +444,16 @@ public abstract class NettyRouterTestBase {
     Assert.assertEquals(msg, result);
   }
 
+  @Test (timeout = 5000L)
+  public void testNotFound() throws Exception {
+    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/not/exists"));
+    HttpURLConnection urlConn = openURL(url);
+    Assert.assertEquals(404, urlConn.getResponseCode());
+
+    // This shouldn't block as the router connection should get closed
+    ByteStreams.toByteArray(urlConn.getErrorStream());
+  }
+
   @Test
   public void testConnectionNoIdleTimeout() throws Exception {
     // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
@@ -681,6 +690,13 @@ public abstract class NettyRouterTestBase {
         numRequests.incrementAndGet();
         TimeUnit.MILLISECONDS.sleep(timeoutMillis);
         responder.sendStatus(HttpResponseStatus.OK);
+      }
+
+      @GET
+      @Path("/v1/exception/{message}")
+      public void exception(HttpRequest request, HttpResponder responder,
+                            @PathParam("msg") String msg) throws Exception {
+        throw new Exception(msg);
       }
 
       @POST
