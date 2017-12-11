@@ -88,7 +88,6 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -103,6 +102,7 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -310,6 +310,9 @@ public class TestBase {
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
+    }
+    if (scheduler instanceof CoreSchedulerService) {
+      ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);

@@ -63,6 +63,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
@@ -84,6 +85,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -140,6 +142,14 @@ public class AppFabricTestHelper {
       Scheduler programScheduler = injector.getInstance(Scheduler.class);
       if (programScheduler instanceof Service) {
         ((Service) programScheduler).startAndWait();
+      }
+      // Wait for the scheduler to be functional.
+      if (programScheduler instanceof CoreSchedulerService) {
+        try {
+          ((CoreSchedulerService) programScheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     return injector;
