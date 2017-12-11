@@ -28,17 +28,17 @@ export default class DeleteEntityBtn extends Component {
     btnLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     className: PropTypes.string
   };
-  getInitialState = () => ({
+  getDefaulState = () => ({
     showModal: false,
     isLoading: true,
     errorMessage: false,
     extendedMessage: false,
   });
-  state = this.getInitialState();
+  state = this.getDefaulState();
 
   toggleModal = (e) => {
     this.setState({
-      ...this.getInitialState(),
+      ...this.getDefaulState(),
       isLoading: !this.state.isLoading,
       showModal: !this.state.showModal
     });

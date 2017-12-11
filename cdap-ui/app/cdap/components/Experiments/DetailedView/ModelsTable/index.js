@@ -20,19 +20,18 @@ import SortableStickyGrid from 'components/SortableStickyGrid';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
-import {setActiveModel, getAlgorithmLabel, getModelsInExperiment} from 'components/Experiments/store/ActionCreator';
+import {setActiveModel, getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
-import DeleteEntityBtn from 'components/DeleteEntityBtn';
 import classnames from 'classnames';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { myExperimentsApi } from 'api/experiments';
 import {objectQuery} from 'services/helpers';
-import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
 import ModelStatusIndicator from 'components/Experiments/DetailedView/ModelStatusIndicator';
 import {Link} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import DeleteModelBtn from 'components/Experiments/DetailedView/DeleteModelBtn';
+import DeleteExperimentBtn from 'components/Experiments/DetailedView/DeleteExperimentBtn';
 
 require('./DetailedViewModelsTable.scss');
 
@@ -57,52 +56,49 @@ let tableHeaders = [
     width: '15%'
   },
   {
-    label: 'Hyperparameters',
-    property: 'hyperparams',
-    width: '10%'
-  },
-  {
     label: '',
     width: '2%'
   },
 ];
+
 const regressionMetrics = [
   {
     label: 'rmse',
     property: 'rmse',
-    width: '10%'
+    width: '12%'
   },
   {
     label: 'r2',
     property: 'r2',
-    width: '10%'
+    width: '13%'
   },
   {
     label: 'evariance',
     property: 'evariance',
-    width: '10%'
+    width: '13%'
   },
   {
     label: 'mae',
     property: 'mae',
-    width: '11%'
+    width: '13%'
   },
 ];
+
 const categoricalMetrics = [
   {
     label: 'Precision',
     property: 'precision',
-    width: '14%'
+    width: '17%'
   },
   {
     label: 'Recall',
     property: 'recall',
-    width: '14%'
+    width: '17%'
   },
   {
     label: 'F1',
     property: 'f1',
-    width: '12%'
+    width: '17%'
   },
 ];
 
@@ -111,6 +107,7 @@ const addMetricsToHeaders = (tableHeaders, metrics) => ([
   ...metrics,
   ...tableHeaders.slice(tableHeaders.length - 1)
 ]);
+
 const getNewHeadersBasedOnOutcome = (outcomeType) => (
   NUMBER_TYPES.indexOf(outcomeType) !== -1 ?
     addMetricsToHeaders(tableHeaders, regressionMetrics)
@@ -123,11 +120,12 @@ const renderTableHeaders = (outcomeType, renderSortableTableHeader) => {
   return (
     <div className="grid-header">
       {
-        newHeaders.map(tableHeader => {
+        newHeaders.map((tableHeader, i) => {
           return (
             <div
               className="grid-header-item"
               title={tableHeader.label}
+              key={i}
               style={{ width: `${tableHeader.width}` }}
             >
               {
@@ -142,42 +140,6 @@ const renderTableHeaders = (outcomeType, renderSortableTableHeader) => {
       }
     </div>
   );
-};
-
-const deleteModel = (experimentId, modelId, callback, errCallback) => {
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
-  myExperimentsApi
-    .deleteModelInExperiment({
-      namespace,
-      experimentId,
-      modelId
-    })
-    .subscribe(
-      () => {
-        getModelsInExperiment(experimentId);
-        callback();
-      },
-      err => {
-        let error = typeof err.response === 'string' ? err.response : JSON.stringify(err);
-        errCallback(error);
-      }
-    );
-};
-
-const deleteExperiment = (experimentId, callback, errCallback) => {
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
-  myExperimentsApi
-    .deleteExperiment({
-      namespace,
-      experimentId
-    })
-    .subscribe(
-      () => window.location.href =`${window.location.origin}/cdap/ns/${namespace}/experiments`,
-      err => {
-        let error = typeof err.response === 'string' ? err.response : JSON.stringify(err);
-        errCallback(error);
-      }
-    );
 };
 
 const renderTableBody = (experimentId, outcomeType, models) => {
@@ -201,21 +163,28 @@ const renderTableBody = (experimentId, outcomeType, models) => {
   );
   const renderMetrics = (newHeaders, model) => {
     let metrics;
+    let len = newHeaders.length - 1;
+    let commonHeadersLen = tableHeaders.length - 1;
     if (NUMBER_TYPES.indexOf(outcomeType) !== -1) {
-      metrics = newHeaders.slice(5, 9);
+      metrics = newHeaders.slice(commonHeadersLen, len);
     } else {
-      metrics = newHeaders.slice(5, 8);
+      metrics = newHeaders.slice(commonHeadersLen, len);
     }
     return metrics.map(t => renderItem(t.width, model.evaluationMetrics[t.property] || '--'));
   };
-  const deleteConfimElement = (model) => <div>Are you sure you want to delete <b>{model.name}</b> model </div>;
+
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   return (
     <div className="grid-body">
       {
         list.map((model) => {
           return (
-            <div className="grid-body-row-container" key={model.id}>
+            <div
+              className={classnames("grid-body-row-container", {
+                "opened": model.active
+              })}
+              key={model.id}
+            >
               <div
                 className={classnames("grid-body-row", {
                   "opened": model.active
@@ -224,17 +193,20 @@ const renderTableBody = (experimentId, outcomeType, models) => {
               >
                 {renderItem(newHeaders[0].width, <IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
                 {renderItem(newHeaders[1].width, model.name)}
-                {renderItem(newHeaders[2].width, <ModelStatusIndicator status={model.status} />)}
-                {renderItem(newHeaders[3].width, model.algorithm)}
-                {renderItem(newHeaders[4].width, <IconSVG name="icon-cog" />)}
+                {renderItem(newHeaders[2].width, <ModelStatusIndicator status={model.status || '--'} />)}
+                {renderItem(newHeaders[3].width, (
+                  <span className="algorithm-cell">
+                    <IconSVG name="icon-cog" />
+                    <span>{model.algorithm}</span>
+                  </span>
+                ))}
                 {renderMetrics(newHeaders, model)}
                 {
                   renderItem(
-                    newHeaders[NUMBER_TYPES.indexOf(outcomeType) !== -1 ? 9 : 8].width,
-                    <DeleteEntityBtn
-                      confirmFn={deleteModel.bind(null, experimentId, model.id)}
-                      headerTitle={"Delete Model"}
-                      confirmationElem={deleteConfimElement(model)}
+                    newHeaders[newHeaders.length - 1].width,
+                    <DeleteModelBtn
+                      experimentId={experimentId}
+                      model={model}
                     />
                   )
                 }
@@ -295,15 +267,7 @@ function ModelsTable({experimentId, list, loading, outcomeType}) {
           >
             Add a Model
           </Link>
-          <DeleteEntityBtn
-            confirmFn={deleteExperiment.bind(null, experimentId)}
-            className="btn btn-link"
-            headerTitle={"Delete Model"}
-            confirmationElem={
-              <div>Are you sure you want to delete <b>{experimentId}</b> experiment </div>
-            }
-            btnLabel={"Delete Experiment"}
-          />
+          <DeleteExperimentBtn experimentId={experimentId} />
         </div>
         <PaginationWithTitle
           handlePageChange={(currentPage) => console.log(`Pagination coming soon. Right now in page # ${currentPage}`)}
@@ -324,7 +288,7 @@ function ModelsTable({experimentId, list, loading, outcomeType}) {
 }
 
 ModelsTable.propTypes = {
-  list: PropTypes.arrayOf,
+  list: PropTypes.array,
   loading: PropTypes.bool,
   experimentId: PropTypes.string,
   outcomeType: PropTypes.string

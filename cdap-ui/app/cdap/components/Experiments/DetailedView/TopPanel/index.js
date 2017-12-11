@@ -18,43 +18,11 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
 import TopPanel from 'components/Experiments/TopPanel';
-import d3 from 'd3';
-import PieChartWithLegends from 'components/PieChartWithLegend';
-import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
+import ExperimentMetricsDropdown from 'components/Experiments/DetailedView/ExperimentMetricsDropdown';
+
 
 require('./DetailedViewTopPanel.scss');
-const HEIGHT_OF_PIE_CHART = 150;
 
-const colorScale = d3.scale.category20();
-
-const getAlgoDistribution = (models) => {
-  if (!models.length) {
-    return [];
-  }
-  let modelsMap = {};
-  models.forEach(model => {
-    let algo = model.algorithm;
-    if (!modelsMap[algo]) {
-      modelsMap = {
-        ...modelsMap,
-        [algo]: {
-          value: getAlgorithmLabel(algo),
-          count: 1,
-          color: colorScale(algo)
-        }
-      };
-    } else {
-      modelsMap = {
-        ...modelsMap,
-        [algo]: {
-          ...modelsMap[algo],
-          count: modelsMap[algo].count + 1
-        }
-      };
-    }
-  });
-  return Object.keys(modelsMap).map(m => modelsMap[m]);
-};
 
 const Metadata = ({name, description, srcpath, total, deployed, outcome}) => {
   return (
@@ -96,8 +64,8 @@ Metadata.propTypes = {
   name: PropTypes.string,
   description: PropTypes.string,
   srcpath: PropTypes.string,
-  total: PropTypes.string,
-  deployed: PropTypes.string,
+  total: PropTypes.number,
+  deployed: PropTypes.number,
   outcome: PropTypes.string
 };
 
@@ -115,30 +83,12 @@ const mapStateToMetadataProps = (state) => {
 
 const ConnectedMetadata = connect(mapStateToMetadataProps)(Metadata);
 
-const AlgorithmDistribution = ({models}) => {
-  return (
-    <PieChartWithLegends
-      data={getAlgoDistribution(models)}
-      width={HEIGHT_OF_PIE_CHART}
-      height={HEIGHT_OF_PIE_CHART}
-    />
-  );
-};
-
-AlgorithmDistribution.propTypes = {
-  models: PropTypes.arrayOf(PropTypes.object)
-};
-
-const mapStateToAlgorithmDistributionProps = (state) => ({ models: state.models });
-
-const ConnectedAlgorithmDistribution = connect(mapStateToAlgorithmDistributionProps)(AlgorithmDistribution);
-
 const DetailedTopPanel = () => {
   return (
     <TopPanel className="detailed-view">
       <div className="experiment-toppanel-container">
         <ConnectedMetadata />
-        <ConnectedAlgorithmDistribution />
+        <ExperimentMetricsDropdown />
       </div>
     </TopPanel>
   );

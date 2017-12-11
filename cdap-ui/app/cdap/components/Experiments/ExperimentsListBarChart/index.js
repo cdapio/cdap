@@ -30,14 +30,14 @@ const customEncoding = {
   },
   "column": {
     "field": "name", "type": "ordinal",
-    "header": {"title": ""}
+    "header": {"title": null}
   },
   "x": {
     "field": "type",
     "type": "nominal",
     "axis": {
       "labels": false,
-      "title": ""
+      "title": null
     }
   },
   "y": {
@@ -56,6 +56,8 @@ export default function ExperimentsListBarChart({data}) {
       <GroupedBarChart
         data={data}
         customEncoding={customEncoding}
+        width={(dimension, data) => ((dimension.width - 190) / (data.length / 2))}
+        heightOffset={70}
       />
     </div>
   );

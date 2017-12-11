@@ -14,7 +14,21 @@
  * the License.
 */
 
-$visualization-width: 450px;
-$toppanel-height: 250px;
-$padding-top-bottom: 25px;
-$padding-left-right: 35px;
+.styled-select-wrapper {
+  display: inline-block;
+  .styled-select-tag {
+    border: 0;
+    background: transparent;
+    border-bottom: 1px solid;
+    border-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    appearance: none;
+
+    &:focus,
+    &:active,
+    &:hover {
+      outline: none;
+    }
+  }
+}

@@ -33,6 +33,9 @@ const DEFAULT_EXPERIMENT_DETAILS = {
   srcpath: '',
   outcome: '',
   outcomeType: '',
+  evaluationMetrics: {},
+  algorithms: {},
+  statuses: {},
   models: [],
   loading: false
 };
@@ -40,14 +43,26 @@ const DEFAULT_EXPERIMENT_DETAILS = {
 const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.SET_EXPERIMENT_DETAILS: {
-      let {name = '', description = '', srcpath = '', outcome = '', outcomeType = ''} = action.payload.experimentDetails;
+      let {
+        name = '',
+        description = '',
+        srcpath = '',
+        outcome = '',
+        outcomeType = '',
+        evaluationMetrics = {},
+        algorithms = {},
+        statuses = {}
+      } = action.payload.experimentDetails;
       return {
         ...state,
         name,
         description,
         srcpath,
         outcome,
-        outcomeType
+        outcomeType,
+        evaluationMetrics,
+        algorithms,
+        statuses
       };
     }
     case ACTIONS.SET_MODELS:

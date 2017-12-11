@@ -32,7 +32,7 @@ export default function PieChartWithLegends({data, width, height}) {
           !data.length ? null :
             data.map(d => {
               return (
-                <div>
+                <div key={d.color}>
                   <span
                     className="pie-legend-color"
                     style={{backgroundColor: d.color}}

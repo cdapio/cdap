@@ -42,6 +42,8 @@ function getExperimentsList() {
           experiments
         }
       });
+    }, (err) => {
+      console.log(err);
     });
 }
 

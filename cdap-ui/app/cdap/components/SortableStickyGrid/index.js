@@ -18,6 +18,7 @@ import React from 'react';
 import SortableTable from 'components/SortableTable';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
+import shortid from 'shortid';
 
 require('./SortableStickyGrid.scss');
 
@@ -33,11 +34,12 @@ export default class SortableStickyGrid extends SortableTable {
     return (
       <div className="grid-header">
       {
-        this.props.tableHeaders.map(tableHeader => {
+        this.props.tableHeaders.map((tableHeader) => {
           return (
             <div
               className="grid-header-item"
               title={tableHeader.label}
+              key={shortid.generate()}
               style={
                 tableHeader.property ? { width: `${itemWidth}%`} : {}
               }
