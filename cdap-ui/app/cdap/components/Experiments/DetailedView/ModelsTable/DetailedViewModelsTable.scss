@@ -53,7 +53,7 @@
     .grid-body-row {
       cursor: pointer;
       &.opened {
-        background-color: $grey-06;
+        background-color: $grey-08;
       }
       .grid-body-item {
         padding: 0.7rem 0 0.7rem 0;
@@ -62,13 +62,13 @@
         }
       }
       &:not(.opened):hover {
-        background-color: $grey-05;
+        background-color: $grey-08;
       }
     }
     .grid-body-row-details {
       display: flex;
       word-break: break-word;
-      background-color: $grey-06;
+      background-color: $grey-08;
       padding: 0 0 10px 0;
       > div {
         padding: 0 10px 0 0;

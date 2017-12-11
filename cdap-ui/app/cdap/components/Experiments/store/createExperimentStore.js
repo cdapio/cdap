@@ -25,6 +25,7 @@ const ACTIONS = {
   SET_EXPERIMENT_SRC_PATH: 'SET_EXPERIMENT_SRC_PATH',
   SET_NEW_EXPERIMENT_CREATED: 'SET_NEW_EXPERIMENT_CREATED',
   SET_CREATE_EXPERIMENT_LOADING: 'SET_CREATE_EXPERIMENT_LOADING',
+  SET_EXPERIMENT_METADATA_FOR_EDIT: 'SET_EXPERIMENT_METADATA_FOR_EDIT',
 
   SET_OUTCOME_COLUMNS: 'SET_OUTCOME_COLUMNS',
   SET_DIRECTIVES: 'SET_DIRECTIVES',
@@ -41,7 +42,8 @@ const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
   outcome: '',
   srcpath: '',
   loading: false,
-  isExperimentCreated: false
+  isExperimentCreated: false,
+  isEdit: false
 };
 
 const DEFAULT_MODEL_CREATE_VALUE = {
@@ -90,6 +92,15 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
         ...state,
         loading: action.payload.loading
       };
+    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT: {
+      let {name, description, outcome, srcpath} = action.payload.experimentDetails;
+      return {
+        ...state,
+        name, description, outcome, srcpath,
+        isExperimentCreated: true,
+        isEdit: true
+      };
+    }
     default:
       return state;
   }
@@ -131,6 +142,13 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
         ...state,
         workspaceId: action.payload.workspaceId
       };
+    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT: {
+      let {workspaceId} = action.payload.experimentDetails;
+      return {
+        ...state,
+        workspaceId
+      };
+    }
     default:
       return state;
   }

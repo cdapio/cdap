@@ -30,6 +30,7 @@ import WarningContainer from 'components/WarningContainer';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {columnNameAlreadyExists} from 'components/DataPrep/helper';
 import {preventPropagation} from 'services/helpers';
+import {NUMBER_TYPES} from 'services/global-constants';
 import capitalize from 'lodash/capitalize';
 import Mousetrap from 'mousetrap';
 
@@ -41,9 +42,7 @@ const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn'
 export default class Calculate extends Component {
   constructor(props) {
     super(props);
-
-    this.NUMBER_TYPES = ['integer', 'short', 'long', 'float', 'double'];
-    this.VALID_TYPES = this.NUMBER_TYPES.concat(['string']);
+    this.VALID_TYPES = NUMBER_TYPES.concat(['string']);
 
     this.columnType = DataPrepStore.getState().dataprep.types[this.props.column];
 
@@ -69,133 +68,133 @@ export default class Calculate extends Component {
       },
       {
         name: 'ADD',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `${this.props.column} + ${this.state.operationInput}`
       },
       {
         name: 'SUBTRACT',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `${this.props.column} - ${this.state.operationInput}`
       },
       {
         name: 'MULTIPLY',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `${this.props.column} * ${this.state.operationInput}`
       },
       {
         name: 'DIVIDE',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `${this.props.column} / ${this.state.operationInput}`
       },
       {
         name: 'MODULO',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `${this.props.column} % ${this.state.operationInput}`
       },
       {
         name: 'divider',
-        validColTypes: this.NUMBER_TYPES
+        validColTypes: NUMBER_TYPES
       },
       {
         name: 'POWEROF',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:pow(${this.props.column}, ${this.state.operationInput})`
       },
       {
         name: 'SQUARE',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:pow(${this.props.column}, 2)`
       },
       {
         name: 'SQUAREROOT',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:sqrt(${this.props.column})`
       },
       {
         name: 'CUBE',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:pow(${this.props.column}, 3)`
       },
       {
         name: 'CUBEROOT',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:cbrt(${this.props.column})`
       },
       {
         name: 'LOG',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:log10(${this.props.column})`
       },
       {
         name: 'NATURALLOG',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:log(${this.props.column})`
       },
       {
         name: 'divider',
-        validColTypes: this.NUMBER_TYPES
+        validColTypes: NUMBER_TYPES
       },
       {
         name: 'ABSVALUE',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:abs(${this.props.column})`
       },
       {
         name: 'CEIL',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:ceil(${this.props.column})`
       },
       {
         name: 'FLOOR',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:floor(${this.props.column})`
       },
       {
         name: 'divider',
-        validColTypes: this.NUMBER_TYPES
+        validColTypes: NUMBER_TYPES
       },
       {
         name: 'SIN',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:sin(${this.props.column})`
       },
       {
         name: 'COS',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:cos(${this.props.column})`
       },
       {
         name: 'TAN',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:tan(${this.props.column})`
       },
       {
         name: 'ARCCOS',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:acos(${this.props.column})`
       },
       {
         name: 'ARCSIN',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:asin(${this.props.column})`
       },
       {
         name: 'ARCTAN',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:atan(${this.props.column})`
       },
       {
         name: 'divider',
-        validColTypes: this.NUMBER_TYPES
+        validColTypes: NUMBER_TYPES
       },
       {
         name: 'ROUND',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => `math:round(${this.props.column})`
       },
       {
         name: 'RANDOM',
-        validColTypes: this.NUMBER_TYPES,
+        validColTypes: NUMBER_TYPES,
         expression: () => 'math:random()'
       },
       {
@@ -331,7 +330,7 @@ export default class Calculate extends Component {
               <div className="column-type-label">
                 <span>
                   {
-                    this.NUMBER_TYPES.indexOf(this.columnType) !== -1 ?
+                    NUMBER_TYPES.indexOf(this.columnType) !== -1 ?
                       T.translate(`${PREFIX}.columnTypeLabel.numeric`)
                     :
                       capitalize(this.columnType)
@@ -393,7 +392,7 @@ export default class Calculate extends Component {
             /* Right now don't need to use ScrollableList for string options since there's only one of them.
             When we have more string options in the future, we can just do renderOptions() */
 
-            this.NUMBER_TYPES.indexOf(this.columnType) !== -1 ?
+            NUMBER_TYPES.indexOf(this.columnType) !== -1 ?
               this.renderOptionsWithScrollableList()
             :
               this.renderOptions()
