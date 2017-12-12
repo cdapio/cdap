@@ -48,9 +48,11 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -63,8 +65,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Service that implements the Scheduler interface. This implements the actual Scheduler using
@@ -73,9 +76,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
   private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerService.class);
 
+  private final CountDownLatch startedLatch;
   private final Transactional transactional;
   private final Service internalService;
-  private final AtomicBoolean schedulerStarted;
   private final DatasetFramework datasetFramework;
   private final SchedulerService scheduler;
 
@@ -85,6 +88,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                        final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
                        final ConstraintCheckerService constraintCheckerService,
                        final NamespaceQueryAdmin namespaceQueryAdmin, final Store store) {
+    this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
     final DynamicDatasetCache datasetCache =
       new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -94,7 +98,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
 
     this.scheduler = schedulerService;
-    this.schedulerStarted = new AtomicBoolean();
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
       @Override
@@ -108,7 +111,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         cleanupJobs();
         constraintCheckerService.startAndWait();
         scheduleNotificationSubscriberService.startAndWait();
-        schedulerStarted.set(true);
+        startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
@@ -188,11 +191,37 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     LOG.info("Schedule migration is completed for all namespaces.");
   }
 
-  private void checkStarted() {
-    if (schedulerStarted.get()) {
-      return;
+  /**
+   * Waits for this scheduler completely started and functional.
+   *
+   * @param timeout maximum timeout to wait for
+   * @param timeoutUnit unit for the timeout
+   *
+   * @throws InterruptedException if the current thread is being interrupted
+   * @throws TimeoutException if the scheduler is not yet functional until the give timeout time passed
+   * @throws IllegalStateException if this scheduler is not yet started
+   */
+  @VisibleForTesting
+  public void waitUntilFunctional(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+    if (!isRunning()) {
+      throw new IllegalStateException(getClass().getSimpleName()
+                                        + " is not running. Cannot wait for it to be functional.");
     }
-    throw new ServiceUnavailableException("Core scheduler");
+    if (!startedLatch.await(timeout, timeoutUnit)) {
+      throw new TimeoutException(getClass().getSimpleName()
+                                   + " is not completely started after " + timeout + " " + timeoutUnit);
+    }
+  }
+
+  /**
+   * Checks if the scheduler started completely and is functional.
+   *
+   * @throws ServiceUnavailableException if the scheduler is not yet functional
+   */
+  private void checkStarted() {
+    if (!Uninterruptibles.awaitUninterruptibly(startedLatch, 0, TimeUnit.SECONDS)) {
+      throw new ServiceUnavailableException("Core scheduler");
+    }
   }
 
   @Override
