@@ -1003,7 +1003,7 @@ class HydratorPlusPlusConfigStore {
         if (!checkForDuplicateDrafts(config, draftsMap)) {
           res[this.$stateParams.namespace] = saveDraft(config, draftsMap);
         } else {
-          throw 'A Draft with the same name already exist. Plesae rename your draft';
+          throw 'A draft with the same name already exists. Please rename your draft.';
         }
         return this.mySettings.set('hydratorDrafts', res);
       })

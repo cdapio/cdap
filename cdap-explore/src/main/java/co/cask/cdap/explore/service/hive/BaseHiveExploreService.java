@@ -81,7 +81,6 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -137,7 +136,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
-  private static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
   public static final String SPARK_YARN_DIST_FILES = "spark.yarn.dist.files";
 
   private static final String PARAMS_EXPLORE_MODIFIES = com.google.common.base.Joiner.on("|").join(
@@ -249,7 +247,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
     if (UserGroupInformation.isSecurityEnabled()) {
-      conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
+      conf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
     }
 
     // workaround to allow CDAP explore to modify params of session conf
@@ -385,7 +383,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     if (UserGroupInformation.isSecurityEnabled()) {
       // define metastore token key name
-      sparkConf.put("spark.hadoop." + HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
+      sparkConf.put("spark.hadoop." + Constants.Explore.HIVE_METASTORE_TOKEN_SIG,
+                    Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
 
       // tokens are already provided for spark client
       sparkConf.put("spark.yarn.security.tokens.hive.enabled", "false");

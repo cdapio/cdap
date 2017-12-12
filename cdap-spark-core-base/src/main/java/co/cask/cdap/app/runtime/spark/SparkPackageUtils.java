@@ -275,12 +275,12 @@ public final class SparkPackageUtils {
 
       zipOutput.putNextEntry(new ZipEntry(file.getName()));
 
-      // Rewrite the hive-site.xml file to set "hive.metastore.token.signature" to "hiveserver2ClientToken"
+      // Rewrite the hive-site.xml file to set the Hive Metastore delegation token signature
       if ("hive-site.xml".equals(file.getName())) {
         Configuration conf = new Configuration(false);
         conf.clear();
         conf.addResource(file.toURI().toURL());
-        conf.set("hive.metastore.token.signature", "hiveserver2ClientToken");
+        conf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
         conf.writeXml(zipOutput);
       } else {
         Files.copy(file.toPath(), zipOutput);

@@ -15,19 +15,6 @@
 -->
 
 <div class="keyvalue-container">
-  <div class="row show-delimiter-container" ng-if="showDelimiter">
-    <div class="col-xs-12">
-      <div class="delimiter delimiter-container">
-        <label class="control-label">Delimiter</label>
-        <input type="text" class="form-control" ng-model="delimiter" />
-      </div>
-      <div class="keyvalue-delimiter delimiter-container">
-        <label class="control-label">KeyValue Delimiter</label>
-        <input type="text" class="form-control" ng-model="kvdelimiter" />
-      </div>
-    </div>
-  </div>
-
   <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
     <div class="col-xs-10 col-lg-8">
       <input type="text" class="form-control" ng-model="property.key" placeholder="{{ keyPlaceholder }}" my-focus-watch="property.newField" />

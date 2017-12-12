@@ -26,23 +26,26 @@ export default function ColumnsTabDetail({columnInfo}) {
   let headers = Object.keys(types);
   return (
     <tr className="column-tab-details">
-      <td />
-      <td colSpan="4">
-        <table className="table">
+      <td colSpan="6">
+        <table className="table statistics-table">
           <thead>
             <tr>
               <th>{T.translate(`${PREFIX}.Header.inferredType`)}</th>
-              <th>{T.translate(`${PREFIX}.Header.percentageChange`)}</th>
+              <th className="text-xs-right">
+                {T.translate(`${PREFIX}.Header.percentageChange`)}
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {
               headers.map((head) => {
+                let chance = Number(Math.round(types[head]+'e2')+'e-2');
+
                 return (
                   <tr key={head}>
                     <td>{head}</td>
-                    <td>{types[head]}</td>
+                    <td className="text-xs-right">{chance}</td>
                   </tr>
                 );
               })
@@ -50,7 +53,6 @@ export default function ColumnsTabDetail({columnInfo}) {
           </tbody>
         </table>
       </td>
-      <td />
     </tr>
   );
 }

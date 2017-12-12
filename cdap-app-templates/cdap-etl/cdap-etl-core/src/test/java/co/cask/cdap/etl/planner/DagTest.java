@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -540,14 +539,12 @@ public class DagTest {
       new Connection("n3", "n4"),
       new Connection("n4", "a2")));
 
-    Set<Dag> actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("c1", "a1", "a2")));
+    Set<Dag> actual = dag.splitByControlNodes(ImmutableSet.of("c1"), ImmutableSet.of("a1", "a2"));
     Set<Dag> expectedDags = new HashSet<>();
     expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "a1"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "n1"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n1", "n2"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n3"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n3", "n4"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n4", "a2"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "n1"), new Connection("n1", "n2"))));
+    expectedDags.add(
+      new Dag(ImmutableSet.of(new Connection("c1", "n3"), new Connection("n3", "n4"), new Connection("n4", "a2"))));
 
     Assert.assertEquals(expectedDags, actual);
 
@@ -563,12 +560,11 @@ public class DagTest {
       new Connection("c1", "a1"),
       new Connection("c1", "a2")));
 
-    actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("c0", "c1", "a1", "a2")));
+    actual = dag.splitByControlNodes(ImmutableSet.of("c0", "c1"), ImmutableSet.of("a1", "a2"));
     expectedDags.clear();
     expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "n1"),
                                              new Connection("n1", "c0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c0", "n2"),
-                                             new Connection("n2", "c1"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c0", "n2"), new Connection("n2", "c1"))));
     expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "a2"))));
     expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "a1"))));
 
@@ -586,13 +582,11 @@ public class DagTest {
       new Connection("c1", "n0"),
       new Connection("n0", "n1")));
 
-    actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("a0", "a1", "a2", "c1")));
+    actual = dag.splitByControlNodes(ImmutableSet.of("c1"), ImmutableSet.of("a0", "a1", "a2"));
     expectedDags.clear();
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "a2"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "a2"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "a2"), new Connection("a1", "a2"))));
     expectedDags.add(new Dag(ImmutableSet.of(new Connection("a2", "c1"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "n1"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n0"), new Connection("n0", "n1"))));
     Assert.assertEquals(expectedDags, actual);
 
     // Tests Actions in the beginning and connect to the Condition through other plugin
@@ -606,29 +600,29 @@ public class DagTest {
       new Connection("n0", "c1"),
       new Connection("c1", "n1")));
 
-    actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("a0", "a1", "c1")));
+    actual = dag.splitByControlNodes(ImmutableSet.of("c1"), ImmutableSet.of("a0", "a1"));
 
     expectedDags.clear();
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "n0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "n0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "c1"))));
+    expectedDags.add(new Dag(
+      ImmutableSet.of(new Connection("a0", "n0"), new Connection("a1", "n0"), new Connection("n0", "c1"))));
     expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n1"))));
     Assert.assertEquals(expectedDags, actual);
+  }
 
+  @Test
+  public void testIdentitySplitByControl() {
     //      |-- n0 --|
     // a0 --|        |-- n2
     //      |-- n1 --|
-    dag = new Dag(ImmutableSet.of(
+    Dag dag = new Dag(ImmutableSet.of(
       new Connection("a0", "n0"),
       new Connection("a0", "n1"),
       new Connection("n0", "n2"),
       new Connection("n1", "n2")));
 
-    actual = dag.splitByControlNodes(ImmutableSet.of("a0"));
-    expectedDags.clear();
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "n0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "n1"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "n2"), new Connection("n1", "n2"))));
+    Set<Dag> actual = dag.splitByControlNodes(ImmutableSet.<String>of(), ImmutableSet.of("a0"));
+    Set<Dag> expectedDags = new HashSet<>();
+    expectedDags.add(dag);
     Assert.assertEquals(expectedDags, actual);
 
 
@@ -640,10 +634,9 @@ public class DagTest {
       new Connection("n0", "n2"),
       new Connection("n1", "n2")));
 
-    actual = dag.splitByControlNodes(ImmutableSet.of("a0"));
+    actual = dag.splitByControlNodes(ImmutableSet.<String>of(), ImmutableSet.of("a0"));
     expectedDags.clear();
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "n0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "n2"), new Connection("n1", "n2"))));
+    expectedDags.add(dag);
     Assert.assertEquals(expectedDags, actual);
 
     // a0 -- n0 -- a1
@@ -651,10 +644,92 @@ public class DagTest {
       new Connection("a0", "n0"),
       new Connection("n0", "a1")));
 
-    actual = dag.splitByControlNodes(ImmutableSet.of("a0", "a1"));
+    actual = dag.splitByControlNodes(ImmutableSet.<String>of(), ImmutableSet.of("a0", "a1"));
     expectedDags.clear();
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "n0"))));
-    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "a1"))));
+    expectedDags.add(dag);
     Assert.assertEquals(expectedDags, actual);
+
+    // n0 --|
+    //      |-- a0
+    //  |---|
+    // n1
+    //  |---|
+    //      |-- n2
+    // a1 --|
+    dag = new Dag(ImmutableSet.of(
+      new Connection("n0", "a0"),
+      new Connection("n1", "a0"),
+      new Connection("n1", "n2"),
+      new Connection("a1", "n2")));
+
+    actual = dag.splitByControlNodes(ImmutableSet.<String>of(), ImmutableSet.of("a0", "a1"));
+    expectedDags.clear();
+    expectedDags.add(dag);
+    Assert.assertEquals(expectedDags, actual);
+  }
+
+  @Test
+  public void testComplicatedSplitByControl() {
+    /*
+                                                   |-- n2 -- a3
+            |-- a1 --|        |-- n0 -- n1 -- c1 --|                          |-- a5 --|
+        a0--|        |-- c0 --|                    |-- n3 -- c2 -- n8 -- a4 --|        |-- a7
+            |-- a2 --|        |                                               |-- a6 --|
+                              |        |-- n4 -- n5 -- c4 -- c5 -- n9
+                              |-- c3 --|
+                                       |              |-- a8
+                                       |-- n6 -- n7 --|
+                                                      |-- a9
+     */
+    Dag dag = new Dag(ImmutableSet.of(
+      new Connection("a0", "a1"),
+      new Connection("a0", "a2"),
+      new Connection("a1", "c0"),
+      new Connection("a2", "c0"),
+      new Connection("c0", "n0"),
+      new Connection("c0", "c3"),
+      new Connection("n0", "n1"),
+      new Connection("n1", "c1"),
+      new Connection("c1", "n2"),
+      new Connection("c1", "n3"),
+      new Connection("n2", "a3"),
+      new Connection("n3", "c2"),
+      new Connection("c2", "n8"),
+      new Connection("n8", "a4"),
+      new Connection("a4", "a5"),
+      new Connection("a4", "a6"),
+      new Connection("a5", "a7"),
+      new Connection("a6", "a7"),
+      new Connection("c3", "n4"),
+      new Connection("c3", "n6"),
+      new Connection("n4", "n5"),
+      new Connection("n5", "c4"),
+      new Connection("c4", "c5"),
+      new Connection("c5", "n9"),
+      new Connection("n6", "n7"),
+      new Connection("n7", "a8"),
+      new Connection("n7", "a9")));
+
+    Set<Dag> actual = dag.splitByControlNodes(
+      ImmutableSet.of("c0", "c1", "c2", "c3", "c4", "c5"),
+      ImmutableSet.of("a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"));
+
+    Set<Dag> expected = ImmutableSet.of(
+      new Dag(ImmutableSet.of(new Connection("a0", "a1"), new Connection("a0", "a2"))),
+      new Dag(ImmutableSet.of(new Connection("a1", "c0"), new Connection("a2", "c0"))),
+      new Dag(ImmutableSet.of(new Connection("c0", "n0"), new Connection("n0", "n1"), new Connection("n1", "c1"))),
+      new Dag(ImmutableSet.of(new Connection("c0", "c3"))),
+      new Dag(ImmutableSet.of(new Connection("c1", "n2"), new Connection("n2", "a3"))),
+      new Dag(ImmutableSet.of(new Connection("c1", "n3"), new Connection("n3", "c2"))),
+      new Dag(ImmutableSet.of(new Connection("c2", "n8"), new Connection("n8", "a4"))),
+      new Dag(ImmutableSet.of(new Connection("a4", "a5"), new Connection("a4", "a6"))),
+      new Dag(ImmutableSet.of(new Connection("a5", "a7"), new Connection("a6", "a7"))),
+      new Dag(ImmutableSet.of(new Connection("c3", "n4"), new Connection("n4", "n5"), new Connection("n5", "c4"))),
+      new Dag(ImmutableSet.of(new Connection("c3", "n6"), new Connection("n6", "n7"),
+                              new Connection("n7", "a8"), new Connection("n7", "a9"))),
+      new Dag(ImmutableSet.of(new Connection("c4", "c5"))),
+      new Dag(ImmutableSet.of(new Connection("c5", "n9"))));
+
+    Assert.assertEquals(expected, actual);
   }
 }
