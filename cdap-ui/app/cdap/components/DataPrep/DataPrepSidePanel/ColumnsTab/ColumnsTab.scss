@@ -85,24 +85,29 @@ $option-hover-bg-color: #eeeeee;
       tbody {
         tr {
           cursor: pointer;
-          td {
-            &:nth-child(2),
-            &:nth-child(3) {
-              width: 5%;
-            }
-            &:nth-child(4) {
-              width: 70%;
-              max-width: 250px;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
-            &:nth-child(5) {
-              width: 10%;
+          &:not(.column-tab-details) {
+            td {
+              &:nth-child(2),
+              &:nth-child(3) {
+                width: 5%;
+              }
+              &:nth-child(4) {
+                width: 70%;
+                max-width: 250px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              &:nth-child(5) {
+                width: 10%;
+              }
             }
           }
           &.column-tab-details {
             background: $element-selected-color;
             border-left: 3px solid;
+
+            td { padding-right: 5px; }
+
             .table {
               background: transparent;
             }
@@ -117,6 +122,12 @@ $option-hover-bg-color: #eeeeee;
         th {
           color: #373a3c;
           padding: 0.3rem;
+        }
+      }
+
+      .statistics-table {
+        th:last-child {
+          min-width: 100px;
         }
       }
     }

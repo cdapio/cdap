@@ -360,6 +360,10 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
         conf.set("spark.home", sparkHome);
       }
 
+      // Set the service name for the Hive Metastore delegation token
+      // (this was set in Master while obtaining delegation token from Hive Metastore)
+      conf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
+
       File newConfFile = File.createTempFile("hive-site.xml", ".tmp");
       try (FileOutputStream os = new FileOutputStream(newConfFile)) {
         conf.writeXml(os);
