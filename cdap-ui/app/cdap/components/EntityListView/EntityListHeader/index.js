@@ -245,9 +245,11 @@ export default class EntityListHeader extends Component {
       <div className="entity-list-header-container">
         <div className="entity-list-header">
           <div className="search-box input-group">
-            <span className="input-feedback input-group-prepend">
-              <IconSVG name="icon-search" />
-            </span>
+            <div className="input-feedback input-group-prepend">
+              <div className="input-group-text">
+                <IconSVG name="icon-search" />
+              </div>
+            </div>
             <input
               type="text"
               className="search-input form-control"

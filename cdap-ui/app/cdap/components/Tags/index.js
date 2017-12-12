@@ -36,12 +36,16 @@ export default class Tags extends Component {
   static defaultProps = {
     showCountLabel: true,
     isNativeLink: false,
+    viewOnly: false,
+    displayAll: false,
   };
 
   static propTypes = {
     entity: PropTypes.object,
     showCountLabel: PropTypes.bool,
     isNativeLink: PropTypes.bool,
+    viewOnly: PropTypes.bool,
+    displayAll: PropTypes.bool,
   };
 
   state = {
@@ -62,7 +66,7 @@ export default class Tags extends Component {
 
   subscriptions = [];
 
-  componentWillMount() {
+  componentDidMount() {
     Mousetrap.bind('return', this.addTag);
     Mousetrap.bind('escape', this.closeInputFieldIfEmpty);
 
@@ -205,6 +209,10 @@ export default class Tags extends Component {
   }
 
   isTagsOverflowing = () => {
+    if (this.props.displayAll) {
+      return;
+    }
+
     let tagsListElem = document.getElementsByClassName('tags-list')[0];
     if (!tagsListElem) {
       return;
@@ -257,6 +265,7 @@ export default class Tags extends Component {
               onDelete={this.deleteTag.bind(this, tag)}
               scope={SCOPES.USER}
               isNativeLink={this.props.isNativeLink}
+              viewOnly={this.props.viewOnly}
               key={tag}
             />
           );
@@ -320,6 +329,14 @@ export default class Tags extends Component {
     );
   }
 
+  renderAddTag() {
+    if (this.props.viewOnly) {
+      return null;
+    }
+
+    return this.state.showInputField ? this.renderInputField() : this.renderPlusButton();
+  }
+
   render() {
     let tagsCount = this.state.systemTags.length + this.state.userTags.length;
 
@@ -334,7 +351,7 @@ export default class Tags extends Component {
           {this.renderUserTags()}
         </span>
         {this.state.showAllTagsLabel ? this.renderTagsPopover() : null}
-        {this.state.showInputField ? this.renderInputField() : this.renderPlusButton()}
+        {this.renderAddTag()}
         {this.state.loading ? (
           <IconSVG name="icon-spinner" className="fa-lg fa-spin" data-testid="loading-icon" />
         ) : null}

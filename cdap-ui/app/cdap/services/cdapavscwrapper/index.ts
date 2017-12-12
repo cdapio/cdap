@@ -20,7 +20,6 @@ import DateLogicalType from 'services/cdapavscwrapper/DateLogicalType';
 import TimestampMicrosLogicalType from 'services/cdapavscwrapper/TimestampMicrosLogicalType';
 import TimeMicrosLogicalType from 'services/cdapavscwrapper/TimeMicrosLogicalType';
 import invert from 'lodash/invert';
-import { IJsonResponse } from 'services/cdapavscwrapper/AbstractLogicalType';
 
 // this dictionary is keeping the real AVRO logical type as the key
 const LogicalTypesDictionary = {

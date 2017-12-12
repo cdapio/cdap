@@ -30,10 +30,12 @@ export default class Tag extends Component {
     scope: PropTypes.string,
     onDelete: PropTypes.func,
     isNativeLink: PropTypes.bool,
+    viewOnly: PropTypes.bool,
   };
 
   static defaultProps = {
     isNativeLink: false,
+    viewOnly: false,
   };
 
   state = {
@@ -55,7 +57,7 @@ export default class Tag extends Component {
       <span className={tagClasses}>
         <span onClick={this.toggleSearchModal} className="tag-content">
           <span>{this.props.value}</span>
-          {this.props.scope === SCOPES.USER ? (
+          {this.props.scope === SCOPES.USER && !this.props.viewOnly ? (
             <IconSVG name="icon-close" onClick={this.props.onDelete} />
           ) : null}
         </span>

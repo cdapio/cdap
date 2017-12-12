@@ -12,6 +12,7 @@ commons:
   delete: Delete
   descriptionLabel: Description
   doneLabel: Done
+  duplicate: Duplicate
   DSVEditor:
     placeholder: value
   dataset: Dataset
@@ -77,6 +78,7 @@ commons:
     view:
       plural: Stream Views
       singular: Stream View
+  export: Export
   formatLabel: Format
   hydrator: Cask Hydrator
   keyValPairs:
@@ -1902,6 +1904,31 @@ features:
       summary: Summary
       unschedule: Unschedule
       version: version {version}
+
+  PipelineList:
+    cdap-data-pipeline: Batch
+    cdap-data-streams: Realtime
+    deployed: Deployed
+    DeployedPipelineView:
+      searchPlaceholder: Search by pipeline name
+      pipelineCount:
+        1: "{context} pipeline"
+        _: "{context} pipelines"
+    draft: Drafts
+    DraftPipelineView:
+      draftCount:
+        1: "{context} pipeline you saved"
+        _: "{context} pipelines you saved"
+    duration: Duration
+    lastSaved: Last saved
+    lastStartTime: Last start time
+    nextRun: Next run in
+    pipelineName: Pipeline name
+    runs: Total runs
+    selectOne: " - Select one to view"
+    status: Status
+    tags: Tags
+    type: Type
 
   PipelineResources:
     cpu: CPU

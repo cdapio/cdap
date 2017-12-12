@@ -31,6 +31,19 @@ const GLOBALS = {
   etlDataPipeline: 'cdap-data-pipeline',
   etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
   etlPipelineTypes: ['cdap-data-streams', 'cdap-data-pipeline'],
+
+  // program types for etl app
+  programInfo: {
+    'cdap-data-pipeline': {
+      programType: 'workflows',
+      programName: 'DataPipelineWorkflow'
+    },
+    'cdap-data-streams': {
+      programType: 'spark',
+      programName: 'DataStreamsSparkStreaming'
+    }
+  },
+
   // Map defines what plugin types to surface for each artifact in UI.
   pluginTypes: {
     'cdap-etl-batch': {

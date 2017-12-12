@@ -56,7 +56,9 @@ function InputPathView({ value, onChange }) {
   return (
     <div className="input-path-container">
       <div className="input-group">
-        <span className="input-group-prepend">{url}</span>
+        <div className="input-group-prepend">
+          <div className="input-group-text">{url}</div>
+        </div>
         <input
           type="text"
           className="form-control"

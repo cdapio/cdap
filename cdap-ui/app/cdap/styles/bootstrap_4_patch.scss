@@ -16,6 +16,7 @@
 
 @import "~bootstrap/scss/mixins";
 @import "./variables.scss";
+@import "~bootstrap/scss/input-group";
 
 @mixin bootstrap_patch() {
   .dropdown-menu {
@@ -69,49 +70,6 @@
   .badge-secondary {
     color: white;
     background-color: $grey-02;
-  }
-
-  .input-group {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
-    width: 100%;
-    .input-group-append,
-    .input-group-prepend {
-      display: flex;
-      align-items: center;
-      padding: 0.375rem 0.75rem;
-      margin-bottom: 0;
-      font-size: 1rem;
-      font-weight: 400;
-      line-height: 1.5;
-      color: #495057;
-      text-align: center;
-      white-space: nowrap;
-      background-color: #e9ecef;
-      border: 1px solid #ced4da;
-      border-radius: 0.25rem;
-    }
-
-    .input-group-prepend {
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-      border-right: 0;
-    }
-    .input-group-append {
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-      border-left: 0;
-    }
-    .form-control {
-      position: relative;
-      flex: 1 1 auto;
-      width: 1%;
-      margin-bottom: 0;
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-    }
   }
 
   .tooltip {

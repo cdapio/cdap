@@ -27,6 +27,7 @@ import {
   setDatabaseProperties,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import PipelineList from 'components/PipelineList';
 
 require('./Home.scss');
 
@@ -158,6 +159,7 @@ export default class Home extends Component {
             path="/ns/:namespace/profiles/details/:profileId"
             component={ProfileDetailView}
           />
+          <Route exact path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route component={Page404} />
         </Switch>
       </div>
