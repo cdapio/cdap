@@ -24,6 +24,7 @@ import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import PipelineList from 'components/PipelineList';
 require('./Home.scss');
 
 const DataPrepBrowser = Loadable({
@@ -106,6 +107,7 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
           <Route exact path="/ns/:namespace/experiments" component={Experiments} />
           <Route exact path="/ns/:namespace/experiments/:experimentId" component={ExperimentDetailedView} />
+          <Route exact path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route component={Page404} />
         </Switch>
       </div>

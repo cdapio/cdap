@@ -44,4 +44,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('pipelineTriggersSidebars', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineTriggersSidebars);
+  })
+  .directive('pipelineListView', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineList);
   });

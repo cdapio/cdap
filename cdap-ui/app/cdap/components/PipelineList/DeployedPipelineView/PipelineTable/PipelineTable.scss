@@ -1,0 +1,168 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../../styles/variables.scss';
+
+$table-bg-color: white;
+$table-border-color: $grey-06;
+$table-border: 1px solid $table-border-color;
+$row-hover-color: $grey-08;
+
+$toggle-width: 45px;
+$type-width: 100px;
+$version-width: 100px;
+$runs-width: 75px;
+$status-width: 150px;
+$last-start-width: 150px;
+$next-run-width: 100px;
+$tags-width: 250px;
+$action-width: 45px;
+
+.pipeline-list-table {
+  background-color: $table-bg-color;
+  padding: 0 2px;
+
+  .table-header {
+    height: 40px;
+    font-weight: bold;
+    border-bottom: 3px solid $table-border-color;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .table-column {
+    padding: 0 5px;
+  }
+
+  .table-row-container {
+    border-bottom: $table-border;
+
+    &.expanded {
+      background-color: $row-hover-color;
+
+      .table-row:hover .pipeline-run,
+      .pipeline-run {
+        color: $orange-01;
+      }
+    }
+  }
+
+  .running-pipelines {
+    padding: 0 $action-width 10px $toggle-width;
+
+    .table {
+      margin-top: 0;
+      margin-bottom: 0;
+
+      th {
+        font-size: 13px;
+      }
+
+      tbody td > a {
+        color: inherit;
+      }
+    }
+
+    thead {
+      background-color: $grey-05;
+    }
+  }
+
+  .table-row {
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    &:hover {
+      background-color: $row-hover-color;
+
+      .pipeline-run { color: $blue-02; }
+    }
+
+    .toggle-expand-column,
+    .action {
+      font-size: 16px;
+    }
+  }
+
+  .toggle-expand-column {
+    width: $toggle-width;
+
+    &.expandable {
+      cursor: pointer;
+    }
+  }
+
+  .name {
+    width: calc(100% - #{$toggle-width} - #{$type-width} - #{$version-width} - #{$runs-width} - #{$status-width} - #{$last-start-width} - #{$next-run-width} - #{$tags-width} - #{$action-width});
+
+    .pipeline-name {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    a {
+      color: $grey-01;
+    }
+
+    .pipeline-run {
+      font-size: 11px;
+      color: $grey-03;
+      font-weight: 500;
+    }
+  }
+
+  .type {
+    width: $type-width;
+  }
+
+  .version {
+    width: $version-width;
+  }
+
+  .runs {
+    width: $runs-width;
+  }
+
+  .status {
+    width: $status-width;
+
+    .text { vertical-align: middle; }
+    .fa { margin-right: 2px; }
+    .status-light-grey { color: $grey-03; }
+    .status-light-green { color: $green-01; }
+    .status-blue { color: $blue-02; }
+    .status-light-red { color: $red-02; }
+  }
+
+  .last-start {
+    width: $last-start-width;
+  }
+
+  .next-run {
+    width: $next-run-width;
+  }
+
+  .tags {
+    width: $tags-width;
+  }
+
+  .action {
+    width: $action-width;
+  }
+}

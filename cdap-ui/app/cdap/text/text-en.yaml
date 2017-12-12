@@ -1320,6 +1320,28 @@ features:
     subtitleMessage2: View all your entities in the
   Pagination:
     dropdown-label: Page
+  PipelineList:
+    cdap-data-pipeline: Batch
+    cdap-data-streams: Realtime
+    creationTime: Created on
+    deployed: Deployed
+    DeployedPipelineView:
+      searchPlaceholder: Search by Pipeline Name
+      pipelineCount: "{count} Pipelines"
+    draft: Draft
+    DraftPipelineView:
+      draftCount: "Draft ({count} pipelines)"
+    duration: Duration
+    lastStartTime: Last Start Time
+    nextRun: Next Run Starts in
+    pipelineName: Pipeline Name
+    runs: Total Runs
+    startTime: Start Time
+    status: Status
+    tags: Tags
+    type: Type
+    version: Version
+
   PipelineSummary:
     filterContainer:
       view: View

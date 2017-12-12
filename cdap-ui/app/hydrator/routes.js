@@ -333,7 +333,7 @@ angular.module(PKG.name + '.feature.hydrator')
         })
 
         .state('hydrator.list', {
-          url: '?page&sortBy&reverse',
+          url: '',
           title: 'Published Pipelines',
           onEnter: function() {
             document.title = 'CDAP | Pipelines';
@@ -342,8 +342,6 @@ angular.module(PKG.name + '.feature.hydrator')
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
           },
-          templateUrl: '/assets/features/hydrator/templates/list.html',
-          controller: 'HydratorPlusPlusListController',
-          controllerAs: 'ListController'
+          templateUrl: '/assets/features/hydrator/templates/list.html'
         });
   });

@@ -42,6 +42,7 @@ var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSideb
 var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
 var GLOBALS = require('../cdap/services/global-constants').default;
 var StatusMapper = require('../cdap/services/StatusMapper').default;
+var PipelineList = require('../cdap/components/PipelineList').default;
 
 export {
   Store,
@@ -69,5 +70,6 @@ export {
   PipelineTriggersSidebars,
   PipelineErrorFactory,
   GLOBALS,
-  StatusMapper
+  StatusMapper,
+  PipelineList
 };

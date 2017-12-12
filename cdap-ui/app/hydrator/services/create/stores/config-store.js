@@ -81,7 +81,8 @@ class HydratorPlusPlusConfigStore {
       },
       __ui__: {
         nodes: [],
-        draftId: null
+        draftId: null,
+        creationTime: null
       },
       description: '',
       name: ''
@@ -141,6 +142,12 @@ class HydratorPlusPlusConfigStore {
   }
   setDraftId(draftId) {
     this.state.__ui__.draftId = draftId;
+  }
+  getCreationTime() {
+    return this.state.__ui__.creationTime;
+  }
+  setCreationTime(time) {
+    this.state.__ui__.creationTime = time;
   }
   getArtifact() {
     return this.getState().artifact;
@@ -978,12 +985,14 @@ class HydratorPlusPlusConfigStore {
     }
     if (!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
+      this.setCreationTime(new Date());
       this.$stateParams.draftId = this.getDraftId();
       this.$state.go('hydrator.create', this.$stateParams, {notify: false});
     }
     let config = this.getConfigForExport();
     config.__ui__ = {
-      draftId: this.getDraftId()
+      draftId: this.getDraftId(),
+      creationTime: this.getCreationTime()
     };
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
       return Object.keys(draftsMap).filter(
