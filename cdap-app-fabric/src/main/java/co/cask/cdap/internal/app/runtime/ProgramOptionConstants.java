@@ -93,4 +93,9 @@ public final class ProgramOptionConstants {
   public static final String PRINCIPAL = "principal";
 
   public static final String APP_PRINCIPAL_EXISTS = "appPrincipalExists";
+
+  /**
+   * Option for the program artifact id.
+   */
+  public static final String ARTIFACT_ID = "artifactId";
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -117,7 +118,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       // Get the artifact details and save it into the program options.
       ArtifactId artifactId = programDescriptor.getArtifactId();
       ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-      ProgramOptions runtimeProgramOptions = updateProgramOptions(programId, options, runId);
+      ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
 
       // Take a snapshot of all the plugin artifacts used by the program
       ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
@@ -284,13 +285,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @param runId   The RunId to be included
    * @return the copy of the program options with RunId included in them
    */
-  private ProgramOptions updateProgramOptions(ProgramId programId,
+  private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId,
                                               ProgramOptions options, RunId runId) {
     // Build the system arguments
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
     builder.putAll(getExtraProgramOptions());
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    builder.put(ProgramOptionConstants.ARTIFACT_ID, Joiner.on(':').join(artifactId.toIdParts()));
 
     // Resolves the user arguments
     // First resolves at the cluster scope if the cluster.name is not empty

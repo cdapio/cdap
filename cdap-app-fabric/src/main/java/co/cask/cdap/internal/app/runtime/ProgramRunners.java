@@ -23,8 +23,10 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -162,6 +164,15 @@ public final class ProgramRunners {
       }
       return targetLocation;
     }
+  }
+
+  /**
+   * Returns the {@link ArtifactId} stored inside the given {@link ProgramOptions#getArguments()}.
+   */
+  public static ArtifactId getArtifactId(ProgramOptions programOptions) {
+    String id = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_ID);
+    Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.ARTIFACT_ID + " in program options");
+    return ArtifactId.fromIdParts(Splitter.on(':').split(id));
   }
 
   private ProgramRunners() {
