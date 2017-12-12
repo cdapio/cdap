@@ -59,7 +59,6 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
@@ -124,6 +123,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -132,6 +132,7 @@ import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ws.rs.Path;
 
 /**
  * Performs the actual execution of mapreduce job.
@@ -301,19 +302,30 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           mapredConf.set("mapreduce.reduce.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
         }
 
+        // (CDAP-7052) Locate the name of the javax.ws.rs-api jar to make it last in the classpath
+        URL jaxrsURL = ClassLoaders.getClassPathURL(Path.class);
+        String jaxrsClassPath = null;
+
         // Get all the jars in jobJar and sort them lexically before adding to the classpath
         // This allows CDAP classes to be picked up first before the Twill classes
-        List<String> jarFiles = new ArrayList<>();
+
+        Set<String> jarFiles = new TreeSet<>();
         try (JarFile jobJarFile = new JarFile(jobJar)) {
           Enumeration<JarEntry> entries = jobJarFile.entries();
           while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement();
-            if (entry.getName().startsWith("lib/") && entry.getName().endsWith(".jar")) {
-              jarFiles.add("job.jar/" + entry.getName());
+            String entryName = entry.getName();
+            if (entryName.startsWith("lib/") && entryName.endsWith(".jar")) {
+              // Skip the jaxrs jar
+              if (jaxrsURL != null && jaxrsURL.getPath().endsWith(entryName)) {
+                jaxrsClassPath = "job.jar/" + entryName;
+              } else {
+                jarFiles.add("job.jar/" + entryName);
+              }
             }
           }
         }
-        Collections.sort(jarFiles);
+
         classpath.addAll(jarFiles);
         classpath.add("job.jar/classes");
 
@@ -329,8 +341,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
 
         hbaseDDLExecutorDirectory = getLocalizedHBaseDDLExecutorDir(tempDir, cConf, job, tempLocation);
-        // Add the mapreduce application classpath at last
+        // Add the mapreduce application classpath, followed by the javax.ws.rs-api at last.
         MapReduceContainerHelper.addMapReduceClassPath(mapredConf, classpath);
+        if (jaxrsClassPath != null) {
+          classpath.add(jaxrsClassPath);
+        }
 
         mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
         mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
@@ -826,11 +841,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   private String getJobName(BasicMapReduceContext context) {
-    Id.Program programId = context.getProgram().getId().toId();
+    ProgramId programId = context.getProgram().getId();
     // MRJobClient expects the following format (for RunId to be the first component)
     return String.format("%s.%s.%s.%s.%s",
                          context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
-                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+                         programId.getNamespace(), programId.getApplication(), programId.getProgram());
   }
 
   /**
