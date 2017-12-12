@@ -244,6 +244,20 @@ public final class ClassLoaders {
   }
 
   /**
+   * Returns the URL to the base classpath for the given class.
+   *
+   * @return the URL of the base classpath or {@code null} if unable to determine the URL.
+   */
+  @Nullable
+  public static URL getClassPathURL(Class<?> cls) {
+    URL url = cls.getClassLoader().getResource(cls.getName().replace('.', '/') + ".class");
+    if (url == null) {
+      return null;
+    }
+    return getClassPathURL(cls.getName(), url);
+  }
+
+  /**
    * Returns the URL to the base classpath for the given class resource URL of the given class name.
    */
   public static URL getClassPathURL(String className, URL classUrl) {
