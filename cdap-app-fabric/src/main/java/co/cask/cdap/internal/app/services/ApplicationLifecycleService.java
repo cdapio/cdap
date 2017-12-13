@@ -26,11 +26,11 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -88,10 +88,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -107,7 +105,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -705,10 +702,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   private void deleteApp(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
-
-
     //Delete the schedules
     scheduler.deleteSchedules(appId);
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+    }
 
     deleteMetrics(appId);
 
@@ -716,33 +714,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deletePreferences(appId);
 
     // Delete all streams and queues state of each flow
-    // TODO: This should be unified with the DeletedProgramHandlerStage
     for (final FlowSpecification flowSpecification : spec.getFlows().values()) {
-      ProgramId flowProgramId = appId.program(ProgramType.FLOW, flowSpecification.getName());
-      // Collects stream name to all group ids consuming that stream
-      final Multimap<String, Long> streamGroups = HashMultimap.create();
-      for (FlowletConnection connection : flowSpecification.getConnections()) {
-        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
-          streamGroups.put(connection.getSourceName(), groupId);
-        }
-      }
-      // Remove all process states and group states for each stream
-      final String namespace = String.format("%s.%s", flowProgramId.getApplication(), flowProgramId.getProgram());
-
-      impersonator.doAs(appId, new Callable<Void>() {
-
-        // TODO: (CDAP-7326) since one worker or flow can only be ran by a single instance of APP, (also a single
-        // version), should delete flow for each version
-        @Override
-        public Void call() throws Exception {
-          for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-            streamConsumerFactory.dropAll(appId.getParent().stream(entry.getKey()), namespace, entry.getValue());
-          }
-          queueAdmin.dropAllForFlow(appId.flow(flowSpecification.getName()));
-          return null;
-        }
-      });
+      FlowUtils.clearDeletedFlow(impersonator, queueAdmin, streamConsumerFactory,
+                                 appId.flow(flowSpecification.getName()), flowSpecification);
     }
 
     ApplicationSpecification appSpec = store.getApplication(appId);
@@ -775,6 +749,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+    }
     store.removeApplication(appId);
   }
 

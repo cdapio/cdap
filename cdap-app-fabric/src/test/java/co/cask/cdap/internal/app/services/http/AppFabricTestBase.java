@@ -49,6 +49,7 @@ import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
@@ -150,6 +151,7 @@ public abstract class AppFabricTestBase {
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
   private static final String API_KEY = "SampleTestApiKey";

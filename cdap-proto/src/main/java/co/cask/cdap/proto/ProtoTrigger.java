@@ -142,17 +142,19 @@ public abstract class ProtoTrigger implements Trigger {
 
   /**
    * Abstract base class for composite trigger in REST requests/responses.
+   *
+   * @param <T> type of triggers contained in the composite trigger
    */
-  public abstract static class AbstractCompositeTrigger extends ProtoTrigger {
-    private final List<Trigger> triggers;
+  public abstract static class AbstractCompositeTrigger<T extends Trigger> extends ProtoTrigger {
+    private final List<T> triggers;
 
-    public AbstractCompositeTrigger(Type type, Trigger... triggers) {
+    public AbstractCompositeTrigger(Type type, List<T> triggers) {
       super(type);
-      this.triggers = Collections.unmodifiableList(new ArrayList<>(Arrays.asList(triggers)));
+      this.triggers = Collections.unmodifiableList(new ArrayList<>(triggers));
       validate();
     }
 
-    public List<Trigger> getTriggers() {
+    public List<T> getTriggers() {
       return triggers;
     }
 
@@ -161,12 +163,12 @@ public abstract class ProtoTrigger implements Trigger {
       if (!getType().equals(Type.AND) && !getType().equals(Type.OR)) {
         throw new IllegalArgumentException("Trigger type " + getType().name() + " is not a composite trigger.");
       }
-      List<Trigger> triggers = getTriggers();
+      List<T> triggers = getTriggers();
       if (triggers.isEmpty()) {
         throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
                                                            "of type %s cannot be empty.", getType().name()));
       }
-      for (Trigger trigger : triggers) {
+      for (T trigger : triggers) {
         if (trigger == null) {
           throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
                                                              "of type %s cannot contain null.", getType().name()));
@@ -191,27 +193,34 @@ public abstract class ProtoTrigger implements Trigger {
     public int hashCode() {
       return triggers.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return getType() + "Trigger{" +
+        "triggers=" + triggers +
+        '}';
+    }
   }
 
   /**
    * Shorthand helper method to create an instance of {@link AndTrigger}
    */
-  public static AndTrigger and(Trigger... triggers) {
-    return new AndTrigger(triggers);
+  public static AndTrigger and(ProtoTrigger... triggers) {
+    return new AndTrigger(Arrays.asList(triggers));
   }
 
   /**
    * Shorthand helper method to create an instance of {@link OrTrigger}
    */
-  public static OrTrigger or(Trigger... triggers) {
-    return new OrTrigger(triggers);
+  public static OrTrigger or(ProtoTrigger... triggers) {
+    return new OrTrigger(Arrays.asList(triggers));
   }
 
   /**
    * Represents an AND trigger in REST requests/responses.
    */
-  public static class AndTrigger extends AbstractCompositeTrigger {
-    public AndTrigger(Trigger... triggers) {
+  public static class AndTrigger extends AbstractCompositeTrigger<ProtoTrigger> {
+    public AndTrigger(List<ProtoTrigger> triggers) {
       super(Type.AND, triggers);
     }
   }
@@ -219,8 +228,8 @@ public abstract class ProtoTrigger implements Trigger {
   /**
    * Represents an OR trigger in REST requests/responses.
    */
-  public static class OrTrigger extends AbstractCompositeTrigger {
-    public OrTrigger(Trigger... triggers) {
+  public static class OrTrigger extends AbstractCompositeTrigger<ProtoTrigger> {
+    public OrTrigger(List<ProtoTrigger> triggers) {
       super(Type.OR, triggers);
     }
   }

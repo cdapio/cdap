@@ -33,6 +33,7 @@ import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -103,6 +104,7 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
       .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
       .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
       .registerTypeAdapter(Constraint.class, new ConstraintCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }

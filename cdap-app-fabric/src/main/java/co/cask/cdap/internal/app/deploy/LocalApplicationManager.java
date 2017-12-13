@@ -42,6 +42,7 @@ import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.pipeline.Stage;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -128,7 +129,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                                      authenticationContext));
     pipeline.addLast(new CreateStreamsStage(streamAdmin, ownerAdmin, authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
-                                                    metricStore, metadataStore, impersonator));
+                                                    metricStore, metadataStore, impersonator, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));

@@ -54,6 +54,7 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -171,6 +172,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
 
@@ -181,6 +183,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
 
@@ -795,7 +798,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Iterator<ProgramScheduleRecord> iterator = schedules.iterator();
       while (iterator.hasNext()) {
         // Remove the schedule if its trigger type does not match the given type
-        if (!((ProtoTrigger) iterator.next().getSchedule().getTrigger()).getType().equals(type)) {
+        if (!iterator.next().getSchedule().getTrigger().getType().equals(type)) {
           iterator.remove();
         }
       }

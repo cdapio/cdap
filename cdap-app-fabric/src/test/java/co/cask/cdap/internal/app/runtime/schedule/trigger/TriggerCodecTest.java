@@ -39,10 +39,12 @@ public class TriggerCodecTest {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
     .create();
 
   private static final Gson GSON_PROTO = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
     .create();
 
   @Test
@@ -103,14 +105,13 @@ public class TriggerCodecTest {
                              ImmutableSet.of(ProgramStatus.COMPLETED));
     testSerDeserYieldsTrigger(protoProgramStatus, programStatusTrigger);
 
-    ProtoTrigger.OrTrigger protoOr =
-      new ProtoTrigger.OrTrigger(protoPartition, new ProtoTrigger.AndTrigger(protoTime, protoProgramStatus));
+    ProtoTrigger.OrTrigger protoOr = ProtoTrigger.or(protoPartition, ProtoTrigger.and(protoTime, protoProgramStatus));
     OrTrigger orTrigger =
       new OrTrigger(partitionTrigger, new AndTrigger(timeTrigger, programStatusTrigger));
     testSerDeserYieldsTrigger(protoOr, orTrigger);
 
     ProtoTrigger.AndTrigger protoAnd =
-      new ProtoTrigger.AndTrigger(protoOr, protoTime, new ProtoTrigger.OrTrigger(protoPartition, protoProgramStatus));
+      ProtoTrigger.and(protoOr, protoTime, ProtoTrigger.or(protoPartition, protoProgramStatus));
     AndTrigger andTrigger =
       new AndTrigger(orTrigger, timeTrigger, new OrTrigger(partitionTrigger, programStatusTrigger));
     testSerDeserYieldsTrigger(protoAnd, andTrigger);

@@ -36,6 +36,7 @@ public class ProtoTriggerCodecTest {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
     .create();
 
   @Test

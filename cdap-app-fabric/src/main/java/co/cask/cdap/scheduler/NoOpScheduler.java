@@ -80,6 +80,11 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
+  public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
+
+  }
+
+  @Override
   public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
     return null;
   }

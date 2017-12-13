@@ -31,7 +31,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -68,6 +68,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
   private static final Gson GSON =
     new GsonBuilder()
       .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
       .registerTypeAdapter(Constraint.class, new ConstraintCodec())
       .create();
 
@@ -153,7 +154,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
     // transaction. Add the schedule id to the transaction change set so that concurrent transactions of the same
     // schedule can have conflict and retry. This prevents concurrent transactions from creating duplicated jobs
     // for the same schedule.
-    if (schedule.getTrigger() instanceof AbstractCompositeTrigger) {
+    if (schedule.getTrigger() instanceof AbstractSatisfiableCompositeTrigger) {
       scheduleIds.add(getRowKeyPrefix(schedule.getScheduleId()));
     }
     try (CloseableIterator<Job> jobs = getJobsForSchedule(schedule.getScheduleId())) {

@@ -16,26 +16,33 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.id.ProgramId;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when at least one of the internal triggers are satisfied.
  */
-public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTrigger {
+public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
 
   public OrTrigger(SatisfiableTrigger... triggers) {
+    this(Arrays.asList(triggers));
+  }
+
+  public OrTrigger(List<SatisfiableTrigger> triggers) {
     super(Type.OR, triggers);
   }
 
   @Override
   public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
-    for (Trigger trigger : getTriggers()) {
-      if (((SatisfiableTrigger) trigger).isSatisfied(schedule, notifications)) {
+    for (SatisfiableTrigger trigger : getTriggers()) {
+      if (trigger.isSatisfied(schedule, notifications)) {
         return true;
       }
     }
@@ -45,5 +52,39 @@ public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTr
   @Override
   public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
     return getUnitTriggerInfosAddRuntimeArgs(context);
+  }
+
+  @Nullable
+  @Override
+  public SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId) {
+    List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
+    for (SatisfiableTrigger trigger : getTriggers()) {
+      if (trigger instanceof ProgramStatusTrigger &&
+        programId.equals(((ProgramStatusTrigger) trigger).getProgramId())) {
+        // this program status trigger will never be satisfied, skip adding it to updatedTriggers
+        continue;
+      }
+      if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
+        SatisfiableTrigger updatedTrigger =
+          ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programId);
+        if (updatedTrigger != null) {
+          // add the updated composite trigger into updatedTriggers
+          updatedTriggers.add(updatedTrigger);
+        }
+      } else {
+        // the trigger is not a composite trigger, add it to updatedTriggers directly
+        updatedTriggers.add(trigger);
+      }
+    }
+    // if the updatedTriggers is empty, the OR trigger will never be satisfied
+    if (updatedTriggers.isEmpty()) {
+      return null;
+    }
+    // No need to wrap the only one remaining trigger with an OrTrigger
+    if (updatedTriggers.size() == 1) {
+      return updatedTriggers.get(0);
+    }
+    // return a new OR trigger constructed from the updated triggers
+    return new co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger(updatedTriggers);
   }
 }

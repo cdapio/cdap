@@ -52,6 +52,7 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueue;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -109,6 +110,7 @@ public class JobQueueDebugger extends AbstractIdleService {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
 
