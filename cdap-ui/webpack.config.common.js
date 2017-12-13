@@ -17,11 +17,13 @@ var webpack = require('webpack');
 var mode = process.env.NODE_ENV;
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
+const COMMON_LIB_NAME = 'common-lib-new';
+
 var plugins = [
   new CaseSensitivePathsPlugin(),
   new webpack.optimize.CommonsChunkPlugin({
-    name: "common-lib",
-    fileName: "common-lib.js",
+    name: COMMON_LIB_NAME,
+    fileName: COMMON_LIB_NAME + '.js',
     minChunks: Infinity
   }),
   // by default minify it.
@@ -103,8 +105,8 @@ var rules = [
 var webpackConfig = {
   context: __dirname + '/app/common',
   entry: {
-    'common': ['./cask-shared-components.js'],
-    'common-lib': [
+    'common-new': ['./cask-shared-components.js'],
+    [COMMON_LIB_NAME]: [
       'babel-polyfill',
       'classnames',
       'reactstrap',
