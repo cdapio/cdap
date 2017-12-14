@@ -23,6 +23,8 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var shortid = require('shortid');
+var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+
 var plugins = [
   new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
@@ -183,9 +185,16 @@ if (mode === 'production' || mode === 'build') {
         '__DEVTOOLS__': false
       },
     }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
+          warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
       }
     })
   );

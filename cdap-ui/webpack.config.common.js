@@ -16,6 +16,7 @@
 var webpack = require('webpack');
 var mode = process.env.NODE_ENV;
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
+var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const COMMON_LIB_NAME = 'common-lib-new';
 
@@ -172,12 +173,16 @@ if (mode !== 'production') {
 }
 if (mode === 'production') {
   plugins.push(
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      },
-      output: {
-        comments: false
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
+          warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
       }
     })
   );

@@ -247,6 +247,15 @@
                   <arguments>install --production --frozen-lockfile</arguments>
                 </configuration>
               </execution>
+              <execution>
+                <id>remove-unnecessary-node-modules</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>run clean-node-modules</arguments>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
           <plugin>
