@@ -340,8 +340,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/common_assets', [
     express.static(MARKET_DIST_PATH, {
-      index: false,
-      maxAge: '1y'
+      index: false
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
