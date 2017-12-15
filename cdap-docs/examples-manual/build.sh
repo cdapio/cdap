@@ -130,7 +130,7 @@ function download_includes() {
   # Group alphabetically each example separately, files from each example together
 
   test_an_include 0d1fdc6d75995c3c417886786ccc8997 ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViews.java
-  test_an_include 6b6c72d2230e1f64e2827a49d92b9146 ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
+  test_an_include 8d900a51c902750a7013dd5d76c46c7e ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
 
   test_an_include 45cbe451f2821eddf2f1245eff468cee ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
   test_an_include 9dcf41f03ee52e42b77588fe18f542d5 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
