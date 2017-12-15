@@ -571,6 +571,7 @@ features:
           timePattern: Time
           upscodePattern: UPS Codes
           urlPattern: URL
+          zipCodePattern: US Zip Codes
         UsingDelimiters:
           modalTitle: Extract Fields Using Delimiter
       Filter:
