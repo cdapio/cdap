@@ -130,6 +130,11 @@ export default class UsingPatternsModal extends Component {
         patternName: 'url'
       },
       {
+        label: T.translate(`${PREFIX}.zipCodePattern`),
+        value: `[^\\d]?([0-9]{5}(?:-[0-9]{4})?)[^\\d]?`,
+        patternName: 'zipcode'
+      },
+      {
         label: T.translate(`${PREFIX}.customPattern`),
         value: null,
         patternName: 'custom'
