@@ -58,8 +58,12 @@ angular.module(PKG.name + '.commons')
             }
             return false;
           }
-          if (newValue < $scope.min || newValue > $scope.max) {
-            $scope.error = 'Value exceeds the limit [min: ' + $scope.min + ', max: ' + $scope.max + ']';
+          if (newValue < $scope.min) {
+            $scope.error = newValue + ' is less than the minimum: ' + $scope.min;
+            return false;
+          }
+          if (newValue > $scope.max) {
+            $scope.error = newValue + ' exceeds the maximum: ' + scope.max;
             return false;
           }
           $scope.error = '';
