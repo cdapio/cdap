@@ -510,10 +510,46 @@ public abstract class TableTest<T extends Table> {
       txClient.canCommitOrThrow(tx5, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       txClient.commitOrThrow(tx5);
-
     } finally {
       admin.drop();
     }
+  }
+
+  /**
+   * Test that tables convert String to byte[] and back inversely. That is, get(put(s)) == s.
+   */
+  @Test
+  public void testStringPutGet() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    try {
+      Table t = getTable(CONTEXT1, MY_TABLE);
+      testStringPutGet(t, "a", "b", "c"); // ascii
+      testStringPutGet(t, "ä", "b", "c"); // row is latin
+      testStringPutGet(t, "a", "ä", "c"); // column is latin
+      testStringPutGet(t, "a", "b", "ä"); // value is latin
+      testStringPutGet(t, "\u009F", "b", "c"); // row is non-printable
+      testStringPutGet(t, "a", "\u009F", "c"); // column is non-printable
+      testStringPutGet(t, "a", "b", "\u009F"); // value is non-printable
+    } finally {
+      admin.drop();
+    }
+  }
+
+  private void testStringPutGet(Table t, String key, String col, String val) throws Exception {
+    Transaction tx = txClient.startShort();
+    ((TransactionAware) t).startTx(tx);
+    t.put(new Put(key, col, val));
+    Row row = t.get(new Get(key));
+    Assert.assertTrue(!row.isEmpty());
+    Assert.assertEquals(key, Bytes.toString(row.getRow()));
+    Assert.assertEquals(1, row.getColumns().size());
+    Assert.assertEquals(col, Bytes.toString(row.getColumns().entrySet().iterator().next().getKey()));
+    Assert.assertEquals(val, Bytes.toString(row.getColumns().entrySet().iterator().next().getValue()));
+    Assert.assertEquals(val, Bytes.toString(row.get(col)));
+    Assert.assertEquals(val, row.getString(col));
+    ((TransactionAware) t).rollbackTx();
+    txClient.abort(tx);
   }
 
   @Test
