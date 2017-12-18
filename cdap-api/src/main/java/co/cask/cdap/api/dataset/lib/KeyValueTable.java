@@ -116,6 +116,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key
    * @param value the new value
    */
+  @Override
   @WriteOnly
   public void write(byte[] key, byte[] value) {
     this.table.put(key, KEY_COLUMN, value);

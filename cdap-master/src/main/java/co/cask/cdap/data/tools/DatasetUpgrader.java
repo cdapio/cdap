@@ -125,6 +125,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     for (final DatasetSpecificationSummary spec : dsFramework.getInstances(NamespaceId.SYSTEM)) {
       final DatasetId datasetId = NamespaceId.SYSTEM.dataset(spec.getName());
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           try {
             LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(), spec.toString());
@@ -196,6 +197,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
       for (final HTableDescriptor desc :
         hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
         Callable<Void> callable = new Callable<Void>() {
+          @Override
           public Void call() throws Exception {
             if (isCDAPUserTable(desc)) {
               upgradeUserTable(desc);

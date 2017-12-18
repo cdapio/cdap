@@ -119,6 +119,7 @@ public final class SimpleJob implements Job {
     return deleteTimeMillis != null;
   }
 
+  @Override
   public Long getDeleteTimeMillis() {
     return deleteTimeMillis;
   }

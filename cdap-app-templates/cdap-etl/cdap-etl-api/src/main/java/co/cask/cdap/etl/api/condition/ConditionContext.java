@@ -39,5 +39,6 @@ public interface ConditionContext extends StageContext, Transactional, SecureSto
   /**
    * Return the arguments which can be updated.
    */
+  @Override
   SettableArguments getArguments();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  * Portions copyright (C) 2012 The Guava Authors
  * Derived from the Google Guava Project
  *
@@ -82,6 +82,7 @@ public final class Parameter implements AnnotatedElement {
    * @since 18.0
    */
   // @Override on JDK8
+  @Override
   public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationType) {
     return getDeclaredAnnotationsByType(annotationType);
   }
@@ -98,6 +99,7 @@ public final class Parameter implements AnnotatedElement {
    * @since 18.0
    */
   // @Override on JDK8
+  @Override
   @Nullable
   public <A extends Annotation> A getDeclaredAnnotation(Class<A> annotationType) {
     Preconditions.checkNotNull(annotationType);
@@ -109,6 +111,7 @@ public final class Parameter implements AnnotatedElement {
    * @since 18.0
    */
   // @Override on JDK8
+  @Override
   public <A extends Annotation> A[] getDeclaredAnnotationsByType(Class<A> annotationType) {
     List<A> list = Iterables.addAll(Iterables.filter(annotations, annotationType), new ArrayList<A>());
     @SuppressWarnings("unchecked")

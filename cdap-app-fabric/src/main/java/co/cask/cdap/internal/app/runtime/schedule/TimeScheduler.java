@@ -449,6 +449,7 @@ public final class TimeScheduler implements Scheduler {
    * An empty {@link Job} to create a group in the scheduler
    */
   private final class EmptyJob implements Job {
+    @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
       // no-op
     }

@@ -44,6 +44,7 @@ public class ConnectorSourceEmitter extends PipeEmitter {
   // we expect the value to already be a RecordInfo. This is because ConnectorSource emits RecordInfo,
   // which it has to be responsible for because the stage name associated with the record is stored in the connector
   // local dataset.
+  @Override
   protected RecordInfo getPipeRecord(Object value) {
     return (RecordInfo) value;
   }

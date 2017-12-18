@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
+  @Override
   public MRJobInfo getMRJobInfo(Id.Run runId) {
     try {
       return mrJobClient.getMRJobInfo(runId);

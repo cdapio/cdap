@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,6 +64,7 @@ public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory
     this.normalizeFunction = useUpperCase ? UPPER_CASE_FUNC : LOWER_CASE_FUNC;
   }
 
+  @Override
   public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
     @SuppressWarnings("unchecked")
     Class<T> rawType = (Class<T>) type.getRawType();
@@ -77,6 +78,7 @@ public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory
     }
 
     return new TypeAdapter<T>() {
+      @Override
       public void write(JsonWriter out, T value) throws IOException {
         if (value == null) {
           out.nullValue();
@@ -85,6 +87,7 @@ public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory
         out.value(normalizeFunction.apply(value));
       }
 
+      @Override
       public T read(JsonReader reader) throws IOException {
         if (reader.peek() == JsonToken.NULL) {
           reader.nextNull();

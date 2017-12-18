@@ -54,26 +54,32 @@ public abstract class LocationRollingPolicyBase extends ContextAwareBase impleme
    * This interface is part of {@link ch.qos.logback.core.rolling.RollingPolicy}
    * @return
    */
+  @Override
   public CompressionMode getCompressionMode() {
     return compressionMode;
   }
 
+  @Override
   public boolean isStarted() {
     return started;
   }
 
+  @Override
   public void start() {
     started = true;
   }
 
+  @Override
   public void stop() {
     started = false;
   }
 
+  @Override
   public void setParent(FileAppender appender) {
     this.parent = appender;
   }
 
+  @Override
   public void setLocation(Location activeFileLocation, Closeable closeable) {
     this.activeFileLocation = activeFileLocation;
     this.closeable = closeable;

@@ -44,6 +44,7 @@ public class MetricsOperationTimer implements OperationTimer {
    *
    * @throws IllegalStateException if the stopwatch is already running.
    */
+  @Override
   public void start() {
     stopwatch.start();
   }
@@ -54,6 +55,7 @@ public class MetricsOperationTimer implements OperationTimer {
    *
    * @throws IllegalStateException if the stopwatch is already stopped.
    */
+  @Override
   public void stop() {
     stopwatch.stop();
   }
@@ -61,6 +63,7 @@ public class MetricsOperationTimer implements OperationTimer {
   /**
    * Resets the stopwatch and updates the timing metrics.
    */
+  @Override
   public void reset() {
     emitTimeMetrics(stopwatch.elapsedTime(TimeUnit.MICROSECONDS));
     stopwatch.reset();

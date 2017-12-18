@@ -46,6 +46,7 @@ public class TransactionPingHandler extends PingHandler {
     this.transactionSystemClient = transactionSystemClient;
   }
 
+  @Override
   @Path(Constants.Gateway.API_VERSION_3 + "/system/services/{service-name}/status")
   @GET
   public void status(HttpRequest request, HttpResponder responder) {

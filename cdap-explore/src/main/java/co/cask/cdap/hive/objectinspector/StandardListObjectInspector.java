@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,16 +51,19 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     this.listElementObjectInspector = listElementObjectInspector;
   }
 
+  @Override
   public final Category getCategory() {
     return Category.LIST;
   }
 
   // without data
+  @Override
   public ObjectInspector getListElementObjectInspector() {
     return listElementObjectInspector;
   }
 
   // with data
+  @Override
   public Object getListElement(Object data, int index) {
     if (data == null) {
       return null;
@@ -100,6 +103,7 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     }
   }
 
+  @Override
   public int getListLength(Object data) {
     if (data == null) {
       return -1;
@@ -119,6 +123,7 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     }
   }
 
+  @Override
   public List<?> getList(Object data) {
     if (data == null) {
       return null;
@@ -152,6 +157,7 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     return list;
   }
 
+  @Override
   public String getTypeName() {
     return org.apache.hadoop.hive.serde.serdeConstants.LIST_TYPE_NAME + "<" +
         listElementObjectInspector.getTypeName() + ">";

@@ -561,6 +561,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     final AtomicBoolean deleted = new AtomicBoolean(false);
     Runnable cleanup = new Runnable() {
 
+      @Override
       public void run() {
         if (!deleted.compareAndSet(false, true)) {
           return;

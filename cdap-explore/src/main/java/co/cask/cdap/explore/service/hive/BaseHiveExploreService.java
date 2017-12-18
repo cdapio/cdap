@@ -729,6 +729,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  @Override
   public QueryHandle createNamespace(NamespaceMeta namespaceMeta) throws ExploreException, SQLException {
     startAndWait();
     try {

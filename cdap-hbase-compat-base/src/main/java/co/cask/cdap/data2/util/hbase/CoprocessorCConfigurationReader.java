@@ -56,6 +56,7 @@ public final class CoprocessorCConfigurationReader extends ConfigurationReader i
     });
   }
 
+  @Override
   public CConfiguration read() throws IOException {
     return read(Type.DEFAULT);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,7 @@ class ApplicationPermissionCollection extends PermissionCollection {
    *
    * @param p the {@link Permission} object to be added.
    */
+  @Override
   public void add(Permission p) {
     synchronized (perms) {
       perms.add(p);
@@ -70,6 +71,7 @@ class ApplicationPermissionCollection extends PermissionCollection {
    * @param p the {@link Permission} object to compare.
    * @return true if "permission" is implied by the permissions in the collection, false if not.
    */
+  @Override
   public boolean implies(Permission p) {
     Iterator<Permission> i = perms.iterator();
     while (i.hasNext()) {
