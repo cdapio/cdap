@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -330,6 +330,7 @@ public class KeyValue {
 
   // Needed doing 'contains' on List.  Only compares the key portion, not the
   // value.
+  @Override
   public boolean equals(Object other) {
     if (!(other instanceof KeyValue)) {
       return false;
@@ -341,6 +342,7 @@ public class KeyValue {
       kv.getBuffer(), kv.getKeyOffset(), kv.getKeyLength());
   }
 
+  @Override
   public int hashCode() {
     byte[] b = getBuffer();
     int start = getOffset(), end = getOffset() + getLength();
@@ -357,6 +359,7 @@ public class KeyValue {
   //
   //---------------------------------------------------------------------------
 
+  @Override
   public String toString() {
     if (this.bytes == null || this.bytes.length == 0) {
       return "empty";

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -92,6 +92,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
    *
    * @return name or null if not set.
    */
+  @Override
   public String getName() {
     return realmName;
   }
@@ -111,6 +112,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   /** Get the identityService.
    * @return the identityService
    */
+  @Override
   public IdentityService getIdentityService() {
     return identityService;
   }
@@ -119,6 +121,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   /** Set the identityService.
    * @param identityService the identityService to set
    */
+  @Override
   public void setIdentityService(IdentityService identityService) {
     this.identityService = identityService;
   }
@@ -166,6 +169,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   /**
    * @see org.eclipse.jetty.util.component.AbstractLifeCycle#doStart()
    */
+  @Override
   protected void doStart() throws Exception {
     if (identityService == null) {
       identityService = new DefaultIdentityService();
@@ -174,6 +178,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   }
 
   /* ------------------------------------------------------------ */
+  @Override
   public UserIdentity login(final String username, final Object credentials) {
     try {
       CallbackHandler callbackHandler = null;
@@ -181,6 +186,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
 
       if (callbackHandlerClass == null) {
         callbackHandler = new CallbackHandler() {
+          @Override
           public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
             for (Callback callback: callbacks) {
               if (callback instanceof NameCallback) {
@@ -242,6 +248,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   }
 
   /* ------------------------------------------------------------ */
+  @Override
   public boolean validate(UserIdentity user) {
     // TODO optionally check user is still valid
     return true;
@@ -255,6 +262,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   }
 
   /* ------------------------------------------------------------ */
+  @Override
   public void logout(UserIdentity user) {
     Set<JAASUserPrincipal> userPrincipals = user.getSubject().getPrincipals(JAASUserPrincipal.class);
     LoginContext loginContext = userPrincipals.iterator().next().getLoginContext();

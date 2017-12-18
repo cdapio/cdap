@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,6 +86,7 @@ public class LDAPLoginModule extends LdapLoginModule {
     /**
      * @see SocketFactory#createSocket(String, int)
      */
+    @Override
     public Socket createSocket(String host, int port) throws IOException  {
       return trustAllFactory.createSocket(host, port);
     }
@@ -93,6 +94,7 @@ public class LDAPLoginModule extends LdapLoginModule {
     /**
      * @see SocketFactory#createSocket(InetAddress, int)
      */
+    @Override
     public Socket createSocket(InetAddress address, int port) throws IOException {
       return trustAllFactory.createSocket(address, port);
     }
@@ -100,6 +102,7 @@ public class LDAPLoginModule extends LdapLoginModule {
     /**
      * @see SocketFactory#createSocket(String, int, InetAddress, int)
      */
+    @Override
     public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
       return trustAllFactory.createSocket(host, port, localHost, localPort);
     }
@@ -107,6 +110,7 @@ public class LDAPLoginModule extends LdapLoginModule {
     /**
      * @see SocketFactory#createSocket(InetAddress, int, InetAddress, int)
      */
+    @Override
     public Socket createSocket(InetAddress address, int port,
                                InetAddress localAddress, int localPort) throws IOException {
       return trustAllFactory.createSocket(address, port, localAddress, localPort);

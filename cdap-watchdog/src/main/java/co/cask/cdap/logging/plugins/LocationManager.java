@@ -167,6 +167,7 @@ public class LocationManager implements Flushable, Closeable, Syncable {
   /**
    * Closes all open output streams and clears cache
    */
+  @Override
   public void close() {
     Collection<LocationOutputStream> locations = activeLocations.values();
     activeLocations.clear();

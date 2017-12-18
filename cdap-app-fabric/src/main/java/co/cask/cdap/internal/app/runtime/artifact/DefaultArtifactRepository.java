@@ -123,18 +123,21 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.impersonator = impersonator;
   }
 
+  @Override
   public CloseableClassLoader createArtifactClassLoader(
     Location artifactLocation, EntityImpersonator entityImpersonator) throws IOException {
     return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactLocation).iterator(),
                                                         entityImpersonator);
   }
 
+  @Override
   public void clear(NamespaceId namespace) throws Exception {
     for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
       deleteArtifact(Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId()));
     }
   }
 
+  @Override
   public List<ArtifactSummary> getArtifactSummaries(final NamespaceId namespace,
                                                     boolean includeSystem) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
@@ -144,6 +147,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     return convertAndAdd(summaries, artifactStore.getArtifacts(namespace));
   }
 
+  @Override
   public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, String name, int limit,
                                                     ArtifactSortOrder order)
     throws Exception {
@@ -151,21 +155,25 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     return convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name, limit, order));
   }
 
+  @Override
   public List<ArtifactSummary> getArtifactSummaries(final ArtifactRange range, int limit,
                                                     ArtifactSortOrder order) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     return convertAndAdd(summaries, artifactStore.getArtifacts(range, limit, order));
   }
 
+  @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
     return artifactStore.getArtifact(artifactId);
   }
 
+  @Override
   public List<ArtifactDetail> getArtifactDetails(final ArtifactRange range, int limit,
                                                  ArtifactSortOrder order) throws Exception {
     return artifactStore.getArtifacts(range, limit, order);
   }
 
+  @Override
   public List<ApplicationClassSummary> getApplicationClasses(NamespaceId namespace,
                                                              boolean includeSystem) throws IOException {
     List<ApplicationClassSummary> summaries = Lists.newArrayList();
@@ -177,6 +185,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     return Collections.unmodifiableList(summaries);
   }
 
+  @Override
   public List<ApplicationClassInfo> getApplicationClasses(NamespaceId namespace,
                                                           String className) throws IOException {
     List<ApplicationClassInfo> infos = Lists.newArrayList();
@@ -189,16 +198,19 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     return Collections.unmodifiableList(infos);
   }
 
+  @Override
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(
     NamespaceId namespace, Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId);
   }
 
+  @Override
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(
     NamespaceId namespace, Id.Artifact artifactId, String pluginType) throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
   }
 
+  @Override
   public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
     NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
     Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
@@ -207,6 +219,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                           pluginPredicate::apply, limit, order);
   }
 
+  @Override
   public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, ArtifactRange artifactRange,
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
@@ -217,10 +230,12 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                             pluginType, pluginName);
   }
 
+  @Override
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
     return addArtifact(artifactId, artifactFile, null, null);
   }
 
+  @Override
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins) throws Exception {
@@ -228,6 +243,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                        Collections.<String, String>emptyMap());
   }
 
+  @Override
   public ArtifactDetail addArtifact(final Id.Artifact artifactId, final File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
@@ -261,6 +277,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
+  @Override
   public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -270,6 +287,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     });
   }
 
+  @Override
   public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -282,6 +300,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     });
   }
 
+  @Override
   public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -297,6 +316,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     });
   }
 
+  @Override
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
@@ -306,6 +326,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     });
   }
 
+  @Override
   public void addSystemArtifacts() throws Exception {
     // scan the directory for artifact .jar files and config files for those artifacts
     Map<Id.Artifact, SystemArtifactInfo> systemArtifacts = new HashMap<>();
@@ -386,6 +407,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
+  @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
@@ -393,6 +415,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     metadataStore.removeMetadata(artifactId.toEntityId());
   }
 
+  @Override
   public List<ArtifactInfo> getArtifactsInfo(NamespaceId namespace) throws Exception {
     final List<ArtifactDetail> artifactDetails = artifactStore.getArtifacts(namespace);
 

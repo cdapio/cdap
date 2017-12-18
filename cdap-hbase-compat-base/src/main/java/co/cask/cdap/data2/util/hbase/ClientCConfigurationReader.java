@@ -33,6 +33,7 @@ public final class ClientCConfigurationReader extends ConfigurationReader implem
     super(hConf, cConf);
   }
 
+  @Override
   public CConfiguration read() throws IOException {
     return read(ConfigurationReader.Type.DEFAULT);
   }

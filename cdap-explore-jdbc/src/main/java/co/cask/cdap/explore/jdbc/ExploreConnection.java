@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -359,26 +359,31 @@ public class ExploreConnection implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public int getNetworkTimeout() throws SQLException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public String getSchema() throws SQLException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public void setSchema(String schema) throws SQLException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public void abort(Executor executor) throws SQLException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();

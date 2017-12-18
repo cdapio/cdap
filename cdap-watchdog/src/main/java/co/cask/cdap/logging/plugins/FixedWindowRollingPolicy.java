@@ -159,6 +159,7 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
   /**
    * Return the value of the parent's RawFile property.
    */
+  @Override
   public String getActiveFileName() {
     return activeFileLocation.getName();
   }

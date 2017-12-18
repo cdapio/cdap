@@ -296,6 +296,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
       // It's important to skip config table enabled.
       if (isDataTable(tableId)) {
         Callable<Void> callable = new Callable<Void>() {
+          @Override
           public Void call() throws Exception {
             LOG.info("Upgrading queue table: {}", tableId);
             Properties properties = new Properties();
@@ -321,6 +322,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     // Upgrade of state store table
     for (final TableId tableId : stateStoreTableIds) {
       Callable<Void> callable = new Callable<Void>() {
+        @Override
         public Void call() throws Exception {
           LOG.info("Upgrading queue state store: {}", tableId);
           DatasetId stateStoreId = createStateStoreDataset(namespaceMeta.getName());

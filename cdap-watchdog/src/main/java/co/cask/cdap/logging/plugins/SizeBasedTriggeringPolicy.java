@@ -41,6 +41,7 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
     setMaxFileSize(maxFileSize);
   }
 
+  @Override
   public boolean isTriggeringEvent(final ILoggingEvent event) throws LogbackException {
     return (getActiveLocationSize() >= maxFileSize.getSize());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,16 +50,19 @@ public class StandardMapObjectInspector implements SettableMapObjectInspector {
   }
 
   // without data
+  @Override
   public ObjectInspector getMapKeyObjectInspector() {
     return mapKeyObjectInspector;
   }
 
+  @Override
   public ObjectInspector getMapValueObjectInspector() {
     return mapValueObjectInspector;
   }
 
   // with data
   // TODO: Now we assume the key Object supports hashCode and equals functions.
+  @Override
   public Object getMapValueElement(Object data, Object key) {
     if (data == null || key == null) {
       return null;
@@ -68,6 +71,7 @@ public class StandardMapObjectInspector implements SettableMapObjectInspector {
     return map.get(key);
   }
 
+  @Override
   public int getMapSize(Object data) {
     if (data == null) {
       return -1;
@@ -76,6 +80,7 @@ public class StandardMapObjectInspector implements SettableMapObjectInspector {
     return map.size();
   }
 
+  @Override
   public Map<?, ?> getMap(Object data) {
     if (data == null) {
       return null;
@@ -84,10 +89,12 @@ public class StandardMapObjectInspector implements SettableMapObjectInspector {
     return map;
   }
 
+  @Override
   public final Category getCategory() {
     return Category.MAP;
   }
 
+  @Override
   public String getTypeName() {
     return org.apache.hadoop.hive.serde.serdeConstants.MAP_TYPE_NAME + "<"
         + mapKeyObjectInspector.getTypeName() + ","

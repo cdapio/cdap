@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ public class StandardUnionObjectInspector implements UnionObjectInspector {
     this.ois = ois;
   }
 
+  @Override
   public List<ObjectInspector> getObjectInspectors() {
     return ois;
   }
@@ -86,6 +87,7 @@ public class StandardUnionObjectInspector implements UnionObjectInspector {
   /**
    * Return the tag of the object.
    */
+  @Override
   public byte getTag(Object o) {
     if (o == null) {
       return -1;
@@ -96,6 +98,7 @@ public class StandardUnionObjectInspector implements UnionObjectInspector {
   /**
    * Return the field based on the tag value associated with the Object.
    */
+  @Override
   public Object getField(Object o) {
     if (o == null) {
       return null;
@@ -103,10 +106,12 @@ public class StandardUnionObjectInspector implements UnionObjectInspector {
     return ((UnionObject) o).getObject();
   }
 
+  @Override
   public Category getCategory() {
     return Category.UNION;
   }
 
+  @Override
   public String getTypeName() {
     return ObjectInspectorUtils.getStandardUnionTypeName(this);
   }

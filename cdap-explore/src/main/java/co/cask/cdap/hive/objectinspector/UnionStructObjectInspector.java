@@ -54,18 +54,22 @@ public class UnionStructObjectInspector extends StructObjectInspector {
       this.structField = structField;
     }
 
+    @Override
     public String getFieldName() {
       return structField.getFieldName();
     }
 
+    @Override
     public ObjectInspector getFieldObjectInspector() {
       return structField.getFieldObjectInspector();
     }
 
+    @Override
     public int getFieldID() {
       return structID;
     }
 
+    @Override
     public String getFieldComment() {
       return structField.getFieldComment();
     }
@@ -96,10 +100,12 @@ public class UnionStructObjectInspector extends StructObjectInspector {
     }
   }
 
+  @Override
   public final Category getCategory() {
     return Category.STRUCT;
   }
 
+  @Override
   public String getTypeName() {
     return ObjectInspectorUtils.getStandardStructTypeName(this);
   }

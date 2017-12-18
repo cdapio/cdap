@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,6 +46,7 @@ public class JAASUserPrincipal implements Principal {
     /* ------------------------------------------------ */
   /** Get the name identifying the user
    */
+  @Override
   public String getName () {
     return name;
   }
@@ -63,6 +64,7 @@ public class JAASUserPrincipal implements Principal {
     return this.loginContext;
   }
 
+  @Override
   public String toString() {
     return getName();
   }

@@ -148,6 +148,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   /**
    * Returns all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId namespace}.
    */
+  @Override
   public List<DatasetModuleMeta> listModules(final NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
     // Sorting by name for convenience
@@ -164,6 +165,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   /**
    * Returns the {@link DatasetModuleMeta metadata} of the specified {@link DatasetModuleId}.
    */
+  @Override
   public DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception {
     ensureNamespaceExists(datasetModuleId.getParent());
     DatasetModuleMeta moduleMeta = typeManager.getModule(datasetModuleId);
@@ -187,6 +189,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
    *                      module jar files
    * @throws DatasetModuleConflictException if #forceUpdate is {@code false}, and there are conflicts with other modules
    */
+  @Override
   public BodyConsumer addModule(final DatasetModuleId datasetModuleId, final String className,
                                 final boolean forceUpdate) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
@@ -208,6 +211,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   /**
    * Deletes the specified {@link DatasetModuleId}
    */
+  @Override
   public void delete(DatasetModuleId datasetModuleId) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
@@ -232,6 +236,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   /**
    * Deletes all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId namespace}.
    */
+  @Override
   public void deleteAll(NamespaceId namespaceId) throws Exception {
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
       throw new UnsupportedOperationException(String.format("Cannot delete modules from '%s' namespace.", namespaceId));
@@ -248,6 +253,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   /**
    * Lists all {@link DatasetType dataset types} in the specified {@link NamespaceId}.
    */
+  @Override
   public List<DatasetTypeMeta> listTypes(final NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
     // Sorting by name for convenience
@@ -265,6 +271,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   /**
    * Returns details of the specified {@link DatasetTypeId dataset type}.
    */
+  @Override
   public DatasetTypeMeta getType(DatasetTypeId datasetTypeId) throws Exception {
     ensureNamespaceExists(datasetTypeId.getParent());
     DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);

@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.action.SettableArguments;
  */
 public interface StageSubmitterContext extends MessagingContext, MessagingAdmin, TransformContext {
 
+  @Override
   SettableArguments getArguments();
 
 }

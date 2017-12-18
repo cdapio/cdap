@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -137,6 +137,7 @@ public class ExploreDriver implements Driver {
     return JDBC_COMPLIANT;
   }
 
+  @Override
   public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();

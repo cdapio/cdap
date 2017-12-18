@@ -156,6 +156,7 @@ public class ObjectMappedTableProperties {
     /**
      * Create a DatasetProperties from this builder.
      */
+    @Override
     public DatasetProperties build() {
       return super.build();
     }

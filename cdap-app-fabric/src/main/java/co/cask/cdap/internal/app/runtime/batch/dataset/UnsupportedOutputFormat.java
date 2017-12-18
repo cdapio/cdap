@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,9 +37,11 @@ public class UnsupportedOutputFormat<K, V> extends OutputFormat<K, V> {
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
     return new RecordWriter<K, V>() {
+      @Override
       public void write(K key, V value) {
         throw new UnsupportedOperationException("Writing to output is not supported.");
       }
+      @Override
       public void close(TaskAttemptContext context) { }
     };
   }

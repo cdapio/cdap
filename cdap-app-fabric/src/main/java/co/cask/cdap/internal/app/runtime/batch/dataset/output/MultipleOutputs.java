@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -277,11 +277,13 @@ public class MultipleOutputs implements Closeable {
       this.counterName = getCounterName(context);
     }
 
+    @Override
     public void write(K key, V value) throws IOException, InterruptedException {
       context.getCounter(groupName, counterName).increment(1);
       writer.write(key, value);
     }
 
+    @Override
     public void close(TaskAttemptContext context) throws IOException, InterruptedException {
       writer.close(context);
     }
@@ -337,6 +339,7 @@ public class MultipleOutputs implements Closeable {
    * Closes all the opened outputs.
    * This should be called from cleanup method of map/reduce task.
    */
+  @Override
   public void close() {
     closeRecordWriters(recordWriters, taskContexts);
   }

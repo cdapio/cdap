@@ -299,6 +299,7 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
   @Nullable
   public WorkflowStatistics getWorkflowStatistics(final WorkflowId id, final long startTime,
                                                   final long endTime, final List<Double> percentiles) {
@@ -928,6 +929,7 @@ public class DefaultStore implements Store {
     }
   }
 
+  @Override
   public Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);

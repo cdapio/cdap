@@ -102,6 +102,7 @@ class SFTPInputStream extends FSInputStream {
     return byteRead;
   }
 
+  @Override
   public synchronized int read(byte[] buf, int off, int len)
     throws IOException {
     if (closed) {
@@ -119,6 +120,7 @@ class SFTPInputStream extends FSInputStream {
     return result;
   }
 
+  @Override
   public synchronized void close() throws IOException {
     if (closed) {
       return;

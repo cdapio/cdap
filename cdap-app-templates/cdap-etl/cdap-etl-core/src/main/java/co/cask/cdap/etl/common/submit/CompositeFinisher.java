@@ -37,6 +37,7 @@ public class CompositeFinisher implements Finisher {
    *
    * @param succeeded whether the program run succeeded or not
    */
+  @Override
   public void onFinish(boolean succeeded) {
     for (Finisher finisher : finishers) {
       finisher.onFinish(succeeded);

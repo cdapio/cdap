@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,18 +56,22 @@ public class ReflectionStructObjectInspector extends
       this.fieldObjectInspector = fieldObjectInspector;
     }
 
+    @Override
     public String getFieldName() {
       return field.getName().toLowerCase();
     }
 
+    @Override
     public ObjectInspector getFieldObjectInspector() {
       return fieldObjectInspector;
     }
 
+    @Override
     public int getFieldID() {
       return fieldId;
     }
 
+    @Override
     public String getFieldComment() {
       return null;
     }
@@ -81,10 +85,12 @@ public class ReflectionStructObjectInspector extends
   Class<?> objectClass;
   List<MyField> fields;
 
+  @Override
   public Category getCategory() {
     return Category.STRUCT;
   }
 
+  @Override
   public String getTypeName() {
     StringBuilder sb = new StringBuilder("struct<");
     boolean first = true;

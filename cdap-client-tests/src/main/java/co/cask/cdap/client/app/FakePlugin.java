@@ -27,6 +27,7 @@ import co.cask.cdap.api.annotation.Plugin;
 public class FakePlugin implements Runnable {
   public static final String NAME = "FakePlugin";
 
+  @Override
   public void run() {
     // do nothing
   }

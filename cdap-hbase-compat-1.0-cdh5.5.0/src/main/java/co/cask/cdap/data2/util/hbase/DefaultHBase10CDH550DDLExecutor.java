@@ -40,6 +40,7 @@ public class DefaultHBase10CDH550DDLExecutor extends DefaultHBaseDDLExecutor {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultHBase10CDH550DDLExecutor.class);
 
+  @Override
   public HTableDescriptor getHTableDescriptor(TableDescriptor descriptor) {
     return HBase10CDH550TableDescriptorUtil.getHTableDescriptor(descriptor);
   }

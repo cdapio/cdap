@@ -66,6 +66,7 @@ public class FileMetadataCleaner {
   void scanAndDeleteOldMetaData(int transactionTimeout, final int cutoffTransactionTime) {
     try {
       transactional.execute(transactionTimeout, new TxRunnable() {
+        @Override
         public void run(DatasetContext context) throws Exception {
           int deletedRows = 0;
           Stopwatch stopwatch = new Stopwatch().start();

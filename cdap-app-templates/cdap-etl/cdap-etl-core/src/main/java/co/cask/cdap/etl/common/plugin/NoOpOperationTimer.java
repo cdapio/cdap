@@ -25,14 +25,17 @@ public class NoOpOperationTimer implements OperationTimer {
   private NoOpOperationTimer() {
   }
 
+  @Override
   public void start() {
     // no-op
   }
 
+  @Override
   public void stop() {
     // no-op
   }
 
+  @Override
   public void reset() {
     // no-op
   }

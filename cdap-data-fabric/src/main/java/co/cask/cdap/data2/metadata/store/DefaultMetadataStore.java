@@ -664,6 +664,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
   }
 
+  @Override
   public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
     DatasetId metadataDatasetInstance = getMetadataDatasetInstance(scope);
     if (dsFramework.hasInstance(metadataDatasetInstance)) {

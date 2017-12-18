@@ -31,18 +31,22 @@ public abstract class LocationTriggeringPolicyBase extends ContextAwareBase impl
   private long activeLocationSize;
   private boolean start;
 
+  @Override
   public void start() {
     start = true;
   }
 
+  @Override
   public void stop() {
     start = false;
   }
 
+  @Override
   public boolean isStarted() {
     return start;
   }
 
+  @Override
   public void setLocation(Location location) {
     activeLocation = location;
   }
@@ -51,10 +55,12 @@ public abstract class LocationTriggeringPolicyBase extends ContextAwareBase impl
     return activeLocation;
   }
 
+  @Override
   public boolean isTriggeringEvent(final File activeFile, final ILoggingEvent event) throws LogbackException {
     return isTriggeringEvent(event);
   }
 
+  @Override
   public void setActiveLocationSize(long size) {
     activeLocationSize = size;
   }

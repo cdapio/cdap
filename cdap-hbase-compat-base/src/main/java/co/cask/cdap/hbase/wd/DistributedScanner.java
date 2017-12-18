@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -207,6 +207,7 @@ public class DistributedScanner implements ResultScanner {
       // this method is where the actual advancing takes place, but you need
       // to call next() to consume it. hasNext() will only advance if there
       // isn't a pending next().
+      @Override
       public boolean hasNext() {
         if (next == null) {
           try {
@@ -221,6 +222,7 @@ public class DistributedScanner implements ResultScanner {
 
       // get the pending next item and advance the iterator. returns null if
       // there is no next item.
+      @Override
       public Result next() {
         // since hasNext() does the real advancing, we call this to determine
         // if there is a next before proceeding.
@@ -236,6 +238,7 @@ public class DistributedScanner implements ResultScanner {
         return temp;
       }
 
+      @Override
       public void remove() {
         throw new UnsupportedOperationException();
       }
