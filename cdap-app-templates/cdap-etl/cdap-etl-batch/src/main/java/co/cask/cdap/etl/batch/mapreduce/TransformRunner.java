@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
@@ -44,7 +43,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +60,6 @@ public class TransformRunner<KEY, VALUE> {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .create();
-  private final Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap;
   private final PipeTransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;
   private final OutputWriter<Object, Object> outputWriter;
 
@@ -103,21 +100,12 @@ public class TransformRunner<KEY, VALUE> {
       }
     }
 
-    // setup error dataset information
-    this.transformErrorSinkMap = new HashMap<>();
-    for (StageSpec transformInfo : phaseSpec.getPhase().getStagesOfType(Transform.PLUGIN_TYPE)) {
-      String errorDatasetName = transformInfo.getErrorDatasetName();
-      if (errorDatasetName != null) {
-        transformErrorSinkMap.put(transformInfo.getName(), new ErrorOutputWriter<>(context, errorDatasetName));
-      }
-    }
-
     MapReduceTransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
       new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics,
                                               new BasicArguments(context.getWorkflowToken(), runtimeArgs),
                                               sourceStage, phaseSpec.getNumOfRecordsPreview(),
                                               phaseSpec.pipelineContainsCondition());
-    this.transformExecutor = transformExecutorFactory.create(phase, outputWriter, transformErrorSinkMap);
+    this.transformExecutor = transformExecutorFactory.create(phase, outputWriter);
   }
 
   // this is needed because we need to write to the context differently depending on the number of outputs
@@ -135,24 +123,15 @@ public class TransformRunner<KEY, VALUE> {
     // should never happen, this is set in initialize
     Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
     Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, ETLMapReduce.SINK_OUTPUTS_TYPE);
-    return hasSingleOutput(pipelinePhase.getStagesOfType(Transform.PLUGIN_TYPE), sinkOutputs) ?
+    return hasSingleOutput(sinkOutputs) ?
       new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
   }
 
-  private boolean hasSingleOutput(Set<StageSpec> transformInfos, Map<String, SinkOutput> sinkOutputs) {
-    // if there are any error datasets, we know we have at least one sink, and one error dataset
-    for (StageSpec info : transformInfos) {
-      if (info.getErrorDatasetName() != null) {
-        return false;
-      }
-    }
+  private boolean hasSingleOutput(Map<String, SinkOutput> sinkOutputs) {
     // if no error datasets, check if we have more than one sink
     Set<String> allOutputs = new HashSet<>();
 
     for (SinkOutput sinkOutput : sinkOutputs.values()) {
-      if (sinkOutput.getErrorDatasetName() != null) {
-        return false;
-      }
       allOutputs.addAll(sinkOutput.getSinkOutputs());
     }
     return allOutputs.size() == 1;

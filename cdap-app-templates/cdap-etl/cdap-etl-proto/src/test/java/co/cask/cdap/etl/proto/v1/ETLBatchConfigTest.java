@@ -40,7 +40,7 @@ public class ETLBatchConfigTest {
   public void testUpgrade() throws Exception {
     final ArtifactSelectorConfig artifact = new ArtifactSelectorConfig("SYSTEM", "universal", "1.0.0");
     ETLStage source = new ETLStage(
-      "source", new Plugin("DataGenerator", ImmutableMap.of("p1", "v1"), artifact), "errorDS");
+      "source", new Plugin("DataGenerator", ImmutableMap.of("p1", "v1"), artifact), null);
     co.cask.cdap.etl.proto.v2.ETLStage sourceNew = from(source, BatchSource.PLUGIN_TYPE);
 
     ETLStage transform1 = new ETLStage(
@@ -51,7 +51,7 @@ public class ETLBatchConfigTest {
     co.cask.cdap.etl.proto.v2.ETLStage transform2New = from(transform2, Transform.PLUGIN_TYPE);
 
     ETLStage transform3 = new ETLStage("transform3",
-                                       new Plugin("Validator", ImmutableMap.of("p1", "v1", "p2", "v2")), "errorDS");
+                                       new Plugin("Validator", ImmutableMap.of("p1", "v1", "p2", "v2")), null);
     co.cask.cdap.etl.proto.v2.ETLStage transform3New = from(transform3, Transform.PLUGIN_TYPE);
 
     ETLStage sink1 = new ETLStage("sink1", new Plugin("Table", ImmutableMap.of("rowkey", "xyz"), artifact), null);
@@ -106,9 +106,7 @@ public class ETLBatchConfigTest {
     return new co.cask.cdap.etl.proto.v2.ETLStage(
       stage.getName(),
       new ETLPlugin(stage.getPlugin().getName(), pluginType,
-                    stage.getPlugin().getProperties(), stage.getPlugin().getArtifact()),
-      stage.getErrorDatasetName()
-    );
+                    stage.getPlugin().getProperties(), stage.getPlugin().getArtifact()));
   }
 
 }

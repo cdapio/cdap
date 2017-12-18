@@ -36,10 +36,9 @@ import javax.annotation.Nullable;
  * The spec contains the input and output schema (if known) for the stage, as well as any output stages it writes to.
  */
 public class StageSpec implements Serializable {
-  private static final long serialVersionUID = 8178852817751037188L;
+  private static final long serialVersionUID = 4682820901456102283L;
   private final String name;
   private final PluginSpec plugin;
-  private final String errorDatasetName;
   private final Map<String, Schema> inputSchemas;
   private final Map<String, Port> outputPorts;
   private final Schema outputSchema;
@@ -50,12 +49,11 @@ public class StageSpec implements Serializable {
   private final Set<String> inputs;
   private final Set<String> outputs;
 
-  private StageSpec(String name, PluginSpec plugin, String errorDatasetName, Map<String, Schema> inputSchemas,
+  private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas,
                     Map<String, Port> outputPorts, Schema errorSchema,
                     boolean stageLoggingEnabled, boolean processTimingEnabled) {
     this.name = name;
     this.plugin = plugin;
-    this.errorDatasetName = errorDatasetName;
     this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
     this.outputPorts = Collections.unmodifiableMap(outputPorts);
     this.outputSchema = plugin.getType().equals(SplitterTransform.PLUGIN_TYPE) || outputPorts.isEmpty() ?
@@ -77,10 +75,6 @@ public class StageSpec implements Serializable {
 
   public String getPluginType() {
     return plugin.getType();
-  }
-
-  public String getErrorDatasetName() {
-    return errorDatasetName;
   }
 
   public Map<String, Schema> getInputSchemas() {
@@ -128,7 +122,6 @@ public class StageSpec implements Serializable {
 
     return Objects.equals(name, that.name) &&
       Objects.equals(plugin, that.plugin) &&
-      Objects.equals(errorDatasetName, that.errorDatasetName) &&
       Objects.equals(inputSchemas, that.inputSchemas) &&
       Objects.equals(outputPorts, that.outputPorts) &&
       Objects.equals(outputSchema, that.outputSchema) &&
@@ -141,7 +134,7 @@ public class StageSpec implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin, errorDatasetName, inputSchemas, outputPorts,
+    return Objects.hash(name, plugin, inputSchemas, outputPorts,
                         outputSchema, errorSchema, inputs, outputs, stageLoggingEnabled, processTimingEnabled);
   }
 
@@ -150,7 +143,6 @@ public class StageSpec implements Serializable {
     return "StageSpec{" +
       "name='" + name + '\'' +
       ", plugin=" + plugin +
-      ", errorDatasetName='" + errorDatasetName + '\'' +
       ", inputSchemas=" + inputSchemas +
       ", outputPorts=" + outputPorts +
       ", outputSchema=" + outputSchema +
@@ -172,7 +164,6 @@ public class StageSpec implements Serializable {
   public static class Builder {
     private final String name;
     private final PluginSpec plugin;
-    private String errorDatasetName;
     private Map<String, Schema> inputSchemas;
     private Map<String, Port> outputPortSchemas;
     private Schema errorSchema;
@@ -186,11 +177,6 @@ public class StageSpec implements Serializable {
       this.outputPortSchemas = new HashMap<>();
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
-    }
-
-    public Builder setErrorDatasetName(String errorDatasetName) {
-      this.errorDatasetName = errorDatasetName;
-      return this;
     }
 
     public Builder addInputSchema(String stageName, Schema schema) {
@@ -236,7 +222,7 @@ public class StageSpec implements Serializable {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, errorDatasetName, inputSchemas, outputPortSchemas, errorSchema,
+      return new StageSpec(name, plugin, inputSchemas, outputPortSchemas, errorSchema,
                            stageLoggingEnabled, processTimingEnabled);
     }
 

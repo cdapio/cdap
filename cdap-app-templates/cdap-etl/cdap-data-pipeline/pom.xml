@@ -90,11 +90,6 @@
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-lang3</artifactId>
         </exclusion>
-        <!-- required so that paranamer will be bundled in app jar. Can remove once avro dependency is removed -->
-        <exclusion>
-          <groupId>com.thoughtworks.paranamer</groupId>
-          <artifactId>paranamer</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -132,7 +127,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <_exportcontents>co.cask.cdap.etl.api.*;org.apache.avro.*</_exportcontents>
+              <_exportcontents>co.cask.cdap.etl.api.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>

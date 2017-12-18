@@ -77,12 +77,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro-mapred</artifactId>
-      <classifier>hadoop2</classifier>
-      <version>${etl.avro.version}</version>
-    </dependency>
-    <dependency>
       <!-- change to hadoop-aws when hadoop dependency is updated to 2.6 -->
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
@@ -138,7 +132,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <_exportcontents>co.cask.cdap.etl.api.*;org.apache.avro.*</_exportcontents>
+              <_exportcontents>co.cask.cdap.etl.api.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>

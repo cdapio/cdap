@@ -203,14 +203,12 @@ public class MapReduceTransformExecutorFactory<T> {
    *
    * @param pipeline the pipeline to create a transform executor for
    * @param outputWriter writes output records to the mapreduce context
-   * @param errorOutputs writes to error datasets
    * @return executor for the pipeline
    * @throws InstantiationException if there was an error instantiating a plugin
    * @throws Exception              if there was an error initializing a plugin
    */
   public <KEY_OUT, VAL_OUT> PipeTransformExecutor<T> create(PipelinePhase pipeline,
-                                                            OutputWriter<KEY_OUT, VAL_OUT> outputWriter,
-                                                            Map<String, ErrorOutputWriter<Object, Object>> errorOutputs)
+                                                            OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
     throws Exception {
     // populate the pipe stages in reverse topological order to ensure that an output is always created before its
     // input. this will allow us to setup all outputs for a stage when we get to it.
@@ -219,7 +217,7 @@ public class MapReduceTransformExecutorFactory<T> {
 
     Map<String, PipeStage> pipeStages = new HashMap<>();
     for (String stageName : traversalOrder) {
-      pipeStages.put(stageName, getPipeStage(pipeline, stageName, pipeStages, outputWriter, errorOutputs));
+      pipeStages.put(stageName, getPipeStage(pipeline, stageName, pipeStages, outputWriter));
     }
 
     // sourceStageName will be null in reducers, so need to handle that case
@@ -228,8 +226,7 @@ public class MapReduceTransformExecutorFactory<T> {
   }
 
   private PipeStage getPipeStage(PipelinePhase pipeline, String stageName, Map<String, PipeStage> pipeStages,
-                                 OutputWriter<?, ?> outputWriter,
-                                 Map<String, ErrorOutputWriter<Object, Object>> errorOutputs) throws Exception {
+                                 OutputWriter<?, ?> outputWriter) throws Exception {
     StageSpec stageSpec = pipeline.getStage(stageName);
     String pluginType = stageSpec.getPluginType();
 
@@ -268,8 +265,6 @@ public class MapReduceTransformExecutorFactory<T> {
     PipeEmitter.Builder emitterBuilder =
       Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipeline.getSources().contains(stageName) ?
         ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
-
-    emitterBuilder.setErrorOutputWriter(errorOutputs.get(stageName));
 
     Map<String, StageSpec.Port> outputPorts = stageSpec.getOutputPorts();
     for (String outputStageName : pipeline.getDag().getNodeOutputs(stageName)) {

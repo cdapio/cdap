@@ -100,7 +100,6 @@ public class PipelineSpecGeneratorTest {
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                   FileSet.class, DatasetProperties.EMPTY,
                                                    Engine.MAPREDUCE);
   }
 
@@ -565,7 +564,6 @@ public class PipelineSpecGeneratorTest {
     BatchPipelineSpecGenerator specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                                               ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                                               ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                                              FileSet.class, DatasetProperties.EMPTY,
                                                                               Engine.MAPREDUCE);
 
     Map<String, String> empty = ImmutableMap.of();
@@ -593,7 +591,6 @@ public class PipelineSpecGeneratorTest {
     BatchPipelineSpecGenerator specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                                               ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                                               ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                                              FileSet.class, DatasetProperties.EMPTY,
                                                                               Engine.MAPREDUCE);
 
     Map<String, String> empty = ImmutableMap.of();

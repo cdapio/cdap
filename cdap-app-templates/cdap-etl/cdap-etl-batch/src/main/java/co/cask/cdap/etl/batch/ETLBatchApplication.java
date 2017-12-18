@@ -58,16 +58,6 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
       getConfigurer(),
       ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-      TimePartitionedFileSet.class,
-      FileSetProperties.builder()
-        .setInputFormat(AvroKeyInputFormat.class)
-        .setOutputFormat(AvroKeyOutputFormat.class)
-        .setEnableExploreOnCreate(true)
-        .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-        .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-        .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-        .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
-        .build(),
       config.getEngine());
 
     BatchPipelineSpec spec = specGenerator.generateSpec(config);

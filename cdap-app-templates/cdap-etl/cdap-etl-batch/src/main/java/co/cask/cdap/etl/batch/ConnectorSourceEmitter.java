@@ -18,12 +18,10 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.ErrorRecord;
-import co.cask.cdap.etl.batch.mapreduce.ErrorOutputWriter;
 import co.cask.cdap.etl.common.RecordInfo;
 import com.google.common.collect.Multimap;
 
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Just like a PipeEmitter, except it doesn't need to add stage name itself, since the ConnectorSource does it.
@@ -36,9 +34,8 @@ public class ConnectorSourceEmitter extends PipeEmitter {
                                  Set<PipeStage<RecordInfo>> outputConsumers,
                                  Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
                                  Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
-                                 Set<PipeStage<RecordInfo<Alert>>> alertConsumers,
-                                 @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
-    super(stageName, outputConsumers, outputPortConsumers, errorConsumers, alertConsumers, errorOutputWriter);
+                                 Set<PipeStage<RecordInfo<Alert>>> alertConsumers) {
+    super(stageName, outputConsumers, outputPortConsumers, errorConsumers, alertConsumers);
   }
 
   // we expect the value to already be a RecordInfo. This is because ConnectorSource emits RecordInfo,
@@ -71,7 +68,7 @@ public class ConnectorSourceEmitter extends PipeEmitter {
     @Override
     public PipeEmitter build() {
       return new ConnectorSourceEmitter(stageName, outputConsumers, outputPortConsumers,
-                                        errorConsumers, alertConsumers, errorOutputWriter);
+                                        errorConsumers, alertConsumers);
     }
   }
 }
