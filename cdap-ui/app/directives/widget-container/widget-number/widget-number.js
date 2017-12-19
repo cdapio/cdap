@@ -63,7 +63,7 @@ angular.module(PKG.name + '.commons')
             return false;
           }
           if (newValue > $scope.max) {
-            $scope.error = newValue + ' exceeds the maximum: ' + scope.max;
+            $scope.error = newValue + ' exceeds the maximum: ' + $scope.max;
             return false;
           }
           $scope.error = '';

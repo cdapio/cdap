@@ -21,7 +21,7 @@ const pluginLabels = {
   'analytics': 'Analytics',
   'sink': 'Sink',
   'action': 'Conditions and Actions',
-  'errortransform': 'Error Handlers'
+  'erroralert': 'Error Handlers and Alerts'
 };
 export const NUMBER_TYPES = ['integer', 'short', 'long', 'float', 'double'];
 const GLOBALS = {
@@ -91,9 +91,9 @@ const GLOBALS = {
     'action': pluginLabels['action'],
     'streamingsource': pluginLabels['source'],
     'windower': pluginLabels['transform'],
-    'errortransform': pluginLabels['errortransform'],
+    'errortransform': pluginLabels['erroralert'],
     'sparkprogram': pluginLabels['action'],
-    'alertpublisher': pluginLabels['sink'],
+    'alertpublisher': pluginLabels['erroralert'],
     'condition': pluginLabels['action'],
     'splittertransform': pluginLabels['transform']
   },

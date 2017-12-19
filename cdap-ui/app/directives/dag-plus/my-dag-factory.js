@@ -56,12 +56,55 @@ angular.module(PKG.name + '.commons')
       dashstyle: '2 4'
     };
 
+    var conditionTrueEndpointStyle = {
+      anchor: 'Right',
+      cssClass: 'condition-endpoint condition-endpoint-true',
+      isSource: true,
+      connectorStyle: conditionTrueConnectionStyle,
+      overlays: [
+        [ 'Label', { label: 'Yes', id: 'yesLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
+      ]
+    };
+
     var conditionFalseConnectionStyle = {
       strokeStyle: '#999999',
       lineWidth: 2,
       outlineColor: 'transparent',
       outlineWidth: 4,
       dashstyle: '2 4'
+    };
+
+    var conditionFalseEndpointStyle = {
+      anchor: [0.5, 1, 0, 1, 2, 0], // same as Bottom but moved right 2px
+      cssClass: 'condition-endpoint condition-endpoint-false',
+      isSource: true,
+      connectorStyle: conditionFalseConnectionStyle,
+      overlays: [
+        [ 'Label', { label: 'No', id: 'noLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
+      ]
+    };
+
+    var splitterEndpointStyle = {
+      anchor: 'Right',
+      cssClass: 'splitter-endpoint',
+      isSource: true
+    };
+
+    var alertEndpointStyle = {
+      anchor: [0.5, 1, 0, 1, 2, 0], // same as Bottom but moved right 2px
+      scope: 'alertScope'
+    };
+
+    var errorEndpointStyle = {
+      anchor: [0.5, 1, 0, 1, 3, 0], // same as Bottom but moved right 3px
+      scope: 'errorScope'
+    };
+
+    var targetNodeOptions = {
+      isTarget: true,
+      dropOptions: { hoverClass: 'drag-hover' },
+      anchor: 'ContinuousLeft',
+      allowLoopback: false
     };
 
     // Have to do this because jsPlumb expects key names of defaultSettings to be in PascalCase
@@ -71,10 +114,11 @@ angular.module(PKG.name + '.commons')
     defaultConnectionStyleSettings['HoverPaintStyle'] = defaultConnectionStyleSettings['hoverPaintStyle'];
     delete defaultConnectionStyleSettings['hoverPaintStyle'];
 
-    var defaultSettings = angular.extend({
-      Anchor: [1, 0.5, 1, 0, 5, 0],
+    var defaultDagSettings = angular.extend({
+      Anchor: [1, 0.5, 1, 0, 0, 2], // same as Right but moved down 2px
       Endpoint: 'Dot',
       EndpointStyle: { radius: 10 },
+      MaxConnections: -1,
       Connector: ['Flowchart', { stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 20, midpoint: 0.2 }],
       ConnectionOverlays: [
         ['Arrow', {
@@ -83,18 +127,25 @@ angular.module(PKG.name + '.commons')
             length: 14,
             foldback: 0.8
         }]
-      ]
+      ],
+      Container: 'dag-container'
     }, defaultConnectionStyleSettings);
 
     function getSettings() {
       var settings = {
-        default: defaultSettings,
+        defaultDagSettings,
         defaultConnectionStyle,
         selectedConnectionStyle,
         conditionTrueConnectionStyle,
+        conditionTrueEndpointStyle,
         conditionFalseConnectionStyle,
+        conditionFalseEndpointStyle,
+        splitterEndpointStyle,
+        alertEndpointStyle,
+        errorEndpointStyle,
         dashedConnectionStyle,
-        solidConnectionStyle
+        solidConnectionStyle,
+        targetNodeOptions
       };
 
       return settings;
@@ -253,7 +304,25 @@ angular.module(PKG.name + '.commons')
 
       nodes.forEach(function (node) {
         var id = node.id || node.name;
-        graph.setNode(id, { label: node.label, width: 100, height: 100 });
+
+        if (!graph.node(id)) {
+          graph.setNode(id, { label: node.label, width: 100, height: 100 });
+        }
+
+        if (node.type === 'errortransform' || node.type === 'alertpublisher') {
+          let connectionsToAlertOrError = connections.filter(conn => conn.to === id);
+          // If a node is connected to an alert publisher or error collector, then need to
+          // increase the width and height here, to not make connections look screwed up
+          angular.forEach(connectionsToAlertOrError, (conn) => {
+            let fromNode = conn.from;
+            if (graph.node(fromNode)) {
+              graph.node(fromNode).width = 300;
+              graph.node(fromNode).height += 250;
+            } else {
+              graph.setNode(fromNode, { label: fromNode, width: 300, height: 350 });
+            }
+          });
+        }
       });
 
       connections.forEach(function (connection) {
