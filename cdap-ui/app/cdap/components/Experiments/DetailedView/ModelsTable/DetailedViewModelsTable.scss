@@ -18,9 +18,7 @@
 @import "../../../../styles/variables.scss";
 
 .experiment-models-table {
-  margin-left: -20px;
-  margin-right: -20px;
-  padding: 20px 30px;
+  padding: $padding-top-bottom $padding-left-right;
   height: calc(100% - #{$toppanel-height - 20px});
 
   .experiment-table-header {
@@ -44,6 +42,10 @@
     }
     .grid-body-row-container {
       width: 100%;
+      &.opened {
+        border-top: 3px solid $grey-04;
+        border-bottom: 3px solid $grey-04;
+      }
     }
     .grid-header {
       .grid-header-item {
@@ -54,11 +56,17 @@
       cursor: pointer;
       &.opened {
         background-color: $grey-08;
+        border: 0;
       }
       .grid-body-item {
         padding: 0.7rem 0 0.7rem 0;
         [class*="icon-caret-"] {
           font-size: 1.2rem; // FIXME: We should have this as a variable and should be standard in variables.scss
+        }
+        .algorithm-cell {
+          > span {
+            margin-left: 3px;
+          }
         }
       }
       &:not(.opened):hover {

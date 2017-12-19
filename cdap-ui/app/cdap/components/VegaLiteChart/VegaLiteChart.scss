@@ -14,7 +14,9 @@
  * the License.
 */
 
-$visualization-width: 450px;
-$toppanel-height: 250px;
-$padding-top-bottom: 25px;
-$padding-left-right: 35px;
+.vega-lite-chart {
+  height: 100%;
+  > div:first-of-type {
+    height: 100%;
+  }
+}

@@ -23,7 +23,7 @@
     display: flex;
     align-items: flex-start;
     flex-direction: column;
-    padding: 20px 30px;
+    padding: $padding-top-bottom $padding-left-right;
     margin: 0;
     .experiment-toppanel-container {
       display: flex;
@@ -90,9 +90,6 @@
     .pie-chart-with-legends {
       display: flex;
       width: $visualization-width;
-      .pie-chart-legends {
-        margin: 20px;
-      }
     }
   }
 }

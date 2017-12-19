@@ -17,9 +17,16 @@
 .pie-chart-with-legends {
   > div {
     &.pie-chart-legends {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       > div {
         margin: 10px 0;
         line-height: 1;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
 
         .pie-legend-color {
           width: 15px;

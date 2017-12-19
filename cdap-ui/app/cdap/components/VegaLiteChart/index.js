@@ -22,11 +22,15 @@ import * as vegaTooltip from 'vega-tooltip';
 import shortid from 'shortid';
 import LoadingSVG from 'components/LoadingSVG';
 import debounce from 'lodash/debounce';
-
-export default class GroupedBarChart extends Component {
+require('./VegaLiteChart.scss');
+export default class VegaLiteChart extends Component {
   propTypes = {
     spec: PropTypes.object.isRequired,
-    data: PropTypes.object
+    data: PropTypes.object,
+    className: PropTypes.string,
+    widthOffset: PropTypes.number,
+    heightOffset: PropTypes.number,
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.func])
   };
   state = {
     data: this.props.data || [],
@@ -65,11 +69,19 @@ export default class GroupedBarChart extends Component {
       const dimension = el.getBoundingClientRect();
       const vlSpec = {
         ...this.props.spec,
-        "width": (dimension.width - 250) / (this.state.data.length / 2), // FIXME: This will not be generic. See if we can abstract this out.
+        width: dimension.width - (this.props.widthOffset || 0),
+        height: dimension.height - (this.props.heightOffset || 0),
         data: {
           name: this.state.id
         }
       };
+      if (this.props.width) {
+        if (typeof this.props.width === 'function') {
+          vlSpec.width = this.props.width(dimension, this.state.data);
+        } else {
+          vlSpec.width = this.props.width;
+        }
+      }
       const spec = vl.compile(vlSpec).spec;
       const runtime = vega.parse(spec);
       this.view = new vega.View(runtime)
@@ -105,7 +117,7 @@ export default class GroupedBarChart extends Component {
 
   render() {
     return (
-      <div className="grouped-bar-chart">
+      <div className={`${this.props.className} vega-lite-chart`}>
         {this.state.isLoading ? <LoadingSVG /> : null }
         <div id={this.state.id}></div>
       </div>

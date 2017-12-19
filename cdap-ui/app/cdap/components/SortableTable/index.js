@@ -115,9 +115,9 @@ export default class SortableTable extends Component {
         <thead>
           <tr>
             {
-              this.props.tableHeaders.map(tableHeader => {
+              this.props.tableHeaders.map((tableHeader, i) => {
                 return (
-                  <th>
+                  <th key={i}>
                     {
                       tableHeader.property ?
                         this.renderSortableTableHeader(tableHeader)

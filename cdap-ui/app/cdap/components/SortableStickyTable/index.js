@@ -27,9 +27,9 @@ export default class SortableStickyTable extends SortableTable {
       <thead>
         <tr>
           {
-            this.props.tableHeaders.map(tableHeader => {
+            this.props.tableHeaders.map((tableHeader, i) => {
               return (
-                <th>
+                <th key={i}>
                   {
                     tableHeader.property ?
                       this.renderSortableTableHeader(tableHeader)

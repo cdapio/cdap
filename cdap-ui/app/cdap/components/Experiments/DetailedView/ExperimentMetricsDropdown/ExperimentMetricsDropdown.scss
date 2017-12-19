@@ -14,7 +14,21 @@
  * the License.
 */
 
-$visualization-width: 450px;
-$toppanel-height: 250px;
-$padding-top-bottom: 25px;
-$padding-left-right: 35px;
+@import "../DetailedViewVariables.scss";
+
+.experiments-metrics-dropdown {
+  width: $visualization-width;
+  > div {
+    &:last-of-type {
+      height: calc(100% - 20px);
+    }
+  }
+  .styled-select-wrapper {
+    margin-left: 250px;
+  }
+  .pie-chart-with-legends {
+    .pie-chart-legends {
+      margin-left: 20px;
+    }
+  }
+}

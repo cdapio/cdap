@@ -45,7 +45,7 @@ const chartSpec = {
   }
 };
 
-export default function GroupedBarChart({data, customEncoding = {}}) {
+export default function GroupedBarChart({data, customEncoding = {}, width, heightOffset}) {
   let newSpec = {
     ...chartSpec,
     "encoding": {
@@ -57,6 +57,9 @@ export default function GroupedBarChart({data, customEncoding = {}}) {
     <VegaLiteChart
       spec={newSpec}
       data={data}
+      className="grouped-bar-chart"
+      width={width}
+      heightOffset={heightOffset}
     />
   );
 }
@@ -69,5 +72,7 @@ GroupedBarChart.propTypes = {
     type: PropTypes.string,
     count: PropTypes.number
   })).isRequired,
-  customEncoding: PropTypes.object
+  customEncoding: PropTypes.object,
+  width: PropTypes.oneOfType(PropTypes.number, PropTypes.func),
+  heightOffset: PropTypes.number
 };
