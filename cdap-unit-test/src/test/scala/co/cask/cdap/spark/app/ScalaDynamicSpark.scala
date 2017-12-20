@@ -19,12 +19,12 @@ package co.cask.cdap.spark.app
 import co.cask.cdap.api.spark.AbstractExtendedSpark
 import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.SparkMain
-import com.google.common.io.BaseEncoding
 import org.apache.spark.SparkContext
 
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Files
+import java.util.Base64
 
 import scala.collection.JavaConversions._
 
@@ -71,7 +71,7 @@ class ScalaDynamicSpark extends AbstractExtendedSpark with SparkMain {
       } finally {
         bos.close()
       }
-      setProperties(Map(("compiled.jar", BaseEncoding.base64().encode(bos.toByteArray))))
+      setProperties(Map(("compiled.jar", Base64.getEncoder().encodeToString(bos.toByteArray))))
     } finally {
       compiler.close()
     }
@@ -81,7 +81,7 @@ class ScalaDynamicSpark extends AbstractExtendedSpark with SparkMain {
     val sc = new SparkContext
 
     val depJar = new File(sec.getRuntimeArguments.get("tmpdir"), "compiled.jar")
-    Files.write(depJar.toPath, BaseEncoding.base64().decode(sec.getSpecification.getProperty("compiled.jar")))
+    Files.write(depJar.toPath, Base64.getDecoder.decode(sec.getSpecification.getProperty("compiled.jar")))
 
     val intp = sec.createInterpreter()
     try {

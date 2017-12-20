@@ -78,6 +78,19 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-explore</artifactId>
       <version>${project.version}</version>
+      <!-- don't use the fat jar in unit test -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hive</groupId>
+          <artifactId>hive-exec</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-exec</artifactId>
+      <version>${hive.version}</version>
+      <classifier>core</classifier>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
