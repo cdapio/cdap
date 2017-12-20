@@ -33,7 +33,6 @@ import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.hash.Hashing;
-import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -44,6 +43,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +75,7 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
       // Upload with right MD5, should get 200
       Assert.assertEquals(HttpURLConnection.HTTP_OK,
                           upload(serviceURI.resolve("upload/" + FileUploadApp.PFS_NAME + "/1").toURL(), content,
-                                 BaseEncoding.base64().encode(Hashing.md5().hashBytes(content).asBytes()), 20));
+                                 Base64.getEncoder().encodeToString(Hashing.md5().hashBytes(content).asBytes()), 20));
 
       // Inspect the partitioned file set and verify the content
       PartitionedFileSet pfs = (PartitionedFileSet) getDataset(FileUploadApp.PFS_NAME).get();

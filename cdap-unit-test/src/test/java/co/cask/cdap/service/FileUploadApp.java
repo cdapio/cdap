@@ -32,7 +32,6 @@ import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Throwables;
-import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.twill.filesystem.Location;
@@ -43,6 +42,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.security.MessageDigest;
+import java.util.Base64;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -125,7 +125,7 @@ public class FileUploadApp extends AbstractApplication {
         @Override
         public void onFinish(HttpServiceResponder responder) throws Exception {
           channel.close();
-          String uploadedMd5 = BaseEncoding.base64().encode(messageDigest.digest());
+          String uploadedMd5 = Base64.getEncoder().encodeToString(messageDigest.digest());
           if (!md5.equals(uploadedMd5)) {
             throw new IllegalArgumentException("MD5 not match. Expected '" + md5 + "', received '" + uploadedMd5 + "'");
           }
