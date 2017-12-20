@@ -153,7 +153,7 @@ function download_includes() {
 
   test_an_include a8afaa78608768231ccf0369c7c147d0 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
   test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include bb7344dd2c55c5ef70653ff0b5fcd6df ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
 
   test_an_include 04abc21d3a3423cecc3b9c9619aa960d ../../cdap-examples/SpamClassifier/src/main/java/co/cask/cdap/examples/sparkstreaming/SpamClassifier.java
