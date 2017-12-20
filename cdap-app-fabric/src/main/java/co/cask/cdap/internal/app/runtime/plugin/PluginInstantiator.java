@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,7 +83,7 @@ import javax.annotation.Nullable;
 public class PluginInstantiator implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
   // used for setting defaults of string and non-string macro-enabled properties at config time
-  private static final Map<String, Class> PROPERTY_TYPES = ImmutableMap.<String, Class>builder()
+  private static final Map<String, Class<?>> PROPERTY_TYPES = ImmutableMap.<String, Class<?>>builder()
     .put("boolean", boolean.class)
     .put("byte", byte.class)
     .put("char", char.class)
@@ -187,8 +187,9 @@ public class PluginInstantiator implements Closeable {
    */
   public <T> T newInstanceWithoutConfig(Plugin plugin) throws IOException, ClassNotFoundException {
     ClassLoader pluginClassLoader = getPluginClassLoader(plugin);
-    Class pluginClassLoaded = pluginClassLoader.loadClass(plugin.getPluginClass().getClassName());
-    return (T) instantiatorFactory.get(TypeToken.of(pluginClassLoaded)).create();
+    @SuppressWarnings("unchecked")
+    Class<T> pluginClassLoaded = (Class<T>) pluginClassLoader.loadClass(plugin.getPluginClass().getClassName());
+    return instantiatorFactory.get(TypeToken.of(pluginClassLoaded)).create();
   }
 
   /**
@@ -218,13 +219,14 @@ public class PluginInstantiator implements Closeable {
     throws IOException, ClassNotFoundException, InvalidMacroException {
     ClassLoader classLoader = getPluginClassLoader(plugin);
     PluginClass pluginClass = plugin.getPluginClass();
-    TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
+    @SuppressWarnings("unchecked")
+    TypeToken<T> pluginType = TypeToken.of((Class<T>) classLoader.loadClass(pluginClass.getClassName()));
 
     try {
       String configFieldName = pluginClass.getConfigFieldName();
       // Plugin doesn't have config. Simply return a new instance.
       if (configFieldName == null) {
-        return (T) instantiatorFactory.get(pluginType).create();
+        return instantiatorFactory.get(pluginType).create();
       }
 
       // Create the config instance
@@ -234,7 +236,7 @@ public class PluginInstantiator implements Closeable {
 
       // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
       PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
-      Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.<String>emptySet();
+      Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
       Reflections.visit(config, configFieldType.getType(),
                         new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), pluginProperties, macroFields));
@@ -287,7 +289,7 @@ public class PluginInstantiator implements Closeable {
   }
 
   private String getDefaultProperty(String propertyName, String propertyType) {
-    Class propertyClass = PROPERTY_TYPES.get(propertyType);
+    Class<?> propertyClass = PROPERTY_TYPES.get(propertyType);
     if (propertyClass == null) {
       throw new IllegalArgumentException(String.format("Unable to get default value for property %s of type %s.",
                                                        propertyName, propertyType));
@@ -380,7 +382,7 @@ public class PluginInstantiator implements Closeable {
     private final ArtifactId artifact;
 
     ClassLoaderKey(ArtifactId artifact) {
-      this(Collections.<ArtifactId>emptyList(), artifact);
+      this(Collections.emptyList(), artifact);
     }
 
     ClassLoaderKey(List<ArtifactId> parents, ArtifactId artifact) {

@@ -60,6 +60,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  */
@@ -88,6 +90,7 @@ public class ArtifactStoreTest {
   @After
   public void cleanup() throws IOException {
     artifactStore.clear(NamespaceId.DEFAULT);
+    artifactStore.clear(NamespaceId.SYSTEM);
   }
 
   @Test
@@ -1266,6 +1269,75 @@ public class ArtifactStoreTest {
       new PluginClass("plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
       ImmutableMap.<String, PluginPropertyField>of())));
     Assert.assertEquals(expected, pluginMap);
+  }
+
+  @Test
+  public void testUniversalPlugin() throws Exception {
+    // First, deploy an artifact in the SYSTEM scope that doesn't have any plugin inside.
+    ArtifactId artifactId = NamespaceId.SYSTEM.artifact("artifact", "1.0.0");
+    writeArtifact(artifactId.toId(), new ArtifactMeta(ArtifactClasses.builder().build()), "test");
+
+    // Deploy an artifact that has a plugin in the DEFAULT scope, but without any parent artifact
+    PluginClass pluginClass1 = new PluginClass("type1", "plugin1", "plugin1", "plugin1", null, Collections.emptyMap());
+    ArtifactId pluginArtifactId1 = NamespaceId.DEFAULT.artifact("plugin-artifact1", "0.0.1");
+    writeArtifact(pluginArtifactId1.toId(),
+                  new ArtifactMeta(ArtifactClasses.builder().addPlugin(pluginClass1).build()), "test");
+
+    // Get the available plugins for the artifact, should get the plugin1
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT,
+                                                                                             artifactId.toId());
+    Assert.assertEquals(1, plugins.size());
+    List<PluginClass> pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
+    Assert.assertEquals(1, pluginsClasses.size());
+    Assert.assertEquals(pluginClass1, pluginsClasses.get(0));
+
+    // Get the available plugins for the plugin artifact itself, should also get the plugin1
+    plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, pluginArtifactId1.toId());
+    Assert.assertEquals(1, plugins.size());
+    pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
+    Assert.assertEquals(1, pluginsClasses.size());
+    Assert.assertEquals(pluginClass1, pluginsClasses.get(0));
+
+    // Deploy an artifact that has a plugin in the DEFAULT scope with a parent artifact
+    PluginClass pluginClass2 = new PluginClass("type2", "plugin2", "plugin2", "plugin2", null, Collections.emptyMap());
+    ArtifactId pluginArtifactId2 = NamespaceId.DEFAULT.artifact("plugin-artifact2", "0.0.1");
+    ArtifactRange parentArtifactRange = new ArtifactRange(artifactId.getNamespace(),
+                                                          artifactId.getArtifact(),
+                                                          ArtifactVersionRange.parse("[1.0.0,2.0.0)"));
+    writeArtifact(pluginArtifactId2.toId(), new ArtifactMeta(ArtifactClasses.builder().addPlugin(pluginClass2).build(),
+                                                             Collections.singleton(parentArtifactRange)), "test");
+
+    // Get the available plugins for the artifact again, should get plugin1 and plugin2
+    plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId.toId());
+    Assert.assertEquals(2, plugins.size());
+
+    // Get and verify the plugins.
+    pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
+    Assert.assertEquals(2, pluginsClasses.size());
+
+    // The plugins are sorted by the ArtifactDescriptor, hence order is guaranteed
+    Assert.assertEquals(Arrays.asList(pluginClass1, pluginClass2), pluginsClasses);
+
+    // Get available plugin by type.
+    for (PluginClass pluginClass : Arrays.asList(pluginClass1, pluginClass2)) {
+      plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId.toId(), pluginClass.getType());
+      Assert.assertEquals(1, plugins.size());
+      pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
+      Assert.assertEquals(1, pluginsClasses.size());
+      Assert.assertEquals(pluginClass, pluginsClasses.get(0));
+    }
+
+    // Get plugins by parent ArtifactRange
+    for (PluginClass pluginClass : Arrays.asList(pluginClass1, pluginClass2)) {
+      SortedMap<ArtifactDescriptor, PluginClass> result = artifactStore.getPluginClasses(NamespaceId.DEFAULT,
+                                                                                         parentArtifactRange,
+                                                                                         pluginClass.getType(),
+                                                                                         pluginClass.getName(), null,
+                                                                                         10,
+                                                                                         ArtifactSortOrder.UNORDERED);
+      Assert.assertEquals(1, result.size());
+      Assert.assertEquals(pluginClass, result.values().stream().findFirst().get());
+    }
   }
 
 
