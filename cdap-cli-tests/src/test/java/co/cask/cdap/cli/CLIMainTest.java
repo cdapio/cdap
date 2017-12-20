@@ -484,6 +484,7 @@ public class CLIMainTest extends CLITestBase {
         + " POST /echo body \"testBody\"", ":testBody");
       testCommandOutputContains(cli, "call service " + serviceV1Argument
         + " POST /echo body \"testBody\"", ":testBody");
+      testCommandOutputContains(cli, "get service logs " + serviceName, "Starting HTTP server for Service " + service);
     } finally {
       // Stop all running services
       programClient.stopAll(NamespaceId.DEFAULT);
