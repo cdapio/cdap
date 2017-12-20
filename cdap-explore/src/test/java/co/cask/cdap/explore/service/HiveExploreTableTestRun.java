@@ -68,7 +68,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                     Schema.Field.of("double_field", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
                     Schema.Field.of("bytes_field", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
                     Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
-  );
+    );
 
   private static final Schema NEW_SCHEMA =
     Schema.recordOf("record",
@@ -474,6 +474,46 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       datasetFramework.deleteInstance(userTableID);
       datasetFramework.deleteInstance(purchaseTableID);
       datasetFramework.deleteInstance(expandedTableID);
+    }
+  }
+
+  @Test
+  public void testNonAsciiStrings() throws Exception {
+    DatasetId ttId = NAMESPACE_ID.dataset("tt");
+    datasetFramework.addInstance(Table.class.getName(), ttId,
+                                 TableProperties.builder()
+                                   .setSchema(Schema.recordOf("record",
+                                                              Schema.Field.of("a", Schema.of(Schema.Type.STRING)),
+                                                              Schema.Field.of("b", Schema.of(Schema.Type.STRING))))
+                                   .setRowFieldName("a")
+                                   .setExploreTableName("tt")
+                                   .build());
+    try {
+      // Accessing dataset instance to perform data operations
+      Table tt = datasetFramework.getDataset(ttId, DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(tt);
+      Transaction tx = transactionManager.startShort(100);
+      ((TransactionAware) tt).startTx(tx);
+
+      tt.put(new Put("a", "b", "c"));
+      tt.put(new Put("ä", "b", "ç")); // row key and column value are non-ASCII
+
+      ((TransactionAware) tt).commitTx();
+      transactionManager.canCommit(tx.getTransactionId(), ((TransactionAware) tt).getTxChanges());
+      transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
+      ((TransactionAware) tt).postTxCommit();
+
+      ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from tt").get();
+      List<Object> columns = results.next().getColumns();
+      Assert.assertEquals(2, columns.size());
+      Assert.assertEquals("a", columns.get(0));
+      Assert.assertEquals("c", columns.get(1));
+      columns = results.next().getColumns();
+      Assert.assertEquals(2, columns.size());
+      Assert.assertEquals("ä", columns.get(0));
+      Assert.assertEquals("ç", columns.get(1));
+    } finally {
+      datasetFramework.deleteInstance(ttId);
     }
   }
 }

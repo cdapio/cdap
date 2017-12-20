@@ -62,7 +62,7 @@ public class Result implements Row, Serializable {
   @Nullable
   public String getString(byte[] column) {
     byte[] val = get(column);
-    return val == null ? null : Bytes.toStringBinary(columns.get(column));
+    return val == null ? null : Bytes.toString(columns.get(column));
   }
 
   @Override

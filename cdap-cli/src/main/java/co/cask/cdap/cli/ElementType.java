@@ -78,8 +78,8 @@ public enum ElementType {
 
   SERVICE("service", new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
-          Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
-          Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
+          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
+          Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   MAPREDUCE("mapreduce", new Noun("MapReduce program", "MapReduce programs"),
             new Noun("MapReduce Program", "MapReduce Programs"),
