@@ -15,33 +15,7 @@
  */
 
 @import "../../styles/variables.scss";
-
-@mixin overviewStyles() {
-  .overview-tab {
-    > .nav-tabs {
-      .nav-item {
-        .nav-link {
-          float: left;
-          padding: 0;
-
-          a {
-            text-decoration: none;
-            padding: 0.5em 1em;
-            float: left;
-            color: inherit;
-
-            &.active {
-              font-weight: bold;
-              text-decoration: none;
-              padding-bottom: 5px;
-              border-bottom: 2px solid $cdap_orange;
-            }
-          }
-        }
-      }
-    }
-  }
-}
+@import "../StreamDetailedView/DetailedViewStyleFunctions.scss";
 
 .app-detailed-view {
   height: calc(100vh - 104px);
@@ -86,6 +60,7 @@
   }
 
   @include overviewStyles();
+  @include breadCrumbWrapper();
 
   > .fa.fa-spinner.fa-spin {
     position: fixed;

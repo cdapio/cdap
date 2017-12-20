@@ -31,7 +31,7 @@ import {Redirect} from 'react-router-dom';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
-import ResourceCenterButton from 'components/ResourceCenterButton';
+import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import queryString from 'query-string';
 require('./DatasetDetailedView.scss');
@@ -190,7 +190,7 @@ export default class DatasetDetailedView extends Component {
   render() {
     if (this.state.loading) {
       return (
-        <div className="app-detailed-view">
+        <div className="app-detailed-view dataset-detailed-view loading">
           <div className="fa fa-spinner fa-spin fa-3x"></div>
         </div>
       );
@@ -213,12 +213,14 @@ export default class DatasetDetailedView extends Component {
         <Helmet
           title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.match.params.datasetId})}
         />
-        <ResourceCenterButton />
-        <BreadCrumb
-          previousPaths={previousPaths}
-          currentStateIcon="icon-datasets"
-          currentStateLabel={T.translate('commons.dataset')}
-        />
+        <div className="bread-crumb-wrapper">
+          <BreadCrumb
+            previousPaths={previousPaths}
+            currentStateIcon="icon-datasets"
+            currentStateLabel={T.translate('commons.dataset')}
+          />
+          <PlusButton />
+        </div>
         <OverviewMetaSection
           entity={this.state.entityDetail}
           onFastActionSuccess={this.goToHome.bind(this)}

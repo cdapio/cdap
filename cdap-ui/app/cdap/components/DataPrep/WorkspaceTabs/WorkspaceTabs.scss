@@ -22,16 +22,18 @@ $dropdown-font-color: #333333;
 $workspace-link-active-color: #ff6600;
 
 .workspace-tabs {
-  height: 30px;
+  height: 50px;
   background-color: $tabs-bg-color;
   border-bottom: 1px solid $border-color;
   padding: 5px 10px 0 10px;
 
   .workspace-tabs-list {
-    height: 25px;
+    height: 45px;
     position: relative;
     z-index: 1;
     white-space: nowrap;
+    display: flex;
+    align-items: flex-end;
   }
 
   .tab-arrow {

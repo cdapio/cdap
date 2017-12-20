@@ -15,7 +15,7 @@
 */
 
 @import "../../../../styles/variables.scss";
-@import "../DetailedViewVariables.scss";
+@import "../../ExperimentsVariables.scss";
 
 .experiments-toppanel {
   &.detailed-view {
@@ -38,6 +38,7 @@
     }
     .experiment-metadata {
       width: calc(100% - #{$visualization-width});
+      padding-right: 30px;
       > div {
         display: flex;
         align-items: flex-start;

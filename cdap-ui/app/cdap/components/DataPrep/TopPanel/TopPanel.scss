@@ -111,6 +111,7 @@ $success_alert_bg_color: $brand-success;
       margin-right: 20px;
       align-items: center;
       justify-content: flex-end;
+      z-index: 999;
 
       .btn-primary {
         margin: 0 10px;
@@ -119,61 +120,39 @@ $success_alert_bg_color: $brand-success;
         }
       }
 
-      .more-dropdown {
-        .btn.btn-secondary {
-          border: 0;
-          height: 31px;
-          display: flex;
-          align-items: flex-end;
-          color: $dropdown_menu_color;
-          padding: 0;
-          background: transparent;
-          box-shadow: none;
-          &:focus,
-          &:active,
-          &:hover {
-            outline: none;
-            color: darken($dropdown_menu_color, 10%);
-          }
-        }
-        &.open {
-          hr {
-            margin-top: 2px;
-            margin-bottom: 2px;
-            margin-left: -10px;
-            margin-right: -1.5rem;
-          }
-          .dropdown-item {
-            cursor: pointer;
-            padding-left: 10px;
-            border: 0;
-            background: transparent;
-            svg.icon-svg {
-              margin-right: 10px;
-            }
-            &[disabled] {
-              cursor: not-allowed;
-            }
-            .btn-link,
-            .btn-link:hover,
-            .btn-link:active,
-            .btn-link:focus {
-              line-height: 1;
-              padding: 0;
-              text-decoration: none;
-              outline: none;
-              color: $dropdown_item_font_color;
-            }
-          }
-          .btn.btn-secondary {
-            color: black;
-          }
+      .plus-button {
+        margin: 0px 15px 51px 0;
+        .popper {
+          margin-right: 20px;
         }
       }
-
       .more-dropdown {
         margin-right: 20px;
         margin-left: 15px;
+        > div {
+          &:first-of-type {
+            line-height: 31px;
+            color: $blue-02;
+            cursor: pointer;
+          }
+        }
+        .popper {
+          margin-right: 80px;
+          ul {
+            margin: 0;
+          }
+          .popover-menu-item {
+            margin: 0;
+            .btn.btn-link {
+              padding: 0;
+            }
+            svg {
+              ~ * {
+                margin-left: 5px;
+              }
+            }
+          }
+        }
       }
 
       .success-alert {
@@ -187,45 +166,6 @@ $success_alert_bg_color: $brand-success;
         color: $success_alert_color;
         background-color: $success_alert_bg_color;
         padding: 10px 15px;
-      }
-
-      .dataprep-plus-button {
-        position: relative;
-        top: -20px;
-        margin-right: 10px;
-
-        .btn,
-        img {
-          width: 58px;
-          height: 58px;
-          background-color: transparent;
-          border: none;
-          padding: 0;
-        }
-
-        .btn {
-          &:focus,
-          &:active {
-            outline: none;
-          }
-        }
-
-        .plus-button-dropdown {
-          width: 200px;
-          padding: 15px;
-
-          .dropdown-item {
-            padding: 0 0 0 5px;
-            cursor: pointer;
-
-            &:hover { background-color: transparent; }
-            &:focus { outline: none; }
-          }
-
-          hr {
-            border-top: 2px solid #cccccc;
-          }
-        }
       }
     }
   }

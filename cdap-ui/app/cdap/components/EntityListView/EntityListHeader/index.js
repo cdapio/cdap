@@ -19,7 +19,7 @@ import { Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
-import ResourceCenterButton from 'components/ResourceCenterButton';
+import PlusButton from 'components/PlusButton';
 import {isDescendant} from 'services/helpers';
 import {Observable} from 'rxjs/Observable';
 import SearchStore from 'components/EntityListView/SearchStore';
@@ -251,7 +251,7 @@ export default class EntityListHeader extends Component {
     );
 
     return (
-      <div>
+      <div className="entity-list-header-container">
         <div className="entity-list-header">
           <div className="search-box input-group">
             <span className="input-feedback input-group-addon">
@@ -275,7 +275,7 @@ export default class EntityListHeader extends Component {
             {sortDropdown}
           </div>
         </div>
-        <ResourceCenterButton />
+        <PlusButton mode={PlusButton.MODE.resourcecenter} />
       </div>
     );
   }

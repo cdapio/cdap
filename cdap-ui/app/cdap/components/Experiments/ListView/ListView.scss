@@ -15,8 +15,7 @@
 */
 
 @import "../../../styles/variables.scss";
-
-$listview-padding: 20px;
+@import "../ExperimentsVariables.scss";
 
 .experiments-listview {
   padding: 0 $listview-padding;
@@ -31,11 +30,8 @@ $listview-padding: 20px;
   .experiments-toppanel {
     position: relative;
 
-    .experiments-plus-btn {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      width: 58px;
+    .plus-button {
+      margin-top: 48px;
     }
   }
   .experiment-list-chart {
@@ -68,7 +64,7 @@ $listview-padding: 20px;
       outline: none;
 
       &:hover {
-        background-color: $grey-06;
+        background-color: $grey-08;
       }
     }
     th,

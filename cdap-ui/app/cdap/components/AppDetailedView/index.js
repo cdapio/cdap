@@ -33,7 +33,7 @@ import FastActionToMessage from 'services/fast-action-message-helper';
 import EntityIconMap from 'services/entity-icon-map';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
-import ResourceCenterButton from 'components/ResourceCenterButton';
+import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import OverviewHeader from 'components/Overview/OverviewHeader';
 import {MyMetadataApi} from 'api/metadata';
@@ -198,12 +198,14 @@ export default class AppDetailedView extends Component {
         <Helmet
           title={T.translate('features.AppDetailedView.Title', {appId: this.props.match.params.appId})}
         />
-        <ResourceCenterButton />
-        <BreadCrumb
-          previousPaths={previousPaths}
-          currentStateIcon={icon}
-          currentStateLabel={T.translate('commons.application')}
-        />
+        <div className="bread-crumb-wrapper">
+          <BreadCrumb
+            previousPaths={previousPaths}
+            currentStateIcon={icon}
+            currentStateLabel={T.translate('commons.application')}
+          />
+          <PlusButton mode={PlusButton.MODE.resourcecenter} />
+        </div>
         <OverviewHeader successMessage={this.state.successMessage} />
         <OverviewMetaSection
           entity={this.state.entityDetail}

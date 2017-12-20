@@ -56,6 +56,9 @@
     flex-wrap: wrap;
     width: 100%;
   }
+  .table-scroll {
+    overflow: auto;
+  }
   .grid-body {
     .grid-body-row {
       border-bottom: 1px solid $grey-05;

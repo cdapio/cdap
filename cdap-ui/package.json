@@ -113,6 +113,7 @@
     "js-file-download": "0.4.1",
     "lodash": "4.2.0",
     "log4js": "0.6.30",
+    "modclean": "^2.1.2",
     "moment": "2.15.0",
     "mousetrap": "1.6.0",
     "ngreact": "0.3.0",
@@ -137,6 +138,7 @@
     "react-helmet": "3.1.0",
     "react-loadable": "4.0.5",
     "react-paginate": "4.1.1",
+    "react-popper": "^0.7.4",
     "react-redux": "4.4.5",
     "react-router": "4.0.0",
     "react-router-dom": "4.0.0",
@@ -160,8 +162,7 @@
     "vega-lite": "2.0.0-beta.16",
     "vega-tooltip": "0.4.3",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
-    "yml-loader": "2.1.0",
-    "modclean": "^2.1.2"
+    "yml-loader": "2.1.0"
   },
   "engines": {
     "node": ">= 4.5.0"
