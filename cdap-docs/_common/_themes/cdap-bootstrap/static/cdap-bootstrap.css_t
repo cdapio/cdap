@@ -517,6 +517,10 @@ table {
     border-bottom: 0px;
 }
 
+.table tr td {
+  word-break: break-all;
+}
+
 .table thead tr.row-odd {
     background: none;
 }
