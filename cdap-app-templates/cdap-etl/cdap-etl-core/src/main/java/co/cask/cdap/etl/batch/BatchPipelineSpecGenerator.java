@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
@@ -28,10 +29,13 @@ import java.util.Set;
 
 /**
  * Generates a pipeline spec for batch apps.
+ *
+ * @param <T> the type of the platform configurer
  */
-public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> {
+public class BatchPipelineSpecGenerator<T extends PluginConfigurer & DatasetConfigurer>
+  extends PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec, T> {
 
-  public BatchPipelineSpecGenerator(PluginConfigurer configurer,
+  public BatchPipelineSpecGenerator(T configurer,
                                     Set<String> sourcePluginTypes,
                                     Set<String> sinkPluginTypes,
                                     Engine engine) {
@@ -44,7 +48,7 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
 
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();
-      DefaultPipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer, name, engine);
+      DefaultPipelineConfigurer<T> pipelineConfigurer = new DefaultPipelineConfigurer<>(configurer, name, engine);
       PluginSpec pluginSpec = configurePlugin(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer);
       specBuilder.addAction(new ActionSpec(name, pluginSpec));
     }

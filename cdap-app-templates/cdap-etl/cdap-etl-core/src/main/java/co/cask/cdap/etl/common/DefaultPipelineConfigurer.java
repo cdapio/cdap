@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -38,16 +39,18 @@ import javax.annotation.Nullable;
  * Configurer for a pipeline, that delegates all operations to a PluginConfigurer, except it prefixes plugin ids
  * to provide isolation for each etl stage. For example, a source can use a plugin with id 'jdbcdriver' and
  * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
+ *
+ * @param <C> type of the platform configurer
  */
-public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInputPipelineConfigurer,
-  MultiOutputPipelineConfigurer {
+public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfigurer>
+  implements PipelineConfigurer, MultiInputPipelineConfigurer, MultiOutputPipelineConfigurer {
   private final Engine engine;
-  private final PluginConfigurer configurer;
+  private final C configurer;
   private final String stageName;
   private final DefaultStageConfigurer stageConfigurer;
   private final Map<String, String> properties;
 
-  public DefaultPipelineConfigurer(PluginConfigurer configurer, String stageName, Engine engine) {
+  public DefaultPipelineConfigurer(C configurer, String stageName, Engine engine) {
     this.configurer = configurer;
     this.stageName = stageName;
     this.stageConfigurer = new DefaultStageConfigurer();

@@ -170,7 +170,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
                                           PluginProperties.builder().addAll(source.getProperties()).build());
       Preconditions.checkNotNull(batchSource, "Could not find plugin %s of type 'source'", source.getName());
       // We use pluginId as the prefixId
-      PipelineConfigurer configurer = new DefaultPipelineConfigurer(mrConfigurer, PLUGIN_ID, Engine.MAPREDUCE);
+      PipelineConfigurer configurer = new DefaultPipelineConfigurer<>(mrConfigurer, PLUGIN_ID, Engine.MAPREDUCE);
       batchSource.configurePipeline(configurer);
       setName("FieldAggregator");
       setProperties(ImmutableMap.<String, String>builder()

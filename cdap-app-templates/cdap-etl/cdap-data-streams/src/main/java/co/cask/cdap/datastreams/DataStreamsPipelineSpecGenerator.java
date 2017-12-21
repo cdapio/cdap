@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datastreams;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.macro.TimeParser;
@@ -26,11 +27,13 @@ import java.util.Set;
 
 /**
  * Generates specs for data stream pipelines.
+ *
+ * @param <T> the type of the platform configurer
  */
-public class DataStreamsPipelineSpecGenerator
-  extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec> {
+public class DataStreamsPipelineSpecGenerator<T extends PluginConfigurer & DatasetConfigurer>
+  extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec, T> {
 
-  public DataStreamsPipelineSpecGenerator(PluginConfigurer configurer, Set<String> sourcePluginTypes,
+  public DataStreamsPipelineSpecGenerator(T configurer, Set<String> sourcePluginTypes,
                                           Set<String> sinkPluginTypes) {
     super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
   }

@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
 
 /**
  * App with streams, datasets, plugins added multiple times that should result in an error.
@@ -60,7 +62,7 @@ public class AppWithDuplicateData extends AbstractApplication<AppWithDuplicateDa
     }
 
     if (config.multiModules) {
-      addDatasetModule("module", IndexedTable.class);
+      addDatasetModule("module", CubeModule.class);
     }
     addWorker(new DumbWorker());
   }
@@ -76,7 +78,7 @@ public class AppWithDuplicateData extends AbstractApplication<AppWithDuplicateDa
     protected void configure() {
       super.configure();
       createDataset("data1", KeyValueTable.class);
-      addDatasetModule("module", Table.class);
+      addDatasetModule("module", FileSetModule.class);
       usePlugin("t1", "n1", "plug", PluginProperties.builder().build());
     }
   }

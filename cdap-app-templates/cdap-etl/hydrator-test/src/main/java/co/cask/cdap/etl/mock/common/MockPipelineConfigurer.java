@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.common;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
@@ -34,7 +35,7 @@ import javax.annotation.Nullable;
 /**
  * Mock test configurer used to test configure pipeline's validation of input schema and setting of output shcema.
  */
-public class MockPipelineConfigurer implements PipelineConfigurer {
+public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfigurer {
   private final Schema inputSchema;
   Schema outputSchema;
   private Map<String, Object> plugins;

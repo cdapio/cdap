@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
@@ -28,7 +29,7 @@ import java.util.Map;
  * Similar to {@link PipelineConfigurer} except it exposes {@link MultiOutputStageConfigurer}
  */
 @Beta
-public interface MultiOutputPipelineConfigurer extends PluginConfigurer {
+public interface MultiOutputPipelineConfigurer extends PluginConfigurer, DatasetConfigurer {
 
   /**
    * Get multi output stage configurer for the pipeline stage

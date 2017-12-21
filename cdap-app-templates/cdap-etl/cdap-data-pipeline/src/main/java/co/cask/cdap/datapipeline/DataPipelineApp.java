@@ -18,8 +18,6 @@ package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.ErrorTransform;
@@ -37,11 +35,8 @@ import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
-import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
-import org.apache.avro.mapreduce.AvroKeyInputFormat;
-import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
 import java.util.Set;
 
@@ -62,12 +57,13 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     ETLBatchConfig config = getConfig();
     setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
 
-    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
-      getConfigurer(),
-      ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-      ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE),
-      config.getEngine());
-    BatchPipelineSpec spec = specGenerator.generateSpec(config);
+    BatchPipelineSpec spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
+                                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE,
+                                                                              SparkSink.PLUGIN_TYPE,
+                                                                              AlertPublisher.PLUGIN_TYPE),
+                                                              config.getEngine())
+      .generateSpec(config);
 
     addWorkflow(new SmartWorkflow(spec, supportedPluginTypes, getConfigurer(), config.getEngine()));
 

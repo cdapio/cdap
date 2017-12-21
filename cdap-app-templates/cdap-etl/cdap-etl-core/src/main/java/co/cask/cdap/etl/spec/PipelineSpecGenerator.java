@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spec;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
@@ -61,16 +62,19 @@ import java.util.Set;
  *
  * @param <C> the type of user provided config
  * @param <P> the pipeline specification generated from the config
+ * @param <T> the type of the platform configurer
  */
-public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends PipelineSpec> {
+public abstract class PipelineSpecGenerator<C extends ETLConfig,
+                                            P extends PipelineSpec,
+                                            T extends PluginConfigurer & DatasetConfigurer> {
   private static final Set<String> VALID_ERROR_INPUTS = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
-  protected final PluginConfigurer configurer;
+  protected final T configurer;
   protected final Engine engine;
   private final Set<String> sourcePluginTypes;
   private final Set<String> sinkPluginTypes;
 
-  protected PipelineSpecGenerator(PluginConfigurer configurer,
+  protected PipelineSpecGenerator(T configurer,
                                   Set<String> sourcePluginTypes,
                                   Set<String> sinkPluginTypes,
                                   Engine engine) {
@@ -108,12 +112,12 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     ValidatedPipeline validatedPipeline = validateConfig(config);
     List<ETLStage> traversalOrder = validatedPipeline.getTraversalOrder();
 
-    Map<String, DefaultPipelineConfigurer> pluginConfigurers = new HashMap<>(traversalOrder.size());
+    Map<String, DefaultPipelineConfigurer<T>> pluginConfigurers = new HashMap<>(traversalOrder.size());
     Map<String, String> pluginTypes = new HashMap<>(traversalOrder.size());
     for (ETLStage stage : traversalOrder) {
       String stageName = stage.getName();
       pluginTypes.put(stageName, stage.getPlugin().getType());
-      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(configurer, stageName, engine));
+      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer<>(configurer, stageName, engine));
     }
 
     // anything prefixed by 'system.[engine].' is a pipeline property.
@@ -133,7 +137,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     // configure the stages in order and build up the stage specs
     for (ETLStage stage : traversalOrder) {
       String stageName = stage.getName();
-      DefaultPipelineConfigurer pluginConfigurer = pluginConfigurers.get(stageName);
+      DefaultPipelineConfigurer<T> pluginConfigurer = pluginConfigurers.get(stageName);
 
       ConfiguredStage configuredStage = configureStage(stage, validatedPipeline, pluginConfigurer);
 
@@ -237,7 +241,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @return the spec for the stage
    */
   private ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
-                                         DefaultPipelineConfigurer pluginConfigurer) {
+                                         DefaultPipelineConfigurer<T> pluginConfigurer) {
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
 
@@ -302,7 +306,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @return the spec for the plugin
    */
   protected PluginSpec configurePlugin(String pluginId, ETLPlugin etlPlugin,
-                                       DefaultPipelineConfigurer pipelineConfigurer) {
+                                       DefaultPipelineConfigurer<T> pipelineConfigurer) {
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
       new ArtifactSelectorProvider(etlPlugin.getType(), etlPlugin.getName())
         .getPluginSelector(etlPlugin.getArtifactConfig()));
