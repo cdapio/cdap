@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -23,7 +24,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 /**
  * Interface for configurers used to create custom Services.
  */
-public interface ServiceConfigurer extends PluginConfigurer {
+public interface ServiceConfigurer extends PluginConfigurer, DatasetConfigurer {
 
   /**
    * Set name of the service.

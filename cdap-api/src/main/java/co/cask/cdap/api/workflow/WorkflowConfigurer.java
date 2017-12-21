@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.annotation.Beta;
@@ -27,7 +28,7 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 /**
  * Configurer for configuring the {@link Workflow}.
  */
-public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer {
+public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer, DatasetConfigurer {
 
   /**
    * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be

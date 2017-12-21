@@ -55,12 +55,11 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     ETLBatchConfig config = getConfig().convertOldConfig();
     setDescription(DEFAULT_DESCRIPTION);
 
-    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
-      getConfigurer(),
-      ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-      config.getEngine());
-
-    BatchPipelineSpec spec = specGenerator.generateSpec(config);
+    BatchPipelineSpec spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
+                                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+                                                              config.getEngine())
+      .generateSpec(config);
 
     int sourceCount = 0;
     for (StageSpec stageSpec : spec.getStages()) {

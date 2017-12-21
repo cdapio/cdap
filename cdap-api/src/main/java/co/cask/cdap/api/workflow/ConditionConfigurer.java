@@ -15,11 +15,12 @@
  */
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring the {@link Condition} in the {@link Workflow}.
  */
-public interface ConditionConfigurer extends ProgramConfigurer, PluginConfigurer {
+public interface ConditionConfigurer extends ProgramConfigurer, PluginConfigurer, DatasetConfigurer {
 }

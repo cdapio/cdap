@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.api;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
@@ -26,8 +27,8 @@ import javax.annotation.Nullable;
  * Helper methods to add plugins to Programs.
  * @param <T> Program's configurer that implements {@link PluginConfigurer}
  */
-public abstract class AbstractPluginConfigurable<T extends PluginConfigurer>
-  extends AbstractProgramDatasetConfigurable {
+public abstract class AbstractPluginConfigurable<T extends PluginConfigurer & DatasetConfigurer>
+  extends AbstractProgramDatasetConfigurable<T> {
 
   @Override
   protected abstract T getConfigurer();

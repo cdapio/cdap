@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
@@ -26,7 +27,7 @@ import java.util.Map;
  * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
  */
 @Beta
-public interface PipelineConfigurer extends PluginConfigurer {
+public interface PipelineConfigurer extends PluginConfigurer, DatasetConfigurer {
 
   /**
    * Get stage configurer for the pipeline stage

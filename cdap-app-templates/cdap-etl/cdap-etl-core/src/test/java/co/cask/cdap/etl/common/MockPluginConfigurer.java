@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
@@ -40,7 +41,7 @@ import javax.annotation.Nullable;
  * Mock {@link PluginConfigurer} for unit tests. No-op for dataset methods.
  * Use the setter methods to populate the plugin objects that should be returned by the PluginConfigurer methods.
  */
-public class MockPluginConfigurer implements PluginConfigurer {
+public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer {
   private Map<Key, Value> plugins;
 
   private static class Value {

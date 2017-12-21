@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
@@ -27,7 +28,7 @@ import java.util.Map;
  * Similar to {@link PipelineConfigurer} except it exposes {@link MultiInputStageConfigurer}
  */
 @Beta
-public interface MultiInputPipelineConfigurer extends PluginConfigurer {
+public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetConfigurer {
 
   /**
    * Get multi input stage configurer for the pipeline stage
