@@ -298,7 +298,8 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testPlugin() throws Exception {
-    File pluginDir = getFile();
+    File pluginDir = TMP_FOLDER.newFolder();
+    addPluginArtifact();
     SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
     copyArtifacts(pluginDir, plugins);
 
@@ -328,7 +329,8 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testPluginConfigWithNoStringValues() throws Exception {
-    File pluginDir = getFile();
+    File pluginDir = TMP_FOLDER.newFolder();
+    addPluginArtifact();
     SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
     copyArtifacts(pluginDir, plugins);
 
@@ -403,7 +405,8 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testMacroPlugin() throws Exception {
-    File pluginDir = getFile();
+    File pluginDir = TMP_FOLDER.newFolder();
+    addPluginArtifact();
     SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
     copyArtifacts(pluginDir, plugins);
 
@@ -723,19 +726,18 @@ public class ArtifactRepositoryTest {
     }
   }
 
-  private static File getFile() throws Exception {
-    File pluginDir = DirUtils.createTempDir(tmpDir);
+  private static void addPluginArtifact() throws Exception {
+    addPluginArtifact(Collections.singleton(
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
+                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
+  }
+
+  private static void addPluginArtifact(Set<ArtifactRange> parents) throws Exception {
     // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
-
-    // add the artifact
-    Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
-                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
     artifactRepository.addArtifact(artifactId, jarFile, parents, null);
-    return pluginDir;
   }
 
   private static SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins() throws Exception {

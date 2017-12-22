@@ -125,19 +125,17 @@ final class ArtifactInspector {
     try {
       File unpackedDir = BundleJarUtil.unJar(artifactLocation,
                                              Files.createTempDirectory(stageDir, "unpacked-").toFile());
-
-      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir)) {
+      try (
+        CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);
+        PluginInstantiator pluginInstantiator =
+          new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
+                                 Files.createTempDirectory(stageDir, "plugins-").toFile(),
+                                 false)
+      ) {
+        pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
         ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
                                                               artifactLocation, artifactClassLoader);
-
-        try (PluginInstantiator pluginInstantiator =
-               new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
-                                      Files.createTempDirectory(stageDir, "plugins-").toFile(),
-                                      false)) {
-          pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
-          inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
-        }
-        return builder.build();
+        return inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator).build();
       }
     } catch (EOFException | ZipException e) {
       throw new InvalidArtifactException("Artifact " + artifactId + " is not a valid zip file.", e);

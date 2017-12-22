@@ -252,7 +252,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       validatePluginSet(additionalPlugins);
     }
 
-    parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
+    parentArtifacts = parentArtifacts == null ? Collections.emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader = null;
     EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
                                                                    impersonator);
