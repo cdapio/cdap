@@ -46,8 +46,14 @@
         self.$allBranches.each(function() {
             var $children = $(this).children('ul,ol');
             if ($children.size() > 0 && $children.children('li').size() > 0) {
-                $(this).addClass('collapsed');
-                $('<span class="icon '+self.options.collapsedIconClass+'"></span>').prependTo($(this));
+                if (!$(this).find('.' + self.options.collapsedIconClass.split(' ').pop()).length) {
+                    $('<span class="icon '+self.options.collapsedIconClass+'"></span>').prependTo($(this));
+                }
+                if ($(this).hasClass('current')) {
+                    self.expand($(this));
+                } else {
+                    self.collapse($(this));
+                }
             }
         });
 

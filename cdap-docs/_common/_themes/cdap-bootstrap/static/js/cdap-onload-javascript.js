@@ -50,7 +50,7 @@
           $('#right-sidebar').css('border-left-color', '#ff6600');
         }
         $('#sidebar').css('margin-left', s_margin_left).css('position', s_position).css('width', s_width);
-        $('#right-sidebar').css('position', s_position).css('width', s_width).height(maxRightSidebarHeight);
+        $('#right-sidebar').css('position', 'fixed').css('width', s_width).height(maxRightSidebarHeight);
     }
 
     $(window).on('load scroll resize', function() {
