@@ -246,6 +246,13 @@ angular.module(PKG.name + '.commons')
           'disabled': 'disabled',
           'node': 'node'
         }
+      },
+      'multi-select': {
+        element: '<my-multi-select-dropdown></my-multi-select-dropdown>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
