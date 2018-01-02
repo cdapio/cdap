@@ -1,0 +1,175 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.scss';
+
+$text-color: $grey-01;
+$border-color: $grey-05;
+$modeless-bg-color: $grey-06;
+$modeless-header-bg-color: $grey-08;
+$modeless-width: 730px;
+$modeless-height: 455px;
+$top-panel-height: 54px;
+$right-position: -330px;
+$regular-font: 14px;
+$secondary-btn-color: $brand-primary;
+
+.pipeline-scheduler-content {
+  width: $modeless-width;
+  height: $modeless-height;
+  top: $top-panel-height;
+  right: $right-position;
+
+  .pipeline-scheduler-body {
+    .schedule-content {
+      width: 100%;
+      margin: 16px 45px 30px 45px;
+      font-size: $regular-font;
+      position: relative;
+
+      .separator {
+        margin-right: 5px;
+      }
+
+      .schedule-type,
+      .control-label,
+      .schedule-values-container {
+        padding: 0;
+      }
+
+      .schedule-type,
+      .control-label {
+        margin-right: 15px;
+      }
+
+      fieldset {
+        /* 70px: height from bottom of buttons to horizontal line */
+        height: calc(100% - 70px);
+
+        .schedule-types {
+          display: flex;
+          align-items: center;
+          height: 30px;
+
+          .schedule-type {
+            cursor: pointer;
+
+            &.schedule-type-basic {
+              display: inline-block;
+              text-align: right;
+            }
+          }
+
+          .active {
+            font-weight: bold;
+            text-decoration: underline;
+            pointer-events: none;
+          }
+        }
+
+        .schedule-type-content {
+          border-bottom: 1px solid $border-color;
+
+          /*  30px: height of Basic | Advanced options */
+          height: calc(100% - 30px);
+
+          label {
+            font-weight: initial;
+            margin-bottom: 0;
+          }
+
+          .form-group {
+            display: flex;
+            align-items: center;
+            height: 45px;
+            margin-bottom: 0;
+
+            &.invisible {
+              visibility: hidden;
+            }
+
+            &.summary {
+              margin-top: 10px;
+            }
+
+            .control-label {
+              text-align: right;
+            }
+
+            .schedule-values-container {
+              .schedule-values {
+                display: flex;
+                align-items: center;
+
+                .day-of-week {
+                  margin-right: 10px;
+                  text-align: center;
+                }
+              }
+
+              .small-dropdown {
+                width: 30%;
+                margin-right: 5px;
+                padding-right: 0;
+                padding-left: 5px;
+              }
+            }
+          }
+
+          .schedule-advanced-header {
+            margin-bottom: 20px;
+            padding-top: 10px;
+            padding-left: 20px;
+          }
+
+          .schedule-advanced-values {
+            display: table;
+
+            .schedule-advanced-input {
+              display: table-cell;
+              text-align: center;
+            }
+          }
+        }
+      }
+
+      .schedule-navigation {
+        position: absolute;
+        bottom: 0;
+
+        .schedule-notes {
+          padding-bottom: 7px;
+
+          .note-label {
+            font-weight: bold;
+          }
+        }
+
+        .btn {
+          font-size: $regular-font;
+
+          &.btn-secondary {
+            color: $secondary-btn-color;
+            margin-left: 16px;
+          }
+
+          .icon-spinner {
+            margin-left: 5px;
+          }
+        }
+      }
+    }
+  }
+}

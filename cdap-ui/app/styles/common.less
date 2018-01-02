@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -226,5 +226,54 @@ footer {
   &:active,
   &:focus {
     color: #ffffff;
+  }
+}
+
+.modeless-container {
+  background: @grey-06;
+  position: absolute;
+  overflow: auto;
+  z-index: 999;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+  color: @grey-01;
+  background-color: white;
+
+  .modeless-header {
+    background-color: @grey-08;
+    height: 60px;
+    padding: 0;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .modeless-title {
+      color: @grey-01;
+      padding-left: 15px;
+      max-width: 80%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      font-weight: 500;
+      margin: 0 auto 0 0;
+      font-size: 16px;
+      line-height: 20px;
+    }
+
+    .btn .fa-remove,
+    .btn .icon-close {
+      color: @grey-01;
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+      margin-right: 5px;
+    }
+  }
+
+  .modeless-content {
+    display: flex;
+    height: ~"-moz-calc(100% - 60px)";
+    height: ~"-webkit-calc(100% - 60px)";
+    height: ~"calc(100% - 60px)";
   }
 }

@@ -1,0 +1,260 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
+$pipeline-type-icon-size: 20px;
+$top-panel-height: 55px;
+$btn-border-color: $grey-03;
+
+.pipeline-details-top-panel {
+  height: $top-panel-height;
+  background-color: white;
+  color: $grey-02;
+  border-bottom: 1px solid $grey-06;
+  z-index: 999;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 40% 40% 20%;
+
+  .pipeline-metadata {
+    padding-top: 5px;
+
+    .pipeline-type-name-version {
+      display: flex;
+      align-items: center;
+      height: 22px;
+
+      .pipeline-type {
+        margin-right: 5px;
+        margin-left: 10px;
+
+        .icon-svg {
+          color: $blue-02;
+          height: $pipeline-type-icon-size;
+          width: $pipeline-type-icon-size;
+        }
+      }
+
+      .pipeline-name {
+        font-size: 16px;
+        line-height: 22px;
+        display: inline;
+        font-weight: 500;
+        margin: 0 3px 0 0;
+        color: $grey-01;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        /* to leave some space for the pipeline type icon and pipeline version */
+        max-width: calc(100% - 180px);
+      }
+
+      .pipeline-description {
+        margin-right: 5px;
+
+        #pipeline-description-info-icon {
+          color: $blue-02;
+        }
+      }
+
+      .pipeline-version {
+        align-self: flex-end;
+      }
+    }
+
+    .pipeline-tags {
+      overflow: hidden;
+      max-width: 100%;
+      white-space: nowrap;
+
+      .tags-holder {
+        .btn.btn-secondary {
+          &.user-tags {
+            background-color: $grey-07;
+            border: 2px solid white;
+            color: $grey-02;
+
+            &:hover {
+              background-color: $grey-06;
+              color: $grey-01;
+            }
+          }
+
+          &.system-tags {
+            background-color: white;
+            color: $blue-grey03;
+            border: 1px solid $blue-grey06;
+
+            &:hover {
+              border-color: $blue-grey03;
+              color: $blue-grey01;
+            }
+          }
+        }
+
+        .plus-button-container {
+          background-color: $grey-03;
+        }
+      }
+    }
+  }
+
+  .pipeline-details-buttons {
+    height: $top-panel-height;
+
+    .pipeline-action-container {
+      display: inline-block;
+      position: relative;
+      height: 100%;
+      border-left: 1px solid white;
+
+      &.active,
+      &:hover {
+        background-color: $grey-08;
+        color: $grey-01;
+        border: 1px solid $grey-05;
+
+        .pipeline-action-btn {
+          &:not(.pipeline-stop-btn):not(.pipeline-run-btn) {
+            border-right: 0;
+          }
+        }
+
+        &:after {
+          display: none;
+        }
+      }
+
+      &.active {
+        border-bottom-color: white;
+      }
+
+      .pipeline-action-btn {
+        height: 100%;
+        padding: 0 10px;
+        display: flex;
+        align-items: center;
+        border-radius: 0;
+
+        .icon-svg {
+          font-size: 18px;
+        }
+
+        &:active {
+          box-shadow: none;
+        }
+      }
+    }
+
+    .pipeline-scheduler-container {
+      .pipeline-scheduler-btn {
+        .icon-runtimestarttime {
+          font-size: 21px;
+
+          &.unschedule-icon {
+            color: $brand-primary;
+          }
+        }
+      }
+
+      &:after {
+        @include border-element(-16px);
+      }
+    }
+
+    .pipeline-configure-container {
+      .pipeline-configure-btn {
+        .icon-sliders {
+          transform: rotate(90deg);
+        }
+      }
+
+      &:after {
+        @include border-element();
+      }
+    }
+
+    .pipeline-summary-container {
+      .pipeline-summary {
+        /* 50px header + 55px detail view top panel */
+        top: 105px;
+      }
+
+      &:after {
+        @include border-element(61px);
+      }
+    }
+
+    .pipeline-stop-container {
+      margin: 0 8px 0 10px;
+
+      .icon-stop {
+        color: $grey-03;
+      }
+    }
+
+    .pipeline-run-container {
+      margin-right: 10px;
+    }
+
+    .pipeline-run-container,
+    .pipeline-stop-container {
+      height: 42px;
+      border: 1px solid $grey-06;
+      border-radius: 5px;
+    }
+
+    .pipeline-details-container {
+      a:hover {
+        text-decoration: none;
+      }
+
+      .pipeline-details-btn {
+        .btn-container {
+          color: $grey-01;
+        }
+      }
+
+      &:after {
+        @include border-element();
+      }
+    }
+
+    .pipeline-actions-container {
+      border-bottom: 1px solid $btn-border-color;
+
+      .pipeline-actions-popper {
+        height: 100%;
+
+        > div:first-child {
+          height: 100%;
+        }
+      }
+    }
+  }
+
+  .plus-button {
+    position: absolute;
+    right: 20px;
+    margin-top: 20px;
+    z-index: 998;
+
+    .popper {
+      display: none;
+    }
+  }
+}

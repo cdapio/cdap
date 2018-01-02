@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusDetailNonRunsStore) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore) {
 
     var vm = this;
 
@@ -975,7 +975,8 @@ angular.module(PKG.name + '.commons')
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
       closeMetricsPopover(node);
-      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
+
+      window.CaskCommon.PipelineMetricsActionCreator.setMetricsTabActive(false);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
@@ -985,7 +986,7 @@ angular.module(PKG.name + '.commons')
         return;
       }
       closeMetricsPopover(node);
-      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true, portName);
+      window.CaskCommon.PipelineMetricsActionCreator.setMetricsTabActive(true, portName);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
@@ -1021,7 +1022,7 @@ angular.module(PKG.name + '.commons')
     vm.cleanUpGraph = function () {
       if ($scope.nodes.length === 0) { return; }
 
-      let newConnections = HydratorPlusPlusCanvasFactory.orderConnections($scope.connections, HydratorPlusPlusConfigStore.getAppType() || HydratorPlusPlusDetailNonRunsStore.getAppType(), $scope.nodes);
+      let newConnections = HydratorPlusPlusCanvasFactory.orderConnections($scope.connections, HydratorPlusPlusConfigStore.getAppType() || window.CaskCommon.PipelineDetailStore.getState().artifact.name, $scope.nodes);
       let connectionsSwapped = false;
       for (let i = 0; i < newConnections.length; i++) {
         if (newConnections[i].from !== $scope.connections[i].from || newConnections[i].to !== $scope.connections[i].to) {

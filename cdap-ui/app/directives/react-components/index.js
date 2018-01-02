@@ -44,4 +44,13 @@ angular.module(PKG.name + '.commons')
   })
   .directive('pipelineTriggersSidebars', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineTriggersSidebars);
+  })
+  .directive('pipelineDetailsTopPanel', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineDetailsTopPanel);
+  })
+  .directive('pipelineScheduler', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineScheduler);
+  })
+  .directive('pipelineDetailsRunLevelInfo', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineDetailsRunLevelInfo);
   });

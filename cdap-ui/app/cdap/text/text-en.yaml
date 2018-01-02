@@ -7,6 +7,7 @@ commons:
   cask: CASK
   cdap: CDAP
   clickhere: click here
+  close: Close
   descriptionLabel: Description
   DSVEditor:
     placeholder: value
@@ -92,6 +93,7 @@ commons:
   then: Then
   tracker: Cask Tracker
   typeLabel: Type
+  valueLabel: Value
   when: When
   wrangler: Cask Wrangler
   yesLabel: Yes
@@ -1358,6 +1360,172 @@ features:
     subtitleMessage2: View all your entities in the
   Pagination:
     dropdown-label: Page
+
+  PipelineConfigurations:
+    ActionButtons:
+      copyRuntimeArgs: Copy Runtime Arguments
+      runtimeArgsCopied: Runtime Arguments Copied
+      runtimeArgsCount:
+        1: "{context} runtime argument"
+        _: "{context} runtime arguments"
+      save: Save
+      saveAndRun: Save and Run
+      saveAndSchedule: Save and Schedule
+      saving: Saving
+    advancedOptions: Advanced options
+    Alerts:
+      contentHeading: Set alerts for your batch pipeline
+      title: Alerts
+    EngineConfig:
+      backpressure: Backpressure
+      backpressureTooltip: Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process.
+      contentHeading: Select the type of engine running your {pipelineTypeLabel} pipeline
+      customConfig: Custom Config
+      customConfigCount:
+        1: "{context} custom config"
+        _: "{context} custom configs"
+      customConfigTooltip: Enter key-value pairs of configuration parameters that will be passed to the underlying {engineDisplayLabel} program.
+      numExecutors: Number of Executors
+      numExecutorsTooltip: The number of executors to allocate for this pipeline on Apache Yarn.
+      showCustomConfig: Show Custom Config
+      title: Engine Config
+    PipelineConfig:
+      batchInterval: Batch Interval
+      checkpointing: Checkpointing
+      checkpointingTooltip: Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures.
+      contentHeading: Set configurations for this pipeline
+      instrumentation: Instrumentation
+      instrumentationTooltip: Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources.
+      stageLogging: Stage Level Logging
+      stageLoggingTooltip: Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources.
+      title: Pipeline Config
+    PreviewConfig:
+      title: Preview Config
+    Resources:
+      client: Client
+      clientTooltip: Resources for the client process which launches the Apache Spark Streaming pipeline
+      driver: Driver
+      driverTooltip: Resources for the driver process which initializes the pipeline
+      executor: Executor
+      executorMapReduce: Mapper/Reducer
+      executorTooltip: Resources for executor processes which run tasks in an Apache Spark pipeline
+      executorMapReduceTooltip: Resources for the executor process which initializes the pipeline
+      contentHeading: Specify the resources for the following processes of the {engineDisplayLabel} program
+      title: Resources
+    RuntimeArgs:
+      contentHeading1: Specify Runtime Arguments or Update the Ones Derived from Preferences
+      contentHeading2: Runtime Arguments used for this run
+      contentHeading3: No Runtime Arguments were used for this run
+      contentSubtitle: By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
+      ProvidedPopover:
+        clearAll: Clear All
+        provided: Provided
+        selectAll: Select All
+      title: Runtime Arguments
+    title: Configure
+    titleHistorical: Run Configurations
+
+  PipelineDetails:
+    duration: Duration
+    RunLevel:
+      configs: Run Configs
+      currentIndex: '({currentRunIndex} of {numRuns})'
+      currentRunIndex: 'Run {currentRunIndex} of {numRuns}'
+      errors: Errors
+      logs: Run Logs
+      noRuns: No Runs
+      pipelineNeverRun: 'This pipeline has never been run.'
+      runsCurrentlyRunning: Runs currently running - select one to view
+      status: Status
+      warnings: Warnings
+    startTime: Start Time
+    TopPanel:
+      actions: Actions
+      configure: Configure
+      delete: Delete Pipeline
+      deleteConfirmation:
+        confirm: Delete
+        confirmPrompt: 'Are you sure you want to delete the pipeline '
+        pipeline: 'Pipeline '
+        proceedPrompt: ' is deleted. Are you sure you want to proceed?'
+        trigger: ' is configured to trigger '
+        triggerDelete: '. Triggers will be deleted if pipeline '
+        triggerPluralCheck:
+          1: "pipeline "
+          _: "pipelines "
+      deleteError: There was a problem with the pipeline you were trying to delete
+      details: Details
+      duplicate: Duplicate
+      export: Export
+      exportModalTitle: Export Pipeline Configuration
+      run: Run
+      schedule: Schedule
+      starting: Starting
+      stop: Stop
+      stopping: Stopping
+      StopPopover:
+        currentRuns: Current runs ({numRuns})
+        stopAll: Stop All
+        stopRun: Stop run
+      summary: Summary
+      unschedule: Unschedule
+      version: version {version}
+
+  PipelineResources:
+    cpu: CPU
+    mb: MB
+    memory: Memory
+
+  PipelineScheduler:
+    advanced:
+      day: Day
+      daysOfWeek: Days of the week
+      header: Schedule this pipeline by using Cron syntax
+      hour: Hour
+      label: Advanced
+      min: Min
+      month: Month
+    basic: Basic
+    header: Configure Schedule for Pipeline
+    intervalOptions:
+      daily: Daily
+      every10min: Every 10 min
+      every30min: Every 30 min
+      every5min: Every 5 min
+      heading: Pipeline run repeats
+      hourly: Hourly
+      monthly: Monthly
+      weekly: Weekly
+      yearly: Yearly
+    maxConcurrentRuns: Max concurrent runs
+    repeatEvery:
+      day: day(s)
+      dayOfMonth: day of the month
+      hour: hour(s)
+      label: Repeats every
+    saveSchedule: Save Schedule
+    saveAndStartSchedule: Save and Start Schedule
+    startingAt:
+      label: Starting At
+      pastTheHour: past the hour
+    startSchedule: Start Schedule
+    summary:
+      atHourMinuteAMPM: 'at {hour}:{min}{AMPM}.'
+      canMaxConcurrentRuns: 'The pipeline can have {num} concurrent runs.'
+      cannotMaxConcurrentRuns: 'The pipeline cannot have concurrent runs.'
+      every: 'every '
+      everyDateOfMonth: 'every {date} day of the month, '
+      everyDay: 'everyday, '
+      everyHour: 'every hour, '
+      everyNumDays: 'every {num} days, '
+      everyNumHours: 'every {num} hours, '
+      everyYearOn: 'every year on {month} {dateOfMonth}, '
+      label: Summary
+      numMinsPastTheHour: '{num} minutes past the hour.'
+      onTheHour: 'on the hour.'
+      scheduledToRun: 'This pipeline is scheduled to run '
+    suspendSchedule: Suspend Schedule
+
   PipelineSummary:
     filterContainer:
       view: View

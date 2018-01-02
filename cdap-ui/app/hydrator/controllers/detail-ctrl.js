@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,65 +15,105 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions, $stateParams, PipelineAvailablePluginsActions) {
+  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
-    HydratorPlusPlusDetailRunsStore.init(rPipelineDetail);
-    HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
+    const pipelineDetailsActionCreator = window.CaskCommon.PipelineDetailActionCreator;
+    const pipelineMetricsActionCreator = window.CaskCommon.PipelineMetricsActionCreator;
+    const pipelineConfigurationsActionCreator = window.CaskCommon.PipelineConfigurationsActionCreator;
 
     this.pipelineType = rPipelineDetail.artifact.name;
+    let programType = this.pipelineType === GLOBALS.etlDataPipeline ? 'workflows' : 'spark';
+    let programName = this.pipelineType === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
+    let scheduleId = GLOBALS.defaultScheduleId;
 
+    let currentRun, metricsObservable, runsPoll;
+    let pluginsFetched = false;
+
+    pipelineDetailsActionCreator.init(rPipelineDetail);
     let runid = $stateParams.runid;
     if (runid) {
-      HydratorPlusPlusDetailActions.setCurrentRun(runid);
+      pipelineDetailsActionCreator.setCurrentRunId(runid);
     }
-    var params = HydratorPlusPlusDetailRunsStore.getParams();
-    params.scope = $scope;
-    var currentRunId;
-    this.PipelineAvailablePluginsActions = PipelineAvailablePluginsActions;
 
-    this.PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, rPipelineDetail.config.stages);
+    let runsFetch = pipelineDetailsActionCreator.getRuns({
+      namespace: $stateParams.namespace,
+      appId: rPipelineDetail.name,
+      programType,
+      programName
+    });
 
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(function () {
+    runsFetch.subscribe(() => {
+      runsPoll = pipelineDetailsActionCreator.pollRuns({
+        namespace: $stateParams.namespace,
+        appId: rPipelineDetail.name,
+        programType,
+        programName
+      });
+    });
 
-      var latestRunId = HydratorPlusPlusDetailRunsStore.getLatestMetricRunId();
-      var latestRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
+    pipelineDetailsActionCreator.fetchScheduleStatus({
+      namespace: $stateParams.namespace,
+      appId: rPipelineDetail.name,
+      scheduleId
+    });
 
-      if (currentRunId === latestRunId) {
+    let pipelineDetailStoreSubscription = window.CaskCommon.PipelineDetailStore.subscribe(() => {
+      let pipelineDetailStoreState = window.CaskCommon.PipelineDetailStore.getState();
+
+      if (!pluginsFetched) {
+        let pluginsToFetchDetailsFor = pipelineDetailStoreState.config.stages.concat(pipelineDetailStoreState.config.postActions);
+        PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, pluginsToFetchDetailsFor);
+        pluginsFetched = true;
+      }
+
+      let latestRun = pipelineDetailStoreState.currentRun;
+      if (!latestRun || !latestRun.runid) {
         return;
       }
 
-      currentRunId = latestRunId;
-      // When current run id changes reset the metrics in the DAG.
-      HydratorPlusPlusDetailMetricsActions.reset();
-
-      if (latestRunId) {
-        var appParams = HydratorPlusPlusDetailRunsStore.getParams();
-        var logsParams = HydratorPlusPlusDetailRunsStore.getLogsParams();
-        var metricParams = {
-          namespace: appParams.namespace,
-          app: appParams.app,
-          run: latestRunId
-        };
-        var programType = HydratorPlusPlusDetailRunsStore.getMetricProgramType();
-        metricParams[programType] = logsParams.programId;
-        if (latestRun.status !== 'RUNNING') {
-          HydratorPlusPlusDetailMetricsActions.requestForMetrics(metricParams);
-        } else {
-          HydratorPlusPlusDetailMetricsActions.pollForMetrics(metricParams);
-        }
+      // let latestRunId = latestRun.runid;
+      if (currentRun && currentRun.runid === latestRun.runid && currentRun.status === latestRun.status) {
+        return;
       }
 
-    });
+      // When current run id changes reset the metrics in the DAG.
+      if (currentRun && currentRun.runid !== latestRun.runid) {
+        pipelineMetricsActionCreator.reset();
+      }
 
-    HydratorPlusPlusDetailActions.pollRuns(
-      HydratorPlusPlusDetailRunsStore.getApi(),
-      params
-    );
+      currentRun = latestRun;
+
+      let metricProgramType = programType === 'workflows' ? 'workflow' : programType;
+
+      let metricParams = {
+        namespace: $stateParams.namespace,
+        app: rPipelineDetail.name,
+        run: latestRun.runid,
+        [metricProgramType]: programName
+      };
+
+      if (metricsObservable) {
+        metricsObservable.unsubscribe();
+      }
+
+      if (latestRun.status !== 'RUNNING') {
+        pipelineMetricsActionCreator.getMetrics(metricParams);
+      } else {
+        metricsObservable = pipelineMetricsActionCreator.pollForMetrics(metricParams);
+      }
+    });
 
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
-      HydratorPlusPlusDetailRunsStore.reset();
-      HydratorPlusPlusDetailNonRunsStore.reset();
-      HydratorPlusPlusDetailMetricsActions.reset();
+      if (runsPoll) {
+        runsPoll.unsubscribe();
+      }
+      if (metricsObservable) {
+        metricsObservable.unsubscribe();
+      }
+      pipelineConfigurationsActionCreator.reset();
+      pipelineDetailsActionCreator.reset();
+      pipelineDetailStoreSubscription();
+      pipelineMetricsActionCreator.reset();
     });
   });
