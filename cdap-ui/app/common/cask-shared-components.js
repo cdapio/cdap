@@ -39,6 +39,7 @@ var StatusFactory = require('../cdap/services/StatusFactory').default;
 var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
 var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
 var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
+var TriggeredPipelineStore = require('../cdap/components/TriggeredPipelines/store/TriggeredPipelineStore').default;
 var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
 var GLOBALS = require('../cdap/services/global-constants').default;
 var StatusMapper = require('../cdap/services/StatusMapper').default;
@@ -67,6 +68,7 @@ export {
   StatusAlertMessage,
   RulesEngineHome,
   PipelineTriggersSidebars,
+  TriggeredPipelineStore,
   PipelineErrorFactory,
   GLOBALS,
   StatusMapper
