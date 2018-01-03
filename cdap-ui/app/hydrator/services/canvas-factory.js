@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,15 +21,15 @@
     /*
       This is the inner utility function that is used once we have a source node to start our traversal.
     */
-    function addConnectionsInOrder(node, finalConnections, originalConnections) {
-      if (node.visited) {
+    function addConnectionsInOrder(sourceConn, finalConnections, originalConnections) {
+      if (sourceConn.visited) {
         return finalConnections;
       }
 
-      node.visited = true;
-      finalConnections.push(node);
+      sourceConn.visited = true;
+      finalConnections.push(sourceConn);
       var nextConnections = originalConnections.filter(function(conn) {
-        if (node.to === conn.from) {
+        if (sourceConn.to === conn.from) {
           return conn;
         }
       });
@@ -56,7 +56,7 @@
           return c;
         }
       }
-      for (var i =0; i<originalConnections.length; i++) {
+      for (var i = 0; i < originalConnections.length; i++) {
         var connection = originalConnections[i];
         var isSoureATarget = originalConnections.filter(isSource);
         if (!isSoureATarget.length) {
@@ -92,7 +92,6 @@
       };
 
       const orderAlertErrorConnections = (alertOrErrorNodes, isErrorNodes = true) => {
-
         angular.forEach(alertOrErrorNodes, (node) => {
           let lastConnToThisNodeIndex = _.findLastIndex(finalConnections, conn => conn.to === node);
 
@@ -149,17 +148,17 @@
           errorNodes.push(nodeName);
         }
       });
-      var source = connections.filter(function(conn) {
+      let sourceConns = connections.filter(function(conn) {
         if (nodesMap[conn.from].type === GLOBALS.pluginTypes[appType].source) {
           return conn;
         }
       });
 
-      if (!source.length) {
-        source = [findTransformThatIsSource(originalConnections)];
+      if (!sourceConns.length) {
+        sourceConns = [findTransformThatIsSource(originalConnections)];
       }
 
-      addConnectionsInOrder(source[0], finalConnections, originalConnections);
+      addConnectionsInOrder(sourceConns[0], finalConnections, originalConnections);
       if (finalConnections.length < originalConnections.length) {
         originalConnections.forEach(function(oConn) {
           var match = finalConnections.filter(fConn => fConn.from === oConn.from && fConn.to === oConn.to).length === 0;

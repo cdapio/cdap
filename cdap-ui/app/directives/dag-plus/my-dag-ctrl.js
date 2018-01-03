@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1035,40 +1035,12 @@ angular.module(PKG.name + '.commons')
         DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
       }
 
-      var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation)._nodes;
+      let graphNodesNetworkSimplex = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation)._nodes;
+      let graphNodesLongestPath = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation, 'longest-path')._nodes;
+
       angular.forEach($scope.nodes, function (node) {
-        var location = graphNodes[node.name];
-
-        var locationX = location.x;
-        var locationY = location.y;
-
-        if (node.type === 'alertpublisher' || node.type === 'errortransform') {
-
-          // If the node connecting to this alert publisher/error transform node only has connections
-          // to these types of nodes, then have to push the alert publisher/error transform down a bit more
-          let connToThisNode = $scope.connections.find(conn => conn.to === node.name);
-          if (connToThisNode) {
-            let sourceNode = connToThisNode.from;
-            let onlyConnectedToErrorsAlerts = true;
-            for (let i = 0; i < $scope.connections.length; i++) {
-              let conn = $scope.connections[i];
-              if (conn.from === sourceNode) {
-                let targetNode = $scope.nodes.find(node => node.name === conn.to);
-                if (targetNode.type !== 'alertpublisher' && targetNode.type !== 'errortransform') {
-                  onlyConnectedToErrorsAlerts = false;
-                  break;
-                }
-              }
-            }
-            if (onlyConnectedToErrorsAlerts) {
-              locationY += 200;
-            } else {
-              locationY += 70;
-            }
-            locationX -= 150;
-          }
-        }
-
+        let locationX = graphNodesNetworkSimplex[node.name].x;
+        let locationY = graphNodesLongestPath[node.name].y;
         node._uiPosition = {
           left: locationX - 50 + 'px',
           top: locationY + 'px'
