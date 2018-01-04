@@ -29,6 +29,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
+import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.upload.ContentWriterFactory;
@@ -45,8 +46,6 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -122,8 +121,6 @@ public final class StreamHandler extends AbstractHttpHandler {
   private ExecutorService asyncExecutor;
   private final StreamWriterSizeCollector sizeCollector;
   private final Impersonator impersonator;
-  private final AuthorizationEnforcer authorizationEnforcer;
-  private final AuthenticationContext authenticationContext;
 
   @Inject
   StreamHandler(CConfiguration cConf,
@@ -131,8 +128,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                 StreamFileWriterFactory writerFactory,
                 final MetricsCollectionService metricsCollectionService,
                 StreamWriterSizeCollector sizeCollector,
-                NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator,
-                AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+                NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.sizeCollector = sizeCollector;
@@ -152,8 +148,6 @@ public final class StreamHandler extends AbstractHttpHandler {
                                                    metricsCollectorFactory, impersonator);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
-    this.authorizationEnforcer = authorizationEnforcer;
-    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -252,25 +246,24 @@ public final class StreamHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/{stream}")
+  @AuthEnforce(entities = {"namespace-id", "stream"}, enforceOn = StreamId.class, actions = Action.WRITE)
   public void enqueue(FullHttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
-    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     streamWriter.enqueue(streamId, getHeaders(request, stream), request.content().nioBuffer());
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
   @Path("/{stream}/async")
+  @AuthEnforce(entities = {"namespace-id", "stream"}, enforceOn = StreamId.class, actions = Action.WRITE)
   public void asyncEnqueue(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
-
     // Need to retain the content buffer since writing is async
     streamWriter.asyncEnqueue(streamId, getHeaders(request, stream), request.content().retain(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
@@ -278,12 +271,12 @@ public final class StreamHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/{stream}/batch")
+  @AuthEnforce(entities = {"namespace-id", "stream"}, enforceOn = StreamId.class, actions = Action.WRITE)
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
-    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     try {
       return streamBodyConsumerFactory.create(request, createContentWriterFactory(streamId, request));
     } catch (UnsupportedOperationException e) {
