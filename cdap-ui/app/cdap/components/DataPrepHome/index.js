@@ -231,13 +231,18 @@ export default class DataPrepHome extends Component {
           :
             null
         }
-        <DataPrep
-          workspaceId={workspaceId}
-          onConnectionsToggle={this.toggleConnectionsView}
-          onWorkspaceDelete={this.props.singleWorkspaceMode ? null : this.updateWorkspaceList}
-          onSubmit={this.props.onSubmit}
-          singleWorkspaceMode={this.props.singleWorkspaceMode}
-        />
+        {
+          !workspaceId && this.props.singleWorkspaceMode ?
+            null
+          :
+            <DataPrep
+              workspaceId={workspaceId}
+              onConnectionsToggle={this.toggleConnectionsView}
+              onWorkspaceDelete={this.props.singleWorkspaceMode ? null : this.updateWorkspaceList}
+              onSubmit={this.props.onSubmit}
+              singleWorkspaceMode={this.props.singleWorkspaceMode}
+            />
+        }
       </div>
     );
   }
