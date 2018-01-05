@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('HydratorPlusPlusDetailMetricsActions', function(HydratorPlusPlusDetailMetricsDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper, HydratorPlusPlusDetailNonRunsStore, $interval) {
+  .service('HydratorPlusPlusDetailMetricsActions', function(HydratorPlusPlusDetailMetricsDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper, $interval) {
 
     var dispatcher = HydratorPlusPlusDetailMetricsDispatcher.getDispatcher();
     var metricsPoll;
@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.hydrator')
           method: 'POST',
           _cdapPath: metricBasePath
         }).then(function (res) {
-          var config = HydratorPlusPlusDetailNonRunsStore.getConfigJson();
+          var config = window.CaskCommon.PipelineDetailStore.getState().config;
           var stagesArray, source, sinks, transforms;
           if (config.stages) {
             stagesArray = config.stages.map(n => n.name);

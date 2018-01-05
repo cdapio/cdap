@@ -19,8 +19,9 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
-let workflowPath = `${basepath}/workflows/:workflowId`;
+let statsPath = `${basepath}/workflows/:workflowId/statistics?start=0`;
 let schedulePath = `${basepath}/schedules/:scheduleId`;
+let programPath = `${basepath}/:programType/:programName`;
 
 export const MyPipelineApi = {
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
@@ -29,8 +30,8 @@ export const MyPipelineApi = {
   suspend: apiCreator(dataSrc, 'POST', 'REQUEST', `${schedulePath}/suspend`),
   getScheduleStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${schedulePath}/status`),
 
-  getStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', `${workflowPath}/statistics?start=0)`),
-  getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${workflowPath}/runs`),
-  getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${workflowPath}/nextruntime)`),
+  getStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
+  getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/runs`),
+  getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/nextruntime)`),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
 };
