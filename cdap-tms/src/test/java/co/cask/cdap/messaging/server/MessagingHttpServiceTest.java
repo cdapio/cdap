@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -479,6 +479,42 @@ public class MessagingHttpServiceTest {
       Assert.assertEquals(Integer.toString(i / 2), payload1);
     }
 
+    // Fetch with message id located inside the payload table, including the message id offset.
+    // Should get the last 10 messages
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
+      .setStartMessage(messages.get(10).getId(), true).fetch()) {
+      messages.clear();
+      Iterators.addAll(messages, iterator);
+    }
+    Assert.assertEquals(10, messages.size());
+    for (int i = 0; i < 10; i += 2) {
+      String payload1 = Bytes.toString(messages.get(i).getPayload());
+      String payload2 = Bytes.toString(messages.get(i + 1).getPayload());
+      Assert.assertEquals(payload1, payload2);
+      Assert.assertEquals(Integer.toString((i + 10) / 2), payload1);
+    }
+
+    // Fetch with message id located inside the payload table, excluding the message id offset.
+    // We start with the 12th message id as offset, hence should get 8 messages.
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
+      .setStartMessage(messages.get(1).getId(), false).fetch()) {
+      messages.clear();
+      Iterators.addAll(messages, iterator);
+    }
+    Assert.assertEquals(8, messages.size());
+    for (int i = 0; i < 8; i += 2) {
+      String payload1 = Bytes.toString(messages.get(i).getPayload());
+      String payload2 = Bytes.toString(messages.get(i + 1).getPayload());
+      Assert.assertEquals(payload1, payload2);
+      Assert.assertEquals(Integer.toString((i + 12) / 2), payload1);
+    }
+
+    // Fetch with the last message id in the payload table, exclusively. Should get an empty iterator
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
+      .setStartMessage(messages.get(messages.size() - 1).getId(), false).fetch()) {
+      Assert.assertFalse(iterator.hasNext());
+    }
+
     // Consume with a limit
     messages.clear();
     try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).setLimit(6).fetch()) {
@@ -491,6 +527,37 @@ public class MessagingHttpServiceTest {
       Assert.assertEquals(payload1, payload2);
       Assert.assertEquals(Integer.toString(i / 2), payload1);
     }
+
+    // Store and publish two more payloads
+    String payload = Integer.toString(10);
+    client.storePayload(StoreRequestBuilder.of(topicId).addPayloads(payload, payload).setTransaction(2L).build());
+    client.publish(StoreRequestBuilder.of(topicId).setTransaction(2L).build());
+
+    // Should get 22 messages
+    messages.clear();
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+      Iterators.addAll(messages, iterator);
+    }
+    Assert.assertEquals(22, messages.size());
+    for (int i = 0; i < 22; i += 2) {
+      String payload1 = Bytes.toString(messages.get(i).getPayload());
+      String payload2 = Bytes.toString(messages.get(i + 1).getPayload());
+      Assert.assertEquals(payload1, payload2);
+      Assert.assertEquals(Integer.toString(i / 2), payload1);
+    }
+
+    // Fetch using the last message id of the first store batch (tx == 1L) as the fetch start offset.
+    // Should get 2 messages back
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
+      .setStartMessage(messages.get(19).getId(), false).fetch()) {
+      messages.clear();
+      Iterators.addAll(messages, iterator);
+    }
+    Assert.assertEquals(2, messages.size());
+    String payload1 = Bytes.toString(messages.get(0).getPayload());
+    String payload2 = Bytes.toString(messages.get(1).getPayload());
+    Assert.assertEquals(payload1, payload2);
+    Assert.assertEquals(Integer.toString(10), payload1);
 
     client.deleteTopic(topicId);
   }

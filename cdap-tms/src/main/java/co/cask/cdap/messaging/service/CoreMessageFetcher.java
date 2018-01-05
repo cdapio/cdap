@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,12 +83,23 @@ final class CoreMessageFetcher extends MessageFetcher {
    * @return a byte array representing the raw message id.
    */
   private byte[] createMessageId(MessageTable.Entry messageEntry, @Nullable PayloadTable.Entry payloadEntry) {
-    byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
     long writeTimestamp = payloadEntry == null ? 0L : payloadEntry.getPayloadWriteTimestamp();
     short payloadSeqId = payloadEntry == null ? 0 : payloadEntry.getPayloadSequenceId();
+    return createMessageId(messageEntry, writeTimestamp, payloadSeqId);
+  }
 
+  /**
+   * Creates a raw message id from the given {@link MessageTable.Entry} and the payload write timestamp and sequence id.
+   *
+   * @param messageEntry entry in the message table representing a message
+   * @param payloadWriteTimestamp the timestamp that the entry was written to the payload table.
+   * @param payloadSeqId the sequence id generated when the entry was written to the payload table.
+   * @return a byte array representing the raw message id.
+   */
+  private byte[] createMessageId(MessageTable.Entry messageEntry, long payloadWriteTimestamp, short payloadSeqId) {
+    byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
     MessageId.putRawId(messageEntry.getPublishTimestamp(), messageEntry.getSequenceId(),
-                       writeTimestamp, payloadSeqId, rawId, 0);
+                       payloadWriteTimestamp, payloadSeqId, rawId, 0);
     return rawId;
   }
 
@@ -119,6 +130,7 @@ final class CoreMessageFetcher extends MessageFetcher {
     private RawMessage nextMessage;
     private MessageTable.Entry messageEntry;
     private CloseableIterator<PayloadTable.Entry> payloadIterator;
+    private MessageId startOffset;
     private boolean inclusive;
     private int messageLimit;
     private PayloadTable payloadTable;
@@ -130,7 +142,7 @@ final class CoreMessageFetcher extends MessageFetcher {
       this.messageLimit = getLimit();
 
       long ttl = topicMetadata.getTTL();
-      MessageId startOffset = getStartOffset() == null ? null : new MessageId(getStartOffset());
+      startOffset = getStartOffset() == null ? null : new MessageId(getStartOffset());
       Long startTime = getStartTime();
 
       // Lower bound of messages that are still valid
@@ -181,9 +193,19 @@ final class CoreMessageFetcher extends MessageFetcher {
               if (payloadTable == null) {
                 payloadTable = payloadTableProvider.get();
               }
+
+              closeQuietly(payloadIterator);
+
+              MessageId payloadStartOffset = startOffset == null
+                ? new MessageId(createMessageId(messageEntry, null))
+                : new MessageId(createMessageId(messageEntry, startOffset.getPayloadWriteTimestamp(),
+                                                startOffset.getPayloadSequenceId()));
+
+              // If startOffset is not used, always fetch with inclusive.
               payloadIterator = payloadTable.fetch(topicMetadata, messageEntry.getTransactionWritePointer(),
-                                                   new MessageId(createMessageId(messageEntry, null)),
-                                                   inclusive, messageLimit);
+                                                   payloadStartOffset, startOffset == null || inclusive, messageLimit);
+              // The start offset is only used for the first payloadIterator being constructed.
+              startOffset = null;
             } catch (IOException e) {
               throw Throwables.propagate(e);
             }
@@ -196,6 +218,7 @@ final class CoreMessageFetcher extends MessageFetcher {
           break;
         }
       }
+      // After the first message, all the sub-sequence table.fetch call should always include all message.
       inclusive = true;
       return nextMessage != null;
     }
