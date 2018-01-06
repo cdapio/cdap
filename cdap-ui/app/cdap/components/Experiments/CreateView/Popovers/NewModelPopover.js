@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,10 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {FormGroup, Label, Col, Input, Row} from 'reactstrap';
 import {
-  setExperimentCreated,
+  setVisiblePopover,
   onModelNameChange,
   onModelDescriptionChange,
-  setModelCreated
+  createModel
 } from 'components/Experiments/store/ActionCreator';
 
 const ModelName = ({modelName, onModelNameChange}) => {
@@ -63,12 +63,12 @@ ModelDescription.propTypes = {
   onModelDescriptionChange: PropTypes.func
 };
 
-const CreateModelBtn = ({state, setModelCreated}) => {
+const CreateModelBtn = ({state, createModel}) => {
   const isAddModelBtnEnabled = () => state.name.length && state.description.length;
   return (
     <button
       className="btn btn-primary"
-      onClick={setModelCreated}
+      onClick={createModel}
       disabled={!isAddModelBtnEnabled()}
     >
       Create Model
@@ -77,12 +77,12 @@ const CreateModelBtn = ({state, setModelCreated}) => {
 };
 CreateModelBtn.propTypes = {
   state: PropTypes.object,
-  setModelCreated: PropTypes.func
+  createModel: PropTypes.func
 };
 
-const ExperimentMetadata = ({experimentOutcome, experimentDescription, setExperimentCreated}) => {
+const ExperimentMetadata = ({experimentOutcome, experimentDescription, setVisiblePopover}) => {
   return (
-    <div className="experiment-metadata">
+    <div className="experiment-metadata-popover">
       <Col xs="12">
         <Row>
           <Col xs="6">Outcome:</Col>
@@ -94,7 +94,7 @@ const ExperimentMetadata = ({experimentOutcome, experimentDescription, setExperi
         </Row>
         <div
           className="btn-link"
-          onClick={setExperimentCreated.bind(null, false)}
+          onClick={setVisiblePopover.bind(null, 'experiment')}
         >
           Edit
         </div>
@@ -105,11 +105,11 @@ const ExperimentMetadata = ({experimentOutcome, experimentDescription, setExperi
 ExperimentMetadata.propTypes = {
   experimentOutcome: PropTypes.string,
   experimentDescription: PropTypes.string,
-  setExperimentCreated: PropTypes.func
+  setVisiblePopover: PropTypes.func
 };
 
-const NewModelPopoverWrapper = ({isExperimentCreated, experimentName}) => {
-  if (!isExperimentCreated) {
+const NewModelPopoverWrapper = ({popover, experimentName}) => {
+  if (popover !== 'model') {
     return null;
   }
   return (
@@ -131,7 +131,7 @@ const NewModelPopoverWrapper = ({isExperimentCreated, experimentName}) => {
   );
 };
 NewModelPopoverWrapper.propTypes = {
-  isExperimentCreated: PropTypes.bool,
+  popover: PropTypes.string,
   experimentName: PropTypes.string
 };
 
@@ -140,14 +140,14 @@ const mapDispatchToModelNameProps = () => ({ onModelNameChange });
 const mapStateToModelDescriptionProps = (state) => ({ modelDescription: state.model_create.description });
 const mapDispatchToModelDescriptionProps = () => ({ onModelDescriptionChange });
 const mapStateToCreateModelBtnProps = (state) => ({ state: state.model_create});
-const mapDispatchToCreateModelBtnProps = () => ({ setModelCreated });
+const mapDispatchToCreateModelBtnProps = () => ({ createModel });
 const mapStateToExperimentMetadataProps = (state) => ({
   experimentOutcome: state.experiments_create.outcome,
   experimentDescription: state.experiments_create.description
 });
-const mapDispatchToExperimentMetadataProps = () => ({ setExperimentCreated });
+const mapDispatchToExperimentMetadataProps = () => ({ setVisiblePopover });
 const mapNMPWStateToProps = (state) => ({
-  isExperimentCreated: state.experiments_create.isExperimentCreated,
+  popover: state.experiments_create.popover,
   experimentName: state.experiments_create.name
 });
 

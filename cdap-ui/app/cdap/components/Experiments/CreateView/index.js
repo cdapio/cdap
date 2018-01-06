@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,17 +22,26 @@ import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepHome from 'components/DataPrepHome';
 import {Prompt, Link} from 'react-router-dom';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
-import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
-import ExperimentPopovers from 'components/Experiments/Popovers';
+import ExperimentPopovers from 'components/Experiments/CreateView/Popovers';
 import DataPrepStore from 'components/DataPrep/store';
-import {setOutcomeColumns, setDirectives, setSrcPath, setWorkspace, getExperimentForEdit} from 'components/Experiments/store/ActionCreator';
-import MLAlgorithmSelection from 'components/Experiments/MLAlgorithmSelection';
-import ExperimentMetadata from 'components/Experiments/ExperimentMetadata';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import {
+  setOutcomeColumns,
+  setDirectives,
+  setSrcPath,
+  setWorkspace,
+  getExperimentForEdit,
+  getExperimentModelSplitForCreate,
+  resetCreateExperimentsStore
+} from 'components/Experiments/store/ActionCreator';
+import MLAlgorithmSelection from 'components/Experiments/CreateView/MLAlgorithmSelection';
+import SplitDataStep from 'components/Experiments/CreateView/SplitDataStep';
+import ExperimentMetadata from 'components/Experiments/CreateView/ExperimentMetadata';
 import Helmet from 'react-helmet';
 import queryString from 'query-string';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
 require('./CreateView.scss');
 
@@ -42,8 +51,10 @@ export default class ExperimentCreateView extends Component {
     location: PropTypes.object,
   };
   state = {
-    workspaceId: '',
-    isModelCreated: createExperimentStore.getState().model_create.isModelCreated
+    workspaceId: createExperimentStore.getState().experiments_create.workspaceId,
+    modelId: createExperimentStore.getState().model_create.modelId,
+    isSplitFinalized: createExperimentStore.getState().model_create.isSplitFinalized,
+    loading: createExperimentStore.getState().experiments_create.loading
   };
   componentDidMount() {
     this.dataprepsubscription = DataPrepStore.subscribe(() => {
@@ -58,47 +69,51 @@ export default class ExperimentCreateView extends Component {
     });
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
       let {model_create, experiments_create} = createExperimentStore.getState();
-      let {isModelCreated, workspaceId} = model_create;
+      let {modelId, isSplitFinalized} = model_create;
+      let {workspaceId, loading} = experiments_create;
       let newState = {};
-      if (this.state.isModelCreated !== isModelCreated) {
-        newState = {isModelCreated};
+      if (this.state.modelId !== modelId) {
+        newState = {modelId};
       }
       if (this.state.workspaceId !== workspaceId) {
         newState = {...newState, workspaceId};
       }
-      if (experiments_create.loading) {
-        newState = {...newState, loading: true};
+      if (this.state.loading !== loading) {
+        newState = {...newState, loading};
+      }
+      if (isSplitFinalized !== this.state.isSplitFinalized) {
+        newState = {...newState, isSplitFinalized};
       }
       if (Object.keys(newState).length > 0) {
         this.setState(newState);
       }
     });
-    let {experimentId} = queryString.parse(this.props.location.search);
-    if (experimentId) {
+    let {experimentId, modelId} = queryString.parse(this.props.location.search);
+    if (experimentId && !modelId) {
       getExperimentForEdit(experimentId);
+    } else if (experimentId && modelId) {
+      getExperimentModelSplitForCreate(experimentId, modelId);
+    } else {
+      this.setState({loading: false});
     }
   }
   componentWillUnmount() {
+    DataPrepStore.dispatch({
+      type: DataPrepActions.reset
+    });
     if (this.dataprepsubscription) {
       this.dataprepsubscription();
     }
-    let {isExperimentCreated} = createExperimentStore.getState().experiments_create;
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    let workspaceId = this.state.workspaceId;
-    if (!isExperimentCreated) {
-      MyDataPrepApi
-        .delete({
-          namespace,
-          workspaceId
-        }).subscribe();
-    }
+    resetCreateExperimentsStore();
   }
   renderTopPanel = (title) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     return (
       <TopPanel>
         <h4>{title}</h4>
-        <Link to={`/ns/${namespace}/experiments`} ><IconSVG name="icon-close" /></Link>
+        <Link to={`/ns/${namespace}/experiments`}>
+          <IconSVG name="icon-close" />
+        </Link>
       </TopPanel>
     );
   };
@@ -146,28 +161,43 @@ export default class ExperimentCreateView extends Component {
       </span>
     );
   }
+  renderSplitDataStep() {
+    let {name} = createExperimentStore.getState().experiments_create;
+    return (
+      <span className="experiments-split-data-step">
+        {this.renderTopPanel(`Add a Model to '${name}'`)}
+        <ExperimentMetadata />
+        <SplitDataStep />
+      </span>
+    );
+  }
   renderAlgorithmSelectionStep() {
     let {name} = createExperimentStore.getState().experiments_create;
     return (
-      <span className="algorithm-selection-step">
+      <span className="experiments-algorithm-selection-step">
         {this.renderTopPanel(`Add a Model to '${name}'`)}
         <ExperimentMetadata />
-        <hr />
         <MLAlgorithmSelection />
       </span>
     );
   }
   renderSteps() {
+    if (this.state.loading) {
+      return <LoadingSVGCentered />;
+    }
     if (!this.state.workspaceId) {
       return this.renderConnections();
     }
 
     let {algorithm} = createExperimentStore.getState().model_create;
-    if (this.state.workspaceId && !this.state.isModelCreated) {
+    if (this.state.workspaceId && !this.state.modelId) {
       return this.renderDataPrep();
     }
 
-    if (this.state.isModelCreated && !algorithm.length) {
+    if (this.state.modelId && !this.state.isSplitFinalized) {
+      return this.renderSplitDataStep();
+    }
+    if (this.state.isSplitFinalized && !algorithm.length) {
       return this.renderAlgorithmSelectionStep();
     }
 
@@ -178,7 +208,6 @@ export default class ExperimentCreateView extends Component {
       <div className="experiments-create-view">
         <Helmet title="CDAP | Create Experiment" />
         {this.renderSteps()}
-        {this.state.loading ? <LoadingSVGCentered /> : null}
         <Prompt message={"Are you sure you want to navigate away?"} />
       </div>
     );

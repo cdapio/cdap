@@ -43,12 +43,12 @@ let tableHeaders = [
   {
     label: 'Model Name',
     property: 'name',
-    width: '20%'
+    width: '15%'
   },
   {
     label: 'Status',
     property: 'status',
-    width: '10%'
+    width: '15%'
   },
   {
     label: 'Algorithm',
@@ -178,13 +178,20 @@ const renderTableBody = (experimentId, outcomeType, models) => {
     <div className="grid-body">
       {
         list.map((model) => {
+          let Component = 'div';
+          let props = {
+            className: classnames("grid-body-row-container", {
+              "opened": model.active
+            }),
+            key: model.id
+          };
+          let inSplitStep = (['SPLITTING', 'DATA_READY', 'EMPTY'].indexOf(model.status) !== -1);
+          if (inSplitStep) {
+            Component = Link;
+            props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${model.id}`;
+          }
           return (
-            <div
-              className={classnames("grid-body-row-container", {
-                "opened": model.active
-              })}
-              key={model.id}
-            >
+            <Component {...props}>
               <div
                 className={classnames("grid-body-row", {
                   "opened": model.active
@@ -195,10 +202,12 @@ const renderTableBody = (experimentId, outcomeType, models) => {
                 {renderItem(newHeaders[1].width, model.name)}
                 {renderItem(newHeaders[2].width, <ModelStatusIndicator status={model.status || '--'} />)}
                 {renderItem(newHeaders[3].width, (
-                  <span className="algorithm-cell">
-                    <IconSVG name="icon-cog" />
-                    <span>{model.algorithm}</span>
-                  </span>
+                  !inSplitStep ? (
+                    <span className="algorithm-cell">
+                      <IconSVG name="icon-cog" />
+                      <span>{model.algorithm}</span>
+                    </span>)
+                  : '--'
                 ))}
                 {renderMetrics(newHeaders, model)}
                 {
@@ -243,7 +252,7 @@ const renderTableBody = (experimentId, outcomeType, models) => {
                 :
                   null
               }
-            </div>
+            </Component>
           );
        })
       }

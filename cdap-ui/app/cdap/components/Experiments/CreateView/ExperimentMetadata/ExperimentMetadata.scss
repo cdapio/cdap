@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,20 @@
  * the License.
 */
 
-.vega-lite-chart {
-  height: 100%;
-  width: 100%;
-  > div:first-of-type {
-    height: 100%;
-    overflow: auto;
+@import "../../../../styles/variables.scss";
+
+.experiment-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px;
+  border-bottom: 1px solid $grey-05;
+  > div {
+    margin: 0 20px 0 0;
+    &.grayed {
+      color: $grey-05;
+    }
+    > * {
+      margin: 0 5px;
+    }
   }
 }

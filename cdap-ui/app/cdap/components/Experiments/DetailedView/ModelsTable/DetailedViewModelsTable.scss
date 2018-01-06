@@ -39,6 +39,13 @@
     .table-scroll {
       height: calc(100% - 25px);
     }
+    a.grid-body-row-container {
+      text-decoration: none;
+      color: inherit;
+      &:hover {
+        text-decoration: none;
+      }
+    }
     .grid-body-row-container {
       width: 100%;
       &.opened {

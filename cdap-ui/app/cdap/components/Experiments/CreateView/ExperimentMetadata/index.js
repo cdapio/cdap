@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import {connect, Provider} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';
+
+require('./ExperimentMetadata.scss');
 
 const ExperimentMetadataWrapper = ({modelName, modelDescription, directives, algorithm}) => {
   let isAlgorithmEmpty = () => isNil(algorithm) || !algorithm.length;

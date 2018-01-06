@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {Provider, connect} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
-import {setModelAlgorithm, createExperimentAndModel} from 'components/Experiments/store/ActionCreator';
+import {setModelAlgorithm, trainModel, setAlgorithmList} from 'components/Experiments/store/ActionCreator';
 import {Label} from 'reactstrap';
 
 require('./MLAlgorithmSelection.scss');
@@ -72,24 +72,24 @@ const MLAlgorithmDetails = ({algorithm}) => {
 MLAlgorithmDetails.propTypes = {
   algorithm: PropTypes.object
 };
-const AddModelBtn = ({algorithm, createExperimentAndModel}) => {
+const AddModelBtn = ({algorithm, trainModel}) => {
   return (
     <button
       className="btn btn-primary"
       disabled={!algorithm.name.length}
-      onClick={createExperimentAndModel}
+      onClick={trainModel}
     >
-      Add a Model and Train
+      Train Model
     </button>
   );
 };
 AddModelBtn.propTypes = {
   algorithm: PropTypes.object,
-  createExperimentAndModel: PropTypes.func
+  trainModel: PropTypes.func
 };
 
 const mapStateToAddModelBtnProps = (state) => ({ algorithm: state.model_create.algorithm});
-const mapDispatchToAddModelBtnProps = () => ({createExperimentAndModel});
+const mapDispatchToAddModelBtnProps = () => ({trainModel});
 const mapStateToMLAlgorithmsListProps = (state) => ({
   algorithmsList: state.model_create.algorithmsList,
   selectedAlgorithm: state.model_create.algorithm
@@ -103,6 +103,7 @@ const ConnectedAddModelBtn = connect(mapStateToAddModelBtnProps, mapDispatchToAd
 
 
 export default function MLAlgorithmSelection() {
+  setAlgorithmList();
   return (
     <Provider store={createExperimentStore}>
       <div className="ml-algorithm-selection">

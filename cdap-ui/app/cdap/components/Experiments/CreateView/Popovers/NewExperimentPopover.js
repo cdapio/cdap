@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,8 +22,9 @@ import {
   onExperimentNameChange,
   onExperimentDescriptionChange,
   onExperimentOutcomeChange,
-  setExperimentCreated
+  createExperiment
 } from 'components/Experiments/store/ActionCreator';
+import IconSVG from 'components/IconSVG';
 
 const ExperimentName = ({name, onNameChange, isEdit}) => {
   return (
@@ -95,27 +96,33 @@ ExperimentOutcome.propTypes = {
   isEdit: PropTypes.bool
 };
 
-const CreateExperimentBtn = ({state, setExperimentCreated}) => {
+const CreateExperimentBtn = ({state, createExperiment}) => {
   const isAddExperimentBtnEnabled = () => {
     return state.name.length && state.description.length && state.outcome.length;
+  };
+  const renderBtnContent = () => {
+    if (state.loading) {
+      return <IconSVG name="icon-spinner" className="fa-spin" />;
+    }
+    return state.isEdit ? 'Edit Experiment' : 'Create Experiment';
   };
   return (
     <button
       className="btn btn-primary"
       disabled={!isAddExperimentBtnEnabled()}
-      onClick={setExperimentCreated}
+      onClick={createExperiment}
     >
-      {state.isEdit ? 'Edit Experiment' : 'Create Experiment'}
+      {renderBtnContent()}
     </button>
   );
 };
 CreateExperimentBtn.propTypes = {
   state: PropTypes.object,
-  setExperimentCreated: PropTypes.func
+  createExperiment: PropTypes.func
 };
 
-const NewExperimentPopoverWrapper = ({isExperimentCreated}) => {
-  if (isExperimentCreated) {
+const NewExperimentPopoverWrapper = ({popover}) => {
+  if (popover !== 'experiment') {
     return null;
   }
   return (
@@ -134,9 +141,9 @@ const NewExperimentPopoverWrapper = ({isExperimentCreated}) => {
   );
 };
 NewExperimentPopoverWrapper.propTypes = {
-  isExperimentCreated: PropTypes.bool
+  popover: PropTypes.string
 };
-const mapDispatchToCreateExperimentBtnProps = () => ({ setExperimentCreated});
+const mapDispatchToCreateExperimentBtnProps = () => ({ createExperiment });
 const mapStateToCreateExperimentBtnProps = (state) => ({ state: {...state.experiments_create} });
 const mapStateToNameProps = (state) => ({ name: state.experiments_create.name, isEdit: state.experiments_create.isEdit });
 const mapDispatchToNameProps = () => ({ onNameChange: onExperimentNameChange });
@@ -144,13 +151,12 @@ const mapStateToDescriptionProps = (state) => ({ description: state.experiments_
 const mapDispatchToDescriptionToProps = () => ({ onDescriptionChange: onExperimentDescriptionChange });
 const mapStateToOutcomeProps = (state) => ({ outcome: state.experiments_create.outcome, columns: state.model_create.columns, isEdit: state.experiments_create.isEdit });
 const mapDispatchToOutcomeProps = () => ({onOutcomeChange: onExperimentOutcomeChange});
-const mapNEPWStateToProps = (state) => ({ isExperimentCreated: state.experiments_create.isExperimentCreated });
-const mapNEPWDispatchToProps = () => ({ setExperimentCreated });
+const mapNEPWStateToProps = (state) => ({ popover: state.experiments_create.popover });
 
 const ExperiementDescriptionWrapper = connect(mapStateToDescriptionProps, mapDispatchToDescriptionToProps)(ExperimentDescription);
 const ExperimentNameWrapper = connect(mapStateToNameProps, mapDispatchToNameProps)(ExperimentName);
 const ExperimentOutcomeWrapper = connect(mapStateToOutcomeProps, mapDispatchToOutcomeProps)(ExperimentOutcome);
-const ConnectedNewExperimentPopoverWrapper = connect(mapNEPWStateToProps, mapNEPWDispatchToProps)(NewExperimentPopoverWrapper);
+const ConnectedNewExperimentPopoverWrapper = connect(mapNEPWStateToProps)(NewExperimentPopoverWrapper);
 const ConnectedCreateExperimentBtn = connect(mapStateToCreateExperimentBtnProps, mapDispatchToCreateExperimentBtnProps)(CreateExperimentBtn);
 
 export default ConnectedNewExperimentPopoverWrapper;

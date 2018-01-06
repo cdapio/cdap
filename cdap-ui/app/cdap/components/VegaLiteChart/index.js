@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,8 @@ export default class VegaLiteChart extends Component {
     className: PropTypes.string,
     widthOffset: PropTypes.number,
     heightOffset: PropTypes.number,
-    width: PropTypes.oneOfType([PropTypes.number, PropTypes.func])
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.func]),
+    tooltipOptions: PropTypes.object
   };
   state = {
     data: this.props.data || [],
@@ -40,6 +41,9 @@ export default class VegaLiteChart extends Component {
   componentDidMount() {
     this.renderChart();
     document.body.onresize = debounce(this.renderChart, 1);
+  }
+  componentWillUnmount() {
+    document.body.onresize = null;
   }
   componentWillReceiveProps(nextProps) {
     this.setState({data: nextProps.data || []}, this.renderChart.bind(this, true));
@@ -89,7 +93,11 @@ export default class VegaLiteChart extends Component {
         .initialize(el)
         .renderer('svg')
         .hover();
-      vegaTooltip.vega(this.view);
+        if (this.props.tooltipOptions && Object.keys(this.props.tooltipOptions).length) {
+          vegaTooltip.vega(this.view, this.props.tooltipOptions);
+        } else {
+          vegaTooltip.vega(this.view);
+        }
       this.bindData();
     } catch (err) {
       console.log('ERROR: Failed to compile vega spec ', err);

@@ -14,7 +14,7 @@
  * the License.
 */
 
-export default [
+const REGRESSION_ALGORITHMS = [
   {
     name: 'linear.regression',
     label: 'Linear Regression'
@@ -36,3 +36,30 @@ export default [
     label: 'Gradient Boosted Tree Regression'
   }
 ];
+const CLASSIFIER_ALGORITHMS = [
+  {
+    name: 'decision.tree.classifier',
+    label: 'Decision Tree Classifier'
+  },
+  {
+    name: 'random.forest.classifier',
+    label: 'Random Forest Classifier'
+  },
+  {
+    name: 'gradient.boosted.tree.classifier',
+    label: 'Gradient Boosted Tree Classifier'
+  },
+  {
+    name: 'multilayer.perceptron.classifier',
+    label: 'Multilayer Perceptron Classifier'
+  },
+  {
+    name: 'logistic.regression',
+    label: 'Logistic Regression'
+  },
+  {
+    name: 'naive.bayes',
+    label: 'Naive Bayes'
+  }
+];
+export {REGRESSION_ALGORITHMS, CLASSIFIER_ALGORITHMS};

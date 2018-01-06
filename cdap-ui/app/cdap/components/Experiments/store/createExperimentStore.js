@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,25 +15,31 @@
 */
 
 import {createStore, combineReducers} from 'redux';
-import {defaultAction} from 'services/helpers';
-import MLAlgorithmsList from 'components/Experiments/store/MLAlgorithmsList';
+import {defaultAction, composeEnhancers} from 'services/helpers';
+import {REGRESSION_ALGORITHMS} from 'components/Experiments/store/MLAlgorithmsList';
 
 const ACTIONS = {
   SET_EXPERIMENT_NAME: 'SET_EXPERIMENT_NAME',
   SET_EXPERIMENT_DESCRIPTION: 'SET_EXPERIMENT_DESCRIPTION',
   SET_EXPERIMENT_OUTCOME: 'SET_EXPERIMENT_OUTCOME',
   SET_EXPERIMENT_SRC_PATH: 'SET_EXPERIMENT_SRC_PATH',
-  SET_NEW_EXPERIMENT_CREATED: 'SET_NEW_EXPERIMENT_CREATED',
   SET_CREATE_EXPERIMENT_LOADING: 'SET_CREATE_EXPERIMENT_LOADING',
   SET_EXPERIMENT_METADATA_FOR_EDIT: 'SET_EXPERIMENT_METADATA_FOR_EDIT',
+  SET_VISIBLE_POPOVER: 'SET_VISIBLE_POPOVER',
 
+  SET_SPLIT_INFO: 'SET_SPLIT_INFO',
+  SET_SCHEMA: 'SET_SCHEMA',
   SET_OUTCOME_COLUMNS: 'SET_OUTCOME_COLUMNS',
   SET_DIRECTIVES: 'SET_DIRECTIVES',
   SET_MODEL_NAME: 'SET_MODEL_NAME',
+  SET_MODEL_ID: 'SET_MODEL_ID',
+  SET_EXPERIMENT_MODEL_FOR_EDIT: 'SET_EXPERIMENT_MODEL_FOR_EDIT',
   SET_MODEL_DESCRIPTION: 'SET_MODEL_DESCRIPTION',
-  SET_MODEL_CREATED: 'SET_MODEL_CREATED',
   SET_MODEL_ML_ALGORITHM: 'SET_MODEL_ML_ALGORITHM',
-  SET_WORKSPACE_ID: 'SET_WORKSPACE_ID'
+  SET_ALGORITHMS_LIST: 'SET_ALGORITHMS_LIST',
+  SET_WORKSPACE_ID: 'SET_WORKSPACE_ID',
+  SET_SPLIT_FINALIZED: 'SET_SPLIT_FINALIZED',
+  RESET: 'RESET'
 };
 
 const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
@@ -42,22 +48,28 @@ const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
   outcome: '',
   srcpath: '',
   loading: false,
-  isExperimentCreated: false,
-  isEdit: false
+  popover: 'experiment',
+  isEdit: false,
+  workspaceId: null
 };
 
 const DEFAULT_MODEL_CREATE_VALUE = {
   name: '',
   description: '',
+  modelId: null,
+
   directives: [],
   columns: [],
-  workspaceId: '',
-  splitMethod: 'random',
+  schema: null,
+
+  splitInfo: {},
+  isSplitFinalized: false,
+
   algorithm: {
     name: ''
   },
-  algorithmsList: MLAlgorithmsList,
-  isModelCreated: false
+
+  algorithmsList: REGRESSION_ALGORITHMS,
 };
 
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
@@ -82,31 +94,44 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
         ...state,
         srcpath: action.payload.srcpath
       };
-    case ACTIONS.SET_NEW_EXPERIMENT_CREATED:
-      return {
-        ...state,
-        isExperimentCreated: action.payload.isExperimentCreated
-      };
     case ACTIONS.SET_CREATE_EXPERIMENT_LOADING:
       return {
         ...state,
         loading: action.payload.loading
       };
-    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT: {
-      let {name, description, outcome, srcpath} = action.payload.experimentDetails;
+    case ACTIONS.SET_WORKSPACE_ID:
       return {
         ...state,
-        name, description, outcome, srcpath,
-        isExperimentCreated: true,
-        isEdit: true
+        workspaceId: action.payload.workspaceId
+      };
+    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT:
+    case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
+      let {name, description, outcome, srcpath, workspaceId} = action.payload.experimentDetails;
+      return {
+        ...state,
+        name, description, outcome, srcpath, workspaceId,
+        isEdit: true,
+        loading: false
       };
     }
+    case ACTIONS.SET_VISIBLE_POPOVER:
+      return {
+        ...state,
+        popover: action.payload.popover
+      };
+    case ACTIONS.RESET:
+      return DEFAULT_EXPERIMENTS_CREATE_VALUE;
     default:
       return state;
   }
 };
 const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction) => {
   switch (action.type) {
+    case ACTIONS.SET_MODEL_ID:
+      return {
+        ...state,
+        modelId: action.payload.modelId
+      };
     case ACTIONS.SET_MODEL_NAME:
       return {
         ...state,
@@ -117,10 +142,15 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
         ...state,
         description: action.payload.description
       };
-    case ACTIONS.SET_MODEL_CREATED:
+    case ACTIONS.SET_SPLIT_INFO:
       return {
         ...state,
-        isModelCreated: true
+        splitInfo: action.payload.splitInfo
+      };
+    case ACTIONS.SET_SPLIT_FINALIZED:
+      return {
+        ...state,
+        isSplitFinalized: action.payload.isSplitFinalized
       };
     case ACTIONS.SET_OUTCOME_COLUMNS:
       return {
@@ -137,18 +167,29 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
         ...state,
         algorithm: action.payload.algorithm
       };
-    case ACTIONS.SET_WORKSPACE_ID:
+    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT:
+    case ACTIONS.SET_SCHEMA:
       return {
         ...state,
-        workspaceId: action.payload.workspaceId
+        schema: action.payload.schema || state.schema
       };
-    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT: {
-      let {workspaceId} = action.payload.experimentDetails;
+    case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
+      let {name, description, id: modelId} = action.payload.modelDetails;
       return {
         ...state,
-        workspaceId
+        name,
+        description,
+        modelId,
+        splitInfo: action.payload.splitInfo
       };
     }
+    case ACTIONS.SET_ALGORITHMS_LIST:
+      return {
+        ...state,
+        algorithmsList: action.payload.algorithmsList
+      };
+    case ACTIONS.RESET:
+      return DEFAULT_MODEL_CREATE_VALUE;
     default:
       return state;
   }
@@ -160,9 +201,10 @@ const createExperimentStore = createStore(
     model_create
   }),
   {
-    experiments_create: DEFAULT_EXPERIMENTS_CREATE_VALUE
+    experiments_create: DEFAULT_EXPERIMENTS_CREATE_VALUE,
+    model_create: DEFAULT_MODEL_CREATE_VALUE
   },
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('CreateExperimentStore')()
 );
 
 export {ACTIONS};

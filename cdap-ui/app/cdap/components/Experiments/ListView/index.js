@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
-import ExperimentsListBarChart from 'components/Experiments/ExperimentsListBarChart';
+import ExperimentsListBarChart from 'components/Experiments/ListView/ExperimentsListBarChart';
 import PlusButton from 'components/PlusButton';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';

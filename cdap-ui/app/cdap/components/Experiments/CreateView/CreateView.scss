@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
 */
 
 @import "../../../styles/variables.scss";
+@import "./CreateViewVariables.scss";
 
 .experiments-create-view {
   height: 100%;
@@ -43,14 +44,19 @@
       .dataprep-body {
         height: calc(100% - 50px);
       }
-    }
-    .dataprep-container {
+
       .top-section {
         .top-section-content {
           .top-panel {
             .action-buttons {
+              .more-dropdown.dropdown {
+                display: none;
+              }
+              .dataprep-plus-button {
+                display: none;
+              }
               > .btn.btn-primary {
-                visibility: hidden;
+                display: none;
               }
             }
           }
@@ -59,28 +65,23 @@
     }
   }
   .experiments-model-panel {
-    height: 50px;
+    height: $height_of_header;
     position: absolute;
     right: 80px;
     top: 59px;
+    z-index: 1000;
     > .btn.btn-primary {
       padding-right: 30px;
       padding-left: 30px;
     }
   }
-  .algorithm-selection-step {
-    .experiment-metadata {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 20px;
+  > .experiments-split-data {
+    > .experiment-metadata {
+      height: $height_of_metadata;
       > div {
-        margin: 0 20px 0 0;
-        &.grayed {
-          color: $grey-05;
-        }
-        > * {
-          margin: 0 5px;
-        }
+        width: 25%;
+        word-break: break-word;
+        margin: 0;
       }
     }
   }
