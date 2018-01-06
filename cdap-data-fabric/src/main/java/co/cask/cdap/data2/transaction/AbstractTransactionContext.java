@@ -65,7 +65,7 @@ public abstract class AbstractTransactionContext extends TransactionContext {
    * Removes the given {@link TransactionAware} from participating in transaction.
    *
    * @param txAware the {@link TransactionAware} to remove
-   * @return {@true} if removed, {@code false} otherwise
+   * @return {@code true} if removed, {@code false} otherwise
    */
   protected abstract boolean doRemoveTransactionAware(TransactionAware txAware);
 
@@ -139,13 +139,12 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       for (TransactionAware txAware : getTransactionAwares()) {
         try {
           success = txAware.rollbackTx() && success;
-        } catch (Throwable e) {
+        } catch (Throwable t) {
+          TransactionFailureException tfe = createTransactionFailure("roll back changes in", txAware, t);
           if (cause == null) {
-            cause = new TransactionFailureException(
-              String.format("Unable to roll back changes in transaction-aware '%s' for transaction %d. ",
-                            txAware.getTransactionAwareName(), currentTx.getTransactionId()), e);
+            cause = tfe;
           } else {
-            cause.addSuppressed(e);
+            cause.addSuppressed(tfe);
           }
           success = false;
         }
@@ -205,12 +204,10 @@ public abstract class AbstractTransactionContext extends TransactionContext {
     for (TransactionAware txAware : getTransactionAwares()) {
       try {
         txAware.startTx(currentTx);
-      } catch (Throwable e) {
+      } catch (Throwable t) {
         try {
           txClient.abort(currentTx);
-          throw new TransactionFailureException(
-            String.format("Unable to start transaction-aware '%s' for transaction %d. ",
-                          txAware.getTransactionAwareName(), currentTx.getTransactionId()), e);
+          throw createTransactionFailure("start", txAware, t);
         } finally {
           currentTx = null;
         }
@@ -227,10 +224,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
     for (TransactionAware txAware : getTransactionAwares()) {
       try {
         changes.addAll(txAware.getTxChanges());
-      } catch (Throwable e) {
-        abort(new TransactionFailureException(
-          String.format("Unable to retrieve changes from transaction-aware '%s' for transaction %d. ",
-                        txAware.getTransactionAwareName(), currentTx.getTransactionId()), e));
+      } catch (Throwable t) {
+        abort(createTransactionFailure("retrieve changes from", txAware, t));
       }
     }
 
@@ -262,9 +257,7 @@ public abstract class AbstractTransactionContext extends TransactionContext {
         cause = e;
       }
       if (!success) {
-        abort(new TransactionFailureException(
-          String.format("Unable to persist changes of transaction-aware '%s' for transaction %d. ",
-                        txAware.getTransactionAwareName(), currentTx.getTransactionId()), cause));
+        abort(createTransactionFailure("persist changes of", txAware, cause));
       }
     }
   }
@@ -291,18 +284,37 @@ public abstract class AbstractTransactionContext extends TransactionContext {
     for (TransactionAware txAware : getTransactionAwares()) {
       try {
         txAware.postTxCommit();
-      } catch (Throwable e) {
+      } catch (Throwable t) {
+        TransactionFailureException tfe = createTransactionFailure("perform post-commit for", txAware, t);
         if (cause == null) {
-          cause = new TransactionFailureException(
-            String.format("Unable to perform post-commit in transaction-aware '%s' for transaction %d. ",
-                          txAware.getTransactionAwareName(), currentTx.getTransactionId()), e);
+          cause = tfe;
         } else {
-          cause.addSuppressed(e);
+          cause.addSuppressed(tfe);
         }
       }
     }
     if (cause != null) {
       throw cause;
     }
+  }
+
+  protected TransactionFailureException createTransactionFailure(String action,
+                                                                 TransactionAware txAware,
+                                                                 Throwable cause) {
+    String txAwareName;
+    Throwable thrownForName = null;
+    try {
+      txAwareName = txAware.getTransactionAwareName();
+    } catch (Throwable t) {
+      thrownForName = t;
+      txAwareName = "unknown";
+    }
+    TransactionFailureException tfe = new TransactionFailureException(
+      String.format("Unable to %s transaction-aware '%s' for transaction %d",
+                    action, txAwareName, currentTx.getTransactionId()), cause);
+    if (thrownForName != null) {
+      tfe.addSuppressed(thrownForName);
+    }
+    return tfe;
   }
 }

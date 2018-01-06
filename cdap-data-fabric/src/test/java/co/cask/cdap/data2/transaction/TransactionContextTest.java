@@ -512,6 +512,79 @@ public class TransactionContextTest {
     }
   }
 
+  @Test
+  public void testGetTxAwareNameFails() throws TransactionFailureException {
+
+    // tests that under any scneario that can make a transaction fail, exceptions from
+    // getTransactionAwareName() do not affect proper abort, and the transaction context's
+    // state is clear (no current transaction) afterwards.
+    TransactionContext context = newTransactionContext(ds1);
+
+    ds1.failGetName = InduceFailure.ThrowException;
+    // the txAware will throw exceptions whenever getTransactionAwareName() is called.
+    // This is called in various failure scenarios. Test these scenarios one by one and check that
+    // the tx context is still functional after that.
+
+    // test failure during startTx()
+    ds1.failStartTxOnce = InduceFailure.ThrowException;
+    try {
+      context.start();
+      Assert.fail("Start should have failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("start failure", e.getCause().getMessage());
+      Assert.assertNull(context.getCurrentTransaction());
+    }
+
+    // test failure during getTxChanges()
+    ds1.failChangesTxOnce = InduceFailure.ThrowException;
+    context.start();
+    try {
+      context.finish();
+      Assert.fail("Get changes should have failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("changes failure", e.getCause().getMessage());
+    }
+    Assert.assertNull(context.getCurrentTransaction());
+
+    // test failure during commitTx()
+    ds1.failCommitTxOnce = InduceFailure.ThrowException;
+    context.start();
+    try {
+      context.finish();
+      Assert.fail("Persist should have failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("persist failure", e.getCause().getMessage());
+    }
+    Assert.assertNull(context.getCurrentTransaction());
+
+    // test failure during rollbackTx()
+    ds1.failRollbackTxOnce = InduceFailure.ThrowException;
+    context.start();
+    try {
+      context.abort();
+      Assert.fail("Rollback should have failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("rollback failure", e.getCause().getMessage());
+    }
+    Assert.assertNull(context.getCurrentTransaction());
+
+    // test failure during postTxCommit()
+    ds1.failPostCommitTxOnce = InduceFailure.ThrowException;
+    context.start();
+    try {
+      context.finish();
+      Assert.fail("Post Commit should have failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("post failure", e.getCause().getMessage());
+    }
+    Assert.assertNull(context.getCurrentTransaction());
+
+    Assert.assertTrue(context.removeTransactionAware(ds1));
+    context.start();
+    context.finish();
+    Assert.assertNull(context.getCurrentTransaction());
+  }
+
   enum InduceFailure { NoFailure, ReturnFalse, ThrowException }
 
   static class DummyTxAware implements TransactionAware {
@@ -529,6 +602,7 @@ public class TransactionContextTest {
     InduceFailure failCommitTxOnce = InduceFailure.NoFailure;
     InduceFailure failPostCommitTxOnce = InduceFailure.NoFailure;
     InduceFailure failRollbackTxOnce = InduceFailure.NoFailure;
+    InduceFailure failGetName = InduceFailure.NoFailure;
 
     void addChange(byte[] key) {
       changes.add(key);
@@ -609,6 +683,9 @@ public class TransactionContextTest {
 
     @Override
     public String getTransactionAwareName() {
+      if (failGetName == InduceFailure.ThrowException) {
+        throw new RuntimeException("persist failure");
+      }
       return "dummy";
     }
   }
