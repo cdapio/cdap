@@ -44,7 +44,7 @@ $toggle-btn-disabled-bg-color: #cccccc;
 
     .panel-toggle {
       width: 25px;
-      height: 80px;
+      height: 100px;
       line-height: 80px;
       background-color: $panel-toggle-bg-color;
 
@@ -72,10 +72,10 @@ $toggle-btn-disabled-bg-color: #cccccc;
   .dataprep-body.row {
     // height calculations
     // 100vh - height of navbar - top panel - footer - tabs
-    // 100vh - 50px - 50px - 54px - 30px
+    // 100vh - 50px - 50px - 54px - 50px
     margin-right: 0;
     margin-left: 0;
-    height: calc(100vh - 184px);
+    height: calc(100vh - 204px);
 
     .dataprep-main {
       height: 100%;

@@ -28,8 +28,7 @@ import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
 import isNil from 'lodash/isNil';
 import {Switch} from 'components/DataPrep/DataPrepContentWrapper';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
-import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import DataPrepPlusButton from 'components/DataPrep/TopPanel/PlusButton';
 
@@ -178,7 +177,6 @@ export default class DataPrepTopPanel extends Component {
       label: T.translate(`${PREFIX}.copyToCDAPDatasetBtn.btnLabel`),
       component: CreateDatasetBtn,
       iconName: 'icon-upload',
-      className: 'createdataset-btn',
       shouldRender: () => !this.props.singleWorkspaceMode,
       disabled: () => isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload'
     },
@@ -293,30 +291,30 @@ export default class DataPrepTopPanel extends Component {
       );
     };
     return (
-      <div key={index}>
-        <DropdownItem
-          className={menuItem.className}
-          title={menuItem.label}
-          onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
-          disabled={menuItem.disabled ? menuItem.disabled() : false}
-        >
-          {getMenuItem(menuItem)}
-        </DropdownItem>
-      </div>
+      <li
+        className={`popover-menu-item ${menuItem.className}`}
+        title={menuItem.label}
+        onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
+        disabled={menuItem.disabled ? menuItem.disabled() : false}
+      >
+        {getMenuItem(menuItem)}
+      </li>
     );
   };
   renderMenu() {
     return (
-      <UncontrolledDropdown className="more-dropdown">
-        <DropdownToggle>
-          <span>{T.translate('features.DataPrep.TopPanel.more')}</span>
-        </DropdownToggle>
-        <DropdownMenu right>
-        {
-          this.menu.map((menu, i) => this.renderMenuItem(menu, i))
-        }
-      </DropdownMenu>
-    </UncontrolledDropdown>
+      <Popover
+        target={() => <span>{T.translate('features.DataPrep.TopPanel.more')}</span>}
+        targetDimension={{width: '31px', height: '31px'}}
+        className="more-dropdown"
+        placement="bottom"
+      >
+        <ul>
+          {
+            this.menu.map((menu, i) => this.renderMenuItem(menu, i))
+          }
+        </ul>
+      </Popover>
     );
   }
 
@@ -394,7 +392,7 @@ export default class DataPrepTopPanel extends Component {
               null
           }
           {this.renderMenu()}
-          <DataPrepPlusButton />
+          {!this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null }
           {this.renderAddToPipelineModal()}
           {this.renderSchemaModal()}
         </div>

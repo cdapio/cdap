@@ -14,7 +14,34 @@
  * the License.
 */
 
-$visualization-width: 450px;
-$toppanel-height: 250px;
-$padding-top-bottom: 25px;
-$padding-left-right: 35px;
+@import "../../styles/variables.scss";
+
+.plus-button {
+  margin-top: 48px;
+  display: inline-block;
+  cursor: pointer;
+  .popper {
+    width: auto;
+    padding: 0;
+    margin-right: 20px;
+    li {
+      padding: 8px;
+      margin: 0;
+      border-radius: 4px;
+      &:last-of-type {
+        border-top: 1px solid $grey-04;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+      &:hover,
+      &:hover a {
+        background: $grey-08;
+        cursor: pointer;
+      }
+      a {
+        text-decoration: none;
+        color: black;
+      }
+    }
+  }
+}

@@ -14,32 +14,11 @@
  * the License.
 */
 
-#experiments-plus-btn {
-  &.button-container {
-    height: 58px;
-    width: 58px;
+// ListView
+$listview-padding: 20px;
 
-    h1 {
-      font-size: 3em;
-    }
-  }
-}
-
-.popover {
-  margin-top: 10px;
-  &.add-experiment-popover-element {
-    margin-left: 0;
-    &:before,
-    &:after {
-      display: none;
-    }
-    .popover-content {
-      padding: 9px 14px;
-      a[href] {
-        text-decoration: none;
-        color: black;
-        cursor: pointer;
-      }
-    }
-  }
-}
+// DetailedView
+$visualization-width: 450px;
+$toppanel-height: 250px;
+$padding-top-bottom: 25px;
+$padding-left-right: 35px;

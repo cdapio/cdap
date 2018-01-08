@@ -60,7 +60,8 @@ var webpackConfig = {
       'vega',
       'vega-lite',
       'vega-tooltip',
-      'react-helmet'
+      'react-helmet',
+      'react-popper'
     ]
   },
   output: {

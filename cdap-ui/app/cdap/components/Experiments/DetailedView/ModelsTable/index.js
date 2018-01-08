@@ -155,7 +155,7 @@ const renderTableBody = (experimentId, outcomeType, models) => {
   const renderItem = (width, content) => (
     <div
       className="grid-body-item"
-      title={typeof content === 'string' ? content : null}
+      title={content}
       style={{ width: `${width}` }}
     >
       {content}

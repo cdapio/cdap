@@ -31,7 +31,7 @@ import capitalize from 'lodash/capitalize';
 import {Redirect} from 'react-router-dom';
 import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
-import ResourceCenterButton from 'components/ResourceCenterButton';
+import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import queryString from 'query-string';
 
@@ -191,7 +191,7 @@ export default class StreamDetailedView extends Component {
   render() {
     if (this.state.loading) {
       return (
-        <div className="app-detailed-view">
+        <div className="app-detailed-view streams-detailed-view loading">
           <div className="fa fa-spinner fa-spin fa-3x"></div>
         </div>
       );
@@ -214,12 +214,14 @@ export default class StreamDetailedView extends Component {
         <Helmet
           title={T.translate('features.StreamDetailedView.Title', {streamId: this.props.match.params.streamId})}
         />
-        <ResourceCenterButton />
-        <BreadCrumb
-          previousPaths={previousPaths}
-          currentStateIcon="icon-streams"
-          currentStateLabel={T.translate('commons.stream')}
-        />
+        <div className="bread-crumb-wrapper">
+          <BreadCrumb
+            previousPaths={previousPaths}
+            currentStateIcon="icon-streams"
+            currentStateLabel={T.translate('commons.stream')}
+          />
+          <PlusButton mode={PlusButton.MODE.resourcecenter} />
+        </div>
         <OverviewMetaSection
           entity={this.state.entityDetail}
           onFastActionSuccess={this.goToHome.bind(this)}

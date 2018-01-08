@@ -24,9 +24,9 @@ import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
 import ExperimentsListBarChart from 'components/Experiments/ExperimentsListBarChart';
-import ExperimentsPlusButton from 'components/Experiments/ExperimentsPlusButton';
+import PlusButton from 'components/PlusButton';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
-import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link} from 'react-router-dom';
 import Helmet from 'react-helmet';
 
@@ -56,6 +56,12 @@ const tableHeaders = [
 ];
 
 const colorScale = d3.scale.category20();
+const PLUSBUTTONCONTEXTMENUITEMS = [
+  {
+    label: 'Create a new Experiment',
+    to: `/ns/${getCurrentNamespace()}/experiments/create`
+  }
+];
 
 const getAlgoDistribution = (models) => {
   if (!models.length) {
@@ -159,7 +165,10 @@ function ExperimentsListView({loading, list}) {
       <div className="experiments-listview">
         <TopPanel>
           <h4>Analytics - All Experiments</h4>
-          <ExperimentsPlusButton />
+          <PlusButton
+            mode={PlusButton.MODE.resourcecenter}
+            contextItems={PLUSBUTTONCONTEXTMENUITEMS}
+          />
         </TopPanel>
         <EmptyMessageContainer title="You have not created any experiments">
           <ul>
@@ -180,7 +189,10 @@ function ExperimentsListView({loading, list}) {
     <div className="experiments-listview">
       <TopPanel>
         <h4>Analytics - All Experiments</h4>
-        <ExperimentsPlusButton />
+        <PlusButton
+          mode={PlusButton.MODE.resourcecenter}
+          contextItems={PLUSBUTTONCONTEXTMENUITEMS}
+        />
       </TopPanel>
       <ExperimentsListBarChart
         data={getDataForGroupedChart(list)}

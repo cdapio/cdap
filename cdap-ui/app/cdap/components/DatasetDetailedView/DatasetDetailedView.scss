@@ -21,8 +21,15 @@
     .iframe-container {
       height: 100%;
     }
+    &.loading {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
     @include overviewStyles();
+    @include breadCrumbWrapper();
 
     .properties-container {
       height: 100%;

@@ -1,0 +1,112 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../styles/variables.scss';
+
+$arrow_size: 7px;
+$margin_adjustment: $arrow_size + 1;
+
+.popper {
+  min-width: 170px;
+  &.hide {
+    display: none;
+  }
+  ul {
+    z-index: 1061;
+    list-style: none;
+    text-align: left;
+    margin: 0;
+    padding: 5px;
+    li {
+      border-radius: 4px;
+      padding: 8px;
+      &:hover {
+        background: $grey-08;
+        cursor: pointer;
+      }
+      a,
+      .btn,
+      a:hover,
+      &.btn:hover {
+        text-decoration: none;
+        color: black;
+      }
+    }
+  }
+}
+.popper {
+  position: absolute;
+  background: white;
+  color: $grey-01;
+  width: 150px;
+  border-radius: 3px;
+  box-shadow: 0 0 2px $grey-02;
+  padding: 0;
+  text-align: center;
+}
+.style5 {
+  background: white;
+  color: grey-01;
+  max-width: 200px;
+  width: auto;
+  font-size: 0.8rem;
+  padding: 0.5em 1em;
+}
+.popper .popper__arrow {
+  position: absolute;
+  height: 10px;
+  width: 10px;
+  background: white;
+  z-index: -1;
+}
+
+.popper[data-placement^="top"] {
+  margin-bottom: 10px;
+  .popper__arrow {
+    border-right: 1px solid $grey-02;
+    border-bottom: 1px solid $grey-02;
+    bottom: -6px;
+    transform: rotate(45deg);
+  }
+}
+
+.popper[data-placement^="bottom"] {
+  margin-top: 10px;
+  .popper__arrow {
+    border-right: 1px solid $grey-02;
+    border-bottom: 1px solid $grey-02;
+    top: -6px;
+    transform: rotate(-135deg);
+  }
+}
+.popper[data-placement^="right"] {
+  margin-left: 10px;
+  .popper__arrow {
+    border-right: 1px solid $grey-02;
+    border-bottom: 1px solid $grey-02;
+    left: -6px;
+    transform: rotate(135deg);
+  }
+}
+.popper[data-placement^="left"] {
+  margin-right: 10px;
+  .popper__arrow {
+    border-right: 1px solid $grey-02;
+    border-bottom: 1px solid $grey-02;
+    right: -6px;
+    transform: rotate(-45deg);
+  }
+}

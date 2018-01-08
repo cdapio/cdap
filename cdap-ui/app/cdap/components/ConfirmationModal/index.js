@@ -109,6 +109,7 @@ export default class ConfirmationModal extends Component {
         toggle={this.props.toggleModal}
         className="confirmation-modal"
         backdrop='static'
+        zIndex={1061}
       >
         <ModalHeader>
           {this.props.headerTitle}

@@ -23,7 +23,7 @@ $tab-active-color: #ff6600;
 .workspace-tab {
   position: relative;
   display: inline-block;
-  padding: 5px 15px 0 15px;
+  padding: 10px 15px 0px 15px;
   margin: 0 -2px;
   cursor: pointer;
   width: 200px;
@@ -125,10 +125,9 @@ $tab-active-color: #ff6600;
 
   &.workspace-dropdown {
     width: 50px;
-    padding-top: 7px;
+    padding-top: 18px;
     padding-left: 0;
     padding-right: 0;
-    top: -5px;
 
     > span { width: 100%; }
 
