@@ -312,7 +312,9 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
     @Override
     public void close() {
-      this.scanner.close();
+      if (this.scanner != null) {
+        this.scanner.close();
+      }
     }
   }
 

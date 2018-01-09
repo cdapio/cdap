@@ -288,6 +288,7 @@ public class DatasetClient {
   public void updateExisting(DatasetId instance, Map<String, String> properties)
     throws NotFoundException, IOException, UnauthenticatedException, ConflictException, UnauthorizedException {
 
+    // TODO: append '/properties' to the URL, to get the properties directly
     DatasetMeta meta = get(instance);
     Map<String, String> existingProperties = meta.getSpec().getProperties();
 

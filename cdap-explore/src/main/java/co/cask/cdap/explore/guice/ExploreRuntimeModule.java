@@ -24,6 +24,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.executor.ExploreMetadataHttpHandler;
 import co.cask.cdap.explore.executor.ExploreQueryExecutorHttpHandler;
 import co.cask.cdap.explore.executor.ExploreStatusHandler;
+import co.cask.cdap.explore.executor.Hive2HttpHandler;
 import co.cask.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
 import co.cask.cdap.explore.executor.NamespacedExploreQueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
@@ -94,6 +95,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreStatusHandler.class);
+      handlerBinder.addBinding().to(Hive2HttpHandler.class);
       CommonHandlers.add(handlerBinder);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);

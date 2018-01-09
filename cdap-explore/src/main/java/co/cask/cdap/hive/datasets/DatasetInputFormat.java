@@ -143,6 +143,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     private RecordScanner recordScanner;
 
     DatasetRecordReader(Configuration conf, DatasetInputSplit datasetInputSplit) throws IOException {
+//      LOG.info("zookeeper string: {}", conf.get("hbase.zookeeper.quorum"));
       this.initialized = new AtomicBoolean(false);
       this.datasetAccessor = new DatasetAccessor(conf);
       this.datasetInputSplit = datasetInputSplit;

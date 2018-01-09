@@ -65,6 +65,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.Closeable;
@@ -102,11 +104,12 @@ public class ContextManager {
   public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                                  SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                  AuthorizationEnforcer authorizationEnforcer,
-                                 AuthenticationContext authenticationContext) {
+                                 AuthenticationContext authenticationContext, TransactionSystemClient txClient) {
     savedContext = new Context(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
-                               authenticationContext);
+                               authenticationContext, txClient);
   }
 
+  // TODO: update javadoc reference (two) to saveContext method (below and above)
   /**
    * If a context was saved using {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory,
    * AuthorizationEnforcer, AuthenticationContext)}, returns the saved context. This is what happens in the
@@ -169,6 +172,7 @@ public class ContextManager {
     // Create context needs to happen only when running in as a MapReduce job.
     // In other cases, ContextManager will be initialized using saveContext method.
 
+    // cConf, hConf
     CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE);
     Configuration hConf = ConfigurationUtil.get(conf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE);
 
@@ -177,6 +181,8 @@ public class ContextManager {
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
 
+    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
+
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
@@ -184,7 +190,7 @@ public class ContextManager {
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
     return new Context(datasetFramework, streamAdmin, zkClientService, datasetInstantiatorFactory,
-                       authenticationContext, authorizationEnforcer);
+                       authenticationContext, authorizationEnforcer, txClient);
   }
 
   /**
@@ -197,11 +203,13 @@ public class ContextManager {
     private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
     private final AuthenticationContext authenticationContext;
     private final AuthorizationEnforcer authorizationEnforcer;
+    private final TransactionSystemClient txClient;
 
     public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                    ZKClientService zkClientService,
                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                   AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer) {
+                   AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer,
+                   TransactionSystemClient txClient) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
       this.streamAdmin = streamAdmin;
@@ -209,14 +217,16 @@ public class ContextManager {
       this.datasetInstantiatorFactory = datasetInstantiatorFactory;
       this.authenticationContext = authenticationContext;
       this.authorizationEnforcer = authorizationEnforcer;
+      this.txClient = txClient;
     }
 
     public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                   AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+                   AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                   TransactionSystemClient txClient) {
       // This constructor is called from Hive server, that is the Explore module.
       this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory, authenticationContext,
-           authorizationEnforcer);
+           authorizationEnforcer, txClient);
     }
 
     public StreamConfig getStreamConfig(StreamId streamId) throws IOException {
@@ -235,6 +245,10 @@ public class ContextManager {
     @Nullable
     public AuthorizationEnforcer getAuthorizationEnforcer() {
       return authorizationEnforcer;
+    }
+
+    public TransactionSystemClient getTxClient() {
+      return txClient;
     }
 
     /**

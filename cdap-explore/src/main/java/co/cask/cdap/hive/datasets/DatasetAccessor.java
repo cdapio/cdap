@@ -28,9 +28,12 @@ import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionSystemClient;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -48,6 +51,7 @@ import java.io.IOException;
 public class DatasetAccessor implements Closeable {
   private final DatasetId datasetId;
   private final ContextManager.Context context;
+  private final TransactionSystemClient txClient;
   private final Transaction transaction;
   private final SystemDatasetInstantiator datasetInstantiator;
   private Dataset dataset;
@@ -62,7 +66,9 @@ public class DatasetAccessor implements Closeable {
     this.context = ContextManager.getContext(conf);
     Preconditions.checkNotNull(context);
     this.datasetInstantiator = context.createDatasetInstantiator(conf.getClassLoader());
-    this.transaction = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
+//    this.transaction = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
+    this.txClient = context.getTxClient();
+    this.transaction = txClient.startLong();
   }
 
   public void initialize() throws IOException, DatasetManagementException,
@@ -87,6 +93,11 @@ public class DatasetAccessor implements Closeable {
 
   @Override
   public void close() throws IOException {
+    try {
+      txClient.commitOrThrow(transaction);
+    } catch (TransactionFailureException e) {
+      Throwables.propagate(e);
+    }
     datasetInstantiator.close();
     context.close();
   }

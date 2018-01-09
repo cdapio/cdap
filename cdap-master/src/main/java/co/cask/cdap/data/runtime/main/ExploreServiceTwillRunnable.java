@@ -258,7 +258,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     // The path are prefixed with "file:" in order to work with Hive started MR job.
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(),
                        Joiner.on(',').join(Iterables.transform(hiveExtraJars.values(), Functions.toStringFunction())));
-    LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
+    LOG.info("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
     // These dependency files need to be copied over to spark container

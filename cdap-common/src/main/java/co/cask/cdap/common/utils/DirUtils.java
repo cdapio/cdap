@@ -102,7 +102,7 @@ public final class DirUtils {
         return tempDir;
       }
     }
-    throw new IllegalStateException("Failed to create directory within "
+    throw new IllegalStateException("Failed to create directory under " + baseDir.getPath() + " within "
                                       + TEMP_DIR_ATTEMPTS + " attempts (tried "
                                       + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
   }

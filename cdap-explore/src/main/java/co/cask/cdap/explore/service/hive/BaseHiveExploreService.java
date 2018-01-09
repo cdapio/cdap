@@ -232,7 +232,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.txClient = txClient;
 
     ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
-                               authenticationContext);
+                               authenticationContext, txClient);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 

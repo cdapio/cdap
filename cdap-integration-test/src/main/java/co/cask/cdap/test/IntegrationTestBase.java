@@ -312,6 +312,7 @@ public abstract class IntegrationTestBase {
     builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
       URI.create(getInstanceURI()).toString()));
 
+    // TODO: set namespace into the ClientConfig?
     if (accessToken != null) {
       builder.setAccessToken(accessToken);
     }
