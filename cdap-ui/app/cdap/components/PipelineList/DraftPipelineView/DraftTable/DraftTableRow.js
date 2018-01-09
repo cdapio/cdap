@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import moment from 'moment';
 
 const PREFIX = 'features.PipelineList';
@@ -27,10 +27,6 @@ export default class DraftTableRow extends Component {
   static propTypes = {
     draft: PropTypes.object
   };
-
-  constructor(props) {
-    super(props);
-  }
 
   getCreationTime(draft) {
     if (!draft.__ui__.creationTime) { return '--'; }
@@ -42,7 +38,7 @@ export default class DraftTableRow extends Component {
 
   render() {
     let draft = this.props.draft;
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     let creationTime = this.getCreationTime(draft);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 import React, { Component } from 'react';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
 import {Observable} from 'rxjs/Observable';
 import T from 'i18n-react';
@@ -23,27 +23,15 @@ import orderBy from 'lodash/orderBy';
 import IconSVG from 'components/IconSVG';
 import StatusMapper from 'services/StatusMapper';
 import PipelineTable from 'components/PipelineList/DeployedPipelineView/PipelineTable';
+import GLOBALS from 'services/global-constants';
 
 require('./DeployedPipelineView.scss');
 
-const INFO_MAP = {
-  'cdap-data-pipeline': {
-    programType: 'workflows',
-    programName: 'DataPipelineWorkflow'
-  },
-  'cdap-data-streams': {
-    programType: 'spark',
-    programName: 'DataStreamsSparkStreaming'
-  }
-};
+const INFO_MAP = GLOBALS.programInfo;
 
 const PREFIX = 'features.PipelineList';
 
 export default class DeployedPipelineView extends Component {
-  constructor(props) {
-    super(props);
-  }
-
   componentWillMount() {
     this.fetchApps();
   }
@@ -54,7 +42,7 @@ export default class DeployedPipelineView extends Component {
   };
 
   fetchApps() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     let params = {
       namespace,
@@ -66,7 +54,7 @@ export default class DeployedPipelineView extends Component {
   }
 
   fetchRuns(pipelines) {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     let reqArr = [];
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import {humanReadableDate} from 'services/helpers';
 import PipelineTags from 'components/PipelineList/DeployedPipelineView/PipelineTags';
 import TimeDuration from 'components/PipelineList/DeployedPipelineView/TimeDuration';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineList';
@@ -33,12 +33,6 @@ export default class PipelineTableRow extends Component {
   static propTypes = {
     pipelineInfo: PropTypes.object
   };
-
-  constructor(props) {
-    super(props);
-
-    this.toggleExpand = this.toggleExpand.bind(this);
-  }
 
   componentWillMount() {
     if (this.props.pipelineInfo && this.props.pipelineInfo.running.length > 0) {
@@ -53,12 +47,12 @@ export default class PipelineTableRow extends Component {
     expanded: false
   };
 
-  toggleExpand() {
+  toggleExpand = () => {
     if (!this.state.expandable) { return; }
     this.setState({
       expanded: !this.state.expanded
     });
-  }
+  };
 
   renderRunningPipeline() {
     if (!this.state.expanded) { return null; }
@@ -80,7 +74,7 @@ export default class PipelineTableRow extends Component {
           <tbody>
             {
               pipelineInfo.running.map((run) => {
-                let namespace = NamespaceStore.getState().selectedNamespace;
+                let namespace = getCurrentNamespace();
 
                 let link = window.getHydratorUrl({
                   stateName: 'hydrator.detail',
@@ -118,7 +112,7 @@ export default class PipelineTableRow extends Component {
 
     let pipelineInfo = this.props.pipelineInfo;
     let statusClassName = StatusMapper.getStatusIndicatorClass(pipelineInfo.status);
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     let pipelineLink = window.getHydratorUrl({
       stateName: 'hydrator.detail',
@@ -148,7 +142,10 @@ export default class PipelineTableRow extends Component {
           </div>
           <div className="table-column name">
             <div className="pipeline-name">
-              <a href={pipelineLink}>
+              <a
+                href={pipelineLink}
+                title={pipelineInfo.name}
+              >
                 {pipelineInfo.name}
               </a>
             </div>
@@ -160,7 +157,7 @@ export default class PipelineTableRow extends Component {
                   <div className="pipeline-run">
                     {pipelineInfo.running.length} Running
 
-                    {this.state.expanded ? ' - Select one to view' : null}
+                    {this.state.expanded ? T.translate(`${PREFIX}.selectOne`) : null}
                   </div>
                 )
             }

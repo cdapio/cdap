@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {MyAppApi} from 'api/app';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./PipelineTags.scss');
 
@@ -26,12 +26,8 @@ export default class PipelineTags extends Component {
     pipelineName: PropTypes.string
   };
 
-  constructor(props) {
-    super(props);
-  }
-
   componentWillMount() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     let params = {
       namespace,

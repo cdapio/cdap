@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
 import IconSVG from 'components/IconSVG';
 import {Observable} from 'rxjs/Observable';
@@ -26,10 +26,6 @@ export default class NextRun extends Component {
   static propTypes = {
     pipelineInfo: PropTypes.object
   };
-
-  constructor(props) {
-    super(props);
-  }
 
   componentWillMount() {
     if (this.props.pipelineInfo.type === 'Realtime') { return; }
@@ -53,7 +49,7 @@ export default class NextRun extends Component {
   };
 
   getNextRun() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
     let pipelineInfo = this.props.pipelineInfo;
 
     // nextruntime endpoint is not under app version yet

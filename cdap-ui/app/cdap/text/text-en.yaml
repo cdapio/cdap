@@ -1336,6 +1336,7 @@ features:
     nextRun: Next Run Starts in
     pipelineName: Pipeline Name
     runs: Total Runs
+    selectOne: " - Select one to view"
     startTime: Start Time
     status: Status
     tags: Tags
