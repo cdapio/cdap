@@ -54,7 +54,11 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
     // check if value is macro or not. If it is, set isMacro to true
     let propertyValue = myHelpers.objectQuery(vm.node, 'plugin', 'properties', vm.field.name);
 
-    vm.isMacro = HydratorPlusPlusHydratorService.containsMacro(propertyValue);
+    let isMacroSupported = myHelpers.objectQuery(vm, 'node', '_backendProperties', vm.field.name, 'macroSupported');
+
+    if (isMacroSupported) {
+      vm.isMacro = HydratorPlusPlusHydratorService.containsMacro(propertyValue);
+    }
   }
 
   init();
