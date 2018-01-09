@@ -221,15 +221,6 @@
                 </configuration>
               </execution>
               <execution>
-                <id>bower-cache-clean</id>
-                <goals>
-                  <goal>bower</goal>
-                </goals>
-                <configuration>
-                  <arguments>cache clean</arguments>
-                </configuration>
-              </execution>
-              <execution>
                 <id>bower-install</id>
                 <goals>
                   <goal>bower</goal>
