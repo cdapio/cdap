@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -28,10 +28,8 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -55,8 +53,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   private final HttpServiceHandlerSpecification spec;
   private final int instanceId;
   private final AtomicInteger instanceCount;
-  private final DefaultArtifactManager defaultArtifactManager;
-  private final NamespaceId namespaceId;
+  private final ArtifactManager artifactManager;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -81,7 +78,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
                                  MessagingService messagingService,
-                                 DefaultArtifactManager defaultArtifactManager) {
+                                 ArtifactManager artifactManager) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
@@ -89,8 +86,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.defaultArtifactManager = defaultArtifactManager;
-    this.namespaceId = program.getId().getNamespaceId();
+    this.artifactManager = artifactManager;
   }
 
   public static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec, int instanceId) {
@@ -124,13 +120,12 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
 
   @Override
   public List<ArtifactInfo> listArtifacts() throws IOException {
-    return Retries.callWithRetries(() -> defaultArtifactManager.listArtifacts(namespaceId), retryStrategy);
+    return artifactManager.listArtifacts();
   }
 
   @Override
   public CloseableClassLoader createClassLoader(final ArtifactInfo artifactInfo,
                                                 @Nullable  final ClassLoader parentClassLoader) throws IOException {
-    return Retries.callWithRetries(() -> defaultArtifactManager.createClassLoader(namespaceId, artifactInfo,
-                                                                                  parentClassLoader), retryStrategy);
+    return artifactManager.createClassLoader(artifactInfo, parentClassLoader);
   }
 }

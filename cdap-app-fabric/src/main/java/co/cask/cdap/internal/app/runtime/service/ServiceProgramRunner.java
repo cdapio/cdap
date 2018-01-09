@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -26,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
@@ -33,7 +35,8 @@ import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
@@ -65,7 +68,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
-  private final DefaultArtifactManager defaultArtifactManager;
+  private final ArtifactManagerFactory artifactManagerFactory;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -73,7 +76,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
                               SecureStore secureStore, SecureStoreManager secureStoreManager,
                               MessagingService messagingService,
-                              DefaultArtifactManager defaultArtifactManager) {
+                              ArtifactManagerFactory artifactManagerFactory) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -83,7 +86,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
-    this.defaultArtifactManager = defaultArtifactManager;
+    this.artifactManagerFactory = artifactManagerFactory;
   }
 
   @Override
@@ -116,12 +119,15 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     try {
+      RetryStrategy retryStrategy = SystemArguments.getRetryStrategy(options.getUserArguments().asMap(),
+                                                                     program.getType(), cConf);
+      ArtifactManager artifactManager = artifactManagerFactory.create(program.getId().getNamespaceId(), retryStrategy);
       ServiceHttpServer component = new ServiceHttpServer(host, program, options, cConf, spec,
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
                                                           txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
-                                                          messagingService, defaultArtifactManager);
+                                                          messagingService, artifactManager);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),

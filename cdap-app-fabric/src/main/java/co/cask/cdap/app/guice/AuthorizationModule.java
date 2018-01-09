@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -47,10 +46,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionSystemClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -121,9 +117,9 @@ public class AuthorizationModule extends PrivateModule {
     public DynamicDatasetCache get() {
       SystemDatasetInstantiator dsInstantiator = new SystemDatasetInstantiator(dsFramework);
       return new MultiThreadDatasetCache(
-        dsInstantiator, txClient, NamespaceId.SYSTEM, ImmutableMap.<String, String>of(),
-        metricsCollectionService.getContext(ImmutableMap.<String, String>of()),
-        ImmutableMap.<String, Map<String, String>>of()
+        dsInstantiator, txClient, NamespaceId.SYSTEM, ImmutableMap.of(),
+        metricsCollectionService.getContext(ImmutableMap.of()),
+        ImmutableMap.of()
       );
     }
   }
@@ -132,14 +128,11 @@ public class AuthorizationModule extends PrivateModule {
   private static final class AdminProvider implements Provider<Admin> {
     private final DatasetFramework dsFramework;
     private final SecureStoreManager secureStoreManager;
-    private final DefaultArtifactManager defaultArtifactManager;
 
     @Inject
-    private AdminProvider(DatasetFramework dsFramework, SecureStoreManager secureStoreManager,
-                          DefaultArtifactManager defaultArtifactManager) {
+    private AdminProvider(DatasetFramework dsFramework, SecureStoreManager secureStoreManager) {
       this.dsFramework = dsFramework;
       this.secureStoreManager = secureStoreManager;
-      this.defaultArtifactManager = defaultArtifactManager;
     }
 
     @Override
@@ -150,8 +143,6 @@ public class AuthorizationModule extends PrivateModule {
 
   @Singleton
   private static final class TransactionalProvider implements Provider<Transactional> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionalProvider.class);
 
     private final DynamicDatasetCache datasetCache;
 

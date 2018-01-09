@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
@@ -41,6 +42,8 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
@@ -88,10 +91,10 @@ public class DistributedProgramRunnableModule {
   }
 
   // usable from any program runtime, such as mapreduce task, spark task, etc
-  public Module createModule(final ProgramId programId, String runId, String instaneId,
+  public Module createModule(final ProgramId programId, String runId, String instanceId,
                              @Nullable final String principal) {
 
-    Module combined = getCombinedModules(programId, generateClient(programId, runId, instaneId));
+    Module combined = getCombinedModules(programId, generateClient(programId, runId, instanceId));
 
     combined = addAuthenticationModule(principal, combined);
 
@@ -112,28 +115,26 @@ public class DistributedProgramRunnableModule {
   // usable from anywhere a TwillContext is exposed
   public Module createModule(final TwillContext context, ProgramId programId, String runId, String instanceId,
                              @Nullable String principal) {
-    return Modules.combine(createModule(programId, runId, instanceId, principal),
-                           new AbstractModule() {
-                             @Override
-                             protected void configure() {
+    return Modules.combine(createModule(programId, runId, instanceId, principal), new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(InetAddress.class)
+          .annotatedWith(Names.named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
+          .toInstance(context.getHost());
 
-                               bind(InetAddress.class).annotatedWith(
-                                 Names.named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
-                                 .toInstance(context.getHost());
+        bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
+          @Override
+          public Cancellable announce(String serviceName, int port) {
+            return context.announce(serviceName, port);
+          }
 
-                               bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
-                                 @Override
-                                 public Cancellable announce(String serviceName, int port) {
-                                   return context.announce(serviceName, port);
-                                 }
-
-                                 @Override
-                                 public Cancellable announce(String serviceName, int port, byte[] payload) {
-                                   return context.announce(serviceName, port, payload);
-                                 }
-                               });
-                             }
-                           });
+          @Override
+          public Cancellable announce(String serviceName, int port, byte[] payload) {
+            return context.announce(serviceName, port, payload);
+          }
+        });
+      }
+   });
   }
 
   private Module addAuthenticationModule(@Nullable String principal, Module combined) {
@@ -181,7 +182,7 @@ public class DistributedProgramRunnableModule {
           // For binding StreamWriter
           install(createStreamFactoryModule());
 
-          // don't need to perform any impersonation from within user progarms
+          // don't need to perform any impersonation from within user programs
           bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
           // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
@@ -197,6 +198,11 @@ public class DistributedProgramRunnableModule {
 
           // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
           bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
+
+          // Bind the ArtifactManager implementation
+          install(new FactoryModuleBuilder()
+                    .implement(ArtifactManager.class, RemoteArtifactManager.class)
+                    .build(ArtifactManagerFactory.class));
         }
       }
     );
