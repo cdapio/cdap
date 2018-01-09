@@ -27,6 +27,7 @@ import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseVersion;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
@@ -287,12 +288,16 @@ public final class HBaseTableFactory implements TableFactory {
 
       // Get cdap version from the table
       ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
+      String hbaseVersion = HBaseTableUtil.getHBaseVersion(tableDescriptor);
 
-      if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
+      if (hbaseVersion != null
+        && hbaseVersion.equals(HBaseVersion.getVersionString())
+        && version.compareTo(ProjectInfo.getVersion()) >= 0) {
         // If cdap has version has not changed or is greater, no need to update. Just enable it, in case
         // it has been disabled by the upgrade tool, and return
-        LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'",
-                 tableId, version, ProjectInfo.getVersion());
+        LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'." +
+                   " The underlying HBase version {} has also not changed.",
+                 tableId, version, ProjectInfo.getVersion(), hbaseVersion);
         enableTable(ddlExecutor, tableId);
         return;
       }
@@ -315,6 +320,7 @@ public final class HBaseTableFactory implements TableFactory {
 
       // Update CDAP version, table prefix
       HBaseTableUtil.setVersion(newDescriptor);
+      HBaseTableUtil.setHBaseVersion(newDescriptor);
       HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
       // Disable auto-splitting
       newDescriptor.setValue(HTableDescriptor.SPLIT_POLICY,

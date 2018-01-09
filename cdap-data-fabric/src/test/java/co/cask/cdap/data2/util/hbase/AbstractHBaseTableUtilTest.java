@@ -235,6 +235,9 @@ public abstract class AbstractHBaseTableUtilTest {
     desc = getTableDescriptor("namespace", "table2");
     Assert.assertNull(desc.getValue("myKey"));
 
+    // Make sure that HBase version is added
+    Assert.assertNotNull(desc.getValue(HBaseTableUtil.CDAP_HBASE_VERSION));
+
     if (namespacesSupported()) {
       try {
         deleteNamespace("namespace");
