@@ -26,7 +26,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -123,11 +122,6 @@ public interface ApplicationSpecification {
    *         for workers configured for the Application.
    */
   Map<String, WorkerSpecification> getWorkers();
-
-  /**
-   * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
-   */
-  Map<String, ScheduleSpecification> getSchedules();
 
   /**
    * @return An immutable {@link Map} from Schedule name to {@link ScheduleCreationSpec}

@@ -23,7 +23,6 @@ import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

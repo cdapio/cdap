@@ -16,16 +16,10 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.schedule.RunConstraints;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -175,55 +169,5 @@ public class ScheduleDetail {
       ", constraints=" + constraints +
       ", timeoutMillis=" + timeoutMillis +
       '}';
-  }
-
-  /**
-   * Return an equivalent schedule specification, or null if there is no equivalent one.
-   */
-  @Deprecated
-  @Nullable
-  public ScheduleSpecification toScheduleSpec() {
-    RunConstraints constraints = RunConstraints.NONE;
-    if (getConstraints() != null) {
-      for (Constraint runConstraint : getConstraints()) {
-        if (runConstraint instanceof ProtoConstraint.ConcurrencyConstraint) {
-          constraints = new RunConstraints(
-            ((ProtoConstraint.ConcurrencyConstraint) runConstraint).getMaxConcurrency());
-          break;
-        }
-      }
-    }
-    Schedule schedule;
-    if (getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-      ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) getTrigger());
-      schedule = new TimeSchedule(getName(), getDescription(), trigger.getCronExpression(), constraints);
-    } else if (getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
-      ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) getTrigger();
-      schedule = new StreamSizeSchedule(getName(), getDescription(),
-                                        trigger.getStreamId().getStream(), trigger.getTriggerMB(), constraints);
-    } else {
-      return null;
-    }
-    return new ScheduleSpecification(schedule, getProgram(), getProperties());
-  }
-
-  /**
-   * Convert a list of schedule details to a list of schedule specifications, for backward compatibility.
-   *
-   * Schedules with triggets other than time or stream size triggers are ignored, so are run constraints
-   * other than concurrency consraints (these were not supported by the legacy APIs).
-   *
-   * @deprecated as of 4.2.0. This is only provided for backward compatibility.
-   */
-  @Deprecated
-  public static List<ScheduleSpecification> toScheduleSpecs(List<ScheduleDetail> details) {
-    List<ScheduleSpecification> specs = new ArrayList<>();
-    for (ScheduleDetail detail : details) {
-      ScheduleSpecification spec = detail.toScheduleSpec();
-      if (spec != null) {
-        specs.add(spec);
-      }
-    }
-    return specs;
   }
 }

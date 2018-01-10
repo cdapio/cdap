@@ -140,8 +140,6 @@ public class PreviewRunnerModule extends PrivateModule {
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
     bind(Scheduler.class).to(NoOpScheduler.class);
-    bind(co.cask.cdap.internal.app.runtime.schedule.Scheduler.class)
-      .to(co.cask.cdap.internal.app.runtime.schedule.NoOpScheduler.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);

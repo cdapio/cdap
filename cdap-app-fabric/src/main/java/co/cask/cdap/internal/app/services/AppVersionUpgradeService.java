@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -39,16 +38,13 @@ import java.util.concurrent.Executors;
 public class AppVersionUpgradeService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AppVersionUpgradeService.class);
 
-  private final DatasetBasedStreamSizeScheduleStore streamSizeScheduleStore;
   private final DatasetBasedTimeScheduleStore timeScheduleStore;
   private final ExecutorService executorService;
   private final DefaultStore defaultStore;
 
   @Inject
-  AppVersionUpgradeService(DatasetBasedStreamSizeScheduleStore streamSizeScheduleStore,
-                           DatasetBasedTimeScheduleStore timeScheduleStore,
+  AppVersionUpgradeService(DatasetBasedTimeScheduleStore timeScheduleStore,
                            DefaultStore defaultStore) {
-    this.streamSizeScheduleStore = streamSizeScheduleStore;
     this.timeScheduleStore = timeScheduleStore;
     this.defaultStore = defaultStore;
     this.executorService = Executors.newFixedThreadPool(
@@ -58,16 +54,6 @@ public class AppVersionUpgradeService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting AppVersionUpgradeService.");
-    executorService.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          streamSizeScheduleStore.upgrade();
-        } catch (Exception e) {
-          LOG.debug("StreamSizeScheduleStore upgrade failed.", e);
-        }
-      }
-    });
 
     executorService.submit(new Runnable() {
       @Override
@@ -100,7 +86,6 @@ public class AppVersionUpgradeService extends AbstractIdleService {
 
   public Map<String, Boolean> getUpgradeStatus() {
     Map<String, Boolean> upgradeStatus = new HashMap<>();
-    upgradeStatus.put("streamSizeScheduleStore", streamSizeScheduleStore.isUpgradeComplete());
     upgradeStatus.put("timeScheduleStore", timeScheduleStore.isUpgradeComplete());
     upgradeStatus.put("defaultStore", defaultStore.isUpgradeComplete());
     return upgradeStatus;

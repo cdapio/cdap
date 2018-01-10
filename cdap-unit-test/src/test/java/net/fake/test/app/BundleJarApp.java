@@ -30,7 +30,7 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -55,7 +55,7 @@ import javax.ws.rs.PathParam;
 public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
   public static final String EXPECTED_LOAD_TEST_CLASSES_OUTPUT =
-    "hello_HelloWorld__co_cask_cdap_api_schedule_Schedule";
+    "hello_HelloWorld__co_cask_cdap_api_schedule_Trigger";
 
   @Override
   public void configure() {
@@ -75,7 +75,7 @@ public class BundleJarApp extends AbstractApplication {
     try {
       // Use context classloader instead of BundleJarApp.class.getClassLoader() b/c this is used only in unit test
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      String result = classLoader.loadClass("hello.HelloWorld").getName() + "__" + Schedule.class.getName();
+      String result = classLoader.loadClass("hello.HelloWorld").getName() + "__" + Trigger.class.getName();
       return result.replaceAll("\\.", "_");
     } catch (ClassNotFoundException e) {
       LOG.error("Error loading test classes with " + BundleJarApp.class.getClassLoader(), e);

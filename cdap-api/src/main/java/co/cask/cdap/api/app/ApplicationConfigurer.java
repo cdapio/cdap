@@ -20,8 +20,6 @@ import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
@@ -29,8 +27,6 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-
-import java.util.Map;
 
 /**
  * Configures a CDAP Application.
@@ -93,19 +89,6 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @param worker The worker to include in the Application
    */
   void addWorker(Worker worker);
-
-  /**
-   * Adds a {@link Schedule} to the specified program in the Application.
-   *
-   * @param schedule the schedule to be included for the program
-   * @param programType the type of the program
-   * @param programName the name of the program
-   * @param properties the properties for the schedule
-   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
-   */
-  @Deprecated
-  void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
-                   Map<String, String> properties);
 
   /**
    * Get a ScheduleBuilder for the specified program.

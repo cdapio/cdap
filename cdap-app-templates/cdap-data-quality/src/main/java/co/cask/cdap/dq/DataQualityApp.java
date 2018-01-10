@@ -19,6 +19,7 @@ package co.cask.cdap.dq;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -30,7 +31,6 @@ import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;
@@ -135,10 +135,9 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     addService(new DataQualityService(configObj.datasetName));
     addWorkflow(new DataQualityWorkflow());
     String schedule = "*/" + scheduleMinutes + " * * * *";
-    scheduleWorkflow(Schedules.builder("aggregatorSchedule")
-                       .setDescription("Schedule execution every " + scheduleMinutes + " min")
-                      .createTimeSchedule(schedule),
-                     "DataQualityWorkflow");
+    schedule(buildSchedule("aggregatorSchedule", ProgramType.WORKFLOW, "DataQualityWorkflow")
+               .setDescription("Schedule execution every " + scheduleMinutes + " min")
+               .triggerByTime(schedule));
   }
 
   /**

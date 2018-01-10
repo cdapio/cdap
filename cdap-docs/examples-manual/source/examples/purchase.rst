@@ -37,8 +37,7 @@ and write to an ``ObjectStore`` dataset.
   - When scheduled by the *PurchaseHistoryWorkFlow*, the ``PurchaseHistoryBuilder`` MapReduce
     reads the *purchases* dataset. It fetches the user profile information, if it is available, from
     the *UserProfileService* and creates a purchase history. It stores the purchase history in the
-    history dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
-    is ingested by the *purchaseStream* using a data schedule.
+    history dataset every morning at 4:00 A.M. using a time schedule.
   - You can either manually (in the Process screen of the CDAP UI) or programmatically execute the
     ``PurchaseHistoryBuilder`` MapReduce to store customers' purchase history in the history dataset.
   - The ``PurchaseHistoryBuilder`` MapReduce demonstrates the setting of memory used by its YARN container, both

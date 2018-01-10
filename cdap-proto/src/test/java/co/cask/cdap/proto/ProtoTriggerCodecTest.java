@@ -21,9 +21,7 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -47,8 +45,6 @@ public class ProtoTriggerCodecTest {
 
     ProtoTrigger.TimeTrigger timeTrigger = new ProtoTrigger.TimeTrigger("* * * * *");
     testTriggerCodec(timeTrigger);
-
-    testTriggerCodec(new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 17));
 
     ProtoTrigger.ProgramStatusTrigger programStatusTrigger =
       new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),

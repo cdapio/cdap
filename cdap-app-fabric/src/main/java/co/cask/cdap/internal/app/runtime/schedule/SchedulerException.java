@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 /**
- * Exception thrown by the {@link Scheduler} interface in case of unforeseen errors.
+ * Exception thrown by the {@link TimeSchedulerService} interface in case of unforeseen errors.
  */
 public class SchedulerException extends Exception {
 

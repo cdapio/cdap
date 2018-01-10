@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -33,16 +32,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Scheduler service to run in Distributed CDAP. Waits for Dataset service to be available.
  */
-public final class DistributedSchedulerService extends AbstractSchedulerService {
+public final class DistributedTimeSchedulerService extends AbstractTimeSchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedTimeSchedulerService.class);
   private final Service serviceDelegate;
   private final CountDownLatch startUpLatch;
 
   @Inject
-  public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
-                                     Store store) {
-    super(timeScheduler, streamSizeScheduler, store);
+  public DistributedTimeSchedulerService(TimeScheduler timeScheduler) {
+    super(timeScheduler);
     this.startUpLatch = new CountDownLatch(1);
     this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override

@@ -26,7 +26,6 @@ import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -94,9 +93,6 @@ public class TriggerCodecTest {
     TimeTrigger timeTrigger = new TimeTrigger("* * * * *");
     testSerDeserYieldsTrigger(protoTime, timeTrigger);
 
-    testSerDeserYieldsTrigger(new ProtoTrigger.StreamSizeTrigger(new StreamId("test", "str"), 1000),
-                              new StreamSizeTrigger(new StreamId("test", "str"), 1000));
-
     ProtoTrigger.ProgramStatusTrigger protoProgramStatus =
       new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
                                             ImmutableSet.of(ProgramStatus.COMPLETED));
@@ -150,9 +146,6 @@ public class TriggerCodecTest {
 
     testContainingTrigger(new ProtoTrigger.TimeTrigger("* * * 1 1"),
                           new TimeTrigger("* * * 1 1"));
-
-    testContainingTrigger(new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 1),
-                          new StreamSizeTrigger(new StreamId("x", "y"), 1));
 
     testContainingTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
                                                                               ProgramType.FLOW, "myprog"),

@@ -16,11 +16,29 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * SchedulerService interface to define start/stop and scheduling of jobs.
+ * LocalTimeSchedulerService - noop for pre and post hooks.
  */
-public interface SchedulerService extends Service, Scheduler {
+public final class LocalTimeSchedulerService extends AbstractTimeSchedulerService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LocalTimeSchedulerService.class);
+
+  @Inject
+  public LocalTimeSchedulerService(TimeScheduler timeScheduler) {
+    super(timeScheduler);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    startSchedulers();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    stopScheduler();
+  }
 }

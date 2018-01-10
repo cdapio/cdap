@@ -20,8 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;

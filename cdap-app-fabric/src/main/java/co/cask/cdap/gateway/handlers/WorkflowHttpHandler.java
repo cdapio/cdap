@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
@@ -42,6 +41,7 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -54,7 +54,6 @@ import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -105,7 +104,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private static final Type STRING_TO_NODESTATEDETAIL_MAP_TYPE
     = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
@@ -115,11 +113,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private final WorkflowClient workflowClient;
   private final DatasetFramework datasetFramework;
-  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler;
+  private final TimeSchedulerService timeScheduler;
 
   @Inject
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
-                      QueueAdmin queueAdmin, co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler,
+                      QueueAdmin queueAdmin, TimeSchedulerService timeScheduler,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
                       MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler,
                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
@@ -129,7 +127,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
           authenticationContext, authorizationEnforcer);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
-    this.scheduler = scheduler;
+    this.timeScheduler = timeScheduler;
   }
 
   @POST
@@ -235,9 +233,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = timeScheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = timeScheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimes));
     } catch (SecurityException e) {
@@ -258,7 +256,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @QueryParam("trigger-type") String triggerType,
                                    @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, format, triggerType,
+    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, triggerType,
                    scheduleStatus);
   }
 
@@ -276,7 +274,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @QueryParam("trigger-type") String triggerType,
                                    @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, version, workflow, format, triggerType, scheduleStatus);
+    doGetSchedules(responder, namespace, application, version, workflow, triggerType, scheduleStatus);
   }
 
   @GET

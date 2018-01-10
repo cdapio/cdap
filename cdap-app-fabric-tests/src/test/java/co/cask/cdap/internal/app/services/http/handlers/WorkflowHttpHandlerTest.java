@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.ConditionalWorkflowApp;
@@ -30,7 +29,6 @@ import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
@@ -46,12 +44,10 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -92,7 +88,6 @@ import javax.annotation.Nullable;
 public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
@@ -870,12 +865,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String scheduleName = schedules.get(0).getName();
     Assert.assertFalse(scheduleName.isEmpty());
 
-    // get schedules in backward-compatible ScheduleSpecification form
-    List<ScheduleSpecification> specs = getScheduleSpecs(TEST_NAMESPACE2, appName, workflowName);
-    Assert.assertEquals(1, specs.size());
-    String specName = specs.get(0).getSchedule().getName();
-    Assert.assertEquals(scheduleName, specName);
-
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
     // List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
     // Assert.assertTrue(previousRuntimes.size() == 0);
@@ -965,127 +954,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     verifyNoRunWithStatus(programId, ProgramRunStatus.RUNNING);
     deleteApp(Id.Application.from(TEST_NAMESPACE2, AppWithSchedule.class.getSimpleName()), 200);
-  }
-
-  @Test
-  public void testStreamSizeSchedules() throws Exception {
-    // Steps for the test:
-    // 1. Deploy the app
-    // 2. Verify the schedules
-    // 3. Ingest data in the stream
-    // 4. Verify the history after waiting a while
-    // 5. Suspend the schedule
-    // 6. Ingest data in the stream
-    // 7. Verify there are no runs after the suspend by looking at the history
-    // 8. Resume the schedule
-    // 9. Verify there are runs after the resume by looking at the history
-
-    String appName = "AppWithStreamSizeSchedule";
-    String sampleSchedule1 = "SampleSchedule1";
-    String sampleSchedule2 = "SampleSchedule2";
-    String workflowName = "SampleWorkflow";
-    String streamName = "stream";
-
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
-
-    StringBuilder longStringBuilder = new StringBuilder();
-    for (int i = 0; i < 10000; i++) {
-      longStringBuilder.append("dddddddddd");
-    }
-    String longString = longStringBuilder.toString();
-
-    // deploy app with schedule in namespace 2
-    HttpResponse response = deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule1));
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule2));
-
-    // get schedules
-    List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
-    Assert.assertEquals(2, schedules.size());
-    String scheduleName1 = schedules.get(0).getName();
-    String scheduleName2 = schedules.get(1).getName();
-    Assert.assertNotNull(scheduleName1);
-    Assert.assertFalse(scheduleName1.isEmpty());
-
-    // Change notification threshold for stream
-    response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2, streamName),
-                     "{'notification.threshold.mb': 1}");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2, streamName));
-    String json = EntityUtils.toString(response.getEntity());
-    StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);
-    Assert.assertEquals(1, properties.getNotificationThresholdMB().intValue());
-
-    // Ingest over 1MB of data in stream
-    for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2, streamName), longString);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    }
-
-    // Only schedule 1 should get executed
-    verifyProgramRuns(programId, ProgramRunStatus.COMPLETED);
-
-    //Check schedule status
-    assertSchedule(programId, scheduleName1, true, 30, TimeUnit.SECONDS);
-    assertSchedule(programId, scheduleName2, true, 30, TimeUnit.SECONDS);
-
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName1));
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName2));
-    //check paused state
-    assertSchedule(programId, scheduleName1, false, 30, TimeUnit.SECONDS);
-    assertSchedule(programId, scheduleName2, false, 30, TimeUnit.SECONDS);
-
-    int workflowRuns = getProgramRuns(programId, ProgramRunStatus.COMPLETED).size();
-    // Should still be one
-    Assert.assertEquals(1, workflowRuns);
-
-    // Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2, streamName), longString);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    }
-    TimeUnit.SECONDS.sleep(5);
-
-    int workflowRunsAfterSuspend = getProgramRuns(programId, ProgramRunStatus.COMPLETED).size();
-    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
-
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName1));
-
-    //check scheduled state
-    assertSchedule(programId, scheduleName1, true, 30, TimeUnit.SECONDS);
-
-    // an additional run should execute and complete after resuming the schedule
-    assertRunHistory(programId, ProgramRunStatus.COMPLETED, 1 + workflowRunsAfterSuspend, 60, TimeUnit.SECONDS);
-
-    //Check status of a non existing schedule
-    try {
-      assertSchedule(programId, "invalid", true, 2, TimeUnit.SECONDS);
-      Assert.fail();
-    } catch (Exception e) {
-      // expected
-    }
-
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName1));
-
-    //check paused state
-    assertSchedule(programId, scheduleName1, false, 30, TimeUnit.SECONDS);
-
-    //Schedule operations using invalid namespace
-    try {
-      assertSchedule(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.WORKFLOW, workflowName),
-                     scheduleName1, true, 2, TimeUnit.SECONDS);
-      Assert.fail();
-    } catch (Exception e) {
-      // expected
-    }
-    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName1));
-    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName1));
-
-    TimeUnit.SECONDS.sleep(2); // Wait until any running jobs just before suspend call completes.
   }
 
   @Test

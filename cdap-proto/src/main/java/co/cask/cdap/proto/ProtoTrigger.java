@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -231,57 +230,6 @@ public abstract class ProtoTrigger implements Trigger {
   public static class OrTrigger extends AbstractCompositeTrigger<ProtoTrigger> {
     public OrTrigger(List<ProtoTrigger> triggers) {
       super(Type.OR, triggers);
-    }
-  }
-
-  /**
-   * Represents a stream size trigger in REST requests/responses.
-   */
-  public static class StreamSizeTrigger extends ProtoTrigger {
-
-    protected final StreamId streamId;
-    protected final int triggerMB;
-
-    public StreamSizeTrigger(StreamId streamId, int triggerMB) {
-      super(Type.STREAM_SIZE);
-      this.streamId = streamId;
-      this.triggerMB = triggerMB;
-      validate();
-    }
-
-    public StreamId getStreamId() {
-      return streamId;
-    }
-
-    public int getTriggerMB() {
-      return triggerMB;
-    }
-
-    @Override
-    public void validate() {
-      ProtoTrigger.validateNotNull(getStreamId(), "stream");
-      ProtoTrigger.validateNotNull(getStreamId().getNamespace(), "stream namespace");
-      ProtoTrigger.validateNotNull(getStreamId().getStream(), "stream name");
-      ProtoTrigger.validateInRange(getTriggerMB(), "trigger in MB", 1, null);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return this == o ||
-        o != null &&
-          getClass().equals(o.getClass()) &&
-          Objects.equals(getStreamId(), ((StreamSizeTrigger) o).getStreamId()) &&
-          Objects.equals(getTriggerMB(), ((StreamSizeTrigger) o).getTriggerMB());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(getStreamId(), getTriggerMB());
-    }
-
-    @Override
-    public String toString() {
-      return String.format("StreamSizeTrigger(%s, %d MB)", getStreamId(), getTriggerMB());
     }
   }
 

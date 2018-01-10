@@ -19,8 +19,6 @@ package co.cask.cdap.api.app;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.BasicService;
@@ -31,9 +29,6 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -154,30 +149,6 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    */
   protected void addService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
     configurer.addService(new BasicService(name, handler, handlers));
-  }
-
-  /**
-   * Schedules the specified {@link Workflow}
-   * @param schedule the schedule to be added for the Workflow
-   * @param workflowName the name of the Workflow
-   * @deprecated since 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
-   */
-  @Deprecated
-  protected void scheduleWorkflow(Schedule schedule, String workflowName) {
-    scheduleWorkflow(schedule, workflowName, Collections.emptyMap());
-  }
-
-
-  /**
-   * Schedule the specified {@link Workflow}
-   * @param schedule the schedule to be added for the Workflow
-   * @param workflowName the name of the Workflow
-   * @param properties properties to be added for the Schedule
-   * @deprecated since 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
-   */
-  @Deprecated
-  protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
-    configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
   }
 
   /**

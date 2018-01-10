@@ -19,10 +19,8 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -30,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Application with workflow scheduling based on a {@link StreamSizeSchedule}.
+ * Application with stream.
  */
-public class AppWithStreamSizeSchedule extends AbstractApplication {
+public class AppWithStream extends AbstractApplication {
 
   public static final Map<String, String> SCHEDULE_PROPS = ImmutableMap.of(
       "oneKey", "oneValue",
@@ -45,11 +43,6 @@ public class AppWithStreamSizeSchedule extends AbstractApplication {
     setDescription("Sample application");
     addWorkflow(new SampleWorkflow());
     addStream(new Stream("stream"));
-
-    scheduleWorkflow(Schedules.builder("SampleSchedule1").createDataSchedule(Schedules.Source.STREAM, "stream", 1),
-                     "SampleWorkflow", SCHEDULE_PROPS);
-    scheduleWorkflow(Schedules.builder("SampleSchedule2").createDataSchedule(Schedules.Source.STREAM, "stream", 2),
-                     "SampleWorkflow", SCHEDULE_PROPS);
   }
 
   /**

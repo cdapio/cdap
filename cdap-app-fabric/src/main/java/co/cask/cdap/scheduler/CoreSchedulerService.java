@@ -20,13 +20,11 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -37,15 +35,13 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.annotations.VisibleForTesting;
@@ -60,10 +56,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -80,14 +74,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final Transactional transactional;
   private final Service internalService;
   private final DatasetFramework datasetFramework;
-  private final SchedulerService scheduler;
+  private final TimeSchedulerService timeSchedulerService;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
-                       final SchedulerService schedulerService,
+                       final TimeSchedulerService timeSchedulerService,
                        final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
-                       final ConstraintCheckerService constraintCheckerService,
-                       final NamespaceQueryAdmin namespaceQueryAdmin, final Store store) {
+                       final ConstraintCheckerService constraintCheckerService) {
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
     final DynamicDatasetCache datasetCache =
@@ -96,8 +89,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                                   Collections.emptyMap(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
-
-    this.scheduler = schedulerService;
+    this.timeSchedulerService = timeSchedulerService;
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
       @Override
@@ -106,8 +98,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME,
                                        Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
         }
-        schedulerService.startAndWait();
-        migrateSchedules(namespaceQueryAdmin, store);
+        timeSchedulerService.startAndWait();
         cleanupJobs();
         constraintCheckerService.startAndWait();
         scheduleNotificationSubscriberService.startAndWait();
@@ -119,7 +110,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       protected void shutDown() throws Exception {
         scheduleNotificationSubscriberService.stopAndWait();
         constraintCheckerService.stopAndWait();
-        schedulerService.stopAndWait();
+        timeSchedulerService.stopAndWait();
         LOG.info("Stopped core scheduler service.");
       }
     }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
@@ -148,47 +139,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     } catch (TransactionFailureException exception) {
       LOG.warn("Failed to cleanup jobs upon startup.", exception);
     }
-  }
-
-  private void migrateSchedules(final NamespaceQueryAdmin namespaceQueryAdmin, final Store appMetaStore)
-    throws Exception {
-
-    List<NamespaceMeta> namespaceMetas = new ArrayList<>(namespaceQueryAdmin.list());
-    ProgramScheduleStoreDataset.MigrationStatus migrationStatus =
-      execute(ProgramScheduleStoreDataset::getMigrationStatus, RuntimeException.class);
-    if (migrationStatus.isMigrationCompleted()) {
-      LOG.debug("Schedule migration has already been completed for all namespaces. Skip migration.");
-      return; // no need to migrate if migration is complete
-    }
-    // Sort namespaces by their namespaceId's, so that namespaceId's with smaller lexicographical order
-    // will be migrated first. Comparing namespaceId with the last migration completed namespaceId
-    // in lexicographical order can determine whether migration is completed for the corresponding namespace.
-    // No need to check whether a namespace is added in current CDAP version because new namespace doesn't have
-    // old schedules to be migrated, or new program schedules in it since CoreSchedulerService has not started
-    namespaceMetas.sort(Comparator.comparing(n -> n.getNamespaceId().toString()));
-    NamespaceId lastCompleteNamespace = migrationStatus.getLastMigrationCompleteNamespace();
-    for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
-      // Since namespaces are sorted in lexicographical order, if the lastCompleteNamespace is larger or equal to
-      // the current namespace lexicographically, then the current namespace is already migrated. Skip this namespace.
-      if (lastCompleteNamespace != null && lastCompleteNamespace.toString().compareTo(namespaceId.toString()) >= 0) {
-        LOG.debug("Skip migrating schedules in namespace '{}', since namespace with lexicographical order " +
-                    "smaller or equal to the last migration completed namespace '{}' should already be migrated.",
-                  namespaceId, lastCompleteNamespace);
-        continue;
-      }
-      LOG.info("Starting schedule migration for namespace '{}'", namespaceId);
-      execute((StoreTxRunnable<Void, RuntimeException>) store -> {
-        store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
-        return null;
-      }, RuntimeException.class);
-    }
-    // Set migration complete after migrating all namespaces
-    execute((StoreTxRunnable<Void, RuntimeException>) store -> {
-      store.setMigrationComplete();
-      return null;
-    }, RuntimeException.class);
-    LOG.info("Schedule migration is completed for all namespaces.");
   }
 
   /**
@@ -255,7 +205,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       for (ProgramSchedule schedule : schedules) {
         try {
           // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
-          scheduler.addProgramSchedule(schedule);
+          timeSchedulerService.addProgramSchedule(schedule);
         } catch (SchedulerException e) {
           // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
           // Need better error handling
@@ -301,7 +251,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         if (ProgramScheduleStatus.SUSPENDED != record.getMeta().getStatus()) {
           throw new ConflictException("Schedule '" + scheduleId + "' is already enabled");
         }
-        scheduler.resumeProgramSchedule(record.getSchedule());
+        timeSchedulerService.resumeProgramSchedule(record.getSchedule());
         store.updateScheduleStatus(scheduleId, ProgramScheduleStatus.SCHEDULED);
         return null;
       }, Exception.class);
@@ -324,7 +274,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         if (ProgramScheduleStatus.SCHEDULED != record.getMeta().getStatus()) {
           throw new ConflictException("Schedule '" + scheduleId + "' is already disabled");
         }
-        scheduler.suspendProgramSchedule(record.getSchedule());
+        timeSchedulerService.suspendProgramSchedule(record.getSchedule());
         store.updateScheduleStatus(scheduleId, ProgramScheduleStatus.SUSPENDED);
         queue.markJobsForDeletion(scheduleId, System.currentTimeMillis());
         return null;
@@ -348,7 +298,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     for (ProgramSchedule schedule : schedules) {
       try {
         // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
-        scheduler.deleteProgramSchedule(schedule);
+        timeSchedulerService.deleteProgramSchedule(schedule);
       } catch (Exception e) {
         // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
         // Need better error handling
@@ -361,7 +311,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private void deleteScheduleInScheduler(ProgramSchedule schedule) throws NotFoundException {
     try {
       // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
-      scheduler.deleteProgramSchedule(schedule);
+      timeSchedulerService.deleteProgramSchedule(schedule);
     } catch (SchedulerException e) {
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw NotFoundException.
       // Need better error handling

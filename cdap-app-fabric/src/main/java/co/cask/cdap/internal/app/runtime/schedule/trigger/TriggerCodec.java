@@ -32,7 +32,6 @@ public class TriggerCodec extends ProtoTriggerCodec {
     ImmutableMap.<ProtoTrigger.Type, Class<? extends Trigger>>builder()
       .put(ProtoTrigger.Type.TIME, TimeTrigger.class)
       .put(ProtoTrigger.Type.PARTITION, PartitionTrigger.class)
-      .put(ProtoTrigger.Type.STREAM_SIZE, StreamSizeTrigger.class)
       .put(ProtoTrigger.Type.PROGRAM_STATUS, ProgramStatusTrigger.class)
       .put(ProtoTrigger.Type.AND, AndTrigger.class)
       .put(ProtoTrigger.Type.OR, OrTrigger.class)

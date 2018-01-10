@@ -17,8 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -30,9 +28,7 @@ import co.cask.cdap.proto.ProtoConstraintCodec;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ScheduleInstanceConfiguration;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -59,7 +55,6 @@ import javax.inject.Inject;
 public class ScheduleClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
     .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
@@ -85,36 +80,11 @@ public class ScheduleClient {
    * Add a new schedule for an existing application.
    *
    * @param scheduleId the ID of the schedule to add
-   * @param configuration describes the new schedule.
-   * @deprecated as of 4.2.0. Use {@link #add(ScheduleId, ScheduleDetail)} instead.
-   */
-  @Deprecated
-  public void add(ScheduleId scheduleId, ScheduleInstanceConfiguration configuration) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
-    doAdd(scheduleId, GSON.toJson(configuration));
-  }
-
-  /**
-   * Add a new schedule for an existing application.
-   *
-   * @param scheduleId the ID of the schedule to add
    * @param detail the {@link ScheduleDetail} describing the new schedule.
    */
   public void add(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doAdd(scheduleId, GSON.toJson(detail));
-  }
-
-  /**
-   * Update an existing schedule.
-   *
-   * @param scheduleId the ID of the schedule to add
-   * @param config describes the updates to the schedule. Fields that are null will not be updated.
-   */
-  @Deprecated
-  public void update(ScheduleId scheduleId, ScheduleInstanceConfiguration config) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
-    doUpdate(scheduleId, GSON.toJson(config));
   }
 
   public void update(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
@@ -135,7 +105,7 @@ public class ScheduleClient {
   /**
    * Get the next scheduled run time of the program. A program may contain multiple schedules.
    * This method returns the next scheduled runtimes for all the schedules. This method only takes
-   + into account {@link Schedule}s based on time. Schedules based on data are ignored.
+   + into account schedules based on time. Schedules based on data are ignored.
    *
    * @param workflow Id of the Workflow for which to fetch next run times.
    * @return list of Scheduled runtimes for the Workflow. Empty list if there are no schedules.

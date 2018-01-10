@@ -67,7 +67,7 @@ import java.util.concurrent.Executors;
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
  * DefaultSchedulerService.
  */
-public final class TimeScheduler implements Scheduler {
+public final class TimeScheduler {
   private static final Logger LOG = LoggerFactory.getLogger(TimeScheduler.class);
   private static final String PAUSED_NEW_TRIGGERS_GROUP = "NewPausedTriggers";
 
@@ -100,14 +100,14 @@ public final class TimeScheduler implements Scheduler {
   }
 
   /**
-   * Creates a paused group TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP by adding a dummy job to it if it does not exists
+   * Creates a paused group TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP by adding a dummy job to it if it does not exist
    * already. This is needed so that we can add new triggers to this paused group and they will be paused too.
    *
    * @throws org.quartz.SchedulerException
    */
   private void initNewPausedTriggersGroup() throws org.quartz.SchedulerException {
-    // if the dummy job does not already exists in the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP then create a dummy job
-    // which will create the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
+    // if the dummy job does not already exists in the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
+    // then create a dummy job which will create the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
     if (!scheduler.checkExists(new JobKey(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP))) {
       JobDetail job = JobBuilder.newJob(EmptyJob.class)
         .withIdentity(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP)
@@ -146,7 +146,6 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
     // Verify every trigger does not exist first before adding any of them to Quartz scheduler
     try {
@@ -165,7 +164,6 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
@@ -185,7 +183,6 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
   public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
@@ -199,7 +196,6 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
   public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
@@ -285,13 +281,11 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
   public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
     return getScheduledRuntime(program, programType, true);
   }
 
-  @Override
   public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
     return getScheduledRuntime(program, programType, false);
@@ -326,33 +320,8 @@ public final class TimeScheduler implements Scheduler {
     return scheduledRuntimes;
   }
 
-  @Override
-  public synchronized ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
-                                                          String scheduleName)
-    throws SchedulerException, ScheduleNotFoundException {
-    try {
-      // No need of including cron entry in the name since this method is used only for migrating schedules
-      // from app meta store and will never be called for schedule with composite trigger
-      String triggerName = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
-      Trigger.TriggerState state = scheduler.getTriggerState(triggerKeyForName(triggerName));
-      // Map trigger state to schedule state.
-      // This method is only interested in returning if the scheduler is
-      // Paused, Scheduled or NotFound.
-      switch (state) {
-        case NONE:
-          throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
-        case PAUSED:
-          return ProgramScheduleStatus.SUSPENDED;
-        default:
-          return ProgramScheduleStatus.SCHEDULED;
-      }
-    } catch (org.quartz.SchedulerException e) {
-      throw new SchedulerException(e);
-    }
-  }
-
   private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {
-    return new JobKey(AbstractSchedulerService.programIdFor(program, programType));
+    return new JobKey(AbstractTimeSchedulerService.programIdFor(program, programType));
   }
 
   private JobFactory createJobFactory() {
@@ -407,13 +376,14 @@ public final class TimeScheduler implements Scheduler {
       }
       for (SatisfiableTrigger timeTrigger : triggerSet) {
         String cron = ((TimeTrigger) timeTrigger).getCronExpression();
-        String triggerName = AbstractSchedulerService.getTriggerName(program, programType, schedule.getName(), cron);
+        String triggerName =
+          AbstractTimeSchedulerService.getTriggerName(program, programType, schedule.getName(), cron);
         cronTriggerKeyMap.put(cron, triggerKeyForName(triggerName));
       }
       return cronTriggerKeyMap;
     }
     // No need to include cron expression in trigger key if the trigger is not composite trigger
-    String triggerName = AbstractSchedulerService.scheduleIdFor(program, programType, schedule.getName());
+    String triggerName = AbstractTimeSchedulerService.scheduleIdFor(program, programType, schedule.getName());
     cronTriggerKeyMap.put(((TimeTrigger) schedule.getTrigger()).getCronExpression(), triggerKeyForName(triggerName));
     return cronTriggerKeyMap;
   }

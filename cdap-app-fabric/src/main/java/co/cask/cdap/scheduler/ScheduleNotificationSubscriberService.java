@@ -80,9 +80,6 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     taskExecutorService.submit(new SchedulerEventSubscriberRunnable(
       cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
       cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE)));
-    taskExecutorService.submit(new SchedulerEventSubscriberRunnable(
-      cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC),
-      cConf.getInt(Constants.Scheduler.STREAM_SIZE_EVENT_FETCH_SIZE)));
     taskExecutorService.submit(new DataEventSubscriberRunnable());
     taskExecutorService.submit(new ProgramStatusEventSubscriberRunnable());
   }

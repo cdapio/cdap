@@ -25,7 +25,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultPartitionTriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultProgramStatusTriggerInfo;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultStreamSizeTriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.common.collect.ImmutableList;
@@ -55,7 +54,6 @@ public class TriggeringScheduleInfoAdapterTest {
                                             "workflow", RunIds.generate(), ProgramStatus.COMPLETED,
                                             token, Collections.<String, String>emptyMap()),
         new DefaultPartitionTriggerInfo("ns", "ds", 10, 11),
-        new DefaultStreamSizeTriggerInfo("ns", "stream", 1, 1000000L, 0L, 0L),
         new DefaultTimeTriggerInfo("1 * * * *", 0L));
     TriggeringScheduleInfo scheduleInfo = new DefaultTriggeringScheduleInfo("schedule", "description", triggerInfos,
                                                                             ImmutableMap.of("key", "value"));

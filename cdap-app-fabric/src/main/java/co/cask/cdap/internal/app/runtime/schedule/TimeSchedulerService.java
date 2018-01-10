@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,18 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.util.concurrent.Service;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Interfaces that defines all methods related to scheduling, un-scheduling jobs.
+ * TimeSchedulerService interface to define start/stop and scheduling of jobs.
  */
-public interface Scheduler {
-
+public interface TimeSchedulerService extends Service {
   /**
    * Add a new schedule converted from the given {@link ProgramSchedule}.
    *
@@ -76,7 +74,7 @@ public interface Scheduler {
   /**
    * Get the previous run time for the program. A program may contain one or more schedules
    * the method returns the previous runtimes for all the schedules. This method only takes
-   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
    * @param program program to fetch the previous runtime.
@@ -91,7 +89,7 @@ public interface Scheduler {
   /**
    * Get the next scheduled run time of the program. A program may contain multiple schedules.
    * This method returns the next scheduled runtimes for all the schedules. This method only takes
-   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
    * @param program program to fetch the next runtime.
@@ -102,18 +100,4 @@ public interface Scheduler {
    */
   List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException;
-
-  /**
-   * Get state of a particular schedule.
-   *
-   * @param program the program for which the state of the schedule is queried
-   * @param programType the type of the program
-   * @param scheduleName the name of the schedule
-   * @return State of the schedule.
-   * @throws SchedulerException on unforeseen error.
-   * @throws NotFoundException if the schedule is not found.
-   */
-  ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws SchedulerException, NotFoundException;
-
 }

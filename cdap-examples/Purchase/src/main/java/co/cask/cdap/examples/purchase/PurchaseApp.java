@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import co.cask.cdap.api.schedule.Schedules;
 
 /**
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
@@ -73,15 +72,6 @@ public class PurchaseApp extends AbstractApplication {
       buildSchedule("DailySchedule", ProgramType.WORKFLOW, "PurchaseHistoryWorkflow")
       .withConcurrency(1)
       .triggerByTime("0 4 * * *")
-    );
-
-    // Schedule the workflow based on the data coming in the purchaseStream stream
-    scheduleWorkflow(
-      Schedules.builder("DataSchedule")
-        .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
-        .setMaxConcurrentRuns(1)
-        .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
-      "PurchaseHistoryWorkflow"
     );
 
     createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties("History dataset"));
