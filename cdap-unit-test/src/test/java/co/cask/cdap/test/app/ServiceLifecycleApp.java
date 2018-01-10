@@ -31,6 +31,7 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.service.ServiceLifeCycleTestRun;
 import com.google.common.base.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

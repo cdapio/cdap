@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -39,7 +40,6 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
@@ -80,7 +80,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            @Nullable PluginInstantiator pluginInstantiator,
                            SecureStore secureStore, SecureStoreManager secureStoreManager,
                            MessagingService messagingService,
-                           DefaultArtifactManager defaultArtifactManager) {
+                           ArtifactManager artifactManager) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -89,7 +89,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
     this.contextFactory = createContextFactory(program, programOptions, instanceId, this.instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                               messagingService, defaultArtifactManager);
+                                               messagingService, artifactManager);
     this.context = contextFactory.create(null);
   }
 
@@ -139,11 +139,11 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               SecureStore secureStore,
                                                               SecureStoreManager secureStoreManager,
                                                               MessagingService messagingService,
-                                                              DefaultArtifactManager defaultArtifactManager) {
+                                                              ArtifactManager artifactManager) {
     return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                               messagingService, defaultArtifactManager);
+                                               messagingService, artifactManager);
   }
 
   /**

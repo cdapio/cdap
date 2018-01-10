@@ -24,6 +24,8 @@ import co.cask.cdap.flow.stream.FlowStreamIntegrationTestRun;
 import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
 import co.cask.cdap.service.FileUploadServiceTestRun;
+import co.cask.cdap.service.ServiceArtifactTestRun;
+import co.cask.cdap.service.ServiceLifeCycleTestRun;
 import co.cask.cdap.spark.SparkFileSetTestRun;
 import co.cask.cdap.spark.SparkStreamingTestRun;
 import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
@@ -31,7 +33,6 @@ import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
 import co.cask.cdap.spark.stream.SparkStreamIntegrationTestRun;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.app.ServiceLifeCycleTestRun;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
 import co.cask.cdap.test.messaging.MessagingAppTestRun;
 import org.junit.ClassRule;
@@ -53,6 +54,7 @@ import org.junit.runners.Suite;
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
   MessagingAppTestRun.class,
+  ServiceArtifactTestRun.class,
   ServiceLifeCycleTestRun.class,
   SparkFileSetTestRun.class,
   SparkMetricsIntegrationTestRun.class,

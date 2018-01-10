@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -28,6 +29,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import co.cask.cdap.internal.app.runtime.artifact.LocalArtifactManager;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.InMemoryFlowProgramRunner;
@@ -92,6 +95,13 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind ProgramStateWriter
     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
     expose(ProgramStateWriter.class);
+
+    // Bind the ArtifactManager implementation and expose it.
+    // It could used by ProgramRunner loaded through runtime extension.
+    install(new FactoryModuleBuilder()
+              .implement(ArtifactManager.class, LocalArtifactManager.class)
+              .build(ArtifactManagerFactory.class));
+    expose(ArtifactManagerFactory.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
