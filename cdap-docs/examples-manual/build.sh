@@ -151,7 +151,7 @@ function download_includes() {
 
   test_an_include 4626aaec1bbc5bdbfd1de28cc721ec76 ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
 
-  test_an_include a8afaa78608768231ccf0369c7c147d0 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
+  test_an_include 8d6bea3f2e94c8d49370858a32c64922 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
   test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
