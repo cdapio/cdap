@@ -33,7 +33,7 @@ import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.stream.ForwardingStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -53,7 +53,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
   private final QueueClientFactory queueClientFactory;
   private final StreamConsumerFactory streamConsumerFactory;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final ProgramId programId;
+  private final Id.Program programId;
   private final LineageWriter lineageWriter;
   private volatile ProgramContext programContext;
 
@@ -68,7 +68,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
     this.datasetCache = datasetCache;
-    this.programId = program.getId();
+    this.programId = program.getId().toId();
     this.lineageWriter = lineageWriter;
   }
 
@@ -122,7 +122,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
 
   @Override
   public StreamConsumer createStreamConsumer(StreamId streamName, ConsumerConfig consumerConfig) throws IOException {
-    String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
+    String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
     final StreamConsumer consumer = streamConsumerFactory.create(streamName, namespace, consumerConfig);
 
     datasetCache.addExtraTransactionAware(consumer);

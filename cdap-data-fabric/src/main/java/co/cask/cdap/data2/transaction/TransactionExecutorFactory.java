@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import com.google.common.base.Supplier;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
 
@@ -27,11 +28,5 @@ import org.apache.tephra.TransactionExecutor;
  */
 public interface TransactionExecutorFactory extends org.apache.tephra.TransactionExecutorFactory {
 
-  /**
-   * Creates a new {@link TransactionExecutor}.
-   *
-   * @param txContextFactory the {@link TransactionContextFactory} for creating new {@link TransactionContext}.
-   * @return a new instance of {@link TransactionExecutor}.
-   */
-  TransactionExecutor createExecutor(TransactionContextFactory txContextFactory);
+  TransactionExecutor createExecutor(Supplier<TransactionContext> txContextSupplier);
 }
