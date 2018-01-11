@@ -18,17 +18,13 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.http.AbstractHttpHandler;
-import co.cask.http.BodyConsumer;
 import co.cask.http.ChannelPipelineModifier;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -65,15 +61,12 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -101,10 +94,6 @@ import javax.ws.rs.PathParam;
  * Tests Netty Router.
  */
 public abstract class NettyRouterTestBase {
-
-  @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-
   static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
 
@@ -712,19 +701,6 @@ public abstract class NettyRouterTestBase {
           //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
         }
         chunkResponder.close();
-      }
-
-      @POST
-      @Path("/v2/upload")
-      public BodyConsumer upload2(HttpRequest request, HttpResponder responder) throws Exception {
-        // Functionally the same as the upload() above, but use BodyConsumer instead.
-        // This is for testing the handling of Expect: 100-continue header
-        return new AbstractBodyConsumer(TEMP_FOLDER.newFile()) {
-          @Override
-          protected void onFinish(HttpResponder responder, File file) throws Exception {
-            responder.sendFile(file);
-          }
-        };
       }
     }
   }
