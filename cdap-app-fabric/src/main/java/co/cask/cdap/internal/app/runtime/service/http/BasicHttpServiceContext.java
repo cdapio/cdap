@@ -89,7 +89,8 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
     this.artifactManager = artifactManager;
   }
 
-  public static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec, int instanceId) {
+  private static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec,
+                                                       int instanceId) {
     Map<String, String> tags = new HashMap<>();
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
     if (spec != null) {

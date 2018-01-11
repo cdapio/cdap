@@ -119,7 +119,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, Closeable {
+  PluginContext, MessagingContext, Closeable, TaskExecutor {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -555,6 +555,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
+  @Override
   public void execute(ThrowingRunnable runnable) throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
@@ -567,6 +568,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
+  @Override
   public <T> T execute(Callable<T> callable) throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {

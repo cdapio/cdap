@@ -16,14 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 import org.apache.twill.common.Cancellable;
 
 /**
  * Context object for carrying context information used by generated handler delegator classes.
  *
- * @param <T> Type of the user http service handler
+ * @param <T> Type of the user {@link HttpServiceHandler}
  */
-public interface DelegatorContext<T> {
+public interface DelegatorContext<T extends HttpServiceHandler> {
 
   /**
    * Returns an instance of the user service handler.
@@ -33,19 +35,19 @@ public interface DelegatorContext<T> {
   T getHandler();
 
   /**
-   * Returns an instance of {@link ServiceTaskExecutor} for the current thread.
-   * Calling this method multiple times from the same thread will return the same
-   * instance util {@link #capture()} is called.
+   * Returns an instance of the service context.
+   * Calling this method multiple times from the same thread will return
+   * the same instance until {@link #capture()} is called.
    */
-  ServiceTaskExecutor getServiceTaskExecutor();
+  HttpServiceContext getServiceContext();
 
   /**
    * Capture the current context. Once this method is called, the current instances of
-   * {@link ServiceTaskExecutor} and {@link ServiceTaskExecutor} associated with the caller thread
-   * will no longer be available through the {@link #getHandler()} or {@link #getServiceTaskExecutor()} methods.
+   * {@link HttpServiceHandler} and {@link HttpServiceContext} associated with the caller thread
+   * will no longer be available through the {@link #getHandler()} or {@link #getServiceContext()} methods.
    *
-   * @return a {@link Cancellable} to release the captured context so that the {@link ServiceTaskExecutor} and the
-   *         {@link ServiceTaskExecutor} will be available for the caller thread of the {@link Cancellable#cancel()}
+   * @return a {@link Cancellable} to release the captured context so that the {@link HttpServiceHandler} and
+   *         {@link HttpServiceContext} will be available for the caller thread of the {@link Cancellable#cancel()}
    *         to be reused.
    */
   Cancellable capture();

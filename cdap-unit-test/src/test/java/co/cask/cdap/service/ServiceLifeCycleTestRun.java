@@ -25,7 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
+import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -87,7 +87,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   @Test
   public void testLifecycleWithThreadTerminates() throws Exception {
     // Set the http server properties to speed up test
-    System.setProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
+    System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
 
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
@@ -124,14 +124,14 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
       // Reset the http server properties to speed up test
-      System.clearProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
+      System.clearProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
     }
   }
 
   @Test
   public void testLifecycleWithGC() throws Exception {
     // Set the http server properties to speed up test
-    System.setProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
+    System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
 
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
@@ -180,7 +180,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
       // Reset the http server properties to speed up test
-      System.clearProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
+      System.clearProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
     }
   }
 

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpContentProducer;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -49,7 +50,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
   private final HttpResponder responder;
   private final BodyProducerFactory bodyProducerFactory;
-  private final ServiceTaskExecutor taskExecutor;
+  private final HttpServiceContext serviceContext;
   private final MetricsContext metricsContext;
   private BufferedResponse bufferedResponse;
   private boolean closed;
@@ -60,9 +61,9 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
    * @param responder the responder which will be bound to
    */
   public DelayedHttpServiceResponder(HttpResponder responder, BodyProducerFactory bodyProducerFactory,
-                                     ServiceTaskExecutor taskExecutor, MetricsContext metricsContext) {
+                                     HttpServiceContext serviceContext, MetricsContext metricsContext) {
     this.responder = responder;
-    this.taskExecutor = taskExecutor;
+    this.serviceContext = serviceContext;
     this.metricsContext = metricsContext;
     this.bodyProducerFactory = bodyProducerFactory;
   }
@@ -74,7 +75,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   DelayedHttpServiceResponder(DelayedHttpServiceResponder other, BodyProducerFactory bodyProducerFactory) {
     this.responder = other.responder;
     this.bodyProducerFactory = bodyProducerFactory;
-    this.taskExecutor = other.taskExecutor;
+    this.serviceContext = other.serviceContext;
     this.metricsContext = other.metricsContext;
     this.bufferedResponse = other.bufferedResponse;
   }
@@ -151,7 +152,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
       if (contentProducer != null) {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
-                              bodyProducerFactory.create(contentProducer, taskExecutor),
+                              bodyProducerFactory.create(contentProducer, serviceContext),
                               headers);
       } else {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),

@@ -16,8 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.service.http.HttpContentProducer;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
@@ -34,42 +36,54 @@ final class BodyProducerAdapter extends BodyProducer {
   private static final Logger LOG = LoggerFactory.getLogger(BodyProducerAdapter.class);
 
   private final HttpContentProducer delegate;
-  private final ServiceTaskExecutor taskExecutor;
+  private final ClassLoader programContextClassloader;
+  private final Transactional transactional;
   private final Cancellable contextReleaser;
-  private final boolean useTxOnFinish;
-  private final boolean useTxOnError;
+  private final TransactionControl onFinishTxControl;
+  private final TransactionControl onErrorTxControl;
 
   private boolean completed;
 
-  BodyProducerAdapter(HttpContentProducer delegate, ServiceTaskExecutor taskExecutor,
-                      Cancellable contextReleaser, TransactionControl defaultTxControl) {
+  BodyProducerAdapter(HttpContentProducer delegate, Transactional transactional,
+                      ClassLoader programContextClassLoader, Cancellable contextReleaser,
+                      TransactionControl defaultTxControl) {
     this.delegate = delegate;
-    this.taskExecutor = taskExecutor;
+    this.programContextClassloader = programContextClassLoader;
+    this.transactional = transactional;
     this.contextReleaser = contextReleaser;
-    this.useTxOnFinish = Transactions.getTransactionControl(
-      defaultTxControl, HttpContentProducer.class, delegate, "onFinish") == TransactionControl.IMPLICIT;
-    this.useTxOnError = Transactions.getTransactionControl(
-      defaultTxControl, HttpContentProducer.class, delegate, "onError", Throwable.class) == TransactionControl.IMPLICIT;
+    this.onFinishTxControl = Transactions.getTransactionControl(defaultTxControl, HttpContentProducer.class,
+                                                                delegate, "onFinish");
+    this.onErrorTxControl = Transactions.getTransactionControl(defaultTxControl, HttpContentProducer.class,
+                                                               delegate, "onError", Throwable.class);
   }
 
   @Override
   public long getContentLength() {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassloader);
     try {
-      return taskExecutor.execute(delegate::getContentLength, false);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      return delegate.getContentLength();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 
   @Override
   public ByteBuf nextChunk() throws Exception {
-    return taskExecutor.execute(() -> Unpooled.copiedBuffer(delegate.nextChunk(taskExecutor.getTransactional())),
-                                false);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassloader);
+    try {
+      return Unpooled.copiedBuffer(delegate.nextChunk(transactional));
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
   @Override
   public void finished() throws Exception {
-    taskExecutor.execute(delegate::onFinish, useTxOnFinish);
+    if (TransactionControl.IMPLICIT == onFinishTxControl) {
+      transactional.execute(context -> delegate.onFinish());
+    } else {
+      delegate.onFinish();
+    }
 
     try {
       contextReleaser.cancel();
@@ -87,7 +101,11 @@ final class BodyProducerAdapter extends BodyProducer {
     // To the HttpContentProducer, if there is error, no other methods will be triggered
     completed = true;
     try {
-      taskExecutor.execute(() -> delegate.onError(throwable), useTxOnError);
+      if (TransactionControl.IMPLICIT == onErrorTxControl) {
+        transactional.execute(context -> delegate.onError(throwable));
+      } else {
+        delegate.onError(throwable);
+      }
     } catch (Throwable t) {
       throwable.addSuppressed(t);
       // nothing much can be done. Simply emit a debug log.
