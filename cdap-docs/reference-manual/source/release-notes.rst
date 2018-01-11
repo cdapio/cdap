@@ -51,17 +51,17 @@ Bug Fixes
 
 - :cask-issue:`CDAP-12774` - Increased the dataset changeset size and limit to integer max by default.
 
-- :cask-issue:`CDAP-12900` - Fixed bug where macro for output schema of a node was not saved when the user closed the node properties modal.
+- :cask-issue:`CDAP-12900` - Fixed a bug where macro for output schema of a node was not saved when the user closed the node properties modal.
 
-- :cask-issue:`CDAP-12930` - Fixed a bug where explore queries would fail against paths in hdfs encryption zones, for certain hadoop distributions.
+- :cask-issue:`CDAP-12930` - Fixed a bug where explore queries would fail against paths in HDFS encryption zones, for certain Hadoop distributions.
 
-- :cask-issue:`CDAP-12945` - Fixed bug where old connection was not removed from the pipeline config when we moved that connection's pointer to another node.
+- :cask-issue:`CDAP-12945` - Fixed a bug where the old connection is not removed from the pipeline config when you move the connection's pointer to another node.
 
 - :cask-issue:`CDAP-12946` - Fixed a bug in the pipeline planner where pipelines that used an action before multiple sources would either fail to deploy or deploy with an incorrect plan.
 
 - :cask-issue:`CDAP-12970` - Fixed a dependency bug that could cause HBase region servers to deadlock during a cold start.
 
-- :cask-issue:`CDAP-13002` - Fixes an issue with the retrieval of non-ASCII strings from Table datasets.
+- :cask-issue:`CDAP-13002` - Fixed an issue with the retrieval of non-ASCII strings from Table datasets.
 
 - :cask-issue:`CDAP-13021` - Messaging table coprocessor now gets upgraded when the underlying HBase version is changed without any change in the CDAP version.
 
