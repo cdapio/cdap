@@ -636,7 +636,7 @@ cdap_set_spark_compat_with_spark_shell() {
 cdap_set_spark_compat() {
   local __output=${1}
   SPARK_VERSION=$(echo -e "${__output}" | grep "^sparkVersion=" | cut -d= -f2)
-  SPARK_MAJOR_VERSION=$(echo ${SPARK_VERSION} | cut -d. -f1)
+  SPARK_MAJOR_VERSION=${SPARK_MAJOR_VERSION:-$(echo ${SPARK_VERSION} | cut -d. -f1)}
   SCALA_VERSION=$(echo -e "${__output}" | grep "^scalaVersion=" | cut -d= -f2)
   SCALA_MAJOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f1)
   SCALA_MINOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f2)
