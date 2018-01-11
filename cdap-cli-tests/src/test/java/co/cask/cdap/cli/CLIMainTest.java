@@ -510,24 +510,26 @@ public class CLIMainTest extends CLITestBase {
     String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started service");
-    assertProgramStatus(programClient, service, "RUNNING");
-    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
-                              "bacon:testBody");
-    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
-    assertProgramStatus(programClient, service, "STOPPED");
+    try {
+      assertProgramStatus(programClient, service, "RUNNING");
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
+                                "bacon:testBody");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+      assertProgramStatus(programClient, service, "STOPPED");
 
-    Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
-    String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
-    String runtimeArgs2KV = SPACE_EQUALS_JOINER.join(runtimeArgs2);
-    testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
-                              "Successfully set runtime args");
-    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
-    assertProgramStatus(programClient, service, "RUNNING");
-    testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgs2Json);
-    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
-                              "chickenz:testBody");
-    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
-    assertProgramStatus(programClient, service, "STOPPED");
+      Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
+      String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
+      String runtimeArgs2KV = SPACE_EQUALS_JOINER.join(runtimeArgs2);
+      testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
+                                "Successfully set runtime args");
+      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
+      testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgs2Json);
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
+                                "chickenz:testBody");
+    } finally {
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+      assertProgramStatus(programClient, service, "STOPPED");
+    }
   }
 
   @Test
