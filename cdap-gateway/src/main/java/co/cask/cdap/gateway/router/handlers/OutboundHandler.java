@@ -36,7 +36,6 @@ public class OutboundHandler extends ChannelDuplexHandler {
 
   private final Channel inboundChannel;
   private boolean requestInProgress;
-  private boolean closeByIdle;
 
   public OutboundHandler(Channel inboundChannel) {
     this.inboundChannel = inboundChannel;
@@ -89,8 +88,8 @@ public class OutboundHandler extends ChannelDuplexHandler {
 
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-    // Close the inbound channel if the close event is not due to internal connection idle
-    if (!closeByIdle) {
+    // If the request is in progress and the outbound connection get dropped, close the inbound connection as well
+    if (requestInProgress) {
       Channels.closeOnFlush(inboundChannel);
     }
     ctx.fireChannelInactive();
@@ -110,7 +109,6 @@ public class OutboundHandler extends ChannelDuplexHandler {
         // No data has been sent or received for a while. Close channel.
         Channel channel = ctx.channel();
         channel.close();
-        closeByIdle = true;
         LOG.trace("No data has been sent or received for channel '{}' for more than the configured idle timeout. " +
                     "Closing the channel. Local Address: {}, Remote Address: {}",
                   channel, channel.localAddress(), channel.remoteAddress());
