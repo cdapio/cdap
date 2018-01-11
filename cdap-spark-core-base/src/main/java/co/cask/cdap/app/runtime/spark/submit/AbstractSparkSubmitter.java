@@ -46,7 +46,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 
 /**
  * Provides common implementation for different {@link SparkSubmitter}.
@@ -194,9 +193,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
-    BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
-    configs.forEach(confAdder);
-    getSubmitConf().forEach(confAdder);
+    for (Map.Entry<String, String> entry : configs.entrySet()) {
+      builder.add("--conf").add(entry.getKey() + "=" + entry.getValue());
+    }
+
+    for (Map.Entry<String, String> entry : getSubmitConf().entrySet()) {
+      builder.add("--conf").add(entry.getKey() + "=" + entry.getValue());
+    }
 
     String archives = Joiner.on(',')
       .join(Iterables.transform(Iterables.filter(resources, ARCHIVE_FILTER), RESOURCE_TO_PATH));

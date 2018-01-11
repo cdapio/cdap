@@ -26,9 +26,8 @@ import scala.collection.JavaConversions._
 /**
   * Spark2 DelegatingSparkListener, which override new 'onOtherEvent' method.
   */
-class DelegatingSparkListener extends DelegatingSparkListenerTrait {
+class DelegatingSparkListener(override val sparkListeners: util.Collection[SparkListener])
+  extends DelegatingSparkListenerTrait {
 
   override def onOtherEvent(event: SparkListenerEvent) = sparkListeners.foreach(_.onOtherEvent(event))
-
-  override def sparkListeners: Seq[SparkListener] = SparkRuntimeEnv.getSparkListeners()
 }

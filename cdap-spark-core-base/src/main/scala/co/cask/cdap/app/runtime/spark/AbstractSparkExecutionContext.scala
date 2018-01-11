@@ -126,7 +126,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     case _: ClassNotFoundException => // no-op
   }
 
-  // Add a SparkListener for events from SparkContext.
+  // Attach a listener to the SparkContextCache, which will in turn listening to events from SparkContext.
   SparkRuntimeEnv.addSparkListener(new SparkListener {
 
     override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) = applicationEndLatch.countDown
@@ -365,11 +365,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   override def getDataTracer(tracerName: String): DataTracer = new SparkDataTracer(runtimeContext, tracerName)
 
-  override def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo] =
-    Option(runtimeContext.getTriggeringScheduleInfo)
-
-  override def toJavaSparkExecutionContext() =
-    sparkClassLoader.createJavaExecutionContext(new SerializableSparkExecutionContext(this));
+  override def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo] = Option(runtimeContext.getTriggeringScheduleInfo)
 
   /**
     * Returns a [[org.apache.spark.broadcast.Broadcast]] of [[java.net.URI]] for

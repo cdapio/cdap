@@ -34,13 +34,17 @@ import org.apache.spark.scheduler.SparkListenerTaskGettingResult
 import org.apache.spark.scheduler.SparkListenerTaskStart
 import org.apache.spark.scheduler.SparkListenerUnpersistRDD
 
+import java.util
+
+import scala.collection.JavaConversions._
+
 /**
   * Common logic across Spark1 and Spark2 for a SparkListener. Delegates all methods to a list of delegates.
   * The list may be mutated outside of this class.
   */
 trait DelegatingSparkListenerTrait extends SparkListener {
 
-  def sparkListeners: Seq[SparkListener]
+  def sparkListeners: util.Collection[SparkListener]
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted) =
     sparkListeners.foreach(_.onStageCompleted(stageCompleted))

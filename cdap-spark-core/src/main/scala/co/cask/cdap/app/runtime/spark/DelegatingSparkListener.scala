@@ -19,16 +19,15 @@ package co.cask.cdap.app.runtime.spark
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.scheduler.SparkListenerEvent
 
+import java.util
+
 /**
   * Spark1 DelegatingSparkListener, which adds a 'onOtherEvent' method for a specific cdh version of spark.
   */
-class DelegatingSparkListener extends DelegatingSparkListenerTrait {
+class DelegatingSparkListener(override val sparkListeners: util.Collection[SparkListener])
+  extends DelegatingSparkListenerTrait {
   
   def onOtherEvent(event: SparkListenerEvent) = {
     // no-op
-  }
-
-  override def sparkListeners: Seq[SparkListener] = {
-    SparkRuntimeEnv.getSparkListeners()
   }
 }

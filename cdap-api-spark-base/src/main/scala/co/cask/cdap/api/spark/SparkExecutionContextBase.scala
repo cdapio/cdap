@@ -301,9 +301,4 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional {
     *         not launched by a schedule
     */
   def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo]
-
-  /**
-    * Returns a new instance of [[co.cask.cdap.api.spark.JavaSparkExecutionContext]].
-    */
-  def toJavaSparkExecutionContext(): JavaSparkExecutionContext
 }

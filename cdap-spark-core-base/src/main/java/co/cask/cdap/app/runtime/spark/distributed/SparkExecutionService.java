@@ -248,7 +248,10 @@ public final class SparkExecutionService extends AbstractIdleService {
       }
 
       try (Reader reader = new InputStreamReader(new ByteBufInputStream(requestBody), StandardCharsets.UTF_8)) {
-        GSON.<Map<String, String>>fromJson(reader, TOKEN_TYPE).forEach(workflowToken::put);
+        Map<String, String> token = GSON.fromJson(reader, TOKEN_TYPE);
+        for (Map.Entry<String, String> entry : token.entrySet()) {
+          workflowToken.put(entry.getKey(), entry.getValue());
+        }
       } catch (IOException e) {
         // Shouldn't happen, since all reading is from in-memory buffer
         LOG.warn("Exception when deocoding workflow token update request for {}", programRunId, e);
