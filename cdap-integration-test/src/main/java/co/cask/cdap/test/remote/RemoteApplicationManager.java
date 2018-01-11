@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -36,6 +37,7 @@ import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
+import co.cask.cdap.test.DefaultSparkManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -78,7 +80,8 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public SparkManager getSparkManager(String jobName) {
-    return new RemoteSparkManager(application.spark(jobName), this, clientConfig, restClient);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.SPARK, jobName);
+    return new DefaultSparkManager(programId, this);
   }
 
   @Override

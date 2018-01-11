@@ -28,7 +28,6 @@ import java.lang.Thread.UncaughtExceptionHandler
 import java.util
 import java.util.Properties
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import javax.annotation.Nullable
@@ -50,7 +49,6 @@ object SparkRuntimeEnv {
   private val LOG = LoggerFactory.getLogger(SparkRuntimeEnv.getClass)
   private var stopped = false
   private val properties = new Properties
-  private val sparkContextLatch = new CountDownLatch(1)
   private var sparkContext: Option[SparkContext] = None
   private var streamingContext: Option[StreamingContext] = None
   private val batchedWALs = new mutable.ListBuffer[AnyRef]
@@ -115,7 +113,6 @@ object SparkRuntimeEnv {
       }
 
       sparkContext = Some(context)
-      sparkContextLatch.countDown()
     }
 
     // For Spark 1.2, it doesn't support `spark.extraListeners` setting.
@@ -202,16 +199,6 @@ object SparkRuntimeEnv {
     this.synchronized {
       sparkContext.getOrElse(throw new IllegalStateException("SparkContext is not available"))
     }
-  }
-
-  /**
-    * Waits for the current [[org.apache.spark.SparkContext]] to be available and returns it. Note that this method
-    * shouldn't be called from the same thread that the [[org.apache.spark.SparkContext]] is being constructed,
-    * otherwise deadlock might occur.
-    */
-  def waitForContext: SparkContext = {
-    sparkContextLatch.await()
-    getContext
   }
 
   /**

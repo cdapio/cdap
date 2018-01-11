@@ -39,7 +39,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
- * Extract the endpoints exposed by http service handler.
+ * Extract the endpoints exposed by a {@link HttpServiceHandler}.
  */
 public final class ServiceEndpointExtractor extends MethodVisitor {
   private final List<ServiceHttpEndpoint> endpoints;

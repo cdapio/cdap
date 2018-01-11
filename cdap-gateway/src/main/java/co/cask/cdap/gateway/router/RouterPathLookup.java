@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.commons.lang.StringUtils;
@@ -79,34 +78,22 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     return APP_FABRIC_HTTP;
   }
 
-  private boolean isUserServiceType(String uriPart) {
-    for (ProgramType type : ServiceDiscoverable.getUserServiceTypes()) {
-      if (type.getCategoryName().equals(uriPart)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
-    } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(uriParts[7])
+    } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && "services".equals(uriParts[7])
       && "methods".equals(uriParts[9])) {
       // User defined services (version specific) handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}/services/{service-id}/methods/
       //       <user-defined-method-path>"
-      String serviceName = ServiceDiscoverable.getName(uriParts[2], uriParts[4],
-                                                       ProgramType.valueOfCategoryName(uriParts[7]), uriParts[8]);
+      String serviceName = ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[8]);
       String version = uriParts[6];
       return new RouteDestination(serviceName, version);
-    } else if ((uriParts.length >= 9) && isUserServiceType(uriParts[5]) && "methods".equals(uriParts[7])) {
+    } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-      return new RouteDestination(ServiceDiscoverable.getName(uriParts[2], uriParts[4],
-                                                              ProgramType.valueOfCategoryName(uriParts[5]),
-                                                              uriParts[6]));
+      return new RouteDestination(ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[6]));
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return METRICS;

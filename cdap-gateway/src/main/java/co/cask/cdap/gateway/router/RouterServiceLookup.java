@@ -198,7 +198,7 @@ public class RouterServiceLookup {
     String serviceName = routeDestination.getServiceName();
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(serviceName);
 
-    EndpointStrategy endpointStrategy = ServiceDiscoverable.isUserService(serviceName) ?
+    EndpointStrategy endpointStrategy = ServiceDiscoverable.isServiceDiscoverable(serviceName) ?
       new UserServiceEndpointStrategy(serviceDiscovered, routeStore, ServiceDiscoverable.getId(serviceName),
                                       fallbackStrategy, routeDestination.getVersion()) :
       new RandomEndpointStrategy(serviceDiscovered);

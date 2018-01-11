@@ -21,11 +21,9 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.PropertyProvider;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -45,7 +43,6 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final Resources clientResources;
   private final Resources driverResources;
   private final Resources executorResources;
-  private final List<SparkHttpServiceHandlerSpecification> handlers;
 
   public SparkSpecification(String className, String name, String description,
                             @Nullable String mainClassName,
@@ -53,8 +50,7 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
                             Map<String, String> properties,
                             @Nullable Resources clientResources,
                             @Nullable Resources driverResources,
-                            @Nullable Resources executorResources,
-                            List<SparkHttpServiceHandlerSpecification> handlers) {
+                            @Nullable Resources executorResources) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -64,7 +60,6 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
     this.clientResources = clientResources;
     this.driverResources = driverResources;
     this.executorResources = executorResources;
-    this.handlers = Collections.unmodifiableList(new ArrayList<>(handlers));
   }
 
   @Override
@@ -131,12 +126,5 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   @Nullable
   public Resources getExecutorResources() {
     return executorResources;
-  }
-
-  /**
-   * @return a {@link List} of {@link SparkHttpServiceHandlerSpecification} defined for the Spark program.
-   */
-  public List<SparkHttpServiceHandlerSpecification> getHandlers() {
-    return handlers;
   }
 }

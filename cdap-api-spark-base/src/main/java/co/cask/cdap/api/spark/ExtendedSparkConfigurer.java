@@ -17,9 +17,6 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.spark.dynamic.SparkCompiler;
-import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
-
-import java.util.Arrays;
 
 /**
  * Extends the functionality of {@link SparkConfigurer} to provide more spark specific feature at configuration time.
@@ -32,20 +29,4 @@ public interface ExtendedSparkConfigurer extends SparkConfigurer {
    * @return a new instance of {@link SparkCompiler}.
    */
   SparkCompiler createSparkCompiler();
-
-  /**
-   * Adds a list of {@link SparkHttpServiceHandler}s to runs in the Spark driver.
-   *
-   * @see SparkHttpServiceHandler
-   */
-  default void addHandlers(SparkHttpServiceHandler...handlers) {
-    addHandlers(Arrays.asList(handlers));
-  }
-
-  /**
-   * Adds a list of {@link SparkHttpServiceHandler}s to runs in the Spark driver.
-   *
-   * @see SparkHttpServiceHandler
-   */
-  void addHandlers(Iterable<? extends SparkHttpServiceHandler> handlers);
 }

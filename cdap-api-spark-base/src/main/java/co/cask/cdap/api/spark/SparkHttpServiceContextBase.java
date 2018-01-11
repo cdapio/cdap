@@ -14,24 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
-
-import co.cask.cdap.api.spark.AbstractExtendedSpark
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkMain
-import org.apache.spark.SparkContext
+package co.cask.cdap.api.spark;
 
 /**
-  *
-  */
-class ScalaSparkServiceProgram extends AbstractExtendedSpark with SparkMain {
+ * Base context interface for Spark http service to interact with CDAP.
+ */
+public interface SparkHttpServiceContextBase {
 
-  override protected def configure() = {
-    setMainClass(classOf[ScalaSparkServiceProgram])
-    addHandlers(new ScalaSparkServiceHandler)
-  }
-
-  override def run(implicit sec: SparkExecutionContext): Unit = {
-    new SparkContext()
-  }
+  /**
+   * Returns the {@link SparkExecutionContext} for interacting with CDAP.
+   */
+  SparkExecutionContext getSparkExecutionContext();
 }

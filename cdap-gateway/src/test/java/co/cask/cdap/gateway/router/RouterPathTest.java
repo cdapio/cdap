@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableList;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -27,8 +26,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.EnumSet;
 
 /**
  *  To test the RouterPathLookup regular expression tests.
@@ -47,21 +44,19 @@ public class RouterPathTest {
 
   @Test
   public void testUserServicePath() {
-    for (ProgramType programType : EnumSet.of(ProgramType.SERVICE, ProgramType.SPARK)) {
-      String path = "/v3/namespaces/n1/apps/a1/" + programType.getCategoryName() + "/s1/methods/m1";
-      HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
-      RouteDestination result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
-      Assert.assertEquals(ServiceDiscoverable.getName("n1", "a1", programType, "s1"), result.getServiceName());
-      Assert.assertTrue(ServiceDiscoverable.isUserService(result.getServiceName()));
-      Assert.assertNull(result.getVersion());
+    String path = "/v3/namespaces/n1/apps/a1/services/s1/methods/m1";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    RouteDestination result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(ServiceDiscoverable.getName("n1", "a1", "s1"), result.getServiceName());
+    Assert.assertTrue(ServiceDiscoverable.isServiceDiscoverable(result.getServiceName()));
+    Assert.assertNull(result.getVersion());
 
-      path = "/v3/namespaces/n1/apps/a1/versions/v1/" + programType.getCategoryName() + "/s1/methods/m1";
-      httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
-      result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
-      Assert.assertEquals(ServiceDiscoverable.getName("n1", "a1", programType, "s1"), result.getServiceName());
-      Assert.assertTrue(ServiceDiscoverable.isUserService(result.getServiceName()));
-      Assert.assertEquals("v1", result.getVersion());
-    }
+    path = "/v3/namespaces/n1/apps/a1/versions/v1/services/s1/methods/m1";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(ServiceDiscoverable.getName("n1", "a1", "s1"), result.getServiceName());
+    Assert.assertTrue(ServiceDiscoverable.isServiceDiscoverable(result.getServiceName()));
+    Assert.assertEquals("v1", result.getVersion());
   }
 
   @Test

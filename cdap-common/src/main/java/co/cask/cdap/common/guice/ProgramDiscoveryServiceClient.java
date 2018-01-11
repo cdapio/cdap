@@ -48,8 +48,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
   private enum DiscoverableProgramType {
     WORKFLOW,
     WEBAPP,
-    SERVICE,
-    SPARK;
+    SERVICE;
 
     private final String prefix;
 
@@ -92,7 +91,8 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
     return new CacheLoader<String, DiscoveryServiceClient>() {
       @Override
       public DiscoveryServiceClient load(String key) throws Exception {
-        String ns = String.format("%s/%s", twillNamespace, key);
+        int idx = key.indexOf('.');  // It must be found as checked in the discover method
+        String ns = String.format("%s/%s%s", twillNamespace, key.substring(0, idx), key.substring(idx));
         LOG.debug("Create ZKDiscoveryClient for " + ns);
         return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
       }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -27,12 +26,10 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -57,21 +54,14 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +70,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -171,13 +160,12 @@ public final class SparkRuntimeContextProvider {
 
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), contextConfig.getProgramOptions());
 
-      Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class),
-                                                          contextConfig.getProgramOptions());
-      ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-      KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
-      MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-      StreamCoordinatorClient streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
-      SparkServiceAnnouncer serviceAnnouncer = injector.getInstance(SparkServiceAnnouncer.class);
+      final Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class),
+                                                                contextConfig.getProgramOptions());
+      final ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
+      final KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
+      final MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+      final StreamCoordinatorClient streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
 
       // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
       // of the spark executor, hence there should be exactly one instance only.
@@ -189,7 +177,6 @@ public final class SparkRuntimeContextProvider {
         public void run() {
           // The logger may already been shutdown. Use System.out/err instead
           System.out.println("Shutting SparkClassLoader services");
-          serviceAnnouncer.close();
           Future<List<ListenableFuture<Service.State>>> future = Services.chainStop(logAppenderService,
                                                                                     streamCoordinatorClient,
                                                                                     metricsCollectionService,
@@ -238,8 +225,7 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(SecureStoreManager.class),
         injector.getInstance(AuthorizationEnforcer.class),
         injector.getInstance(AuthenticationContext.class),
-        injector.getInstance(MessagingService.class),
-        serviceAnnouncer
+        injector.getInstance(MessagingService.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
@@ -341,38 +327,6 @@ public final class SparkRuntimeContextProvider {
       } catch (Throwable t) {
         notifyFailed(t);
       }
-    }
-  }
-
-  /**
-   * The {@link ServiceAnnouncer} for announcing user Spark http service.
-   */
-  private static final class SparkServiceAnnouncer implements ServiceAnnouncer, AutoCloseable {
-
-    private final ZKDiscoveryService discoveryService;
-
-    @Inject
-    SparkServiceAnnouncer(CConfiguration cConf, ZKClient zKclient, ProgramId programId) {
-      // Use the ZK path that points to the Twill application of the Spark client.
-      String ns = String.format("%s/%s", cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE),
-                                ServiceDiscoverable.getName(programId));
-      this.discoveryService = new ZKDiscoveryService(ZKClients.namespace(zKclient, ns));
-    }
-
-    @Override
-    public Cancellable announce(String serviceName, int port) {
-      return announce(serviceName, port, Bytes.EMPTY_BYTE_ARRAY);
-    }
-
-    @Override
-    public Cancellable announce(String serviceName, int port, byte[] payload) {
-      Discoverable discoverable = new Discoverable(serviceName, new InetSocketAddress(getHostname(), port), payload);
-      return discoveryService.register(discoverable);
-    }
-
-    @Override
-    public void close() {
-      discoveryService.close();
     }
   }
 

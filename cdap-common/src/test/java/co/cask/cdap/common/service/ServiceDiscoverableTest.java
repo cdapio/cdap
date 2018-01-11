@@ -31,8 +31,8 @@ public class ServiceDiscoverableTest {
     ProgramId serviceId = new ApplicationId("ns", "app").service("s1");
     String discoverableName = ServiceDiscoverable.getName(serviceId);
     Assert.assertEquals("service.ns.app.s1", discoverableName);
-    Assert.assertTrue(ServiceDiscoverable.isUserService(discoverableName));
-    Assert.assertFalse(ServiceDiscoverable.isUserService("service1."));
+    Assert.assertTrue(ServiceDiscoverable.isServiceDiscoverable(discoverableName));
+    Assert.assertFalse(ServiceDiscoverable.isServiceDiscoverable("service1."));
     Assert.assertEquals(serviceId, ServiceDiscoverable.getId(discoverableName));
   }
 }

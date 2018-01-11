@@ -61,7 +61,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -97,7 +96,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
-  private final ServiceAnnouncer serviceAnnouncer;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -106,7 +104,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                     MessagingService messagingService, ServiceAnnouncer serviceAnnouncer) {
+                     MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -121,7 +119,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
-    this.serviceAnnouncer = serviceAnnouncer;
   }
 
   @Override
@@ -170,7 +167,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
                                                                    authorizationEnforcer, authenticationContext,
-                                                                   messagingService, serviceAnnouncer);
+                                                                   messagingService);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

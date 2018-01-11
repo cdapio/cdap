@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package co.cask.cdap.api.spark;
 
-import co.cask.cdap.api.app.AbstractApplication;
+import org.apache.spark.SparkContext;
 
 /**
- * Testing application for Spark2.
+ * Context interface for providing access to {@link SparkContext} and CDAP functionality.
  */
-public class Spark2TestApp extends AbstractApplication {
+public interface SparkHttpServiceContext extends SparkHttpServiceContextBase {
 
-  @Override
-  public void configure() {
-    addSpark(new ScalaSparkServiceProgram());
-  }
+  /**
+   * Returns the {@link SparkContext} object created in the Spark driver.
+   */
+  SparkContext getSparkContext();
 }

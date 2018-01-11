@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -26,12 +26,18 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.cdap.internal.app.runtime.service.http.ServiceTaskExecutor;
 import co.cask.cdap.proto.Id;
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,7 +133,58 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
   }
 
   private void verifyHandlers(List<? extends HttpServiceHandler> handlers) {
-    Preconditions.checkArgument(!handlers.isEmpty(), "Service %s should have at least one handler", name);
-    new HttpHandlerFactory("", TransactionControl.IMPLICIT).validateHttpHandler(handlers);
+    Preconditions.checkArgument(!Iterables.isEmpty(handlers), "Service %s should have at least one handler", name);
+    try {
+      List<HttpHandler> httpHandlers = Lists.newArrayList();
+      for (HttpServiceHandler handler : handlers) {
+        httpHandlers.add(createHttpHandler(handler));
+      }
+
+      // Constructs a NettyHttpService, to verify that the handlers passed in by the user are valid.
+      NettyHttpService.builder("service-configurer")
+        .setHttpHandlers(httpHandlers)
+        .build();
+    } catch (Throwable t) {
+      String errMessage = String.format("Invalid handlers in service: %s.", name);
+      LOG.error(errMessage, t);
+      throw new IllegalArgumentException(errMessage, t);
+    }
+  }
+
+  private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
+    HttpHandlerFactory factory = new HttpHandlerFactory("");
+    @SuppressWarnings("unchecked")
+    TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
+    return factory.createHttpHandler(type, new VerificationDelegateContext<>(handler), new NoopMetricsContext());
+  }
+
+  private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {
+
+    private final T handler;
+
+    private VerificationDelegateContext(T handler) {
+      this.handler = handler;
+    }
+
+    @Override
+    public T getHandler() {
+      return handler;
+    }
+
+    @Override
+    public ServiceTaskExecutor getServiceTaskExecutor() {
+      // Never used. (It's only used during server runtime, which we don't verify).
+      return null;
+    }
+
+    @Override
+    public Cancellable capture() {
+      return new Cancellable() {
+        @Override
+        public void cancel() {
+          // no-op
+        }
+      };
+    }
   }
 }

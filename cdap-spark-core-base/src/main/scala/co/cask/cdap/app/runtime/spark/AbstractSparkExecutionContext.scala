@@ -29,9 +29,7 @@ import co.cask.cdap.api.messaging.MessagingContext
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 import co.cask.cdap.api.security.store.SecureStore
-import co.cask.cdap.api.spark.JavaSparkExecutionContext
 import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.SparkSpecification
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
@@ -45,8 +43,6 @@ import co.cask.cdap.app.runtime.spark.dynamic.SparkClassFileHandler
 import co.cask.cdap.app.runtime.spark.dynamic.SparkCompilerCleanupManager
 import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
-import co.cask.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
-import co.cask.cdap.app.runtime.spark.service.SparkHttpServiceServer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.common.conf.Constants
@@ -69,7 +65,6 @@ import org.apache.spark.scheduler._
 import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
-
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -80,6 +75,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -118,9 +115,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private val compilerCleanupManager = new SparkCompilerCleanupManager
   private val interpreterCount = new AtomicInteger(0)
 
-  @volatile
-  private var sparkHttpServiceServer: Option[SparkHttpServiceServer] = None
-
   // Start the Spark driver http service
   sparkDriveHttpService.startAndWait()
 
@@ -135,21 +129,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   // Add a SparkListener for events from SparkContext.
   SparkRuntimeEnv.addSparkListener(new SparkListener {
 
-    override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
-      // Start the SparkHttpServiceServer to host SparkHttpServiceHandler
-      val handlers = getSpecification.getHandlers
-      if (!handlers.isEmpty) {
-        val httpServer = new SparkHttpServiceServer(
-          runtimeContext, new DefaultSparkHttpServiceContext(AbstractSparkExecutionContext.this))
-        httpServer.startAndWait()
-        sparkHttpServiceServer = Some(httpServer)
-      }
-    }
-
-    override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-      sparkHttpServiceServer.foreach(_.stopAndWait())
-      applicationEndLatch.countDown
-    }
+    override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) = applicationEndLatch.countDown
 
     override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
       val jobId = Integer.valueOf(jobStart.jobId)
@@ -174,16 +154,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       sparkTxHandler.jobEnded(jobEnd.jobId, jobEnd.jobResult == JobSucceeded)
     }
   })
-
-  /**
-    * If the Spark program has [[co.cask.cdap.api.spark.service.SparkHttpServiceHandler]], block
-    * until the [[org.apache.spark.SparkContext]] is being closed explicitly (on shutdown).
-    */
-  def waitForSparkHttpService(): Unit = {
-    if (!getSpecification.getHandlers.isEmpty) {
-      applicationEndLatch.await()
-    }
-  }
 
   override def close() = {
     try {
@@ -398,7 +368,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   override def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo] =
     Option(runtimeContext.getTriggeringScheduleInfo)
 
-  override def toJavaSparkExecutionContext(): JavaSparkExecutionContext =
+  override def toJavaSparkExecutionContext() =
     sparkClassLoader.createJavaExecutionContext(new SerializableSparkExecutionContext(this));
 
   /**

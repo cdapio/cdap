@@ -46,7 +46,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
@@ -68,7 +67,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final LoggingContext loggingContext;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final ServiceAnnouncer serviceAnnouncer;
 
   // This is needed to maintain a strong reference while the Spark program is running,
   // since outside of this class, the spark classloader is wrapped with a WeakReferenceDelegatorClassLoader
@@ -87,7 +85,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
                       AuthenticationContext authenticationContext,
-                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer) {
+                      MessagingService messagingService) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
@@ -101,7 +99,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-    this.serviceAnnouncer = serviceAnnouncer;
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -212,13 +209,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public AuthenticationContext getAuthenticationContext() {
     return authenticationContext;
-  }
-
-  /**
-   * Returns the {@link ServiceAnnouncer} for announcing discoverables.
-   */
-  public ServiceAnnouncer getServiceAnnouncer() {
-    return serviceAnnouncer;
   }
 
   @Override

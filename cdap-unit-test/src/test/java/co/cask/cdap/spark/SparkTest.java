@@ -46,7 +46,6 @@ import co.cask.cdap.spark.app.ScalaSparkLogParser;
 import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
 import co.cask.cdap.spark.app.SparkAppUsingGetDataset;
 import co.cask.cdap.spark.app.SparkLogParser;
-import co.cask.cdap.spark.app.SparkServiceProgram;
 import co.cask.cdap.spark.app.StreamFormatSpecSpark;
 import co.cask.cdap.spark.app.StreamSQLSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
@@ -59,17 +58,14 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -80,16 +76,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -99,9 +88,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Unit-tests for testing Spark program.
@@ -393,10 +379,13 @@ public class SparkTest extends TestFrameworkTestBase {
         resultManager.flush();    // This is to start a new TX
         LOG.info("Reading from threshold result");
         try (CloseableIterator<KeyValue<byte[], byte[]>> itor = resultTable.scan(null, null)) {
-          return ImmutableSet.copyOf(Iterators.transform(itor, input -> {
-            String word = Bytes.toString(input.getKey());
-            LOG.info("{}, {}", word, Bytes.toInt(input.getValue()));
-            return word;
+          return ImmutableSet.copyOf(Iterators.transform(itor, new Function<KeyValue<byte[], byte[]>, String>() {
+            @Override
+            public String apply(KeyValue<byte[], byte[]> input) {
+              String word = Bytes.toString(input.getKey());
+              LOG.info("{}, {}", word, Bytes.toInt(input.getValue()));
+              return word;
+            }
           }));
         }
       }
@@ -410,53 +399,6 @@ public class SparkTest extends TestFrameworkTestBase {
   public void testSparkWithGetDataset() throws Exception {
     testSparkWithGetDataset(SparkAppUsingGetDataset.class, SparkLogParser.class.getSimpleName());
     testSparkWithGetDataset(SparkAppUsingGetDataset.class, ScalaSparkLogParser.class.getSimpleName());
-  }
-
-  @Test
-  public void testSparkHttpService() throws Exception {
-    ApplicationManager applicationManager = deploy(TestSparkApp.class);
-    SparkManager sparkManager = applicationManager.getSparkManager(SparkServiceProgram.class.getSimpleName()).start();
-
-    URL url = sparkManager.getServiceURL(5, TimeUnit.MINUTES);
-    Assert.assertNotNull(url);
-
-    // GET request to sum n numbers.
-    URL sumURL = url.toURI().resolve("sum?n=" + Joiner.on("&n=").join(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)).toURL();
-    HttpURLConnection urlConn = (HttpURLConnection) sumURL.openConnection();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, urlConn.getResponseCode());
-    try (InputStream is = urlConn.getInputStream()) {
-      Assert.assertEquals(55, Integer.parseInt(new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8)));
-    }
-
-    URL wordcountURL = url.toURI().resolve("wordcount").toURL();
-    urlConn = (HttpURLConnection) wordcountURL.openConnection();
-
-    // POST lines of sentences
-    urlConn.setDoOutput(true);
-    urlConn.setChunkedStreamingMode(10);
-
-    List<String> messages = new ArrayList<>();
-    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(urlConn.getOutputStream(), "UTF-8"))) {
-      for (int i = 0; i < 10; i++) {
-        writer.printf("Message number %d\n", i);
-        messages.add("Message number " + i);
-      }
-    }
-
-    Assert.assertEquals(200, urlConn.getResponseCode());
-    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), "UTF-8")) {
-      Map<String, Integer> result = new Gson().fromJson(reader, new TypeToken<Map<String, Integer>>() { }.getType());
-
-      // Do a wordcount locally to get the expected result
-      Map<String, Integer> expected = messages.stream()
-        .flatMap((Function<String, Stream<String>>) s -> Arrays.stream(s.split("\\s+")))
-        .map(s -> Maps.immutableEntry(s, 1))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1 + v2));
-
-      Assert.assertEquals(expected, result);
-    }
-
-    sparkManager.stop();
   }
 
   private void testSparkWithGetDataset(Class<? extends Application> appClass, String sparkProgram) throws Exception {
