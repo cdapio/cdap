@@ -92,22 +92,9 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties pluginProperties) {
-    return (T) plugins.get(pluginId);
-  }
-
-  @Nullable
-  @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
                          PluginProperties pluginProperties, PluginSelector pluginSelector) {
     return (T) plugins.get(pluginId);
-  }
-
-  @Nullable
-  @Override
-  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
-                                     PluginProperties pluginProperties) {
-    return (Class<T>) plugins.get(pluginId).getClass();
   }
 
   @Nullable

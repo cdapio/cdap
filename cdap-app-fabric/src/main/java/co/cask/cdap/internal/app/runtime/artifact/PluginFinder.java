@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Map;
@@ -30,8 +29,19 @@ import java.util.Map;
  */
 public interface PluginFinder {
 
+  /**
+   * Finds a plugin in the given namespace as well as in the SYSTEM namespace.
+   *
+   * @param pluginNamespaceId the namespace that the plugin is deployed in.
+   * @param parentArtifactId the artifact that the plugin extends
+   * @param pluginType type of the plugin
+   * @param pluginName name of the plugin
+   * @param selector a {@link PluginSelector} to select a plugin
+   * @return a pair of {@link ArtifactDescriptor} and {@link PluginClass}
+   * @throws PluginNotExistsException if no plugin can be found
+   */
   Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId pluginNamespaceId,
-                                                        ArtifactRange parentRange,
+                                                        ArtifactId parentArtifactId,
                                                         String pluginType, String pluginName,
                                                         PluginSelector selector) throws PluginNotExistsException;
 

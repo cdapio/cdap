@@ -129,21 +129,8 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
-    throw new UnsupportedOperationException(ERROR_MSG);
-  }
-
-  @Nullable
-  @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    throw new UnsupportedOperationException(ERROR_MSG);
-  }
-
-  @Nullable
-  @Override
-  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
-                                     PluginProperties properties) {
     throw new UnsupportedOperationException(ERROR_MSG);
   }
 

@@ -106,7 +106,8 @@ public class AbstractProgramRuntimeServiceTest {
 
     runtimeService.startAndWait();
     try {
-      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null, null);
+      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
+                                                           NamespaceId.DEFAULT.artifact("test", "1.0"));
       final ProgramController controller =
         runtimeService.run(descriptor, new SimpleProgramOptions(program.getId())).getController();
       Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
@@ -181,7 +182,8 @@ public class AbstractProgramRuntimeServiceTest {
     runtimeService.startAndWait();
     try {
       try {
-        ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null, null);
+        ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
+                                                             NamespaceId.DEFAULT.artifact("test", "1.0"));
 
         // Set of scopes to test
         String programScope = program.getType().getScope();

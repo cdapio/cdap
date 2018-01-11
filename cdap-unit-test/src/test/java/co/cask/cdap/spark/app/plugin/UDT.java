@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
-
-import org.apache.spark.sql.SparkSession;
+package co.cask.cdap.spark.app.plugin;
 
 /**
- * Context interface for providing access to {@link SparkSession} and CDAP functionality.
+ * User defined transform
  */
-public interface SparkHttpServiceContext extends SparkHttpServiceContextBase {
+public interface UDT {
 
-  /**
-   * Returns a {@link SparkSession} for operating with DataFrames.
-   */
-  SparkSession getSparkSession();
+  int apply(String str);
 }

@@ -14,17 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.artifact.ArtifactRange;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
@@ -36,16 +37,21 @@ public class LocalPluginFinder implements PluginFinder {
 
   private final ArtifactRepository artifactRepository;
 
+  @Inject
   public LocalPluginFinder(ArtifactRepository artifactRepository) {
     this.artifactRepository = artifactRepository;
   }
 
   @Override
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId pluginNamespaceId, ArtifactRange parentRange,
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId pluginNamespaceId,
+                                                               ArtifactId parentArtifactId,
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
     throws PluginNotExistsException {
     try {
+      ArtifactRange parentRange = new ArtifactRange(parentArtifactId.getNamespace(), parentArtifactId.getArtifact(),
+                                                    new ArtifactVersion(parentArtifactId.getVersion()), true,
+                                                    new ArtifactVersion(parentArtifactId.getVersion()), true);
       return artifactRepository.findPlugin(pluginNamespaceId, parentRange, pluginType, pluginName, selector);
     } catch (IOException | ArtifactNotFoundException e) {
       // If there is error accessing artifact store or if the parent artifact is missing, just propagate

@@ -16,15 +16,14 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -133,11 +132,8 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
 
     PluginNotExistsException exception = null;
     for (ArtifactId parentId : Iterables.concat(parents, Collections.singleton(artifactId))) {
-      ArtifactRange parentRange = new ArtifactRange(parentId.getNamespace(), parentId.getArtifact(),
-                                                    new ArtifactVersion(parentId.getVersion()), true,
-                                                    new ArtifactVersion(parentId.getVersion()), true);
       try {
-        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = pluginFinder.findPlugin(pluginNamespaceId, parentRange,
+        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = pluginFinder.findPlugin(pluginNamespaceId, parentId,
                                                                                          pluginType, pluginName,
                                                                                          selector);
         Plugin plugin = FindPluginHelper.getPlugin(Iterables.transform(parents, ArtifactId::toApiArtifactId),

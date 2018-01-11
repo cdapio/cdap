@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -67,6 +68,7 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClient;
@@ -239,7 +241,9 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(AuthorizationEnforcer.class),
         injector.getInstance(AuthenticationContext.class),
         injector.getInstance(MessagingService.class),
-        serviceAnnouncer
+        serviceAnnouncer,
+        injector.getInstance(PluginFinder.class),
+        injector.getInstance(LocationFactory.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

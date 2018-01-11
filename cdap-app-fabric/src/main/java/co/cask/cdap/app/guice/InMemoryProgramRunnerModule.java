@@ -31,6 +31,8 @@ import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.artifact.LocalArtifactManager;
+import co.cask.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.InMemoryFlowProgramRunner;
@@ -102,6 +104,9 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
               .implement(ArtifactManager.class, LocalArtifactManager.class)
               .build(ArtifactManagerFactory.class));
     expose(ArtifactManagerFactory.class);
+
+    bind(PluginFinder.class).to(LocalPluginFinder.class);
+    expose(PluginFinder.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =

@@ -70,17 +70,6 @@ public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName,
-                         String pluginId, PluginProperties properties) {
-    Value value = plugins.get(new Key(pluginType, pluginName));
-    if (value == null) {
-      return null;
-    }
-    return (T) value.plugin;
-  }
-
-  @Nullable
-  @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
                          PluginProperties properties, PluginSelector selector) {
     Value value = plugins.get(new Key(pluginType, pluginName));
@@ -89,13 +78,6 @@ public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer
     }
     selector.select(value.artifacts);
     return (T) value.plugin;
-  }
-
-  @Nullable
-  @Override
-  public <T> Class<T> usePluginClass(String pluginType, String pluginName,
-                                     String pluginId, PluginProperties properties) {
-    return null;
   }
 
   @Nullable

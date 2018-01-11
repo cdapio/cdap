@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
+package co.cask.cdap.spark.app;
 
-import org.apache.spark.sql.SparkSession;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginContext;
 
 /**
- * Context interface for providing access to {@link SparkSession} and CDAP functionality.
+ * A interface to allow configuring and using plugins.
  */
-public interface SparkHttpServiceContext extends SparkHttpServiceContextBase {
+public interface Extensible {
 
-  /**
-   * Returns a {@link SparkSession} for operating with DataFrames.
-   */
-  SparkSession getSparkSession();
+  void configure(PluginConfigurer configurer);
+
+  void initialize(PluginContext context) throws Exception;
 }

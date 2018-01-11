@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.api.messaging.Message;
+import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.Notification;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -70,8 +72,10 @@ public class TestFrameworkTestBase extends TestBase {
    * Creates an artifact jar by tracing dependency from the given {@link Application} class.
    */
   protected static File createArtifactJar(Class<? extends Application> appClass) throws IOException {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, appClass.getPackage().getName());
     return new File(AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-                                                     appClass).toURI());
+                                                     appClass, manifest).toURI());
   }
 
   /**

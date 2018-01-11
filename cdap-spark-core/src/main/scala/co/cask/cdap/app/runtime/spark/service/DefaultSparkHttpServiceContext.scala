@@ -17,18 +17,10 @@
 package co.cask.cdap.app.runtime.spark.service
 
 import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.service.SparkHttpServiceContext
-import co.cask.cdap.app.runtime.spark.SerializableSparkExecutionContext
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv
-import org.apache.spark.api.java.JavaSparkContext
 
 /**
   * Default implementation of the [[co.cask.cdap.api.spark.service.SparkHttpServiceContext]].
   */
-class DefaultSparkHttpServiceContext(delegate: SparkExecutionContext)
-  extends SerializableSparkExecutionContext(delegate) with SparkHttpServiceContext {
+class DefaultSparkHttpServiceContext(sec: SparkExecutionContext) extends AbstractSparkHttpServiceContext(sec) {
 
-  override lazy val getSparkContext = SparkRuntimeEnv.waitForContext
-
-  override lazy val getJavaSparkContext: JavaSparkContext = new JavaSparkContext(getSparkContext)
 }

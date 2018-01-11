@@ -30,6 +30,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
@@ -48,6 +49,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -69,6 +71,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ServiceAnnouncer serviceAnnouncer;
+  private final PluginFinder pluginFinder;
+  private final LocationFactory locationFactory;
 
   // This is needed to maintain a strong reference while the Spark program is running,
   // since outside of this class, the spark classloader is wrapped with a WeakReferenceDelegatorClassLoader
@@ -87,7 +91,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
                       AuthenticationContext authenticationContext,
-                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer) {
+                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
+                      PluginFinder pluginFinder, LocationFactory locationFactory) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
@@ -102,6 +107,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.serviceAnnouncer = serviceAnnouncer;
+    this.pluginFinder = pluginFinder;
+    this.locationFactory = locationFactory;
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -219,6 +226,20 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public ServiceAnnouncer getServiceAnnouncer() {
     return serviceAnnouncer;
+  }
+
+  /**
+   * Returns the {@link PluginFinder} for locating plugins.
+   */
+  public PluginFinder getPluginFinder() {
+    return pluginFinder;
+  }
+
+  /**
+   * Returns the {@link LocationFactory} for the runtime environement.
+   */
+  public LocationFactory getLocationFactory() {
+    return locationFactory;
   }
 
   @Override

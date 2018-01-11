@@ -70,15 +70,11 @@ import java.util.jar.Manifest;
  */
 @Category(XSlowTests.class)
 public class ArtifactClientTestRun extends ClientTestBase {
-  private static final InputSupplier<InputStream> DUMMY_SUPPLIER = new InputSupplier<InputStream>() {
-    @Override
-    public InputStream getInput() throws IOException {
-      return new ByteArrayInputStream(new byte[]{});
-    }
-  };
+  private static final InputSupplier<InputStream> DUMMY_SUPPLIER = () -> new ByteArrayInputStream(new byte[]{});
 
   private ArtifactClient artifactClient;
 
+  @Override
   @Before
   public void setUp() throws Throwable {
     super.setUp();
@@ -324,7 +320,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
     Assert.assertTrue(artifactClient.getPluginSummaries(myapp2Id, "runnable").isEmpty());
 
     // test get plugin details for plugin1 for myapp-2.0.0
-    PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", "p1 description", Plugin1.class.getName(),
+    PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", "p1 description", Plugin1.class.getName(), "conf",
       pluginArtifactSummary, props, new HashSet<String>());
     Assert.assertEquals(Sets.newHashSet(pluginInfo),
                         Sets.newHashSet(artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1")));

@@ -157,8 +157,22 @@ public class PluginInstantiator implements Closeable {
    * @see PluginClassLoader
    */
   public ClassLoader getPluginClassLoader(Plugin plugin) throws IOException {
+    return getPluginClassLoader(plugin.getArtifactId(), plugin.getParents());
+  }
+
+  /**
+   * Returns a {@link ClassLoader} for the given plugin.
+   *
+   * @param artifactId the artifact id of the plugin
+   * @param pluginParents the list of parents' artifact id of the plugin that are also plugins
+   * @throws IOException if failed to expand the artifact jar to create the plugin ClassLoader
+   *
+   * @see PluginClassLoader
+   */
+  public PluginClassLoader getPluginClassLoader(ArtifactId artifactId,
+                                                List<ArtifactId> pluginParents) throws IOException {
     try {
-      return classLoaders.get(new ClassLoaderKey(plugin.getParents(), plugin.getArtifactId()));
+      return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents));
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -382,10 +396,10 @@ public class PluginInstantiator implements Closeable {
     private final ArtifactId artifact;
 
     ClassLoaderKey(ArtifactId artifact) {
-      this(Collections.emptyList(), artifact);
+      this(artifact, Collections.emptyList());
     }
 
-    ClassLoaderKey(List<ArtifactId> parents, ArtifactId artifact) {
+    ClassLoaderKey(ArtifactId artifact, List<ArtifactId> parents) {
       this.parents = parents;
       this.artifact = artifact;
     }
@@ -445,7 +459,7 @@ public class PluginInstantiator implements Closeable {
        * could be another plugin. In effect, the plugin should have access to everything exported by plugins and apps
        * above it.
        */
-      PluginClassLoader parentPluginCL = classLoaders.get(new ClassLoaderKey(parentsOfParent, parentArtifact));
+      PluginClassLoader parentPluginCL = getPluginClassLoader(parentArtifact, parentsOfParent);
       ClassLoader parentCL =
         new CombineClassLoader(parentPluginCL.getParent(), parentPluginCL.getExportPackagesClassLoader());
       return new PluginClassLoader(key.artifact, unpackedDir, parentCL);
