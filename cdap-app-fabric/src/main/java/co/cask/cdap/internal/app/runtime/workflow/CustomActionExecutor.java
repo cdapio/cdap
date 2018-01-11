@@ -32,12 +32,14 @@ import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Execute the custom action in the Workflow.
  */
 class CustomActionExecutor {
-
+  private static final Logger LOG = LoggerFactory.getLogger(CustomActionExecutor.class);
   private final CustomAction customAction;
   private final BasicCustomActionContext customActionContext;
 
@@ -81,7 +83,7 @@ class CustomActionExecutor {
       customActionContext.initializeProgram(customAction, txControl, false);
 
       customActionContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
-      customActionContext.execute(customAction::run);
+      customActionContext.executeChecked(customAction::run);
       customActionContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
 
     } catch (Throwable t) {

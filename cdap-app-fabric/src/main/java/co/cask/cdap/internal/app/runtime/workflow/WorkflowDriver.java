@@ -498,7 +498,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                workflowCondition, "initialize", WorkflowContext.class);
 
         context.initializeProgram(workflowCondition, txControl, false);
-        boolean result = context.execute(() -> workflowCondition.apply(context));
+        boolean result = context.executeChecked(new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            return workflowCondition.apply(context);
+          }
+        });
         iterator = result ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
       } finally {
         TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class,

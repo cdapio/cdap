@@ -119,7 +119,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, Closeable, TaskExecutor {
+  PluginContext, MessagingContext, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -555,8 +555,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
-  @Override
-  public void execute(ThrowingRunnable runnable) throws Exception {
+  public void executeChecked(ThrowingRunnable runnable) throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       runnable.run();
@@ -568,8 +567,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
-  @Override
-  public <T> T execute(Callable<T> callable) throws Exception {
+  public void executeUnchecked(Runnable runnable) {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
+    try {
+      runnable.run();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  /**
+   * Run some code with the context class loader combined from the program class loader and the system class loader.
+   */
+  public <T> T executeChecked(Callable<T> callable) throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       return callable.call();
@@ -597,7 +607,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         program.initialize((T) AbstractContext.this);
       }, retryOnConflict);
     } else {
-      execute(() -> {
+      executeChecked(() -> {
         try {
           //noinspection unchecked
           program.initialize((T) AbstractContext.this);
@@ -625,9 +635,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     try {
       try {
         if (TransactionControl.IMPLICIT == txControl) {
-          execute(context -> program.destroy(), retryOnConflict);
+          execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              program.destroy();
+            }
+          }, retryOnConflict);
         } else {
-          execute(program::destroy);
+          executeChecked(program::destroy);
         }
       } catch (TransactionConflictException e) {
         // For Tx conflict, use it as is.
