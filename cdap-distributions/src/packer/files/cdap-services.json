@@ -1,0 +1,141 @@
+{
+  "cdap": {
+    "version": "4.3.3-1",
+    "repo": {
+      "apt_repo_url": "http://repository.cask.co/ubuntu/precise/amd64/cdap/4.3"
+    },
+    "cdap_site": {
+      "dashboard.server.address": "<DOCKER_HOST>",
+      "explore.enabled": "true",
+      "master.services.bind.address": "0.0.0.0",
+      "master.services.announce.address": "<DOCKER_HOST>",
+      "root.namespace": "cdap",
+      "router.bind.address": "0.0.0.0",
+      "router.server.address": "<DOCKER_HOST>",
+      "security.auth.server.address": "security",
+      "security.authentication.basic.realmfile": "/etc/security/realmfile",
+      "security.authentication.handlerClassName": "co.cask.cdap.security.server.BasicAuthenticationHandler",
+      "security.keytab.path": "/etc/security/keytabs/${name}.headless.keytab",
+      "security.authorization.enabled": "false",
+      "security.auth.server.announce.urls": "http://<DOCKER_HOST>:10009",
+      "security.enabled": "true",
+      "zookeeper.quorum": "<HADOOP_HOST>:2181/cdap",
+      "hive.server2.jdbc.url":"jdbc:hive2://<HADOOP_HOST>:10000/default;principal=hive/_HOST@CONTINUUITY.NET",
+      "kafka.seed.brokers":"<DOCKER_HOST>:9092",
+      "kafka.server.host.name": "0.0.0.0",
+      "kafka.server.advertised.host.name": "<DOCKER_HOST>",
+      "enable.unrecoverable.reset": "true",
+      "router.webapp.enabled": "true",
+      "hdfs.user": "yarn",
+      "master.service.memory.mb": "1024",
+      "explore.executor.container.memory.mb": "1024",
+      "log.saver.container.memory.mb": "1024",
+      "dataset.executor.container.memory.mb": "1024",
+      "messaging.container.memory.mb": "1024",
+      "stream.container.memory.mb": "1024",
+      "data.tx.memory.mb": "1024",
+      "metrics.processor.memory.mb": "1024",
+      "metrics.memory.mb": "1024",
+      "log.saver.container.memory.mb": "1024",
+      "app.bind.port": "11016",
+      "dataset.service.bind.port": "11017",
+      "data.tx.bind.port": "11018",
+      "explore.service.bind.port": "11019",
+      "metadata.service.bind.port": "11020",
+      "stream.bind.port": "11021",
+      "kerberos.auth.enabled": "false"
+    },
+    "security": {
+      "manage_realmfile": "true",
+      "realmfile": {
+        "cdapitn": "cdapitn",
+        "alice": "alicepassword",
+        "bob": "bobpassword",
+        "eve": "evepassword",
+        "carol": "carolpassword",
+        "systemadmin": "systemadmin"
+      }
+    }
+  },
+  "hadoop": {
+    "distribution_version": "2.6.3.0",
+    "distribution": "hdp",
+    "core_site": {
+      "fs.defaultFS":"hdfs://<HADOOP_HOST>:8020",
+      "hadoop.http.authentication.simple.anonymous.allowed":"true",
+      "hadoop.security.authentication":"simple",
+      "hadoop.security.authorization":"false"
+    },
+    "yarn_site": {
+      "hadoop.registry.zk.quorum": "<HADOOP_HOST>:2181",
+      "yarn.application.classpath": "/etc/hadoop/conf,/usr/hdp/current/hadoop-client/*,/usr/hdp/current/hadoop-client/lib/*,/usr/hdp/current/hadoop-hdfs-client/*,/usr/hdp/current/hadoop-hdfs-client/lib/*,/usr/hdp/current/hadoop-yarn-client/*,/usr/hdp/current/hadoop-yarn-client/lib/*",
+      "yarn.log.server.url": "http://<HADOOP_HOST>:19888/jobhistory/logs",
+      "yarn.log.server.web-service.url": "http://<HADOOP_HOST>:8188/ws/v1/applicationhistory",
+      "yarn.resourcemanager.address": "<HADOOP_HOST>:8032",
+      "yarn.resourcemanager.admin.address": "<HADOOP_HOST>:8033",
+      "yarn.resourcemanager.resource-tracker.address": "<HADOOP_HOST>:8031",
+      "yarn.resourcemanager.scheduler.address": "<HADOOP_HOST>:8030",
+      "yarn.resourcemanager.webapp.address": "<HADOOP_HOST>:8088",
+      "yarn.resourcemanager.webapp.https.address": "<HADOOP_HOST>:8090",
+      "yarn.resourcemanager.zk-address": "<HADOOP_HOST>:2181",
+      "yarn.timeline-service.address": "<HADOOP_HOST>:10200",
+      "yarn.timeline-service.webapp.address": "<HADOOP_HOST>:8188",
+      "yarn.timeline-service.webapp.https.address": "<HADOOP_HOST>:8190"
+    }
+  },
+  "hbase":{
+    "hbase_site": {
+      "hbase.tmp.dir": "/tmp/hbase-${user.name}",
+      "hbase.cluster.distributed":"true",
+      "hbase.defaults.for.version.skip":"true",
+      "hbase.hregion.memstore.mslab.enabled":"true",
+      "hbase.rootdir":"hdfs://<HADOOP_HOST>:8020/apps/hbase/data",
+      "hbase.security.authentication":"simple",
+      "hbase.security.authorization":"false",
+      "hbase.zookeeper.quorum":"<HADOOP_HOST>",
+      "zookeeper.znode.parent":"/hbase"
+    }
+  },
+  "hive": {
+    "hive_site": {
+      "datanucleus.connectionPoolingType":"DBCP",
+      "hive.exec.local.scratchdir":"/tmp/${user.name}",
+      "hive.metastore.sasl.enabled":"false",
+      "hive.metastore.uris":"thrift://<HADOOP_HOST>:9083",
+      "hive.server2.authentication":"SIMPLE",
+      "hive.support.concurrency":"true",
+      "hive.zookeeper.quorum":"<HADOOP_HOST>",
+      "javax.jdo.option.ConnectionDriverName":"com.mysql.jdbc.Driver",
+      "javax.jdo.option.ConnectionPassword":"dbuserpassword",
+      "javax.jdo.option.ConnectionURL":"jdbc:mysql://<HADOOP_HOST>:3306/hive?createDatabaseIfNotExist=true",
+      "javax.jdo.option.ConnectionUserName":"dbuser"
+    }
+  },
+  "nodejs": {
+    "install_method": "binary",
+    "version": "4.5.0",
+    "binary": {
+      "checksum": {
+        "linux_x64": "5678ad94ee35e40fc3a2c545e136a0dc946ac4c039fca5898e1ea51ecf9e7c39"
+      }
+    }
+  },
+  "java": {
+    "install_flavor": "openjdk",
+    "jdk_version": 8
+  },
+  "zookeeper": {
+    "zoocfg": {
+      "authProvider.1": "org.apache.zookeeper.server.auth.SASLAuthenticationProvider",
+      "maxClientCnxns": "0",
+      "tickTime": "2000",
+      "initLimit": "10",
+      "syncLimit": "2",
+      "server.1": "<HADOOP_HOST>:2888:3888"
+    },
+    "zookeeper_env": {
+      "server_jvmflags": "-Xmx256m",
+      "zookeeper_log_dir": "/data/logs/zookeeper"
+    }
+  }
+}

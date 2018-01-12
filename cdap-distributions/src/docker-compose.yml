@@ -1,0 +1,101 @@
+version: '3'
+services:
+  router:
+    build:
+      dockerfile: services.Dockerfile
+      context: .
+      args:
+        CDAP_ROLE: router
+        CDAP_COMPONENT: gateway
+        HADOOP_HOST: <HADOOP_HOST>
+        DOCKER_HOST: <DOCKER_HOST>
+        PORTS: 11015
+    image: cdap/router
+    container_name: router
+    ports:
+     - "11015:11015"
+    expose:
+     - "11015"
+    tty: true
+  ui:
+    build:
+      dockerfile: services.Dockerfile
+      context: .
+      args:
+        CDAP_ROLE: ui
+        CDAP_COMPONENT: ui
+        HADOOP_HOST: <HADOOP_HOST>
+        DOCKER_HOST: <DOCKER_HOST>
+        PORTS: 11011
+    image: cdap/ui
+    container_name: ui
+    ports:
+     - "11011:11011"
+    expose:
+     - "11011"
+    tty: true
+  kafka:
+    build:
+      dockerfile: services.Dockerfile
+      context: .
+      args:
+        CDAP_ROLE: kafka-server
+        CDAP_COMPONENT: kafka
+        HADOOP_HOST: <HADOOP_HOST>
+        DOCKER_HOST: <DOCKER_HOST>
+        PORTS: 9092
+    image: cdap/kafka
+    container_name: kafka
+    # hostname: "<DOCKER_HOST>"
+    ports:
+     - "9092:9092"
+    expose:
+     - "9092"
+    tty: true
+  master:
+    build:
+      dockerfile: services.Dockerfile
+      context: .
+      args:
+        CDAP_ROLE: master
+        CDAP_COMPONENT: master
+        HADOOP_HOST: <HADOOP_HOST>
+        DOCKER_HOST: <DOCKER_HOST>
+        PORTS: 11016 11017 11018 11019 11020 11021
+    image: cdap/master
+    container_name: master
+    tty: true
+    #extra_hosts:
+    # - "zookeeper:<ZOOKEEPER>"
+    ports:
+     - "11016:11016"
+     - "11017:11017"
+     - "11018:11018"
+     - "11019:11019"
+     - "11020:11020"
+     - "11021:11021"
+    expose:
+      - "11016"
+      - "11017"
+      - "11018"
+      - "11019"
+      - "11020"
+      - "11021"
+    # hostname: "<DOCKER_HOST>"
+  security:
+    build:
+      dockerfile: services.Dockerfile
+      context: .
+      args:
+        CDAP_ROLE: auth-server
+        CDAP_COMPONENT: security
+        HADOOP_HOST: <HADOOP_HOST>
+        DOCKER_HOST: <DOCKER_HOST>
+        PORTS: 10009
+    image: cdap/security
+    container_name: security
+    ports:
+     - "10009:10009"
+    expose:
+     - "10009"
+    tty: true
