@@ -504,8 +504,8 @@ export default class FileBrowser extends Component {
           </div>
         </div>
 
-        <div className="sub-panel clearfix">
-          <div className="path-container float-xs-left">
+        <div className="sub-panel">
+          <div className="path-container">
             <FilePath
               baseStatePath={this.state.statePath}
               fullpath={this.state.path}
@@ -514,7 +514,7 @@ export default class FileBrowser extends Component {
             />
           </div>
 
-          <div className="float-xs-right">
+          <div className="info-container">
             <div className="info">
               <span>
                 {T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}

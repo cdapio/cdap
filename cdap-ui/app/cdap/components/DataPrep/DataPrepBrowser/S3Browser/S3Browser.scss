@@ -27,43 +27,6 @@ $s3_file_icon_color: $orange-03;
 .s3-browser {
   height: 100%;
 
-  .sub-panel {
-
-    &.routing-disabled {
-      display: block;
-      > div {
-        display: block;
-        &:first-child {
-          margin-top: 10px;
-        }
-        &:last-child {
-          display: flex;
-          justify-content: space-between;
-        }
-      }
-    }
-    padding: 0 15px;
-    display: flex;
-    justify-content: space-between;
-    > div {
-      flex: 0.5;
-      display: flex;
-      align-items: center;
-      &:last-child {
-        justify-content: flex-end;
-      }
-    }
-    .info {
-      line-height: 46px;
-      font-size: 12px;
-      color: #999999;
-    }
-    .search-container {
-      width: 200px;
-      padding-left: 15px;
-      display: inline-block;
-    }
-  }
   .s3-content {
     height: calc(100% - 56px - 46px);
     > div {

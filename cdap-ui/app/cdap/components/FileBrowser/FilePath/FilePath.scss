@@ -23,6 +23,12 @@ $dropdown-item-height: 35px;
 
   a {
     color: $path-color;
+    > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100px;
+    }
 
     &:hover {
       text-decoration: none;

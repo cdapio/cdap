@@ -19,8 +19,9 @@ $connections-panel-border-color: #cccccc;
 $connections-menu-active-color: #ff6600;
 $connections-menu-item-color: #333333;
 $top-panel-bg-color: #efefef;
+$info-font-color: #999999;
 $border-color: #cccccc;
-$top-panel-height: 56px;
+$top-panel-height: 50px;
 $gutter-width: 15px;
 
 .dataprep-connections-container {
@@ -142,6 +143,55 @@ $gutter-width: 15px;
   .connections-content {
     width: calc(100% - 250px);
 
+    .sub-panel {
+      padding: 10px;
+      display: flex;
+      .path-container,
+      .info-container {
+        width: 50%;
+      }
+      .path-container {
+        padding-right: 10px;
+        .file-path-container {
+          height: 100%;
+          .paths {
+            display: inline-flex;
+            align-items: center;
+            height: inherit;
+            width: 100%;
+            overflow: hidden;
+
+            a.active-directory {
+              width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+          }
+          .collapsed-paths {
+            display: flex;
+            height: 100%;
+            align-items: center;
+          }
+        }
+      }
+      .info-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-left: 10px;
+        justify-content: flex-end;
+        .info {
+          flex: 0.7;
+          font-size: 12px;
+          color: $info-font-color;
+          text-align: right;
+          padding-right: 5px;
+        }
+        .search-container {
+          flex: 0.3;
+        }
+      }
+    }
     &.expanded { width: 100%; }
   }
 }

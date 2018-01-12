@@ -19,6 +19,7 @@
 .plus-button {
   margin-top: 48px;
   display: inline-block;
+  z-index: 999;
   cursor: pointer;
   .popper {
     width: auto;
