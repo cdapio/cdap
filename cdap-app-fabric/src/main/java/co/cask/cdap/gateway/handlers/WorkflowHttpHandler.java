@@ -252,7 +252,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("namespace-id") String namespace,
                                    @PathParam("app-id") String application,
                                    @PathParam("workflow-id") String workflow,
-                                   @QueryParam("format") String format,
                                    @QueryParam("trigger-type") String triggerType,
                                    @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
@@ -270,7 +269,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("app-id") String application,
                                    @PathParam("app-version") String version,
                                    @PathParam("workflow-id") String workflow,
-                                   @QueryParam("format") String format,
                                    @QueryParam("trigger-type") String triggerType,
                                    @QueryParam("schedule-status") String scheduleStatus)
     throws NotFoundException, BadRequestException {
