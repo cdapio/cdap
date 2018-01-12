@@ -289,7 +289,63 @@ angular.module(PKG.name + '.commons')
       return icon;
     }
 
-    function getGraphLayout(nodes, connections, separation) {
+    function getNodesMap(nodes) {
+      let nodesMap = {};
+      nodes.forEach(node => {
+        nodesMap[node.name] = node;
+      });
+      return nodesMap;
+    }
+
+    function customGraphLayout(graph, nodes, connections) {
+      let graphNodes = graph._nodes;
+      let nodesMap = getNodesMap(nodes);
+
+      angular.forEach(nodes, (node) => {
+        let location = graphNodes[node.name];
+        let locationX = location.x;
+        let locationY = location.y;
+
+        if (node.type === 'alertpublisher' || node.type === 'errortransform') {
+          let connToThisNode = connections.find(conn => conn.to === node.name);
+          if (connToThisNode) {
+            let sourceNode = connToThisNode.from;
+            let nonErrorsAlertsConnCount = 0;
+            for (let i = 0; i < connections.length; i++) {
+              let conn = connections[i];
+              if (conn.from === sourceNode) {
+                let targetNode = nodesMap[conn.to];
+                if (targetNode.type !== 'alertpublisher' && targetNode.type !== 'errortransform') {
+                  nonErrorsAlertsConnCount += 1;
+                  if (nonErrorsAlertsConnCount > 1) {
+                    break;
+                  }
+                }
+              }
+            }
+
+            // If the node connecting to this alert publisher/error transform node only has connections
+            // to these types of nodes, then have to push the alert publisher/error transform down a bit more
+            if (nonErrorsAlertsConnCount === 0) {
+              locationY += 200;
+
+            // Else if there's one non error or alert connection then push down a little bit.
+            // Don't have to push down if there are 2 or more non error alert connections, since
+            // the error and alert nodes will be pushed down automatically by dagre.
+            } else if (nonErrorsAlertsConnCount === 1) {
+              locationY += 70;
+            }
+
+            locationX -= 150;
+          }
+        }
+
+        graph._nodes[node.name].x = locationX;
+        graph._nodes[node.name].y = locationY;
+      });
+    }
+
+    function getGraphLayout(nodes, connections, separation, rankingAlgo = 'network-simplex') {
       var rankSeparation = separation || 200;
 
       var graph = new dagre.graphlib.Graph();
@@ -298,7 +354,8 @@ angular.module(PKG.name + '.commons')
         ranksep: rankSeparation,
         rankdir: 'LR',
         marginx: 0,
-        marginy: 0
+        marginy: 0,
+        ranker: rankingAlgo
       });
       graph.setDefaultEdgeLabel(function() { return {}; });
 
@@ -334,13 +391,15 @@ angular.module(PKG.name + '.commons')
       });
 
       dagre.layout(graph);
+      customGraphLayout(graph, nodes, connections);
       return graph;
     }
 
     return {
-      getSettings: getSettings,
-      getIcon: getIcon,
-      getGraphLayout: getGraphLayout
+      getSettings,
+      getIcon,
+      getNodesMap,
+      getGraphLayout
     };
 
   });
