@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,7 @@ const chartSpec = {
   }
 };
 
-export default function GroupedBarChart({data, customEncoding = {}, width, heightOffset}) {
+export default function GroupedBarChart({data, customEncoding = {}, width, heightOffset, tooltipOptions}) {
   let newSpec = {
     ...chartSpec,
     "encoding": {
@@ -60,6 +60,7 @@ export default function GroupedBarChart({data, customEncoding = {}, width, heigh
       className="grouped-bar-chart"
       width={width}
       heightOffset={heightOffset}
+      tooltipOptions={tooltipOptions}
     />
   );
 }
@@ -74,5 +75,6 @@ GroupedBarChart.propTypes = {
   })).isRequired,
   customEncoding: PropTypes.object,
   width: PropTypes.oneOfType(PropTypes.number, PropTypes.func),
-  heightOffset: PropTypes.number
+  heightOffset: PropTypes.number,
+  tooltipOptions:  PropTypes.object
 };

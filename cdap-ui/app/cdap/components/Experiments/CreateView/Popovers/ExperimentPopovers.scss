@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
+@import "../../../../styles/variables.scss";
 
 $popover_container_border_color: $grey-05;
 
@@ -65,7 +65,7 @@ $popover_container_border_color: $grey-05;
       max-height: 250px;
     }
   }
-  .experiment-metadata {
+  .experiment-metadata-popover {
     color: $popover_container_border_color;
     .btn-link {
       cursor: pointer;

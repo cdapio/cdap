@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,8 @@
  * the License.
 */
 
-import {createStore, compose} from 'redux';
+import {createStore} from 'redux';
+import {composeEnhancers} from 'services/helpers';
 import {defaultAction} from 'services/helpers';
 
 const ACTIONS = {
@@ -116,17 +117,12 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
       return state;
   }
 };
-const composeEnhancers =
-typeof window === 'object' &&
-window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?
-  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
-    name: 'ExperimentDetailStore'
-  }) : compose;
+
 
 const experimentDetailsStore = createStore(
   experimentDetails,
   DEFAULT_EXPERIMENT_DETAILS,
-  composeEnhancers()
+  composeEnhancers('ExperimentDetailStore')()
 );
 
 export default experimentDetailsStore;
