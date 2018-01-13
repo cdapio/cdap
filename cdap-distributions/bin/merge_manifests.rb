@@ -40,6 +40,9 @@ begin
     opts.on('-o', '--output FILE', 'Output manifest file to create. Will overwrite any existing file') do |o|
       options[:output] = o
     end
+    opts.on('--overwrite', 'Resolve duplicate parcel entries by preferring first manifest specified') do
+      options[:overwrite] = true
+    end
 
     opts.separator ''
     opts.separator 'Required Arguments: must specify two input manifest files, via two -m arguments or two positional parameters'
@@ -51,6 +54,8 @@ begin
     opts.separator "  #{$PROGRAM_NAME} -m /path/to/manifest1,/path/to/manifest2 -o /path/to/output"
     opts.separator '  # Writes to stdout only:'
     opts.separator "  #{$PROGRAM_NAME} /path/to/manifest1 /path/to/manifest2"
+    opts.separator '  # Duplicate entries from manifest1 will take precedence over manifest2:'
+    opts.separator "  #{$PROGRAM_NAME} /path/to/manifest1 /path/to/manifest2 --overwrite"
     opts.separator ''
   end
   op.parse!(ARGV)
@@ -77,19 +82,30 @@ def serialize_manifest(obj)
   JSON.pretty_generate(obj, indent: '    ')
 end
 
-# Check for unmergable input and fail
-def check_for_duplicates(m1, m2)
+# returns common parcelName entries between input manifests
+def duplicate_parcelNames(m1, m2)
   m1_parcels = m1['parcels'].map { |h| h['parcelName'] }
   m2_parcels = m2['parcels'].map { |h| h['parcelName'] }
 
   duplicates = m1_parcels & m2_parcels
-  raise "Cannot merge, duplicate parcels across manifests: #{duplicates}" unless duplicates.empty?
+end
+
+# Check for duplicate input and fail
+def check_for_duplicates(m1, m2)
+  duplicates = duplicate_parcelNames(m1, m2)
+  raise "Cannot merge, duplicate parcels across manifests: #{duplicates}. Consider using --overwrite option" unless duplicates.empty?
 end
 
 # Given two manifest hashes, merge into one
-def merge_manifests(m1, m2)
-  # Fail on invalid input
-  check_for_duplicates(m1, m2)
+def merge_manifests(m1, m2, overwrite = false)
+  if overwrite
+    duplicates = duplicate_parcelNames(m1,m2)
+    # remove duplicate parcel entries from the 2nd input prior to merge
+    m2['parcels'].reject! { |h| duplicates.include? h['parcelName'] }
+  else
+    # Fail on invalid input
+    check_for_duplicates(m1, m2)
+  end
 
   output = {}
   # Set lastUpdated to most recent of the inputs
@@ -104,7 +120,7 @@ end
 m1 = deserialize_manifest(options[:manifest][0])
 m2 = deserialize_manifest(options[:manifest][1])
 
-merged = merge_manifests(m1, m2)
+merged = merge_manifests(m1, m2, options[:overwrite])
 
 if options.key?(:output)
   # Write to specified output file
