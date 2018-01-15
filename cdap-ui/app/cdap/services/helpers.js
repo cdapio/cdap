@@ -87,6 +87,10 @@ function humanReadableNumber(num, type) {
 
 }
 function humanReadableDate(date, isMilliseconds) {
+  if (!date || typeof date !== 'number') {
+    return '--';
+  }
+
   const format = 'MM-DD-YYYY HH:mm:ss A';
   if (isMilliseconds) {
     return moment(date).format(format);

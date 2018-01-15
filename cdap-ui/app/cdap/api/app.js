@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,5 +27,6 @@ export const MyAppApi = {
   getVersions: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}/versions`),
   getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   batchStatus: apiCreator(dataSrc, 'POST', 'POLL', '/namespaces/:namespace/status'),
-  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath)
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
+  getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}/metadata`)
 };

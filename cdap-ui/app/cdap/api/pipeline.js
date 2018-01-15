@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,21 @@
  * the License.
  */
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
 let statsPath = `${basepath}/workflows/:workflowId/statistics?start=0`;
+let appVersionPath = `${basepath}/versions/:version`;
+let programPath = `${appVersionPath}/:programType/:programName`;
 
 export const MyPipelineApi = {
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps'),
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   pollStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
+  getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/runs`),
+  getNextRun: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:programType/:programName/nextruntime`),
 };

@@ -1,0 +1,79 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../../styles/variables.scss';
+
+$table-bg-color: white;
+$table-border-color: $grey-06;
+$table-border: 1px solid $table-border-color;
+$row-hover-color: $grey-08;
+
+$type-width: 20%;
+$creation-time-width: 20%;
+$action-width: 45px;
+$name-offset: 25px;
+
+.draft-table {
+  background-color: $table-bg-color;
+  padding: 0 2px;
+
+  .table-header {
+    height: 40px;
+    font-weight: bold;
+    border-bottom: 3px solid $table-border-color;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .table-column {
+    padding: 0 5px;
+  }
+
+  .table-row {
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-bottom: $table-border;
+
+    &:hover {
+      background-color: $row-hover-color;
+    }
+  }
+
+  .name {
+    width: calc(100% - #{$type-width} - #{$creation-time-width} - #{$action-width});
+    padding-left: $name-offset;
+
+    a {
+      color: $grey-01;
+      font-size: 16px;
+    }
+  }
+
+  .type {
+    width: $type-width;
+  }
+
+  .creation-time {
+    width: $creation-time-width;
+  }
+
+  .action {
+    width: $action-width;
+  }
+}
