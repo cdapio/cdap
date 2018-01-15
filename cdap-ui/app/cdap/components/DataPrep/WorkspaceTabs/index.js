@@ -130,7 +130,7 @@ export default class WorkspaceTabs extends Component {
     let containerElem = document.getElementsByClassName('workspace-tabs')[0];
     let boundingBox = containerElem.getBoundingClientRect();
 
-    let maxTabs = Math.floor((boundingBox.width - 100) / WORKSPACE_WIDTH);
+    let maxTabs = Math.floor((boundingBox.width - 200) / WORKSPACE_WIDTH);
 
     let {displayTabs, dropdownTabs} = this.splitTabs(this.state.workspaceList, maxTabs);
 

@@ -22,10 +22,8 @@ $table-row-hover-color: #eeeeee;
 $folder-icon-color: $blue-02;
 $file-icon-color: $orange-03;
 $table-font-color: #333333;
-$info-font-color: #999999;
 $row-disabled-color: #aaaaaa;
 $subpanel-height: 46px;
-$gutter-width: 15px;
 $divider-color: #999999;
 $empty-message-link-color: $cdap-orange;
 
@@ -34,34 +32,9 @@ $empty-message-link-color: $cdap-orange;
   // overwrite this height styling
   height: calc(100vh - 50px - 54px);
 
-  .sub-panel {
-    padding: 0 $gutter-width;
-
-    .path-container {
-      line-height: $subpanel-height;
-    }
-
-    .search-container,
-    .info {
-      float: left;
-      width: 200px;
-      padding-left: $gutter-width;
-    }
-
-    .info {
-      line-height: $subpanel-height;
-      font-size: 12px;
-      color: $info-font-color;
-    }
-
-    .search-container .form-control {
-      margin-top: ($subpanel-height - 32px) / 2;
-    }
-  }
-
   .directory-content-table {
-    padding: 0 $gutter-width;
-    height: calc(100% - 56px - 46px);
+    padding: 0;
+    height: calc(100% - 50px - 51px);
 
     .row { margin: 0; }
 

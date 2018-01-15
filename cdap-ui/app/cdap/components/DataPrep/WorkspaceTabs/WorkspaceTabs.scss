@@ -47,8 +47,14 @@ $workspace-link-active-color: #ff6600;
   width: 250px;
   border-radius: 0;
 
-  &.bs-tether-element-attached-right { margin-left: 0; }
-  &.bs-tether-element-attached-top { margin-top: 2px; }
+  &.bs-tether-element-attached-right {
+    margin-left: 0;
+    z-index: 999;
+  }
+  &.bs-tether-element-attached-top {
+    margin-top: 2px;
+    z-index: 999;
+  }
 
   .workspace-list-dropdown-item {
     display: block;

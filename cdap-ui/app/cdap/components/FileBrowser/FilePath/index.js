@@ -162,7 +162,7 @@ export default class FilePath extends Component {
                 onClick={this.handlePropagation.bind(this, path.link)}
                 enableRouting={this.props.enableRouting}
               >
-                {path.name}
+                <span>{path.name}</span>
                 {
                   index !== links.length - 1 ? <span className="path-divider">/</span> : null
                 }
