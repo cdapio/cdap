@@ -253,6 +253,13 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig'
         }
+      },
+      'radio-group': {
+        element: '<my-radio-group></my-radio-group>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];

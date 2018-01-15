@@ -20,8 +20,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
-        config: '=',
-        radioBtnMode: '='
+        config: '='
       },
       templateUrl: 'widget-container/widget-multi-select-dropdown/widget-multi-select-dropdown.html',
       controller: function($scope, myHelpers) {
