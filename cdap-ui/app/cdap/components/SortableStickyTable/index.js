@@ -52,7 +52,7 @@ export default class SortableStickyTable extends SortableTable {
           {this.renderTableHeader()}
         </table>
         <div className="table-scroll">
-          {this.renderTableBody(this.state.entities)}
+          {this.props.renderTableBody(this.state.entities)}
         </div>
       </div>
     );

@@ -35,7 +35,7 @@ const getIconMap = (status) => status in STATUS_ICON_MAP ? STATUS_ICON_MAP[statu
 export default function ModelStatusIndicator({status}) {
   let iconMap = getIconMap(status);
   return (
-    <span className="model-status-indicator">
+    <span className="model-status-indicator" title={status}>
       <IconSVG name={iconMap.icon} className={iconMap.className} />
       <span>{status}</span>
     </span>

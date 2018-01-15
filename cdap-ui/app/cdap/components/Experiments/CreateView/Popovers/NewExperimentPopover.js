@@ -23,7 +23,7 @@ import {
   onExperimentDescriptionChange,
   onExperimentOutcomeChange,
   createExperiment
-} from 'components/Experiments/store/ActionCreator';
+} from 'components/Experiments/store/CreateExperimentActionCreator';
 import IconSVG from 'components/IconSVG';
 
 const ExperimentName = ({name, onNameChange, isEdit}) => {

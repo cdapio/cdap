@@ -14,21 +14,21 @@
  * the License.
 */
 
-@import "../../../../../styles/variables.scss";
+import {createStore} from 'redux';
+import {defaultAction, composeEnhancers} from 'services/helpers';
+const DEFAULT_ALGORITHMS = [];
+export const ACTIONS = {
+  SET_ALGORITHMS_LIST: 'SET_ALGORITHMS_LIST'
+};
 
-.split-info {
-  padding: 15px 0;
-  .split-info-graph-wrapper {
-    height: 300px;
-    margin-top: -10px;
+const algorithmsList = (state = DEFAULT_ALGORITHMS, action = defaultAction) => {
+  switch (action.type) {
+    case ACTIONS.SET_ALGORITHMS_LIST:
+      return action.payload.algorithmsList || state;
+    default:
+      return state;
   }
-  .active-column-container {
-    font-size: 1.2rem;
-    margin: 5px 0 0 0;
-    .icon-svg.icon-star {
-      color: $orange-01;
-      margin-right: 5px;
-      height: 12px;
-    }
-  }
-}
+};
+
+const algorithmsStore = createStore(algorithmsList, DEFAULT_ALGORITHMS, composeEnhancers('ALGORITHMS_STORE')());
+export default algorithmsStore;

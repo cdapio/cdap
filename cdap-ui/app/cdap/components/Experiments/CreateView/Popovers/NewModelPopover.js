@@ -23,7 +23,7 @@ import {
   onModelNameChange,
   onModelDescriptionChange,
   createModel
-} from 'components/Experiments/store/ActionCreator';
+} from 'components/Experiments/store/CreateExperimentActionCreator';
 
 const ModelName = ({modelName, onModelNameChange}) => {
   return (

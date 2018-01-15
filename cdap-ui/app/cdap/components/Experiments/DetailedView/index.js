@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {Provider} from 'react-redux';
 import experimentDetailStore from 'components/Experiments/store/experimentDetailStore';
-import {getExperimentDetails} from 'components/Experiments/store/ActionCreator';
+import {getExperimentDetails, setAlgorithmsList} from 'components/Experiments/store/ActionCreator';
 import ConnectedTopPanel from 'components/Experiments/DetailedView/TopPanel';
 import ModelsTableWrapper from 'components/Experiments/DetailedView/ModelsTable';
 
@@ -33,6 +33,7 @@ export default class ExperimentDetails extends Component {
     loading: true
   }
   componentWillMount() {
+    setAlgorithmsList();
     let {experimentId} = this.props.match.params;
     getExperimentDetails(experimentId);
   }

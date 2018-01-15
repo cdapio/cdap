@@ -18,30 +18,55 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {Provider, connect} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
-import {setModelAlgorithm, trainModel, setAlgorithmList} from 'components/Experiments/store/ActionCreator';
+import {
+  setModelAlgorithm,
+  trainModel,
+  setAlgorithmList,
+  updateHyperParam
+} from 'components/Experiments/store/CreateExperimentActionCreator';
+import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
 import {Label} from 'reactstrap';
+import {objectQuery} from 'services/helpers';
+import HyperParamWidget from 'components/Experiments/CreateView/MLAlgorithmSelection/HyperParamWidget';
+import { getHyperParamLabel } from 'components/Experiments/store/ActionCreator';
+import startCase from 'lodash/startCase';
+import classnames from 'classnames';
 
 require('./MLAlgorithmSelection.scss');
 
 const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm}) => {
+  if (!objectQuery(algorithmsList, 'length')) {
+    return null;
+  }
+  const getSelectedAlgorithm = (algorithm) => {
+    let hyperparameters = {};
+    algorithm.hyperparameters.forEach(hp => {
+      hyperparameters[hp.name] = hp.defaultVal;
+    });
+    return {
+      name: algorithm.name,
+      hyperparameters
+    };
+  };
   return (
     <div className="ml-algorithm-list-view">
-      <h3>Select a Machine Learning Algorithm</h3>
-      <div className="ml-algorithm-category-title">Continous</div>
+      <div className="ml-algorithm-category-title">Algorithm Type: {startCase(algorithmsList[0].type || '')}</div>
       {
         algorithmsList.map((algo, i) => {
           return (
             <div
               key={i}
-              className="ml-algorithm-list-item"
-              onClick={setModelAlgorithm.bind(null, algo)}
+              className={classnames("ml-algorithm-list-item", {
+                selected: selectedAlgorithm.name === algo.name
+              })}
+              onClick={setModelAlgorithm.bind(null, getSelectedAlgorithm(algo))}
             >
               <input
                 type="radio"
                 name="algo-radio"
                 value={algo.name}
                 checked={selectedAlgorithm.name === algo.name}
-                onChange={setModelAlgorithm.bind(null, algo)}
+                onChange={setModelAlgorithm.bind(null, getSelectedAlgorithm(algo))}
               />
               <Label className="control-label">
                 {algo.label}
@@ -50,6 +75,7 @@ const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm}
           );
         })
       }
+      <ConnectedAddModelBtn />
     </div>
   );
 };
@@ -58,19 +84,117 @@ MLAlgorithmsList.propTypes = {
   setModelAlgorithm: PropTypes.func,
   selectedAlgorithm: PropTypes.object
 };
+const getComponent = (hyperParam) => {
+  /*
+    Example of hyper parameters from backend
+    {
+      "type": "int|double",
+      "defaultVal": "32",
+      "validValues": [],
+      "range": {
+        "min": "2",
+        "max": "1000",
+        "isMinInclusive": true
+      }
+    },
+    {
+      "type": "string",
+      "defaultVal": "gaussian",
+      "validValues": [
+        "gaussian",
+        "binomial",
+        "poisson",
+        "gamma"
+      ]
+    },
+    {
+      "type": "bool",
+      "defaultVal": "true",
+      "validValues": [
+        "true",
+        "false"
+      ]
+    },
+  */
+  const BACKEND_PROPS_TO_REACT_PROPS = {
+    'int': {
+      'defaultVal': 'defaultValue',
+      'range,min': 'min',
+      'range,max': 'max',
+      'name': 'name'
+    },
+    'double': {
+      'defaultVal': 'defaultValue',
+      'range,min': 'min',
+      'range,max': 'max',
+      'name': 'name'
+    },
+    'bool': {
+      'defaultVal': 'defaultValue',
+      'validValues': 'options',
+      'name': 'name'
+    },
+    'string': {
+      'defaultVal': 'defaultValue',
+      'validValues': 'options',
+      'name': 'name'
+    }
+  };
+  let matchedType = BACKEND_PROPS_TO_REACT_PROPS[hyperParam.type];
+  if (!matchedType) {
+    return {};
+  }
+  let config = {};
+  Object
+    .keys(matchedType)
+    .forEach(hyperParamProp => {
+      if (hyperParamProp.indexOf(',') !== -1) {
+        config[matchedType[hyperParamProp]] = objectQuery.apply(null, [hyperParam, ...hyperParamProp.split(',')]);
+      } else {
+        config[matchedType[hyperParamProp]] = hyperParam[hyperParamProp];
+      }
+    });
+  return config;
+};
 // Will be used post demo.
-const MLAlgorithmDetails = ({algorithm}) => {
+const MLAlgorithmDetails = ({algorithm, algorithmsList}) => {
   if (!algorithm.name.length) {
     return null;
   }
   return (
-    <pre>
-      {JSON.stringify(algorithm, null, 2)}
-    </pre>
+    <div className="ml-algorithm-hyper-parameters-wrapper">
+      <strong> Configure hyperparameters for {getAlgorithmLabel(algorithm.name)} </strong>
+      <div className="ml-algorithm-hyper-parameters">
+        {
+          algorithmsList
+            .find(al => al.name === algorithm.name)
+            .hyperparameters
+            .map(hyperParam => {
+              let actualValue = algorithm.hyperparameters[hyperParam.name];
+              let config = {
+                ...getComponent(hyperParam),
+                label: getHyperParamLabel(algorithm.name, hyperParam.name),
+                value: actualValue
+              };
+              return (
+                <HyperParamWidget
+                  type={hyperParam.type}
+                  config={config}
+                  onChange={(e) => {
+                    // FIX: as we use non-input elements this doesn't need be an "event" object
+                    updateHyperParam(hyperParam.name, e.target.value);
+                  }}
+                />
+              );
+            })
+        }
+      </div>
+    </div>
   );
 };
 MLAlgorithmDetails.propTypes = {
-  algorithm: PropTypes.object
+  algorithm: PropTypes.object,
+  algorithmsList: PropTypes.arrayOf(PropTypes.object)
 };
 const AddModelBtn = ({algorithm, trainModel}) => {
   return (
@@ -91,14 +215,17 @@ AddModelBtn.propTypes = {
 const mapStateToAddModelBtnProps = (state) => ({ algorithm: state.model_create.algorithm});
 const mapDispatchToAddModelBtnProps = () => ({trainModel});
 const mapStateToMLAlgorithmsListProps = (state) => ({
-  algorithmsList: state.model_create.algorithmsList,
+  algorithmsList: state.model_create.validAlgorithmsList,
   selectedAlgorithm: state.model_create.algorithm
 });
 const mapDispatchToMLAlgorithmsListProps = () => ({setModelAlgorithm});
-// const mapStateToMLAlgorithmDetailsProps = (state) => ({ algorithm: state.model_create.algorithm });
+const mapStateToMLAlgorithmDetailsProps = (state) => ({
+  algorithmsList: state.model_create.algorithmsList,
+  algorithm: state.model_create.algorithm
+});
 
 const ConnectedMLAlgorithmsList = connect(mapStateToMLAlgorithmsListProps, mapDispatchToMLAlgorithmsListProps)(MLAlgorithmsList);
-// const ConnectedMLAlgorithmDetails = connect(mapStateToMLAlgorithmDetailsProps)(MLAlgorithmDetails);
+const ConnectedMLAlgorithmDetails = connect(mapStateToMLAlgorithmDetailsProps)(MLAlgorithmDetails);
 const ConnectedAddModelBtn = connect(mapStateToAddModelBtnProps, mapDispatchToAddModelBtnProps)(AddModelBtn);
 
 
@@ -107,12 +234,12 @@ export default function MLAlgorithmSelection() {
   return (
     <Provider store={createExperimentStore}>
       <div className="ml-algorithm-selection">
+        <h3>Select a Machine Learning Algorithm</h3>
         <div className="ml-algorithm-list-details">
           <ConnectedMLAlgorithmsList />
-          {/* <ConnectedMLAlgorithmDetails /> */}
+          <ConnectedMLAlgorithmDetails />
           <br />
         </div>
-        <ConnectedAddModelBtn />
       </div>
     </Provider>
   );

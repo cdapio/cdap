@@ -33,8 +33,10 @@ import {
   setWorkspace,
   getExperimentForEdit,
   getExperimentModelSplitForCreate,
-  resetCreateExperimentsStore
-} from 'components/Experiments/store/ActionCreator';
+  resetCreateExperimentsStore,
+  fetchAlgorithmsList
+} from 'components/Experiments/store/CreateExperimentActionCreator';
+import {setAlgorithmsList} from 'components/Experiments/store/ActionCreator';
 import MLAlgorithmSelection from 'components/Experiments/CreateView/MLAlgorithmSelection';
 import SplitDataStep from 'components/Experiments/CreateView/SplitDataStep';
 import ExperimentMetadata from 'components/Experiments/CreateView/ExperimentMetadata';
@@ -56,6 +58,9 @@ export default class ExperimentCreateView extends Component {
     isSplitFinalized: createExperimentStore.getState().model_create.isSplitFinalized,
     loading: createExperimentStore.getState().experiments_create.loading
   };
+  componentWillMount() {
+    setAlgorithmsList();
+  }
   componentDidMount() {
     this.dataprepsubscription = DataPrepStore.subscribe(() => {
       let {dataprep} = DataPrepStore.getState();
@@ -96,6 +101,7 @@ export default class ExperimentCreateView extends Component {
     } else {
       this.setState({loading: false});
     }
+    fetchAlgorithmsList();
   }
   componentWillUnmount() {
     DataPrepStore.dispatch({

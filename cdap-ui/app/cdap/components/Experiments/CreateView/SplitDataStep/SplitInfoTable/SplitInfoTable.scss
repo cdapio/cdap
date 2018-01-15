@@ -46,6 +46,16 @@
           &:hover {
             background: $grey-08;
           }
+          &.active {
+            background: transparentize($color: $yellow-02, $amount: 0.7);
+          }
+          .outcome-field {
+            .icon-svg.icon-star {
+              color: $orange-01;
+              margin-right: 5px;
+              height: 12px;
+            }
+          }
         }
       }
       .split-table-header {

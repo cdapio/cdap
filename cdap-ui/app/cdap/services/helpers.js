@@ -225,7 +225,7 @@ const defaultEventObject = {
 
 function preventPropagation(e = defaultEventObject) {
   e.stopPropagation();
-  e.nativeEvent.stopImmediatePropagation();
+  e.nativeEvent ? e.nativeEvent.stopImmediatePropagation() : e.stopImmediatePropagation();
   e.preventDefault();
 }
 

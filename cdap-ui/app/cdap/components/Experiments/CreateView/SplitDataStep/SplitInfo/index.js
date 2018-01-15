@@ -19,6 +19,7 @@ import React, { Component } from 'react';
 import {connect} from 'react-redux';
 import SplitInfoTable from 'components/Experiments/CreateView/SplitDataStep/SplitInfoTable';
 import SplitInfoGraph from 'components/Experiments/CreateView/SplitDataStep/SplitInfoGraph';
+import IconSVG from 'components/IconSVG';
 
 require('./SplitInfo.scss');
 
@@ -51,7 +52,18 @@ class SplitInfo extends Component {
       <div className="split-info">
         <h5> Verify Sample by Feature or Outcome </h5>
         <div className="active-column-container">
-          Displaying column: <strong>{this.state.activeColumn}</strong>
+          <span>Displaying column: </span>
+          <strong>
+            {
+              this.state.activeColumn === this.props.outcome ? (
+                <span className="outcome-field">
+                  <IconSVG name="icon-star" />
+                  <span>{this.state.activeColumn}</span>
+                </span>
+              )
+              : this.state.activeColumn
+            }
+          </strong>
         </div>
         <div className="split-info-graph-wrapper">
           <SplitInfoGraph
@@ -62,6 +74,8 @@ class SplitInfo extends Component {
         <SplitInfoTable
           splitInfo={this.state.splitInfo}
           onActiveColumnChange={this.onActiveColumnChange}
+          activeColumn={this.state.activeColumn}
+          outcome={this.props.outcome}
         />
       </div>
     );

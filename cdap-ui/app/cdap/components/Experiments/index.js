@@ -17,11 +17,12 @@
 import React, {Component} from 'react';
 import {Provider} from 'react-redux';
 import experimentsStore from 'components/Experiments/store';
-import {getExperimentsList} from 'components/Experiments/store/ActionCreator';
+import {getExperimentsList, setAlgorithmsList} from 'components/Experiments/store/ActionCreator';
 import ExperimentsListView from 'components/Experiments/ListView';
 
 class Experiments extends Component {
   componentWillMount() {
+    setAlgorithmsList();
     getExperimentsList();
   }
   render() {

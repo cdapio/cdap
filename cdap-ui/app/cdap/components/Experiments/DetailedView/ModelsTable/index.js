@@ -32,6 +32,9 @@ import {Link} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import DeleteModelBtn from 'components/Experiments/DetailedView/DeleteModelBtn';
 import DeleteExperimentBtn from 'components/Experiments/DetailedView/DeleteExperimentBtn';
+import HyperParamsPopover from 'components/Experiments/DetailedView/HyperParamsPopover';
+import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
 
 require('./DetailedViewModelsTable.scss');
 
@@ -148,14 +151,14 @@ const renderTableBody = (experimentId, outcomeType, models) => {
     return {
       ...model,
       name,
-      algorithm: getAlgorithmLabel(algorithm),
+      algorithmLabel: getAlgorithmLabel(algorithm),
       hyperparameters
     };
   });
   const renderItem = (width, content) => (
     <div
       className="grid-body-item"
-      title={content}
+      title={isNumber(content) || isString(content) ? content : ''}
       style={{ width: `${width}` }}
     >
       {content}
@@ -203,9 +206,12 @@ const renderTableBody = (experimentId, outcomeType, models) => {
                 {renderItem(newHeaders[2].width, <ModelStatusIndicator status={model.status || '--'} />)}
                 {renderItem(newHeaders[3].width, (
                   !inSplitStep ? (
-                    <span className="algorithm-cell">
-                      <IconSVG name="icon-cog" />
-                      <span>{model.algorithm}</span>
+                    <span className="algorithm-cell" title={model.algorithmLabel}>
+                      <HyperParamsPopover
+                        hyperparameters={model.hyperparameters}
+                        algorithm={model.algorithm}
+                      />
+                      <span>{model.algorithmLabel}</span>
                     </span>)
                   : '--'
                 ))}
