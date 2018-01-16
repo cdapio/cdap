@@ -101,7 +101,7 @@
     "clipboard": "1.7.1",
     "compression": "1.6.1",
     "cookie-parser": "1.4.1",
-    "d3": "3.5.17",
+    "d3": "4.12.2",
     "event-emitter": "0.3.4",
     "express": "4.16.2",
     "finalhandler": "0.4.1",
