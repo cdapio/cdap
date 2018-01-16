@@ -169,30 +169,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
   }
 
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/current")
-  public void getWorkflowStatus(HttpRequest request, final HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                                @PathParam("run-id") String runId) throws IOException {
-    try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId, new WorkflowClient.Callback() {
-         @Override
-         public void handle(WorkflowClient.Status status) {
-           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-             responder.sendJson(HttpResponseStatus.OK, status.getResult());
-           } else {
-             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
-           }
-         }
-       });
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
-  }
-
   /**
    * Returns the previous runtime when the scheduled program ran.
    */

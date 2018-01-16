@@ -18,10 +18,8 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
@@ -30,15 +28,12 @@ import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +41,6 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -194,8 +188,6 @@ public class ProgramClientTestRun extends ClientTestBase {
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
 
-      testWorkflowCommand(app.workflow(FakeWorkflow.NAME));
-
       LOG.info("Starting flow with debug");
       programClient.start(flow, true);
       assertProgramRunning(programClient, flow);
@@ -208,43 +200,5 @@ public class ProgramClientTestRun extends ClientTestBase {
         LOG.error("Error deleting app {} during test cleanup.", app, e);
       }
     }
-  }
-
-  private void testWorkflowCommand(final WorkflowId workflow) throws Exception {
-    // File is used to synchronized between the test case and the FakeWorkflow
-    File doneFile = TMP_FOLDER.newFile();
-    Assert.assertTrue(doneFile.delete());
-
-    LOG.info("Starting workflow");
-
-    programClient.start(workflow, false, ImmutableMap.of("done.file", doneFile.getAbsolutePath()));
-    assertProgramRunning(programClient, workflow);
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return programClient.getProgramRuns(workflow, "running", Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
-      }
-    }, 5, TimeUnit.SECONDS);
-    List<RunRecord> runRecords = programClient.getProgramRuns(workflow, "running", Long.MIN_VALUE, Long.MAX_VALUE, 100);
-    Assert.assertEquals(1, runRecords.size());
-
-    final String pid = runRecords.get(0).getPid();
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        try {
-          return programClient.getWorkflowCurrent(workflow, pid).size();
-        } catch (NotFoundException e) {
-          // try again if the 'current' endpoint is not discoverable yet
-          return 0;
-        }
-      }
-    }, 20, TimeUnit.SECONDS);
-
-    // Signal the FakeWorkflow that execution can be continued by creating temp file
-    Assert.assertTrue(doneFile.createNewFile());
-
-    assertProgramStopped(programClient, workflow);
-    LOG.info("Workflow stopped");
   }
 }
