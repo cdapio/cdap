@@ -233,6 +233,16 @@ function isNilOrEmptyString(value) {
   return isNil(value) || value === '';
 }
 
+function isNumeric(value) {
+  return !isNaN(parseFloat(value)) && isFinite(value);
+}
+
+function wholeArrayIsNumeric(values) {
+  return values.reduce((prev, curr) => {
+    return prev && isNumeric(curr);
+  }, isNumeric(values[0]));
+}
+
 function requiredFieldsCompleted(state, requiredFields) {
   for (let i = 0; i < requiredFields.length; i++) {
     let requiredField = requiredFields[i];
@@ -291,5 +301,7 @@ export {
   isPluginSource,
   isPluginSink,
   isBatchPipeline,
-  composeEnhancers
+  composeEnhancers,
+  isNumeric,
+  wholeArrayIsNumeric
 };

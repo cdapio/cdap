@@ -15,7 +15,7 @@
 */
 
 import {objectQuery} from 'services/helpers';
-import GLOBALS from 'services/global-constants';
+import {GLOBALS} from 'services/global-constants';
 
 let countUnFilledRequiredFields = (node) => {
   var requiredFieldCount = 0;

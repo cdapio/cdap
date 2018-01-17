@@ -21,6 +21,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.pipelineType = rPipelineDetail.artifact.name;
     let programType = this.pipelineType === GLOBALS.etlDataPipeline ? 'workflows' : 'spark';
     let programName = this.pipelineType === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
+    let scheduleId = GLOBALS.defaultScheduleId;
 
     let currentRunId;
     let pluginsFetched = false;
@@ -36,6 +37,12 @@ angular.module(PKG.name + '.feature.hydrator')
       appId: rPipelineDetail.name,
       programType,
       programName
+    });
+
+    actionCreator.fetchScheduleStatus({
+      namespace: $stateParams.namespace,
+      appId: rPipelineDetail.name,
+      scheduleId
     });
 
     let pipelineDetailStoreSubscription = window.CaskCommon.PipelineDetailStore.subscribe(() => {

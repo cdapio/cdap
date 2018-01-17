@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,20 +23,26 @@ import classnames from 'classnames';
 require('./Tag.scss');
 
 export default class Tag extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      searchModalOpen: false,
-    };
+  static propTypes = {
+    value: PropTypes.string,
+    scope: PropTypes.string,
+    onDelete: PropTypes.func,
+    isNativeLink: PropTypes.bool
+  };
 
-    this.toggleSearchModal = this.toggleSearchModal.bind(this);
+  static defaultProps = {
+    isNativeLink: false
+  };
+
+  state = {
+    searchModalOpen: false
   }
 
-  toggleSearchModal() {
+  toggleSearchModal = () => {
     this.setState({
       searchModalOpen: !this.state.searchModalOpen
     });
-  }
+  };
 
   render() {
     let tagClasses = classnames("btn btn-secondary", {
@@ -67,6 +73,7 @@ export default class Tag extends Component {
               target={['app', 'dataset', 'stream']}
               isOpen={this.state.searchModalOpen}
               toggle={this.toggleSearchModal}
+              isNativeLink={this.props.isNativeLink}
             />
           :
             null
@@ -75,9 +82,3 @@ export default class Tag extends Component {
     );
   }
 }
-
-Tag.propTypes = {
-  value: PropTypes.string,
-  scope: PropTypes.string,
-  onDelete: PropTypes.func
-};

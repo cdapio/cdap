@@ -15,13 +15,19 @@
 */
 
 import {MyPipelineApi} from 'api/pipeline';
-import {MyProgramApi} from 'api/program';
 import PipelineDetailStore, {ACTIONS} from 'components/PipelineDetails/store';
 
 const init = (pipeline) => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.INITIALIZE_PIPELINE_DETAILS,
     payload: { pipeline }
+  });
+};
+
+const setOptionalProperty = (key, value) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_OPTIONAL_PROPERTY,
+    payload: { key, value }
   });
 };
 
@@ -35,10 +41,12 @@ const setSchedule = (schedule) => {
 const fetchScheduleStatus = (params) => {
   MyPipelineApi
     .getScheduleStatus(params)
-    .subscribe(scheduleStatus => {
+    .subscribe(schedule => {
       PipelineDetailStore.dispatch({
         type: ACTIONS.SET_SCHEDULE_STATUS,
-        payload: { scheduleStatus }
+        payload: {
+          scheduleStatus: schedule.status
+        }
       });
     }, (err) => {
       console.log(err);
@@ -157,28 +165,6 @@ const setMaxConcurrentRuns = (maxConcurrentRuns) => {
   });
 };
 
-const startPipeline = (params) => {
-  MyProgramApi.action({
-    ...params,
-    action: 'start'
-  });
-};
-
-const stopPipeline = (params) => {
-  MyProgramApi.action({
-    ...params,
-    action: 'stop'
-  });
-};
-
-const schedulePipeline = (params) => {
-  MyPipelineApi.schedule(params);
-};
-
-const suspendSchedule = (params) => {
-  MyPipelineApi.suspend(params);
-};
-
 const setCurrentRun = (runId) => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.SET_CURRENT_RUN,
@@ -264,6 +250,7 @@ const reset = () => {
 
 export {
   init,
+  setOptionalProperty,
   setSchedule,
   fetchScheduleStatus,
   setEngine,
@@ -282,10 +269,6 @@ export {
   setCheckpointing,
   setNumRecordsPreview,
   setMaxConcurrentRuns,
-  startPipeline,
-  stopPipeline,
-  schedulePipeline,
-  suspendSchedule,
   setCurrentRun,
   getRuns,
   getNextRunTime,

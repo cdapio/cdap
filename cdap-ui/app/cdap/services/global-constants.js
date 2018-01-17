@@ -23,7 +23,7 @@ const pluginLabels = {
   'action': 'Conditions and Actions',
   'erroralert': 'Error Handlers and Alerts'
 };
-export const NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double'];
+const NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double'];
 const GLOBALS = {
   etlBatch: 'cdap-etl-batch',
   etlRealtime: 'cdap-etl-realtime',
@@ -135,6 +135,7 @@ const GLOBALS = {
   },
 
   defaultSchemaName: 'etlSchemaBody',
+  defaultScheduleId: 'dataPipelineSchedule',
 
   'en': {
     hydrator: {
@@ -206,4 +207,7 @@ const GLOBALS = {
   }
 };
 
-export default GLOBALS;
+export {
+  NUMBER_TYPES,
+  GLOBALS
+};
