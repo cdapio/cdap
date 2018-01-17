@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,35 +13,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../styles/variables.scss';
 
-@import "../../styles/variables.less";
-
-@text-color: #333333;
-@border-color: #cccccc;
-@modeless-bg-color: lightgray;
-@modeless-header-bg-color: #f5f5f5;
-@modeless-width: 730px;
-@modeless-height: 455px;
-@regular-font: 14px;
-@secondary-btn-color: @brand-primary;
+$text-color: $grey-01;
+$border-color: $grey-05;
+$modeless-bg-color: lightgray;
+$modeless-header-bg-color: $grey-08;
+$modeless-width: 730px;
+$modeless-height: 455px;
+$regular-font: 14px;
+$secondary-btn-color: $brand-primary;
 
 body.theme-cdap {
   &.state-hydrator {
     .pipeline-scheduler-content {
-      background: @modeless-bg-color;
+      background: $modeless-bg-color;
       position: fixed;
       top: 95px;
       overflow: auto;
       right: 15px;
       z-index: 999;
       box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
-      color: @text-color;
+      color: $text-color;
       background-color: white;
-      width: @modeless-width;
-      height: @modeless-height;
+      width: $modeless-width;
+      height: $modeless-height;
 
       .pipeline-scheduler-header {
-        background-color: @modeless-header-bg-color;
+        background-color: $modeless-header-bg-color;
         height: 60px;
         padding: 0;
         border-radius: 4px 4px 0 0;
@@ -50,7 +49,7 @@ body.theme-cdap {
         justify-content: space-between;
 
         .modeless-title {
-          color: @text-color;
+          color: $text-color;
           padding-left: 15px;
           max-width: 80%;
           text-overflow: ellipsis;
@@ -62,9 +61,10 @@ body.theme-cdap {
           line-height: 20px;
         }
 
-        .btn .fa-remove {
-          color: @text-color;
-          font-size: 16px;
+        .btn .icon-close {
+          color: $text-color;
+          height: 16px;
+          width: 16px;
         }
       }
 
@@ -72,14 +72,12 @@ body.theme-cdap {
         display: flex;
 
         /* 60px: height of modeless box header */
-        height: ~"calc(100% - 60px)";
-        height: ~"-moz-calc(100% - 60px)";
-        height: ~"-webkit-calc(100% - 60px)";
+        height: calc(100% - 60px);
 
         .schedule-content {
           width: 100%;
           margin: 16px 45px 30px 45px;
-          font-size: @regular-font;
+          font-size: $regular-font;
           position: relative;
 
           .separator {
@@ -99,9 +97,7 @@ body.theme-cdap {
 
           fieldset {
             /* 70px: height from bottom of buttons to horizontal line */
-            height: ~"calc(100% - 70px)";
-            height: ~"-moz-calc(100% - 70px)";
-            height: ~"-webkit-calc(100% - 70px)";
+            height: calc(100% - 70px);
 
             .schedule-types {
               display: flex;
@@ -125,12 +121,10 @@ body.theme-cdap {
             }
 
             .schedule-type-content {
-              border-bottom: 1px solid @border-color;
+              border-bottom: 1px solid $border-color;
 
               /*  30px: height of Basic | Advanced options */
-              height: ~"calc(100% - 30px)";
-              height: ~"-moz-calc(100% - 30px)";
-              height: ~"-webkit-calc(100% - 30px)";
+              height: calc(100% - 30px);
 
               label {
                 font-weight: initial;
@@ -205,11 +199,15 @@ body.theme-cdap {
             }
 
             .btn {
-              font-size: @regular-font;
+              font-size: $regular-font;
 
               &.btn-secondary {
-                color: @secondary-btn-color;
+                color: $secondary-btn-color;
                 margin-left: 16px;
+
+                .icon-spinner {
+                  margin-left: 5px;
+                }
               }
             }
           }

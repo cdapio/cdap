@@ -58,6 +58,7 @@ function getStatusIndicatorClass (displayStatus) {
 }
 
 export default {
+  statusMap,
   lookupDisplayStatus,
   getStatusIndicatorClass
 };

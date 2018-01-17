@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,28 +27,32 @@ require('./Tags.scss');
 import T from 'i18n-react';
 
 export default class Tags extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      systemTags: [],
-      userTags: [],
-      showInputField: false,
-      loading: false,
-      currentInputTag: '',
-    };
+  static defaultProps = {
+    showCountLabel: true,
+    isNativeLink: false
+  };
 
-    this.params = {
-      namespace: NamespaceStore.getState().selectedNamespace,
-      entityType: convertEntityTypeToApi(this.props.entity.type),
-      entityId: this.props.entity.id,
-    };
+  static propTypes = {
+    entity: PropTypes.object,
+    showCountLabel: PropTypes.bool,
+    isNativeLink: PropTypes.bool
+  };
 
-    this.toggleInputField = this.toggleInputField.bind(this);
-    this.onInputTagChange = this.onInputTagChange.bind(this);
-    this.addTag = this.addTag.bind(this);
-    this.closeInputFieldIfEmpty = this.closeInputFieldIfEmpty.bind(this);
-    this.subscriptions = [];
-  }
+  state = {
+    systemTags: [],
+    userTags: [],
+    showInputField: false,
+    loading: false,
+    currentInputTag: '',
+  };
+
+  params = {
+    namespace: NamespaceStore.getState().selectedNamespace,
+    entityType: convertEntityTypeToApi(this.props.entity.type),
+    entityId: this.props.entity.id,
+  };
+
+  subscriptions = [];
 
   componentWillMount() {
     Mousetrap.bind('return', this.addTag);
@@ -86,7 +90,7 @@ export default class Tags extends Component {
     this.subscriptions.map(subscriber => subscriber.unsubscribe());
   }
 
-  toggleInputField() {
+  toggleInputField = () => {
     if (!this.state.loading) {
       if (this.state.showInputField) {
         this.setState({
@@ -98,22 +102,22 @@ export default class Tags extends Component {
         showInputField: !this.state.showInputField
       });
     }
-  }
+  };
 
-  closeInputFieldIfEmpty() {
+  closeInputFieldIfEmpty = () => {
     if (this.state.currentInputTag === '' && this.state.showInputField) {
       this.setState({
         showInputField: false,
         error: false
       });
     }
-  }
+  };
 
-  onInputTagChange(e) {
+  onInputTagChange = (e) => {
     this.setState({
       currentInputTag: e.target.value
     });
-  }
+  };
 
   fetchUserTags() {
     let params = Object.assign({}, this.params, { scope: 'USER' });
@@ -138,7 +142,7 @@ export default class Tags extends Component {
     this.subscriptions.push(fetchTagsSubscription);
   }
 
-  addTag() {
+  addTag = () => {
     if (this.state.currentInputTag !== '') {
       this.setState({
         loading: true
@@ -156,7 +160,7 @@ export default class Tags extends Component {
 
       this.subscriptions.push(addTagsSubscription);
     }
-  }
+  };
 
   deleteTag(tag, event) {
     event.preventDefault();
@@ -185,8 +189,9 @@ export default class Tags extends Component {
           this.state.systemTags.map(tag => {
             return (
               <Tag
-                value = {tag}
-                scope = 'SYSTEM'
+                value={tag}
+                scope='SYSTEM'
+                isNativeLink={this.props.isNativeLink}
               />
             );
           })
@@ -202,9 +207,10 @@ export default class Tags extends Component {
           this.state.userTags.map(tag => {
             return (
               <Tag
-                value = {tag}
+                value={tag}
                 onDelete={this.deleteTag.bind(this, tag)}
-                scope = 'USER'
+                scope='USER'
+                isNativeLink={this.props.isNativeLink}
               />
             );
           })
@@ -250,7 +256,12 @@ export default class Tags extends Component {
     let tagsCount = this.state.systemTags.length + this.state.userTags.length;
     return (
       <div className="tags-holder">
-        <strong> {T.translate('features.Tags.label')}({tagsCount}): </strong>
+        {
+          this.props.showCountLabel ?
+            <strong> {T.translate('features.Tags.label')}({tagsCount}): </strong>
+          :
+            null
+        }
         {
           !tagsCount && !this.state.loading ?
             <i>{T.translate('features.Tags.notags')}</i>
@@ -286,6 +297,3 @@ export default class Tags extends Component {
     );
   }
 }
-Tags.propTypes = {
-  entity: PropTypes.object
-};
