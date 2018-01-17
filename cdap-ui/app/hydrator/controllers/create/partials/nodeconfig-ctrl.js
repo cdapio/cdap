@@ -540,22 +540,29 @@ class HydratorPlusPlusNodeConfigCtrl {
         // has output records
         angular.forEach(res, (stageMetrics, stageName) => {
           let recordsOutPorts = Object.keys(stageMetrics).filter(metricName => metricName.indexOf('records.out.') !== -1);
+
+          // Looking at the metrics of the stage that the user clicked on
+          // so just set recordsOut to the value returned at the 'records.out' property
           if (stageName === this.state.node.plugin.label) {
-            if (!recordsOutPorts.length) {
-              recordsOut[stageName] = this.formatMultipleRecords(stageMetrics['records.out']);
-            } else {
+            if (recordsOutPorts.length) {
               angular.forEach(recordsOutPorts, (recordsOutPort) => {
                 let portName = _.capitalize(recordsOutPort.split('.').pop());
                 recordsOut[portName] = this.formatMultipleRecords(stageMetrics[recordsOutPort]);
               });
+            } else {
+              recordsOut[stageName] = this.formatMultipleRecords(stageMetrics['records.out']);
             }
 
-          } else { // set the records in of current stage to records out of previous stage with data
+          // Looking at the metrics of the stage previous to the one that the user clicked on
+          // so set the recordsIn of current stage to recordsOut of previous stage with data
+          } else {
             let correctMetricsName;
-            if (!recordsOutPorts.length) {
-              correctMetricsName = 'records.out';
-            } else {
+            if (recordsOutPorts.length) {
               correctMetricsName = recordsOutPorts.find(port => port.split('.').pop() === previousStagePort);
+            } else if (stageMetrics.hasOwnProperty('records.alert') && this.state.node.plugin.type === 'alertpublisher') {
+              correctMetricsName = 'records.alert';
+            } else {
+              correctMetricsName = 'records.out';
             }
             recordsIn[stageName] = this.formatMultipleRecords(stageMetrics[correctMetricsName]);
           }
@@ -594,7 +601,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
 
     let mapInputs = {
-      schema: {},
+      schemaFields: {},
       records: []
     };
 
@@ -603,16 +610,23 @@ class HydratorPlusPlusNodeConfigCtrl {
       if (json.value) {
         json = json.value;
       }
+      let schemaFields, data;
 
-      if (!json.schema) { return; }
+      if (json.schema) {
+        schemaFields = json.schema.fields.map( (field) => {
+          return field.name;
+        });
+      } else {
+        schemaFields = Object.keys(json);
+      }
 
-      let schema = json.schema.fields.map( (field) => {
-        return field.name;
-      });
+      if (json.fields) {
+        data = json.fields;
+      } else {
+        data = json;
+      }
 
-      let data = json.fields;
-
-      mapInputs.schema = schema;
+      mapInputs.schemaFields = schemaFields;
       mapInputs.records.push(data);
     });
 
