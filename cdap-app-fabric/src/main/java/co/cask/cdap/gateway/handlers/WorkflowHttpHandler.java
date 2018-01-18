@@ -78,7 +78,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
@@ -111,12 +110,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
 
-  private final WorkflowClient workflowClient;
   private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeScheduler;
 
   @Inject
-  WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
+  WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
                       QueueAdmin queueAdmin, TimeSchedulerService timeScheduler,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
                       MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler,
@@ -125,7 +123,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin,
           mrJobInfoFetcher, metricStore, namespaceQueryAdmin, programScheduler,
           authenticationContext, authorizationEnforcer);
-    this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
     this.timeScheduler = timeScheduler;
   }
