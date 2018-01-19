@@ -19,6 +19,7 @@ import React, {Component} from 'react';
 import Popover from 'components/Popover';
 import PlusButtonModal from 'components/PlusButtonModal';
 import {Link} from 'react-router-dom';
+import PlusButtonStore from 'services/PlusButtonStore';
 require('./PlusButton.scss');
 
 const PLUSBUTTON_DIMENSION = 58;
@@ -32,6 +33,22 @@ export default class PlusButton extends Component {
     })),
     mode: PropTypes.oneOf(['marketplace', 'resourcecenter'])
   };
+
+  componentDidMount() {
+    this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
+      let modalState = PlusButtonStore.getState().modalState;
+      this.setState({
+        showModal: modalState
+      });
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.plusButtonSubscription) {
+      this.plusButtonSubscription();
+    }
+  }
+
   static defaultProps = {
     contextItems: []
   };
