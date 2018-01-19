@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
@@ -138,5 +139,14 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
 
   public static ArtifactId fromString(String string) {
     return EntityId.fromString(string, ArtifactId.class);
+  }
+
+  /**
+   * Creates a {@link co.cask.cdap.api.artifact.ArtifactId} from this class.
+   */
+  public co.cask.cdap.api.artifact.ArtifactId toApiArtifactId() {
+    return new co.cask.cdap.api.artifact.ArtifactId(artifact, new ArtifactVersion(version),
+                                                    NamespaceId.SYSTEM.getNamespace().equals(namespace)
+                                                      ? ArtifactScope.SYSTEM : ArtifactScope.USER);
   }
 }

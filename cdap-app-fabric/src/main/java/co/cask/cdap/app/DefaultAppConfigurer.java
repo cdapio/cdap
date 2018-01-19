@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,8 +42,8 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
@@ -71,7 +71,7 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of {@link ApplicationConfigurer}.
  */
-public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
+public class DefaultAppConfigurer extends AbstractConfigurer implements ApplicationConfigurer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppConfigurer.class);
 
@@ -309,7 +309,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                schedules, builtScheduleSpecs, workers, getPlugins());
   }
 
-  private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {
+  private void addDatasetsAndPlugins(AbstractConfigurer configurer) {
     addDatasets(configurer);
     addPlugins(configurer.getPlugins());
   }

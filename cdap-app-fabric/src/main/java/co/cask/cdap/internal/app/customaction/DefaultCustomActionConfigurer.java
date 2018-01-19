@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.customaction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.customaction.DefaultCustomActionSpecification;
@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link CustomActionConfigurer}.
  */
-public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer implements CustomActionConfigurer {
+public final class DefaultCustomActionConfigurer extends AbstractConfigurer implements CustomActionConfigurer {
 
   private final CustomAction customAction;
 

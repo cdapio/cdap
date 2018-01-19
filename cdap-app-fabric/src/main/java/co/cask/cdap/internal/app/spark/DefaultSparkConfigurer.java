@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link SparkConfigurer}.
  */
-public class DefaultSparkConfigurer extends DefaultPluginConfigurer implements SparkConfigurer {
+public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkConfigurer {
 
   private final Spark spark;
   private String name;

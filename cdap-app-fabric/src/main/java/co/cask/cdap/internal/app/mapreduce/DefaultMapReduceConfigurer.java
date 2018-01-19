@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link MapReduceConfigurer}.
  */
-public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer implements MapReduceConfigurer {
+public final class DefaultMapReduceConfigurer extends AbstractConfigurer implements MapReduceConfigurer {
 
   private final MapReduce mapReduce;
   private String name;

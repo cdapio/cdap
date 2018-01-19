@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -314,7 +314,7 @@ public interface ArtifactRepository {
    * @throws UnauthorizedException if the current user is not permitted to write properties to the artifact. To be able
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
-  void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception;
+  void writeArtifactProperty(Id.Artifact artifactId, String key, String value) throws Exception;
 
   /**
    * Deletes a property for an artifact. If the property does not exist, this will be a no-op.
@@ -326,7 +326,7 @@ public interface ArtifactRepository {
    * @throws UnauthorizedException if the current user is not permitted to remove a property from the artifact. To be
    *                               able to remove a property, users must have admin privileges on the artifact
    */
-  void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception;
+  void deleteArtifactProperty(Id.Artifact artifactId, String key) throws Exception;
 
   /**
    * Deletes all properties for an artifact. If no properties exist, this will be a no-op.

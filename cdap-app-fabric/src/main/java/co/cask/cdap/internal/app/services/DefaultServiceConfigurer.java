@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -32,8 +32,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -41,8 +39,8 @@ import java.util.Map;
 /**
  * A default implementation of {@link ServiceConfigurer}.
  */
-public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements ServiceConfigurer {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
+public class DefaultServiceConfigurer extends AbstractConfigurer implements ServiceConfigurer {
+
   private final String className;
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;

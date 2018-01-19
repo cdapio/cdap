@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
  */
-public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer implements HttpServiceConfigurer {
+public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer implements HttpServiceConfigurer {
 
   private final HttpServiceHandler handler;
   private final String name;
