@@ -17,7 +17,7 @@
 package co.cask.cdap.common.metadata;
 
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.Collections;
 import java.util.Map;

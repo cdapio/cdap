@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata;
+package co.cask.cdap.api.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
 

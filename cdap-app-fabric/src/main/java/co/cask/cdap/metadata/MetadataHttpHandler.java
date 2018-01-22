@@ -34,7 +34,7 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;

@@ -22,7 +22,8 @@ import javax.annotation.Nullable;
 /**
  * This class represents the purchase history for one customer.
  */
-public class PurchaseHistory {
+public class
+PurchaseHistory {
 
   private final String customer;
   private final UserProfile userProfile;

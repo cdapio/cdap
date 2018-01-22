@@ -56,7 +56,7 @@ import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import com.google.common.base.Charsets;
