@@ -53,13 +53,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
  * Stream input format for use in hive queries and only hive queries. Will not work outside of hive.
  */
-public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> {
+public class HiveStreamInputFormatDelegate implements InputFormat<Void, ObjectWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(HiveStreamInputFormat.class);
 
   @Override
@@ -106,6 +108,8 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
       @Override
       public InputSplit createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
                                     long start, long length, @Nullable String[] locations) {
+        LOG.info("StreamInputSplit classloader: {}",
+                 ((URLClassLoader) StreamInputSplit.class.getClassLoader()).getURLs());
         return new StreamInputSplit(tablePaths[0], eventPath, indexPath, startTime, endTime, start, length, locations);
       }
     });

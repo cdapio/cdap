@@ -1,0 +1,154 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.hive.stream;
+
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.format.RecordFormats;
+import co.cask.cdap.hive.context.ContextManager;
+import co.cask.cdap.hive.serde.ObjectDeserializer;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.io.ObjectWritable;
+import org.apache.hadoop.io.Writable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+
+/**
+ *
+ */
+public class StreamSerDeInitializer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(StreamSerDeInitializer.class);
+  // timestamp and headers are guaranteed to be the first columns in a stream table.
+  // the rest of the columns are for the stream body.
+  private static final int BODY_OFFSET = 2;
+
+  // A GSON object that knows how to serialize Schema type.
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+
+  ObjectInspector inspector;
+  AbstractStreamEventRecordFormat<?> streamFormat;
+  ObjectDeserializer deserializer;
+
+  public StreamSerDeInitializer() {
+    LOG.info("Current classloader: {}", getClass().getClassLoader());
+    LOG.info("Current classloader URLs: {}", Arrays.toString(((URLClassLoader) getClass().getClassLoader()).getURLs()));
+  }
+
+  public void initialize(Configuration conf, Properties properties) throws SerDeException {
+    String streamNamespace = properties.getProperty(Constants.Explore.STREAM_NAMESPACE);
+    String streamName = properties.getProperty(Constants.Explore.STREAM_NAME);
+
+    // no namespace SHOULD be an exception but... Hive calls initialize in several places, one of which is
+    // when you try and drop a table.
+    // When updating to CDAP 2.8, old tables will not have namespace as a serde property. So in order
+    // to avoid a null pointer exception that prevents dropping a table, we handle the null namespace case here.
+    if (streamNamespace == null) {
+      // we also still need an ObjectInspector as Hive uses it to check what columns the table has.
+      this.inspector = new ObjectDeserializer(properties, null).getInspector();
+      return;
+    }
+
+    StreamId streamId = new StreamId(streamNamespace, streamName);
+
+    LOG.info("ObjectDeserializer classloader: {}", ObjectDeserializer.class.getClassLoader());
+    LOG.info("ObjectDeserializer classloader URLs: {}",
+             Arrays.toString(((URLClassLoader) ObjectDeserializer.class.getClassLoader()).getURLs()));
+
+    LOG.info("conf: {}", conf.get(Constants.Explore.CCONF_KEY));
+
+    try (ContextManager.Context context = ContextManager.getContext(conf)) {
+      Schema schema = null;
+      // apparently the conf can be null in some versions of Hive?
+      // Because it calls initialize just to get the object inspector
+      if (context != null) {
+        // Get the stream format from the stream config.
+        FormatSpecification formatSpec = getFormatSpec(properties, streamId, context);
+        this.streamFormat = (AbstractStreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
+        schema = formatSpec.getSchema();
+      }
+      this.deserializer = new ObjectDeserializer(properties, schema, BODY_OFFSET);
+      this.inspector = deserializer.getInspector();
+    } catch (UnsupportedTypeException e) {
+      // this should have been validated up front when schema was set on the stream.
+      // if we hit this something went wrong much earlier.
+      LOG.error("Schema unsupported by format.", e);
+      throw new SerDeException("Schema unsupported by format.", e);
+    } catch (IOException e) {
+      LOG.error("Could not get the config for stream {}.", streamName, e);
+      throw new SerDeException("Could not get the config for stream " + streamName, e);
+    } catch (Exception e) {
+      LOG.error("Could not create the format for stream {}.", streamName, e);
+      throw new SerDeException("Could not create the format for stream " + streamName, e);
+    }
+  }
+
+  public Object deserialize(Writable writable) throws SerDeException {
+    // The writable should always contains a StreamEvent object provided by the StreamRecordReader
+    ObjectWritable objectWritable = (ObjectWritable) writable;
+    StreamEvent streamEvent = (StreamEvent) objectWritable.get();
+
+    // timestamp and headers are always guaranteed to be first.
+    List<Object> event = Lists.newArrayList();
+    event.add(streamEvent.getTimestamp());
+    event.add(streamEvent.getHeaders());
+
+    try {
+      // The format should always format the stream event into a record.
+      event.addAll(deserializer.translateRecord(streamFormat.read(streamEvent)));
+      return event;
+    } catch (Throwable t) {
+      LOG.info("Unable to format the stream body.", t);
+      throw new SerDeException("Unable to format the stream body.", t);
+    }
+  }
+
+  /**
+   * Gets the {@link FormatSpecification} for the given stream based on the SerDe properties.
+   * For backward compatibility, if the format specification is not set in the SerDe properties, it will be
+   * fetched from the {@link StreamConfig}.
+   */
+  private FormatSpecification getFormatSpec(Properties properties, StreamId streamId,
+                                            ContextManager.Context context) throws IOException {
+    String formatSpec = properties.getProperty(Constants.Explore.FORMAT_SPEC);
+    if (formatSpec == null) {
+      StreamConfig config = context.getStreamConfig(streamId);
+      return config.getFormat();
+    }
+    return GSON.fromJson(formatSpec, FormatSpecification.class);
+  }
+}

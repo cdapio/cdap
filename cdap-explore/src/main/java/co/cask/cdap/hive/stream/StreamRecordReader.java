@@ -38,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -57,6 +59,10 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
   private final AuthorizationEnforcer authorizationEnforcer;
 
   StreamRecordReader(InputSplit split, JobConf conf) throws IOException {
+    LOG.info("split Classloader: {}",
+             Arrays.toString(((URLClassLoader) split.getClass().getClassLoader()).getURLs()));
+    LOG.info("StreamInputSplit Classloader: {}",
+             Arrays.toString(((URLClassLoader) StreamInputSplit.class.getClassLoader()).getURLs()));
     ContextManager.Context context = ContextManager.getContext(conf);
     this.inputSplit = (StreamInputSplit) split;
     this.events = Lists.newArrayListWithCapacity(1);
@@ -67,7 +73,7 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
                                 "AuthenticationContext in Hive's StreamRecordReader should not be null.");
     this.principal = context.getAuthenticationContext().getPrincipal();
     this.authorizationEnforcer = context.getAuthorizationEnforcer();
-    this.streamId = HiveStreamInputFormat.getStreamId(conf);
+    this.streamId = HiveStreamInputFormatDelegate.getStreamId(conf);
   }
 
   @Override

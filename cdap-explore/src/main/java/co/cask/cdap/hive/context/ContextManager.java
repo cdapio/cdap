@@ -60,6 +60,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -68,9 +69,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -96,6 +103,15 @@ import javax.annotation.Nullable;
  */
 public class ContextManager {
   private static Context savedContext;
+
+  private static final Logger LOG = LoggerFactory.getLogger(ContextManager.class);
+
+  static {
+    LOG.info("ContextManager classloader: {}", ContextManager.class.getClassLoader());
+    LOG.info("ContextManager classloader URLs: {}",
+             Arrays.toString(((URLClassLoader) ContextManager.class.getClassLoader()).getURLs()));
+  }
+
 
   /**
    * Create and save a context, so that any call to {@link #getContext(Configuration)} that is made in this jvm
@@ -173,8 +189,17 @@ public class ContextManager {
     // In other cases, ContextManager will be initialized using saveContext method.
 
     // cConf, hConf
-    CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE);
+//    CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE);
+
+    // TODO: get cdap conf from client-side, instead
+    File cdapSiteFile = new File("/etc/cdap/conf/cdap-site.xml");
+    Preconditions.checkState(cdapSiteFile.exists());
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(cdapSiteFile.toURI().toURL());
+
     Configuration hConf = ConfigurationUtil.get(conf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE);
+
+    LOG.info("root namespace: {}", cConf.get("root.namespace"));
 
     Injector injector = createInjector(cConf, hConf);
 

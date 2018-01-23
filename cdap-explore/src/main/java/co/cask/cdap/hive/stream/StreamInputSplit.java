@@ -62,8 +62,8 @@ public final class StreamInputSplit extends FileSplit implements Writable {
    * @param length Size of this split.
    * @param locations List of hosts containing this split.
    */
-  StreamInputSplit(Path path, Path eventPath, @Nullable Path indexPath, long startTime, long endTime,
-                   long start, long length, @Nullable String[] locations) {
+  public StreamInputSplit(Path path, Path eventPath, @Nullable Path indexPath, long startTime, long endTime,
+                          long start, long length, @Nullable String[] locations) {
     super(path, start, length, locations);
     this.eventPath = eventPath;
     this.indexPath = indexPath;
@@ -95,14 +95,14 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   /**
    * Returns the event start timestamp in milliseconds.
    */
-  long getStartTime() {
+  public long getStartTime() {
     return startTime;
   }
 
   /**
    * Returns the event end timestamp in milliseconds.
    */
-  long getEndTime() {
+  public long getEndTime() {
     return endTime;
   }
 

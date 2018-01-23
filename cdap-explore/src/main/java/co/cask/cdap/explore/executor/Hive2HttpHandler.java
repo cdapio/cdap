@@ -71,7 +71,7 @@ public class Hive2HttpHandler extends AbstractHttpHandler {
   @Path("streams/testit/testit")
   public void testIt(HttpRequest request, HttpResponder responder)
     throws SQLException, IOException, ClassNotFoundException {
-    new HiveJdbcClient().main(new String[0]);
+//    new HiveJdbcClient().main(new String[0]);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 }

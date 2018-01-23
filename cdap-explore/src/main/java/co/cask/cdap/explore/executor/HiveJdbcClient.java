@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
@@ -99,7 +100,7 @@ public class HiveJdbcClient {
 
   private static final String BASE_URL =
     // must be run from the same node where hiveserver2 is running
-    String.format("jdbc:hive2://%s:10010/default;principal=hive/_HOST@CONTINUUITY.NET", hostname);
+    String.format("jdbc:hive2://%s:10000/default;principal=hive/_HOST@CONTINUUITY.NET", hostname);
 
   // tableTypes:
   private static final String STREAM = "s";
@@ -164,16 +165,82 @@ public class HiveJdbcClient {
     cConf.addResource(cdapSiteFile.toURI().toURL());
     ConfigurationUtil.set(additionalArgs, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
 
+    LOG.info("root namespace: {}", cConf.get("root.namespace"));
 
 
+    for (Entry<String, String> stringStringEntry : additionalArgs.entrySet()) {
+      LOG.info("{}::{}", stringStringEntry.getKey(), stringStringEntry.getValue());
+    }
+
+    LOG.info("additionalArgs3: {}", additionalArgs);
 
 
-
-    Connection conn = getConnection2(props);
+//    Connection conn = getConnection(additionalArgs);
+    Connection conn = getConnection2(additionalArgs);
     Statement statement = conn.createStatement();
 
 
+//    addFatJar(statement);
 
+//    String query = "show tables \'" + tableName + "\'";
+    String query = "show tables";
+    System.out.println("Running: " + query);
+    ResultSet resultSet = statement.executeQuery(query);
+    while (resultSet.next()) {
+      System.out.println(resultSet.getString(1));
+    }
+
+
+
+    String path = new File("/tmp/cdap-explore2-4.3.1.jar").getAbsolutePath();
+    query = "add jar " + path;
+    System.out.println("Running: " + query);
+    statement.execute(query); // will always return false for this statement
+
+
+
+    query = "list jars";
+    System.out.println("Running: " + query);
+    resultSet = statement.executeQuery(query);
+    while (resultSet.next()) {
+      System.out.println(resultSet.getString(1));
+    }
+
+
+
+
+    query = "describe " + tableName;
+    System.out.println("Running: " + query);
+    resultSet = statement.executeQuery(query);
+
+    while (resultSet.next()) {
+      System.out.println(resultSet.getString(1) + "\t" + resultSet.getString(2));
+    }
+
+    query = "select * from " + tableName;
+    System.out.println("Running: " + query);
+    resultSet = statement.executeQuery(query);
+
+    for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); ++i) {
+      System.out.println("col #" + i + ": " + resultSet.getMetaData().getColumnName(i) + "(" +
+                           resultSet.getMetaData().getColumnTypeName(i) + ")");
+    }
+
+    while (resultSet.next()) {
+      print(resultSet, tableType);
+    }
+
+    query = "select count(1) from " + tableName + " LIMIT 1";
+    System.out.println("Running: " + query);
+    resultSet = statement.executeQuery(query);
+
+    while (resultSet.next()) {
+      System.out.println(resultSet.getString(1));
+    }
+
+  }
+
+  private static void addFatJar(Statement statement) throws URISyntaxException, IOException, SQLException {
     // TODO: write hbase conf and cdap conf to a file, tell hive to take THAT.
     // dont include hadoop classpath/conf to this list
 
@@ -216,80 +283,6 @@ public class HiveJdbcClient {
     String query = "add jar " + Joiner.on(" ").join(dependencyJars);
     System.out.println("Running: " + query);
     statement.execute(query); // will always return false for this statement
-
-//    String query = "show tables \'" + tableName + "\'";
-    query = "show tables";
-    System.out.println("Running: " + query);
-    ResultSet resultSet = statement.executeQuery(query);
-    while (resultSet.next()) {
-      System.out.println(resultSet.getString(1));
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    File masterLibDir = new File("/opt/cdap/master/lib");
-//    for (String masterJarFile : masterLibDir.list()) {
-//      String path = new File(masterLibDir, masterJarFile).getAbsolutePath();
-//      query = "add jar " + path;
-//      System.out.println("Running: " + query);
-//      statement.execute(query); // will always return false for this statement
-//    }
-
-    query = "list jars";
-    System.out.println("Running: " + query);
-    resultSet = statement.executeQuery(query);
-    while (resultSet.next()) {
-      System.out.println(resultSet.getString(1));
-    }
-
-
-
-
-
-
-
-
-
-
-    query = "describe " + tableName;
-    System.out.println("Running: " + query);
-    resultSet = statement.executeQuery(query);
-
-    while (resultSet.next()) {
-      System.out.println(resultSet.getString(1) + "\t" + resultSet.getString(2));
-    }
-
-    query = "select * from " + tableName;
-    System.out.println("Running: " + query);
-    resultSet = statement.executeQuery(query);
-
-    for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); ++i) {
-      System.out.println("col #" + i + ": " + resultSet.getMetaData().getColumnName(i) + "(" +
-                           resultSet.getMetaData().getColumnTypeName(i) + ")");
-    }
-
-    while (resultSet.next()) {
-      print(resultSet, tableType);
-    }
-
-    query = "select count(1) from " + tableName + " LIMIT 1";
-    System.out.println("Running: " + query);
-    resultSet = statement.executeQuery(query);
-
-    while (resultSet.next()) {
-      System.out.println(resultSet.getString(1));
-    }
-
   }
 
 

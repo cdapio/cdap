@@ -75,6 +75,9 @@ public class ObjectDeserializer {
    * @param fieldOffset Ignore columns before the offset when flattening records
    */
   public ObjectDeserializer(Properties properties, Schema schema, int fieldOffset) {
+    // The columns property comes from the Hive metastore, which has it from the create table statement
+    // It is then important that this schema be accurate and in the right order - the same order as
+    // object inspectors will reflect them.
     this(Lists.newArrayList(properties.getProperty(serdeConstants.LIST_COLUMNS).split(",")),
          TypeInfoUtils.getTypeInfosFromTypeString(properties.getProperty(serdeConstants.LIST_COLUMN_TYPES)),
          schema, fieldOffset);

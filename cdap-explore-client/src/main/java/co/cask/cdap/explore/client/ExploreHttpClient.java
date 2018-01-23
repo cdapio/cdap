@@ -271,7 +271,7 @@ abstract class ExploreHttpClient implements Explore {
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, QueryStatus.class);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + " not found.");
     }
     throw new ExploreException("Cannot get status. Reason: " + response);
   }
@@ -283,7 +283,7 @@ abstract class ExploreHttpClient implements Explore {
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, COL_DESC_LIST_TYPE);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + " not found.");
     }
     throw new ExploreException("Cannot get result schema. Reason: " + response);
   }
@@ -296,7 +296,7 @@ abstract class ExploreHttpClient implements Explore {
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, ROW_LIST_TYPE);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + " not found.");
     }
     throw new ExploreException("Cannot get next results. Reason: " + response);
   }
@@ -310,7 +310,7 @@ abstract class ExploreHttpClient implements Explore {
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, ROW_LIST_TYPE);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + " not found.");
     }
     throw new ExploreException("Cannot get results preview. Reason: " + response);
   }
@@ -321,7 +321,7 @@ abstract class ExploreHttpClient implements Explore {
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return;
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + " not found.");
     }
     throw new ExploreException("Cannot close operation. Reason: " + response);
   }
