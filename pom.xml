@@ -1686,6 +1686,7 @@
                   <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
                   <exclude>**/.rubocop*.yml</exclude>
+                  <exclude>script/**</exclude>
                 </excludes>
               </configuration>
             </execution>
