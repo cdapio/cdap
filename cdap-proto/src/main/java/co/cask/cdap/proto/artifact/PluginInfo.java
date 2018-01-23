@@ -18,11 +18,13 @@ package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Represents an plugin info returned by
@@ -30,18 +32,35 @@ import java.util.Set;
  */
 @Beta
 public class PluginInfo extends PluginSummary {
+
+  private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
   private final Set<String> endpoints;
 
-  public PluginInfo(String name, String type, String description, String className,
+  public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
+    this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(), pluginClass.getClassName(),
+         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints());
+  }
+
+  public PluginInfo(String name, String type, String description, String className, @Nullable String configFieldName,
                     ArtifactSummary artifact, Map<String, PluginPropertyField> properties, Set<String> endpoints) {
     super(name, type, description, className, artifact);
+    this.configFieldName = configFieldName;
     this.properties = properties;
     this.endpoints = endpoints;
   }
 
+  @Nullable
+  public String getConfigFieldName() {
+    return configFieldName;
+  }
+
   public Map<String, PluginPropertyField> getProperties() {
     return properties;
+  }
+
+  public Set<String> getEndpoints() {
+    return endpoints;
   }
 
   @Override
@@ -56,25 +75,32 @@ public class PluginInfo extends PluginSummary {
     PluginInfo that = (PluginInfo) o;
 
     return super.equals(that) &&
+      Objects.equals(configFieldName, that.configFieldName) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(endpoints, that.endpoints);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), properties);
+    return Objects.hash(super.hashCode(), configFieldName, properties, endpoints);
   }
 
   @Override
   public String toString() {
-    return "PluginSummary{" +
-      "name='" + name + '\'' +
+    return "PluginInfo{" +
+      "configFieldName='" + configFieldName + '\'' +
+      ", properties=" + properties +
+      ", endpoints=" + endpoints +
+      ", name='" + name + '\'' +
       ", type='" + type + '\'' +
       ", description='" + description + '\'' +
       ", className='" + className + '\'' +
-      ", properties=" + properties +
       ", artifact=" + artifact +
-      ", endpoints=" + endpoints +
+      ", name='" + getName() + '\'' +
+      ", type='" + getType() + '\'' +
+      ", description='" + getDescription() + '\'' +
+      ", className='" + getClassName() + '\'' +
+      ", artifact=" + getArtifact() +
       '}';
   }
 }

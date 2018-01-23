@@ -65,6 +65,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
+import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -271,7 +272,8 @@ public class AppFabricTestHelper {
 
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
       ProgramOptionConstants.RUN_ID, RunIds.generate().getId(),
-      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
+      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName(),
+      ProgramOptionConstants.ARTIFACT_ID, Joiner.on(":").join(app.getArtifactId().toIdParts())
     ));
 
     return runner.run(program, new SimpleProgramOptions(program.getId(), systemArgs, userArgs));

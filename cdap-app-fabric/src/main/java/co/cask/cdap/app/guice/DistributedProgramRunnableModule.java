@@ -43,7 +43,9 @@ import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
+import co.cask.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
@@ -203,6 +205,9 @@ public class DistributedProgramRunnableModule {
           install(new FactoryModuleBuilder()
                     .implement(ArtifactManager.class, RemoteArtifactManager.class)
                     .build(ArtifactManagerFactory.class));
+
+          // Bind the PluginFinder implementation
+          bind(PluginFinder.class).to(RemotePluginFinder.class);
         }
       }
     );

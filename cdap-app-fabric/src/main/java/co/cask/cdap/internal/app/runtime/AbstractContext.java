@@ -80,6 +80,7 @@ import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
@@ -127,6 +128,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     .create();
 
   private final CConfiguration cConf;
+  private final ArtifactId artifactId;
   private final Program program;
   private final ProgramOptions programOptions;
   private final ProgramRunId programRunId;
@@ -162,6 +164,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId());
 
+    this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.program = program;
     this.programOptions = programOptions;
     this.cConf = cConf;
@@ -397,6 +400,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   public String getProgramName() {
     return program.getName();
+  }
+
+  /**
+   * Returns the {@link ArtifactId} of the artifact that contains the program.
+   */
+  public ArtifactId getArtifactId() {
+    return artifactId;
   }
 
   public Program getProgram() {

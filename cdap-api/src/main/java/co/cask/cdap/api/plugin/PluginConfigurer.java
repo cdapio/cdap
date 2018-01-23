@@ -37,7 +37,9 @@ public interface PluginConfigurer {
    * @throws IllegalArgumentException if the pluginId has been used already
    */
   @Nullable
-  <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties);
+  default <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
+    return usePlugin(pluginType, pluginName, pluginId, properties, new PluginSelector());
+  }
 
   /**
    * Adds a Plugin usage to the Application and create a new instance.
@@ -71,7 +73,10 @@ public interface PluginConfigurer {
    * @throws IllegalArgumentException if the pluginId has been used already
    */
   @Nullable
-  <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties);
+  default <T> Class<T> usePluginClass(String pluginType, String pluginName,
+                                      String pluginId, PluginProperties properties) {
+    return usePluginClass(pluginType, pluginName, pluginId, properties, new PluginSelector());
+  }
 
   /**
    * Adds a Plugin usage to the Application.

@@ -21,6 +21,9 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
@@ -30,6 +33,7 @@ import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpContentConsumer;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import co.cask.cdap.api.spark.service.SparkHttpServicePluginContext;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -46,10 +50,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.ToIntFunction;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -64,6 +70,7 @@ public class SparkServiceProgram extends AbstractExtendedSpark implements JavaSp
   protected void configure() {
     setMainClass(SparkServiceProgram.class);
     addHandlers(new TestSparkHandler());
+    usePlugin("function", "pluggable", "pluggable", PluginProperties.builder().add("udtName", "${udtName}").build());
   }
 
   @Override
@@ -138,6 +145,104 @@ public class SparkServiceProgram extends AbstractExtendedSpark implements JavaSp
           }
         }
       };
+    }
+
+    @GET
+    @Path("/plugin")
+    public void plugin(HttpServiceRequest request, HttpServiceResponder responder,
+                       @QueryParam("pluginType") String pluginType,
+                       @QueryParam("pluginName") String pluginName,
+                       @QueryParam("file") String file) {
+      try (SparkHttpServicePluginContext pluginContext = getContext().getPluginContext()) {
+
+        Class<?> cls = pluginContext.usePluginClass(pluginType, pluginName, "pluginId",
+                                                    PluginProperties.builder().build());
+        if (cls == null) {
+          responder.sendError(404, "Plugin of type " + pluginType + " and name " + pluginName + " not found.");
+          return;
+        }
+
+        JavaSparkContext jsc = getContext().getJavaSparkContext();
+
+        Map<String, Integer> counts = jsc.textFile(file)
+          .mapPartitionsToPair(iterator -> {
+            ToIntFunction<String> func = pluginContext.newPluginInstance("pluginId");
+            List<Tuple2<String, Integer>> result = new ArrayList<>();
+
+            while (iterator.hasNext()) {
+              String element = iterator.next();
+              result.add(new Tuple2<>(element, func.applyAsInt(element)));
+            }
+
+            return result;
+          })
+          .reduceByKey((v1, v2) -> v1 + v2)
+          .collectAsMap();
+
+        responder.sendJson(200, counts, new TypeToken<Map<String, Integer>>() { }.getType(), new Gson());
+      }
+    }
+
+    @GET
+    @Path("/udtPlugin")
+    public void extPlugin(HttpServiceRequest request, HttpServiceResponder responder,
+                          @QueryParam("udtName") String udtName,
+                          @QueryParam("file") String file) throws Exception {
+      // Use the pluggable plugin to add and load an UDT extension for the actual computation
+      try (SparkHttpServicePluginContext pluginContext = getContext().getPluginContext()) {
+        Extensible extensible = pluginContext.newPluginInstance("pluggable", new UDTNameMacroEvaluator(udtName));
+
+        extensible.configure(pluginContext);
+
+        JavaSparkContext jsc = getContext().getJavaSparkContext();
+
+        Map<String, Integer> counts = jsc.textFile(file)
+          .mapPartitionsToPair(iterator -> {
+            ToIntFunction<String> func = pluginContext.newPluginInstance("pluggable",
+                                                                         new UDTNameMacroEvaluator(udtName));
+            if (func instanceof Extensible) {
+              ((Extensible) func).initialize(pluginContext);
+            }
+
+            List<Tuple2<String, Integer>> result = new ArrayList<>();
+
+            while (iterator.hasNext()) {
+              String element = iterator.next();
+              result.add(new Tuple2<>(element, func.applyAsInt(element)));
+            }
+
+            return result;
+          })
+          .reduceByKey((v1, v2) -> v1 + v2)
+          .collectAsMap();
+
+        responder.sendJson(200, counts, new TypeToken<Map<String, Integer>>() { }.getType(), new Gson());
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+      }
+    }
+  }
+
+  private static final class UDTNameMacroEvaluator implements MacroEvaluator {
+
+    private final String udtName;
+
+    private UDTNameMacroEvaluator(String udtName) {
+      this.udtName = udtName;
+    }
+
+    @Override
+    public String lookup(String property) throws InvalidMacroException {
+      if (property.equals("udtName")) {
+        return udtName;
+      }
+      throw new InvalidMacroException("Unknown property " + property);
+    }
+
+    @Override
+    public String evaluate(String macroFunction, String... arguments) throws InvalidMacroException {
+      throw new InvalidMacroException("Unsupported macro function " + macroFunction);
     }
   }
 }

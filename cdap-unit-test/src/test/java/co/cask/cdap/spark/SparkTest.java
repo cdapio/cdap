@@ -51,6 +51,9 @@ import co.cask.cdap.spark.app.StreamFormatSpecSpark;
 import co.cask.cdap.spark.app.StreamSQLSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
 import co.cask.cdap.spark.app.TransactionSpark;
+import co.cask.cdap.spark.app.plugin.PluggableFunc;
+import co.cask.cdap.spark.app.plugin.StringLengthFunc;
+import co.cask.cdap.spark.app.plugin.StringLengthUDT;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
@@ -83,10 +86,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -457,6 +462,54 @@ public class SparkTest extends TestFrameworkTestBase {
     }
 
     sparkManager.stop();
+  }
+
+  @Test
+  public void testSparkServicePlugin() throws Exception {
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("plugin", "1.0"), Collections.emptySet(), StringLengthFunc.class);
+
+    // Generate some lines to a file
+    File file = TMP_FOLDER.newFile();
+    try (PrintStream printer = new PrintStream(file)) {
+      for (int i = 0; i < 1000; i++) {
+        printer.printf("Message %d\n", i);
+      }
+    }
+
+    ApplicationManager applicationManager = deploy(TestSparkApp.class);
+    SparkManager sparkManager = applicationManager.getSparkManager(SparkServiceProgram.class.getSimpleName()).start();
+
+    URL url = sparkManager.getServiceURL(5, TimeUnit.MINUTES);
+    Assert.assertNotNull(url);
+
+    URL pluginURL = url.toURI().resolve("plugin?pluginType=function&pluginName=len&file="
+                                          + URLEncoder.encode(file.getAbsolutePath(), "UTF-8")).toURL();
+    HttpURLConnection urlConn = (HttpURLConnection) pluginURL.openConnection();
+    Assert.assertEquals(200, urlConn.getResponseCode());
+
+    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), "UTF-8")) {
+      Map<String, Integer> result = new Gson().fromJson(reader, new TypeToken<Map<String, Integer>>() { }.getType());
+      // The result should be from each line in the file to the length of the line
+      Assert.assertEquals(1000, result.size());
+      Assert.assertTrue(Files.lines(file.toPath()).allMatch(line -> result.getOrDefault(line, -1) == line.length()));
+    }
+
+    // Deploy the UDT plugin and test the plugin extending plugin case
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("pluggable", "1.0"), Collections.emptySet(), PluggableFunc.class);
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("lenudt", "1.0"), NamespaceId.DEFAULT.artifact("pluggable", "1.0"),
+                      StringLengthUDT.class);
+
+    pluginURL = url.toURI().resolve("udtPlugin?udtName=len&file="
+                                          + URLEncoder.encode(file.getAbsolutePath(), "UTF-8")).toURL();
+    urlConn = (HttpURLConnection) pluginURL.openConnection();
+    Assert.assertEquals(200, urlConn.getResponseCode());
+
+    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), "UTF-8")) {
+      Map<String, Integer> result = new Gson().fromJson(reader, new TypeToken<Map<String, Integer>>() { }.getType());
+      // The result should be from each line in the file to the length of the line
+      Assert.assertEquals(1000, result.size());
+      Assert.assertTrue(Files.lines(file.toPath()).allMatch(line -> result.getOrDefault(line, -1) == line.length()));
+    }
   }
 
   private void testSparkWithGetDataset(Class<? extends Application> appClass, String sparkProgram) throws Exception {

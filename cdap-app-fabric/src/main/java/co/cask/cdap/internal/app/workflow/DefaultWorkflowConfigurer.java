@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
@@ -52,7 +52,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link WorkflowConfigurer}.
  */
-public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
+public class DefaultWorkflowConfigurer extends AbstractConfigurer
   implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final String className;

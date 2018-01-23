@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,21 @@
 
 package co.cask.cdap.api.spark.service;
 
-import org.apache.spark.sql.SparkSession;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginContext;
+
+import java.io.Closeable;
 
 /**
- * Context interface for providing access to {@link SparkSession} and CDAP functionality.
+ * A {@link PluginContext} for Spark HTTP service. It also implements {@link PluginConfigurer} to allow dynamically
+ * adding plugins that are usable for Spark jobs submitted through the handler
+ * methods in {@link SparkHttpServiceHandler}.
  */
-public interface SparkHttpServiceContext extends SparkHttpServiceContextBase {
+public interface SparkHttpServicePluginContext extends PluginContext, PluginConfigurer, Closeable {
 
   /**
-   * Returns a {@link SparkSession} for operating with DataFrames.
+   * Close and release resources owned by this object.
    */
-  SparkSession getSparkSession();
+  @Override
+  void close();
 }

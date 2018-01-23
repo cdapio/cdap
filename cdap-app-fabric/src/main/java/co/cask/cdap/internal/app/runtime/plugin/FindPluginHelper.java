@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -71,7 +70,7 @@ public final class FindPluginHelper {
     try {
       pluginInstantiator.addArtifact(pluginEntry.getKey().getLocation(), artifact);
     } catch (IOException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return new Plugin(parents, artifact, pluginEntry.getValue(),
                       properties.setMacros(collectMacroEvaluator.getMacros()));

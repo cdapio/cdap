@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link WorkerConfigurer}.
  */
-public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements WorkerConfigurer {
+public class DefaultWorkerConfigurer extends AbstractConfigurer implements WorkerConfigurer {
 
   private final Worker worker;
   private String name;

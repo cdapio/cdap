@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,18 +18,31 @@ package co.cask.cdap.internal.app.runtime.plugin;
 
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a plugin does not exist.
  */
 public class PluginNotExistsException extends NotFoundException {
 
+  @Deprecated
   public PluginNotExistsException(Id.Namespace namespace, String type, String name) {
-    super("plugin", String.format("%s:%s:%s", namespace.getId(), type, name));
+    this(namespace.toEntityId(), type, name);
   }
 
+  @Deprecated
   public PluginNotExistsException(Id.Artifact artifactId, String type, String name) {
+    this(artifactId.toEntityId(), type, name);
+  }
+
+  public PluginNotExistsException(NamespaceId namespace, String type, String name) {
+    super("plugin", String.format("%s:%s:%s", namespace.getNamespace(), type, name));
+  }
+
+  public PluginNotExistsException(ArtifactId artifactId, String type, String name) {
     super("plugin", String.format("%s:%s:%s:%s:%s",
-      artifactId.getNamespace().getId(), type, name, artifactId.getName(), artifactId.getVersion()));
+                                  artifactId.getNamespace(), type, name, artifactId.getArtifact(),
+                                  artifactId.getVersion()));
   }
 }

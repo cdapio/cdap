@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.workflow.condition;
 import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.ConditionConfigurer;
 import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link ConditionConfigurer}
  */
-public class DefaultConditionConfigurer extends DefaultPluginConfigurer implements ConditionConfigurer {
+public class DefaultConditionConfigurer extends AbstractConfigurer implements ConditionConfigurer {
   private final Condition condition;
   private String name;
   private String description;
