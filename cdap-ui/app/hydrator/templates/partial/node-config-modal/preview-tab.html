@@ -48,14 +48,14 @@
         <!-- INPUT RECORDS -->
         <table class="table table-bordered">
           <thead>
-            <th ng-repeat="field in ::value.schema">
+            <th ng-repeat="field in ::value.schemaFields">
               {{ ::field }}
             </th>
           </thead>
 
           <tbody>
             <tr ng-repeat="row in ::value.records">
-              <td ng-repeat="field in ::value.schema">
+              <td ng-repeat="field in ::value.schemaFields">
                 {{ ::row[field] }}
               </td>
             </tr>
@@ -118,14 +118,14 @@
         <!-- OUTPUT RECORDS -->
         <table class="table table-bordered">
           <thead>
-            <th ng-repeat="field in ::value.schema">
+            <th ng-repeat="field in ::value.schemaFields">
               {{ ::field }}
             </th>
           </thead>
 
           <tbody>
             <tr ng-repeat="row in ::value.records">
-              <td ng-repeat="field in ::value.schema">
+              <td ng-repeat="field in ::value.schemaFields">
                 {{ ::row[field] }}
               </td>
             </tr>
