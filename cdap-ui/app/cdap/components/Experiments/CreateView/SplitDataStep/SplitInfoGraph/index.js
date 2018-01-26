@@ -39,7 +39,11 @@ export default class SplitInfoGraph extends Component {
     },
     "y": {
       "field": "count", "type": "quantitative",
-      "axis": {"title": "Count (Percent)", "grid": false}
+      "axis": {
+        "title": "Count (Percent)",
+        "grid": false,
+        "format": ".0%",
+      }
     },
   };
 

@@ -22,13 +22,16 @@ import {NUMBER_TYPES} from 'services/global-constants';
 import SortableTable from 'components/SortableTable';
 import {objectQuery} from 'services/helpers';
 import findLast from 'lodash/findLast';
+import classnames from 'classnames';
 
 require('./SplitInfoTable.scss');
 
 export default class SplitInfoTable extends Component {
   static propTypes = {
     splitInfo: PropTypes.object,
-    onActiveColumnChange: PropTypes.func
+    onActiveColumnChange: PropTypes.func,
+    activeColumn: PropTypes.string,
+    outcome: PropTypes.string
   };
 
   state = {
@@ -42,11 +45,17 @@ export default class SplitInfoTable extends Component {
       'int',
       'long',
       'string'
-    ]
+    ],
+    activeColumn: this.props.activeColumn,
+    outcome: this.props.outcome
   };
 
   componentWillReceiveProps(nextProps) {
-    this.setState({splitInfo: nextProps.splitInfo});
+    this.setState({
+      splitInfo: nextProps.splitInfo,
+      activeColumn: nextProps.activeColumn,
+      outcome: nextProps.outcome
+    });
   }
 
   toggleCollapse = () => {
@@ -133,9 +142,22 @@ export default class SplitInfoTable extends Component {
             return (
               <tr
                 key={field.name}
+                className={classnames({
+                  'active': field.name === this.state.activeColumn
+                })}
                 onClick={this.props.onActiveColumnChange.bind(null, field.name)}
               >
-                <td>{field.name}</td>
+                <td>
+                  {
+                    this.state.outcome === field.name ? (
+                      <span className="outcome-field">
+                        <IconSVG name="icon-star" />
+                        <span> {field.name} </span>
+                      </span>
+                    )
+                    : field.name
+                  }
+                </td>
                 <td>{field.numTotal}</td>
                 <td>{field.numEmpty}</td>
                 <td>{field.numZero}</td>
@@ -159,9 +181,22 @@ export default class SplitInfoTable extends Component {
             return (
               <tr
                 key={field.name}
+                className={classnames({
+                  'active': field.name === this.state.activeColumn
+                })}
                 onClick={this.props.onActiveColumnChange.bind(null, field.name)}
               >
-                <td>{field.name}</td>
+                 <td>
+                  {
+                    this.state.outcome === field.name ? (
+                      <span className="outcome-field">
+                        <IconSVG name="icon-star" />
+                        <span> {field.name} </span>
+                      </span>
+                    )
+                    : field.name
+                  }
+                </td>
                 <td>{field.numTotal}</td>
                 <td>{field.numEmpty}</td>
                 <td>{field.unique}</td>
@@ -179,6 +214,7 @@ export default class SplitInfoTable extends Component {
         entities={fields}
         tableHeaders={this.NUMERICAL_FIELD_HEADERS}
         renderTableBody={this.renderNumericalTableBody}
+        sortOnInitialLoad={false}
       />
     );
   };
@@ -189,6 +225,7 @@ export default class SplitInfoTable extends Component {
         entities={fields}
         tableHeaders={this.CATEGORICAL_FIELD_HEADERS}
         renderTableBody={this.renderCategoricalTableBody}
+        sortOnInitialLoad={false}
       />
     );
   };

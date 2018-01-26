@@ -22,19 +22,18 @@ import classnames from 'classnames';
 require('./SortableTable.scss');
 
 export default class SortableTable extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      entities: props.entities,
-      sortByHeader: '',
-      sortOrder: 'asc'
-    };
-
-    this.renderTableBody = this.props.renderTableBody.bind(this);
-  }
+  state = {
+    entities: this.props.entities,
+    sortByHeader: '',
+    sortOrder: 'asc',
+    sortOnInitialLoad: typeof this.props.sortOnInitialLoad !== 'boolean' ? true : this.props.sortOnInitialLoad
+  };
 
   componentWillMount() {
-    let entities = this.props.entities;
+    if (!this.state.sortOnInitialLoad) {
+      return;
+    }
+    let entities = this.state.entities;
     let sortByHeader = this.getDefaultSortedHeader();
     entities = orderBy(entities, [sortByHeader], [this.state.sortOrder]);
     this.setState({
@@ -130,7 +129,7 @@ export default class SortableTable extends Component {
             }
           </tr>
         </thead>
-        {this.renderTableBody(this.state.entities)}
+        {this.props.renderTableBody(this.state.entities)}
       </table>
     );
   }
@@ -145,5 +144,6 @@ SortableTable.propTypes = {
   ),
   renderTableBody: PropTypes.func,
   entities: PropTypes.arrayOf(PropTypes.object),
-  className: PropTypes.string
+  className: PropTypes.string,
+  sortOnInitialLoad: PropTypes.bool
 };

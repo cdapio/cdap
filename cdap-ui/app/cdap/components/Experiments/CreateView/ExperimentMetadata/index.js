@@ -67,7 +67,7 @@ const mapStateToProps = (state) => ({
   directives: state.model_create.directives,
   algorithm: !state.model_create.algorithm.name.length
     ? '' :
-    state.model_create.algorithmsList
+    state.model_create.validAlgorithmsList
       .find(algo => algo.name === state.model_create.algorithm.name)
       .label
 });

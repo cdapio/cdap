@@ -16,7 +16,6 @@
 
 import {createStore, combineReducers} from 'redux';
 import {defaultAction, composeEnhancers} from 'services/helpers';
-import {REGRESSION_ALGORITHMS} from 'components/Experiments/store/MLAlgorithmsList';
 
 const ACTIONS = {
   SET_EXPERIMENT_NAME: 'SET_EXPERIMENT_NAME',
@@ -36,9 +35,11 @@ const ACTIONS = {
   SET_EXPERIMENT_MODEL_FOR_EDIT: 'SET_EXPERIMENT_MODEL_FOR_EDIT',
   SET_MODEL_DESCRIPTION: 'SET_MODEL_DESCRIPTION',
   SET_MODEL_ML_ALGORITHM: 'SET_MODEL_ML_ALGORITHM',
+  SET_VALID_ALGORITHMS_LIST: 'SET_VALID_ALGORITHMS_LIST',
   SET_ALGORITHMS_LIST: 'SET_ALGORITHMS_LIST',
   SET_WORKSPACE_ID: 'SET_WORKSPACE_ID',
   SET_SPLIT_FINALIZED: 'SET_SPLIT_FINALIZED',
+  UPDATE_HYPER_PARAM: 'UPDATE_HYPER_PARAM',
   RESET: 'RESET'
 };
 
@@ -69,7 +70,8 @@ const DEFAULT_MODEL_CREATE_VALUE = {
     name: ''
   },
 
-  algorithmsList: REGRESSION_ALGORITHMS,
+  validAlgorithmsList: [],
+  algorithmsList: []
 };
 
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
@@ -167,6 +169,24 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
         ...state,
         algorithm: action.payload.algorithm
       };
+    case ACTIONS.SET_ALGORITHMS_LIST:
+      return {
+        ...state,
+        algorithmsList: action.payload.algorithmsList
+      };
+    case ACTIONS.UPDATE_HYPER_PARAM: {
+      let {key, value} = action.payload;
+      return {
+        ...state,
+        algorithm: {
+          ...state.algorithm,
+          hyperparameters: {
+            ...state.algorithm.hyperparameters,
+            [key]: value
+          }
+        }
+      };
+    }
     case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT:
     case ACTIONS.SET_SCHEMA:
       return {
@@ -183,10 +203,14 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
         splitInfo: action.payload.splitInfo
       };
     }
-    case ACTIONS.SET_ALGORITHMS_LIST:
+    case ACTIONS.SET_VALID_ALGORITHMS_LIST:
       return {
         ...state,
-        algorithmsList: action.payload.algorithmsList
+        validAlgorithmsList: state.algorithmsList.filter(
+          algo => action.payload.validAlgorithmsList
+            .map(al => al.name)
+            .indexOf(algo.algorithm) !== -1
+        )
       };
     case ACTIONS.RESET:
       return DEFAULT_MODEL_CREATE_VALUE;

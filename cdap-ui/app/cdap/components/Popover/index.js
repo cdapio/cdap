@@ -20,61 +20,124 @@ import { Manager, Target, Popper, Arrow } from 'react-popper';
 import {Observable} from 'rxjs/Observable';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
+import {preventPropagation, isDescendant} from 'services/helpers';
+import shortid from 'shortid';
+import ee from 'event-emitter';
 require('./Popover.scss');
 
 export default class Popover extends Component {
 
-  propTypes = {
-    children: PropTypes.ReactElement,
-    target: PropTypes.ReactElement,
+  static propTypes = {
+    children: PropTypes.element,
+    target: PropTypes.element,
     targetDimension: PropTypes.object.isRequired,
     className: PropTypes.string,
+    showOn: PropTypes.oneOf(['Click', 'Hover']),
+    bubbleEvent: PropTypes.bool,
     placement: PropTypes.oneOf([
       'top',
       'bottom',
       'left',
       'right',
       'auto'
-    ])
+    ]),
+    enableInteractionInPopover: PropTypes.bool
+  };
+
+  eventEmitter = ee(ee);
+
+  static defaultProps = {
+    showOn: 'Click',
+    bubbleEvent: true,
+    enableInteractionInPopover: false
   };
 
   state = {
     showPopover: false
   };
 
-  togglePopover = () => {
+  id = `popover-${shortid.generate()}`;
+
+  hidePopoverEventHandler = (popoverId) => {
+    if (this.id !== popoverId) {
+      this.setState({
+        showPopover: false
+      });
+    }
+  };
+
+  componentDidMount() {
+    this.eventEmitter.on('POPOVER_OPEN', this.hidePopoverEventHandler);
+  }
+
+  componentWillUnmount() {
+    this.eventEmitter.off('POPOVER_OPEN', this.hidePopoverEventHandler);
+  }
+
+  cleanUpDocumentClickEventHandler = () => {
+    if (this.documentClick$) {
+      this.documentClick$.unsubscribe();
+    }
+    Mousetrap.unbind('esc');
+  }
+  togglePopover = (e) => {
     let newState = !this.state.showPopover;
 
     this.setState({
       showPopover: newState
     });
     if (newState) {
+      this.eventEmitter.emit('POPOVER_OPEN', this.id);
       this.documentClick$ = Observable.fromEvent(document, 'click')
-        .subscribe(() => {
-          this.togglePopover();
+        .subscribe((e) => {
+          let parent = document.getElementById(this.id);
+          let child = e.target;
+          if (this.props.enableInteractionInPopover && isDescendant(parent, child)) {
+            preventPropagation(e);
+            return false;
+          }
+          this.cleanUpDocumentClickEventHandler();
+          this.setState({
+            showPopover: false
+          });
         });
 
       Mousetrap.bind('esc', this.togglePopover);
     } else {
-      if (this.documentClick$) {
-        this.documentClick$.unsubscribe();
-      }
-      Mousetrap.unbind('esc');
+      this.cleanUpDocumentClickEventHandler();
     }
+    this.handleBubbleEvent(e);
   };
+  handleBubbleEvent = (e) => {
+    if (!this.props.bubbleEvent) {
+      preventPropagation(e);
+      return false;
+    }
+  }
 
   render() {
+    let targetProps = {
+      style: this.props.targetDimension
+    };
+    if (this.props.showOn === 'Click') {
+      targetProps[`on${this.props.showOn}`] = this.togglePopover;
+    } else if (this.props.showOn === 'Hover') {
+      targetProps['onMouseOver'] = this.togglePopover;
+      targetProps['onMouseOut'] = this.togglePopover;
+    }
     const TargetElement = this.props.target;
     return (
       <Manager className={this.props.className}>
-        <Target style={this.props.targetDimension} onClick={this.togglePopover}>
+        <Target {...targetProps}>
           <TargetElement />
         </Target>
         <Popper
+          id={this.id}
           placement={this.props.placement || 'auto'}
           className={classnames("popper", {
           'hide': !this.state.showPopover
           })}
+          onClick={this.handleBubbleEvent}
         >
           {this.props.children}
           <Arrow className="popper__arrow" />

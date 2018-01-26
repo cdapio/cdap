@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
-import {createSplitAndUpdateStatus, setSplitFinalized} from 'components/Experiments/store/ActionCreator';
+import {createSplitAndUpdateStatus, setSplitFinalized} from 'components/Experiments/store/CreateExperimentActionCreator';
 import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo';
 import IconSVG from 'components/IconSVG';
 
