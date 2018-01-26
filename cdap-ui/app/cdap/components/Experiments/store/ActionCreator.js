@@ -28,14 +28,18 @@ function setExperimentsLoading() {
 
 function getExperimentsList() {
   setExperimentsLoading();
+  let {offset, limit} = experimentsStore.getState().experiments;
   myExperimentsApi
-    .list({namespace: getCurrentNamespace()})
-    .subscribe(experiments => {
+    .list({ namespace: getCurrentNamespace(), offset, limit })
+    .subscribe(res => {
+      let experiments = res.experiments;
+      let totalCount = res.totalRowCount;
       experiments.forEach(experiment => getModelsListInExperiment(experiment.name));
       experimentsStore.dispatch({
         type: ACTIONS.SET_EXPERIMENTS_LIST,
         payload: {
-          experiments
+          experiments,
+          totalCount
         }
       });
     }, (err) => {
@@ -49,12 +53,15 @@ function getModelsListInExperiment(experimentId) {
       experimentId,
       namespace: getCurrentNamespace()
     })
-    .subscribe(models => {
+    .subscribe(res => {
+      let models = res.models;
+      let modelsCount = res.totalRowCount;
       experimentsStore.dispatch({
         type: ACTIONS.SET_MODELS_IN_EXPERIMENT,
         payload: {
           experimentId,
-          models
+          models,
+          modelsCount
         }
       });
     });
@@ -92,19 +99,56 @@ function getModelsInExperiment(experimentId) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_LOADING
   });
+  let { modelsOffset: offset, modelsLimit: limit } = experimentDetailsStore.getState();
   myExperimentsApi.getModelsInExperiment({
     namespace: getCurrentNamespace(),
-    experimentId
+    experimentId,
+    offset,
+    limit
   })
-  .subscribe(models => {
-    experimentDetailsStore.dispatch({
-      type: EXPERIMENTDETAILACTIONS.SET_MODELS,
-      payload: {
-        models
-      }
+    .subscribe(res => {
+      let models = res.models;
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_MODELS,
+        payload: {
+          models,
+          totalCount: res.totalRowCount
+        }
+      });
+      models.forEach(model => getModelStatus(experimentId, model.id));
     });
-    models.forEach(model => getModelStatus(experimentId, model.id));
+}
+
+function handleModelsPageChange({ selected }) {
+  let { modelsLimit, name: experimentId } = experimentDetailsStore.getState();
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODEL_PAGINATION,
+    payload: {
+      modelsOffset: selected * modelsLimit
+    }
   });
+  updateQueryStringWithModelsOffset();
+  getModelsInExperiment(experimentId);
+}
+
+function updatePaginationForModels({ modelsLimit, modelsOffset }) {
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODEL_PAGINATION,
+    payload: {
+      modelsOffset,
+      modelsLimit
+    }
+  });
+}
+
+function updateQueryStringWithModelsOffset() {
+  let { modelsOffset: offset, modelsLimit: limit } = experimentDetailsStore.getState();
+  let query = `offset=${offset}&limit=${limit}`;
+  let obj = {
+    title: document.title,
+    url: `${location.pathname}?${query}`
+  };
+  history.pushState(obj, obj.title, obj.url);
 }
 
 function getSplitsInExperiment(experimentId) {
@@ -190,6 +234,40 @@ const setAlgorithmsList = () => {
     });
 };
 
+function updatePagination({ limit, offset }) {
+  experimentsStore.dispatch({
+    type: ACTIONS.SET_PAGINATION,
+    payload: { limit, offset }
+  });
+}
+
+function updateQueryString() {
+  let {offset, limit} = experimentsStore.getState().experiments;
+  let query = `offset=${offset}&limit=${limit}`;
+  let obj = {
+    title: document.title,
+    url: `${location.pathname}?${query}`
+  };
+  history.pushState(obj, obj.title, obj.url);
+}
+
+function handlePageChange({selected}) {
+  let {limit} = experimentsStore.getState().experiments;
+  experimentsStore.dispatch({
+    type: ACTIONS.SET_PAGINATION,
+    payload: {
+      offset: selected * limit
+    }
+  });
+  updateQueryString();
+  getExperimentsList();
+}
+
+function resetExperimentDetailStore() {
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.RESET
+  });
+}
 export {
   setExperimentsLoading,
   getExperimentsList,
@@ -202,6 +280,11 @@ export {
   setActiveModel,
   getAlgorithmLabel,
   getHyperParamLabel,
-  setAlgorithmsList
+  setAlgorithmsList,
+  updatePaginationForModels,
+  handleModelsPageChange,
+  handlePageChange,
+  updatePagination,
+  resetExperimentDetailStore
 };
 

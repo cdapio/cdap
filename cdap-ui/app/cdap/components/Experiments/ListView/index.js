@@ -25,10 +25,12 @@ import PaginationWithTitle from 'components/PaginationWithTitle';
 import d3 from 'd3';
 import ExperimentsListBarChart from 'components/Experiments/ListView/ExperimentsListBarChart';
 import PlusButton from 'components/PlusButton';
-import EmptyMessageContainer from 'components/EmptyMessageContainer';
-import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
+import InvalidPageView from 'components/Experiments/ListView/InvalidPageView';
+import EmptyListView from 'components/Experiments/ListView/EmptyListView';
+import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
 import Helmet from 'react-helmet';
+import {handlePageChange} from 'components/Experiments/store/ActionCreator';
 
 require('./ListView.scss');
 
@@ -95,10 +97,11 @@ const getAlgoDistribution = (models) => {
 const renderTableBody = (entities) => {
   let list = entities.map(entity => {
     let models = entity.models || [];
+    let modelsCount = entity.modelsCount;
     return {
       name: entity.name,
       description: entity.description,
-      numOfModels: models.length,
+      numOfModels: modelsCount,
       numOfDeployedModels: models.filter(model => model.deploytime).length,
       testData: entity.srcpath.split('/').pop(),
       algorithmTypes: getAlgoDistribution(models)
@@ -143,7 +146,7 @@ const getDataForGroupedChart = (experiments) => {
       {
         name: experiment.name,
         type: 'Models',
-        count: Array.isArray(experiment.models) ? experiment.models.length: 0
+        count: Array.isArray(experiment.models) ? experiment.models.length : 0
       },
       {
         name: experiment.name,
@@ -155,7 +158,7 @@ const getDataForGroupedChart = (experiments) => {
   return data;
 };
 
-function ExperimentsListView({loading, list}) {
+function ExperimentsListView({ loading, list, totalPages, currentPage, totalCount }) {
   if (loading) {
     return <LoadingSVGCentered />;
   }
@@ -170,18 +173,10 @@ function ExperimentsListView({loading, list}) {
             contextItems={PLUSBUTTONCONTEXTMENUITEMS}
           />
         </TopPanel>
-        <EmptyMessageContainer title="You have not created any experiments">
-          <ul>
-            <li>
-              <Link
-                to={`/ns/${namespace}/experiments/create`}
-              >
-                Create
-              </Link>
-              <span> a new experiment</span>
-            </li>
-          </ul>
-        </EmptyMessageContainer>
+        {
+          totalPages ? <InvalidPageView namespace={namespace} /> : <EmptyListView namespace={namespace} />
+        }
+
       </div>
     );
   }
@@ -199,11 +194,11 @@ function ExperimentsListView({loading, list}) {
       />
       <div className="clearfix">
         <PaginationWithTitle
-          handlePageChange={(currentPage) => console.log(`Pagination coming soon. Right now in page # ${currentPage}`)}
-          currentPage={1}
-          totalPages={1}
-          title={"Experiments"}
-          numberOfEntities={list.length}
+          handlePageChange={handlePageChange}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          title={totalCount > 1 ? "Experiments" : "Experiment"}
+          numberOfEntities={totalCount}
         />
         <SortableStickyTable
           entities={list}
@@ -217,13 +212,19 @@ function ExperimentsListView({loading, list}) {
 
 ExperimentsListView.propTypes = {
   loading: PropTypes.bool,
-  list: PropTypes.arrayOf(PropTypes.object)
+  list: PropTypes.arrayOf(PropTypes.object),
+  totalPages: PropTypes.number,
+  currentPage: PropTypes.number,
+  totalCount: PropTypes.number
 };
 
 const mapStateToProps = (state) => {
   return {
     loading: state.experiments.loading,
-    list: state.experiments.list
+    list: state.experiments.list,
+    totalPages: state.experiments.totalPages,
+    currentPage: state.experiments.offset === 0 ? 1 : Math.ceil((state.experiments.offset + 1) / state.experiments.limit),
+    totalCount: state.experiments.totalCount
   };
 };
 

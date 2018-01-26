@@ -20,7 +20,7 @@ import SortableStickyGrid from 'components/SortableStickyGrid';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
-import {setActiveModel, getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
+import {setActiveModel, getAlgorithmLabel, handleModelsPageChange} from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';
@@ -266,7 +266,7 @@ const renderTableBody = (experimentId, outcomeType, models) => {
   );
 };
 
-function ModelsTable({experimentId, list, loading, outcomeType}) {
+function ModelsTable({experimentId, modelsList, loading, outcomeType, modelsTotalPages, modelsCurrentPage, modelsTotalCount}) {
   if (loading || isEmpty(experimentId)) {
     return (
       <LoadingSVGCentered />
@@ -285,15 +285,15 @@ function ModelsTable({experimentId, list, loading, outcomeType}) {
           <DeleteExperimentBtn experimentId={experimentId} />
         </div>
         <PaginationWithTitle
-          handlePageChange={(currentPage) => console.log(`Pagination coming soon. Right now in page # ${currentPage}`)}
-          currentPage={1}
-          totalPages={1}
-          title={list.length > 1 ? "Models" : "Model"}
-          numberOfEntities={list.length}
+          handlePageChange={handleModelsPageChange}
+          currentPage={modelsCurrentPage}
+          totalPages={modelsTotalPages}
+          title={modelsTotalCount > 1 ? "Models" : "Model"}
+          numberOfEntities={modelsTotalCount}
         />
       </div>
       <SortableStickyGrid
-        entities={list}
+        entities={modelsList}
         tableHeaders={tableHeaders}
         renderTableHeaders={renderTableHeaders.bind(null, outcomeType)}
         renderTableBody={renderTableBody.bind(null, experimentId, outcomeType)}
@@ -303,18 +303,26 @@ function ModelsTable({experimentId, list, loading, outcomeType}) {
 }
 
 ModelsTable.propTypes = {
-  list: PropTypes.array,
+  modelsList: PropTypes.array,
   loading: PropTypes.bool,
   experimentId: PropTypes.string,
-  outcomeType: PropTypes.string
+  outcomeType: PropTypes.string,
+  modelsTotalPages: PropTypes.number,
+  modelsCurrentPage: PropTypes.number,
+  modelsTotalCount: PropTypes.number
 };
 
-const mapStateToProps = (state) => ({
-  list: state.models,
-  experimentId: state.name,
-  loading: state.loading,
-  outcomeType: state.outcomeType
-});
+const mapStateToProps = (state) => {
+  return {
+    modelsList: state.models,
+    experimentId: state.name,
+    loading: state.loading,
+    outcomeType: state.outcomeType,
+    modelsTotalPages: state.modelsTotalPages,
+    modelsCurrentPage: state.modelsOffset === 0 ? 1 : Math.ceil((state.modelsOffset + 1) / state.modelsLimit),
+    modelsTotalCount: state.modelsTotalCount
+  };
+};
 
 const ModelsTableWrapper = connect(mapStateToProps)(ModelsTable);
 

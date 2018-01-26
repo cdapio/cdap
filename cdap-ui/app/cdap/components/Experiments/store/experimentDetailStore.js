@@ -25,10 +25,12 @@ const ACTIONS = {
   SET_ACTIVE_MODEL: 'SET_ACTIVE_MODEL',
   SET_LOADING: 'SET_LOADING',
   SET_SPLITS: 'SET_SPLITS',
-  SET_MODEL_STATUS: 'SET_MODEL_STATUS'
+  SET_MODEL_STATUS: 'SET_MODEL_STATUS',
+  SET_MODEL_PAGINATION: 'SET_MODEL_PAGINATION',
+  RESET: 'RESET'
 };
 
-const DEFAULT_EXPERIMENT_DETAILS = {
+export const DEFAULT_EXPERIMENT_DETAILS = {
   name: '',
   description: '',
   srcpath: '',
@@ -38,6 +40,10 @@ const DEFAULT_EXPERIMENT_DETAILS = {
   algorithms: {},
   statuses: {},
   models: [],
+  modelsOffset: 0,
+  modelsLimit: 10,
+  modelsTotalCount: 0,
+  modelsTotalPages: 0,
   loading: false
 };
 
@@ -70,7 +76,15 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
       return {
         ...state,
         models: action.payload.models,
+        modelsTotalCount: action.payload.totalCount,
+        modelsTotalPages: Math.ceil(action.payload.totalCount / state.modelsLimit),
         loading: false
+      };
+    case ACTIONS.SET_MODEL_PAGINATION:
+      return {
+        ...state,
+        modelsOffset: action.payload.modelsOffset,
+        modelsLimit: action.payload.modelsLimit || state.modelsLimit
       };
     case ACTIONS.SET_ACTIVE_MODEL:
       return {
