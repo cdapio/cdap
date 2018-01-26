@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -36,7 +38,7 @@ public class OutboundHandler extends ChannelDuplexHandler {
 
   private final Channel inboundChannel;
   private boolean requestInProgress;
-  private boolean closeByIdle;
+  private boolean keepAlive;
 
   public OutboundHandler(Channel inboundChannel) {
     this.inboundChannel = inboundChannel;
@@ -46,6 +48,12 @@ public class OutboundHandler extends ChannelDuplexHandler {
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     // One receiving messages from the internal service, forward it to the inbound channel
     inboundChannel.write(msg);
+
+    if (msg instanceof HttpResponse) {
+      keepAlive = HttpUtil.isKeepAlive((HttpResponse) msg);
+    }
+
+    // A response is completed by receiving the last http content
     if (msg instanceof LastHttpContent) {
       requestInProgress = false;
     }
@@ -58,8 +66,10 @@ public class OutboundHandler extends ChannelDuplexHandler {
 
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    if (!requestInProgress) {
-      requestInProgress = msg instanceof HttpObject;
+    // A request starts with a HttpRequest
+    if (msg instanceof HttpRequest) {
+      requestInProgress = true;
+      keepAlive = HttpUtil.isKeepAlive((HttpRequest) msg);
     }
     ctx.write(msg, promise);
   }
@@ -68,19 +78,16 @@ public class OutboundHandler extends ChannelDuplexHandler {
   public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
     if (requestInProgress) {
       final Channel channel = ctx.channel();
-      ctx.executor().execute(new Runnable() {
-        @Override
-        public void run() {
-          // If outboundChannel is not saturated anymore, continue accepting
-          // the incoming traffic from the inboundChannel.
-          if (channel.isWritable()) {
-            LOG.trace("Setting inboundChannel readable.");
-            inboundChannel.config().setAutoRead(true);
-          } else {
-            // If outboundChannel is saturated, do not read inboundChannel
-            LOG.trace("Setting inboundChannel non-readable.");
-            inboundChannel.config().setAutoRead(false);
-          }
+      ctx.executor().execute(() -> {
+        // If outboundChannel is not saturated anymore, continue accepting
+        // the incoming traffic from the inboundChannel.
+        if (channel.isWritable()) {
+          LOG.trace("Setting inboundChannel readable.");
+          inboundChannel.config().setAutoRead(true);
+        } else {
+          // If outboundChannel is saturated, do not read inboundChannel
+          LOG.trace("Setting inboundChannel non-readable.");
+          inboundChannel.config().setAutoRead(false);
         }
       });
     }
@@ -89,8 +96,8 @@ public class OutboundHandler extends ChannelDuplexHandler {
 
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-    // Close the inbound channel if the close event is not due to internal connection idle
-    if (!closeByIdle) {
+    // Close the inbound channel if there is request in progress, or the last request/response has keep-alive == false
+    if (requestInProgress || !keepAlive) {
       Channels.closeOnFlush(inboundChannel);
     }
     ctx.fireChannelInactive();
@@ -110,7 +117,6 @@ public class OutboundHandler extends ChannelDuplexHandler {
         // No data has been sent or received for a while. Close channel.
         Channel channel = ctx.channel();
         channel.close();
-        closeByIdle = true;
         LOG.trace("No data has been sent or received for channel '{}' for more than the configured idle timeout. " +
                     "Closing the channel. Local Address: {}, Remote Address: {}",
                   channel, channel.localAddress(), channel.remoteAddress());

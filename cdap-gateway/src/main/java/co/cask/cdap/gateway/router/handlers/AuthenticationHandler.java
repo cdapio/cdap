@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -136,6 +136,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                                           HttpResponseStatus.UNAUTHORIZED, content);
       HttpUtil.setContentLength(response, content.readableBytes());
+      HttpUtil.setKeepAlive(response, false);
       response.headers().setAll(headers);
       response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json;charset=UTF-8");
 
