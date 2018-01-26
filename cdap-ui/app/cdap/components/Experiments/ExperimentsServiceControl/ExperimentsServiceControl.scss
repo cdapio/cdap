@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../styles/variables.scss';
+
+.experiments-service-control {
+  display: flex;
+  height: calc(100vh - 104px);
+  font-size: 15px;
+
+  .text-container,
+  .image-containers {
+    width: 50%;
+    height: 100%;
+  }
+
+  .image-containers {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 50px;
+    padding-left: 25px;
+    img {
+      height: auto;
+      margin: 20px;
+      width: 75%;
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+  .text-container {
+    padding-top: 50px;
+    padding-left: 30px;
+    padding-right: 30px;
+
+    p {
+      line-height: 2;
+      padding-right: 20px;
+    }
+    .experiments-benefit {
+      li { padding: 10px 0; }
+    }
+    .action-container {
+      padding-bottom: 25px;
+
+      .loading-bar { height: 16px; }
+    }
+    .mail-to-link {
+      color: $cdap-orange;
+    }
+    .btn {
+      .btn-label {
+        vertical-align: top;
+      }
+    }
+  }
+  .exepriments-service-control-error {
+    margin-top: 20px;
+    .icon-svg {
+      margin-right: 5px;
+    }
+  }
+}

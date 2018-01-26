@@ -18,7 +18,10 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-let basePath = '/namespaces/:namespace/apps/ModelManagementApp/spark/ModelManagerService/methods';
+let appPath = '/namespaces/:namespace/apps/ModelManagementApp';
+let servicePath = `${appPath}/spark/ModelManagerService`;
+let basePath = `${servicePath}/methods`;
+
 export const myExperimentsApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`),
 
@@ -38,5 +41,14 @@ export const myExperimentsApi = {
 
   createExperiment: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basePath}/experiments/:experimentId`),
   createSplit: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/splits`),
-  createModelInExperiment: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models`)
+  createModelInExperiment: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models`),
+
+  // Service management
+  getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
+  startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${servicePath}/start`),
+  stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${servicePath}/stop`),
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${servicePath}/status`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`)
+
 };
