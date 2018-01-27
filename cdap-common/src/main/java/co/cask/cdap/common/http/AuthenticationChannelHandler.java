@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     LOG.error("Got exception: {}", cause.getMessage(), cause);
     // TODO: add WWW-Authenticate header for 401 response -  REACTOR-900
     HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+    HttpUtil.setContentLength(response, 0);
+    HttpUtil.setKeepAlive(response, false);
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
   }
 }

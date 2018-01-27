@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.http.AbstractHttpHandler;
@@ -87,6 +88,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -465,6 +467,74 @@ public abstract class NettyRouterTestBase {
     urlConnection.disconnect();
   }
 
+  @Test
+  public void testConnectionClose2() throws Exception {
+    // turn off retry on POST request
+    String oldValue = System.getProperty("sun.net.http.retryPost");
+    System.setProperty("sun.net.http.retryPost", "false");
+    try {
+      URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/sleep"));
+
+      // Disable the server 2 from discovery
+      defaultServer2.cancelRegistration();
+
+      HttpURLConnection urlConn = openURL(url);
+      urlConn.setDoOutput(true);
+      urlConn.setRequestMethod("POST");
+
+      // Sleep for 50 ms
+      urlConn.getOutputStream().write("50".getBytes(StandardCharsets.UTF_8));
+      Assert.assertEquals(200, urlConn.getResponseCode());
+      urlConn.getInputStream().close();
+      urlConn.disconnect();
+
+      // Now disable server1 and enable server2 from discovery
+      defaultServer1.cancelRegistration();
+      defaultServer2.registerServer();
+
+      // Make sure the discovery change is in effect
+      ServiceDiscovered discover = ((DiscoveryServiceClient) discoveryService).discover(APP_FABRIC_SERVICE);
+      Assert.assertNotNull(new RandomEndpointStrategy(discover).pick(5, TimeUnit.SECONDS));
+
+      // Make a call to sleep for couple seconds
+      urlConn = openURL(url);
+      urlConn.setDoOutput(true);
+      urlConn.setRequestMethod("POST");
+      urlConn.getOutputStream().write("3000".getBytes(StandardCharsets.UTF_8));
+
+      // Wait for the result asynchronously, while at the same time shutdown server1.
+      // Shutting down server1 shouldn't affect the connection.
+      CompletableFuture<Integer> result = new CompletableFuture<>();
+      HttpURLConnection finalUrlConn = urlConn;
+      Thread t = new Thread(() -> {
+        try {
+          result.complete(finalUrlConn.getResponseCode());
+        } catch (Exception e) {
+          result.completeExceptionally(e);
+        } finally {
+          try {
+            finalUrlConn.getInputStream().close();
+            finalUrlConn.disconnect();
+          } catch (IOException e) {
+            LOG.error("Exception when closing url connection", e);
+          }
+        }
+      });
+      t.start();
+
+      defaultServer1.stopAndWait();
+      Assert.assertEquals(200, result.get().intValue());
+      Assert.assertEquals(1, defaultServer1.getNumRequests());
+      Assert.assertEquals(1, defaultServer2.getNumRequests());
+    } finally {
+      if (oldValue == null) {
+        System.clearProperty("sun.net.http.retryPost");
+      } else {
+        System.setProperty("sun.net.http.retryPost", oldValue);
+      }
+    }
+  }
+
   protected HttpURLConnection openURL(URL url) throws Exception {
     return (HttpURLConnection) url.openConnection();
   }
@@ -702,6 +772,7 @@ public abstract class NettyRouterTestBase {
       @POST
       @Path("/v1/upload")
       public void upload(FullHttpRequest request, HttpResponder responder) throws IOException {
+        numRequests.incrementAndGet();
         ByteBuf content = request.content();
 
         int readableBytes;
@@ -717,6 +788,7 @@ public abstract class NettyRouterTestBase {
       @POST
       @Path("/v2/upload")
       public BodyConsumer upload2(HttpRequest request, HttpResponder responder) throws Exception {
+        numRequests.incrementAndGet();
         // Functionally the same as the upload() above, but use BodyConsumer instead.
         // This is for testing the handling of Expect: 100-continue header
         return new AbstractBodyConsumer(TEMP_FOLDER.newFile()) {
@@ -725,6 +797,16 @@ public abstract class NettyRouterTestBase {
             responder.sendFile(file);
           }
         };
+      }
+
+      @POST
+      @Path("/v1/sleep")
+      public void sleep(FullHttpRequest request, HttpResponder responder) throws Exception {
+        numRequests.incrementAndGet();
+        long sleepMillis = Long.parseLong(request.content().toString(StandardCharsets.UTF_8));
+        TimeUnit.MILLISECONDS.sleep(sleepMillis);
+
+        responder.sendStatus(HttpResponseStatus.OK);
       }
     }
   }
