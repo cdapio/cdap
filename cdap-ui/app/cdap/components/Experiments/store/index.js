@@ -20,12 +20,18 @@ import {defaultAction} from 'services/helpers';
 const ACTIONS = {
   SET_EXPERIMENTS_LIST: 'SET_EXPERIMENTS_LIST',
   SET_EXPERIMENTS_LOADING: 'SET_EXPERIMENTS_LOADING',
-  SET_MODELS_IN_EXPERIMENT: 'SET_MODELS_IN_EXPERIMENT'
+  SET_MODELS_IN_EXPERIMENT: 'SET_MODELS_IN_EXPERIMENT',
+  SET_PAGINATION: 'SET_PAGINATION'
 };
 
-const DEFAULT_EXPERIMENTS = {
+export const DEFAULT_EXPERIMENTS = {
   list: [],
-  loading: false
+  offset: 0,
+  totalPages: 0,
+  totalCount: 0,
+  limit: 10,
+  loading: false,
+  modelsCount: 0
 };
 
 const experiments = (state = DEFAULT_EXPERIMENTS, action = defaultAction) => {
@@ -34,7 +40,14 @@ const experiments = (state = DEFAULT_EXPERIMENTS, action = defaultAction) => {
       return {
         ...state,
         list: action.payload.experiments,
+        totalPages: Math.ceil(action.payload.totalCount / state.limit),
+        totalCount: action.payload.totalCount,
         loading: false
+      };
+    case ACTIONS.SET_PAGINATION:
+      return {
+        ...state,
+        offset: action.payload.offset
       };
     case ACTIONS.SET_EXPERIMENTS_LOADING:
       return {
@@ -48,7 +61,8 @@ const experiments = (state = DEFAULT_EXPERIMENTS, action = defaultAction) => {
           if (experiment.name === action.payload.experimentId) {
             return {
               ...experiment,
-              models: action.payload.models
+              models: action.payload.models,
+              modelsCount: action.payload.modelsCount
             };
           }
           return experiment;

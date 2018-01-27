@@ -75,7 +75,7 @@ const mapStateToMetadataProps = (state) => {
     description: state.description,
     srcpath: state.srcpath,
     models: state.models,
-    total: state.models.length,
+    total: state.modelsTotalCount,
     deployed: state.models.filter(model => model.deployTime).length,
     outcome: state.outcome
   };

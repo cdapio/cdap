@@ -56,7 +56,7 @@ export default function ExperimentsListBarChart({data}) {
       <GroupedBarChart
         data={data}
         customEncoding={customEncoding}
-        width={(dimension, data) => ((dimension.width - 190) / (data.length / 2))}
+        width={(dimension, data) => ((dimension.width - 290) / (data.length / 2))}
         heightOffset={70}
       />
     </div>
