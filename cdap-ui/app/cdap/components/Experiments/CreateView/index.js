@@ -20,9 +20,9 @@ import TopPanel from 'components/Experiments/TopPanel';
 import IconSVG from 'components/IconSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepHome from 'components/DataPrepHome';
-import {Prompt, Link} from 'react-router-dom';
+import {Prompt, Link, Redirect} from 'react-router-dom';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import ExperimentPopovers from 'components/Experiments/CreateView/Popovers';
 import DataPrepStore from 'components/DataPrep/store';
@@ -55,8 +55,10 @@ export default class ExperimentCreateView extends Component {
   state = {
     workspaceId: createExperimentStore.getState().experiments_create.workspaceId,
     modelId: createExperimentStore.getState().model_create.modelId,
+    experimentId: createExperimentStore.getState().experiments_create.name,
     isSplitFinalized: createExperimentStore.getState().model_create.isSplitFinalized,
-    loading: createExperimentStore.getState().experiments_create.loading
+    loading: createExperimentStore.getState().experiments_create.loading,
+    redirectToExperimentDetail: false
   };
   componentWillMount() {
     setAlgorithmsList();
@@ -74,11 +76,14 @@ export default class ExperimentCreateView extends Component {
     });
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
       let {model_create, experiments_create} = createExperimentStore.getState();
-      let {modelId, isSplitFinalized} = model_create;
-      let {workspaceId, loading} = experiments_create;
+      let {modelId, isSplitFinalized, isModelTrained} = model_create;
+      let {workspaceId, loading, name: experimentId} = experiments_create;
       let newState = {};
+      if (this.state.experimentId !== experimentId) {
+        newState = {experimentId};
+      }
       if (this.state.modelId !== modelId) {
-        newState = {modelId};
+        newState = {...newState, modelId};
       }
       if (this.state.workspaceId !== workspaceId) {
         newState = {...newState, workspaceId};
@@ -88,6 +93,9 @@ export default class ExperimentCreateView extends Component {
       }
       if (isSplitFinalized !== this.state.isSplitFinalized) {
         newState = {...newState, isSplitFinalized};
+      }
+      if (isModelTrained) {
+        newState = {...newState, redirectToExperimentDetail: true};
       }
       if (Object.keys(newState).length > 0) {
         this.setState(newState);
@@ -113,11 +121,14 @@ export default class ExperimentCreateView extends Component {
     resetCreateExperimentsStore();
   }
   renderTopPanel = (title) => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let navigateTo = `/ns/${getCurrentNamespace()}/experiments`;
+    if (this.state.experimentId) {
+      navigateTo = `${navigateTo}/${this.state.experimentId}`;
+    }
     return (
       <TopPanel>
         <h4>{title}</h4>
-        <Link to={`/ns/${namespace}/experiments`}>
+        <Link to={navigateTo}>
           <IconSVG name="icon-close" />
         </Link>
       </TopPanel>
@@ -191,6 +202,13 @@ export default class ExperimentCreateView extends Component {
     if (this.state.loading) {
       return <LoadingSVGCentered />;
     }
+    if (this.state.redirectToExperimentDetail) {
+      return (
+        <Redirect
+          to={`/ns/${getCurrentNamespace()}/experiments/${this.state.experimentId}`}
+        />
+      );
+    }
     if (!this.state.workspaceId) {
       return this.renderConnections();
     }
@@ -214,7 +232,10 @@ export default class ExperimentCreateView extends Component {
       <div className="experiments-create-view">
         <Helmet title="CDAP | Create Experiment" />
         {this.renderSteps()}
-        <Prompt message={"Are you sure you want to navigate away?"} />
+        <Prompt
+          when={!this.state.experimentId || !this.state.modelId}
+          message={"Are you sure you want to navigate away?"}
+        />
       </div>
     );
   }

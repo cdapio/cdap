@@ -25,7 +25,7 @@ require('./HyperParamsPopover.scss');
 export default function HyperParamsPopover({algorithm, hyperparameters}) {
   return (
     <Popover
-      target={() => <IconSVG name="icon-cog" />}
+      target={() => <IconSVG name="icon-cogs" />}
       className="hyperparameters-popover"
       placement="right"
       bubbleEvent={false}

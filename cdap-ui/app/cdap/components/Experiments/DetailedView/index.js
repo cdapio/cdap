@@ -22,13 +22,15 @@ import {
   getExperimentDetails,
   updatePaginationForModels,
   handleModelsPageChange,
-  resetExperimentDetailStore
+  resetExperimentDetailStore,
+  resetNewlyTrainingModel
 } from 'components/Experiments/store/ActionCreator';
 import ConnectedTopPanel from 'components/Experiments/DetailedView/TopPanel';
 import ModelsTableWrapper from 'components/Experiments/DetailedView/ModelsTable';
 import Mousetrap from 'mousetrap';
 import isNil from 'lodash/isNil';
 import queryString from 'query-string';
+import Alert from 'components/Alert';
 
 require('./DetailedView.scss');
 
@@ -52,6 +54,20 @@ export default class ExperimentDetails extends Component {
     Mousetrap.unbind('right');
     resetExperimentDetailStore();
   }
+
+  showNewlyTrainingModel = () => {
+    let {newlyTrainingModel} = experimentDetailStore.getState();
+    if (newlyTrainingModel) {
+      return (
+        <Alert
+          message={`You have successfully started training the model: ${newlyTrainingModel.name}`}
+          type='success'
+          showAlert={true}
+          onClose={resetNewlyTrainingModel}
+        />
+      );
+    }
+  };
 
   goToNextPage = () => {
     let {modelsOffset, modelsLimit, modelsTotalPages} = experimentDetailStore.getState();
@@ -94,6 +110,7 @@ export default class ExperimentDetails extends Component {
         <div className="experiment-detailed-view">
           <ConnectedTopPanel />
           <ModelsTableWrapper />
+          {this.showNewlyTrainingModel()}
         </div>
       </Provider>
     );

@@ -268,6 +268,12 @@ function resetExperimentDetailStore() {
     type: EXPERIMENTDETAILACTIONS.RESET
   });
 }
+
+function resetNewlyTrainingModel() {
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.RESET_NEWLY_TRAINING_MODEL
+  });
+}
 export {
   setExperimentsLoading,
   getExperimentsList,
@@ -285,6 +291,7 @@ export {
   handleModelsPageChange,
   handlePageChange,
   updatePagination,
-  resetExperimentDetailStore
+  resetExperimentDetailStore,
+  resetNewlyTrainingModel
 };
 
