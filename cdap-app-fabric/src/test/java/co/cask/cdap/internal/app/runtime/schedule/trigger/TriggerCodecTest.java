@@ -49,9 +49,14 @@ public class TriggerCodecTest {
   @Test
   public void testTimeTriggerValidation() {
     // Cron with wrong number of parts
-    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ?"), "Cron entry must contain 5 or 6 fields.");
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * * 1 ? *"), "Cron entry must contain 5 or 6 fields.");
     // Quartz doesn't support '?' in both day-of-the-month and day-of-the-week
-    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ? 1 ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ? 1 ?"),
+                          "'?' can only be specfied for Day-of-Month -OR- Day-of-Week.");
+    // Quartz doesn't support '0' in day-of-the-week
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("2 6 ? * 0,1,4,5"),
+                          "Day-of-Week values must be between 1 and 7");
     // Quartz doesn't support wild-card '*' in day-of-the-month or day-of-the-week if neither of them is '?'
     // Cron entry with resolution in minutes will have wild-card '*' in day-of-the-month or day-of-the-week
     // replaced by '?' if neither of them is '?', before it's parsed by Quartz
@@ -63,6 +68,7 @@ public class TriggerCodecTest {
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * * 1 1"));
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * 1 1 *"));
 
+    GSON.toJson(new ProtoTrigger.TimeTrigger("2 6 ? * 1,4,5"), Trigger.class);
     GSON.toJson(new ProtoTrigger.TimeTrigger("* * ? 1 1"), Trigger.class);
     GSON.toJson(new ProtoTrigger.TimeTrigger("* * * 1 ?"), Trigger.class);
     GSON.toJson(new ProtoTrigger.TimeTrigger("* * ? 1 *"), Trigger.class);
@@ -72,6 +78,10 @@ public class TriggerCodecTest {
   }
 
   private void assertDeserializeFail(ProtoTrigger.TimeTrigger trigger) {
+    assertDeserializeFail(trigger, "");
+  }
+
+  private void assertDeserializeFail(ProtoTrigger.TimeTrigger trigger, String errorMessageSubstring) {
     // ProtoTriggerCodec only checks whether TimeTrigger contains null cron entry
     GSON_PROTO.toJson(trigger, ProtoTrigger.class);
     try {
@@ -79,7 +89,7 @@ public class TriggerCodecTest {
       GSON.fromJson(GSON.toJson(trigger, Trigger.class), Trigger.class);
       Assert.fail(String.format("Deserializing invalid trigger %s should fail.", trigger));
     } catch (IllegalArgumentException e) {
-      // Expected
+      Assert.assertTrue(e.getMessage().contains(errorMessageSubstring));
     }
   }
 
