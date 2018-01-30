@@ -14,83 +14,84 @@
  * the License.
 */
 
-
 import React, { Component } from 'react';
-import { Provider } from 'react-redux';
-import experimentsStore, { DEFAULT_EXPERIMENTS } from 'components/Experiments/store';
-import { getExperimentsList, setAlgorithmsList, updatePagination, handlePageChange } from 'components/Experiments/store/ActionCreator';
-import ExperimentsListView from 'components/Experiments/ListView';
-import queryString from 'query-string';
-import isNil from 'lodash/isNil';
-import Mousetrap from 'mousetrap';
+import {myExperimentsApi} from 'api/experiments';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import Loadable from 'react-loadable';
+import {Route, Switch} from 'react-router-dom';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import ExperimentsServiceControl from 'components/Experiments/ExperimentsServiceControl';
+import ExperimentsList from 'components/Experiments/ListView';
 
-class Experiments extends Component {
+const ExperimentsCreateView = Loadable({
+  loader: () => import(/* webpackChunkName: "ExperimentsCreateView" */ 'components/Experiments/CreateView'),
+  loading: LoadingSVGCentered
+});
+
+const ExperimentDetailedView = Loadable({
+  loader: () => import(/* webpackChunkName: "ExperimentsDetailedView" */ 'components/Experiments/DetailedView'),
+  loading: LoadingSVGCentered
+});
+
+export default class Experiments extends Component {
   componentWillMount() {
-    setAlgorithmsList();
-    Mousetrap.bind('right', this.goToNextPage);
-    Mousetrap.bind('left', this.goToPreviousPage);
-    this.parseUrlAndUpdateStore();
-    getExperimentsList();
+    this.checkIfMMDSRunning();
   }
 
-  componentWillUnmount() {
-    Mousetrap.unbind('left');
-    Mousetrap.unbind('right');
+  state = {
+    loading: true,
+    isRunning: false
+  };
+
+  checkIfMMDSRunning = () => {
+    let namespace = getCurrentNamespace();
+
+    myExperimentsApi.list({namespace})
+      .subscribe(() => {
+        this.setState({
+          loading: false,
+          isRunning: true
+        });
+      }, () => {
+        this.setState({
+          loading: false,
+          isRunning: false
+        });
+      });
+  };
+
+  onServiceStart = () => {
+    this.setState({
+      loading: false,
+      isRunning: true
+    });
+  };
+
+  renderLoading() {
+    return (
+      <LoadingSVGCentered />
+    );
   }
-
-  componentWillReceiveProps(nextProps) {
-    this.parseUrlAndUpdateStore(nextProps);
-    getExperimentsList();
-  }
-
-  goToNextPage = () => {
-    let {offset, limit, totalPages} = experimentsStore.getState().experiments;
-    let nextPage = offset === 0 ? 1 : Math.ceil((offset + 1) / limit);
-    if (nextPage < totalPages) {
-      handlePageChange({ selected: nextPage });
-    }
-  };
-
-  goToPreviousPage = () => {
-    let {offset, limit} = experimentsStore.getState().experiments;
-    let prevPage = offset === 0 ? 1 : Math.ceil((offset + 1) / limit);
-    if (prevPage > 1) {
-      handlePageChange({ selected: prevPage - 2 });
-    }
-  };
-
-  parseUrlAndUpdateStore = (nextProps) => {
-    let props = nextProps || this.props;
-    let { offset, limit } = this.getQueryObject(queryString.parse(props.location.search));
-    updatePagination({ offset, limit });
-  };
-
-  getQueryObject = (query) => {
-    if (isNil(query)) {
-      return {};
-    }
-    let {
-      offset = DEFAULT_EXPERIMENTS.offset,
-      limit = DEFAULT_EXPERIMENTS.limit
-    } = query;
-    offset = parseInt(offset, 10);
-    limit = parseInt(limit, 10);
-    if (isNaN(offset)) {
-      offset = DEFAULT_EXPERIMENTS.offset;
-    }
-    if (isNaN(limit)) {
-      limit = DEFAULT_EXPERIMENTS.limit;
-    }
-    return { offset, limit };
-  };
 
   render() {
+    if (this.state.loading) {
+      return this.renderLoading();
+    }
+
+    if (!this.state.isRunning) {
+      return (
+        <ExperimentsServiceControl
+          onServiceStart={this.onServiceStart}
+        />
+      );
+    }
+
     return (
-      <Provider store={experimentsStore}>
-        <ExperimentsListView />
-      </Provider>
+      <Switch>
+        <Route exact path="/ns/:namespace/experiments" component={ExperimentsList} />
+        <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
+        <Route exact path="/ns/:namespace/experiments/:experimentId" component={ExperimentDetailedView} />
+      </Switch>
     );
   }
 }
-
-export default Experiments;

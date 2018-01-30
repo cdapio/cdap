@@ -19,11 +19,11 @@ import React, { Component } from 'react';
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
 import EntityListView from 'components/EntityListView';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 require('./Home.scss');
 
 const DataPrepBrowser = Loadable({
@@ -56,15 +56,6 @@ const AppDetailedView = Loadable({
 });
 const Experiments = Loadable({
   loader: () => import(/* webpackChunkName: "Experiments" */ 'components/Experiments'),
-  loading: LoadingSVGCentered
-});
-const ExperimentsCreateView = Loadable({
-  loader: () => import(/* webpackChunkName: "ExperimentsCreateView" */ 'components/Experiments/CreateView'),
-  loading: LoadingSVGCentered
-});
-
-const ExperimentDetailedView = Loadable({
-  loader: () => import(/* webpackChunkName: "ExperimentsDetailedView" */ 'components/Experiments/DetailedView'),
   loading: LoadingSVGCentered
 });
 
@@ -103,9 +94,7 @@ export default class Home extends Component {
             );
           }} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
-          <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
-          <Route exact path="/ns/:namespace/experiments" component={Experiments} />
-          <Route exact path="/ns/:namespace/experiments/:experimentId" component={ExperimentDetailedView} />
+          <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route component={Page404} />
         </Switch>
       </div>
