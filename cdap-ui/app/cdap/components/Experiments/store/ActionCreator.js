@@ -128,7 +128,7 @@ function handleModelsPageChange({ selected }) {
     }
   });
   updateQueryStringWithModelsOffset();
-  getModelsInExperiment(experimentId);
+  getExperimentDetails(experimentId);
 }
 
 function updatePaginationForModels({ modelsLimit, modelsOffset }) {

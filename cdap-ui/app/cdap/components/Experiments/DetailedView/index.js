@@ -23,7 +23,8 @@ import {
   updatePaginationForModels,
   handleModelsPageChange,
   resetExperimentDetailStore,
-  resetNewlyTrainingModel
+  resetNewlyTrainingModel,
+  setAlgorithmsList
 } from 'components/Experiments/store/ActionCreator';
 import ConnectedTopPanel from 'components/Experiments/DetailedView/TopPanel';
 import ModelsTableWrapper from 'components/Experiments/DetailedView/ModelsTable';
@@ -43,6 +44,7 @@ export default class ExperimentDetails extends Component {
   componentWillMount() {
     Mousetrap.bind('right', this.goToNextPage);
     Mousetrap.bind('left', this.goToPreviousPage);
+    setAlgorithmsList();
     let { experimentId } = this.props.match.params;
     let { offset: modelsOffset, limit: modelsLimit } = this.getQueryObject(queryString.parse(this.props.location.search));
     updatePaginationForModels({modelsOffset, modelsLimit});
