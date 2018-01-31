@@ -20,14 +20,10 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
 
 /**
  *
@@ -38,14 +34,11 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   private final WorkflowDriver driver;
   private final String serviceName;
-  private final ServiceAnnouncer serviceAnnouncer;
-  private Cancellable cancelAnnounce;
 
-  WorkflowProgramController(ProgramRunId programRunId, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer) {
+  WorkflowProgramController(ProgramRunId programRunId, WorkflowDriver driver) {
     super(programRunId);
     this.driver = driver;
     this.serviceName = getServiceName();
-    this.serviceAnnouncer = serviceAnnouncer;
     startListen(driver);
   }
 
@@ -74,21 +67,14 @@ final class WorkflowProgramController extends AbstractProgramController {
     service.addListener(new ServiceListenerAdapter() {
       @Override
       public void running() {
-        InetSocketAddress endpoint = driver.getServiceEndpoint();
-        cancelAnnounce = serviceAnnouncer.announce(serviceName, endpoint.getPort());
-        LOG.debug("Workflow service {} announced at {}", serviceName, endpoint);
+
+        LOG.debug("Workflow service {} started", serviceName);
         started();
       }
 
       @Override
       public void terminated(Service.State from) {
         LOG.debug("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
-        if (cancelAnnounce != null) {
-          // If the workflow is stopped before entering the STARTING state, cancelAnnounce will be null
-          // since it is initialized in the running method
-          cancelAnnounce.cancel();
-        }
-        LOG.debug("Service {} unregistered.", serviceName);
         if (getState() != State.STOPPING) {
           // service completed itself.
           complete();
@@ -101,12 +87,6 @@ final class WorkflowProgramController extends AbstractProgramController {
       @Override
       public void failed(Service.State from, Throwable failure) {
         LOG.error("Workflow service '{}' failed.", serviceName, failure);
-        if (cancelAnnounce != null) {
-          // if there is an exception before workflow enters into the RUNNING state, cancelAnnounce will be null
-          // since it is initialized in the running method
-          cancelAnnounce.cancel();
-        }
-        LOG.info("Service {} unregistered.", serviceName);
         error(failure);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
