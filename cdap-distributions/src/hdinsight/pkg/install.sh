@@ -104,9 +104,9 @@ chef-solo -o 'recipe[ulimit::default],recipe[cdap::fullstack],recipe[cdap::init]
 rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
 
 # Start CDAP Services
-for i in /etc/init.d/cdap-*
-do
-  ${i} start || die "Failed to start ${i}"
+for i in /etc/init.d/cdap-*; do
+  __svc=$(basename ${i})
+  service ${__svc} start || die "Failed to start ${__svc}"
 done
 
 __cleanup_tmpdir
