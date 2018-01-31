@@ -84,8 +84,7 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
 
   private void checkMutualExclusive(Map<String, String> props, String key1, String key2) {
     Preconditions.checkArgument(!(Boolean.valueOf(props.get(key1)) && Boolean.valueOf(props.get(key2))),
-                                "Only one of '%s' and '%s' may be set to true",
-                                FileSetProperties.DATA_EXTERNAL, FileSetProperties.DATA_USE_EXISTING);
+                                "Only one of '%s' and '%s' may be set to true", key1, key2);
   }
 
   @Override
