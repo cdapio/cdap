@@ -30,7 +30,6 @@ import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -94,7 +93,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .create();
 
-  private static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>() { }.getType();
   private static final Type MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE
     = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
   private static final Type MAP_STRING_TO_DATASETSPECIFICATIONSUMMARY_TYPE
