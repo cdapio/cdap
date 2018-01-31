@@ -249,6 +249,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   private void updateTableDesc(HTableDescriptor desc, HBaseDDLExecutor ddlExecutor) throws IOException {
     hBaseTableUtil.setVersion(desc);
+    hBaseTableUtil.setHBaseVersion(desc);
     hBaseTableUtil.setTablePrefix(desc);
     hBaseTableUtil.modifyTable(ddlExecutor, desc);
   }

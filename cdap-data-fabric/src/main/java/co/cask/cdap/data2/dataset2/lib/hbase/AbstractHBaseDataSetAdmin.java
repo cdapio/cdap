@@ -23,6 +23,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseVersion;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -146,11 +147,16 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
       // Get the cdap version from the table
       ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
+      String hbaseVersion = HBaseTableUtil.getHBaseVersion(tableDescriptor);
 
-      if (!needUpdate && version.compareTo(ProjectInfo.getVersion()) >= 0) {
+      if (!needUpdate
+        && hbaseVersion != null
+        && hbaseVersion.equals(HBaseVersion.getVersionString())
+        && version.compareTo(ProjectInfo.getVersion()) >= 0) {
         // If neither the table spec nor the cdap version have changed, no need to update
         LOG.info("Table '{}' has not changed and its version '{}' is same or greater " +
-                   "than current CDAP version '{}'", tableId, version, ProjectInfo.getVersion());
+                   "than current CDAP version '{}'. The underlying HBase version {} has also not changed.",
+                 tableId, version, ProjectInfo.getVersion(), hbaseVersion);
         return;
       }
 
@@ -184,6 +190,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       }
 
       HBaseTableUtil.setVersion(newDescriptor);
+      HBaseTableUtil.setHBaseVersion(newDescriptor);
       HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
 
       LOG.info("Updating table '{}'...", tableId);

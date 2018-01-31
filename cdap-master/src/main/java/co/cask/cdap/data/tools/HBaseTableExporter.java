@@ -48,17 +48,12 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
+import org.apache.hadoop.hbase.mapreduce.Import;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
@@ -140,19 +135,6 @@ public class HBaseTableExporter {
   }
 
   /**
-   * A mapper that just writes KeyValues.
-   */
-  static class KeyValueImporter extends TableMapper<ImmutableBytesWritable, KeyValue> {
-    @Override
-    public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException,
-      InterruptedException {
-      for (Cell kv : value.rawCells()) {
-        context.write(row, KeyValueUtil.ensureKeyValue(kv));
-      }
-    }
-  }
-
-  /**
    * Sets up the actual MapReduce job.
    * @param tx The transaction which needs to be passed to the Scan instance. This transaction is be used by
    *           coprocessors to filter out the data corresonding to the invalid transactions .
@@ -171,7 +153,7 @@ public class HBaseTableExporter {
     scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, new TransactionCodec().encode(tx));
     job.setNumReduceTasks(0);
 
-    TableMapReduceUtil.initTableMapperJob(tableName, scan, KeyValueImporter.class, null, null, job);
+    TableMapReduceUtil.initTableMapperJob(tableName, scan, Import.KeyValueImporter.class, null, null, job);
 
     FileSystem fs = FileSystem.get(hConf);
     Random rand = new Random();

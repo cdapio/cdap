@@ -31,6 +31,48 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 4.3.3 <http://docs.cask.co/cdap/4.3.3/index.html>`__
+=============================================================
+Improvements
+------------
+
+- :cask-issue:`CDAP-12942` - GroupBy aggregator plugin fields are now macro enabled.
+
+- :cask-issue:`CDAP-12963` - Allow CDAP user programs to talk to Kerberos enabled HiveServer2 in the cluster without using a keytab.
+
+- :cask-issue:`CDAP-12974` - Removed concurrent upgrades of HBase coprocessors since it could lead to regions getting stuck in transit.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-7052` - Fixed a bug that prevented MapReduce AM logs from YARN to show the right URI.
+
+- :cask-issue:`CDAP-7644` - Added CLI command to fetch service logs.
+
+- :cask-issue:`CDAP-12774` - Increased the dataset changeset size and limit to integer max by default.
+
+- :cask-issue:`CDAP-12900` - Fixed a bug where macro for output schema of a node was not saved when the user closed the node properties modal.
+
+- :cask-issue:`CDAP-12930` - Fixed a bug where explore queries would fail against paths in HDFS encryption zones, for certain Hadoop distributions.
+
+- :cask-issue:`CDAP-12945` - Fixed a bug where the old connection is not removed from the pipeline config when you move the connection's pointer to another node.
+
+- :cask-issue:`CDAP-12946` - Fixed a bug in the pipeline planner where pipelines that used an action before multiple sources would either fail to deploy or deploy with an incorrect plan.
+
+- :cask-issue:`CDAP-12970` - Fixed a dependency bug that could cause HBase region servers to deadlock during a cold start.
+
+- :cask-issue:`CDAP-13002` - Fixed an issue with the retrieval of non-ASCII strings from Table datasets.
+
+- :cask-issue:`CDAP-13021` - Messaging table coprocessor now gets upgraded when the underlying HBase version is changed without any change in the CDAP version.
+
+- :cask-issue:`CDAP-13026` - Fixed a bug that prevented a parquet snapshot source and sink to be used in the same pipeline.
+
+- :cask-issue:`CDAP-13033` - Fixed a bug in TMS that prevented correctly consuming multiple events emitted in the same transaction.
+
+- :cask-issue:`CDAP-13037` - Make TransactionContext resilient against getTransactionAwareName() failures.
+
+- :cask-issue:`CDAP-13040` - Fixed avro fileset plugins so that reserved hive keywords can be used as column names.
+
 `Release 4.3.2 <http://docs.cask.co/cdap/4.3.2/index.html>`__
 =============================================================
 New Features
