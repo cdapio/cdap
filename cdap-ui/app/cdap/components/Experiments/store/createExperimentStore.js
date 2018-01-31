@@ -127,6 +127,7 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
       return state;
   }
 };
+
 const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.SET_MODEL_ID:
