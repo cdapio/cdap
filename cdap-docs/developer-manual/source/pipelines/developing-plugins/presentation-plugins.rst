@@ -421,6 +421,71 @@ CDAP pipelines as of version |version|.
             }
           }
      
+   * - ``multi-select``
+     - - ``delimiter``: delimiter to concatenate multiple values to form a single string
+       - ``options``: array of options where each option is defined by
+         - ``id``: value to be set for the plugin property
+         - ``label``: a label to be rendered in UI for that specific option
+       - ``defaultValue``: an array of default value(s) to use when rendering the widget for the first time
+     - ``string``
+     - Multi-select dropdown to choose one or more from a list of available options.
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "name": "property-keyvalue",
+            "widget-type": "multi-select",
+            "widget-attributes": {
+              "delimiter": ",",
+              "defaultValue": [
+                "value1",
+                "value2"
+              ],
+              "options": [
+                {
+                  "id": "value1",
+                  "label": "Value One"
+                },
+                {
+                  "id": "value2",
+                  "label": "Value two"
+                }
+              ]
+            }
+          }
+     
+   * - ``radio-group``
+     - - ``layout``: Layout for the radio buttons to render. Defaults to `block` to render one below the other. Another option is `inline` to render side-by-side
+       - ``options``: an array of options where each option is defined by
+         - ``id``: value to be set for the plugin property
+         - ``label``: a label to be rendered in UI for that specific option
+       - ``defaultValue``: default value to use when no value is specified
+     - ``string``
+     - A group of radio buttons to choose one among a list of available options.
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "name": "property-keyvalue",
+            "widget-type": "radio-group",
+            "widget-attributes": {
+              "layout": "inline",
+              "defaultValue": "value1",
+              "options": [
+                {
+                  "id": "value1",
+                  "label": "Value One"
+                },
+                {
+                  "id": "value2",
+                  "label": "Value two"
+                }
+              ]
+            }
+          }
+     
    * - ``keyvalue-dropdown``
      - - ``delimiter``: delimiter for the key-value pairs
        - ``dropdownOptions``: list of drop-down options to display
