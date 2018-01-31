@@ -79,6 +79,13 @@ const MyDataPrepApi = {
   readGCSFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/buckets/:activeBucket/read`),
   getGCSSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/specification`),
 
+  // BigQuery
+  bigQueryTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/bigquery/test`),
+  bigQueryGetDatasets: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery`),
+  bigQueryGetTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/:datasetId/tables`),
+  readBigQueryTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/:datasetId/tables/:tableId/read`),
+  getBigQuerySpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/specification`),
+
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),

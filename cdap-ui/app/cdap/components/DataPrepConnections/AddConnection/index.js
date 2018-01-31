@@ -23,6 +23,7 @@ import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnectio
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import S3Connection from 'components/DataPrepConnections/S3Connection';
 import GCSConnection from 'components/DataPrepConnections/GCSConnection';
+import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import T from 'i18n-react';
 
 require('./AddConnection.scss');
@@ -61,6 +62,11 @@ export default class AddConnection extends Component {
         type: 'GCS',
         icon: 'icon-google',
         component: GCSConnection
+      },
+      {
+        type: 'Big Query',
+        icon: 'icon-google',
+        component: BigQueryConnection
       }
     ];
   }

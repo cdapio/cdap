@@ -235,7 +235,7 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
         );
-      } else if (['kafka', 's3', 'gcs'].indexOf(info.properties.connection) !== -1) {
+      } else if (['kafka', 's3', 'gcs', 'bigquery'].indexOf(info.properties.connection) !== -1) {
         return (
           <div className="data-prep-name">
             <div className="connection-type">

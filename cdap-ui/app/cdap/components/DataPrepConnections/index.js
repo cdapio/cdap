@@ -25,10 +25,12 @@ import {
   setS3AsActiveBrowser,
   setDatabaseAsActiveBrowser,
   setKafkaAsActiveBrowser,
-  setGCSAsActiveBrowser
+  setGCSAsActiveBrowser,
+  setBigQueryAsActiveBrowser,
+  listBigQueryTables
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
@@ -48,7 +50,7 @@ require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
 
 const RouteToHDFS = () => {
-  let namespace = NamespaceStore.getState().selectedNamespace;
+  let namespace = getCurrentNamespace();
 
   return (
     <Redirect to={`/ns/${namespace}/connections/browser`} />
@@ -95,6 +97,7 @@ export default class DataPrepConnections extends Component {
       kafkaList: [],
       s3List: [],
       gcsList: [],
+      bigQueryList: [],
       activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
       activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
       showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
@@ -104,7 +107,6 @@ export default class DataPrepConnections extends Component {
     this.onServiceStart = this.onServiceStart.bind(this);
     this.fetchConnectionsList = this.fetchConnectionsList.bind(this);
     this.onUploadSuccess = this.onUploadSuccess.bind(this);
-
   }
 
   componentWillMount() {
@@ -135,7 +137,7 @@ export default class DataPrepConnections extends Component {
     }
   }
   checkBackendUp() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     MyDataPrepApi.ping({ namespace })
       .subscribe(() => {
@@ -193,6 +195,8 @@ export default class DataPrepConnections extends Component {
       setS3AsActiveBrowser({name: 's3', id: browserName.id, path: '/'});
     } else if (typeof browserName === 'object' && browserName.type === 'GCS') {
       setGCSAsActiveBrowser({name: 'gcs', id: browserName.id, path: '/'});
+    } else if (typeof browserName === 'object' && browserName.type === 'BIGQUERY') {
+      setBigQueryAsActiveBrowser({name: 'bigquery', id: browserName.id});
     }
 
     this.setState({
@@ -207,7 +211,7 @@ export default class DataPrepConnections extends Component {
   }
 
   fetchConnectionsList(action, targetId) {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     MyDataPrepApi.listConnections({
       namespace,
@@ -218,7 +222,8 @@ export default class DataPrepConnections extends Component {
       let databaseList = [],
           kafkaList = [],
           s3List = [],
-          gcsList = [];
+          gcsList = [],
+          bigQueryList = [];
 
       let state = {};
       if (action === 'delete' && this.state.activeConnectionid === targetId) {
@@ -236,14 +241,21 @@ export default class DataPrepConnections extends Component {
           s3List.push(connection);
         } else if (connection.type === 'GCS') {
           gcsList.push(connection);
+        } else if (connection.type === 'BIGQUERY') {
+          bigQueryList.push(connection);
         }
       });
 
-      state.databaseList = databaseList;
-      state.kafkaList = kafkaList;
-      state.s3List = s3List;
-      state.gcsList = gcsList;
-      state.loading = false;
+      state = {
+        ...state,
+        databaseList,
+        kafkaList,
+        s3List,
+        gcsList,
+        bigQueryList,
+        loading: false
+      };
+
       this.setState(state);
     });
   }
@@ -254,7 +266,8 @@ export default class DataPrepConnections extends Component {
 
   onUploadSuccess(workspaceId) {
     if (this.props.enableRouting) {
-      let {selectedNamespace: namespace} = NamespaceStore.getState();
+      let namespace = getCurrentNamespace();
+
       let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
       window.location.href = navigatePath;
       return;
@@ -264,7 +277,7 @@ export default class DataPrepConnections extends Component {
     }
   }
   renderDatabaseDetail() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
     const baseLinkPath = `/ns/${namespace}/connections`;
 
     return (
@@ -298,7 +311,7 @@ export default class DataPrepConnections extends Component {
   }
 
   renderKafkaDetail() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
     const baseLinkPath = `/ns/${namespace}/connections`;
 
     return (
@@ -332,7 +345,7 @@ export default class DataPrepConnections extends Component {
   }
 
   renderS3Detail() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
     const baseLinkPath = `/ns/${namespace}/connections`;
 
     return (
@@ -366,7 +379,7 @@ export default class DataPrepConnections extends Component {
   }
 
   renderGCSDetail() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
     const baseLinkPath = `/ns/${namespace}/connections`;
 
     return (
@@ -399,10 +412,44 @@ export default class DataPrepConnections extends Component {
     );
   }
 
+  renderBigQueryDetail() {
+    let namespace = getCurrentNamespace();
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.bigQueryList.map((bq) => {
+          return (
+            <div
+              key={bq.id}
+              title={bq.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/bigquery/${bq.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, {...bq, name: bq.type.toLowerCase()})}
+                singleWorkspaceMode={this.props.singleWorkspaceMode}
+              >
+                {bq.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={bq}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   renderPanel() {
     if (!this.state.sidePanelExpanded)  { return null; }
 
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
     const baseLinkPath = `/ns/${namespace}/connections`;
 
     return (
@@ -504,6 +551,18 @@ export default class DataPrepConnections extends Component {
             </div>
             {this.renderGCSDetail()}
           </ExpandableMenu>
+
+          <ExpandableMenu>
+            <div>
+              <span className="fa fa-fw">
+                <IconSVG name="icon-google" />
+              </span>
+              <span>
+              {T.translate(`${PREFIX}.bigquery`, {count: this.state.bigQueryList.length})}
+              </span>
+            </div>
+            {this.renderBigQueryDetail()}
+          </ExpandableMenu>
         </div>
 
         <AddConnection
@@ -604,6 +663,21 @@ export default class DataPrepConnections extends Component {
             );
           }}
         />
+        <Route
+          path={`${BASEPATH}/bigquery/:bigQueryId`}
+          render={(match) => {
+            let id  = match.match.params.bigQueryId;
+            setBigQueryAsActiveBrowser({name: 'bigquery', id});
+            return (
+              <DataPrepBrowser
+                match={match}
+                location={location}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
         <Route component={RouteToHDFS} />
       </Switch>
     );
@@ -644,6 +718,10 @@ export default class DataPrepConnections extends Component {
         path = `/${bucketName}/${path}/`;
       }
       setGCSAsActiveBrowser({name: 'gcs', id: this.state.activeConnectionid, path});
+    } else if (this.state.activeConnectionType === 'bigquery') {
+      let {workspaceInfo} = DataPrepStore.getState().dataprep;
+      setBigQueryAsActiveBrowser({name: 'bigquery', id: this.state.activeConnectionid});
+      listBigQueryTables(workspaceInfo.properties.connectionid, workspaceInfo.properties.datasetId);
     }
     return (
       <DataPrepBrowser

@@ -26,7 +26,9 @@ import T from 'i18n-react';
 import {Subject} from 'rxjs/Subject';
 import find from 'lodash/find';
 
-export default function GetPipelineConfig() {
+const PREFIX = 'features.DataPrep.PipelineError';
+
+export default function getPipelineConfig() {
   let workspaceInfo = DataPrepStore.getState().dataprep.workspaceInfo;
   let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -52,7 +54,7 @@ function findWranglerArtifacts(artifacts, pluginVersion) {
 
   if (wranglerArtifacts.length === 0) {
     // cannot find plugin. Error out
-    throw 'Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market';
+    throw T.translate(`${PREFIX}.missingWranglerPlugin`);
   }
 
   let filteredArtifacts = wranglerArtifacts;
@@ -87,11 +89,11 @@ function constructFileSource(artifactsList, properties) {
   let batchArtifact = find(artifactsList, { 'name': 'core-plugins' });
   let realtimeArtifact = find(artifactsList, { 'name': 'spark-plugins' });
   if (!batchArtifact) {
-    return T.translate('features.DataPrep.TopPanel.filePipeline.ingestDataerrorBatch');
+    return T.translate(`${PREFIX}.fileBatch`);
   }
 
   if (!realtimeArtifact) {
-    return T.translate('features.DataPrep.TopPanel.filePipeline.ingestDataerrorRealtime');
+    return T.translate(`${PREFIX}.fileRealtime`);
   }
 
   batchArtifact.version = '[1.7.0, 3.0.0)';
@@ -137,7 +139,7 @@ function constructDatabaseSource(artifactsList, dbInfo) {
   let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
 
   if (!batchArtifact) {
-    return T.translate('features.DataPrep.TopPanel.databasePipeline.ingestDataError');
+    return T.translate(`${PREFIX}.database`);
   }
   batchArtifact.version = '[1.7.0, 3.0.0)';
   let pluginName = 'Database';
@@ -181,7 +183,7 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
   // it doesn't contain the streamingsource or batchsource plugins
   let pluginArtifact = find(artifactsList, {name: 'kafka-plugins'});
   if (!pluginArtifact) {
-    return T.translate('features.DataPrep.TopPanel.kafkaPipeline.ingestDataError');
+    return T.translate(`${PREFIX}.kafka`);
   }
 
   plugin = plugin[pluginName];
@@ -236,7 +238,7 @@ function constructS3Source(artifactsList, s3Info) {
   }
   let batchArtifact = find(artifactsList, {name: 'amazon-s3-plugins'});
   if (!batchArtifact) {
-    return T.translate('features.DataPrep.TopPanel.S3Pipeline.ingestDataError');
+    return T.translate(`${PREFIX}.s3`);
   }
   batchArtifact.version = '[1.7.0, 3.0.0)';
   let plugin = objectQuery(s3Info, 'values', 0, 'S3');
@@ -264,7 +266,7 @@ function constructGCSSource(artifactsList, gcsInfo) {
   if (!gcsInfo) { return null; }
   let batchArtifact = find(artifactsList, {name: 'google-cloud'});
   if (!batchArtifact) {
-    return T.translate('features.DataPrep.TopPanel.GCSPipeline.ingestDataerror');
+    return T.translate(`${PREFIX}.gcs`);
   }
 
   batchArtifact.version = '[0.9.0, 3.0.0)';
@@ -291,6 +293,43 @@ function constructGCSSource(artifactsList, gcsInfo) {
     batchSource: batchStage,
     connections: [{
       from: 'GCS',
+      to: 'Wrangler'
+    }]
+  };
+}
+
+function constructBigQuerySource(artifactsList, bigqueryInfo) {
+  if (!bigqueryInfo) { return null; }
+
+  let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+  if (!batchArtifact) {
+    return T.translate(`${PREFIX}.bigquery`);
+  }
+
+  batchArtifact.version = '[0.9.2, 3.0.0)';
+  let plugin = objectQuery(bigqueryInfo, 'values', 0);
+
+  let pluginName = Object.keys(plugin)[0];
+
+  plugin = plugin[pluginName];
+
+  let batchPluginInfo = {
+    name: plugin.name,
+    label: plugin.name,
+    type: 'batchsource',
+    artifact: batchArtifact,
+    properties: plugin.properties
+  };
+
+  let batchStage = {
+    name: 'BigQueryTable',
+    plugin: batchPluginInfo
+  };
+
+  return {
+    batchSource: batchStage,
+    connections: [{
+      from: 'BigQueryTable',
       to: 'Wrangler'
     }]
   };
@@ -357,6 +396,13 @@ function constructProperties(workspaceInfo, pluginVersion) {
       wid: workspaceId
     };
     rxArray.push(MyDataPrepApi.getGCSSpecification(specParams));
+  } else if (state.workspaceInfo.properties.connection === 'bigquery') {
+    let specParams = {
+      namespace,
+      connectionId: state.workspaceInfo.properties.connectionid,
+      wid: workspaceId
+    };
+    rxArray.push(MyDataPrepApi.getBigQuerySpecification(specParams));
   }
 
   try {
@@ -407,6 +453,10 @@ function constructProperties(workspaceInfo, pluginVersion) {
         threshold: "1"
       };
 
+      if (state.workspaceInfo.properties.connection === 'file') {
+        properties.field = 'body';
+      }
+
       try {
         getParsedSchemaForDataPrep(tempSchema);
       } catch (e) {
@@ -424,8 +474,6 @@ function constructProperties(workspaceInfo, pluginVersion) {
         }
       };
 
-      let connections = [];
-
       let realtimeStages = [wranglerStage];
       let batchStages = [wranglerStage];
 
@@ -441,55 +489,67 @@ function constructProperties(workspaceInfo, pluginVersion) {
         sourceConfigs = constructS3Source(res[0], res[2]);
       } else if (state.workspaceInfo.properties.connection === 'gcs') {
         sourceConfigs = constructGCSSource(res[0], res[2]);
+      } else if (state.workspaceInfo.properties.connection === 'bigquery') {
+        sourceConfigs = constructBigQuerySource(res[0], res[2]);
       }
 
       if (typeof sourceConfigs === 'string') {
         observable.error(sourceConfigs);
         return;
       }
-      if (sourceConfigs) {
-        realtimeStages.push(sourceConfigs.realtimeSource);
-        batchStages.push(sourceConfigs.batchSource);
-        connections = sourceConfigs.connections;
+
+      let {
+        realtimeSource,
+        batchSource,
+        connections
+      } = sourceConfigs;
+
+      let realtimeConfig = null,
+          batchConfig = null;
+
+      if (realtimeSource) {
+        realtimeStages.push(realtimeSource);
+        realtimeConfig = {
+          artifact: realtimeArtifact,
+          config: {
+            stages: realtimeStages,
+            batchInterval: '10s',
+            connections,
+            "resources": {
+              "memoryMB": 1024,
+              "virtualCores": 1
+            },
+            "driverResources": {
+              "memoryMB": 1024,
+              "virtualCores": 1
+            },
+          }
+        };
       }
 
-      let realtimeConfig = {
-        artifact: realtimeArtifact,
-        config: {
-          stages: realtimeStages,
-          batchInterval: '10s',
-          connections,
-          "resources": {
-            "memoryMB": 1024,
-            "virtualCores": 1
-          },
-          "driverResources": {
-            "memoryMB": 1024,
-            "virtualCores": 1
-          },
-        }
-      };
-
-      let batchConfig = {
-        artifact: batchArtifact,
-        config: {
-          stages: batchStages,
-          connections,
-          "resources": {
-            "memoryMB": 1024,
-            "virtualCores": 1
-          },
-          "driverResources": {
-            "memoryMB": 1024,
-            "virtualCores": 1
-          },
-        }
-      };
+      if (batchSource) {
+        batchStages.push(batchSource);
+        batchConfig = {
+          artifact: batchArtifact,
+          config: {
+            stages: batchStages,
+            connections,
+            "resources": {
+              "memoryMB": 1024,
+              "virtualCores": 1
+            },
+            "driverResources": {
+              "memoryMB": 1024,
+              "virtualCores": 1
+            },
+          }
+        };
+      }
 
       observable.next({realtimeConfig, batchConfig});
 
     }, (err) => {
-      observable.error(objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'));
+      observable.error(objectQuery(err, 'response', 'message') || T.translate(`${PREFIX}.defaultMessage`));
     });
   } catch (e) {
     observable.error(objectQuery(e, 'message') || e);

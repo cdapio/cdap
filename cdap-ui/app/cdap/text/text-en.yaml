@@ -337,6 +337,14 @@ features:
       suggestion1: the page
       suggestionTitle: "You can try to:"
     DataPrepBrowser:
+      BigQueryBrowser:
+        datasetCount:
+          0: No Datasets
+          1: "{context} Dataset"
+          _: "{context} Datasets"
+        datasets: Datasets
+        name: Name
+        title: Select Table
       DatabaseBrowser:
         EmptyMessage:
           clearLabel: Clear
@@ -840,6 +848,16 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    PipelineError:
+      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Cask Market.
+      database: Unable to find Database Plugins. Please make sure Database Plugins are available.
+      defaultMessage: Error adding to pipeline.
+      fileBatch: Unable to find Core Plugins. Please make sure Core Plugins are available.
+      fileRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available.
+      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market.
+      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market.
+      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market.
+      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market
     sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
@@ -851,6 +869,7 @@ features:
         realtimePipelineBtn: Realtime Pipeline
         errorTitle: Unable to create pipeline
       applyBtnLabel: Apply
+      bigquery: Big Query
       cleanseLinkLabel: "cleanse "
       copyToCDAPDatasetBtn:
         btnLabel: Ingest Data
@@ -881,40 +900,21 @@ features:
         ingestFailMessage: Unable to Ingest Data
         uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
       database: Database
-      databasePipeline:
-        ingestDataError: Unable to find Database Plugins. Please make sure Database Plugins are available before ingesting data.
-        pipelineError: Unable to find Database Plugins. Please make sure Database Plugins are available before creating a pipeline.
       databaseTitle: "Table: {name}"
       file: File System
-      filePipeline:
-        ingestDataerrorBatch: Unable to find Core Plugins. Please make sure Core Plugins are available before ingesting data.
-        ingestDataerrorRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available before ingesting data.
-        pipelineErrorBatch: Unable to find Core Plugins. Please make sure Core Plugins are available before creating a pipeline.
-        pipelineErrorRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available before creating a pipeline.
       gcs: GCS
-      GCSPipeline:
-        ingestDataerror: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market before ingesting data.
-        pipelineError: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market before creating a pipeline.
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
       invalidFieldNameRemedies3: column names.
       kafka: Kafka
-      kafkaPipeline:
-        ingestDataError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before ingesting data.
-        pipelineError: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market before creating a pipeline.
       more: More
-      PipelineModal:
-        defaultErrorMessage: Error adding to pipeline
       PlusButton:
         addDirective: Add directive
         addOtherEntities: Add other Entities
         successMessage: You successfully added a custom directive to CDAP. Apply that directive by typing it into the power mode input area.
-      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      realtimeDisabledTooltip: "Importing data from {type} in realtime is currently not supported."
       s3: S3
-      S3Pipeline:
-        ingestDataError: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market before ingesting data.
-        pipelineError: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market before creating a pipeline.
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       Tabs:
@@ -946,6 +946,26 @@ features:
         mainMessage: Are you sure you want to close {workspace}?
   DataPrepConnections:
     AddConnections:
+      BigQuery:
+        bucket: Temporary GCS Bucket
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to Google Big Query
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add Connection: Big Query"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+        name: Name
+        projectId: Project ID
+        required: Required
+        serviceAccountKeyfile: Service Account Keyfile Location
+        testConnection: Test Connection
       Database:
         DatabaseDetail:
           advanced: Advanced
@@ -1048,6 +1068,7 @@ features:
         region: Region
         required: Required
         testConnection: Test Connection
+    bigquery: Google Big Query ({count})
 
     ConnectionManagement:
       Confirmations:
