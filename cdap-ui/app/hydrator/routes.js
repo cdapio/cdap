@@ -317,9 +317,7 @@ angular.module(PKG.name + '.feature.hydrator')
               controllerAs: 'DetailCtrl'
             },
             'toppanel@hydrator.detail': {
-              templateUrl: '/assets/features/hydrator/templates/detail/top-panel.html',
-              controller: 'HydratorDetailTopPanelController',
-              controllerAs: 'TopPanelCtrl'
+              templateUrl: '/assets/features/hydrator/templates/detail/top-panel.html'
             },
             'canvas@hydrator.detail': {
               templateUrl: '/assets/features/hydrator/templates/detail/canvas.html',

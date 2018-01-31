@@ -41,10 +41,12 @@ var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').defaul
 var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
 var TriggeredPipelineStore = require('../cdap/components/TriggeredPipelines/store/TriggeredPipelineStore').default;
 var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
-var GLOBALS = require('../cdap/services/global-constants').default;
+var GLOBALS = require('../cdap/services/global-constants').GLOBALS;
 var StatusMapper = require('../cdap/services/StatusMapper').default;
 var PipelineDetailStore = require('../cdap/components/PipelineDetails/store').default;
 var PipelineDetailActionCreator = require('../cdap/components/PipelineDetails/store/ActionCreator');
+var PipelineDetailsTopPanel = require('../cdap/components/PipelineDetails/PipelineDetailsTopPanel').default;
+var PipelineScheduler = require('../cdap/components/PipelineScheduler').default;
 
 export {
   Store,
@@ -75,5 +77,7 @@ export {
   GLOBALS,
   StatusMapper,
   PipelineDetailStore,
-  PipelineDetailActionCreator
+  PipelineDetailActionCreator,
+  PipelineDetailsTopPanel,
+  PipelineScheduler
 };

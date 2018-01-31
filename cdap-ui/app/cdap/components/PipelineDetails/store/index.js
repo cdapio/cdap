@@ -14,14 +14,15 @@
  * the License.
 */
 
-import {createStore, compose} from 'redux';
-import {defaultAction} from 'services/helpers';
-import GLOBALS from 'services/global-constants';
+import {createStore} from 'redux';
+import {defaultAction, composeEnhancers} from 'services/helpers';
+import {GLOBALS} from 'services/global-constants';
 
 const ACTIONS = {
   INITIALIZE_PIPELINE_DETAILS: 'INITIALIZE_PIPELINE_DETAILS',
 
   // Pipeline level Actions
+  SET_OPTIONAL_PROPERTY: 'SET_OPTIONAL_PROPERTY',
   SET_SCHEDULE: 'SET_SCHEDULE',
   SET_ENGINE: 'SET_ENGINE',
   SET_BATCH_INTERVAL: 'SET_BATCH_INTERVAL',
@@ -74,6 +75,7 @@ const DEFAULT_PIPELINE_DETAILS = {
     scope: ''
   },
   config: {},
+  version: '',
   scheduleStatus: '',
 
   // Run level info
@@ -97,7 +99,8 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       try {
         newPipelineConfig = JSON.parse(pipeline.configuration);
       } catch (e) {
-        console.log('ERROR cannot parse configuration');
+        console.log('ERROR: cannot parse configuration');
+        newPipelineConfig = {...state.config};
       }
 
       return {
@@ -109,9 +112,15 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
           version: pipeline.artifact.version,
           scope: pipeline.artifact.scope
         },
-        config: {...newPipelineConfig}
+        config: {...newPipelineConfig},
+        version: pipeline.appVersion
       };
     }
+    case ACTIONS.SET_OPTIONAL_PROPERTY:
+      return {
+        ...state,
+        [action.payload.key]: action.payload.value
+      };
     case ACTIONS.SET_SCHEDULE:
       return {
         ...state,
@@ -359,17 +368,11 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       return state;
   }
 };
-const composeEnhancers =
-typeof window === 'object' &&
-window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?
-  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
-    name: 'PipelineDetailStore'
-  }) : compose;
 
 const PipelineDetailStore = createStore(
   pipelineDetails,
   DEFAULT_PIPELINE_DETAILS,
-  composeEnhancers()
+  composeEnhancers('PipelineDetailStore')()
 );
 
 export default PipelineDetailStore;

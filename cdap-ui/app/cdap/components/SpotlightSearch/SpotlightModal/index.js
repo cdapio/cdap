@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import {MySearchApi} from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
 import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
-import {Link} from 'react-router-dom';
+import NavLinkWrapper from 'components/NavLinkWrapper';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import shortid from 'shortid';
@@ -40,18 +40,26 @@ require('./SpotlightModal.scss');
 const PAGE_SIZE = 10;
 
 export default class SpotlightModal extends Component {
-  constructor(props) {
-    super(props);
+  static propTypes = {
+    query: PropTypes.string,
+    tag: PropTypes.string,
+    target: PropTypes.array,
+    isOpen: PropTypes.bool,
+    toggle: PropTypes.func,
+    isNativeLink: PropTypes.bool
+  };
 
-    this.state = {
-      searchResults: { results: [] },
-      currentPage: 1,
-      numPages: 1,
-      focusIndex: 0,
-      isPaginationExpanded: false
-    };
-    this.handlePaginationToggle = this.handlePaginationToggle.bind(this);
-  }
+  static defaultProps = {
+    isNativeLink: false
+  };
+
+  state = {
+    searchResults: { results: [] },
+    currentPage: 1,
+    numPages: 1,
+    focusIndex: 0,
+    isPaginationExpanded: false
+  };
 
   componentWillMount() {
     Mousetrap.bind('up', this.handleUpDownArrow.bind(this, 'UP'));
@@ -81,11 +89,11 @@ export default class SpotlightModal extends Component {
     }
   }
 
-  handlePaginationToggle() {
+  handlePaginationToggle = () => {
     this.setState({
       isPaginationExpanded: !this.state.isPaginationExpanded
     });
-  }
+  };
 
   handleEnter() {
     let entity = parseMetadata(this.state.searchResults.results[this.state.focusIndex]);
@@ -130,8 +138,12 @@ export default class SpotlightModal extends Component {
         .map(parseMetadata)
         .map((entity, index) => {
           let entityTypeLabel = convertEntityTypeToApi(entity.type);
+          let entityUrl = `/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`;
           return (
-            <Link to={`/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`}>
+            <NavLinkWrapper
+              to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
+              isNativeLink={this.props.isNativeLink}
+            >
               <div
                 key={shortid.generate()}
                 className={classnames('row search-results-item', {
@@ -179,7 +191,7 @@ export default class SpotlightModal extends Component {
                   </div>
                 </Col>
               </div>
-            </Link>
+            </NavLinkWrapper>
           );
         })
       );
@@ -221,11 +233,3 @@ export default class SpotlightModal extends Component {
     );
   }
 }
-
-SpotlightModal.propTypes = {
-  query: PropTypes.string,
-  tag: PropTypes.string,
-  target: PropTypes.array,
-  isOpen: PropTypes.bool,
-  toggle: PropTypes.func
-};
