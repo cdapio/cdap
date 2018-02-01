@@ -70,6 +70,8 @@ public abstract class HBaseTableUtil {
 
   public static final String CDAP_VERSION = "cdap.version";
 
+  public static final String CDAP_HBASE_VERSION = "cdap.hbase.version";
+
   /**
    * Represents the compression types supported for HBase tables.
    */
@@ -188,6 +190,12 @@ public abstract class HBaseTableUtil {
     return builder.build();
   }
 
+  public HTableDescriptor setHBaseVersion(HTableDescriptor tableDescriptor) {
+    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
+    setHBaseVersion(builder);
+    return builder.build();
+  }
+
   public HTableDescriptor setTablePrefix(HTableDescriptor tableDescriptor) {
     HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
     builder.setValue(Constants.Dataset.TABLE_PREFIX, tablePrefix);
@@ -226,7 +234,9 @@ public abstract class HBaseTableUtil {
                                                                   tableName.getQualifierAsString());
     tdBuilder
       .addProperty(Constants.Dataset.TABLE_PREFIX, tablePrefix)
-      .addProperty(HBaseTableUtil.CDAP_VERSION, ProjectInfo.getVersion().toString());
+      .addProperty(HBaseTableUtil.CDAP_VERSION, ProjectInfo.getVersion().toString())
+      .addProperty(HBaseTableUtil.CDAP_HBASE_VERSION, HBaseVersion.get().getMajorVersion());
+
 
     return tdBuilder;
   }
@@ -248,6 +258,15 @@ public abstract class HBaseTableUtil {
 
   public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
     return new ProjectInfo.Version(tableDescriptor.getValue(CDAP_VERSION));
+  }
+
+  public static void setHBaseVersion(HTableDescriptorBuilder tableDescriptorBuilder) {
+    tableDescriptorBuilder.setValue(CDAP_HBASE_VERSION, HBaseVersion.get().getMajorVersion());
+  }
+
+  @Nullable
+  public static String getHBaseVersion(HTableDescriptor tableDescriptor) {
+    return tableDescriptor.getValue(CDAP_HBASE_VERSION);
   }
 
   public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {

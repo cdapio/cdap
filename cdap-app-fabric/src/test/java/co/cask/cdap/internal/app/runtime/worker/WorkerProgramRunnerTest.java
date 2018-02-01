@@ -16,10 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.AppWithMisbehavedDataset;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.table.Get;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -134,6 +138,31 @@ public class WorkerProgramRunnerTest {
     for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(DefaultId.NAMESPACE.dataset(spec.getName()));
     }
+  }
+
+  @Test
+  public void testWorkerWithMisbehavedDataset() throws Throwable {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(AppWithMisbehavedDataset.class, TEMP_FOLDER_SUPPLIER);
+    final ProgramController controller = startProgram(app, AppWithMisbehavedDataset.TableWriter.class);
+    Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
+      @Override
+      public ProgramController.State call() throws Exception {
+        return controller.getState();
+      }
+    }, 30, TimeUnit.SECONDS);
+
+    // validate worker was able to execute its second transaction
+    final TransactionExecutor executor = txExecutorFactory.createExecutor(datasetCache);
+    executor.execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Table table = datasetCache.getDataset(AppWithMisbehavedDataset.TABLE);
+          Row result = table.get(new Get(AppWithMisbehavedDataset.ROW, AppWithMisbehavedDataset.COLUMN));
+          Assert.assertEquals(AppWithMisbehavedDataset.VALUE, result.getString(AppWithMisbehavedDataset.COLUMN));
+        }
+      });
   }
 
   @Test
