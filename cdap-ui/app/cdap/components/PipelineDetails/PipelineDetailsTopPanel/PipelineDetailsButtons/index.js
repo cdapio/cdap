@@ -16,11 +16,13 @@
 
 import React from 'react';
 import ScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ScheduleButton';
+import ConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ConfigureButton';
 
 export default function PipelineDetailsButtons() {
   return (
     <div className="pipeline-details-buttons">
       <ScheduleButton />
+      <ConfigureButton />
     </div>
   );
 }

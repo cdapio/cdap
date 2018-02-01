@@ -101,13 +101,28 @@ $pipeline-type-icon-size: 20px;
   }
 
   .pipeline-details-buttons {
-    .pipeline-scheduler-btn {
-      .icon-runtimestarttime {
-        height: 21px;
-        width: 21px;
+    .pipeline-scheduler,
+    .pipeline-configure {
+      display: inline-block;
+    }
 
-        &.unschedule-icon {
-          color: $brand-primary;
+    .pipeline-scheduler {
+      .pipeline-scheduler-btn {
+        .icon-runtimestarttime {
+          height: 21px;
+          width: 21px;
+
+          &.unschedule-icon {
+            color: $brand-primary;
+          }
+        }
+      }
+    }
+
+    .pipeline-configure {
+      .pipeline-configure-btn {
+        .icon-sliders {
+          transform: rotate(90deg);
         }
       }
     }
