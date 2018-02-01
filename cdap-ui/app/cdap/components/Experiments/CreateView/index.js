@@ -44,6 +44,7 @@ import Helmet from 'react-helmet';
 import queryString from 'query-string';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {objectQuery} from 'services/helpers';
 
 require('./CreateView.scss');
 
@@ -70,6 +71,8 @@ export default class ExperimentCreateView extends Component {
       if (!headers.length) {
         return;
       }
+      let workspaceId = objectQuery(workspaceInfo, 'workspace', 'name');
+      setWorkspace(workspaceId);
       setSrcPath(workspaceInfo.properties.path);
       setOutcomeColumns(headers);
       setDirectives(directives);

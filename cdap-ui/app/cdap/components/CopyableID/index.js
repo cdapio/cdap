@@ -30,7 +30,8 @@ export default class CopyableID extends Component {
   static propTypes = {
     id: PropTypes.string.isRequired,
     idprefix: PropTypes.string,
-    label: PropTypes.string
+    label: PropTypes.string,
+    placement: PropTypes.string
   };
 
   static defaultProps = {
@@ -58,7 +59,7 @@ export default class CopyableID extends Component {
     };
     let tooltipProps = {
       target: idlabel,
-      placement: 'right',
+      placement: this.props.placement || 'right',
       tether: tetherConfig,
       delay: 0
     };
@@ -67,7 +68,7 @@ export default class CopyableID extends Component {
     }
     return (
       <span
-        className="btn-link"
+        className="copyable-id btn-link"
         id={idlabel}
         onClick={this.onIDClickHandler.bind(this, this.props.id)}
         onMouseOut={() => {

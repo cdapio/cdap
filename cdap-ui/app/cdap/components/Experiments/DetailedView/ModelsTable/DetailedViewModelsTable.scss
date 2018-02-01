@@ -40,18 +40,54 @@
 
   .grid.grid-container {
     max-height: calc(100% - 32px);
+    height: 100%;
     .grid-header,
     .grid-body {
       .grid-item {
         grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+        &:hover {
+          [class*="icon-"] {
+            color: $blue-03;
+          }
+        }
+      }
+    }
+    .grid-body {
+      .grid-item {
+        padding: 7px 7px;
         &.opened {
-          grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+          grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
           background: $grey-08;
           border-bottom: 3px solid $grey-04;
           border-top: 0;
           align-items: start;
-          div {
-            word-break: break-word;
+          cursor: auto;
+          > div {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            height: 100%;
+            strong {
+              display: block;
+            }
+            .copyable-id {
+              padding-left: 0;
+            }
+            > div {
+              padding: 5px 0;
+            }
+          }
+          .collapsable-wrapper {
+            .grid.grid-container {
+              max-height: 300px;
+              padding: 0 10px;
+              .grid-item {
+                grid-template-columns: 1fr;
+              }
+            }
+          }
+          &.loading {
+            display: flex;
+            justify-content: center;
           }
         }
         &.active {
@@ -63,14 +99,21 @@
           border-color: $green-02;
         }
       }
-    }
-    .grid-body {
+      > a {
+        color: inherit;
+      }
       .algorithm-cell,
       > div > span {
         width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+      [class*="icon-"] {
+        color: $grey-03;
+        &:hover {
+          color: $blue-03;
+        }
       }
     }
     &.classification {
@@ -79,8 +122,13 @@
         .grid-item {
           grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 20px;
         }
-        &.opened {
-          grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 20px;
+      }
+      .grid-body {
+        .grid-item {
+          &.opened {
+            grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
+            cursor: auto;
+          }
         }
       }
     }

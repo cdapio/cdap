@@ -19,22 +19,49 @@ import React from 'react';
 import {connect, Provider} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
 import {createSplitAndUpdateStatus, setSplitFinalized} from 'components/Experiments/store/CreateExperimentActionCreator';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo';
 import IconSVG from 'components/IconSVG';
 
 require('./SplitDataStep.scss');
+const getSplitLogsUrl = (experimentId, splitInfo) => {
+  let splitId = splitInfo.id;
+  let {routerServerUrl, routerServerPort} = window.CDAP_CONFIG.cdap;
+  let protocol = window.CDAP_CONFIG.sslEnabled ? 'https' : 'http';
+  if (routerServerUrl === '127.0.0.1') {
+    routerServerUrl = 'localhost';
+  }
+  let hostPort = `${protocol}://${routerServerUrl}:${routerServerPort}`;
+  let baseUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/ModelManagementApp/spark/ModelManagerService/logs`;
+  let queryParams = encodeURI(`?filter=MDC:experiment="${experimentId}" AND MDC:split=${splitId}`);
+  return `${hostPort}${baseUrl}${queryParams}`;
+};
 
-const renderSplitBtn = (splitInfo, onClick) => {
+const renderSplitBtn = (experimentId, splitInfo, onClick) => {
   let isSplitCreated = Object.keys(splitInfo).length;
-  let isSplitComplete = (splitInfo || {}).status === 'Complete';
-  if (!isSplitCreated || (isSplitCreated && isSplitComplete)) {
+  let splitStatus = (splitInfo || {}).status;
+  let isSplitComplete = ['Complete', 'Failed'].indexOf(splitStatus) !== -1;
+  let isSplitFailed = splitStatus === 'Failed';
+  const splitError = () => {
     return (
-      <button
-        className="btn btn-primary"
-        onClick={onClick}
-      >
-        Split data Randomly and verify sample
-      </button>
+      <span className="split-error-container text-danger">
+        Current Split Failed. Please check {" "}
+        <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank"> Logs </a>{" "}
+        for more information
+      </span>
+    );
+  };
+  if (!isSplitCreated || (isSplitCreated && isSplitComplete) || (isSplitCreated && isSplitFailed)) {
+    return (
+      <div>
+        <button
+          className="btn btn-primary"
+          onClick={onClick}
+        >
+          Split data Randomly and verify sample
+        </button>
+        {splitStatus === 'Failed' ? splitError() : null}
+      </div>
     );
   }
   return (
@@ -50,14 +77,14 @@ const renderSplitBtn = (splitInfo, onClick) => {
   );
 };
 
-function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFinalized}) {
+function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFinalized, experimentId}) {
   let splitStatus = splitInfo.status || 'Complete';
   return (
     <div className="split-data-step">
       <h3>Split Data </h3>
       <div>Create Test Dataset for this Model.</div>
       <br />
-      {renderSplitBtn(splitInfo, createSplitAndUpdateStatus)}
+      {renderSplitBtn(experimentId, splitInfo, createSplitAndUpdateStatus)}
       {
         Object.keys(splitInfo).length && splitInfo.status === 'Complete' ? (
           <div className="action-button-group">
@@ -81,15 +108,17 @@ SplitDataStep.propTypes = {
   splitInfo: PropTypes.object,
   schema: PropTypes.object,
   createSplitAndUpdateStatus: PropTypes.func,
-  setSplitFinalized: PropTypes.func
+  setSplitFinalized: PropTypes.func,
+  experimentId: PropTypes.string
 };
 
 const mapStateToSplitDataStepProps = (state) => {
-  let {model_create} = state;
+  let {model_create, experiments_create} = state;
   let {splitInfo = {}} = model_create;
   return {
     splitInfo: splitInfo,
-    schema: splitInfo.schema
+    schema: splitInfo.schema,
+    experimentId: experiments_create.name
   };
 };
 const mapDispatchToSplitDataStepProps = () => {

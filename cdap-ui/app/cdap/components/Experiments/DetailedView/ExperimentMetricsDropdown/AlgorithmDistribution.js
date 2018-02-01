@@ -19,12 +19,18 @@ import React from 'react';
 import d3 from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
 import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
-const HEIGHT_OF_PIE_CHART = 190;
+import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
+const HEIGHT_OF_PIE_CHART = 190;
 const colorScale = d3.scale.category20();
 const AlgorithmDistribution = ({algorithms}) => {
   if (!algorithms.length) {
-    return null;
+    return (
+      <EmptyMetricMessage
+        mainMessage={`Algorithm Distribution Unavailable`}
+        popoverMessage={`Atleast one model has to be trained to get Algorithms distribution`}
+      />
+    );
   }
   let algos = algorithms.map(algo => {
     return {

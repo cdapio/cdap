@@ -31,6 +31,12 @@ export default class Alert extends Component {
     };
   }
   successTimeout = null;
+  componentDidMount() {
+    if (this.state.type === 'success') {
+      clearTimeout(this.successTimeout);
+      this.successTimeout = setTimeout(this.onClose, SUCCESS_CLOSE_TIMEOUT);
+    }
+  }
   componentWillReceiveProps(nextProps) {
     let {showAlert, type, message} = nextProps;
     if (
@@ -44,7 +50,7 @@ export default class Alert extends Component {
         message
       });
     }
-    if (type === 'success') {
+    if (this.state.type === 'success') {
       clearTimeout(this.successTimeout);
       this.successTimeout = setTimeout(this.onClose, SUCCESS_CLOSE_TIMEOUT);
     }

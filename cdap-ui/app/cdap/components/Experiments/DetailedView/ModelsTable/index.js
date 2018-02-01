@@ -35,6 +35,9 @@ import HyperParamsPopover from 'components/Experiments/DetailedView/HyperParamsP
 import isNumber from 'lodash/isNumber';
 import isString from 'lodash/isString';
 import shortid from 'shortid';
+import CopyableID from 'components/CopyableID';
+import CollapsibleWrapper from 'components/CollapsibleWrapper';
+import LoadingSVG from 'components/LoadingSVG';
 
 require('./DetailedViewModelsTable.scss');
 
@@ -129,16 +132,80 @@ const renderMetrics = (newHeaders, model) => {
   return metrics.map(t => wrapContentWithTitleAttr(model.evaluationMetrics[t.property] || '--'));
 };
 
-const renderModelDetails = (model, newlyTrainingModel) => {
+const renderFeaturesTable = (features) => {
+  return (
+    <div className="features-grid-wrapper">
+      <div className="grid grid-container">
+        <div className="grid-header">
+          <div className="grid-item">
+            <strong> Features </strong>
+          </div>
+        </div>
+        <div className="grid-body">
+          {features.map(feature => (<div className="grid-item"> {feature}</div>))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const renderDirectivesTables = (directives) => {
+  return (
+    <div className="features-grid-wrapper">
+      <div className="grid grid-container">
+        <div className="grid-header">
+          <div className="grid-item">
+            <strong> Directives </strong>
+          </div>
+        </div>
+        <div className="grid-body">
+          {directives.map(directive => (<div className="grid-item"> {directive}</div>))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const constructModelTrainingLogs = (model, experimentId) => {
+  let splitId = objectQuery(model, 'splitDetails', 'id');
+  let nowInSeconds = Math.floor(Date.now() / 1000);
+  let startTime = Math.floor(model.createtime / 1000);
+  let endTime = Math.floor(model.trainedtime / 1000) || nowInSeconds;
+  if (splitId) {
+    let {routerServerUrl, routerServerPort} = window.CDAP_CONFIG.cdap;
+    let protocol = window.CDAP_CONFIG.sslEnabled ? 'https' : 'http';
+    if (routerServerUrl === '127.0.0.1') {
+      routerServerUrl = 'localhost';
+    }
+    let hostPort = `${protocol}://${routerServerUrl}:${routerServerPort}`;
+    let baseUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/ModelManagementApp/spark/ModelManagerService/logs`;
+    let queryParams = encodeURI(`?filter=MDC:experiment="${experimentId}" AND MDC:model=${model.id}&start=${startTime}&end=${endTime}`);
+    return `${hostPort}${baseUrl}${queryParams}`;
+  }
+};
+
+const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let props = {
     className: classnames("grid-item", {
       "opened": model.detailedView,
       "active": model.active,
-      "highlight": model.id === newlyTrainingModelId
+      "highlight": model.id === newlyTrainingModelId,
+      "loading": !model.splitDetails
     }),
     key: shortid.generate()
   };
+  if (!model.splitDetails) {
+    return (
+      <div {...props}>
+        <LoadingSVG />
+      </div>
+    );
+  }
+  let directives = objectQuery(model, 'splitDetails', 'directives') || [];
+  let splitId = objectQuery(model, 'splitDetails', 'id');
+  let modelTrainingLogsUrl;
+  modelTrainingLogsUrl = constructModelTrainingLogs(model, experimentId);
   return (
     <div {...props}>
       <div />
@@ -149,11 +216,24 @@ const renderModelDetails = (model, newlyTrainingModel) => {
         </div>
         <div>
           <strong># Directives </strong>
-          <div>{Array.isArray(objectQuery(model, 'splitDetails', 'directives')) ? model.splitDetails.directives.length : '--'}</div>
+          <div>
+            <CollapsibleWrapper
+              content={directives.length}
+              popoverContent={renderDirectivesTables.bind(null, directives)}
+              alwaysShowViewLink={true}
+            />
+          </div>
         </div>
+      </div>
+      <div>
         <div>
           <strong>Features ({model.features.length}) </strong>
-          <div>{model.features.join(',')}</div>
+          <div>
+            <CollapsibleWrapper
+              content={model.features.join(',')}
+              popoverContent={renderFeaturesTable.bind(null, model.features)}
+            />
+          </div>
         </div>
       </div>
       <div>
@@ -165,6 +245,25 @@ const renderModelDetails = (model, newlyTrainingModel) => {
           <strong> Created on</strong>
           <div>{humanReadableDate(model.createtime, true)}</div>
         </div>
+      </div>
+      <div>
+        <div>
+          <strong> Model ID </strong>
+          <CopyableID
+            id={model.id}
+            label="Copy To Clipboard"
+            placement="left"
+          />
+        </div>
+        {
+          splitId ?
+            <div>
+              <strong>Model Training Logs </strong>
+              <a href={modelTrainingLogsUrl} target="_blank"> Logs </a>
+            </div>
+          :
+            null
+        }
       </div>
     </div>
   );
@@ -230,7 +329,7 @@ function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel) {
       hyperparameters
     };
     if (model.detailedView) {
-      return renderModelDetails(model, newlyTrainingModel);
+      return renderModelDetails(model, newlyTrainingModel, experimentId);
     }
     return renderModel(model, outcomeType, experimentId, newlyTrainingModel);
  });

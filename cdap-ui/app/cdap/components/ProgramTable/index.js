@@ -89,11 +89,11 @@ export default class ProgramTable extends Component {
     });
   }
 
-  renderTableBody() {
+  renderTableBody(entities) {
     return (
       <tbody>
         {
-          this.state.entities.map(program => {
+          entities.map(program => {
             let icon = EntityIconMap[program.programType];
             let statusClass = program.status === 'RUNNING' ? 'text-success' : '';
             return (

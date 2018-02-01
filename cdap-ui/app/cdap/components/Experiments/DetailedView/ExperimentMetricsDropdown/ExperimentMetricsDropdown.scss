@@ -15,12 +15,34 @@
 */
 
 @import "../../ExperimentsVariables.scss";
+@import "../../../../styles/variables.scss";
 
 .experiments-metrics-dropdown {
   width: $visualization-width;
   > div {
     &:last-of-type {
-      height: calc(100% - 20px);
+      height: calc(100% - 30px);
+    }
+    &.empty-message {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      color: $grey-04;
+      border: 2px solid $grey-04;
+      border-radius: 4px;
+      margin-top: 10px;
+      > span {
+        margin: 0 5px;
+      }
+      .icon-svg {
+        color: $blue-03;
+        cursor: pointer;
+        display: block;
+      }
+      .popper {
+        font-size: 1rem;
+      }
     }
   }
   .styled-select-wrapper {

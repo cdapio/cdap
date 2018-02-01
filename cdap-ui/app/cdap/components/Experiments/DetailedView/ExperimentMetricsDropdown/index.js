@@ -95,15 +95,12 @@ class ExperimentMetricsDropdown extends Component {
         <ModelStatusesDistribution modelStatuses={this.props.statuses.histo || []} />
       );
     }
-    let values = this.props.evaluationMetrics[metric];
-    if (!values) {
-      return null;
-    }
+    let values = this.props.evaluationMetrics[metric] || {};
     let {width, height} = this.containerRef.getBoundingClientRect();
     return (
       <MetricChartWithLegend
         xAxisTitle={label}
-        values={values.histo}
+        values={values.histo || []}
         width={width}
         height={height}
       />

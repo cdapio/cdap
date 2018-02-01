@@ -94,16 +94,17 @@ function humanReadableDate(date, isMilliseconds) {
   return (moment(date * 1000)).format(format);
 }
 
+const ONE_MIN_SECONDS = 60;
+const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
+const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
+const ONE_WEEK_SECONDS = ONE_DAY_SECONDS * 7;
+const ONE_MONTH_SECONDS = ONE_DAY_SECONDS * 30;
+const ONE_YEAR_SECONDS = ONE_MONTH_SECONDS * 12;
+
 function humanReadableDuration(timeInSeconds) {
   if (typeof timeInSeconds !== 'number') {
     return timeInSeconds;
   }
-  const ONE_MIN_SECONDS = 60;
-  const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
-  const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
-  const ONE_WEEK_SECONDS = ONE_DAY_SECONDS * 7;
-  const ONE_MONTH_SECONDS = ONE_DAY_SECONDS * 30;
-  const ONE_YEAR_SECONDS = ONE_MONTH_SECONDS * 12;
   const pluralize = (number, label) => number > 1 ? `${label}s` : label;
   if (timeInSeconds < 60) {
     return `${Math.floor(timeInSeconds)} ${pluralize(timeInSeconds, T.translate('commons.secShortLabel'))}`;
@@ -291,5 +292,11 @@ export {
   isPluginSource,
   isPluginSink,
   isBatchPipeline,
-  composeEnhancers
+  composeEnhancers,
+  ONE_MIN_SECONDS,
+  ONE_HOUR_SECONDS,
+  ONE_DAY_SECONDS,
+  ONE_WEEK_SECONDS,
+  ONE_MONTH_SECONDS,
+  ONE_YEAR_SECONDS
 };
