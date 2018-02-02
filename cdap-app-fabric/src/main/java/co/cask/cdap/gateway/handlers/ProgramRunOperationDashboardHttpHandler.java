@@ -63,10 +63,10 @@ import javax.ws.rs.QueryParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/ops")
-public class ProgramRunOperationHttpHandler extends AbstractAppFabricHttpHandler {
+public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new Gson();
   private static final Type OPERATION_REQUEST_TYPE = new TypeToken<ProgramRunOperationRequest>() { }.getType();
-  private static final Type REPORT_READ_REQUEST_TYPE = new TypeToken<ProgramRunOperationRequest>() { }.getType();
+  private static final Type REPORT_READ_REQUEST_TYPE = new TypeToken<ReportReadRequest>() { }.getType();
   private static final Type DASHBOARD_SUMMARY_REQUEST_TYPE = new TypeToken<DashboardSummaryRequest>() { }.getType();
 
   @POST
@@ -139,7 +139,7 @@ public class ProgramRunOperationHttpHandler extends AbstractAppFabricHttpHandler
 
     DashboardSummaryRequest dashboardRequest = decodeRequestBody(request, DASHBOARD_SUMMARY_REQUEST_TYPE);
     int resolution = dashboardRequest.getResolution();
-    if (resolution != 300 || resolution != 3600) {
+    if (resolution != 300 && resolution != 3600) {
       throw new BadRequestException(String.format("Resolution is %d, but it can only be 500 or 3600.", resolution));
     }
     long currentTs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -192,7 +192,7 @@ public class ProgramRunOperationHttpHandler extends AbstractAppFabricHttpHandler
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(dashboardDetails));
   }
 
-  private <T> T decodeRequestBody(FullHttpRequest request, Type type) throws IOException, BadRequestException {
+  private static <T> T decodeRequestBody(FullHttpRequest request, Type type) throws IOException, BadRequestException {
     T decodedRequestBody;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       try {

@@ -56,6 +56,58 @@ public class ReportSummary {
     this.startedByProgramTrigger = startedByProgramTrigger;
   }
 
+  public List<String> getNamespaces() {
+    return namespaces;
+  }
+
+  public long getStartTs() {
+    return startTs;
+  }
+
+  public long getEndTs() {
+    return endTs;
+  }
+
+  public Map<String, Integer> getProgramTypeCount() {
+    return programTypeCount;
+  }
+
+  public long getMinDurationTs() {
+    return minDurationTs;
+  }
+
+  public long getMaxDurationTs() {
+    return maxDurationTs;
+  }
+
+  public long getAverageDurationTs() {
+    return averageDurationTs;
+  }
+
+  public long getNewestStartedTs() {
+    return newestStartedTs;
+  }
+
+  public long getOldestStartedTs() {
+    return oldestStartedTs;
+  }
+
+  public List<ProgramRunOwner> getOwners() {
+    return owners;
+  }
+
+  public int getStartedManually() {
+    return startedManually;
+  }
+
+  public int getStartedByTimeSchedule() {
+    return startedByTimeSchedule;
+  }
+
+  public int getStartedByProgramTrigger() {
+    return startedByProgramTrigger;
+  }
+
   public static class ProgramRunOwner {
     private final String user;
     private final int runs;
