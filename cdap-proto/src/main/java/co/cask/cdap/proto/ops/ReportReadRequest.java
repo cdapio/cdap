@@ -164,7 +164,7 @@ public class ReportReadRequest {
     return numRecordsOut;
   }
 
-  public class Filter<T> {
+  public static class Filter<T> {
     private final List<T> value;
 
     public Filter(List<T> value) {
@@ -172,7 +172,7 @@ public class ReportReadRequest {
     }
   }
 
-  public class Sortable<T> {
+  public static class Sortable<T> {
     private final Range<T> range;
     private final SortBy sortBy;
 
@@ -182,7 +182,7 @@ public class ReportReadRequest {
     }
   }
 
-  public class Range<T> {
+  public static class Range<T> {
     private final T min;
     private final T max;
 

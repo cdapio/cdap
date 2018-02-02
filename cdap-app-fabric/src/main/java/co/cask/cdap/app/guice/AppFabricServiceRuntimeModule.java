@@ -52,6 +52,7 @@ import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.ProgramRunOperationDashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.RouteConfigHttpHandler;
 import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
@@ -393,6 +394,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(DashboardHttpHandler.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
+      handlerBinder.addBinding().to(ProgramRunOperationDashboardHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
