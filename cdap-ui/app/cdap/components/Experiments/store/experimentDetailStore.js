@@ -27,6 +27,8 @@ const ACTIONS = {
   SET_SPLITS: 'SET_SPLITS',
   SET_MODEL_STATUS: 'SET_MODEL_STATUS',
   SET_MODEL_PAGINATION: 'SET_MODEL_PAGINATION',
+  SET_NEWLY_TRAINING_MODEL: 'SET_NEWLY_TRAINING_MODEL',
+  RESET_NEWLY_TRAINING_MODEL: 'RESET_NEWLY_TRAINING_MODEL',
   RESET: 'RESET'
 };
 
@@ -40,6 +42,7 @@ export const DEFAULT_EXPERIMENT_DETAILS = {
   algorithms: {},
   statuses: {},
   models: [],
+  newlyTrainingModel: false,
   modelsOffset: 0,
   modelsLimit: 10,
   modelsTotalCount: 0,
@@ -72,14 +75,37 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
         statuses
       };
     }
-    case ACTIONS.SET_MODELS:
+    case ACTIONS.SET_NEWLY_TRAINING_MODEL:
       return {
         ...state,
-        models: action.payload.models,
+        newlyTrainingModel: action.payload.model
+      };
+    case ACTIONS.RESET_NEWLY_TRAINING_MODEL:
+      return {
+        ...state,
+        newlyTrainingModel: false
+      };
+    case ACTIONS.SET_MODELS: {
+      let {models} = action.payload;
+      if (state.newlyTrainingModel) {
+        models = models.map(model => {
+          if (model.id === state.newlyTrainingModel.modelId) {
+            return {
+              ...model,
+              active: true
+            };
+          }
+          return model;
+        });
+      }
+      return {
+        ...state,
+        models,
         modelsTotalCount: action.payload.totalCount,
         modelsTotalPages: Math.ceil(action.payload.totalCount / state.modelsLimit),
         loading: false
       };
+    }
     case ACTIONS.SET_MODEL_PAGINATION:
       return {
         ...state,

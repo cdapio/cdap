@@ -40,6 +40,7 @@ const ACTIONS = {
   SET_WORKSPACE_ID: 'SET_WORKSPACE_ID',
   SET_SPLIT_FINALIZED: 'SET_SPLIT_FINALIZED',
   UPDATE_HYPER_PARAM: 'UPDATE_HYPER_PARAM',
+  SET_MODEL_TRAINED: 'SET_MODEL_TRAINED',
   RESET: 'RESET'
 };
 
@@ -71,7 +72,8 @@ const DEFAULT_MODEL_CREATE_VALUE = {
   },
 
   validAlgorithmsList: [],
-  algorithmsList: []
+  algorithmsList: [],
+  isModelTrained: false
 };
 
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
@@ -127,6 +129,7 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
       return state;
   }
 };
+
 const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.SET_MODEL_ID:
@@ -211,6 +214,11 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
             .map(al => al.name)
             .indexOf(algo.algorithm) !== -1
         )
+      };
+    case ACTIONS.SET_MODEL_TRAINED:
+      return {
+        ...state,
+        isModelTrained: true
       };
     case ACTIONS.RESET:
       return DEFAULT_MODEL_CREATE_VALUE;

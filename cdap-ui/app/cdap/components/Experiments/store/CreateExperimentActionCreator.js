@@ -15,6 +15,7 @@
 */
 
 import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS} from 'components/Experiments/store/createExperimentStore';
+import experimentDetailStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -294,7 +295,13 @@ function trainModel() {
       modelId
     }, postBody)
     .subscribe(() => {
-      window.location.href = `${window.location.origin}/cdap/ns/${getCurrentNamespace()}/experiments/${experimentId}`;
+      experimentDetailStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_NEWLY_TRAINING_MODEL,
+        payload: {model: model_create}
+      });
+      createExperimentStore.dispatch({
+        type: CREATEEXPERIMENTACTIONS.SET_MODEL_TRAINED
+      });
     });
 }
 

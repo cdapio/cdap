@@ -29,6 +29,7 @@
 
       thead tr th {
         color: $grey-03;
+        border-top: 0;
         &:first-of-type {
           border-left: 0;
         }
