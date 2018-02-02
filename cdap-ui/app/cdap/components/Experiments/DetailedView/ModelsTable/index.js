@@ -16,11 +16,10 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import SortableStickyGrid from 'components/SortableStickyGrid';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
-import {setActiveModel, getAlgorithmLabel, handleModelsPageChange} from 'components/Experiments/store/ActionCreator';
+import {handleModelsPageChange, getAlgorithmLabel, setActiveModel} from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';
@@ -35,80 +34,63 @@ import DeleteExperimentBtn from 'components/Experiments/DetailedView/DeleteExper
 import HyperParamsPopover from 'components/Experiments/DetailedView/HyperParamsPopover';
 import isNumber from 'lodash/isNumber';
 import isString from 'lodash/isString';
+import shortid from 'shortid';
 
 require('./DetailedViewModelsTable.scss');
 
 let tableHeaders = [
   {
-    label: '',
-    width: '2%'
-  },
-  {
     label: 'Model Name',
-    property: 'name',
-    width: '15%'
+    property: 'name'
   },
   {
     label: 'Status',
-    property: 'status',
-    width: '15%'
+    property: 'status'
   },
   {
     label: 'Algorithm',
-    property: 'algorithm',
-    width: '15%'
-  },
-  {
-    label: '',
-    width: '2%'
-  },
+    property: 'algorithm'
+  }
 ];
 
 const regressionMetrics = [
   {
-    label: 'rmse',
-    property: 'rmse',
-    width: '12%'
+    label: 'RMSE',
+    property: 'rmse'
   },
   {
-    label: 'r2',
-    property: 'r2',
-    width: '13%'
+    label: 'R2',
+    property: 'r2'
   },
   {
-    label: 'evariance',
-    property: 'evariance',
-    width: '13%'
+    label: 'Evariance',
+    property: 'evariance'
   },
   {
-    label: 'mae',
-    property: 'mae',
-    width: '13%'
+    label: 'Mean Avg Error',
+    property: 'mae'
   },
 ];
 
 const categoricalMetrics = [
   {
     label: 'Precision',
-    property: 'precision',
-    width: '17%'
+    property: 'precision'
   },
   {
     label: 'Recall',
-    property: 'recall',
-    width: '17%'
+    property: 'recall'
   },
   {
     label: 'F1',
-    property: 'f1',
-    width: '17%'
+    property: 'f1'
   },
 ];
 
 const addMetricsToHeaders = (tableHeaders, metrics) => ([
-  ...tableHeaders.slice(0, tableHeaders.length - 1),
+  ...tableHeaders.slice(0, tableHeaders.length),
   ...metrics,
-  ...tableHeaders.slice(tableHeaders.length - 1)
+  ...tableHeaders.slice(tableHeaders.length)
 ]);
 
 const getNewHeadersBasedOnOutcome = (outcomeType) => (
@@ -118,155 +100,171 @@ const getNewHeadersBasedOnOutcome = (outcomeType) => (
     addMetricsToHeaders(tableHeaders, categoricalMetrics)
 );
 
-const renderTableHeaders = (outcomeType, renderSortableTableHeader) => {
-  let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
-  return (
-    <div className="grid-header">
+const addDetailedModelObject = (list) => {
+  let activeIndex = list.findIndex(model => model.active);
+  if (activeIndex !== -1) {
+    return [
+      ...list.slice(0, activeIndex + 1),
       {
-        newHeaders.map((tableHeader, i) => {
-          return (
-            <div
-              className="grid-header-item"
-              title={tableHeader.label}
-              key={i}
-              style={{ width: `${tableHeader.width}` }}
-            >
-              {
-                tableHeader.property ?
-                  renderSortableTableHeader(tableHeader)
-                :
-                  tableHeader.label
-              }
-            </div>
-          );
-        })
-      }
+        ...list[activeIndex],
+        detailedView: true,
+        active: false
+      },
+      ...list.slice(activeIndex + 1)
+    ];
+  }
+  return list;
+};
+
+const wrapContentWithTitleAttr = (content) => (
+  <div title={isNumber(content) || isString(content) ? content : ''}>
+    {content}
+  </div>
+);
+
+const renderMetrics = (newHeaders, model) => {
+  let commonHeadersLen = tableHeaders.length;
+  let len = newHeaders.length;
+  let metrics = newHeaders.slice(commonHeadersLen, len);
+  return metrics.map(t => wrapContentWithTitleAttr(model.evaluationMetrics[t.property] || '--'));
+};
+
+const renderModelDetails = (model, newlyTrainingModel) => {
+  let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
+  let props = {
+    className: classnames("grid-item", {
+      "opened": model.detailedView,
+      "active": model.active,
+      "highlight": model.id === newlyTrainingModelId
+    }),
+    key: shortid.generate()
+  };
+  return (
+    <div {...props}>
+      <div />
+      <div>
+        <div>
+          <strong>Model Description</strong>
+          <div>{model.description || '--'}</div>
+        </div>
+        <div>
+          <strong># Directives </strong>
+          <div>{Array.isArray(objectQuery(model, 'splitDetails', 'directives')) ? model.splitDetails.directives.length : '--'}</div>
+        </div>
+        <div>
+          <strong>Features ({model.features.length}) </strong>
+          <div>{model.features.join(',')}</div>
+        </div>
+      </div>
+      <div>
+        <div>
+          <strong>Deployed on</strong>
+          <div>{model.deploytime === -1 ? '--' : humanReadableDate(model.deploytime)}</div>
+        </div>
+        <div>
+          <strong> Created on</strong>
+          <div>{humanReadableDate(model.createtime, true)}</div>
+        </div>
+      </div>
     </div>
   );
 };
 
-const renderTableBody = (experimentId, outcomeType, models) => {
-  let list = models.map(model => {
+const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
+  let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
+  let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
+  let Component = 'div';
+  let props = {
+    className: classnames("grid-item", {
+      "opened": model.detailedView,
+      "active": model.active,
+      "highlight": model.id === newlyTrainingModelId
+    }),
+    key: shortid.generate()
+  };
+  let inSplitStep = (['SPLITTING', 'DATA_READY', 'EMPTY'].indexOf(model.status) !== -1);
+  if (inSplitStep) {
+    Component = Link;
+    props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${model.id}`;
+  }
+  return (
+    <Component
+      {...props}
+      onClick={setActiveModel.bind(null, model.id)}
+    >
+      {wrapContentWithTitleAttr(<IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
+      {wrapContentWithTitleAttr(model.name)}
+      {wrapContentWithTitleAttr(<ModelStatusIndicator status={model.status || '--'} />)}
+      {wrapContentWithTitleAttr((
+        !inSplitStep ? (
+          <span className="algorithm-cell" title={model.algorithmLabel}>
+            <HyperParamsPopover
+              hyperparameters={model.hyperparameters}
+              algorithm={model.algorithm}
+            />
+            <span>{model.algorithmLabel}</span>
+          </span>)
+        : '--'
+      ))}
+      {renderMetrics(newHeaders, model, experimentId)}
+      {
+        wrapContentWithTitleAttr(
+          <DeleteModelBtn
+            experimentId={experimentId}
+            model={model}
+          />
+        )
+      }
+    </Component>
+  );
+};
+
+function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel) {
+  let list = addDetailedModelObject([...models]);
+  return list.map((model) => {
     let {name, algorithm, hyperparameters} = model;
-    return {
+    model = {
       ...model,
       name,
       algorithmLabel: getAlgorithmLabel(algorithm),
       hyperparameters
     };
-  });
-  const renderItem = (width, content) => (
-    <div
-      className="grid-body-item"
-      title={isNumber(content) || isString(content) ? content : ''}
-      style={{ width: `${width}` }}
-    >
-      {content}
-    </div>
-  );
-  const renderMetrics = (newHeaders, model) => {
-    let metrics;
-    let len = newHeaders.length - 1;
-    let commonHeadersLen = tableHeaders.length - 1;
-    if (NUMBER_TYPES.indexOf(outcomeType) !== -1) {
-      metrics = newHeaders.slice(commonHeadersLen, len);
-    } else {
-      metrics = newHeaders.slice(commonHeadersLen, len);
+    if (model.detailedView) {
+      return renderModelDetails(model, newlyTrainingModel);
     }
-    return metrics.map(t => renderItem(t.width, model.evaluationMetrics[t.property] || '--'));
-  };
+    return renderModel(model, outcomeType, experimentId, newlyTrainingModel);
+ });
+}
 
+function renderGrid(models, outcomeType, experimentId, newlyTrainingModel) {
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   return (
-    <div className="grid-body">
-      {
-        list.map((model) => {
-          let Component = 'div';
-          let props = {
-            className: classnames("grid-body-row-container", {
-              "opened": model.active
-            }),
-            key: model.id
-          };
-          let inSplitStep = (['SPLITTING', 'DATA_READY', 'EMPTY'].indexOf(model.status) !== -1);
-          if (inSplitStep) {
-            Component = Link;
-            props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${model.id}`;
+    <div className={classnames("grid grid-container", {
+      "classification": NUMBER_TYPES.indexOf(outcomeType) === -1
+    })}>
+      <div className="grid-header">
+        <div className="grid-item">
+          <strong></strong>
+          {
+            newHeaders.map(header => {
+              return (
+                <strong>
+                  {header.label}
+                </strong>
+              );
+            })
           }
-          return (
-            <Component {...props}>
-              <div
-                className={classnames("grid-body-row", {
-                  "opened": model.active
-                })}
-                onClick={setActiveModel.bind(null, model.id)}
-              >
-                {renderItem(newHeaders[0].width, <IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
-                {renderItem(newHeaders[1].width, model.name)}
-                {renderItem(newHeaders[2].width, <ModelStatusIndicator status={model.status || '--'} />)}
-                {renderItem(newHeaders[3].width, (
-                  !inSplitStep ? (
-                    <span className="algorithm-cell" title={model.algorithmLabel}>
-                      <HyperParamsPopover
-                        hyperparameters={model.hyperparameters}
-                        algorithm={model.algorithm}
-                      />
-                      <span>{model.algorithmLabel}</span>
-                    </span>)
-                  : '--'
-                ))}
-                {renderMetrics(newHeaders, model)}
-                {
-                  renderItem(
-                    newHeaders[newHeaders.length - 1].width,
-                    <DeleteModelBtn
-                      experimentId={experimentId}
-                      model={model}
-                    />
-                  )
-                }
-              </div>
-              {
-                model.active ?
-                  <div className="grid-body-row-details">
-                    <div style={{width: tableHeaders[0].width}}></div>
-                    <div style={{width: tableHeaders[1].width}}>
-                      <div>
-                        <strong>Model Description</strong>
-                        <div>{model.description}</div>
-                      </div>
-                      <div>
-                        <strong># Directives </strong>
-                        <div>{Array.isArray(objectQuery(model, 'splitDetails', 'directives')) ? model.splitDetails.directives.length : '--'}</div>
-                      </div>
-                      <div>
-                        <strong>Features ({model.features.length}) </strong>
-                        <div>{model.features.join(',')}</div>
-                      </div>
-                    </div>
-                    <div style={{width: tableHeaders[2].width}}>
-                      <div>
-                        <strong>Deployed on</strong>
-                        <div>{model.deploytime === -1 ? '--' : humanReadableDate(model.deploytime)}</div>
-                      </div>
-                      <div>
-                        <strong> Created on</strong>
-                        <div>{humanReadableDate(model.createtime, true)}</div>
-                      </div>
-                    </div>
-                  </div>
-                :
-                  null
-              }
-            </Component>
-          );
-       })
-      }
+          <strong></strong>
+        </div>
+      </div>
+      <div className="grid-body">
+        {renderGridBody(models, outcomeType, experimentId, newlyTrainingModel)}
+      </div>
     </div>
   );
-};
+}
 
-function ModelsTable({experimentId, modelsList, loading, outcomeType, modelsTotalPages, modelsCurrentPage, modelsTotalCount}) {
+function ModelsTable({experimentId, modelsList, loading, outcomeType, modelsTotalPages, modelsCurrentPage, modelsTotalCount, newlyTrainingModel}) {
   if (loading || isEmpty(experimentId)) {
     return (
       <LoadingSVGCentered />
@@ -292,12 +290,7 @@ function ModelsTable({experimentId, modelsList, loading, outcomeType, modelsTota
           numberOfEntities={modelsTotalCount}
         />
       </div>
-      <SortableStickyGrid
-        entities={modelsList}
-        tableHeaders={tableHeaders}
-        renderTableHeaders={renderTableHeaders.bind(null, outcomeType)}
-        renderTableBody={renderTableBody.bind(null, experimentId, outcomeType)}
-      />
+      {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel)}
     </div>
   );
 }
@@ -309,7 +302,8 @@ ModelsTable.propTypes = {
   outcomeType: PropTypes.string,
   modelsTotalPages: PropTypes.number,
   modelsCurrentPage: PropTypes.number,
-  modelsTotalCount: PropTypes.number
+  modelsTotalCount: PropTypes.number,
+  newlyTrainingModel: PropTypes.bool
 };
 
 const mapStateToProps = (state) => {
@@ -320,7 +314,8 @@ const mapStateToProps = (state) => {
     outcomeType: state.outcomeType,
     modelsTotalPages: state.modelsTotalPages,
     modelsCurrentPage: state.modelsOffset === 0 ? 1 : Math.ceil((state.modelsOffset + 1) / state.modelsLimit),
-    modelsTotalCount: state.modelsTotalCount
+    modelsTotalCount: state.modelsTotalCount,
+    newlyTrainingModel: state.newlyTrainingModel
   };
 };
 

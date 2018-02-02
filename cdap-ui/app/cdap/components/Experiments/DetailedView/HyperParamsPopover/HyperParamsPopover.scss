@@ -19,6 +19,7 @@
 .hyperparameters-popover {
   cursor: pointer;
   display: inline-block;
+  margin-right: 5px;
   .popper {
     width: auto;
     padding: 10px;
@@ -26,6 +27,7 @@
 
     .table.table-bordered {
       border: 0;
+      margin: 0;
 
       thead tr th {
         color: $grey-03;

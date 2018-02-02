@@ -16,6 +16,7 @@
 
 @import "../../ExperimentsVariables.scss";
 @import "../../../../styles/variables.scss";
+@import "../../../../styles/mixins.scss";
 
 .experiment-models-table {
   padding: $padding-top-bottom $padding-left-right;
@@ -34,60 +35,52 @@
       margin: 0;
     }
   }
-  .sortable-sticky-grid {
-    height: calc(100% - 45px);
-    .table-scroll {
-      height: calc(100% - 25px);
-    }
-    a.grid-body-row-container {
-      text-decoration: none;
-      color: inherit;
-      &:hover {
-        text-decoration: none;
-      }
-    }
-    .grid-body-row-container {
-      width: 100%;
-      &.opened {
-        border-top: 3px solid $grey-04;
-        border-bottom: 3px solid $grey-04;
-      }
-    }
-    .grid-header {
-      .grid-header-item {
-        padding: 0;
-      }
-    }
-    .grid-body-row {
-      cursor: pointer;
-      &.opened {
-        background-color: $grey-08;
-        border: 0;
-      }
-      .grid-body-item {
-        padding: 0.7rem 0 0.7rem 0;
-        [class*="icon-caret-"] {
-          font-size: 1.2rem; // FIXME: We should have this as a variable and should be standard in variables.scss
-        }
-        .algorithm-cell {
-          > span {
-            margin-left: 3px;
+
+  @include grid();
+
+  .grid.grid-container {
+    max-height: calc(100% - 32px);
+    .grid-header,
+    .grid-body {
+      .grid-item {
+        grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+        &.opened {
+          grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+          background: $grey-08;
+          border-bottom: 3px solid $grey-04;
+          border-top: 0;
+          align-items: start;
+          div {
+            word-break: break-word;
           }
         }
-      }
-      &:not(.opened):hover {
-        background-color: $grey-08;
+        &.active {
+          border-bottom: 0;
+          border-top: 2px solid $grey-04; // ALERT: HACK - 1px from the row on top.
+          background: $grey-08;
+        }
+        &.highlight {
+          border-color: $green-02;
+        }
       }
     }
-    .grid-body-row-details {
-      display: flex;
-      word-break: break-word;
-      background-color: $grey-08;
-      padding: 0 0 10px 0;
-      > div {
-        padding: 0 10px 0 0;
-        > div {
-          margin-top: 10px;
+    .grid-body {
+      .algorithm-cell,
+      > div > span {
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+    &.classification {
+      .grid-header,
+      .grid-body {
+        .grid-item {
+          grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 20px;
+        }
+        &.opened {
+          grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 20px;
         }
       }
     }

@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import {Modal} from 'reactstrap';
 require('./Alert.scss');
+const SUCCESS_CLOSE_TIMEOUT = 3000;
 
 export default class Alert extends Component {
   constructor(props) {
@@ -29,6 +30,7 @@ export default class Alert extends Component {
       type: props.type
     };
   }
+  successTimeout = null;
   componentWillReceiveProps(nextProps) {
     let {showAlert, type, message} = nextProps;
     if (
@@ -41,6 +43,10 @@ export default class Alert extends Component {
         type,
         message
       });
+    }
+    if (type === 'success') {
+      clearTimeout(this.successTimeout);
+      this.successTimeout = setTimeout(this.onClose, SUCCESS_CLOSE_TIMEOUT);
     }
   }
   onClose = () => {

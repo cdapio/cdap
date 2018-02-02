@@ -42,7 +42,7 @@ export const DEFAULT_EXPERIMENT_DETAILS = {
   algorithms: {},
   statuses: {},
   models: [],
-  newlyTrainingModel: false,
+  newlyTrainingModel: null,
   modelsOffset: 0,
   modelsLimit: 10,
   modelsTotalCount: 0,
@@ -83,7 +83,7 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
     case ACTIONS.RESET_NEWLY_TRAINING_MODEL:
       return {
         ...state,
-        newlyTrainingModel: false
+        newlyTrainingModel: null
       };
     case ACTIONS.SET_MODELS: {
       let {models} = action.payload;
