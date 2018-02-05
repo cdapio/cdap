@@ -164,24 +164,52 @@ public class ReportReadRequest {
     return numRecordsOut;
   }
 
+  /**
+   * Allowed values in a field to be included in the report.
+   *
+   * @param <T> type of the values
+   */
   public static class Filter<T> {
     private final List<T> value;
 
     public Filter(List<T> value) {
       this.value = value;
     }
+
+    public List<T> getValue() {
+      return value;
+    }
   }
 
+  /**
+   * A class represents the allowed range of values in a field to be included in the report and
+   * the order of sorting by this field.
+   *
+   * @param <T> type of the values
+   */
   public static class Sortable<T> {
     private final Range<T> range;
     private final SortBy sortBy;
 
-    public Sortable(Range<T> range, SortBy sortBy) {
+    public Sortable(@Nullable Range<T> range, @Nullable SortBy sortBy) {
       this.range = range;
       this.sortBy = sortBy;
     }
+
+    public Range<T> getRange() {
+      return range;
+    }
+
+    public SortBy getSortBy() {
+      return sortBy;
+    }
   }
 
+  /**
+   * Allowed range of values in a field to be included in the report and the order sorting.
+   *
+   * @param <T>
+   */
   public static class Range<T> {
     private final T min;
     private final T max;
@@ -190,8 +218,19 @@ public class ReportReadRequest {
       this.min = min;
       this.max = max;
     }
+
+    public T getMin() {
+      return min;
+    }
+
+    public T getMax() {
+      return max;
+    }
   }
 
+  /**
+   * The order to sort a field by.
+   */
   public enum SortBy {
     ASCENDING,
     DESCENDING

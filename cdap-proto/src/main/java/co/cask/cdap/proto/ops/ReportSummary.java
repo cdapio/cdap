@@ -108,6 +108,9 @@ public class ReportSummary {
     return startedByProgramTrigger;
   }
 
+  /**
+   * The user who starts the program run.
+   */
   public static class ProgramRunOwner {
     private final String user;
     private final int runs;

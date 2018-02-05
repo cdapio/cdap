@@ -54,6 +54,9 @@ public class ExistingDashboardSummaryRecord extends DashboardSummaryRecord {
     return clusterCoreUsage;
   }
 
+  /**
+   * A summary of the existing program runs in a namespace.
+   */
   public static class ExistingNamespaceSummary extends NamespaceSummary {
     private final int running;
     private final int successful;

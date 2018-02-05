@@ -38,6 +38,9 @@ public class DashboardSummaryRecord {
     return namespaceSummaries;
   }
 
+  /**
+   * A summary of the program runs in a namespace.
+   */
   public static class NamespaceSummary {
     private final String namespace;
     private final int scheduled;
