@@ -17,6 +17,7 @@
 import {defaultAction, composeEnhancers} from 'services/helpers';
 import {createStore} from 'redux';
 import range from 'lodash/range';
+import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 
 const INTERVAL_OPTIONS = {
   '5MIN': 'Every 5 min',
@@ -62,7 +63,7 @@ const ACTIONS = {
 };
 
 const DEFAULT_SCHEDULE_OPTIONS = {
-  cron: '0 * * * *',
+  cron: HYDRATOR_DEFAULT_VALUES.schedule,
   intervalOption: INTERVAL_OPTIONS.DAILY,
   minInterval: 5,
   hourInterval: HOUR_OPTIONS_CLOCK[0],

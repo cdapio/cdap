@@ -24,14 +24,4 @@ angular.module(PKG.name + '.feature.hydrator', [
 
     binary: '{"type":"record","name":"etlSchemaBody","fields":[{"name":"body","type":"bytes"}]}'
   })
-  .constant('HYDRATOR_DEFAULT_VALUES', {
-    instance: 1,
-    batchInterval: '10s',
-    schedule: '0 * * * *',
-    resources: {
-      virtualCores: 1,
-      memoryMB: 1024
-    },
-    numOfRecordsPreview: 100,
-    previewTimeoutInMin: 1
-  });
+  .constant('HYDRATOR_DEFAULT_VALUES', window.CaskCommon.HYDRATOR_DEFAULT_VALUES);

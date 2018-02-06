@@ -15,10 +15,18 @@
 */
 
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
+import PipelineConfigurations from 'components/PipelineConfigurations';
 
 export default class ConfigureButton extends Component {
+  static propTypes = {
+    isBatch: PropTypes.bool,
+    pipelineName: PropTypes.string,
+    config: PropTypes.object
+  };
+
   state = {
     showModeless: false
   };
@@ -27,7 +35,7 @@ export default class ConfigureButton extends Component {
     this.setState({
       showModeless: !this.state.showModeless
     });
-  }
+  };
 
   renderConfigureButton() {
     return (
@@ -50,6 +58,18 @@ export default class ConfigureButton extends Component {
     return (
       <div className="pipeline-configure">
         {this.renderConfigureButton()}
+        {
+          this.state.showModeless ?
+            <PipelineConfigurations
+              onClose={this.toggleModeless}
+              isDetailView={true}
+              isBatch={this.props.isBatch}
+              pipelineName={this.props.pipelineName}
+              config={this.props.config}
+            />
+          :
+            null
+        }
       </div>
     );
   }

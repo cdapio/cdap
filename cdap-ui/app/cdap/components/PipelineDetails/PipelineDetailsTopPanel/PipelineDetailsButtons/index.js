@@ -15,14 +15,40 @@
 */
 
 import React from 'react';
+import {Provider, connect} from 'react-redux';
+import PipelineDetailStore from 'components/PipelineDetails/store';
+import {GLOBALS} from 'services/global-constants';
 import ScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ScheduleButton';
 import ConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ConfigureButton';
 
+const mapStateToScheduleButton = (state) => {
+  return {
+    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
+    schedule: state.config.schedule,
+    maxConcurrentRuns: state.config.maxConcurrentRuns,
+    pipelineName: state.name,
+    scheduleStatus: state.scheduleStatus
+  };
+};
+
+const mapStateToConfigureButton = (state) => {
+  return {
+    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
+    pipelineName: state.name,
+    config: state.config
+  };
+};
+
+const ConnectedScheduleButton = connect(mapStateToScheduleButton, null)(ScheduleButton);
+const ConnectedConfigureButton = connect(mapStateToConfigureButton, null)(ConfigureButton);
+
 export default function PipelineDetailsButtons() {
   return (
-    <div className="pipeline-details-buttons">
-      <ScheduleButton />
-      <ConfigureButton />
-    </div>
+    <Provider store={PipelineDetailStore}>
+      <div className="pipeline-details-buttons">
+        <ConnectedScheduleButton />
+        <ConnectedConfigureButton />
+      </div>
+    </Provider>
   );
 }

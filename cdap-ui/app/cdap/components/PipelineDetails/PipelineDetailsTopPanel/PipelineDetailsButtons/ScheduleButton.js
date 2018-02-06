@@ -15,8 +15,8 @@
 */
 
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {MyPipelineApi} from 'api/pipeline';
-import PipelineDetailStore from 'components/PipelineDetails/store';
 import {fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
 import PipelineScheduler from 'components/PipelineScheduler';
 import classnames from 'classnames';
@@ -27,26 +27,28 @@ import {GLOBALS} from 'services/global-constants';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 
 export default class ScheduleButton extends Component {
+  static propTypes = {
+    isBatch: PropTypes.bool,
+    schedule: PropTypes.string,
+    maxConcurrentRuns: PropTypes.number,
+    pipelineName: PropTypes.string,
+    scheduleStatus: PropTypes.string
+  }
+
   state = {
     showScheduler: false,
-    scheduleStatus: '',
+    scheduleStatus: this.props.scheduleStatus,
     scheduleLoading: true,
     scheduleError: null
   };
 
-  detailStoreSubscription = PipelineDetailStore.subscribe(() => {
-    let scheduleStatus = StatusMapper.lookupDisplayStatus(PipelineDetailStore.getState().scheduleStatus);
+  componentWillReceiveProps(nextProps) {
+    let scheduleStatus = StatusMapper.lookupDisplayStatus(nextProps.scheduleStatus);
     if (scheduleStatus !== this.state.scheduleStatus) {
       this.setState({
         scheduleStatus,
         scheduleLoading: false
       });
-    }
-  });
-
-  componentWillUnmount() {
-    if (this.detailStoreSubscription) {
-      this.detailStoreSubscription();
     }
   }
 
@@ -62,7 +64,7 @@ export default class ScheduleButton extends Component {
     });
     let params = {
       namespace: getCurrentNamespace(),
-      appId: PipelineDetailStore.getState().name,
+      appId: this.props.pipelineName,
       scheduleId: GLOBALS.defaultScheduleId
     };
     scheduleApi(params)
@@ -157,8 +159,7 @@ export default class ScheduleButton extends Component {
   }
 
   render() {
-    let storeState = PipelineDetailStore.getState();
-    if (storeState.artifact.name !== GLOBALS.etlDataPipeline) {
+    if (!this.props.isBatch) {
       return null;
     }
 
@@ -169,11 +170,11 @@ export default class ScheduleButton extends Component {
         {
           this.state.showScheduler ?
             <PipelineScheduler
-              schedule={storeState.config.schedule}
-              maxConcurrentRuns={storeState.config.maxConcurrentRuns}
+              schedule={this.props.schedule}
+              maxConcurrentRuns={this.props.maxConcurrentRuns}
               onClose={this.toggleScheduler}
               isDetailView={true}
-              pipelineName={storeState.name}
+              pipelineName={this.props.pipelineName}
               scheduleStatus={this.state.scheduleStatus}
               schedulePipeline={this.scheduleOrSuspend.bind(this, MyPipelineApi.schedule)}
               suspendSchedule={this.scheduleOrSuspend.bind(this, MyPipelineApi.suspend)}

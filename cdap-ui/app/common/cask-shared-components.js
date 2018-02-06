@@ -42,6 +42,7 @@ var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSideb
 var TriggeredPipelineStore = require('../cdap/components/TriggeredPipelines/store/TriggeredPipelineStore').default;
 var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
 var GLOBALS = require('../cdap/services/global-constants').GLOBALS;
+var HYDRATOR_DEFAULT_VALUES = require('../cdap/services/global-constants').HYDRATOR_DEFAULT_VALUES;
 var StatusMapper = require('../cdap/services/StatusMapper').default;
 var PipelineDetailStore = require('../cdap/components/PipelineDetails/store').default;
 var PipelineDetailActionCreator = require('../cdap/components/PipelineDetails/store/ActionCreator');
@@ -75,6 +76,7 @@ export {
   TriggeredPipelineStore,
   PipelineErrorFactory,
   GLOBALS,
+  HYDRATOR_DEFAULT_VALUES,
   StatusMapper,
   PipelineDetailStore,
   PipelineDetailActionCreator,

@@ -106,12 +106,17 @@ $pipeline-type-icon-size: 20px;
       display: inline-block;
     }
 
+    .pipeline-scheduler-btn,
+    .pipeline-configure-btn {
+      .icon-svg {
+        height: 21px;
+        width: 21px;
+      }
+    }
+
     .pipeline-scheduler {
       .pipeline-scheduler-btn {
         .icon-runtimestarttime {
-          height: 21px;
-          width: 21px;
-
           &.unschedule-icon {
             color: $brand-primary;
           }

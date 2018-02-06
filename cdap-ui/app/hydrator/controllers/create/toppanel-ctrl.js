@@ -600,11 +600,11 @@ class HydratorPlusPlusTopPanelCtrl {
         this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
         this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
         this.startPollPreviewStatus(res.application);
-      }, (err) => {
+      }, () => {
         this.previewLoading = false;
         this.myAlertOnValium.show({
           type: 'danger',
-          content: err.data
+          content: ''
         });
       });
   }
