@@ -206,8 +206,27 @@ const GLOBALS = {
     }
   }
 };
+const HYDRATOR_DEFAULT_VALUES = {
+  instance: 1,
+  batchInterval: '10s',
+  schedule: '0 * * * *',
+  resources: {
+    virtualCores: 1,
+    memoryMB: 1024
+  },
+  numOfRecordsPreview: 100,
+  previewTimeoutInMin: 2,
+  engine: 'mapreduce',
+  processTimingEnabled: true,
+  stageLoggingEnabled: true,
+  disableCheckpoints: false,
+  stopGracefully: true,
+  backpressure: true,
+  numExecutors: 1
+};
 
 export {
   NUMBER_TYPES,
-  GLOBALS
+  GLOBALS,
+  HYDRATOR_DEFAULT_VALUES
 };
