@@ -63,6 +63,10 @@ const BATCH_INTERVAL_UNITS = [
 ];
 
 const NUM_EXECUTORS_OPTIONS = range(1, 11);
+const ENGINE_OPTIONS = {
+  MAPREDUCE: 'mapreduce',
+  SPARK: 'spark'
+};
 
 const DEFAULT_CONFIGURE_OPTIONS = {
   runtimeArgs: [],
@@ -110,6 +114,10 @@ const getCustomConfigForDisplay = (properties, engine) => {
     }
   }
   return customConfigForDisplay;
+};
+
+const getEngineDisplayLabel = (engine, isBatch) => {
+  return engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ? 'MapReduce' : 'Apache Spark Streaming';
 };
 
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
@@ -273,5 +281,7 @@ export {
   BATCH_INTERVAL_RANGE,
   BATCH_INTERVAL_UNITS,
   NUM_EXECUTORS_OPTIONS,
-  getCustomConfigForDisplay
+  ENGINE_OPTIONS,
+  getCustomConfigForDisplay,
+  getEngineDisplayLabel
 };

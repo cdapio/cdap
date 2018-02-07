@@ -23,14 +23,10 @@ import ToggleSwitch from 'components/ToggleSwitch';
 import SelectWithOptions from 'components/SelectWithOptions';
 import KeyValuePairs from 'components/KeyValuePairs';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
-import {NUM_EXECUTORS_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {getEngineDisplayLabel, NUM_EXECUTORS_OPTIONS, ENGINE_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
-
-const getEngineDisplayLabel = (engine) => {
-  return engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark Streaming';
-};
 
 const mapStateToEngineInputProps = (state, ownProps) => {
   return {
@@ -322,11 +318,11 @@ export default class EngineConfig extends Component {
     return (
       <div className="engine-config-radio">
         <label className="radio-inline radio-spark">
-          <EngineRadioInput value="spark" />
+          <EngineRadioInput value={ENGINE_OPTIONS.SPARK} />
           Spark
         </label>
         <label className="radio-inline radio-mapReduce">
-          <EngineRadioInput value="mapreduce" />
+          <EngineRadioInput value={ENGINE_OPTIONS.MAPREDUCE} />
           MapReduce
         </label>
       </div>

@@ -308,13 +308,8 @@ body.theme-cdap {
 
             &.resources {
               .client,
-              .driver,
-              .executor {
-                padding-left: 0;
-              }
-
-              .client,
               .driver {
+                padding-left: 0;
                 border-right: 1px solid $input-label-color;
               }
 
@@ -329,7 +324,7 @@ body.theme-cdap {
                   margin-top: 15px;
 
                   .small-dropdown,
-                  my-number-widget input {
+                  input.memoryMB-input {
                     width: 60px;
                     padding-right: 0;
                     padding-left: 5px;
@@ -377,6 +372,27 @@ body.theme-cdap {
               .num-runtime-args {
                 color: $input-label-color;
                 margin-left: auto;
+              }
+            }
+          }
+
+          &.configuration-content-batch {
+            .configuration-step-content {
+              &.preview-config {
+                .num-records-preview {
+                  my-number-widget {
+                    margin-left: 10px;
+                    width: 80px;
+                  }
+                }
+              }
+              &.resources {
+                .executor {
+                  padding-left: 50px;
+                }
+              }
+              &.alerts {
+                top: 0;
               }
             }
           }
