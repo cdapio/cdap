@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
 import PipelineConfig from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfig';
 import EngineConfig from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfig';
+import classnames from 'classnames';
 
 export default function ConfigurationsContent({isBatch, activeTab, isDetailView}) {
   let ContentToShow;
@@ -30,7 +31,7 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
       ContentToShow = EngineConfig;
   }
   return (
-    <div className="configuration-content">
+    <div className={classnames("configuration-content", {"configuration-content-realtime": !isBatch})}>
       <ContentToShow
         isBatch={isBatch}
         isDetailView={isDetailView}

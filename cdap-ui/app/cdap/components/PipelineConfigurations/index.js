@@ -68,6 +68,12 @@ export default class PipelineConfigurations extends Component {
     });
   }
 
+  componentWillUnmount() {
+    if (this.documentClick$) {
+      this.documentClick$.unsubscribe();
+    }
+  }
+
   setActiveTab = (tab) => {
     this.setState({
       activeTab: tab

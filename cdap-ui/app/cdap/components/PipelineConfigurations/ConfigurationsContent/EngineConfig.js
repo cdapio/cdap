@@ -14,15 +14,23 @@
  * the License.
 */
 
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Input } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import SelectWithOptions from 'components/SelectWithOptions';
+import KeyValuePairs from 'components/KeyValuePairs';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {NUM_EXECUTORS_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.EngineConfig';
+
+const getEngineDisplayLabel = (engine) => {
+  return engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark Streaming';
+};
 
 const mapStateToEngineInputProps = (state, ownProps) => {
   return {
@@ -47,21 +55,6 @@ const EngineRadioInput = connect(
   mapStateToEngineInputProps,
   mapDispatchToEngineInputProps
 )(Input);
-
-const renderBatchEngineConfig = () => {
-  return (
-    <div className="engine-config-radio">
-      <label className="radio-inline radio-spark">
-        <EngineRadioInput value="spark" />
-        Spark
-      </label>
-      <label className="radio-inline radio-mapReduce">
-        <EngineRadioInput value="mapreduce" />
-        MapReduce
-      </label>
-    </div>
-  );
-};
 
 const mapStateToBackpressureProps = (state, ownProps) => {
   return {
@@ -172,37 +165,205 @@ const ConnectedNumExecutors = connect(
   mapDispatchToNumExecutorsProps
 )(NumExecutors);
 
-
-const renderRealtimeEngineConfig = (disabled) => {
-  return (
-    <div>
-      <ConnectedBackpressure disabled={disabled} />
-      <ConnectedNumExecutors />
-    </div>
-  );
+const mapStateToCustomConfigProps = (state, ownProps) => {
+  return {
+    isDetailView: ownProps.isDetailView,
+    showCustomConfig: ownProps.showCustomConfig,
+    toggleCustomConfig: ownProps.toggleCustomConfig,
+    engine: state.engine,
+    customConfigKeyValuePairs: state.customConfigKeyValuePairs
+  };
 };
 
-export default function EngineConfig({isBatch, isDetailView}) {
-  let pipelineTypeLabel = isBatch ? 'batch' : 'realtime';
+const mapStateToCustomConfigKeyValuesProps = (state) => {
+  return {
+    keyValues: state.customConfigKeyValuePairs
+  };
+};
 
-  return (
-    <div className="configuration-step-content configuration-content-container engine-config">
-      <fieldset disabled={isDetailView}>
-        <div className="step-content-heading">
-          {`Select the type of engine running your ${pipelineTypeLabel} pipeline`}
-        </div>
+const mapDispatchToCustomConfigKeyValuesProps = (dispatch) => {
+  return {
+    onKeyValueChange: (keyValues) => {
+      dispatch({
+        type: PipelineConfigurationsActions.SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS,
+        payload: { keyValues }
+      });
+    }
+  };
+};
+
+const ConnectedCustomConfigKeyValuePairs = connect(
+  mapStateToCustomConfigKeyValuesProps,
+  mapDispatchToCustomConfigKeyValuesProps
+)(KeyValuePairs);
+
+const CustomConfig = ({isDetailView, showCustomConfig, toggleCustomConfig, engine, customConfigKeyValuePairs}) => {
+  const StudioViewCustomConfigLabel = () => {
+    return (
+      <span>
+        <a
+          className="add-custom-config-label"
+          onClick={toggleCustomConfig}
+        >
+          <IconSVG name={showCustomConfig ? "icon-caret-down" : "icon-caret-right"} />
+          Show Custom Config
+        </a>
+        <IconSVG
+          name="icon-info-circle"
+          id="custom-config-info-icon"
+        />
+        <UncontrolledTooltip
+          target="custom-config-info-icon"
+          delay={{show: 250, hide: 0}}
+          placement="right"
+        >
+          {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
+        </UncontrolledTooltip>
         {
-          isBatch ?
-            renderBatchEngineConfig()
+          showCustomConfig ?
+            (
+              <span>
+                <span className="float-xs-right num-rows">
+                  {`${customConfigKeyValuePairs.pairs.length}`}
+                  {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
+                </span>
+                <hr />
+              </span>
+            )
           :
-            renderRealtimeEngineConfig(isDetailView)
+            null
         }
-      </fieldset>
+      </span>
+    );
+  };
+
+  const DetailViewCustomConfigLabel = () => {
+    return (
+      <span>
+        <hr />
+        <label>Custom Config</label>
+        <IconSVG
+          name="icon-info-circle"
+          id="custom-config-info-icon"
+        />
+        <UncontrolledTooltip
+          target="custom-config-info-icon"
+          delay={{show: 250, hide: 0}}
+          placement="right"
+        >
+          {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
+        </UncontrolledTooltip>
+        <span className="float-xs-right num-rows">
+          {`${customConfigKeyValuePairs.pairs.length} `}
+          {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
+        </span>
+      </span>
+    );
+  };
+
+  return (
+    <div className="add-custom-config">
+      {
+        isDetailView ?
+          <DetailViewCustomConfigLabel />
+        :
+          <StudioViewCustomConfigLabel />
+      }
+      {
+        isDetailView || showCustomConfig ?
+          (
+            <div>
+              <div className="custom-config-labels key-value-pair-labels">
+                <span className="key-label">Name</span>
+                <span className="value-label">Value</span>
+              </div>
+              <div className="custom-config-values key-value-pair-values">
+                <ConnectedCustomConfigKeyValuePairs />
+              </div>
+            </div>
+          )
+        :
+          null
+      }
     </div>
   );
-}
-
-EngineConfig.propTypes = {
-  isBatch: PropTypes.bool,
-  isDetailView: PropTypes.bool
 };
+
+CustomConfig.propTypes = {
+  isDetailView: PropTypes.bool,
+  showCustomConfig: PropTypes.bool,
+  toggleCustomConfig: PropTypes.func,
+  engine: PropTypes.string,
+  customConfigKeyValuePairs: PropTypes.object
+};
+
+const ConnectedCustomConfig = connect(
+  mapStateToCustomConfigProps,
+  null
+)(CustomConfig);
+
+export default class EngineConfig extends Component {
+  static propTypes = {
+    isBatch: PropTypes.bool,
+    isDetailView: PropTypes.bool
+  };
+
+  state = {
+    showCustomConfig: false
+  };
+
+  toggleCustomConfig = () => {
+    this.setState({
+      showCustomConfig: !this.state.showCustomConfig
+    });
+  };
+
+  renderBatchEngineConfig() {
+    return (
+      <div className="engine-config-radio">
+        <label className="radio-inline radio-spark">
+          <EngineRadioInput value="spark" />
+          Spark
+        </label>
+        <label className="radio-inline radio-mapReduce">
+          <EngineRadioInput value="mapreduce" />
+          MapReduce
+        </label>
+      </div>
+    );
+  }
+
+  renderRealtimeEngineConfig(disabled) {
+    return (
+      <div>
+        <ConnectedBackpressure disabled={disabled} />
+        <ConnectedNumExecutors />
+      </div>
+    );
+  }
+
+  render() {
+    let pipelineTypeLabel = this.props.isBatch ? 'batch' : 'realtime';
+
+    return (
+      <div className="configuration-step-content configuration-content-container engine-config">
+        <fieldset disabled={this.props.isDetailView}>
+          <div className="step-content-heading">
+            {`Select the type of engine running your ${pipelineTypeLabel} pipeline`}
+          </div>
+          {
+            this.props.isBatch ?
+              this.renderBatchEngineConfig()
+            :
+              this.renderRealtimeEngineConfig(this.props.isDetailView)
+          }
+        </fieldset>
+        <ConnectedCustomConfig
+          isDetailView={this.props.isDetailView}
+          showCustomConfig={this.state.showCustomConfig}
+          toggleCustomConfig={this.toggleCustomConfig}
+        />
+      </div>
+    );
+  }
+}

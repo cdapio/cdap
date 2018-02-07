@@ -18,6 +18,7 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 import {createStore} from 'redux';
 import {GLOBALS, HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
+import {convertMapToKeyValuePairsObj} from 'services/helpers';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
@@ -32,6 +33,7 @@ const ACTIONS = {
   SET_CLIENT_VIRTUAL_CORES: 'SET_CLIENT_VIRTUAL_CORES',
   SET_BACKPRESSURE: 'SET_BACKPRESSURE',
   SET_CUSTOM_CONFIG: 'SET_CUSTOM_CONFIG',
+  SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS: 'SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS',
   SET_NUM_EXECUTORS: 'SET_NUM_EXECUTORS',
   SET_INSTRUMENTATION: 'SET_INSTRUMENTATION',
   SET_STAGE_LOGGING: 'SET_STAGE_LOGGING',
@@ -64,7 +66,7 @@ const NUM_EXECUTORS_OPTIONS = range(1, 11);
 
 const DEFAULT_CONFIGURE_OPTIONS = {
   runtimeArgs: [],
-  customConfig: [],
+  customConfigKeyValuePairs: {},
   postRunActions: [],
   properties: {},
   engine: HYDRATOR_DEFAULT_VALUES.engine,
@@ -93,12 +95,30 @@ const getCustomConfigFromProperties = (properties) => {
   return customConfig;
 };
 
+const getCustomConfigForDisplay = (properties, engine) => {
+  let currentCustomConfig = getCustomConfigFromProperties(properties);
+  let customConfigForDisplay = {};
+  for (let key in currentCustomConfig) {
+    if (currentCustomConfig.hasOwnProperty(key)) {
+      let newKey = key;
+      if (engine === 'mapreduce' && key.startsWith('system.mapreduce.')) {
+        newKey = newKey.slice(17);
+      } else if (key.startsWith('system.spark.')) {
+        newKey = newKey.slice(13);
+      }
+      customConfigForDisplay[newKey] = currentCustomConfig[key];
+    }
+  }
+  return customConfigForDisplay;
+};
+
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.INITIALIZE_CONFIG:
       return {
         ...state,
-        ...action.payload
+        ...action.payload,
+        customConfigKeyValuePairs: convertMapToKeyValuePairsObj(getCustomConfigForDisplay(action.payload.properties, action.payload.engine))
       };
     case ACTIONS.SET_ENGINE:
       return {
@@ -171,6 +191,11 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
           'system.spark.spark.streaming.backpressure.enabled': action.payload.backpressure
         }
       };
+    case ACTIONS.SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS:
+      return {
+        ...state,
+        customConfigKeyValuePairs: action.payload.keyValues
+      };
     case ACTIONS.SET_CUSTOM_CONFIG: {
       // Need to remove previous custom configs from config.properties before setting new ones
       let currentProperties = {...state.properties};
@@ -195,12 +220,9 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
 
       return {
         ...state,
-        config: {
-          ...state,
-          properties: {
-            ...currentProperties,
-            ...newCustomConfigs
-          }
+        properties: {
+          ...currentProperties,
+          ...newCustomConfigs
         }
       };
     }
@@ -250,5 +272,6 @@ export {
   TAB_OPTIONS,
   BATCH_INTERVAL_RANGE,
   BATCH_INTERVAL_UNITS,
-  NUM_EXECUTORS_OPTIONS
+  NUM_EXECUTORS_OPTIONS,
+  getCustomConfigForDisplay
 };

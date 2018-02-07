@@ -21,6 +21,7 @@ import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import {compose} from 'redux';
+import uuid from 'uuid/v4';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -282,6 +283,38 @@ const composeEnhancers = (storeTitle) =>
       name: storeTitle
     }) : compose;
 
+const convertMapToKeyValuePairsObj = (obj) => {
+  let keyValuePairsObj = {};
+  keyValuePairsObj.pairs = Object.keys(obj).map(objKey => {
+    return {
+      key: objKey,
+      value: obj[objKey],
+      uniqueId: 'id-' + uuid()
+    };
+  });
+  if (!keyValuePairsObj.pairs.length) {
+    keyValuePairsObj.pairs.push({
+      key: '',
+      value: '',
+      uniqueId: 'id-' + uuid()
+    });
+  }
+  return keyValuePairsObj;
+};
+
+const convertKeyValuePairsObjToMap = (keyValues) => {
+  let map = {};
+  if (keyValues.pairs) {
+    keyValues.pairs.forEach((currentPair) => {
+      if (currentPair.key.length > 0 && currentPair.value.length > 0) {
+        let key = currentPair.key;
+        map[key] = currentPair.value;
+      }
+    });
+  }
+  return map;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -303,5 +336,7 @@ export {
   isBatchPipeline,
   composeEnhancers,
   isNumeric,
-  wholeArrayIsNumeric
+  wholeArrayIsNumeric,
+  convertMapToKeyValuePairsObj,
+  convertKeyValuePairsObjToMap
 };
