@@ -100,6 +100,7 @@ public class HBaseVersionTest {
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.11.0");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.12.0");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.13.0");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.14.0");
 
     // bigtop 1.1.0
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_98, "0.98.12-hadoop2");
