@@ -16,9 +16,10 @@
 
 @import '../../../styles/variables.scss';
 $pipeline-type-icon-size: 20px;
+$top-panel-height: 55px;
 
 .pipeline-details-top-panel {
-  height: 55px;
+  height: $top-panel-height;
   background-color: white;
   border-bottom: 1px solid $grey-06;
   z-index: 999;
@@ -101,13 +102,40 @@ $pipeline-type-icon-size: 20px;
   }
 
   .pipeline-details-buttons {
-    .pipeline-scheduler-btn {
-      .icon-runtimestarttime {
+    .pipeline-scheduler,
+    .pipeline-configure {
+      display: inline-block;
+      height: $top-panel-height;
+    }
+
+    .pipeline-scheduler-btn,
+    .pipeline-configure-btn {
+      height: 100%;
+
+      .icon-svg {
         height: 21px;
         width: 21px;
+      }
 
-        &.unschedule-icon {
-          color: $brand-primary;
+      &.btn-select {
+        background-color: $grey-08;
+      }
+    }
+
+    .pipeline-scheduler {
+      .pipeline-scheduler-btn {
+        .icon-runtimestarttime {
+          &.unschedule-icon {
+            color: $brand-primary;
+          }
+        }
+      }
+    }
+
+    .pipeline-configure {
+      .pipeline-configure-btn {
+        .icon-sliders {
+          transform: rotate(90deg);
         }
       }
     }

@@ -14,9 +14,21 @@
  * the License.
 */
 
+/*
+  This store represents the state of the Pipeline Schedule modeless.
+
+  In Studio view, all the configs will have default values, while in Detail view
+  this store is initialized using values from the pipeline json/PipelineDetailStore
+
+  When the user makes a change inside the modeless and clicks Save, then we dispatch
+  an action in PipelineScheduler component to save the new configs to config-store.js
+  (in Studio view) or to PipelineDetailStore (in Detail view)
+*/
+
 import {defaultAction, composeEnhancers} from 'services/helpers';
 import {createStore} from 'redux';
 import range from 'lodash/range';
+import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 
 const INTERVAL_OPTIONS = {
   '5MIN': 'Every 5 min',
@@ -62,7 +74,7 @@ const ACTIONS = {
 };
 
 const DEFAULT_SCHEDULE_OPTIONS = {
-  cron: '0 * * * *',
+  cron: HYDRATOR_DEFAULT_VALUES.schedule,
   intervalOption: INTERVAL_OPTIONS.DAILY,
   minInterval: 5,
   hourInterval: HOUR_OPTIONS_CLOCK[0],
