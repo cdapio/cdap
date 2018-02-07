@@ -57,6 +57,7 @@ import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
@@ -494,7 +495,8 @@ public class StandaloneMain {
       new PreviewHttpModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
-      new OperationalStatsModule()
+      new OperationalStatsModule(),
+      new ProvisionerModule()
     );
   }
 }

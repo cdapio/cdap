@@ -175,6 +175,14 @@
     </description>
   </property>
 
+  <property>
+    <name>runtime.extensions.dir</name>
+    <value>ext/runtimeproviders</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master that
+      are scanned for program runtime extensions
+    </description>
+  </property>
 
   <!-- Tephra Configuration -->
   <property>

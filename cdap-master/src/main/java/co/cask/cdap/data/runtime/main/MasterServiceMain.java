@@ -60,6 +60,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.master.startup.ServiceResourceKeys;
@@ -575,7 +576,8 @@ public class MasterServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
-      new OperationalStatsModule()
+      new OperationalStatsModule(),
+      new ProvisionerModule()
     );
   }
 
@@ -624,7 +626,6 @@ public class MasterServiceMain extends DaemonMain {
       authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
       services.add(getAndStart(injector, KafkaClientService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
-
       services.add(getAndStart(injector, OperationalStatsService.class));
       ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);

@@ -420,6 +420,13 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <!-- Add dependencies on runtime provider extensions to make sure they are built before standalone -->
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-runtime-ext-yarn</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -605,6 +612,14 @@
                       <targetPath>ext/operations/core</targetPath>
                       <includes>
                         <include>*.sdk.jar</include>
+                      </includes>
+                    </resource>
+                    <!-- copy runtime provider extensions -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-runtime-ext-yarn/target</directory>
+                      <targetPath>ext/runtimeproviders/yarn</targetPath>
+                      <includes>
+                        <include>co.cask.cdap.cdap-runtime-ext-yarn-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
