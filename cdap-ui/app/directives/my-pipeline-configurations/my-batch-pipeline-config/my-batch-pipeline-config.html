@@ -14,36 +14,36 @@
   the License.
 -->
 
-<div class="pipeline-configurations-content">
-  <div class="pipeline-configurations-header">
-    <h3 class="modeless-title">
+<div class="pipeline-configurations-content modeless-container">
+  <div class="pipeline-configurations-header modeless-header">
+    <div class="modeless-title">
       Configure
       <span ng-if="BatchPipelineConfigCtrl.pipelineName.length > 0">
         "{{BatchPipelineConfigCtrl.pipelineName}}"
       </span>
-    </h3>
+    </div>
     <div class="btn-group">
       <a class="btn" ng-click="BatchPipelineConfigCtrl.onClose()">
         <span class="fa fa-remove"></span>
       </a>
     </div>
   </div>
-  <div class="pipeline-configurations-body">
+  <div class="pipeline-configurations-body modeless-content">
     <div class="configurations-side-panel">
-      <div class="configurations-headers">
-        <div class="configuration-header"
+      <div class="configurations-tabs">
+        <div class="configuration-tab"
               ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'}"
               ng-click="BatchPipelineConfigCtrl.activeTab = 'runtimeArgs'"
               ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
           Runtime Arguments
         </div>
-        <div class="configuration-header"
+        <div class="configuration-tab"
               ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'previewConfig'}"
               ng-click="BatchPipelineConfigCtrl.activeTab = 'previewConfig'"
               ng-if="!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showPreviewConfig">
           Preview Config
         </div>
-        <div class="configuration-header toggle-advanced-options"
+        <div class="configuration-tab toggle-advanced-options"
               ng-click="BatchPipelineConfigCtrl.showAdvanced = !BatchPipelineConfigCtrl.showAdvanced"
               ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
           <span class="fa"
@@ -53,22 +53,22 @@
         </div>
         <div class="advanced-options"
               ng-show="BatchPipelineConfigCtrl.showAdvanced || !BatchPipelineConfigCtrl.isDeployed && !BatchPipelineConfigCtrl.showPreviewConfig">
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'pipelineConfig'}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'pipelineConfig'">
             Pipeline Config
           </div>
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'engineConfig'}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'engineConfig'">
             Engine Config
           </div>
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'resources', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'resources'">
             Resources
           </div>
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'alerts', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'alerts'">
             Alerts
@@ -77,8 +77,9 @@
       </div>
     </div>
 
-    <div class="configuration-content">
-      <div class="configuration-step-content configuration-content-container runtime-arguments"
+    <div class="configuration-content configuration-content-batch">
+      <div class="configuration-step-content configuration-content-container"
+            id="runtime-arguments-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <my-pipeline-runtime-args
           runtime-arguments="BatchPipelineConfigCtrl.runtimeArguments"
@@ -87,7 +88,8 @@
         </my-pipeline-runtime-args>
       </div>
 
-      <div class="configuration-step-content configuration-content-container preview-config"
+      <div class="configuration-step-content configuration-content-container"
+            id="preview-config-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'previewConfig'">
         <div class="step-content-heading">
           Set the number of records to preview
@@ -104,7 +106,8 @@
         </div>
       </div>
 
-      <div class="configuration-step-content pipeline-config"
+      <div class="configuration-step-content"
+            id="pipeline-config-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'pipelineConfig'">
         <div class="step-content-heading">
           Set configurations for this pipeline
@@ -136,7 +139,8 @@
           </div>
         </div>
       </div>
-      <div class="configuration-step-content resources"
+      <div class="configuration-step-content"
+            id="resources-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'resources'">
         <div class="step-content-heading">
           Specify the resources for the following processes of the {{ BatchPipelineConfigCtrl.engineForDisplay }} program
@@ -195,7 +199,8 @@
           </div>
         </div>
       </div>
-      <div class="configuration-step-content alerts"
+      <div class="configuration-step-content"
+            id="alerts-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'alerts'">
         <div class="step-content-heading">
           Set alerts for your batch pipeline
@@ -207,7 +212,8 @@
         </my-post-run-actions>
       </div>
 
-      <div class="configuration-step-content configuration-content-container engine-config"
+      <div class="configuration-step-content configuration-content-container"
+            id="engine-config-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
         <fieldset ng-disabled="BatchPipelineConfigCtrl.isDeployed">
           <div class="step-content-heading">

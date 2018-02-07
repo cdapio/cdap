@@ -175,8 +175,8 @@ export default class PipelineScheduler extends Component {
 
   renderHeader() {
     return (
-      <div className="pipeline-scheduler-header">
-        <h3 className="modeless-title">
+      <div className="pipeline-scheduler-header modeless-header">
+        <div className="modeless-title">
           Configure Schedule for Pipeline
           {
             this.props.pipelineName.length ?
@@ -184,7 +184,7 @@ export default class PipelineScheduler extends Component {
             :
               null
           }
-        </h3>
+        </div>
         <div className="btn-group">
           <a
             className="btn"
@@ -261,11 +261,11 @@ export default class PipelineScheduler extends Component {
     return (
       <Provider store={PipelineSchedulerStore}>
         <div
-          className="pipeline-scheduler-content"
+          className="pipeline-scheduler-content modeless-container"
           ref={(ref) => this.schedulerComponent = ref}
         >
           {this.renderHeader()}
-          <div className="pipeline-scheduler-body">
+          <div className="pipeline-scheduler-body modeless-content">
             <div className="schedule-content">
                 <fieldset disabled={this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULED']}>
                   <ViewSwitch />

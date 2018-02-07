@@ -106,6 +106,7 @@ $top-panel-height: 55px;
     .pipeline-configure {
       display: inline-block;
       height: $top-panel-height;
+      position: relative;
     }
 
     .pipeline-scheduler-btn,
