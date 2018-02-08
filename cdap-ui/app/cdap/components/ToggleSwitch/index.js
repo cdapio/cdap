@@ -19,9 +19,9 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 require('./ToggleSwitch.scss');
 
-export default function ToggleSwitch({isOn, onToggle, isDisabled}) {
+export default function ToggleSwitch({isOn, onToggle, disabled}) {
   return (
-    <div className={classnames("toggle-switch-container", {"disabled": isDisabled})}>
+    <div className={classnames("toggle-switch-container", {"disabled": disabled})}>
       <div
         className={classnames("toggle-switch", {"on": isOn, 'off': !isOn})}
         onClick={onToggle}
@@ -35,5 +35,5 @@ export default function ToggleSwitch({isOn, onToggle, isDisabled}) {
 ToggleSwitch.propTypes = {
   isOn: PropTypes.bool,
   onToggle: PropTypes.func,
-  isDisabled: PropTypes.bool
+  disabled: PropTypes.bool
 };

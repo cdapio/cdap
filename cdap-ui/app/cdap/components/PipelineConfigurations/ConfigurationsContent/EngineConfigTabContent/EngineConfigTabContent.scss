@@ -77,8 +77,14 @@ $input-label-color: $grey-03;
         }
       }
 
+      .numExecutors {
+        .fa.fa-info-circle {
+          margin-left: 5px;
+        }
+      }
+
       .add-custom-config {
-        margin-top: 15px;
+        margin-top: 5px;
 
         hr {
           margin-top: 9px;
