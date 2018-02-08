@@ -14,6 +14,10 @@
  * the License.
 */
 
+@import "../../../../styles/variables.scss";
+
+$input-label-color: $grey-03;
+
 .configuration-content {
   #resources-tab-content {
     .client,

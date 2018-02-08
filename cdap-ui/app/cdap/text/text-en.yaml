@@ -1360,6 +1360,11 @@ features:
     subtitleMessage2: View all your entities in the
   Pagination:
     dropdown-label: Page
+  PipelineConfigurations:
+    EngineConfig:
+      customConfigCount:
+        1: "custom config"
+        _: "custom configs"
   PipelineSummary:
     filterContainer:
       view: View

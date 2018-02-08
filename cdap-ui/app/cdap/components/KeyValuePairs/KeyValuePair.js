@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import React, { Component } from 'react';
 require('./KeyValuePairs.scss');
 import T from 'i18n-react';
 import classnames from 'classnames';
+import {preventPropagation} from 'services/helpers';
 
 class KeyValuePair extends Component {
   constructor(props) {
@@ -99,14 +100,14 @@ class KeyValuePair extends Component {
         <button
           type="submit"
           className="btn add-row-btn btn-link"
-          onClick={this.props.addRow}
+          onClick={(e) => {this.props.addRow(); preventPropagation(e);}}
         >
           <i className="fa fa-plus" />
         </button>
         <button
           type="submit"
           className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
-          onClick={this.props.removeRow}
+          onClick={(e) => {this.props.removeRow(); preventPropagation(e);}}
         >
           <i className="fa fa-trash" />
         </button>
