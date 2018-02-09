@@ -8291,9 +8291,9 @@ react-tether@0.5.6:
   dependencies:
     tether "^1.3.7"
 
-react-timeago@3.1.3:
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/react-timeago/-/react-timeago-3.1.3.tgz#8ebefed9757dd48eb0c64642ae4f94930b579d9f"
+react-timeago@3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/react-timeago/-/react-timeago-3.3.0.tgz#5aa2573c1b2df2bceda89dc25db4145939255fee"
 
 react-vis@1.7.9:
   version "1.7.9"
