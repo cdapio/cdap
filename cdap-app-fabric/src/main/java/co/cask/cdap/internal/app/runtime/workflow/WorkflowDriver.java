@@ -75,7 +75,6 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.http.NettyHttpService;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -89,8 +88,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +117,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private final Program program;
   private final ProgramOptions programOptions;
-  private final InetAddress hostname;
   private final WorkflowSpecification workflowSpec;
   private final CConfiguration cConf;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
@@ -143,12 +139,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
 
-  private NettyHttpService httpService;
   private volatile Thread runningThread;
   private boolean suspended;
   private Workflow workflow;
 
-  WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
+  WorkflowDriver(Program program, ProgramOptions options,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
@@ -158,7 +153,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  ProgramStateWriter programStateWriter) {
     this.program = program;
     this.programOptions = options;
-    this.hostname = hostname;
     this.workflowSpec = workflowSpec;
     this.cConf = cConf;
     this.lock = new ReentrantLock();
@@ -192,16 +186,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(loggingContext);
-
-    // Using small size thread pool is enough, as the API we supported are just simple lookup.
-    httpService = NettyHttpService.builder(workflowRunId.getProgram() + "-workflow-driver")
-      .setWorkerThreadPoolSize(2)
-      .setExecThreadPoolSize(4)
-      .setHost(hostname.getHostName())
-      .setHttpHandlers(new WorkflowServiceHandler(createStatusSupplier()))
-      .build();
-
-    httpService.start();
     runningThread = Thread.currentThread();
     createLocalDatasets();
     workflow = initializeWorkflow();
@@ -278,7 +262,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // Clear the interrupt flag.
     boolean interrupted = Thread.interrupted();
     try {
-      httpService.stop();
       destroyWorkflow();
       deleteLocalDatasets();
       if (pluginInstantiator != null) {
@@ -634,15 +617,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Thread t = runningThread;
     runningThread = null;
     t.interrupt();
-  }
-
-  /**
-   * Returns the endpoint that the http service is bind to.
-   *
-   * @throws IllegalStateException if the service is not started.
-   */
-  InetSocketAddress getServiceEndpoint() {
-    return httpService.getBindAddress();
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {

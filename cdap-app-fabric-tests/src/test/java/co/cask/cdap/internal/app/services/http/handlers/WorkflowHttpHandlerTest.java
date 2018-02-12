@@ -29,7 +29,7 @@ import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -93,7 +93,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .create();
 
-  private static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>() { }.getType();
   private static final Type MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE
     = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
   private static final Type MAP_STRING_TO_DATASETSPECIFICATIONSUMMARY_TYPE
@@ -111,15 +110,14 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
-    String path = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(), program.getId(),
-                                runId);
-    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
-    if (response.getStatusLine().getStatusCode() == 200) {
-      String json = EntityUtils.toString(response.getEntity());
-      List<WorkflowActionNode> output = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-      return output.size();
+    Map<String, WorkflowNodeStateDetail> nodeStates = getWorkflowNodeStates(program.toEntityId(), runId);
+    int count = 0;
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStates.values()) {
+      if (nodeStateDetail.getNodeStatus().equals(NodeStatus.RUNNING)) {
+        count++;
+      }
     }
-    return null;
+    return count;
   }
 
   private void waitForStatusCode(final String path, final Id.Program program, final int expectedStatusCode)
@@ -168,14 +166,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
                                 runId);
 
     waitForStatusCode(path, program, expectedStatusCode);
-  }
-
-  private HttpResponse getWorkflowCurrentStatus(Id.Program program, String runId) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(),
-                                      program.getId(), runId);
-    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                              program.getNamespaceId());
-    return doGet(versionedUrl);
   }
 
   private String createInput(String folderName) throws IOException {
@@ -499,21 +489,19 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     List<RunRecord> historyRuns = getProgramRuns(workflowId, ProgramRunStatus.RUNNING);
     Assert.assertEquals(2, historyRuns.size());
 
-    HttpResponse response = getWorkflowCurrentStatus(workflowId, historyRuns.get(0).getPid());
+    HttpResponse response = getWorkflowNodeStatesResponse(workflowId.toEntityId(), historyRuns.get(0).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String json = EntityUtils.toString(response.getEntity());
-    List<WorkflowActionNode> nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-    Assert.assertEquals(1, nodes.size());
+    Map<String, WorkflowNodeStateDetail> statusMap = readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
+    Assert.assertEquals(1, statusMap.size());
     Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
-                        nodes.get(0).getProgram().getProgramName());
+                        statusMap.values().iterator().next().getNodeId());
 
-    response = getWorkflowCurrentStatus(workflowId, historyRuns.get(1).getPid());
+    response = getWorkflowNodeStatesResponse(workflowId.toEntityId(), historyRuns.get(1).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-    Assert.assertEquals(1, nodes.size());
+    statusMap = readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
+    Assert.assertEquals(1, statusMap.size());
     Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
-                        nodes.get(0).getProgram().getProgramName());
+                        statusMap.values().iterator().next().getNodeId());
   }
 
   private void verifyFileExists(final List<File> fileList)
@@ -619,10 +607,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     // Wait until the program stop
     waitState(programId, ProgramStatus.STOPPED.name());
 
-    // Current endpoint would return 404
-    response = getWorkflowCurrentStatus(programId, runId);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
     // Now there should be 2 RunRecord with status killed
     verifyProgramRuns(programId, ProgramRunStatus.KILLED, 1);
 
@@ -678,13 +662,15 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramId workflowId, String runId)
     throws Exception {
+    HttpResponse response = getWorkflowNodeStatesResponse(workflowId, runId);
+    return readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
+  }
+
+  private HttpResponse getWorkflowNodeStatesResponse(ProgramId workflowId, String runId) throws Exception {
     String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state", workflowId.getApplication(),
                                 workflowId.getProgram(), runId);
-
     path = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
-
-    HttpResponse response = doGet(path);
-    return readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
+    return doGet(path);
   }
 
   @Category(XSlowTests.class)

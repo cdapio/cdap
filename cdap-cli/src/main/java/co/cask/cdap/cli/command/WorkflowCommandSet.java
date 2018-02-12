@@ -40,7 +40,6 @@ public class WorkflowCommandSet extends CommandSet<Command> {
   private static Iterable<Command> generateCommands(ProgramClient programClient, WorkflowClient workflowClient,
                                                     CLIConfig cliConfig) {
     List<Command> commands = new ArrayList<>();
-    commands.add(new GetWorkflowCurrentRunCommand(ElementType.WORKFLOW, programClient, cliConfig));
     commands.add(new GetWorkflowTokenCommand(workflowClient, cliConfig));
     commands.add(new GetWorkflowLocalDatasetsCommand(workflowClient, cliConfig));
     commands.add(new DeleteWorkflowLocalDatasetsCommand(workflowClient, cliConfig));

@@ -30,7 +30,6 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
@@ -43,7 +42,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -52,7 +50,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,7 +60,6 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
   private final ProgramRunnerFactory programRunnerFactory;
   private final ServiceAnnouncer serviceAnnouncer;
-  private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -77,7 +73,6 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
-                               @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
@@ -86,7 +81,6 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
-    this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -128,15 +122,14 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
+      WorkflowDriver driver = new WorkflowDriver(program, options, workflowSpec, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                  txClient, runtimeStore, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService, programStateWriter);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
-      ProgramController controller = new WorkflowProgramController(program.getId().run(runId), driver,
-                                                                   serviceAnnouncer);
+      ProgramController controller = new WorkflowProgramController(program.getId().run(runId), driver);
       driver.start();
       return controller;
     } catch (Exception e) {

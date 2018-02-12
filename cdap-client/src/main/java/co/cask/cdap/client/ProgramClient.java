@@ -19,7 +19,6 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -48,7 +47,6 @@ import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -501,34 +499,6 @@ public class ProgramClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(service);
     }
-  }
-
-  /**
-   * Get the current run information for the Workflow based on the runid
-   *
-   * @param workflowId ID of the workflow
-   * @param runId ID of the run for which the details are to be returned
-   * @return list of {@link WorkflowActionNode} currently running for the given runid
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, workflow, or runid could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   */
-  public List<WorkflowActionNode> getWorkflowCurrent(WorkflowId workflowId, String runId)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-    String path = String.format("/apps/%s/workflows/%s/runs/%s/current",
-                                workflowId.getApplication(), workflowId.getProgram(), runId);
-    URL url = config.resolveNamespacedURLV3(workflowId.getNamespaceId(), path);
-
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(workflowId.run(runId));
-    }
-
-    ObjectResponse<List<WorkflowActionNode>> objectResponse = ObjectResponse.fromJsonBody(
-      response, new TypeToken<List<WorkflowActionNode>>() { }.getType(), GSON);
-
-    return objectResponse.getResponseObject();
   }
 
   /**
