@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+#
+# Copyright © 2016-2017 Cask Data, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+#
+# This script is the main script for performing all CDAP functions. With it,
+# you can start, stop, or get status on CDAP and its services, run queries,
+# execute CLI commands, and more. Anything not handled by this script is passed
+# to the CDAP CLI to be interpreted.
+#
+
+__script=${BASH_SOURCE[0]}
+
+# Resolve symlinks
+__readlink() {
+  local __target_file=${1}
+  cd $(dirname "${__target_file}")
+  __target_file=$(basename "${__target_file}")
+  while test -L "${__target_file}"; do
+    __target_file=$(readlink "${__target_file}")
+    cd $(dirname "${__target_file}")
+    __target_file=$(basename "${__target_file}")
+  done
+  echo "$(pwd -P)/${__target_file}"
+}
+
+__target=$(__readlink ${__script})
+__basename=$(basename "${__target}")
+__dirname=$(dirname "${__target}")
+__target=$(cd "${__dirname}"; echo $(pwd -P)/${__basename})
+
+__app_home=$(dirname "${__target}")
+__app_home=$(cd "${__app_home}"/.. >&-; pwd -P)
+__comp_home=${COMPONENT_HOME:-$(cd "${__target%/*/*}" >&- 2>/dev/null; pwd -P)}
+
+# Determine if we're in Distributed from packages or SDK/Parcel
+if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]] && [[ ${__comp_home} != /opt/cdap/sandbox* ]]; then
+  # We're distributed from packages
+  __app_home=${__comp_home}
+  __cdap_home=${CDAP_HOME:-/opt/cdap}
+elif [[ ${__comp_home##*/} == cli ]]; then
+  # We're distributed in a non-standard location, such as Parcel, or CLI
+  __app_home=${__comp_home}
+  __cdap_home=${CDAP_HOME:-${__comp_home%/*}}
+else
+  # We're in the SDK, __app_home and __cdap_home are identical
+  __cdap_home=${CDAP_HOME:-${__app_home}}
+fi
+
+# Source our functions script, which will be located with us
+source "${__app_home}"/bin/functions.sh
+
+__fn_home=$(cdap_home)
+# Do a small sanity check
+if [[ ${__cdap_home} != ${__fn_home} ]]; then
+  die "CDAP_HOME doesn't match output of cdap_home function! Aborting!"
+fi
+
+export CDAP_HOME=${__cdap_home}
+
+# Load user-modifiable configuration
+test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
+
+# Main script, handles options and Does the Right Thing™
+case ${1} in
+  apply-pack) shift; cdap_apply_pack ${@}; __ret=${?} ;;
+  auth-server|kafka-server|master|router|ui) CDAP_SERVICE=${1}; shift; cdap_service ${CDAP_SERVICE} ${@}; __ret=${?} ;;
+  classpath) cdap_service master classpath; __ret=${?} ;;
+  cli) shift; cdap_cli "${@}"; __ret=${?} ;;
+  config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
+  upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
+  version) shift; cdap_version_command ${@}; __ret=${?} ;;
+  run) shift; cdap_run_class ${@}; __ret=${?} ;;
+  sdk) shift; echo "[WARN] sdk commands are deprecated, please use sandbox commands instead.">&2; cdap_sdk ${@}; __ret=${?} ;;
+  sandbox) shift; cdap_sdk ${@}; __ret=${?} ;;
+  setup) shift; cdap_setup ${@}; __ret=${?} ;;
+  debug) shift; cdap_debug ${@}; __ret=${?} ;;
+  *)
+    echo
+    echo "Usage: ${0} <command> [arguments]"
+    echo
+    echo "  Commands:"
+    echo
+    if [[ $(cdap_context) == 'distributed' ]]; then
+    # No indent to make lining up easier
+    echo "    auth-server  - Sends the arguments (start/stop/kill/etc.) to the appropriate CDAP service on this host"
+    echo "    kafka-server"
+    echo "    master"
+    echo "    router"
+    echo "    ui"
+    echo
+    echo "    classpath    - Returns the Java CLASSPATH of the CDAP Master service"
+    echo "    run          - Runs a given class with arguments using the CDAP Master CLASSPATH and environment"
+    echo "    upgrade      - Runs the CDAP Upgrade with optional arguments"
+    echo
+    echo "    setup        - Setup the specified component (coprocessors) required by CDAP at runtime"
+    echo
+    else
+    echo "    sandbox      - Sends the arguments (start/stop/etc.) to the CDAP Sandbox on this host"
+    fi
+    echo "    apply-pack   - Installs a CDAP Pack specified as an argument"
+    echo "    cli          - Starts an interactive CDAP CLI session"
+    echo "    debug        - Runs CDAP debug functions"
+    echo "    version      - Displays versions of local CDAP components"
+    echo
+    echo " Get more help for each command by executing:"
+    echo " ${0} <command> --help"
+    echo
+    ;;
+esac
+
+exit ${__ret}

@@ -137,5 +137,11 @@
       "server_jvmflags": "-Xmx256m",
       "zookeeper_log_dir": "/data/logs/zookeeper"
     }
+  },
+  "spark": {
+    "release": {
+      "version": "1.6.3",
+      "install": "true"
+    }
   }
 }

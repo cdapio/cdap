@@ -708,6 +708,8 @@ cdap_service() {
 # Start a non-Java application with arguments in the background
 #
 cdap_start_bin() {
+  local readonly __foreground=${1}
+  shift
   local readonly __args=${@}
   local readonly __svc=${CDAP_SERVICE/-server/}
   local readonly __ret __pid
@@ -717,11 +719,15 @@ cdap_start_bin() {
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   ulimit -a >>${__logfile} 2>&1
 
-  nohup nice -n ${NICENESS} ${MAIN_CMD} ${MAIN_CMD_ARGS} ${__args} </dev/null >>${__logfile} 2>&1 &
-
-  __pid=${!}
-  __ret=${?}
-  echo ${__pid} >${__pidfile}
+  if ${__foreground}; then
+    nice -n ${NICENESS} ${MAIN_CMD} ${MAIN_CMD_ARGS} ${__args} 2>&1 \
+      | tee -a "${LOG_DIR}"/cdap-${CDAP_SERVICE}.log
+  else
+    nohup nice -n ${NICENESS} ${MAIN_CMD} ${MAIN_CMD_ARGS} ${__args} </dev/null >>${__logfile} 2>&1 &
+    __pid=${!}
+    __ret=${?}
+    echo ${__pid} >${__pidfile}
+  fi
   if ! kill -0 ${__pid} >/dev/null 2>&1; then
     die "${MAIN_CMD} failed to start, please check logs at ${LOG_DIR} for more information"
   fi

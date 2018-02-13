@@ -13,7 +13,10 @@
 # limitations under the License.
 #
 # Cask is a trademark of Cask Data, Inc. All rights reserved.
-# EXAMPLE: docker build -t cdap/router:latest -f router.Dockerfile --build-arg CDAP_ROLE=router --build-arg CDAP_COMPONENT=gateway
+
+# This currently assumes that you are running against a singlenode cluster. You can pass the hadoop and docker hostnames and it will be applied ot the configs.
+# EXAMPLE: docker build -t cdap/master:latest -f services.Dockerfile --build-arg CDAP_ROLE=master --build-arg CDAP_COMPONENT=master --build-arg HADOOP_HOST=<HADOOP_HOSTNAME> --build-arg DOCKER_HOST=<DOCKER_HOSTNAME> .
+# You can also use this with docker-compose by running "docker-compose up -d"
 
 FROM ubuntu:16.04
 MAINTAINER Cask Data <ops@cask.co>
@@ -53,13 +56,13 @@ RUN apt-get install -y --no-install-recommends git && \
 COPY packer/scripts /tmp/scripts
 COPY packer/files /tmp/files
 
-RUN sed -i -e "s/<HADOOP_HOST>/$HADOOP_HOST/g" /tmp/files/cdap-services.json && \
-    sed -i -e "s/<DOCKER_HOST>/$DOCKER_HOST/g" /tmp/files/cdap-services.json
-
-# Install Chef, setup APT, run Chef cdap::sdk recipe, then clean up
-RUN curl -vL https://chef.io/chef/install.sh | bash -s -- -v 12.19.36 && \
+# Install Chef, setup APT, config file setup, install Java(needed for UI), install spark, run Chef cdap::COMPONENT recipe, then clean up
+RUN curl -vL https://chef.io/chef/install.sh | bash -s -- -v 12.21.31 && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
+    sed -i -e "s/<HADOOP_HOST>/$HADOOP_HOST/g" /tmp/files/cdap-services.json && \
+    sed -i -e "s/<DOCKER_HOST>/$DOCKER_HOST/g" /tmp/files/cdap-services.json && \
     chef-solo -o java::default -j /tmp/files/cdap-services.json && \
+    if [ "$CDAP_ROLE" == "master" ]; then chef-solo -o hadoop::spark -j /tmp/files/cdap-services.json ; fi && \
     chef-solo -o cdap::${CDAP_COMPONENT} -j /tmp/files/cdap-services.json && \
     chef-solo -o cdap::config -j /tmp/files/cdap-services.json && \
     for i in remove-chef.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
@@ -67,7 +70,11 @@ RUN curl -vL https://chef.io/chef/install.sh | bash -s -- -v 12.19.36 && \
       /var/lib/apt/lists/* \
       /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 
-ENV PATH /opt/cdap/ui/bin:${PATH}
+# Can't copy from outside the build dir
+# temp hack to do dev work on functions.sh
+COPY packer/bin /opt/cdap/$CDAP_COMPONENT/bin
+
+ENV PATH /opt/cdap/$CDAP_COMPONENT/bin:${PATH}
 
 # Copy entrypoint
 COPY docker-service-entrypoint.sh /
@@ -77,4 +84,4 @@ EXPOSE $PORTS
 
 # start CDAP in the background and tail in the foreground
 ENTRYPOINT ["/docker-service-entrypoint.sh"]
-#CMD ["service","cdap-$CDAP_ROLE","start","--foreground"]
+CMD ["sh","-c","cdap $CDAP_ROLE start --foreground"]
