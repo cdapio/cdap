@@ -52,6 +52,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -388,56 +389,44 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private void doPartitionOperation(HttpRequest request, HttpResponder responder, DatasetId datasetId,
                                     PartitionOperation partitionOperation) {
-    Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-      if (dataset == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
-        return;
-      }
-    } catch (IOException e) {
-      String classNotFoundMessage = isClassNotFoundException(e);
-      if (classNotFoundMessage != null) {
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-      LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetId);
-      return;
-    }
-
-    try {
-      if (!(dataset instanceof PartitionedFileSet)) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
-        return;
-      }
-      Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
-
-      Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-
-
-      PartitionKey partitionKey;
+      Dataset dataset;
       try {
-        partitionKey = PartitionedFileSetArguments.getOutputPartitionKey(properties, partitioning);
+        dataset = datasetInstantiator.getDataset(datasetId);
       } catch (Exception e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "invalid partition key: " + e.getMessage());
+        LOG.error("Exception instantiating dataset {}.", datasetId, e);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetId);
         return;
       }
-      if (partitionKey == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
-        return;
+      try {
+        if (!(dataset instanceof PartitionedFileSet)) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
+          return;
+        }
+        Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
+        Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+        Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+        PartitionKey partitionKey;
+        try {
+          partitionKey = PartitionedFileSetArguments.getOutputPartitionKey(properties, partitioning);
+        } catch (Exception e) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "invalid partition key: " + e.getMessage());
+          return;
+        }
+        if (partitionKey == null) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
+          return;
+        }
+        QueryHandle handle = partitionOperation.submitOperation(partitionKey, properties);
+        if (handle == null) {
+          return;
+        }
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", handle.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+      } finally {
+        Closeables.closeQuietly(dataset);
       }
-
-      QueryHandle handle = partitionOperation.submitOperation(partitionKey, properties);
-      if (handle == null) {
-        return;
-      }
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -493,18 +482,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return null;
       }
     });
-  }
-
-  // returns the cause of the class not found exception if it is one. Otherwise returns null.
-  @Nullable
-  private static String isClassNotFoundException(Throwable e) {
-    if (e instanceof ClassNotFoundException) {
-      return e.getMessage();
-    }
-    if (e.getCause() != null) {
-      return isClassNotFoundException(e.getCause());
-    }
-    return null;
   }
 
   private NamespacedEntityId getEntityToImpersonate(NamespacedEntityId entityId, String programId) {

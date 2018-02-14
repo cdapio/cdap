@@ -197,16 +197,16 @@ public class ExploreTableManager {
   private String generateEnableStatement(DatasetId datasetId, DatasetSpecification spec, boolean truncating)
     throws UnsupportedTypeException, ExploreException {
 
-    Dataset dataset = null;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-      return generateEnableStatement(dataset, spec, datasetId,
-                                     tableNaming.getTableName(datasetId, spec.getProperties()), truncating);
+      Dataset dataset = datasetInstantiator.getDataset(datasetId);
+      try {
+        return generateEnableStatement(dataset, spec, datasetId,
+                                       tableNaming.getTableName(datasetId, spec.getProperties()), truncating);
+      } finally {
+        Closeables.closeQuietly(dataset);
+      }
     } catch (IOException e) {
-      LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
-    } finally {
-      Closeables.closeQuietly(dataset);
+      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId, e);
     }
   }
 
@@ -256,15 +256,16 @@ public class ExploreTableManager {
         alterStatements.add(enableStatement);
       }
     } else {
-      Dataset dataset = null;
       try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-        dataset = datasetInstantiator.getDataset(datasetId);
-        alterStatements = generateAlterStatements(datasetId, tableName, dataset, spec, oldSpec);
+        Dataset dataset = datasetInstantiator.getDataset(datasetId);
+        try {
+          alterStatements = generateAlterStatements(datasetId, tableName, dataset, spec, oldSpec);
+        } finally {
+          Closeables.closeQuietly(dataset);
+        }
       } catch (IOException e) {
         LOG.error("Exception instantiating dataset {}.", datasetId, e);
         throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
-      } finally {
-        Closeables.closeQuietly(dataset);
       }
     }
     LOG.trace("alter statements for update: {}", alterStatements);
@@ -312,21 +313,22 @@ public class ExploreTableManager {
       return null;
     }
 
-    Dataset dataset = null;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-      if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-        // do not drop the explore table that dataset is reusing an existing table
-        if (FileSetProperties.isUseExisting(spec.getProperties())) {
-          return null;
+      Dataset dataset = datasetInstantiator.getDataset(datasetId);
+      try {
+        if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+          // do not drop the explore table that dataset is reusing an existing table
+          if (FileSetProperties.isUseExisting(spec.getProperties())) {
+            return null;
+          }
         }
+        return generateDeleteStatement(dataset, databaseName, tableName);
+      } finally {
+        Closeables.closeQuietly(dataset);
       }
-      return generateDeleteStatement(dataset, databaseName, tableName);
     } catch (IOException e) {
       LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetId, e);
       throw new ExploreException("Exception instantiating dataset " + datasetId);
-    } finally {
-      Closeables.closeQuietly(dataset);
     }
   }
 
