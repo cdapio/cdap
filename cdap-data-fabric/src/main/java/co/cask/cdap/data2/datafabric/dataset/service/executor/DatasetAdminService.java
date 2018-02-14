@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.IncompatibleUpdateException;
@@ -43,7 +42,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
@@ -77,11 +76,6 @@ public class DatasetAdminService {
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.metadataStore = metadataStore;
     this.impersonator = impersonator;
-  }
-
-  public boolean exists(DatasetId datasetInstanceId) throws Exception {
-    DatasetAdmin datasetAdmin = getDatasetAdmin(datasetInstanceId);
-    return datasetAdmin.exists();
   }
 
   /**
@@ -127,14 +121,18 @@ public class DatasetAdminService {
             : type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
 
           DatasetAdmin admin = type.getAdmin(context, spec);
-          if (existing != null) {
-            if (admin instanceof Updatable) {
-              ((Updatable) admin).update(existing);
+          try {
+            if (existing != null) {
+              if (admin instanceof Updatable) {
+                ((Updatable) admin).update(existing);
+              } else {
+                admin.upgrade();
+              }
             } else {
-              admin.upgrade();
+              admin.create();
             }
-          } else {
-            admin.create();
+          } finally {
+            Closeables.closeQuietly(admin);
           }
           return spec;
         }
@@ -213,7 +211,11 @@ public class DatasetAdminService {
               String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
           }
           DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
-          admin.drop();
+          try {
+            admin.drop();
+          } finally {
+            Closeables.closeQuietly(admin);
+          }
           return null;
         }
       });
@@ -223,37 +225,41 @@ public class DatasetAdminService {
     metadataStore.removeMetadata(datasetInstanceId);
   }
 
+  public boolean exists(DatasetId datasetInstanceId) throws Exception {
+    return performDatasetAdmin(datasetInstanceId, DatasetAdmin::exists);
+  }
+
   public void truncate(DatasetId datasetInstanceId) throws Exception {
-    DatasetAdmin datasetAdmin = getDatasetAdmin(datasetInstanceId);
-    datasetAdmin.truncate();
+    LOG.info("Truncating dataset {}", datasetInstanceId);
+    performDatasetAdmin(datasetInstanceId, DatasetAdmin::truncate);
   }
 
   public void upgrade(DatasetId datasetInstanceId) throws Exception {
-    DatasetAdmin datasetAdmin = getDatasetAdmin(datasetInstanceId);
-    datasetAdmin.upgrade();
+    LOG.info("Upgrading dataset {}", datasetInstanceId);
+    performDatasetAdmin(datasetInstanceId, DatasetAdmin::upgrade);
   }
 
-  private DatasetAdmin getDatasetAdmin(final DatasetId datasetInstanceId) throws IOException,
-    DatasetManagementException, NotFoundException {
+  private void performDatasetAdmin(final DatasetId datasetInstanceId, VoidOperation operation) throws Exception {
+    performDatasetAdmin(datasetInstanceId, (Operation<Void>) admin -> {
+      operation.perform(admin);
+      return null;
+    });
+  }
 
+  private <T> T performDatasetAdmin(final DatasetId datasetInstanceId, Operation<T> operation) throws Exception {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      DatasetAdmin admin = impersonator.doAs(datasetInstanceId, (Callable<DatasetAdmin>) () -> {
+        DatasetAdmin admin1 = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
+        if (admin1 == null) {
+          throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+        }
+        // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
+        return new ImpersonatingDatasetAdmin(admin1, impersonator, datasetInstanceId);
+      });
       try {
-        return impersonator.doAs(datasetInstanceId, new Callable<DatasetAdmin>() {
-          @Override
-          public DatasetAdmin call() throws Exception {
-            DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
-            if (admin == null) {
-              throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
-            }
-            // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
-            return new ImpersonatingDatasetAdmin(admin, impersonator, datasetInstanceId);
-          }
-        });
-      } catch (Exception e) {
-        Throwables.propagateIfInstanceOf(e, IOException.class);
-        Throwables.propagateIfInstanceOf(e, DatasetManagementException.class);
-        Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-        throw Throwables.propagate(e);
+        return operation.perform(admin);
+      } finally {
+        Closeables.closeQuietly(admin);
       }
     }
   }
@@ -271,5 +277,13 @@ public class DatasetAdminService {
     }
     LOG.debug("Using {} user for dataset {}", ugi.getUserName(), datasetInstanceId);
     return ugi;
+  }
+
+  private interface Operation<T> {
+    T perform(DatasetAdmin admin) throws Exception;
+  }
+
+  private interface VoidOperation {
+    void perform(DatasetAdmin admin) throws Exception;
   }
 }
