@@ -66,7 +66,7 @@ export default class ExploreAction extends Component {
     const updateDisabledProp = () => {
       let {tables: explorableTables} = ExploreTablesStore.getState();
       let entityId = this.props.entity.id.replace(/[\.\-]/g, '_');
-      let type = this.props.entity.type === 'datasetinstance' ? 'dataset' : this.props.entity.type;
+      let type = this.props.entity.type;
       let match = explorableTables.filter(db => {
         return db.table === `${type}_${entityId.toLowerCase()}` || db.table === entityId.toLowerCase();
       });
@@ -163,7 +163,7 @@ ExploreAction.propTypes = {
     version: PropTypes.string,
     uniqueId: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
-    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired,
+    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
   }),
   opened: PropTypes.bool,
   argsToAction: PropTypes.object

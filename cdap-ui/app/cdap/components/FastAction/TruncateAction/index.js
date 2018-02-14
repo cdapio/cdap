@@ -76,7 +76,7 @@ export default class TruncateAction extends Component {
       namespace: NamespaceStore.getState().selectedNamespace
     };
     switch (this.props.entity.type) {
-      case 'datasetinstance':
+      case 'dataset':
         api = MyDatasetApi.truncate;
         params.datasetId = this.props.entity.id;
         break;
@@ -150,7 +150,7 @@ TruncateAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     uniqueId: PropTypes.string,
-    type: PropTypes.oneOf(['datasetinstance', 'stream']).isRequired,
+    type: PropTypes.oneOf(['dataset', 'stream']).isRequired,
   }),
   onSuccess: PropTypes.func
 };

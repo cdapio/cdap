@@ -17,7 +17,6 @@
 const apiEntityTypeConvert = {
   application: 'apps',
   dataset: 'datasets',
-  datasetinstance: 'datasets',
   stream: 'streams'
 };
 

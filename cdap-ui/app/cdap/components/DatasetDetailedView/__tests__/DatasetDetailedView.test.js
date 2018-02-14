@@ -66,7 +66,7 @@ const datasetProperties = {
   "name": "MyApp1",
   "app": "MyApp1",
   "id": "recipes",
-  "type": "datasetinstance",
+  "type": "dataset",
   "properties": {
     "schema": "",
     "creation-time": "1492442466016",

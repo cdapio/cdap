@@ -63,7 +63,7 @@ export default class EntityCard extends Component {
         return <ApplicationMetrics entity={this.props.entity} />;
       case 'artifact':
         return <ArtifactMetrics entity={this.props.entity} />;
-      case 'datasetinstance':
+      case 'dataset':
         return <DatasetMetrics entity={this.props.entity} />;
       case 'program':
         return <ProgramMetrics entity={this.props.entity} poll={this.props.poll}/>;
