@@ -28,7 +28,7 @@ CDAP_TAG=${CDAP_TAG:+v5.0.0}
 # The CDAP package version passed to Chef
 CDAP_VERSION=${CDAP_VERSION:-5.0.0-1}
 # The version of Chef to install
-CHEF_VERSION=${CHEF_VERSION:-12.10.24}
+CHEF_VERSION=${CHEF_VERSION:-12.21.31}
 # cdap-site.xml configuration parameters
 EXPLORE_ENABLED='true'
 # Sleep delay before starting services (in seconds)
