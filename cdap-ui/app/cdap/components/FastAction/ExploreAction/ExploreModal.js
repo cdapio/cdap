@@ -31,7 +31,7 @@ import T from 'i18n-react';
 export default class ExploreModal extends Component {
   constructor(props) {
     super(props);
-    this.type = this.props.entity.type === 'datasetinstance' ? 'dataset' : this.props.entity.type;
+    this.type = this.props.entity.type;
     this.state = {
       queryString: `SELECT * FROM ${this.props.entity.databaseName}.${this.props.entity.tableName} LIMIT 500`,
       queries: [],
@@ -485,7 +485,7 @@ ExploreModal.propTypes = {
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
-    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired,
+    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
     databaseName: PropTypes.string,
     tableName: PropTypes.string
   })

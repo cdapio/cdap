@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 
 class myLineageService {
-
   constructor($state, myTrackerApi) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
@@ -38,15 +37,17 @@ class myLineageService {
 
     /* SETTING NODES */
     angular.forEach(response.programs, (value, key) => {
+      let entityId = value.entityId.program;
+
       let nodeObj = {
-        label: value.entityId.id.id,
+        label: entityId,
         id: key,
         nodeType: 'program',
-        applicationId: value.entityId.id.application.applicationId,
-        entityId: value.entityId.id.id,
-        entityType: this.parseProgramType(value.entityId.id.type),
-        displayType: value.entityId.id.type,
-        icon: this.getProgramIcon(value.entityId.id.type),
+        applicationId: value.entityId.application,
+        entityId: entityId,
+        entityType: this.parseProgramType(value.entityId.type),
+        displayType: value.entityId.type,
+        icon: this.getProgramIcon(value.entityId.type),
         runs: []
       };
 
@@ -158,15 +159,17 @@ class myLineageService {
 
     /* SETTING NODES */
     angular.forEach(response.programs, (value, key) => {
+      let entityId = value.entityId.program;
+
       let nodeObj = {
-        label: value.entityId.id.id,
+        label: entityId,
         id: key,
         nodeType: 'program',
-        applicationId: value.entityId.id.application.applicationId,
-        entityId: value.entityId.id.id,
-        entityType: this.parseProgramType(value.entityId.id.type),
-        displayType: value.entityId.id.type,
-        icon: this.getProgramIcon(value.entityId.id.type),
+        applicationId: value.entityId.application,
+        entityId: entityId,
+        entityType: this.parseProgramType(value.entityId.type),
+        displayType: value.entityId.type,
+        icon: this.getProgramIcon(value.entityId.type),
         runs: []
       };
 
@@ -295,16 +298,16 @@ class myLineageService {
   }
 
   parseDataInfo(data) {
-    if (data.entityId.type === 'datasetinstance') {
+    if (data.entityId.entity === 'DATASET') {
       return {
-        name: data.entityId.id.instanceId,
+        name: data.entityId.dataset,
         type: 'datasets',
         icon: 'icon-datasets',
         displayType: 'Dataset'
       };
     } else {
       return {
-        name: data.entityId.id.streamName,
+        name: data.entityId.stream,
         type: 'streams',
         icon: 'icon-streams',
         displayType: 'Stream'
@@ -359,8 +362,6 @@ class myLineageService {
     });
   }
 }
-
-myLineageService.$inject = ['$state', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
   .service('myLineageService', myLineageService);

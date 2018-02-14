@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,8 +73,8 @@ $jump-button-container-size: 80px;
     &.application {
       @include selected-card($application-entity-header-bg);
     }
-    &.datasetinstance {
-      @include selected-card($datasetinstance-entity-header-bg);
+    &.dataset {
+      @include selected-card($dataset-entity-header-bg);
     }
     &.stream {
       @include selected-card($stream-entity-header-bg);
@@ -84,7 +84,7 @@ $jump-button-container-size: 80px;
   // FIXME: Right now only programs and artifacts will not be clickable.
   &.datapipeline,
   &.application,
-  &.datasetinstance,
+  &.dataset,
   &.stream {
     .cask-card {
       cursor: pointer;

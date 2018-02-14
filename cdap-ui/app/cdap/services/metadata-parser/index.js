@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,22 +16,23 @@
 
 import EntityIconMap from 'services/entity-icon-map';
 import intersection from 'lodash/intersection';
+import EntityType from 'services/metadata-parser/EntityType';
 
 export function parseMetadata(entity) {
-  let type = entity.entityId.type;
+  let type = entity.entityId.entity;
 
   switch (type) {
-    case 'artifact':
+    case EntityType.artifact:
       return createArtifactObj(entity);
-    case 'application':
+    case EntityType.application:
       return createApplicationObj(entity);
-    case 'datasetinstance':
+    case EntityType.dataset:
       return createDatasetObj(entity);
-    case 'program':
+    case EntityType.program:
       return createProgramObj(entity);
-    case 'stream':
+    case EntityType.stream:
       return createStreamObj(entity);
-    case 'view':
+    case EntityType.view:
       return createViewObj(entity);
   }
 }
@@ -39,7 +40,7 @@ export function parseMetadata(entity) {
 export function getType(entity) {
   if (entity.type === 'program') {
     return entity.programType.toLowerCase();
-  } if (entity.type === 'datasetinstance') {
+  } if (entity.type === 'dataset') {
     return 'dataset';
   } else if (entity.type !== 'application') {
     return entity.type;
@@ -56,29 +57,27 @@ export function getType(entity) {
 
 function createArtifactObj(entity) {
   return {
-    id: entity.entityId.id.name,
-    type: entity.entityId.type,
-    version: entity.entityId.id.version.version,
+    id: entity.entityId.artifact,
+    type: entity.entityId.entity.toLowerCase(),
+    version: entity.entityId.version,
     metadata: entity,
-    scope: entity.entityId.id.namespace.id.toLowerCase() === 'system' ? 'SYSTEM' : 'USER',
-    icon: EntityIconMap[entity.entityId.type]
+    scope: entity.entityId.namespace.toLowerCase() === 'system' ? 'SYSTEM' : 'USER',
+    icon: EntityIconMap['artifact']
   };
 }
 
 function createApplicationObj(entity) {
-  const hydratorAritfacts = [
+  const pipelineArtifacts = [
     'cdap-data-pipeline',
-    'cdap-data-streams',
-    'cdap-etl-batch',
-    'cdap-etl-realtime'
+    'cdap-data-streams'
   ];
 
-  let version = entity.metadata.SYSTEM.properties.version;
+  let version = entity.entityId.version;
   if (version === '-SNAPSHOT') {
     version = '1.0.0-SNAPSHOT';
   }
 
-  let icon = EntityIconMap[entity.entityId.type];
+  let icon = EntityIconMap['application'];
   if (entity.metadata.SYSTEM.tags.indexOf('cdap-data-pipeline') !== -1) {
     icon = EntityIconMap['cdap-data-pipeline'];
   } else if (entity.metadata.SYSTEM.tags.indexOf('cdap-data-streams') !== -1) {
@@ -86,49 +85,49 @@ function createApplicationObj(entity) {
   }
 
   return {
-    id: entity.entityId.id.applicationId,
-    type: entity.entityId.type,
+    id: entity.entityId.application,
+    type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
     version,
     icon,
-    isHydrator: intersection(entity.metadata.SYSTEM.tags, hydratorAritfacts).length > 0
+    isHydrator: intersection(entity.metadata.SYSTEM.tags, pipelineArtifacts).length > 0
   };
 }
 
 function createDatasetObj(entity) {
   return {
-    id: entity.entityId.id.instanceId,
-    type: entity.entityId.type,
+    id: entity.entityId.dataset,
+    type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
-    icon: EntityIconMap[entity.entityId.type]
+    icon: EntityIconMap['dataset']
   };
 }
 
 function createProgramObj(entity) {
   return {
-    id: entity.entityId.id.id,
-    applicationId: entity.entityId.id.application.applicationId,
-    type: entity.entityId.type,
-    programType: entity.entityId.id.type,
+    id: entity.entityId.program,
+    applicationId: entity.entityId.application,
+    type: entity.entityId.entity.toLowerCase(),
+    programType: entity.entityId.type,
     metadata: entity,
-    icon: EntityIconMap[entity.entityId.id.type]
+    icon: EntityIconMap[entity.entityId.type]
   };
 }
 
 function createStreamObj(entity) {
   return {
-    id: entity.entityId.id.streamName,
-    type: entity.entityId.type,
+    id: entity.entityId.stream,
+    type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
-    icon: EntityIconMap[entity.entityId.type]
+    icon: EntityIconMap['stream']
   };
 }
 
 function createViewObj(entity) {
   return {
-    id: entity.entityId.id.id,
-    type: entity.entityId.type,
+    id: entity.entityId.view,
+    type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
-    icon: EntityIconMap[entity.entityId.type]
+    icon: EntityIconMap['view']
   };
 }

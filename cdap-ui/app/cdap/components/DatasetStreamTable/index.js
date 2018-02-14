@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,8 +79,8 @@ export default class DatasetStreamTable extends Component {
         {
           entities.map(dataEntity => {
             let currentNamespace = NamespaceStore.getState().selectedNamespace;
-            let icon = dataEntity.type === 'datasetinstance' ? 'icon-datasets' : 'icon-streams';
-            let type = dataEntity.type === 'datasetinstance' ? 'Dataset' : 'Stream';
+            let icon = dataEntity.type === 'dataset' ? 'icon-datasets' : 'icon-streams';
+            let type = dataEntity.type === 'dataset' ? 'Dataset' : 'Stream';
             let link = `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`;
             return (
               // this is super ugly, but cannot wrap a link around a <tr> tag, so have to wrap it

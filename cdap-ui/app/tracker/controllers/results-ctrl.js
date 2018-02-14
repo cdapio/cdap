@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -166,9 +166,9 @@ class TrackerResultsController {
     let query = this.myHelpers.objectQuery;
     let system = query(entity, 'metadata', 'SYSTEM');
     let sysProps = query(system, 'properties');
-    if (entity.entityId.type === 'datasetinstance') {
+    if (entity.entityId.entity === 'DATASET') {
       angular.extend(obj, {
-        name: entity.entityId.id.instanceId,
+        name: entity.entityId.dataset,
         type: 'Dataset',
         entityTypeState: 'datasets',
         icon: 'icon-datasets'
@@ -186,9 +186,9 @@ class TrackerResultsController {
 
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
-    } else if (entity.entityId.type === 'stream') {
+    } else if (entity.entityId.entity === 'STREAM') {
       angular.extend(obj, {
-        name: entity.entityId.id.streamName,
+        name: entity.entityId.stream,
         type: 'Stream',
         entityTypeState: 'streams',
         icon: 'icon-streams'
@@ -201,12 +201,12 @@ class TrackerResultsController {
       }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[1].count++;
-    } else if (entity.entityId.type === 'view') {
+    } else if (entity.entityId.entity === 'VIEW') {
       // THIS SECTION NEEDS TO BE UPDATED
       angular.extend(obj, {
-        name: entity.entityId.id.id,
+        name: entity.entityId.view,
         type: 'Stream View',
-        entityTypeState: 'views:' + entity.entityId.id.stream.streamName,
+        entityTypeState: 'views:' + entity.entityId.stream,
         icon: 'icon-streams'
       });
       if (system && sysProps) {
@@ -222,7 +222,6 @@ class TrackerResultsController {
   }
 
   findQueries(entity, parsedEntity) {
-
     // Removing special characters from search query
     let replaceRegex = new RegExp('[^a-zA-Z0-9]', 'g');
     let searchTerm = this.$state.params.searchQuery.replace(replaceRegex, '');

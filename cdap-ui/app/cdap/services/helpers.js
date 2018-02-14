@@ -206,7 +206,6 @@ function getIcon(entity) {
     case 'application':
     case 'app':
       return 'icon-fist';
-    case 'datasetinstance':
     case 'dataset':
       return 'icon-datasets';
     case 'stream':

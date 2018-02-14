@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ export default class DatasetTab extends Component {
   }
   getEntitiesForTable({datasets, streams}) {
     return datasets
-      .map(dataset => Object.assign({}, dataset, {type: 'datasetinstance', id: dataset.name}))
+      .map(dataset => Object.assign({}, dataset, {type: 'dataset', id: dataset.name}))
       .concat(
         streams
         .map(stream => Object.assign({}, stream, {type: 'stream', id: stream.name}))
