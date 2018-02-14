@@ -53,10 +53,10 @@ apt-get update --yes || die "Failed to run 'apt-get update'"
 apt-get install --yes git || die "Failed to install git"
 
 # Install chef
-curl -L https://www.chef.io/chef/install.sh | sudo bash -s -- -v ${CHEF_VERSION} || die "Failed to install chef"
+__create_tmpdir
+curl -L -o ${__tmpdir}/install.sh https://www.chef.io/chef/install.sh && sudo bash ${__tmpdir}/install.sh -v ${CHEF_VERSION} || die "Failed to install chef"
 
 # Clone CDAP repo
-__create_tmpdir
 git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
 
 # Check out to specific tag if specified
