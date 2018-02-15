@@ -21,194 +21,151 @@ $modeless-bg-color: $grey-06;
 $modeless-header-bg-color: $grey-08;
 $modeless-width: 730px;
 $modeless-height: 455px;
+$top-panel-height: 55px;
+$right-position: -330px;
 $regular-font: 14px;
 $secondary-btn-color: $brand-primary;
 
-body.theme-cdap {
-  &.state-hydrator {
-    .pipeline-scheduler-content {
-      background: $modeless-bg-color;
-      position: fixed;
-      top: 95px;
-      overflow: auto;
-      right: 15px;
-      z-index: 999;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
-      color: $text-color;
-      background-color: white;
-      width: $modeless-width;
-      height: $modeless-height;
+.pipeline-scheduler-content {
+  width: $modeless-width;
+  height: $modeless-height;
+  top: $top-panel-height;
+  right: $right-position;
 
-      .pipeline-scheduler-header {
-        background-color: $modeless-header-bg-color;
-        height: 60px;
-        padding: 0;
-        border-radius: 4px 4px 0 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+  .pipeline-scheduler-body {
+    .schedule-content {
+      width: 100%;
+      margin: 16px 45px 30px 45px;
+      font-size: $regular-font;
+      position: relative;
 
-        .modeless-title {
-          color: $text-color;
-          padding-left: 15px;
-          max-width: 80%;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          overflow: hidden;
-          font-weight: 500;
-          margin: 0 auto 0 0;
-          font-size: 16px;
-          line-height: 20px;
-        }
-
-        .btn .icon-close {
-          color: $text-color;
-          height: 16px;
-          width: 16px;
-        }
+      .separator {
+        margin-right: 5px;
       }
 
-      .pipeline-scheduler-body {
-        display: flex;
+      .schedule-type,
+      .control-label,
+      .schedule-values-container {
+        padding: 0;
+      }
 
-        /* 60px: height of modeless box header */
-        height: calc(100% - 60px);
+      .schedule-type,
+      .control-label {
+        margin-right: 15px;
+      }
 
-        .schedule-content {
-          width: 100%;
-          margin: 16px 45px 30px 45px;
-          font-size: $regular-font;
-          position: relative;
+      fieldset {
+        /* 70px: height from bottom of buttons to horizontal line */
+        height: calc(100% - 70px);
 
-          .separator {
-            margin-right: 5px;
+        .schedule-types {
+          display: flex;
+          align-items: center;
+          height: 30px;
+
+          .schedule-type {
+            cursor: pointer;
+
+            &.schedule-type-basic {
+              display: inline-block;
+              text-align: right;
+            }
           }
 
-          .schedule-type,
-          .control-label,
-          .schedule-values-container {
-            padding: 0;
+          .active {
+            font-weight: bold;
+            text-decoration: underline;
+            pointer-events: none;
+          }
+        }
+
+        .schedule-type-content {
+          border-bottom: 1px solid $border-color;
+
+          /*  30px: height of Basic | Advanced options */
+          height: calc(100% - 30px);
+
+          label {
+            font-weight: initial;
+            margin-bottom: 0;
           }
 
-          .schedule-type,
-          .control-label {
-            margin-right: 15px;
-          }
+          .form-group {
+            display: flex;
+            align-items: center;
+            height: 45px;
+            margin-bottom: 0;
 
-          fieldset {
-            /* 70px: height from bottom of buttons to horizontal line */
-            height: calc(100% - 70px);
-
-            .schedule-types {
-              display: flex;
-              align-items: center;
-              height: 30px;
-
-              .schedule-type {
-                cursor: pointer;
-
-                &.schedule-type-basic {
-                  display: inline-block;
-                  text-align: right;
-                }
-              }
-
-              .active {
-                font-weight: bold;
-                text-decoration: underline;
-                pointer-events: none;
-              }
+            &.invisible {
+              visibility: hidden;
             }
 
-            .schedule-type-content {
-              border-bottom: 1px solid $border-color;
+            &.summary {
+              margin-top: 10px;
+            }
 
-              /*  30px: height of Basic | Advanced options */
-              height: calc(100% - 30px);
+            .control-label {
+              text-align: right;
+            }
 
-              label {
-                font-weight: initial;
-                margin-bottom: 0;
-              }
-
-              .form-group {
+            .schedule-values-container {
+              .schedule-values {
                 display: flex;
                 align-items: center;
-                height: 45px;
-                margin-bottom: 0;
 
-                &.invisible {
-                  visibility: hidden;
-                }
-
-                &.summary {
-                  margin-top: 10px;
-                }
-
-                .control-label {
-                  text-align: right;
-                }
-
-                .schedule-values-container {
-                  .schedule-values {
-                    display: flex;
-                    align-items: center;
-
-                    .day-of-week {
-                      margin-right: 10px;
-                      text-align: center;
-                    }
-                  }
-
-                  .small-dropdown {
-                    width: 30%;
-                    margin-right: 5px;
-                    padding-right: 0;
-                    padding-left: 5px;
-                  }
-                }
-              }
-
-              .schedule-advanced-header {
-                margin-bottom: 20px;
-                padding-top: 10px;
-                padding-left: 20px;
-              }
-
-              .schedule-advanced-values {
-                display: table;
-
-                .schedule-advanced-input {
-                  display: table-cell;
+                .day-of-week {
+                  margin-right: 10px;
                   text-align: center;
                 }
               }
+
+              .small-dropdown {
+                width: 30%;
+                margin-right: 5px;
+                padding-right: 0;
+                padding-left: 5px;
+              }
             }
           }
 
-          .schedule-navigation {
-            position: absolute;
-            bottom: 0;
+          .schedule-advanced-header {
+            margin-bottom: 20px;
+            padding-top: 10px;
+            padding-left: 20px;
+          }
 
-            .schedule-notes {
-              padding-bottom: 7px;
+          .schedule-advanced-values {
+            display: table;
 
-              .note-label {
-                font-weight: bold;
-              }
+            .schedule-advanced-input {
+              display: table-cell;
+              text-align: center;
             }
+          }
+        }
+      }
 
-            .btn {
-              font-size: $regular-font;
+      .schedule-navigation {
+        position: absolute;
+        bottom: 0;
 
-              &.btn-secondary {
-                color: $secondary-btn-color;
-                margin-left: 16px;
+        .schedule-notes {
+          padding-bottom: 7px;
 
-                .icon-spinner {
-                  margin-left: 5px;
-                }
-              }
+          .note-label {
+            font-weight: bold;
+          }
+        }
+
+        .btn {
+          font-size: $regular-font;
+
+          &.btn-secondary {
+            color: $secondary-btn-color;
+            margin-left: 16px;
+
+            .icon-spinner {
+              margin-left: 5px;
             }
           }
         }

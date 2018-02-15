@@ -20,7 +20,10 @@ import PropTypes from 'prop-types';
 import {Observable} from 'rxjs/Observable';
 import {isDescendant} from 'services/helpers';
 import PipelineConfigurationsStore, {TAB_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import ConfigurationsSidePanel from 'components/PipelineConfigurations/ConfigurationsSidePanel';
+import ConfigurationsContent from 'components/PipelineConfigurations/ConfigurationsContent';
 import IconSVG from 'components/IconSVG';
+require('./PipelineConfigurations.scss');
 
 export default class PipelineConfigurations extends Component {
   static propTypes = {
@@ -85,16 +88,16 @@ export default class PipelineConfigurations extends Component {
 
   renderHeader() {
     return (
-      <div className="pipeline-configurations-header">
-        <h3 className="modeless-title">
+      <div className="pipeline-configurations-header modeless-header">
+        <div className="modeless-title">
           Configure
           {
             this.props.pipelineName.length ?
-              ` ${this.props.pipelineName}`
+              ` "${this.props.pipelineName}"`
             :
               null
           }
-        </h3>
+        </div>
         <div className="btn-group">
           <a
             className="btn"
@@ -111,12 +114,25 @@ export default class PipelineConfigurations extends Component {
     return (
       <Provider store={PipelineConfigurationsStore}>
         <div
-          className="pipeline-configurations-content"
+          className="pipeline-configurations-content modeless-container"
           ref={(ref) => this.configModeless = ref}
         >
           {this.renderHeader()}
-          <div className="pipeline-configurations-body">
-            {/* content here */}
+          <div className="pipeline-configurations-body modeless-content">
+            <ConfigurationsSidePanel
+              isDetailView={this.props.isDetailView}
+              isPreview={this.props.isPreview}
+              isBatch={this.props.isBatch}
+              activeTab={this.state.activeTab}
+              onTabChange={this.setActiveTab}
+              showAdvancedTabs={this.state.showAdvancedTabs}
+              toggleAdvancedTabs={this.toggleAdvancedTabs}
+            />
+            <ConfigurationsContent
+              activeTab={this.state.activeTab}
+              isBatch={this.props.isBatch}
+              isDetailView={this.props.isDetailView}
+            />
           </div>
         </div>
       </Provider>
