@@ -28,7 +28,7 @@ CDAP_TAG=${CDAP_TAG:+v4.2.1}
 # The CDAP package version passed to Chef
 CDAP_VERSION=${CDAP_VERSION:-4.2.1-1}
 # The version of Chef to install
-CHEF_VERSION=${CHEF_VERSION:-12.10.24}
+CHEF_VERSION=${CHEF_VERSION:-12.21.31}
 # cdap-site.xml configuration parameters
 EXPLORE_ENABLED='true'
 # Sleep delay before starting services (in seconds)
@@ -102,10 +102,10 @@ __create_tmpdir() { mkdir -p ${__tmpdir}; };
 sudo yum install -y git || die "Failed to install git"
 
 # Install chef
-curl -L https://www.chef.io/chef/install.sh | sudo bash -s -- -v ${CHEF_VERSION} || die "Failed to install chef"
+__create_tmpdir
+curl -L -o ${__tmpdir}/install.sh https://www.chef.io/chef/install.sh && sudo bash ${__tmpdir}/install.sh -v ${CHEF_VERSION} || die "Failed to install chef"
 
 # Clone CDAP repo
-__create_tmpdir
 echo "INFO: Checking out CDAP_BRANCH ${CDAP_BRANCH}"
 git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
 
