@@ -17,10 +17,7 @@
 package co.cask.cdap.proto.ops;
 
 /**
- * Represents the status of a report generation job.
+ *
  */
-public enum ReportStatus {
-  RUNNING,
-  COMPLETED,
-  FAILED
+public class ReportGenerationRequestDeserializer {
 }

@@ -17,10 +17,28 @@
 package co.cask.cdap.proto.ops;
 
 /**
- * Represents the status of a report generation job.
+ * Represents the artifact meta information of a program run.
  */
-public enum ReportStatus {
-  RUNNING,
-  COMPLETED,
-  FAILED
+public class ArtifactMetaInfo {
+  private final String scope;
+  private final String name;
+  private final String version;
+
+  public ArtifactMetaInfo(String scope, String name, String version) {
+    this.scope = scope;
+    this.name = name;
+    this.version = version;
+  }
+
+  public String getScope() {
+    return scope;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getVersion() {
+    return version;
+  }
 }

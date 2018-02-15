@@ -20,20 +20,27 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ops.DashboardPorgramRunRecord;
+import co.cask.cdap.proto.ops.ArtifactMetaInfo;
+import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.proto.ops.DashboardSummaryRecord;
 import co.cask.cdap.proto.ops.DashboardSummaryRequest;
 import co.cask.cdap.proto.ops.ExistingDashboardSummaryRecord;
+import co.cask.cdap.proto.ops.FilterDeserializer;
 import co.cask.cdap.proto.ops.ProgramRunOperationRequest;
+import co.cask.cdap.proto.ops.ProgramRunReport;
+import co.cask.cdap.proto.ops.ProgramRunReportRecord;
+import co.cask.cdap.proto.ops.ReportGenerationInfo;
+import co.cask.cdap.proto.ops.ReportGenerationRequest;
 import co.cask.cdap.proto.ops.ReportGenerationStatus;
-import co.cask.cdap.proto.ops.ReportProgramRunRecord;
-import co.cask.cdap.proto.ops.ReportReadRequest;
+import co.cask.cdap.proto.ops.ReportList;
 import co.cask.cdap.proto.ops.ReportStatus;
+import co.cask.cdap.proto.ops.ReportStatusInfo;
 import co.cask.cdap.proto.ops.ReportSummary;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Singleton;
@@ -50,8 +57,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -62,58 +71,72 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} to handle program run operation dashboard and reports for v3 REST APIs
  */
 @Singleton
-@Path(Constants.Gateway.API_VERSION_3 + "/ops")
+@Path(Constants.Gateway.API_VERSION_3)
 public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ReportGenerationRequest.Filter.class, new FilterDeserializer())
+    .create();
   private static final Type OPERATION_REQUEST_TYPE = new TypeToken<ProgramRunOperationRequest>() { }.getType();
-  private static final Type REPORT_READ_REQUEST_TYPE = new TypeToken<ReportReadRequest>() { }.getType();
+  private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
   private static final Type DASHBOARD_SUMMARY_REQUEST_TYPE = new TypeToken<DashboardSummaryRequest>() { }.getType();
 
+  public static final List<ReportStatusInfo> MOCK_REPORT_STATUS_INFO = ImmutableList.of(
+    new ReportStatusInfo("report0", 1516805200L, ReportStatus.RUNNING),
+    new ReportStatusInfo("report1", 1516805201L, ReportStatus.COMPLETED),
+    new ReportStatusInfo("report2", 1516805202L, ReportStatus.FAILED));
+
+  public static final ReportGenerationRequest MOCK_REPORT_GENERATION_REQUEST =
+    new ReportGenerationRequest(0, 1, ImmutableList.of("namespace", "duration", "user"),
+                                ImmutableList.of(
+                                  new ReportGenerationRequest.Sort("duration",
+                                                                   ReportGenerationRequest.Order.DESCENDING)),
+                                ImmutableList.of(
+                                  new ReportGenerationRequest.RangeFilter<>("duration",
+                                                                            new ReportGenerationRequest.Range<>(null,
+                                                                                                                30L))));
+
+  @GET
+  @Path("/reports")
+  public void getReports(FullHttpRequest request, HttpResponder responder,
+                         @QueryParam("offset") String offsetString,
+                         @QueryParam("limit") String limitString)
+    throws IOException, BadRequestException {
+    int offset = Integer.valueOf(offsetString);
+    int limit = Integer.valueOf(limitString);
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(new ReportList(offset, limit, MOCK_REPORT_STATUS_INFO.size(),
+                                                  MOCK_REPORT_STATUS_INFO)));
+  }
+
   @POST
-  @Path("report/execute")
+  @Path("/reports")
   public void executeReportGeneration(FullHttpRequest request, HttpResponder responder)
     throws IOException, BadRequestException {
-
-    ProgramRunOperationRequest operationRequest = decodeRequestBody(request, OPERATION_REQUEST_TYPE);
+    ReportGenerationRequest reportGenerationRequest = decodeRequestBody(request, REPORT_GENERATION_REQUEST_TYPE);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(new ReportStatus(UUID.randomUUID().toString(), 1517410100L,
-                                                    ReportGenerationStatus.COMPLETED)));
+                       GSON.toJson(ImmutableMap.of("id", UUID.randomUUID().toString())));
   }
 
   @GET
-  @Path("report/{report-id}/status")
+  @Path("/reports/{report-id}")
   public void getReportStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("report-id") String reportId) {
+                              @PathParam("report-id") String reportId,
+                              @QueryParam("share-id") String shareId) {
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(new ReportStatus(reportId, 1517410100L, ReportGenerationStatus.COMPLETED)));
+                       GSON.toJson(new ReportGenerationInfo(1517410100L, ReportGenerationStatus.COMPLETED,
+                                                            MOCK_REPORT_GENERATION_REQUEST)));
   }
 
   @GET
-  @Path("report/{report-id}/summary")
-  public void getReportSummary(HttpRequest request, HttpResponder responder,
-                               @PathParam("report-id") String reportId) {
-    ReportSummary reportSummary = new ReportSummary(ImmutableList.of("default", "ns1", "ns2"), 1516805200, 1517410000,
-                                                    ImmutableMap.of("RealtimePipeline", 20,
-                                                                    "BatchPipeline", 20,
-                                                                    "MapReduce", 20),
-                                                    400, 600, 500, 1516815900, 1516810000,
-                                                    ImmutableList.of(new ReportSummary.ProgramRunOwner("Ajai", 20),
-                                                                     new ReportSummary.ProgramRunOwner("Lea", 20),
-                                                                     new ReportSummary.ProgramRunOwner("Mao", 20)),
-                                                    20, 20, 20);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(reportSummary));
-  }
-
-  @POST
-  @Path("report/{report-id}/read")
-  public void readReport(FullHttpRequest request, HttpResponder responder,
-                         @PathParam("report-id") String reportId,
-                         @QueryParam("offset") String offsetString,
-                         @QueryParam("limit") String limitString) throws IOException, BadRequestException {
-    long start = (offsetString == null || offsetString.isEmpty()) ? 0 : Long.parseLong(offsetString);
+  @Path("reports/{report-id}/runs")
+  public void getReportRuns(FullHttpRequest request, HttpResponder responder,
+                            @PathParam("report-id") String reportId,
+                            @QueryParam("offset") String offsetString,
+                            @QueryParam("limit") String limitString,
+                            @QueryParam("share-id") String shareId) throws IOException, BadRequestException {
+    long offset = (offsetString == null || offsetString.isEmpty()) ? 0 : Long.parseLong(offsetString);
     long limit = (limitString == null || limitString.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(limitString);
-    ReportReadRequest reportReadRequest = decodeRequestBody(request, REPORT_READ_REQUEST_TYPE);
-    List<ReportProgramRunRecord> report = new ArrayList<>();
+    List<ProgramRunReportRecord> runs = new ArrayList<>();
     String[] namespaces = {"default", "ns1", "ns2"};
     String[] types = {"RealtimePipeline", "BatchPipeline", "MapReduce"};
     String[] users = {"Ajai", "Lea", "Mao"};
@@ -125,16 +148,81 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
       int m = i % 3;
       long startTs = 1516810000 + i * 100;
       long endTs = startTs + durations[m];
-      report.add(new ReportProgramRunRecord(namespaces[m], types[m] + Integer.toString(i / 3), types[m], statuses[m],
-                                            startTs, endTs, durations[m], users[m], startMethods[m],
-                                            Collections.EMPTY_MAP, 50, 200, 100, 2, 10, 5, 1, 5, 3, 2, 4, 6));
+      runs.add(new ProgramRunReportRecord(namespaces[m], new ArtifactMetaInfo("USER", "CustomApp", "v1"),
+                                          new ProgramRunReportRecord.ApplicationMetaInfo("CustomApp", "v1"), types[m],
+                                          statuses[m], startTs, endTs, durations[m], users[m], startMethods[m],
+                                          Collections.EMPTY_MAP, 50, 200, 100, 2, 10, 5, 1, 5, 3, 2, 4, 6));
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(report));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new ProgramRunReport(offset, limit, 10000, runs)));
+  }
+
+  @GET
+  @Path("/reports/{report-id}/summary")
+  public void getReportSummary(HttpRequest request, HttpResponder responder,
+                               @PathParam("report-id") String reportId,
+                               @QueryParam("share-id") String shareId) {
+    ReportSummary reportSummary =
+      new ReportSummary(ImmutableList.of("default", "ns1", "ns2"), 1516805200, 1517410000,
+                        ImmutableList.of(new ReportSummary.ProgramRunArtifact("SYSTEM", "RealtimePipeline", "v1", 20),
+                                         new ReportSummary.ProgramRunArtifact("SYSTEM", "BatchPipeline", "v1", 20),
+                                         new ReportSummary.ProgramRunArtifact("USER", "CustomApp", "v1", 20)),
+                        new ReportSummary.DurationStats(400, 600, 500),
+                        new ReportSummary.StartStats(1516815900, 1516810000),
+                        ImmutableList.of(new ReportSummary.ProgramRunOwner("Ajai", 20),
+                                         new ReportSummary.ProgramRunOwner("Lea", 20),
+                                         new ReportSummary.ProgramRunOwner("Mao", 20)),
+                        ImmutableList.of(new ReportSummary.ProgramRunStartMethod("MANUAL", 20),
+                                         new ReportSummary.ProgramRunStartMethod("TIME", 20),
+                                         new ReportSummary.ProgramRunStartMethod("PROGRAM_STATUS", 20)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(reportSummary));
+  }
+
+  @DELETE
+  @Path("/reports/{report-id}")
+  public void deleteReport(HttpRequest request, HttpResponder responder,
+                           @PathParam("report-id") String reportId) {
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
-  @Path("dashboard/summary")
-  public void readDashboardSummary(FullHttpRequest request, HttpResponder responder)
+  @Path("/reports/{report-id}/shareid")
+  public void shareReport(HttpRequest request, HttpResponder responder,
+                          @PathParam("report-id") String reportId) {
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(ImmutableMap.of("shareid", UUID.randomUUID().toString())));
+  }
+
+  @GET
+  @Path("/dashboard")
+  public void readDashboardDetail(FullHttpRequest request, HttpResponder responder,
+                                  @QueryParam("start") String start,
+                                  @QueryParam("duration") String duration,
+                                  @QueryParam("namespace") Set<String> namespaces)
+    throws IOException, BadRequestException {
+    ProgramRunOperationRequest dashboardRequest = decodeRequestBody(request, OPERATION_REQUEST_TYPE);
+    List<DashboardProgramRunRecord> dashboardDetails = new ArrayList<>();
+    String[] namespaceArray = new String[namespaces.size()];
+    namespaces.toArray(namespaceArray);
+    String[] types = {"RealtimePipeline", "BatchPipeline", "MapReduce"};
+    String[] users = {"Ajai", "Lea", "Mao"};
+    String[] startMethods = {"Manual", "Scheduled", "Triggered"};
+
+    ProgramRunStatus[] statuses = {ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.RUNNING};
+    int[] durations = {400, 500, -1};
+    for (int i = 0; i < 60; i++) {
+      int m = i % 3;
+      dashboardDetails.add(
+        new DashboardProgramRunRecord(namespaceArray[i % namespaceArray.length],
+                                      new ArtifactMetaInfo("USER", "CustomApp", "v1"),
+                                      types[m] + Integer.toString(i / 3), types[m], durations[m],
+                                      users[m], startMethods[m], statuses[m]));
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(dashboardDetails));
+  }
+
+//  @POST
+//  @Path("/dashboard/summary")
+  private void readDashboardSummary(FullHttpRequest request, HttpResponder responder)
     throws IOException, BadRequestException {
 
     DashboardSummaryRequest dashboardRequest = decodeRequestBody(request, DASHBOARD_SUMMARY_REQUEST_TYPE);
@@ -168,28 +256,6 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(dashboardSummary));
-  }
-
-  @POST
-  @Path("dashboard/detail")
-  public void readDashboardDetail(FullHttpRequest request, HttpResponder responder)
-    throws IOException, BadRequestException {
-    ProgramRunOperationRequest dashboardRequest = decodeRequestBody(request, OPERATION_REQUEST_TYPE);
-    List<DashboardPorgramRunRecord> dashboardDetails = new ArrayList<>();
-    String[] namespaces = {"ns1", "ns2"};
-    String[] types = {"RealtimePipeline", "BatchPipeline", "MapReduce"};
-    String[] users = {"Ajai", "Lea", "Mao"};
-    String[] startMethods = {"Manual", "Scheduled", "Triggered"};
-
-    ProgramRunStatus[] statuses = {ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.RUNNING};
-    int[] durations = {400, 500, -1};
-    for (int i = 0; i < 60; i++) {
-      int m = i % 3;
-      dashboardDetails.add(new DashboardPorgramRunRecord(namespaces[i % 2], types[m] + Integer.toString(i / 3),
-                                                         types[m], durations[m], users[m], startMethods[m],
-                                                         statuses[m]));
-    }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(dashboardDetails));
   }
 
   private static <T> T decodeRequestBody(FullHttpRequest request, Type type) throws IOException, BadRequestException {
