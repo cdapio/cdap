@@ -96,6 +96,9 @@ public enum ReportFieldType {
     return FIELD_NAME_MAP.get(fieldName);
   }
 
+  /**
+   * Type of the filter.
+   */
   public enum FilterType {
     VALUE,
     RANGE
