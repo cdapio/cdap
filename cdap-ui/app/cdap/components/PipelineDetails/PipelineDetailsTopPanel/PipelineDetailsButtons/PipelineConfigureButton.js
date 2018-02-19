@@ -19,16 +19,55 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import PipelineConfigurations from 'components/PipelineConfigurations';
+import myPreferenceApi from 'api/preference';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+
+const getPrefsRelevantToMacros = (resolvedPrefs = {}, macrosMap = {}) => {
+  let relevantPrefs = {};
+  for (let pref in resolvedPrefs) {
+    if (resolvedPrefs.hasOwnProperty(pref) && macrosMap.hasOwnProperty(pref)) {
+      relevantPrefs[pref] = resolvedPrefs[pref];
+    }
+  }
+  return relevantPrefs;
+};
 
 export default class PipelineConfigureButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
-    config: PropTypes.object
+    config: PropTypes.object,
+    macrosMap: PropTypes.array,
+    runtimeArgs: PropTypes.array
   };
 
   state = {
     showModeless: false
+  };
+
+  getRuntimeArgumentsAndToggleModeless = () => {
+    if (Object.keys(this.props.macrosMap).length !== 0) {
+      myPreferenceApi
+        .getAppPreferencesResolved({
+          namespace: getCurrentNamespace(),
+          appId: this.props.pipelineName
+        })
+        .subscribe(res => {
+          let relevantPrefs = getPrefsRelevantToMacros(res, this.props.macrosMap);
+          let resolvedMacros = {...this.props.macrosMap, ...relevantPrefs};
+
+          PipelineConfigurationsStore.dispatch({
+            type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
+            payload: { resolvedMacros }
+          });
+          this.toggleModeless();
+        }, (err) => {
+          console.log(err);
+        });
+    } else {
+      this.toggleModeless();
+    }
   };
 
   toggleModeless = () => {
@@ -40,7 +79,7 @@ export default class PipelineConfigureButton extends Component {
   renderConfigureButton() {
     return (
       <div
-        onClick={this.toggleModeless}
+        onClick={this.getRuntimeArgumentsAndToggleModeless}
         className={classnames("btn pipeline-configure-btn", {"btn-select" : this.state.showModeless})}
       >
         <div className="btn-container">

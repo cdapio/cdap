@@ -54,9 +54,12 @@ angular.module(PKG.name + '.feature.hydrator')
       }
 
       let latestRun = pipelineDetailStoreState.currentRun;
-      let latestRunId = latestRun.runid;
+      if (!latestRun || !latestRun.runid) {
+        return;
+      }
 
-      if (!latestRunId || currentRunId === latestRunId) {
+      let latestRunId = latestRun.runid;
+      if (currentRunId === latestRunId) {
         return;
       }
 

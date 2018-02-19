@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
+import RuntimeArgsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent';
 import PipelineConfigTabContent from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent';
 import EngineConfigTabContent from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent';
 import ResourcesTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent';
@@ -26,6 +27,9 @@ require('./ConfigurationsContent.scss');
 export default function ConfigurationsContent({isBatch, activeTab, isDetailView}) {
   let ContentToShow;
   switch (activeTab) {
+    case TAB_OPTIONS.RUNTIME_ARGS:
+      ContentToShow = RuntimeArgsTabContent;
+      break;
     case TAB_OPTIONS.PIPELINE_CONFIG:
       ContentToShow = PipelineConfigTabContent;
       break;

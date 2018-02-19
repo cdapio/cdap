@@ -30,9 +30,13 @@ import {createStore} from 'redux';
 import {GLOBALS, HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
 import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
+import shortid from 'shortid';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
+  SET_RUNTIME_ARGS: 'SET_RUNTIME_ARGS',
+  SET_RESOLVED_MACROS: 'SET_RESOLVED_MACROS',
+  RESET_RUNTIME_ARG_TO_RESOLVED_VALUE: 'RESET_RUNTIME_ARG_TO_RESOLVED_VALUE',
   SET_ENGINE: 'SET_ENGINE',
   SET_BATCH_INTERVAL_RANGE: 'SET_BATCH_INTERVAL_RANGE',
   SET_BATCH_INTERVAL_UNIT: 'SET_BATCH_INTERVAL_UNIT',
@@ -80,7 +84,12 @@ const ENGINE_OPTIONS = {
 };
 
 const DEFAULT_CONFIGURE_OPTIONS = {
-  runtimeArgs: [],
+  runtimeArgs: {'pairs': [{
+    key : '',
+    value : '',
+    uniqueId : shortid.generate()
+  }]},
+  resolvedMacros: {},
   customConfigKeyValuePairs: {},
   postRunActions: [],
   properties: {},
@@ -133,6 +142,63 @@ const getEngineDisplayLabel = (engine, isBatch) => {
   return engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ? 'MapReduce' : 'Apache Spark Streaming';
 };
 
+const checkForReset = (runtimeArgs, resolvedMacros) => {
+  let runtimeArgsPairs = runtimeArgs.pairs;
+  runtimeArgsPairs.forEach(runtimeArg => {
+    if (!runtimeArg.notDeletable) {
+      return;
+    }
+    if (runtimeArg.provided) {
+      runtimeArg.showReset = false;
+    } else {
+      let runtimeArgKey = runtimeArg.key;
+      if (resolvedMacros.hasOwnProperty(runtimeArgKey)) {
+        if (resolvedMacros[runtimeArgKey] !== runtimeArg.value) {
+          runtimeArg.showReset = true;
+        } else {
+          runtimeArg.showReset = false;
+        }
+      }
+    }
+  });
+  return runtimeArgs;
+};
+
+const resetRuntimeArgToResolvedValue = (index, runtimeArgs, resolvedMacros) => {
+  let runtimeArgKey = runtimeArgs.pairs[index].key;
+  runtimeArgs.pairs[index].value = resolvedMacros[runtimeArgKey];
+  return runtimeArgs;
+};
+
+const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
+  let providedMacros = {};
+
+  // holds provided macros in an object here even though we don't need the value,
+  // because object hash is faster than Array.indexOf
+  if (currentRuntimeArgs.pairs) {
+    currentRuntimeArgs.pairs.forEach((currentPair) => {
+      let key = currentPair.key;
+      if (currentPair.notDeletable && currentPair.provided) {
+        providedMacros[key] = currentPair.value;
+      }
+    });
+    currentRuntimeArgs.pairs = currentRuntimeArgs.pairs.filter(keyValuePair => {
+      return Object.keys(macrosMap).indexOf(keyValuePair.key) === -1;
+    });
+  }
+  let macros = Object.keys(macrosMap).map(macroKey => {
+    return {
+      key: macroKey,
+      value: macrosMap[macroKey],
+      uniqueId: 'id-' + shortid.generate(),
+      notDeletable: true,
+      provided: providedMacros.hasOwnProperty(macroKey)
+    };
+  });
+  currentRuntimeArgs.pairs = macros.concat(currentRuntimeArgs.pairs);
+  return currentRuntimeArgs;
+};
+
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.INITIALIZE_CONFIG:
@@ -140,6 +206,26 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         ...action.payload,
         customConfigKeyValuePairs: getCustomConfigForDisplay(action.payload.properties, action.payload.engine)
+      };
+    case ACTIONS.SET_RUNTIME_ARGS:
+      return {
+        ...state,
+        runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros)
+      };
+    case ACTIONS.SET_RESOLVED_MACROS: {
+      let resolvedMacros = action.payload.resolvedMacros;
+      let runtimeArgs = getRuntimeArgsForDisplay(state.runtimeArgs, resolvedMacros);
+
+      return {
+        ...state,
+        resolvedMacros,
+        runtimeArgs
+      };
+    }
+    case ACTIONS.RESET_RUNTIME_ARG_TO_RESOLVED_VALUE:
+      return {
+        ...state,
+        runtimeArgs: resetRuntimeArgToResolvedValue(action.payload.index, {...state.runtimeArgs}, state.resolvedMacros)
       };
     case ACTIONS.SET_ENGINE:
       return {
