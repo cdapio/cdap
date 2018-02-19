@@ -18,6 +18,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {BATCH_INTERVAL_RANGE, BATCH_INTERVAL_UNITS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const mapStateToSelectBatchIntervalRangeProps = (state) => {
   return {
@@ -32,6 +33,7 @@ const mapDispatchToSelectBatchIntervalRangeProps = (dispatch) => {
         type: PipelineConfigurationsActions.SET_BATCH_INTERVAL_RANGE,
         payload: { batchIntervalRange: e.target.value }
       });
+      updatePipelineEditStatus();
     }
   };
 };

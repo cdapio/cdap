@@ -21,6 +21,7 @@ import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const mapStateToStageLoggingProps = (state) => {
   return {
@@ -34,6 +35,7 @@ const mapDispatchToStageLoggingProps = (dispatch) => {
         type: PipelineConfigurationsActions.SET_STAGE_LOGGING,
         payload: { stageLogging: value }
       });
+      updatePipelineEditStatus();
     }
   };
 };

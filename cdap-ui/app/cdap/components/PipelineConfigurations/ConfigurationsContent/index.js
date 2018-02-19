@@ -17,15 +17,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
+import RuntimeArgsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent';
 import PipelineConfigTabContent from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent';
 import EngineConfigTabContent from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent';
 import ResourcesTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent';
+import AlertsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/AlertsTabContent';
+import ConfigurationsActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons';
 import classnames from 'classnames';
 require('./ConfigurationsContent.scss');
 
-export default function ConfigurationsContent({isBatch, activeTab, isDetailView}) {
+export default function ConfigurationsContent({isBatch, activeTab, isDetailView, onClose}) {
   let ContentToShow;
   switch (activeTab) {
+    case TAB_OPTIONS.RUNTIME_ARGS:
+      ContentToShow = RuntimeArgsTabContent;
+      break;
     case TAB_OPTIONS.PIPELINE_CONFIG:
       ContentToShow = PipelineConfigTabContent;
       break;
@@ -35,9 +41,9 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
     case TAB_OPTIONS.RESOURCES:
       ContentToShow = ResourcesTabContent;
       break;
-    default:
-      // Other tabs will just be empty for now
-      ContentToShow = 'div';
+    case TAB_OPTIONS.ALERTS:
+      ContentToShow = AlertsTabContent;
+      break;
   }
   return (
     <div
@@ -50,6 +56,10 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
         isBatch={isBatch}
         isDetailView={isDetailView}
       />
+      <ConfigurationsActionButtons
+        onClose={onClose}
+        activeTab={activeTab}
+      />
     </div>
   );
 }
@@ -57,5 +67,6 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
 ConfigurationsContent.propTypes = {
   isBatch: PropTypes.bool,
   activeTab: PropTypes.string,
-  isDetailView: PropTypes.bool
+  isDetailView: PropTypes.bool,
+  onClose: PropTypes.func
 };

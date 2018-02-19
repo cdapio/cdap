@@ -1361,10 +1361,14 @@ features:
   Pagination:
     dropdown-label: Page
   PipelineConfigurations:
+    ActionButtons:
+      runtimeArgsCount:
+        1: "{context} runtime argument"
+        _: "{context} runtime arguments"
     EngineConfig:
       customConfigCount:
-        1: "custom config"
-        _: "custom configs"
+        1: "{context} custom config"
+        _: "{context} custom configs"
   PipelineSummary:
     filterContainer:
       view: View

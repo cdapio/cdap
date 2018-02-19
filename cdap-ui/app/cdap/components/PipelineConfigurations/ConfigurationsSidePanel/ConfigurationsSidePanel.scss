@@ -55,6 +55,8 @@ $text-color: $grey-01;
       &.toggle-advanced-options {
         padding-left: 0;
 
+        .fa-caret-right,
+        .fa-caret-down,
         .icon-caret-right,
         .icon-caret-down {
           height: 14px;

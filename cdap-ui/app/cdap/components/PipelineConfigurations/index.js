@@ -60,7 +60,7 @@ export default class PipelineConfigurations extends Component {
 
     this.documentClick$ = Observable.fromEvent(document, 'click')
     .subscribe((e) => {
-      if (!this.configModeless || isDescendant(this.configModeless, e.target)) {
+      if (!this.configModeless || isDescendant(this.configModeless, e.target) || document.getElementsByClassName('post-run-actions-modal').length > 0) {
         return;
       }
 
@@ -132,6 +132,7 @@ export default class PipelineConfigurations extends Component {
               activeTab={this.state.activeTab}
               isBatch={this.props.isBatch}
               isDetailView={this.props.isDetailView}
+              onClose={this.props.onClose}
             />
           </div>
         </div>

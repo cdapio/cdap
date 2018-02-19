@@ -48,6 +48,8 @@ var PipelineDetailStore = require('../cdap/components/PipelineDetails/store').de
 var PipelineDetailActionCreator = require('../cdap/components/PipelineDetails/store/ActionCreator');
 var PipelineDetailsTopPanel = require('../cdap/components/PipelineDetails/PipelineDetailsTopPanel').default;
 var PipelineScheduler = require('../cdap/components/PipelineScheduler').default;
+var AvailablePluginsStore = require('../cdap/services/AvailablePluginsStore').default;
+var AVAILABLE_PLUGINS_ACTIONS = require('../cdap/services/AvailablePluginsStore').AVAILABLE_PLUGINS_ACTIONS;
 
 export {
   Store,
@@ -81,5 +83,7 @@ export {
   PipelineDetailStore,
   PipelineDetailActionCreator,
   PipelineDetailsTopPanel,
-  PipelineScheduler
+  PipelineScheduler,
+  AvailablePluginsStore,
+  AVAILABLE_PLUGINS_ACTIONS
 };

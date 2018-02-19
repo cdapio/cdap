@@ -91,7 +91,9 @@ export default class KeyValuePairs extends Component {
     });
     this.subscription = KeyValueStore.subscribe(() => {
       this.setState(KeyValueStore.getState().keyValues);
-      onKeyValueChange(KeyValueStore.getState().keyValues);
+      if (typeof onKeyValueChange === 'function') {
+        onKeyValueChange(KeyValueStore.getState().keyValues);
+      }
     });
   }
 
@@ -124,6 +126,7 @@ export default class KeyValuePairs extends Component {
                   getResettedKeyValue={this.props.getResettedKeyValue}
                   keyPlaceholder={this.props.keyPlaceholder}
                   valuePlaceholder={this.props.valuePlaceholder}
+                  disabled={this.props.disabled}
                 />
               </Provider>
             </div>
@@ -149,5 +152,6 @@ KeyValuePairs.propTypes = {
   onKeyValueChange: PropTypes.func,
   getResettedKeyValue: PropTypes.func,
   keyPlaceholder: PropTypes.string,
-  valuePlaceholder: PropTypes.string
+  valuePlaceholder: PropTypes.string,
+  disabled: PropTypes.bool
 };
