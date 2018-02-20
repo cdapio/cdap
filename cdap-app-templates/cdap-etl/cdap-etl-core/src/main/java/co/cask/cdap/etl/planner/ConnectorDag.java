@@ -102,7 +102,7 @@ public class ConnectorDag extends Dag {
 
     /*
         Find sections of the dag where a source is writing to both a sink and a reduce node
-        or to multiple reduce nodes. a connector counts as both a source and a sink.
+        or to multiple reduce nodes. A connector counts as both a source and a sink.
 
         for example, if a source is writing to both a sink and a reduce:
 
@@ -275,6 +275,39 @@ public class ConnectorDag extends Dag {
       }
     }
 
+    /*
+        Find sinks that have at multiple reduce nodes as parents, or at least one reduce node and one source
+        as parents. Connectors count as sources. We need to insert a connector in front of those sinks
+        to ensure that a sink is never placed in multiple subdags when split. For example:
+
+                   |--> reduce1 --|
+          source --|              |--> sink
+                   |--> reduce2 --|
+
+        Will currently be broken down to:
+
+                   |--> reduce1.connector    reduce1.connector --> reduce1 --> sink
+          source --|
+                   |--> reduce2.connector    reduce2.connector --> reduce2 --> sink
+
+        This would make the sink in two different subdags so we insert a connector in front of the sink to make it:
+
+                   |--> reduce1.connector    reduce1.connector --> reduce1 --> sink.connector
+          source --|                                                                             sink.connector --> sink
+                   |--> reduce2.connector    reduce2.connector --> reduce2 --> sink.connector
+     */
+    for (String sink : sinks) {
+      Set<String> sourcesAndReduceNodes = Sets.union(connectors.keySet(), Sets.union(sources, reduceNodes));
+      Set<String> parents = parentsOf(sink, sourcesAndReduceNodes);
+
+      Set<String> parentSources = Sets.intersection(sourcesAndReduceNodes, parents);
+      Set<String> reduceParents = Sets.intersection(parentSources, reduceNodes);
+      // at least one reduce parent and at least two sources
+      if (reduceParents.size() > 0 && parentSources.size() > 1) {
+        addConnectorInFrontOf(sink, addedAlready);
+      }
+    }
+
     return addedAlready;
   }
 
@@ -368,12 +401,15 @@ public class ConnectorDag extends Dag {
     Set<String> possibleNewSinks = Sets.union(sinks, connectors.keySet());
     for (String reduceNode : reduceNodes) {
       Dag subdag = subsetAround(reduceNode, possibleNewSources, possibleNewSinks);
-      remainingNodes.removeAll(subdag.getNodes());
+      // remove all non-connector sinks from remaining nodes.
+      // connectors will be a source in one subdag and a sink in another subdag,
+      // so they will all eventually be removed as a source, or will end up in remainingSources down below
+      Set<String> subdagConnectorSinks = Sets.intersection(subdag.getSinks(), connectors.keySet());
+      remainingNodes.removeAll(Sets.difference(subdag.getNodes(), subdagConnectorSinks));
       dags.add(subdag);
     }
 
     Set<String> remainingSources = new TreeSet<>(Sets.intersection(remainingNodes, possibleNewSources));
-    Set<String> processedNodes = new HashSet<>();
 
     /* Since there can be remaining sources from subdags which don't overlap, they should be split as seperate subdags.
      For example:
@@ -398,40 +434,49 @@ public class ConnectorDag extends Dag {
 
     // For that, we first create all the subdags from remaining sources and keep track of accessible nodes for those
     // subdags. source -> [ nodes accessible by the source ]
-    Map<String, Set<String>> nodesAccessibleBySources = new HashMap<>();
+    Map<String, Dag> remainingDags = new HashMap<>();
     for (String remainingSource : remainingSources) {
-      Dag remainingNodesDag = subsetFrom(remainingSource, possibleNewSinks);
-      nodesAccessibleBySources.put(remainingSource, remainingNodesDag.getNodes());
+      remainingDags.put(remainingSource, subsetFrom(remainingSource, possibleNewSinks));
     }
 
     // Then we merge overlapping subdags.
+    Set<String> processedSources = new HashSet<>();
     for (String remainingSource : remainingSources) {
       // Skip remainingSource if it has already been added to a dag.
-      if (!processedNodes.add(remainingSource)) {
+      if (!processedSources.add(remainingSource)) {
         continue;
       }
 
-      // Create a dag that contains all nodes accessible from the current source
-      Set<String> subdag = new HashSet<>(nodesAccessibleBySources.get(remainingSource));
+      Dag subdag = remainingDags.get(remainingSource);
+      // Don't count the sources when looking for subdag overlap.
+      // This is to prevent a subdag with a connector as a sink
+      // and another subdag with that same connector as a source from getting merged
+      Set<String> subdagNodes = new HashSet<>(subdag.getNodes());
+      Set<String> nonSourceNodes = Sets.difference(subdagNodes, subdag.getSources());
       // go through all the other remaining sources and see if there is a path from them to our current dag
-      Set<String> otherSources = Sets.difference(remainingSources, processedNodes);
+      Set<String> otherSources = Sets.difference(remainingSources, processedSources);
       // keep looping until no new nodes were added to the subdag.
       boolean nodesAdded;
       do {
         nodesAdded = false;
         for (String otherSource : otherSources) {
-          Set<String> otherAccessibleNodes = nodesAccessibleBySources.get(otherSource);
+          Dag otherSubdag = remainingDags.get(otherSource);
           // If there is a path from the other source to our current dag, add those nodes to our current dag
-          if (!Sets.intersection(subdag, otherAccessibleNodes).isEmpty()) {
-            if (subdag.addAll(otherAccessibleNodes)) {
+          Set<String> otherNonSourceNodes = Sets.difference(otherSubdag.getNodes(), otherSubdag.getSources());
+          // Don't count the sources when looking for subdag overlap.
+          // This is to prevent a subdag with a connector as a sink
+          // and another subdag with that same connector as a source from getting merged
+          if (!Sets.intersection(nonSourceNodes, otherNonSourceNodes).isEmpty()) {
+            if (subdagNodes.addAll(otherSubdag.getNodes())) {
               nodesAdded = true;
             }
           }
         }
       } while (nodesAdded);
-      dags.add(createSubDag(subdag));
+      Dag mergedSubdag = createSubDag(subdagNodes);
+      dags.add(mergedSubdag);
       // keep track of processed nodes
-      processedNodes.addAll(subdag);
+      processedSources.addAll(mergedSubdag.getSources());
     }
     return dags;
   }
