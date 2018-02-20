@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,34 +12,31 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-@import "../../../styles/variables.scss";
+@import "../../styles/variables.scss";
 
-.dataprep-error-alert-container {
-  position: absolute;
-  top: 50px;
-  left: 0;
-  width: 100%;
-  background-color: $alert-danger-bg;
-  color: white;
-  padding: 7px 10px;
-  z-index: 999;
-
-  .error-content,
-  .close-icon {
-    display: inline-block;
+.collapsable-wrapper {
+  display: inline-block;
+  max-width: 100%;
+  .popper {
+    text-align: left;
+    width: auto;
   }
-
-  .error-content { width: calc(100% - 35px); }
-
-  .close-icon {
-    width: 35px;
-    text-align: right;
-    font-size: 16px;
-    line-height: 16px;
+  .view-popover-wrapper {
+    display: inline-block;
     vertical-align: top;
-
-    .fa.fa-times { cursor: pointer; }
+    margin: 0 3px;
+  }
+  .view-wrapper {
+    color: $blue-03;
+    cursor: pointer;
+  }
+  .with-view-link {
+    width: calc(100% - 50px);
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    text-overflow: ellipsis;
   }
 }

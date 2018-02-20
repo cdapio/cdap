@@ -17,6 +17,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import VegaLiteChart from 'components/VegaLiteChart';
+import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 var chartSpec = {
   "data": {
@@ -61,12 +62,21 @@ export default function MetricChartWithLegend({xAxisTitle, values, height, width
     width
   };
   xAxisTitle ? spec.encoding.x.axis.title = xAxisTitle : delete spec.encoding.x.axis.title;
+  if (!values.length) {
+    return (
+      <EmptyMetricMessage
+        mainMessage={`${xAxisTitle} Distribution Unavailable`}
+        popoverMessage={`Atleast one model has to be trained to get ${xAxisTitle} distribution`}
+      />
+    );
+  }
   return (
     <VegaLiteChart
       spec={spec}
       data={values}
       widthOffset={280}
       heightOffset={30}
+      className="metric-chart-with-legend"
     />
   );
 }

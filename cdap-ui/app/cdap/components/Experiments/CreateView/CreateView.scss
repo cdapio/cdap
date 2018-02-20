@@ -41,6 +41,9 @@
   .dataprephome-wrapper {
     height: calc(100vh - 154px); // header + footer + workspace tab
     .dataprep-container {
+      .dataprep-error-alert-container {
+        top: 0;
+      }
       .dataprep-body {
         height: calc(100% - 50px);
       }
@@ -49,8 +52,11 @@
         .top-section-content {
           .top-panel {
             .action-buttons {
-              .more-dropdown.dropdown {
-                display: none;
+              z-index: 998;
+              .more-dropdown {
+                .popper {
+                  margin-right: 0;
+                }
               }
               .dataprep-plus-button {
                 display: none;
@@ -69,7 +75,7 @@
     position: absolute;
     right: 80px;
     top: 59px;
-    z-index: 1000;
+    z-index: 999;
     > .btn.btn-primary {
       padding-right: 30px;
       padding-left: 30px;

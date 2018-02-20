@@ -20,6 +20,8 @@ import { Provider } from 'react-redux';
 import experimentDetailStore, {DEFAULT_EXPERIMENT_DETAILS} from 'components/Experiments/store/experimentDetailStore';
 import {
   getExperimentDetails,
+  getModelsInExperiment,
+  getModelStatus,
   updatePaginationForModels,
   handleModelsPageChange,
   resetExperimentDetailStore,
@@ -41,6 +43,8 @@ export default class ExperimentDetails extends Component {
     location: PropTypes.object
   };
 
+  modelStatusObservables = [];
+
   componentWillMount() {
     Mousetrap.bind('right', this.goToNextPage);
     Mousetrap.bind('left', this.goToPreviousPage);
@@ -49,12 +53,18 @@ export default class ExperimentDetails extends Component {
     let { offset: modelsOffset, limit: modelsLimit } = this.getQueryObject(queryString.parse(this.props.location.search));
     updatePaginationForModels({modelsOffset, modelsLimit});
     getExperimentDetails(experimentId);
+    getModelsInExperiment(experimentId).subscribe(({models}) => {
+      models.forEach(model => this.modelStatusObservables.push(getModelStatus(experimentId, model.id)));
+    });
   }
 
   componentWillUnmount() {
     Mousetrap.unbind('left');
     Mousetrap.unbind('right');
     resetExperimentDetailStore();
+    if (this.modelStatusObservables.length) {
+      this.modelStatusObservables.forEach(statusObservable$ => statusObservable$.unsubscribe());
+    }
   }
 
   showNewlyTrainingModel = () => {

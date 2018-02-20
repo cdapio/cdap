@@ -19,11 +19,11 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {FormGroup, Label, Col, Input, Row} from 'reactstrap';
 import {
-  setVisiblePopover,
   onModelNameChange,
   onModelDescriptionChange,
   createModel
 } from 'components/Experiments/store/CreateExperimentActionCreator';
+import {POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
 
 const ModelName = ({modelName, onModelNameChange}) => {
   return (
@@ -80,7 +80,7 @@ CreateModelBtn.propTypes = {
   createModel: PropTypes.func
 };
 
-const ExperimentMetadata = ({experimentOutcome, experimentDescription, setVisiblePopover}) => {
+const ExperimentMetadata = ({experimentOutcome, experimentDescription}) => {
   return (
     <div className="experiment-metadata-popover">
       <Col xs="12">
@@ -92,34 +92,27 @@ const ExperimentMetadata = ({experimentOutcome, experimentDescription, setVisibl
           <Col xs="6">Description:</Col>
           <Col xs="6">{experimentDescription}</Col>
         </Row>
-        <div
-          className="btn-link"
-          onClick={setVisiblePopover.bind(null, 'experiment')}
-        >
-          Edit
-        </div>
       </Col>
     </div>
   );
 };
 ExperimentMetadata.propTypes = {
   experimentOutcome: PropTypes.string,
-  experimentDescription: PropTypes.string,
-  setVisiblePopover: PropTypes.func
+  experimentDescription: PropTypes.string
 };
 
 const NewModelPopoverWrapper = ({popover, experimentName}) => {
-  if (popover !== 'model') {
+  if (popover !== POPOVER_TYPES.MODEL) {
     return null;
   }
   return (
     <div className="new-model-popover">
       <FormGroup row>
         <Col xs="12">
-          <Label className="control-label"> Select where you want to add this model </Label>
+          <Label className="control-label"> Create model under the experiment </Label>
         </Col>
         <Col xs="12">
-          <Input value={experimentName} />
+          <Input disabled value={experimentName} />
         </Col>
         <ConnectedExperimentMetadata />
       </FormGroup>
@@ -145,7 +138,6 @@ const mapStateToExperimentMetadataProps = (state) => ({
   experimentOutcome: state.experiments_create.outcome,
   experimentDescription: state.experiments_create.description
 });
-const mapDispatchToExperimentMetadataProps = () => ({ setVisiblePopover });
 const mapNMPWStateToProps = (state) => ({
   popover: state.experiments_create.popover,
   experimentName: state.experiments_create.name
@@ -154,7 +146,7 @@ const mapNMPWStateToProps = (state) => ({
 const ConnectedModelName = connect(mapStateToModelNameProps, mapDispatchToModelNameProps)(ModelName);
 const ConnectedModelDescription = connect(mapStateToModelDescriptionProps, mapDispatchToModelDescriptionProps)(ModelDescription);
 const ConnectedCreateModelBtn = connect(mapStateToCreateModelBtnProps, mapDispatchToCreateModelBtnProps)(CreateModelBtn);
-const ConnectedExperimentMetadata = connect(mapStateToExperimentMetadataProps, mapDispatchToExperimentMetadataProps)(ExperimentMetadata);
+const ConnectedExperimentMetadata = connect(mapStateToExperimentMetadataProps)(ExperimentMetadata);
 const ConnectedNewModelPopoverWrapper = connect(mapNMPWStateToProps)(NewModelPopoverWrapper);
 
 export default ConnectedNewModelPopoverWrapper;

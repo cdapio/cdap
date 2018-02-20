@@ -33,6 +33,7 @@ export const myExperimentsApi = {
   getSplitStatus: apiCreator(dataSrc, 'GET', 'POLL', `${basePath}/experiments/:experimentId/splits/:splitId/status`),
   getAlgorithms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/algorithms`),
   getModelStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/status`),
+  pollModelStatus: apiCreator(dataSrc, 'GET', 'POLL', `${basePath}/experiments/:experimentId/models/:modelId/status`),
   trainModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/train`),
   getSplitsInExperiment: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/splits`),
 

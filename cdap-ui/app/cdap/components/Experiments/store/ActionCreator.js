@@ -76,8 +76,6 @@ function deleteExperiment(experimentId) {
 }
 
 function getExperimentDetails(experimentId) {
-  getModelsInExperiment(experimentId);
-  getSplitsInExperiment(experimentId);
   myExperimentsApi
     .getExperiment({
       namespace: getCurrentNamespace(),
@@ -100,23 +98,25 @@ function getModelsInExperiment(experimentId) {
     type: EXPERIMENTDETAILACTIONS.SET_LOADING
   });
   let { modelsOffset: offset, modelsLimit: limit } = experimentDetailsStore.getState();
-  myExperimentsApi.getModelsInExperiment({
+  let ModelsObservable$ = myExperimentsApi.getModelsInExperiment({
     namespace: getCurrentNamespace(),
     experimentId,
     offset,
     limit
-  })
-    .subscribe(res => {
-      let models = res.models;
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_MODELS,
-        payload: {
-          models,
-          totalCount: res.totalRowCount
-        }
-      });
-      models.forEach(model => getModelStatus(experimentId, model.id));
+  });
+
+  ModelsObservable$.subscribe(res => {
+    let models = res.models;
+    experimentDetailsStore.dispatch({
+      type: EXPERIMENTDETAILACTIONS.SET_MODELS,
+      payload: {
+        models,
+        totalCount: res.totalRowCount
+      }
     });
+    getSplitsInExperiment(experimentId);
+  });
+  return ModelsObservable$;
 }
 
 function handleModelsPageChange({ selected }) {
@@ -168,8 +168,8 @@ function getSplitsInExperiment(experimentId) {
 }
 
 function getModelStatus(experimentId, modelId) {
-  myExperimentsApi
-    .getModelStatus({
+  return myExperimentsApi
+    .pollModelStatus({
       namespace: getCurrentNamespace(),
       experimentId,
       modelId
@@ -186,6 +186,11 @@ function getModelStatus(experimentId, modelId) {
 }
 
 function setActiveModel(activeModelId) {
+  let state = experimentDetailsStore.getState();
+  let {splitDetails} = state.models.find(model => model.id === activeModelId);
+  if (!splitDetails) {
+    getSplitsInExperiment(state.name);
+  }
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_ACTIVE_MODEL,
     payload: {

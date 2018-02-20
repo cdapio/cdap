@@ -44,13 +44,18 @@ const ACTIONS = {
   RESET: 'RESET'
 };
 
+const POPOVER_TYPES = {
+  EXPERIMENT: 'EXPERIMENT',
+  MODEL: 'MODEL'
+};
+
 const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
   name: '',
   description: '',
   outcome: '',
   srcpath: '',
   loading: false,
-  popover: 'experiment',
+  popover: POPOVER_TYPES.EXPERIMENT,
   isEdit: false,
   workspaceId: null
 };
@@ -115,7 +120,8 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
         ...state,
         name, description, outcome, srcpath, workspaceId,
         isEdit: true,
-        loading: false
+        loading: false,
+        popover: POPOVER_TYPES.MODEL
       };
     }
     case ACTIONS.SET_VISIBLE_POPOVER:
@@ -239,5 +245,5 @@ const createExperimentStore = createStore(
   composeEnhancers('CreateExperimentStore')()
 );
 
-export {ACTIONS};
+export {ACTIONS, POPOVER_TYPES};
 export default createExperimentStore;

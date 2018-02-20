@@ -24,15 +24,16 @@ import {
   onExperimentOutcomeChange,
   createExperiment
 } from 'components/Experiments/store/CreateExperimentActionCreator';
+import {POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
+
 import IconSVG from 'components/IconSVG';
 
-const ExperimentName = ({name, onNameChange, isEdit}) => {
+const ExperimentName = ({name, onNameChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
         <Label className="control-label">Experiment Name</Label>
         <Input
-          disabled={isEdit}
           value={name}
           onChange={onNameChange}
           placeholder="Add a name for this Experiment"
@@ -43,8 +44,7 @@ const ExperimentName = ({name, onNameChange, isEdit}) => {
 };
 ExperimentName.propTypes = {
   name: PropTypes.string,
-  onNameChange: PropTypes.func,
-  isEdit: PropTypes.bool
+  onNameChange: PropTypes.func
 };
 
 const ExperimentDescription = ({description, onDescriptionChange}) => {
@@ -67,13 +67,12 @@ ExperimentDescription.propTypes = {
   onDescriptionChange: PropTypes.func
 };
 
-const ExperimentOutcome = ({outcome, columns, onOutcomeChange, isEdit}) => {
+const ExperimentOutcome = ({outcome, columns, onOutcomeChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
         <Label className="control-label">Set Outcome for this Experiment </Label>
         <Input
-          disabled={isEdit}
           type="select"
           value={outcome}
           onChange={onOutcomeChange}
@@ -92,8 +91,7 @@ const ExperimentOutcome = ({outcome, columns, onOutcomeChange, isEdit}) => {
 ExperimentOutcome.propTypes = {
   outcome: PropTypes.string,
   columns: PropTypes.arrayOf(PropTypes.object),
-  onOutcomeChange: PropTypes.func,
-  isEdit: PropTypes.bool
+  onOutcomeChange: PropTypes.func
 };
 
 const CreateExperimentBtn = ({state, createExperiment}) => {
@@ -104,7 +102,7 @@ const CreateExperimentBtn = ({state, createExperiment}) => {
     if (state.loading) {
       return <IconSVG name="icon-spinner" className="fa-spin" />;
     }
-    return state.isEdit ? 'Edit Experiment' : 'Create Experiment';
+    return 'Create Experiment';
   };
   return (
     <button
@@ -121,8 +119,8 @@ CreateExperimentBtn.propTypes = {
   createExperiment: PropTypes.func
 };
 
-const NewExperimentPopoverWrapper = ({popover}) => {
-  if (popover !== 'experiment') {
+const NewExperimentPopoverWrapper = ({popover, isEdit}) => {
+  if (popover !== POPOVER_TYPES.EXPERIMENT || isEdit) {
     return null;
   }
   return (
@@ -141,17 +139,18 @@ const NewExperimentPopoverWrapper = ({popover}) => {
   );
 };
 NewExperimentPopoverWrapper.propTypes = {
-  popover: PropTypes.string
+  popover: PropTypes.string,
+  isEdit: PropTypes.bool
 };
 const mapDispatchToCreateExperimentBtnProps = () => ({ createExperiment });
 const mapStateToCreateExperimentBtnProps = (state) => ({ state: {...state.experiments_create} });
-const mapStateToNameProps = (state) => ({ name: state.experiments_create.name, isEdit: state.experiments_create.isEdit });
+const mapStateToNameProps = (state) => ({ name: state.experiments_create.name });
 const mapDispatchToNameProps = () => ({ onNameChange: onExperimentNameChange });
 const mapStateToDescriptionProps = (state) => ({ description: state.experiments_create.description });
 const mapDispatchToDescriptionToProps = () => ({ onDescriptionChange: onExperimentDescriptionChange });
-const mapStateToOutcomeProps = (state) => ({ outcome: state.experiments_create.outcome, columns: state.model_create.columns, isEdit: state.experiments_create.isEdit });
+const mapStateToOutcomeProps = (state) => ({ outcome: state.experiments_create.outcome, columns: state.model_create.columns});
 const mapDispatchToOutcomeProps = () => ({onOutcomeChange: onExperimentOutcomeChange});
-const mapNEPWStateToProps = (state) => ({ popover: state.experiments_create.popover });
+const mapNEPWStateToProps = (state) => ({ popover: state.experiments_create.popover, isEdit: state.experiments_create.isEdit });
 
 const ExperiementDescriptionWrapper = connect(mapStateToDescriptionProps, mapDispatchToDescriptionToProps)(ExperimentDescription);
 const ExperimentNameWrapper = connect(mapStateToNameProps, mapDispatchToNameProps)(ExperimentName);

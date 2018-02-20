@@ -17,6 +17,10 @@
 $tooltip_text_color: white;
 $tooltip_bg_color: #000000;
 
+.copyable-id {
+  padding: 0 10px;
+  cursor: pointer;
+}
 .tooltip.copyable-id-tooltip-element {
   .tooltip-inner {
     background-color: $tooltip_bg_color;
@@ -55,6 +59,22 @@ $tooltip_bg_color: #000000;
         border-top: 5px solid transparent;
         border-bottom: 5px solid transparent;
         border-right: 5px solid $tooltip_bg_color;
+      }
+    }
+  }
+  &.copyable-id-tooltip-target-attached-left {
+    .tooltip-inner {
+      margin-right: 11px;
+      &:before {
+        bottom: 0;
+        top: 35%;
+        margin-left: -11px;
+        content: "";
+        border-width: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 5px solid $tooltip_bg_color;
+        left: 100%;
       }
     }
   }

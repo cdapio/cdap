@@ -14,7 +14,7 @@
  * the License.
 */
 
-import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS} from 'components/Experiments/store/createExperimentStore';
+import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS, POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
 import experimentDetailStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -68,7 +68,7 @@ function setDirectives(directives) {
   });
 }
 
-function setVisiblePopover(popover = 'experiment') {
+function setVisiblePopover(popover = POPOVER_TYPES.EXPERIMENT) {
   createExperimentStore.dispatch({
     type: CREATEEXPERIMENTACTIONS.SET_VISIBLE_POPOVER,
     payload: {popover}
@@ -85,7 +85,7 @@ function setExperimentCreated(experimentId) {
   createExperimentStore.dispatch({
     type: CREATEEXPERIMENTACTIONS.SET_VISIBLE_POPOVER,
     payload: {
-      popover: 'model'
+      popover: POPOVER_TYPES.MODEL
     }
   });
 }
@@ -205,7 +205,7 @@ function pollForSplitStatus(experimentId, split) {
         if (status === 'Splitting') {
           return;
         }
-        if (status === 'Complete') {
+        if (status === 'Complete' || status === 'Failed') {
           splitStautsPoll.unsubscribe();
           return callback();
         }
@@ -249,7 +249,11 @@ function createSplitAndUpdateStatus() {
       addSplitToModel(split.id);
       return pollForSplitStatus(experiments_create.name, split);
     })
-    .subscribe(setSplitDetails.bind(null, experiments_create.name));
+    .subscribe(
+      setSplitDetails.bind(null, experiments_create.name),
+      (err) => console.log('Splitting Failed: ', err),
+      () => console.log('Split Task complete ', arguments)
+    );
 }
 
 function createModel() {
@@ -462,7 +466,10 @@ function addSplitToModel(splitId) {
       experimentId: experiments_create.name,
       modelId: model_create.modelId
     }, {id: splitId})
-    .subscribe();
+    .subscribe(
+      () => {},
+      (err) => console.log('Adding split faied: ', err)
+    );
 }
 
 function setSplitFinalized() {

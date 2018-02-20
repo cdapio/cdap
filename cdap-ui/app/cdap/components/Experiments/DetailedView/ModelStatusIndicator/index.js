@@ -17,18 +17,32 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
+import capitalize from 'lodash/capitalize';
+
 require('./ModelStatusIndicator.scss');
 
 const DEFAULT_STATUS_MAP = {
   className: 'text-info',
-  icon: 'icon-circle'
+  icon: 'icon-circle-o'
 };
 
 const STATUS_ICON_MAP = {
-  RUNNING: {
+  TRAINING: {
+    className: 'spin fa-spin',
+    icon: 'icon-spinner'
+  },
+  SPLITTING: {
+    className: 'spin fa-spin',
+    icon: 'icon-spinner'
+  },
+  TRAINED: {
     className: 'text-success',
-    icon: 'icon-circle'
-  }
+    icon: 'icon-circle-o'
+  },
+  TRAINING_FAILED: {
+    className: 'text-danger',
+    icon: 'icon-circle-o'
+  },
 };
 const getIconMap = (status) => status in STATUS_ICON_MAP ? STATUS_ICON_MAP[status] : DEFAULT_STATUS_MAP;
 
@@ -37,7 +51,7 @@ export default function ModelStatusIndicator({status}) {
   return (
     <span className="model-status-indicator" title={status}>
       <IconSVG name={iconMap.icon} className={iconMap.className} />
-      <span>{status}</span>
+      <span>{capitalize(status)}</span>
     </span>
   );
 }
