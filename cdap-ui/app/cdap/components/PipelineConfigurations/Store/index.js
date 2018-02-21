@@ -105,7 +105,8 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   numExecutors: HYDRATOR_DEFAULT_VALUES.numExecutors,
   numOfRecordsPreview: HYDRATOR_DEFAULT_VALUES.numOfRecordsPreview,
   previewTimeoutInMin: HYDRATOR_DEFAULT_VALUES.previewTimeoutInMin,
-  batchInterval: HYDRATOR_DEFAULT_VALUES.batchInterval
+  batchInterval: HYDRATOR_DEFAULT_VALUES.batchInterval,
+  postActions: []
 };
 
 const getCustomConfigFromProperties = (properties) => {

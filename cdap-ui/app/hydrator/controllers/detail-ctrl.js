@@ -49,7 +49,8 @@ angular.module(PKG.name + '.feature.hydrator')
       let pipelineDetailStoreState = window.CaskCommon.PipelineDetailStore.getState();
 
       if (!pluginsFetched) {
-        PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, pipelineDetailStoreState.config.stages);
+        let pluginsToFetchDetailsFor = pipelineDetailStoreState.config.stages.concat(pipelineDetailStoreState.config.postActions);
+        PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, pluginsToFetchDetailsFor);
         pluginsFetched = true;
       }
 
