@@ -32,6 +32,10 @@ $reset-button-color: #0275d8;
     border-radius: 0;
     width: 40%;
     margin-right: 10px;
+
+    &.wider {
+      width: 50%;
+    }
   }
   .add-row-btn,
   .remove-row-btn {

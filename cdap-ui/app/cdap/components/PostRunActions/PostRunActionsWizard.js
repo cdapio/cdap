@@ -27,8 +27,9 @@ import HydratorModal from 'components/HydratorModal';
 import SelectWithOptions from 'components/SelectWithOptions';
 import KeyValuePairs from 'components/KeyValuePairs';
 import DSVEditor from 'components/DSVEditor';
-import {convertMapToKeyValuePairsObj} from 'services/helpers';
+import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
 import shortid from 'shortid';
+import {preventPropagation} from 'services/helpers';
 
 export default class PostRunActionsWizard extends Component {
   static propTypes = {
@@ -104,9 +105,8 @@ export default class PostRunActionsWizard extends Component {
         };
         break;
       case 'textarea':
-        Component = 'input';
+        Component = 'textarea';
         props = {
-          type: 'textarea',
           value,
           className: 'form-control'
         };
@@ -130,7 +130,8 @@ export default class PostRunActionsWizard extends Component {
         props = {
           values,
           placeholder: attributes['value-placeholder'],
-          onChange: onChangeFn
+          onChange: onChangeFn,
+          disabled: true
         };
         break;
       }
@@ -144,7 +145,8 @@ export default class PostRunActionsWizard extends Component {
         });
         props = {
           keyValues: convertMapToKeyValuePairsObj(keyValuePairsMap),
-          onKeyValueChange: onChangeFn
+          onKeyValueChange: onChangeFn,
+          disabled: true
         };
         break;
       }
@@ -157,6 +159,11 @@ export default class PostRunActionsWizard extends Component {
         };
     }
     return <Component {...props} />;
+  }
+
+  toggleAndPreventPropagation = (e) => {
+    this.props.toggleModal();
+    preventPropagation(e);
   }
 
 
@@ -215,9 +222,9 @@ export default class PostRunActionsWizard extends Component {
     return (
       <HydratorModal
         isOpen={this.props.isOpen}
-        toggle={this.props.toggleModal}
+        toggle={this.toggleAndPreventPropagation}
+        backdrop="static"
         modalClassName="post-run-actions-modal hydrator-modal"
-        backdrop='static'
         zIndex={1061}
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
@@ -234,7 +241,7 @@ export default class PostRunActionsWizard extends Component {
           <div className="btn-group float-xs-right">
             <a
               className="btn"
-              onClick={this.props.toggleModal}
+              onClick={this.toggleAndPreventPropagation}
             >
               <IconSVG name = "icon-close" />
             </a>
@@ -242,7 +249,10 @@ export default class PostRunActionsWizard extends Component {
         </div>
         <ModalBody>
           {this.renderBody()}
-          <div className="btn btn-blue">
+          <div
+            className="btn btn-blue float-xs-right close-button"
+            onClick={this.toggleAndPreventPropagation}
+          >
             Close
           </div>
         </ModalBody>

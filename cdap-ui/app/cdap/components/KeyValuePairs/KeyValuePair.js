@@ -14,7 +14,6 @@
  * the License.
 */
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
 require('./KeyValuePairs.scss');
 import T from 'i18n-react';
@@ -40,7 +39,7 @@ class KeyValuePair extends Component {
         <input
           type="text"
           value=""
-          className="form-control value-input"
+          className={classnames("form-control value-input", {"wider": this.props.disabled})}
           disabled
         />
       );
@@ -55,8 +54,31 @@ class KeyValuePair extends Component {
         onKeyDown={this.keyDown}
         onChange={this.props.onChange.bind(null, 'value')}
         placeholder={valuePlaceholder}
-        className="form-control value-input"
+        className={classnames("form-control value-input", {"wider": this.props.disabled})}
       />
+    );
+  }
+
+  renderActionButtons() {
+    if (this.props.disabled) { return null; }
+
+    return (
+      <span>
+        <button
+          type="submit"
+          className="btn add-row-btn btn-link"
+          onClick={(e) => {this.props.addRow(); preventPropagation(e);}}
+        >
+          <i className="fa fa-plus" />
+        </button>
+        <button
+          type="submit"
+          className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
+          onClick={(e) => {this.props.removeRow(); preventPropagation(e);}}
+        >
+          <i className="fa fa-trash" />
+        </button>
+      </span>
     );
   }
 
@@ -93,24 +115,11 @@ class KeyValuePair extends Component {
           onKeyDown={this.keyDown}
           onChange={this.props.onChange.bind(null, 'key')}
           placeholder={keyPlaceholder}
-          className="form-control key-input"
+          className={classnames("form-control key-input", {"wider": this.props.disabled})}
           disabled={this.props.notDeletable}
         />
         {this.renderValueField()}
-        <button
-          type="submit"
-          className="btn add-row-btn btn-link"
-          onClick={(e) => {this.props.addRow(); preventPropagation(e);}}
-        >
-          <i className="fa fa-plus" />
-        </button>
-        <button
-          type="submit"
-          className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
-          onClick={(e) => {this.props.removeRow(); preventPropagation(e);}}
-        >
-          <i className="fa fa-trash" />
-        </button>
+        {this.renderActionButtons()}
         {this.renderNotDeletableElements()}
       </div>
     );
@@ -131,7 +140,8 @@ KeyValuePair.propTypes = {
   onProvided: PropTypes.func,
   getResettedKeyValue: PropTypes.func,
   keyPlaceholder: PropTypes.string,
-  valuePlaceholder: PropTypes.string
+  valuePlaceholder: PropTypes.string,
+  disabled: PropTypes.bool
 };
 
 export default KeyValuePair;

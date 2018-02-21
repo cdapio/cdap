@@ -29,7 +29,7 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 import {createStore} from 'redux';
 import {GLOBALS, HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
-import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
+import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import shortid from 'shortid';
 
 const ACTIONS = {
@@ -106,7 +106,8 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   numOfRecordsPreview: HYDRATOR_DEFAULT_VALUES.numOfRecordsPreview,
   previewTimeoutInMin: HYDRATOR_DEFAULT_VALUES.previewTimeoutInMin,
   batchInterval: HYDRATOR_DEFAULT_VALUES.batchInterval,
-  postActions: []
+  postActions: [],
+  validToSave: true
 };
 
 const getCustomConfigFromProperties = (properties) => {
@@ -200,6 +201,10 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
   return currentRuntimeArgs;
 };
 
+const validateConfig = (runtimeArguments, customConfig) => {
+  return keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig);
+};
+
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.INITIALIZE_CONFIG:
@@ -211,7 +216,8 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
     case ACTIONS.SET_RUNTIME_ARGS:
       return {
         ...state,
-        runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros)
+        runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
+        validToSave: validateConfig(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
       };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
@@ -302,7 +308,8 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
     case ACTIONS.SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS:
       return {
         ...state,
-        customConfigKeyValuePairs: action.payload.keyValues
+        customConfigKeyValuePairs: action.payload.keyValues,
+        validToSave: validateConfig(state.runtimeArgs, action.payload.keyValues)
       };
     case ACTIONS.SET_CUSTOM_CONFIG: {
       // Need to remove previous custom configs from config.properties before setting new ones

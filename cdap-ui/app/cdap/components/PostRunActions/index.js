@@ -81,7 +81,7 @@ export default class PostRunActions extends Component {
           </tbody>
         </table>
         {
-          this.state.activeActionWizard ?
+          this.state.openActionWizard ?
             (
               <PostRunActionsWizard
                 action={this.state.activeActionWizard}
