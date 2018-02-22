@@ -22,7 +22,7 @@ import upperFirst from 'lodash/upperFirst';
 import orderBy from 'lodash/orderBy';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import { Modal, ModalHeader, ModalBody, Tooltip } from 'reactstrap';
 import myPreferenceApi from 'api/preference';
 import {convertProgramToApi} from 'services/program-api-converter';
@@ -116,7 +116,7 @@ export default class SetPreferenceModal extends Component {
                 'pairs': [{
                     'key':'',
                     'value':'',
-                    'uniqueId': shortid.generate()
+                    'uniqueId': uuidV4()
                   }]
               };
             } else {
@@ -190,7 +190,7 @@ export default class SetPreferenceModal extends Component {
         prefArray.push({
           key: key,
           value: prefObj[key],
-          uniqueId: shortid.generate()
+          uniqueId: uuidV4()
         });
       }
     }

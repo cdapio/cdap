@@ -14,7 +14,7 @@
  * the License.
 */
 
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import FilePath from 'components/FileBrowser/FilePath';
 import {connect} from 'react-redux';
 import {setPrefix} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
@@ -34,7 +34,7 @@ class S3Path extends FilePath {
     if (path === '/') {
       individualPaths.push({
         name: 'Root',
-        id: shortid.generate(),
+        id: uuidV4(),
         link: `${pathname}?prefix=/`
       });
     } else {
@@ -43,7 +43,7 @@ class S3Path extends FilePath {
         if (part === '') {
           newPath = '/';
           individualPaths.push({
-            id: shortid.generate(),
+            id: uuidV4(),
             name: 'Root',
             link: `${pathname}?prefix=${newPath}`,
           });
@@ -51,7 +51,7 @@ class S3Path extends FilePath {
         }
         newPath = newPath[newPath.length - 1] !== '/' ? `${newPath}/` : newPath;
         individualPaths.push({
-          id: shortid.generate(),
+          id: uuidV4(),
           link: `${pathname}?prefix=${newPath}`,
           name: part
         });

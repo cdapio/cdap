@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import {MyMetadataApi} from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
 import map from 'lodash/map';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import AddPropertyModal from 'components/PropertiesEditor/AddPropertyModal';
 import T from 'i18n-react';
 import DeleteConfirmation from 'components/PropertiesEditor/DeleteConfirmation';
@@ -32,7 +32,7 @@ require('./PropertiesEditor.scss');
 const convertObjToArr = (obj) => {
   let properties = map(obj, (value, key) => ({key, value}))
     .map((row) => {
-      row.id = shortid.generate();
+      row.id = uuidV4();
       return row;
     });
   return properties;

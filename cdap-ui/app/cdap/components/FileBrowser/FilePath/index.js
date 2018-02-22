@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {Link} from 'react-router-dom';
 import classnames from 'classnames';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
@@ -79,7 +79,7 @@ export default class FilePath extends Component {
       });
 
     let paths = [{
-      id: shortid.generate(),
+      id: uuidV4(),
       name: 'Root',
       link: `${this.props.baseStatePath}/`
     }];
@@ -91,7 +91,7 @@ export default class FilePath extends Component {
       link = `${link}/${directoryPath}`;
 
       paths.push({
-        id: shortid.generate(),
+        id: uuidV4(),
         name: value,
         link
       });

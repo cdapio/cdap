@@ -23,7 +23,7 @@ import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyDatasetApi} from 'api/dataset';
 import {MyMetadataApi} from 'api/metadata';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 import DatasetDetaildViewTab from 'components/DatasetDetailedView/Tabs';
 import FastActionToMessage from 'services/fast-action-message-helper';
@@ -123,7 +123,7 @@ export default class DatasetDetailedView extends Component {
           (res) => {
             let appId;
             let programs = res[1].map((program) => {
-              program.uniqueId = shortid.generate();
+              program.uniqueId = uuidV4();
               appId = program.application.applicationId;
               program.app = appId;
               program.name = program.id;

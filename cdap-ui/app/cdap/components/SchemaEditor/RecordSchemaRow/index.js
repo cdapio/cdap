@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import {SCHEMA_TYPES, checkComplexType, getParsedSchema, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 require('./RecordSchemaRow.scss');
-import uuid from 'node-uuid';
+import uuidV4 from 'uuid/v4';
 import {Input} from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {insertAt, removeAt} from 'services/helpers';
@@ -45,7 +45,7 @@ export default class RecordSchemaRow extends Component {
         });
       this.state = {
         type: 'record',
-        name: 'a' +  uuid.v4().split('-').join(''),
+        name: 'a' +  uuidV4().split('-').join(''),
         displayFields,
         error: ''
       };
@@ -53,14 +53,14 @@ export default class RecordSchemaRow extends Component {
     } else {
       this.state = {
         type: 'record',
-        name: 'a' +  uuid.v4().split('-').join(''),
+        name: 'a' +  uuidV4().split('-').join(''),
         displayFields: [
           {
             name: '',
             type: 'string',
             displayType: 'string',
             nullable: false,
-            id: uuid.v4(),
+            id: uuidV4(),
             showAbstractSchemaRow: true
           }
         ],
@@ -86,7 +86,7 @@ export default class RecordSchemaRow extends Component {
     let displayFields = insertAt(displayFieldsCopy, index, {
       name: '',
       displayType: 'string',
-      id: uuid.v4(),
+      id: uuidV4(),
       refRequired: true,
       nullable: false,
       showAbstractSchemaRow: true
@@ -110,7 +110,7 @@ export default class RecordSchemaRow extends Component {
           type: 'string',
           displayType: 'string',
           nullable: false,
-          id: uuid.v4(),
+          id: uuidV4(),
           showAbstractSchemaRow: true
         }
       ];

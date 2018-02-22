@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
 import moment from 'moment';
 import {Link} from 'react-router-dom';
@@ -159,7 +159,7 @@ export default class FileBrowser extends Component {
 
   formatResponse(contents) {
     return contents.map((content) => {
-      content.uniqueId = shortid.generate();
+      content.uniqueId = uuidV4();
       content['last-modified'] = moment(content['last-modified']).format('MM/DD/YY HH:mm');
       content.displaySize = convertBytesToHumanReadable(content.size, HUMANREADABLESTORAGE_NODECIMAL, true);
 

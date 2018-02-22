@@ -16,7 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import HostPortActions from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
   type: '',
@@ -50,7 +50,7 @@ const hostport = (state = initialState, action = defaultAction) => {
       stateCopy.rows.splice(action.payload.index + 1, 0, {
         host: '',
         port: '',
-        uniqueId: shortid.generate()
+        uniqueId: uuidV4()
       });
       return stateCopy;
     case HostPortActions.deletePair:
@@ -60,7 +60,7 @@ const hostport = (state = initialState, action = defaultAction) => {
         stateCopy.rows.push({
           host: '',
           port: '',
-          uniqueId: shortid.generate()
+          uniqueId: uuidV4()
         });
       }
       return stateCopy;

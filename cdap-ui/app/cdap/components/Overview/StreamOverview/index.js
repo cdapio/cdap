@@ -21,7 +21,7 @@ import OverviewHeader from 'components/Overview/OverviewHeader';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
 import StreamOverviewTab from 'components/Overview/StreamOverview/StreamOverviewTab';
 import NamespaceStore from 'services/NamespaceStore';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {objectQuery} from 'services/helpers';
 import {MyMetadataApi} from 'api/metadata';
 import {MyStreamApi} from 'api/stream';
@@ -80,7 +80,7 @@ export default class StreamOverview extends Component {
         .subscribe((res) => {
           let appId;
           let programs = res[1].map((program) => {
-            program.uniqueId = shortid.generate();
+            program.uniqueId = uuidV4();
             appId = program.application.applicationId;
             program.app = appId;
             program.name = program.id;

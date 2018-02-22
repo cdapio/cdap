@@ -22,7 +22,7 @@ var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
-var shortid = require('shortid');
+var uuidV4 = require('uuid/v4');
 var plugins = [
   new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
@@ -61,7 +61,7 @@ var plugins = [
     template: './cdap.html',
     filename: 'cdap.html',
     hash: true,
-    hashId: shortid.generate()
+    hashId: uuidV4()
   })
 ];
 var mode = process.env.NODE_ENV;

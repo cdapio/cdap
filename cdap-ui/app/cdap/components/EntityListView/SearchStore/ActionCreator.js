@@ -17,7 +17,7 @@
 import {MySearchApi} from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreAction from 'components/EntityListView/SearchStore/SearchStoreActions';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
@@ -71,7 +71,7 @@ const search = () => {
         results: res.results
           .map(parseMetadata)
           .map((entity) => {
-            entity.uniqueId = shortid.generate();
+            entity.uniqueId = uuidV4();
             return entity;
           })
       });

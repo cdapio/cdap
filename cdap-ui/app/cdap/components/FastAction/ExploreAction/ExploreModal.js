@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import myExploreApi from 'api/explore';
 import isObject from 'lodash/isObject';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import 'whatwg-fetch';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
@@ -236,7 +236,7 @@ export default class ExploreModal extends Component {
 
   render() {
     const renderQueryRow = (query) => {
-      let id = shortid.generate();
+      let id = uuidV4();
       return (
         <tr key={id}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
@@ -330,7 +330,7 @@ export default class ExploreModal extends Component {
                   <thead>
                     <tr>
                       {
-                        query.schema.map(s => (<th key={shortid.generate()}>{s.name}</th>))
+                        query.schema.map(s => (<th key={uuidV4()}>{s.name}</th>))
                       }
                     </tr>
                   </thead>
@@ -340,7 +340,7 @@ export default class ExploreModal extends Component {
                         .preview
                         .map((row) => {
                           return (
-                            <tr key={shortid.generate()}>
+                            <tr key={uuidV4()}>
                               {
                                 !row.columns ?
                                   T.translate('features.FastAction.viewEvents.noResults')
@@ -355,7 +355,7 @@ export default class ExploreModal extends Component {
                                     }
 
                                     return (
-                                      <td key={shortid.generate()}>
+                                      <td key={uuidV4()}>
                                         {content}
                                       </td>
                                     );
@@ -376,7 +376,7 @@ export default class ExploreModal extends Component {
         );
       };
       return (
-        <tr key={shortid.generate()}>
+        <tr key={uuidV4()}>
           <td colSpan="4" className="preview-cell">
             {
               query.schema && !query.preview ?

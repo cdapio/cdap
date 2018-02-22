@@ -27,7 +27,7 @@ import isEmpty from 'lodash/isEmpty';
 import NamespaceStore from 'services/NamespaceStore';
 import BreadCrumb from 'components/BreadCrumb';
 import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {Redirect} from 'react-router-dom';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import EntityIconMap from 'services/entity-icon-map';
@@ -97,7 +97,7 @@ export default class AppDetailedView extends Component {
               });
             }
             let programs = entityDetail.programs.map(prog => {
-              prog.uniqueId = shortid.generate();
+              prog.uniqueId = uuidV4();
               return prog;
             });
             let datasets = entityDetail.datasets.map(dataset => {
@@ -107,7 +107,7 @@ export default class AppDetailedView extends Component {
                 },
                 type: 'datasetinstance'
               };
-              dataset.uniqueId = shortid.generate();
+              dataset.uniqueId = uuidV4();
               return dataset;
             });
             let streams = entityDetail.streams.map(stream => {
@@ -117,7 +117,7 @@ export default class AppDetailedView extends Component {
                 },
                 type: 'stream'
               };
-              stream.uniqueId = shortid.generate();
+              stream.uniqueId = uuidV4();
               return stream;
             });
             entityDetail.streams = streams;

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 require('./ProgramCards.scss');
 
 export default function ProgramCards({programs}) {
@@ -44,7 +44,7 @@ export default function ProgramCards({programs}) {
               }
             };
             entity = parseMetadata(entity);
-            let uniqueId = shortid.generate();
+            let uniqueId = uuidV4();
             entity.uniqueId = uniqueId;
             program.uniqueId = uniqueId;
             return (

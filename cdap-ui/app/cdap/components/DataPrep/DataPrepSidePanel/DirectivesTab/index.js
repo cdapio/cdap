@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTab/DirectivesTabRow';
 import fileDownload from 'react-file-download';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
@@ -34,7 +34,7 @@ export default class DirectivesTab extends Component {
       directives: store.directives.map((directive) => {
         let obj = {
           name: directive,
-          uniqueId: shortid.generate()
+          uniqueId: uuidV4()
         };
         return obj;
       })
@@ -49,7 +49,7 @@ export default class DirectivesTab extends Component {
         directives: state.directives.map((directive) => {
           let obj = {
             name: directive,
-            uniqueId: shortid.generate()
+            uniqueId: uuidV4()
           };
           return obj;
         })

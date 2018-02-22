@@ -16,7 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import KeyValueStoreActions from './KeyValueStoreActions';
-var shortid = require('shortid');
+import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
   type: '',
@@ -56,7 +56,7 @@ const keyValues = (state = initialState, action = defaultAction) => {
       stateCopy.pairs.splice(action.payload.index + 1, 0, {
         key : '',
         value: '',
-        uniqueId: shortid.generate(),
+        uniqueId: uuidV4(),
         provided: false
       });
       return stateCopy;
@@ -67,7 +67,7 @@ const keyValues = (state = initialState, action = defaultAction) => {
         stateCopy.pairs.push({
           key : '',
           value : '',
-          uniqueId: shortid.generate(),
+          uniqueId: uuidV4(),
           provided: false
         });
       }

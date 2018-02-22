@@ -19,7 +19,7 @@ import React, { Component } from 'react';
 import Rx from 'rx';
 import findIndex from 'lodash/findIndex';
 import first from 'lodash/head';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import isEmpty from 'lodash/isEmpty';
 import WizardStepHeader from './WizardStepHeader';
 import WizardStepContent from './WizardStepContent';
@@ -316,7 +316,7 @@ export default class Wizard extends Component {
           label={`${step.shorttitle}`}
           className={this.isStepComplete(step.id) ? 'completed' : null}
           id={step.id}
-          key={shortid.generate()}
+          key={uuidV4()}
           onClick={this.setActiveStep.bind(this, step.id)}
           disabled={this.isStepDisabled(step.id)}
         />

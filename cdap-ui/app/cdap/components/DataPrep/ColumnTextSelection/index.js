@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import classnames from 'classnames';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import Rx from 'rx';
 import intersection from 'lodash/intersection';
 
@@ -138,7 +138,7 @@ export default class ColumnTextSelection extends Component {
       if (head !== highlightColumn) {
         return (
           <td
-            key={shortid.generate()}
+            key={uuidV4()}
             className="gray-out"
           >
             <div>
@@ -149,7 +149,7 @@ export default class ColumnTextSelection extends Component {
       }
       return (
         <td
-          key={shortid.generate()}
+          key={uuidV4()}
           className={CELLHIGHLIGHTCLASSNAME}
           onMouseDown={this.mouseDownHandler}
           onMouseUp={this.mouseUpHandler.bind(this, head, index)}

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import MyDataPrepApi from 'api/dataprep';
 import Fuse from 'fuse.js';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import reverse from 'lodash/reverse';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
@@ -171,7 +171,7 @@ export default class DataPrepAutoComplete extends Component {
           return row.score === 0 && index === 0;
         })
         .map((row) => {
-          row.uniqueId = shortid.generate();
+          row.uniqueId = uuidV4();
           return row;
         });
 
