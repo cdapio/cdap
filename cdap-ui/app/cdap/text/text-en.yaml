@@ -1340,6 +1340,10 @@ features:
   Pagination:
     dropdown-label: Page
   PipelineConfigurations:
+    ActionButtons:
+      runtimeArgsCount:
+        1: "runtime argument"
+        _: "runtime arguments"
     EngineConfig:
       customConfigCount:
         1: "custom config"

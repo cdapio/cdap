@@ -21,6 +21,7 @@ import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const mapStateToCheckpointingProps = (state) => {
   return {
@@ -34,6 +35,7 @@ const mapDispatchToCheckpointingProps = (dispatch) => {
         type: PipelineConfigurationsActions.SET_CHECKPOINTING,
         payload: { checkpointing: value }
       });
+      updatePipelineEditStatus();
     }
   };
 };

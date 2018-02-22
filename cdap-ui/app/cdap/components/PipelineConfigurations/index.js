@@ -132,6 +132,7 @@ export default class PipelineConfigurations extends Component {
               activeTab={this.state.activeTab}
               isBatch={this.props.isBatch}
               isDetailView={this.props.isDetailView}
+              onClose={this.props.onClose}
             />
           </div>
         </div>

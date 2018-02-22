@@ -22,10 +22,11 @@ import PipelineConfigTabContent from 'components/PipelineConfigurations/Configur
 import EngineConfigTabContent from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent';
 import ResourcesTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent';
 import AlertsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/AlertsTabContent';
+import ConfigurationsActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons';
 import classnames from 'classnames';
 require('./ConfigurationsContent.scss');
 
-export default function ConfigurationsContent({isBatch, activeTab, isDetailView}) {
+export default function ConfigurationsContent({isBatch, activeTab, isDetailView, onClose}) {
   let ContentToShow;
   switch (activeTab) {
     case TAB_OPTIONS.RUNTIME_ARGS:
@@ -43,9 +44,6 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
     case TAB_OPTIONS.ALERTS:
       ContentToShow = AlertsTabContent;
       break;
-    default:
-      // Other tabs will just be empty for now
-      ContentToShow = 'div';
   }
   return (
     <div
@@ -58,6 +56,10 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
         isBatch={isBatch}
         isDetailView={isDetailView}
       />
+      <ConfigurationsActionButtons
+        onClose={onClose}
+        activeTab={activeTab}
+      />
     </div>
   );
 }
@@ -65,5 +67,6 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView}
 ConfigurationsContent.propTypes = {
   isBatch: PropTypes.bool,
   activeTab: PropTypes.string,
-  isDetailView: PropTypes.bool
+  isDetailView: PropTypes.bool,
+  onClose: PropTypes.func
 };

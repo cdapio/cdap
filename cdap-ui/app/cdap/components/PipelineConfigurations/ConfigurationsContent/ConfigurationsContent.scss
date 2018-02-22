@@ -118,37 +118,5 @@ $secondary-btn-color: $brand-primary;
         margin-left: 5px;
       }
     }
-
-    .configuration-step-navigation {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-
-      .btn {
-        font-size: $regular-font;
-
-        &.btn-secondary {
-          color: $secondary-btn-color;
-        }
-
-        &.apply-run {
-          margin-right: 16px;
-        }
-
-        &.apply-close {
-          width: 100px;
-        }
-      }
-
-      .apply-run-container {
-        display: flex;
-        align-items: center;
-
-        .num-runtime-args {
-          color: $input-label-color;
-          margin-left: auto;
-        }
-      }
-    }
   }
 }

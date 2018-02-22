@@ -21,6 +21,8 @@ import IconSVG from 'components/IconSVG';
 import KeyValuePairs from 'components/KeyValuePairs';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {getEngineDisplayLabel, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {convertKeyValuePairsObjToMap} from 'services/helpers';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
@@ -31,13 +33,22 @@ const mapStateToCustomConfigKeyValuesProps = (state) => {
   };
 };
 
-const mapDispatchToCustomConfigKeyValuesProps = (dispatch) => {
+const mapDispatchToCustomConfigKeyValuesProps = (dispatch, ownProps) => {
   return {
     onKeyValueChange: (keyValues) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS,
         payload: { keyValues }
       });
+      let customConfigObj = convertKeyValuePairsObjToMap(keyValues);
+      dispatch({
+        type: PipelineConfigurationsActions.SET_CUSTOM_CONFIG,
+        payload: {
+          customConfig: customConfigObj,
+          isBatch: ownProps.isBatch
+        }
+      });
+      updatePipelineEditStatus();
     }
   };
 };
@@ -50,6 +61,7 @@ const ConnectedCustomConfigKeyValuePairs = connect(
 const mapStateToCustomConfigProps = (state, ownProps) => {
   return {
     isDetailView: ownProps.isDetailView,
+    isBatch: ownProps.isBatch,
     showCustomConfig: ownProps.showCustomConfig,
     toggleCustomConfig: ownProps.toggleCustomConfig,
     engine: state.engine,
@@ -57,7 +69,7 @@ const mapStateToCustomConfigProps = (state, ownProps) => {
   };
 };
 
-const CustomConfig = ({isDetailView, showCustomConfig, toggleCustomConfig, engine, customConfigKeyValuePairs}) => {
+const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConfig, engine, customConfigKeyValuePairs}) => {
   const StudioViewCustomConfigLabel = () => {
     return (
       <span>
@@ -138,7 +150,7 @@ const CustomConfig = ({isDetailView, showCustomConfig, toggleCustomConfig, engin
                 <span className="value-label">Value</span>
               </div>
               <div className="custom-config-values key-value-pair-values">
-                <ConnectedCustomConfigKeyValuePairs />
+                <ConnectedCustomConfigKeyValuePairs isBatch={isBatch} />
               </div>
             </div>
           )
@@ -151,6 +163,7 @@ const CustomConfig = ({isDetailView, showCustomConfig, toggleCustomConfig, engin
 
 CustomConfig.propTypes = {
   isDetailView: PropTypes.bool,
+  isBatch: PropTypes.bool,
   showCustomConfig: PropTypes.bool,
   toggleCustomConfig: PropTypes.func,
   engine: PropTypes.string,

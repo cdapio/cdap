@@ -27,7 +27,7 @@
 
 import {defaultAction, composeEnhancers} from 'services/helpers';
 import {createStore} from 'redux';
-import {GLOBALS, HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
+import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
 import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import shortid from 'shortid';
@@ -54,6 +54,7 @@ const ACTIONS = {
   SET_STAGE_LOGGING: 'SET_STAGE_LOGGING',
   SET_CHECKPOINTING: 'SET_CHECKPOINTING',
   SET_NUM_RECORDS_PREVIEW: 'SET_NUM_RECORDS_PREVIEW',
+  SET_PIPELINE_EDIT_STATUS: 'SET_PIPELINE_EDIT_STATUS',
 };
 
 const TAB_OPTIONS = {
@@ -107,7 +108,10 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   previewTimeoutInMin: HYDRATOR_DEFAULT_VALUES.previewTimeoutInMin,
   batchInterval: HYDRATOR_DEFAULT_VALUES.batchInterval,
   postActions: [],
-  validToSave: true
+  schedule: HYDRATOR_DEFAULT_VALUES.cron,
+  maxConcurrentRuns: 1,
+  validToSave: true,
+  pipelineEdited: false
 };
 
 const getCustomConfigFromProperties = (properties) => {
@@ -202,7 +206,7 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
 };
 
 const validateConfig = (runtimeArguments, customConfig) => {
-  return keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig);
+  return !keyValuePairsHaveMissingValues(runtimeArguments) && !keyValuePairsHaveMissingValues(customConfig);
 };
 
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
@@ -325,7 +329,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       let newCustomConfigs = {};
       Object.keys(action.payload.customConfig).forEach(newCustomConfigKey => {
         let newCustomConfigValue = action.payload.customConfig[newCustomConfigKey];
-        if (GLOBALS.etlBatchPipelines.indexOf(state.artifact.name) !== -1 && state.engine === 'mapreduce') {
+        if (action.payload.isBatch && state.engine === 'mapreduce') {
           newCustomConfigKey = 'system.mapreduce.' + newCustomConfigKey;
         } else {
           newCustomConfigKey = 'system.spark.' + newCustomConfigKey;
@@ -372,6 +376,12 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         numOfRecordsPreview: action.payload.numRecordsPreview
       };
+    case ACTIONS.SET_PIPELINE_EDIT_STATUS:
+      return {
+        ...state,
+        pipelineEdited: action.payload.pipelineEdited
+      };
+
   }
 };
 
