@@ -19,6 +19,23 @@ import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/
 import {GLOBALS} from 'services/global-constants';
 import {MyPipelineApi} from 'api/pipeline';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import cloneDeep from 'lodash/cloneDeep';
+
+const applyRuntimeArgs = () => {
+  let runtimeArgs = PipelineConfigurationsStore.getState().runtimeArgs;
+  PipelineConfigurationsStore.dispatch({
+    type: PipelineConfigurationsActions.SET_SAVED_RUNTIME_ARGS,
+    payload: { savedRuntimeArgs: cloneDeep(runtimeArgs) }
+  });
+};
+
+const revertRuntimeArgsToSavedValues = () => {
+  let savedRuntimeArgs = PipelineConfigurationsStore.getState().savedRuntimeArgs;
+  PipelineConfigurationsStore.dispatch({
+    type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
+    payload: { runtimeArgs: cloneDeep(savedRuntimeArgs) }
+  });
+};
 
 const updatePipelineEditStatus = () => {
   const isResourcesEqual = (oldvalue, newvalue) => {
@@ -51,8 +68,6 @@ const updatePipelineEditStatus = () => {
     });
   }
 };
-
-const applyRuntimeArgs = () => {};
 
 const updatePipeline = () => {
   let detailStoreState = PipelineDetailStore.getState();
@@ -129,7 +144,8 @@ const updatePipeline = () => {
 };
 
 export {
-  updatePipelineEditStatus,
   applyRuntimeArgs,
+  revertRuntimeArgsToSavedValues,
+  updatePipelineEditStatus,
   updatePipeline
 };

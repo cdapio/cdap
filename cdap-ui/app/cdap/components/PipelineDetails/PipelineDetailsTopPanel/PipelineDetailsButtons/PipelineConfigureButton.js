@@ -22,6 +22,8 @@ import PipelineConfigurations from 'components/PipelineConfigurations';
 import myPreferenceApi from 'api/preference';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {applyRuntimeArgs, revertRuntimeArgsToSavedValues} from 'components/PipelineConfigurations/Store/ActionCreator';
+import isEqual from 'lodash/isEqual';
 
 const getPrefsRelevantToMacros = (resolvedPrefs = {}, macrosMap = {}) => {
   let relevantPrefs = {};
@@ -47,7 +49,7 @@ export default class PipelineConfigureButton extends Component {
   };
 
   getRuntimeArgumentsAndToggleModeless = () => {
-    if (Object.keys(this.props.macrosMap).length !== 0) {
+    if (Object.keys(this.props.macrosMap).length !== 0 && !this.state.showModeless) {
       myPreferenceApi
         .getAppPreferencesResolved({
           namespace: getCurrentNamespace(),
@@ -55,12 +57,20 @@ export default class PipelineConfigureButton extends Component {
         })
         .subscribe(res => {
           let relevantPrefs = getPrefsRelevantToMacros(res, this.props.macrosMap);
-          let resolvedMacros = {...this.props.macrosMap, ...relevantPrefs};
+          let storeState = PipelineConfigurationsStore.getState();
 
-          PipelineConfigurationsStore.dispatch({
-            type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
-            payload: { resolvedMacros }
-          });
+          // If preferences have changed, then update macro values with new preferences.
+          // Otherwise, keep the values as they are
+          if (!storeState || (storeState && !isEqual(relevantPrefs, storeState.resolvedMacros))) {
+            let resolvedMacros = {...this.props.macrosMap, ...relevantPrefs};
+
+            PipelineConfigurationsStore.dispatch({
+              type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
+              payload: { resolvedMacros }
+            });
+            applyRuntimeArgs();
+          }
+
           this.toggleModeless();
         }, (err) => {
           console.log(err);
@@ -71,6 +81,9 @@ export default class PipelineConfigureButton extends Component {
   };
 
   toggleModeless = () => {
+    if (this.state.showModeless) {
+      revertRuntimeArgsToSavedValues();
+    }
     this.setState({
       showModeless: !this.state.showModeless
     });

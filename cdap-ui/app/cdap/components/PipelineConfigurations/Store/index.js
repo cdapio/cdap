@@ -31,10 +31,12 @@ import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
 import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import shortid from 'shortid';
+import cloneDeep from 'lodash/cloneDeep';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
   SET_RUNTIME_ARGS: 'SET_RUNTIME_ARGS',
+  SET_SAVED_RUNTIME_ARGS: 'SET_SAVED_RUNTIME_ARGS',
   SET_RESOLVED_MACROS: 'SET_RESOLVED_MACROS',
   RESET_RUNTIME_ARG_TO_RESOLVED_VALUE: 'RESET_RUNTIME_ARG_TO_RESOLVED_VALUE',
   SET_ENGINE: 'SET_ENGINE',
@@ -84,12 +86,22 @@ const ENGINE_OPTIONS = {
   SPARK: 'spark'
 };
 
-const DEFAULT_CONFIGURE_OPTIONS = {
-  runtimeArgs: {'pairs': [{
+const DEFAULT_RUNTIME_ARGS = {
+  'pairs': [{
     key : '',
     value : '',
     uniqueId : shortid.generate()
-  }]},
+  }]
+};
+
+const DEFAULT_CONFIGURE_OPTIONS = {
+
+  // savedRuntimeArgs represent the runtime args the user has Saved for the current session
+  // runtimeArgs represent the current values in the modeless
+  // If the user changes runtime args values in the modeless but doesn't click Save, then we'll
+  // runtimeArgs to savedRuntimeArgs
+  runtimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
+  savedRuntimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   resolvedMacros: {},
   customConfigKeyValuePairs: {},
   postRunActions: [],
@@ -222,6 +234,11 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
         validToSave: validateConfig(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
+      };
+    case ACTIONS.SET_SAVED_RUNTIME_ARGS:
+      return {
+        ...state,
+        savedRuntimeArgs: action.payload.savedRuntimeArgs
       };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
@@ -399,6 +416,7 @@ export {
   BATCH_INTERVAL_UNITS,
   NUM_EXECUTORS_OPTIONS,
   ENGINE_OPTIONS,
+  DEFAULT_RUNTIME_ARGS,
   getCustomConfigForDisplay,
   getEngineDisplayLabel
 };
