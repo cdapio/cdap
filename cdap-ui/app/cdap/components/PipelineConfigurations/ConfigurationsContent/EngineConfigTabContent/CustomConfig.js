@@ -22,7 +22,7 @@ import KeyValuePairs from 'components/KeyValuePairs';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {getEngineDisplayLabel, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {convertKeyValuePairsObjToMap} from 'services/helpers';
+import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
