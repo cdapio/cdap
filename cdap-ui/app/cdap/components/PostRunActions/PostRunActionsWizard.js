@@ -26,6 +26,7 @@ import { ModalBody } from 'reactstrap';
 import HydratorModal from 'components/HydratorModal';
 import SelectWithOptions from 'components/SelectWithOptions';
 import KeyValuePairs from 'components/KeyValuePairs';
+import RadioGroup from 'components/RadioGroup';
 import DSVEditor from 'components/DSVEditor';
 import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
 import shortid from 'shortid';
@@ -96,6 +97,14 @@ export default class PostRunActionsWizard extends Component {
           className: 'form-control disabled'
         };
         break;
+      case 'number':
+        Component = 'input';
+        props = {
+          type: 'number',
+          value,
+          className: 'form-control'
+        };
+        break;
       case 'textbox':
         Component = 'input';
         props = {
@@ -110,6 +119,9 @@ export default class PostRunActionsWizard extends Component {
           value,
           className: 'form-control'
         };
+        if (attributes && attributes.rows) {
+          props.rows = attributes.rows;
+        }
         break;
       case 'password':
         Component = 'input';
@@ -150,7 +162,14 @@ export default class PostRunActionsWizard extends Component {
         };
         break;
       }
-
+      case 'radio-group':
+        Component = RadioGroup;
+        props = {
+          value,
+          layout: attributes.layout,
+          options: attributes.options
+        };
+        break;
       default:
         Component = 'input';
         props = {
