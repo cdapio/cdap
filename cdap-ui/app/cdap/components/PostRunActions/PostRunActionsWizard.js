@@ -29,7 +29,7 @@ import KeyValuePairs from 'components/KeyValuePairs';
 import RadioGroup from 'components/RadioGroup';
 import DSVEditor from 'components/DSVEditor';
 import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {preventPropagation} from 'services/helpers';
 
 export default class PostRunActionsWizard extends Component {
@@ -137,7 +137,7 @@ export default class PostRunActionsWizard extends Component {
         let values = value.split(attributes.delimiter || ',');
         values = values.map(value => ({
           property: value,
-          uniqueId: shortid.generate()
+          uniqueId: uuidV4()
         }));
         props = {
           values,

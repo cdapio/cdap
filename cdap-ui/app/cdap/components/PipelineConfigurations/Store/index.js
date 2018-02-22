@@ -30,7 +30,7 @@ import {createStore} from 'redux';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
 import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
 
 const ACTIONS = {
@@ -90,7 +90,7 @@ const DEFAULT_RUNTIME_ARGS = {
   'pairs': [{
     key : '',
     value : '',
-    uniqueId : shortid.generate()
+    uniqueId : uuidV4()
   }]
 };
 
@@ -208,7 +208,7 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
     return {
       key: macroKey,
       value: macrosMap[macroKey],
-      uniqueId: 'id-' + shortid.generate(),
+      uniqueId: 'id-' + uuidV4(),
       notDeletable: true,
       provided: providedMacros.hasOwnProperty(macroKey)
     };

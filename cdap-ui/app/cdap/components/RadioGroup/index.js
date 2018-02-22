@@ -17,10 +17,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import uuid from 'uuid/v4';
+import uuidV4 from 'uuid/v4';
 
 export default function RadioGroup({layout, options, value}) {
-  let groupName = 'radio-group-'+ uuid();
+  let groupName = 'radio-group-'+ uuidV4();
   return (
     <div className={classnames("widget-radio-group", {"widget-radio-group-inline": layout === 'inline'})}>
       {
