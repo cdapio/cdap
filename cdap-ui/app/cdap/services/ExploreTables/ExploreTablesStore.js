@@ -17,13 +17,13 @@
 import thunk from 'redux-thunk';
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 import ExploreTablesActions from 'services/ExploreTables/ExploreTablesActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import findIndex from 'lodash/findIndex';
 
 const defaultAction = {
   type: '',
   payload: {},
-  uniqueId: shortid.generate()
+  uniqueId: uuidV4()
 };
 
 const defaultInitialState = {

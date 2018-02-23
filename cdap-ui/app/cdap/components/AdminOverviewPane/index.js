@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 require('./AdminOverviewPane.scss');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
-var shortid = require('shortid');
+import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import LoadingSVG from 'components/LoadingSVG';
@@ -35,7 +35,7 @@ function AdminOverviewPane({platforms, isLoading}) {
       platform = platforms[platform];
       return (
         <OverviewPaneCard
-          key={shortid.generate()}
+          key={uuidV4()}
           name={platform.name}
           version={platform.version}
           url={platform.url}

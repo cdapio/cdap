@@ -15,7 +15,7 @@
  */
 
 import Socket from '../socket';
-import uuid from 'node-uuid';
+import uuidV4 from 'uuid/v4';
 import Rx from 'rx';
 
 export default class Datasource {
@@ -52,7 +52,7 @@ export default class Datasource {
 
   request(resource = {}) {
     let generatedResource = {
-      id: uuid.v4(),
+      id: uuidV4(),
       json: resource.json === false ? false : true,
       method: resource.method || 'GET',
       suppressErrors: resource.suppressErrors || false
@@ -94,7 +94,7 @@ export default class Datasource {
 
   poll(resource = {}) {
     let generatedResource = {
-      id: uuid.v4(),
+      id: uuidV4(),
       interval: resource.interval || 10000,
       json: resource.json || true,
       method: resource.method || 'GET',

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import ConfigureButton from '../ConfigureButton';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import ReloadSystemArtifacts from 'components/AdminConfigurePane/ReloadSystemArtifacts';
@@ -48,13 +48,13 @@ export default function AdminConfigurePane({ openNamespaceWizard, openPreference
             null
         }
         <ConfigureButton
-          key={shortid.generate()}
+          key={uuidV4()}
           label={setPreferencesLabel}
           onClick={openPreferenceModal}
           iconClass={wrenchClasses}
         />
         <ConfigureButton
-          key={shortid.generate()}
+          key={uuidV4()}
           label={addNSLabel}
           onClick={openNamespaceWizard}
           iconClass="icon-addnamespaces"

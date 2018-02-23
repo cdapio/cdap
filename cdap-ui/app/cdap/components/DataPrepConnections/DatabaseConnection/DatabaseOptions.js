@@ -25,7 +25,7 @@ import classnames from 'classnames';
 import T from 'i18n-react';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import find from 'lodash/find';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import orderBy from 'lodash/orderBy';
@@ -82,7 +82,7 @@ export default class DatabaseOptions extends Component {
             return o.label === driver.label;
           });
 
-          driver.uniqueId = shortid.generate();
+          driver.uniqueId = uuidV4();
 
           if (matched) {
             driver.installed = true;

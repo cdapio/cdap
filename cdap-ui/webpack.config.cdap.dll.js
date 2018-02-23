@@ -39,7 +39,7 @@ var webpackConfig = {
   entry: {
     vendor: [
       'whatwg-fetch',
-      'node-uuid',
+      'uuid',
       'sockjs-client',
       'fuse.js',
       'react-dropzone',

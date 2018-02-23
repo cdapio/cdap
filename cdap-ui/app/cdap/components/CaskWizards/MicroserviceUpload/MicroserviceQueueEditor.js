@@ -22,7 +22,7 @@ import MicroserviceQueueActions from 'services/WizardStores/MicroserviceUpload/M
 import {createMicroserviceQueueStore} from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueStore';
 import MicroserviceQueue from 'components/CaskWizards/MicroserviceUpload/MicroserviceQueue';
 import IconSVG from 'components/IconSVG';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
 
 require('./MicroserviceQueue.scss');
@@ -176,7 +176,7 @@ export default class MicroserviceQueueEditor extends Component {
       );
     }
     return (
-      <Provider store={this.MicroserviceQueueStore} key={shortid.generate()}>
+      <Provider store={this.MicroserviceQueueStore} key={uuidV4()}>
         <div className="microservice-queue-editor-container">
           {
             this.state.queues.map((field, index) => {

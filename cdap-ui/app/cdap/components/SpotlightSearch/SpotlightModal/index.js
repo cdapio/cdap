@@ -24,7 +24,7 @@ import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
 import {Link} from 'react-router-dom';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import Pagination from 'components/Pagination';
 import SpotlightModalHeader from './SpotlightModalHeader';
 
@@ -133,7 +133,7 @@ export default class SpotlightModal extends Component {
           return (
             <Link to={`/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`}>
               <div
-                key={shortid.generate()}
+                key={uuidV4()}
                 className={classnames('row search-results-item', {
                   active: index === this.state.focusIndex
                 })}
@@ -159,7 +159,7 @@ export default class SpotlightModal extends Component {
                     {
                       entity.metadata.metadata.SYSTEM.tags.map((tag) => {
                         return (
-                          <Tag key={shortid.generate()}>{tag}</Tag>
+                          <Tag key={uuidV4()}>{tag}</Tag>
                         );
                       })
                     }
@@ -168,7 +168,7 @@ export default class SpotlightModal extends Component {
                         (
                           entity.metadata.metadata.USER.tags.map((tag) => {
                             return (
-                              <Tag key={shortid.generate()}>{tag}</Tag>
+                              <Tag key={uuidV4()}>{tag}</Tag>
                             );
                           })
                         )

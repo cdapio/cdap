@@ -24,7 +24,7 @@ import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import HostPortEditor from 'components/DataPrepConnections/KafkaConnection/HostPortEditor';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 import CardActionFeedback from 'components/CardActionFeedback';
 
@@ -44,7 +44,7 @@ export default class KafkaConnection extends Component {
       brokersList: [{
         host: 'localhost',
         port: '9092',
-        uniqueId: shortid.generate()
+        uniqueId: uuidV4()
       }],
       connectionResult: null,
       testConnectionLoading: false,
@@ -103,7 +103,7 @@ export default class KafkaConnection extends Component {
       let obj = {
         host: split[0] || '',
         port: split[1] || '',
-        uniqueId: shortid.generate()
+        uniqueId: uuidV4()
       };
 
       brokersList.push(obj);
