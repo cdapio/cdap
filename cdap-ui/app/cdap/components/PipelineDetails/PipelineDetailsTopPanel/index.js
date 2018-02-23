@@ -15,27 +15,81 @@
 */
 
 import React, { Component } from 'react';
+import {Provider, connect} from 'react-redux';
 import PipelineDetailsMetadata from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsMetadata';
 import PipelineDetailsButtons from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons';
 import PipelineDetailStore from 'components/PipelineDetails/store';
-import {fetchMacros} from 'components/PipelineDetails/store/ActionCreator';
+import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {getPrefsRelevantToMacros} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {MyPipelineApi} from 'api/pipeline';
+import {MyPreferenceApi} from 'api/preference';
+import {objectQuery} from 'services/helpers';
+import {GLOBALS} from 'services/global-constants';
 
 require('./PipelineDetailsTopPanel.scss');
 
+const mapStateToButtonsProps = (state) => {
+  return {
+    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
+    pipelineName: state.name,
+    schedule: state.config.schedule,
+    maxConcurrentRuns: state.config.maxConcurrentRuns,
+    scheduleStatus: state.scheduleStatus
+  };
+};
+
+const ConnectedPipelineDetailsButtons = connect(mapStateToButtonsProps)(PipelineDetailsButtons);
+
 export default class PipelineDetailsTopPanel extends Component {
+  componentWillMount() {
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
+      payload: {...PipelineDetailStore.getState().config}
+    });
+  }
   componentDidMount() {
-    fetchMacros({
+    const params = {
       namespace: getCurrentNamespace(),
       appId: PipelineDetailStore.getState().name
-    });
+    };
+
+    MyPipelineApi.fetchMacros(params)
+      .combineLatest(MyPreferenceApi.getAppPreferencesResolved(params))
+      .subscribe((res) => {
+        let macrosSpec = res[0];
+        let macrosMap = {};
+        let macros = [];
+        macrosSpec.map(ms => {
+          if (objectQuery(ms, 'spec', 'properties', 'macros', 'lookupProperties')) {
+            macros = macros.concat(ms.spec.properties.macros.lookupProperties);
+          }
+        });
+        macros.forEach(macro => {
+          macrosMap[macro] = '';
+        });
+
+        let currentAppPrefs = res[1];
+        let relevantPrefs = getPrefsRelevantToMacros(currentAppPrefs, macrosMap);
+        let resolvedMacros = {...macrosMap, ...relevantPrefs};
+
+        PipelineConfigurationsStore.dispatch({
+          type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
+          payload: { resolvedMacros }
+        });
+      }, (err) => {
+        console.log(err);
+      }
+    );
   }
   render() {
     return (
-      <div className = "pipeline-details-top-panel">
-        <PipelineDetailsMetadata />
-        <PipelineDetailsButtons />
-      </div>
+      <Provider store={PipelineDetailStore}>
+        <div className = "pipeline-details-top-panel">
+          <PipelineDetailsMetadata />
+          <ConnectedPipelineDetailsButtons />
+        </div>
+      </Provider>
     );
   }
 }

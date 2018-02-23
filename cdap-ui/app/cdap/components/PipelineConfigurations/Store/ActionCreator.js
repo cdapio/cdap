@@ -37,6 +37,16 @@ const revertRuntimeArgsToSavedValues = () => {
   });
 };
 
+const getPrefsRelevantToMacros = (resolvedPrefs = {}, macrosMap = {}) => {
+  let relevantPrefs = {};
+  for (let pref in resolvedPrefs) {
+    if (resolvedPrefs.hasOwnProperty(pref) && macrosMap.hasOwnProperty(pref)) {
+      relevantPrefs[pref] = resolvedPrefs[pref];
+    }
+  }
+  return relevantPrefs;
+};
+
 const updatePipelineEditStatus = () => {
   const isResourcesEqual = (oldvalue, newvalue) => {
     return oldvalue.memoryMB === newvalue.memoryMB && oldvalue.virtualCores === newvalue.virtualCores;
@@ -146,6 +156,7 @@ const updatePipeline = () => {
 export {
   applyRuntimeArgs,
   revertRuntimeArgsToSavedValues,
+  getPrefsRelevantToMacros,
   updatePipelineEditStatus,
   updatePipeline
 };

@@ -243,11 +243,13 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
       let runtimeArgs = getRuntimeArgsForDisplay(state.runtimeArgs, resolvedMacros);
+      let savedRuntimeArgs = cloneDeep(runtimeArgs);
 
       return {
         ...state,
         resolvedMacros,
-        runtimeArgs
+        runtimeArgs,
+        savedRuntimeArgs
       };
     }
     case ACTIONS.RESET_RUNTIME_ARG_TO_RESOLVED_VALUE:

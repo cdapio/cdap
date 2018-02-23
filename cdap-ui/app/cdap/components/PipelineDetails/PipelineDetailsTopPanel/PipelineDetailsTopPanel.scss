@@ -103,14 +103,16 @@ $top-panel-height: 55px;
 
   .pipeline-details-buttons {
     .pipeline-scheduler,
-    .pipeline-configure {
+    .pipeline-configure,
+    .pipeline-run {
       display: inline-block;
       height: $top-panel-height;
       position: relative;
     }
 
     .pipeline-scheduler-btn,
-    .pipeline-configure-btn {
+    .pipeline-configure-btn,
+    .pipeline-run-btn {
       height: 100%;
 
       .icon-svg {

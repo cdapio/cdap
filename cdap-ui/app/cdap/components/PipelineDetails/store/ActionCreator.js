@@ -16,7 +16,6 @@
 
 import {MyPipelineApi} from 'api/pipeline';
 import PipelineDetailStore, {ACTIONS} from 'components/PipelineDetails/store';
-import {objectQuery} from 'services/helpers';
 
 const init = (pipeline) => {
   PipelineDetailStore.dispatch({
@@ -48,29 +47,6 @@ const fetchScheduleStatus = (params) => {
         payload: {
           scheduleStatus: schedule.status
         }
-      });
-    }, (err) => {
-      console.log(err);
-    });
-};
-
-const fetchMacros = (params) => {
-  MyPipelineApi
-    .fetchMacros(params)
-    .subscribe(macrosSpec => {
-      let macrosMap = {};
-      let macros = [];
-      macrosSpec.map(ms => {
-        if (objectQuery(ms, 'spec', 'properties', 'macros', 'lookupProperties')) {
-          macros = macros.concat(ms.spec.properties.macros.lookupProperties);
-        }
-      });
-      macros.forEach(macro => {
-        macrosMap[macro] = '';
-      });
-      PipelineDetailStore.dispatch({
-        type: ACTIONS.SET_MACROS_MAP,
-        payload: { macrosMap }
       });
     }, (err) => {
       console.log(err);
@@ -277,7 +253,6 @@ export {
   setOptionalProperty,
   setSchedule,
   fetchScheduleStatus,
-  fetchMacros,
   setEngine,
   setBatchInterval,
   setMemoryMB,

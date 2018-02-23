@@ -15,42 +15,52 @@
 */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Provider, connect} from 'react-redux';
-import PipelineDetailStore from 'components/PipelineDetails/store';
-import {GLOBALS} from 'services/global-constants';
+import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import ScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ScheduleButton';
 import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineConfigureButton';
+import PipelineRunButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineRunButton';
 
-const mapStateToScheduleButton = (state) => {
+const mapStateToConfigureButton = (state, ownProps) => {
   return {
-    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
-    schedule: state.config.schedule,
-    maxConcurrentRuns: state.config.maxConcurrentRuns,
-    pipelineName: state.name,
-    scheduleStatus: state.scheduleStatus
-  };
-};
-
-const mapStateToConfigureButton = (state) => {
-  return {
-    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
-    pipelineName: state.name,
-    config: state.config,
-    macrosMap: state.macrosMap,
+    isBatch: ownProps.isBatch,
+    pipelineName: ownProps.pipelineName,
+    resolvedMacros: state.resolvedMacros,
     runtimeArgs: state.runtimeArgs
   };
 };
 
-const ConnectedScheduleButton = connect(mapStateToScheduleButton, null)(ScheduleButton);
-const ConnectedConfigureButton = connect(mapStateToConfigureButton, null)(PipelineConfigureButton);
+const ConnectedConfigureButton = connect(mapStateToConfigureButton)(PipelineConfigureButton);
 
-export default function PipelineDetailsButtons() {
+export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus}) {
   return (
-    <Provider store={PipelineDetailStore}>
+    <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
-        <ConnectedScheduleButton />
-        <ConnectedConfigureButton />
+        <ConnectedConfigureButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
+        <ScheduleButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+          schedule={schedule}
+          maxConcurrentRuns={maxConcurrentRuns}
+          scheduleStatus={scheduleStatus}
+        />
+        <PipelineRunButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
       </div>
     </Provider>
   );
 }
+
+PipelineDetailsButtons.propTypes = {
+  isBatch: PropTypes.boolean,
+  pipelineName: PropTypes.string,
+  schedule: PropTypes.string,
+  maxConcurrentRuns: PropTypes.number,
+  scheduleStatus: PropTypes.string
+};

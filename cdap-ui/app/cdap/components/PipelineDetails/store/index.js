@@ -32,7 +32,6 @@ const ACTIONS = {
   SET_CURRENT_RUN: 'SET_CURRENT_RUN',
   SET_RUNS: 'SET_RUNS',
   SET_STATISTICS: 'SET_STATISTICS',
-  SET_MACROS_MAP: 'SET_MACROS_MAP',
   SET_USER_RUNTIME_ARGUMENTS: 'SET_USER_RUNTIME_ARGUMENTS',
   SET_MACROS_AND_USER_RUNTIME_ARGUMENTS: 'SET_MACROS_AND_USER_RUNTIME_ARGUMENTS',
   SET_RUNTIME_ARGUMENTS_FOR_DISPLAY: 'SET_RUNTIME_ARGUMENTS_FOR_DISPLAY',
@@ -147,11 +146,6 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       return {
         ...state,
         statistics: action.payload.statistics
-      };
-    case ACTIONS.SET_MACROS_MAP:
-      return {
-        ...state,
-        macrosMap: action.payload.macrosMap
       };
     case ACTIONS.SET_USER_RUNTIME_ARGUMENTS:
       return {
