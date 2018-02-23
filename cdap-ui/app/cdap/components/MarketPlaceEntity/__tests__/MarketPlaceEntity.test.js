@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {mount} from 'enzyme';
 
 jest.useFakeTimers();
@@ -104,7 +104,7 @@ const entityDetail2 = {
   }]
 };
 
-const entityId = shortid.generate();
+const entityId = uuidV4();
 
 describe('MarketplaceEntity Unit tests', () => {
   let marketPlaceEntity;
@@ -175,7 +175,7 @@ describe('MarketplaceEntity Unit tests', () => {
     let marketPlaceEntity1 = mount(
       <MarketPlaceEntity
         entity={entity}
-        entityId={shortid.generate()}
+        entityId={uuidV4()}
       />
     );
 

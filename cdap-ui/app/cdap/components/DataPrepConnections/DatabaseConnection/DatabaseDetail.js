@@ -26,7 +26,7 @@ import replace from 'lodash/replace';
 import ee from 'event-emitter';
 import {objectQuery} from 'services/helpers';
 import CardActionFeedback from 'components/CardActionFeedback';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import LoadingSVG from 'components/LoadingSVG';
 
 const CONN_TYPE = {
@@ -45,7 +45,7 @@ export default class DatabaseDetail extends Component {
 
     let defaultPort = this.props.db['default.port'] || '';
 
-    let customId = shortid.generate();
+    let customId = uuidV4();
 
     this.state = {
       connType: this.props.db.name === 'oraclethin' ? CONN_TYPE.advanced : CONN_TYPE.basic,
@@ -87,7 +87,7 @@ export default class DatabaseDetail extends Component {
         let customId = this.state.customId;
 
         if (list.indexOf(customId) !== -1) {
-          customId = shortid.generate();
+          customId = uuidV4();
         }
 
         list.push(customId);

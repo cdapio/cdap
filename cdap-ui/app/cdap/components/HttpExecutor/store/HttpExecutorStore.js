@@ -16,7 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
   action : '',
@@ -31,7 +31,7 @@ const defaultInitialState = {
     pairs: [{
       key: '',
       value: '',
-      uniqueId: shortid.generate()
+      uniqueId: uuidV4()
     }]
   },
   response: null,

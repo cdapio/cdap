@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 import classnames from 'classnames';
 import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
@@ -47,7 +47,7 @@ export default class DataPrepTable extends Component {
     let currentWorkspaceName = currentWorkspace.name;
     this.state = {
       headers: storeState.dataprep.headers.map(header => ({name: header, edit: false})),
-      data: storeState.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),
+      data: storeState.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: uuidV4(), scrollId: i})),
       windowSize: DEFAULT_WINDOW_SIZE,
       loading: !storeState.dataprep.initialized,
       directivesLength: storeState.dataprep.directives.length,
@@ -67,7 +67,7 @@ export default class DataPrepTable extends Component {
       }
       this.setState({
         windowSize: DEFAULT_WINDOW_SIZE,
-        data: state.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: shortid.generate(), scrollId: i})),
+        data: state.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: uuidV4(), scrollId: i})),
         headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
         loading: !state.dataprep.initialized && !state.error.dataError,
         directivesLength: state.dataprep.directives.length,

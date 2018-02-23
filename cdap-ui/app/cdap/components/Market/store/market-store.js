@@ -15,7 +15,7 @@
  */
 
 import {createStore} from 'redux';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import VersionRange from 'services/VersionRange';
 import Version from 'services/VersionRange/Version';
 import VersionStore from 'services/VersionStore';
@@ -35,7 +35,7 @@ const market = (state=initialState, action) => {
     case 'SET_ENTITIES':
       return Object.assign({}, state, {
         list: filterEntities(action.payload)
-          .map(entity => Object.assign(entity, {id: shortid.generate()})),
+          .map(entity => Object.assign(entity, {id: uuidV4()})),
         loading: false
       });
     case 'SET_ACTIVE_ENTITY':

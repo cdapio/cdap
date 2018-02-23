@@ -15,10 +15,8 @@
  */
 
 import React, {Component} from 'react';
-
 import TabConfig from './TabConfig';
 import ConfigurableTab from '../ConfigurableTab';
-
 import {MyMarketApi} from 'api/market';
 import MarketAction from './action/market-action.js';
 import find from 'lodash/find';
@@ -26,8 +24,7 @@ import MarketStore from 'components/Market/store/market-store.js';
 import sortedUniq from 'lodash/sortedUniq';
 import cloneDeep from 'lodash/cloneDeep';
 import MarketCategoriesIconMap from 'services/market-category-icon-map';
-
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 export default class Market extends Component {
   constructor(props) {
@@ -70,7 +67,7 @@ export default class Market extends Component {
         const getDefaultTabConfig = (missingTab) => {
           let placeholderIcon = MarketCategoriesIconMap[missingTab] || `icon-${missingTab[0].toUpperCase()}`;
           return {
-            id: shortid.generate(),
+            id: uuidV4(),
             icon: `${placeholderIcon}`,
             content: TabConfig.defaultTabContent
           };

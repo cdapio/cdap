@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import FastActions from 'components/EntityCard/FastActions';
 import SortableTable from 'components/SortableTable';
 import IconSVG from 'components/IconSVG';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {humanReadableDate} from 'services/helpers';
 import EntityIconMap from 'services/entity-icon-map';
 import T from 'i18n-react';
@@ -84,7 +84,7 @@ export default class ProgramTable extends Component {
         programType: prog.type,
         type: 'program',
         id: prog.name,
-        uniqueId: shortid.generate()
+        uniqueId: uuidV4()
       });
     });
   }

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 import getIcon from 'services/market-action-icon-map';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
 import IconSVG from 'components/IconSVG';
@@ -104,7 +104,7 @@ export default class MarketActionsContainer extends Component {
               return (
                 <div
                   className="action-container text-xs-center"
-                  key={shortid.generate()}
+                  key={uuidV4()}
                   onClick={this.openWizard.bind(this, index, action.type, action)}
                 >
                   <div

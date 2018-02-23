@@ -19,7 +19,7 @@ import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import ColumnsTabRow from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabRow';
 import ColumnsTabDetail from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabDetail';
 import findIndex from 'lodash/findIndex';
@@ -39,7 +39,7 @@ export default class ColumnsTab extends Component {
       columns: columnInfo.columns,
       headers: dataprepstate.headers.map(res => ({
         name: res,
-        uniqueId: shortid.generate() // FIXME: This might be costly. Need to find a better way to avoid having unique IDs
+        uniqueId: uuidV4() // FIXME: This might be costly. Need to find a better way to avoid having unique IDs
       })),
       selectedHeaders: dataprepstate.selectedHeaders,
       workspaceId: dataprepstate.workspaceId,
@@ -64,7 +64,7 @@ export default class ColumnsTab extends Component {
         headers: dataprepstate.headers.map((res) => {
           let obj = {
             name: res,
-            uniqueId: shortid.generate()
+            uniqueId: uuidV4()
           };
           return obj;
         }),
@@ -166,7 +166,7 @@ export default class ColumnsTab extends Component {
         ...modifiedHeaders.slice(0, index + 1),
         Object.assign({}, modifiedHeaders[index], {
           isDetail: true,
-          uniqueId: shortid.generate()
+          uniqueId: uuidV4()
         }),
         ...modifiedHeaders.slice(index + 1)
       ];

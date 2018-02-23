@@ -19,13 +19,13 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Input, Label } from 'reactstrap';
 require('./TimeToLive.scss');
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 export default function TimeToLive({value, onChange}) {
   const getOptions = (count) => {
     return Array.apply(null, {length: count})
       .map((e, i) => (
-        <option key={shortid.generate()}>
+        <option key={uuidV4()}>
           {i}
         </option>
       ));

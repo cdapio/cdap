@@ -23,7 +23,7 @@ import PublishPipelineWizardConfig from 'services/WizardConfigs/PublishPipelineW
 import PublishPipelineAction from 'services/WizardStores/PublishPipeline/PublishPipelineActions.js';
 import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/ActionCreator.js';
 import head from 'lodash/head';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import MyUserStoreApi from 'api/userstore';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
@@ -129,7 +129,7 @@ export default class PublishPipelineWizard extends Component {
       return MyUserStoreApi
         .get()
         .mergeMap((res) => {
-          draftId = shortid.generate();
+          draftId = uuidV4();
           draftConfig.__ui__.draftId = draftId;
           res = res || {};
           res.property = res.property || {};

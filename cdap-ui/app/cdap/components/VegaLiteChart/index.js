@@ -19,7 +19,7 @@ import React, {Component} from 'react';
 import * as vl from 'vega-lite';
 import * as vega from 'vega';
 import * as vegaTooltip from 'vega-tooltip';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import LoadingSVG from 'components/LoadingSVG';
 import debounce from 'lodash/debounce';
 require('./VegaLiteChart.scss');
@@ -36,7 +36,7 @@ export default class VegaLiteChart extends Component {
   state = {
     data: this.props.data || [],
     isLoading: true,
-    id: `chart-${shortid.generate()}`
+    id: `chart-${uuidV4()}`
   };
   componentDidMount() {
     this.renderChart();

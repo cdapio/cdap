@@ -23,7 +23,7 @@ import {objectQuery} from 'services/helpers';
 import IconSVG from 'components/IconSVG';
 import { Input, Label } from 'reactstrap';
 import T from 'i18n-react';
-import uuid from 'uuid/v4';
+import uuidV4 from 'uuid/v4';
 
 require('./ResourceCenterPipelineEntity.scss');
 
@@ -36,7 +36,7 @@ export default function ResourceCenterPipelineEntity({onError}) {
   const secondaryActionLabel = T.translate(`${PREFIX}.actionbtn1`);
   const iconClassName = 'icon-pipelines';
 
-  const resourceCenterId = uuid();
+  const resourceCenterId = uuidV4();
   const hydratorLinkStateName = 'hydrator.create';
   const hydratorLinkStateParams = {
     namespace: NamespaceStore.getState().selectedNamespace,

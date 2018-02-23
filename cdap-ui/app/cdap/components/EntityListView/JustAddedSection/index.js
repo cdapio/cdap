@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import {MySearchApi} from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {objectQuery} from 'services/helpers';
 import classnames from 'classnames';
 import EntityCard from 'components/EntityCard';
@@ -123,7 +123,7 @@ export default class JustAddedSection extends Component {
             return creationTime >= thresholdTime;
           })
           .map((entity) => {
-            entity.uniqueId = shortid.generate();
+            entity.uniqueId = uuidV4();
             return entity;
           });
       })

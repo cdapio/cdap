@@ -22,7 +22,7 @@ import {createSchemaStore} from './SchemaStore';
 import SchemaStoreActions from './SchemaStoreActions';
 
 import { Table } from 'reactstrap';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import FieldRow from './FieldRow';
 require('./SimpleSchema.scss');
 
@@ -123,7 +123,7 @@ export default class SimpleSchema extends Component {
           {
             this.state.fields.map( (field, index) => {
               return (
-                <Provider store={this.SchemaStore} key={shortid.generate()}>
+                <Provider store={this.SchemaStore} key={uuidV4()}>
                   <FieldRowCopy
                     className="schema-field-row"
                     index={index}

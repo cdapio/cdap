@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import {isDescendant} from 'services/helpers';
 import {Popover, PopoverContent} from 'reactstrap';
 import {Observable} from 'rxjs/Observable';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
 import Mousetrap from 'mousetrap';
 import isEqual from 'lodash/isEqual';
@@ -80,7 +80,7 @@ export default class ColumnActionsDropdown extends Component {
     */
     this.directives = [
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: ParseDirective,
         requiredColCount: 1
       },
@@ -88,12 +88,12 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider'
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: SetCharacterEncoding,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: ChangeDataTypeDirective,
         requiredColCount: 1
       },
@@ -101,17 +101,17 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider'
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: Format,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: Calculate,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: CustomTransform,
         requiredColCount: 1
       },
@@ -119,21 +119,21 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider'
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: FilterDirective,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: MarkAsError
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: FindAndReplaceDirective,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: FillNullOrEmpty,
         requiredColCount: 1
       },
@@ -141,27 +141,27 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider'
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: CopyColumnDirective,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: DropColumnDirective,
         requiredColCount: 0
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: KeepColumnDirective,
         requiredColCount: 0
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: MergeColumnsDirective,
         requiredColCount: 2
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: SwapColumnsDirective,
         requiredColCount: 2
       },
@@ -169,22 +169,22 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider'
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: ExtractFields,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: Explode,
         requiredColCount: 0
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: DefineVariableDirective,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: SetCounterDirective,
         requiredColCount: 1
       },
@@ -192,23 +192,23 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider'
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: MaskData
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: EncodeDecode,
         requiredColCount: 1
       },
       {
-        id: shortid.generate(),
+        id: uuidV4(),
         tag: Decode,
         requiredColCount: 1
       }
     ];
     this.eventEmitter = ee(ee);
     this.eventEmitter.on('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
-    this.dropdownId = shortid.generate();
+    this.dropdownId = uuidV4();
   }
 
   componentDidMount() {

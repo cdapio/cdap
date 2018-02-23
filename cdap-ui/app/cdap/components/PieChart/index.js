@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import d3 from 'd3';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import isNil from 'lodash/isNil';
 
 export default class PieChart extends Component {
@@ -31,7 +31,7 @@ export default class PieChart extends Component {
   };
   state = {
     data: this.props.data,
-    id: shortid.generate()
+    id: uuidV4()
   };
   componentDidMount() {
     this.drawPie();

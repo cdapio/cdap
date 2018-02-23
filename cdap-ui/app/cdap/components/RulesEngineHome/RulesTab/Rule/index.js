@@ -26,7 +26,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import DSVEditor from 'components/DSVEditor';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import {preventPropagation} from 'services/helpers';
 import RulebooksPopover from 'components/RulesEngineHome/RulesTab/Rule/RulebooksPopover';
 import {getRuleBooks, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
@@ -211,7 +211,7 @@ class Rule extends Component {
       );
     }
     let rules = this.state.ruleDetails.action.map(action => ({
-      uniqueId: shortid.generate(),
+      uniqueId: uuidV4(),
       property: action
     }));
     return (

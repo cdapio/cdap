@@ -24,7 +24,7 @@ import Description from 'components/Description';
 import TimeAgo from 'react-timeago';
 import Tags from 'components/Tags';
 import moment from 'moment';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 
 require('./OverviewMetaSection.scss');
@@ -115,7 +115,7 @@ export default class OverviewMetaSection extends Component {
     let description =  objectQuery(this.props, 'entity', 'properties', 'description');
     // have to generate new uniqueId here, because we don't want the fast actions here to
     // trigger the tooltips on the card view
-    let entity = Object.assign({}, this.props.entity, {uniqueId: shortid.generate()});
+    let entity = Object.assign({}, this.props.entity, {uniqueId: uuidV4()});
     return (
       <div className="overview-meta-section">
         <h2 title={this.props.entity.id}>
