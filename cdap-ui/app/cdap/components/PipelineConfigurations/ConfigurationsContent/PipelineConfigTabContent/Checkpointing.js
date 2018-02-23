@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 
@@ -49,17 +49,13 @@ const Checkpointing = ({checkpointing, onToggle}) => {
           isOn={checkpointing}
           onToggle={onToggle.bind(null, !checkpointing)}
         />
-        <IconSVG
-          name="icon-info-circle"
-          id="checkpointing-info-icon"
-        />
-        <UncontrolledTooltip
-          target="checkpointing-info-icon"
-          delay={{show: 250, hide: 0}}
-          placement="right"
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
         >
           Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures.
-        </UncontrolledTooltip>
+        </Popover>
       </div>
     </div>
   );

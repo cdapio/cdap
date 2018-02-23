@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
 import {ENGINE_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
@@ -59,25 +59,23 @@ const ExecutorResources = ({isBatch, engine, virtualCores, onVirtualCoresChange,
         "col-xs-4": !isBatch
       })}
     >
-      <span className="resource-title">
-        {engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ? 'Mapper/Reducer' : 'Executor'}
-      </span>
-      <IconSVG
-        name="icon-info-circle"
-        id="executor-resources-info-icon"
-      />
-      <UncontrolledTooltip
-        target="executor-resources-info-icon"
-        delay={{show: 250, hide: 0}}
-        placement="right"
-      >
-        {
-          engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ?
-            'Resources for the executor process which initializes the pipeline'
-          :
-            'Resources for executor processes which run tasks in an Apache Spark pipeline'
-        }
-      </UncontrolledTooltip>
+      <div className="resource-title-icon">
+        <span className="resource-title">
+          {engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ? 'Mapper/Reducer' : 'Executor'}
+        </span>
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
+        >
+          {
+            engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ?
+              'Resources for the executor process which initializes the pipeline'
+            :
+              'Resources for executor processes which run tasks in an Apache Spark pipeline'
+          }
+        </Popover>
+      </div>
       <PipelineResources
         virtualCores={virtualCores}
         onVirtualCoresChange={onVirtualCoresChange}

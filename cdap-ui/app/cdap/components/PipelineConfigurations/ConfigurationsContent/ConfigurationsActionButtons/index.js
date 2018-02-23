@@ -16,114 +16,111 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
-import {applyRuntimeArgs, updatePipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
-import IconSVG from 'components/IconSVG';
-import T from 'i18n-react';
+import {applyRuntimeArgs, updatePipeline, runPipeline, schedulePipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import ConfigModelessSaveAndRunBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons/ConfigModelessSaveAndRunBtn';
+import ConfigModelessSaveAndScheduleBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons/ConfigModelessSaveAndScheduleBtn';
+import ConfigModelessSaveBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons/ConfigModelessSaveBtn';
+import ConfigModelessRuntimeArgsCount from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons/ConfigModelessRuntimeArgsCount';
+
 require('./ConfigurationsActionButtons.scss');
-
-const PREFIX = 'features.PipelineConfigurations.ActionButtons';
-
-const mapStateToProps = (state, ownProps) => {
-  return {
-    runtimeArgs: state.runtimeArgs,
-    validToSave: state.validToSave,
-    pipelineEdited: state.pipelineEdited,
-    updatingPipeline: ownProps.updatingPipeline,
-    saveAndClose: ownProps.saveAndClose,
-    activeTab: ownProps.activeTab,
-  };
-};
-
-const ConfigActionButtons = ({runtimeArgs, validToSave, pipelineEdited, updatingPipeline, saveAndClose, activeTab}) => {
-  return (
-    <div className="configuration-step-navigation">
-      <div className="apply-run-container">
-        <button
-          className="btn btn-primary"
-          disabled={updatingPipeline || !validToSave}
-          onClick={saveAndClose.bind(this, pipelineEdited)}
-        >
-          {
-            updatingPipeline ?
-              (
-                <span>
-                  Saving
-                  <IconSVG
-                    name="icon-spinner"
-                    className="fa-spin"
-                  />
-                 </span>
-              )
-            :
-              <span>Save</span>
-          }
-        </button>
-        {
-          activeTab === TAB_OPTIONS.RUNTIME_ARGS ?
-            (
-              <span className="num-runtime-args">
-                {T.translate(`${PREFIX}.runtimeArgsCount`, {context: runtimeArgs.pairs.length})}
-              </span>
-            )
-          :
-            null
-        }
-      </div>
-    </div>
-  );
-};
-
-ConfigActionButtons.propTypes = {
-  activeTab: PropTypes.string,
-  runtimeArgs: PropTypes.object,
-  validToSave: PropTypes.bool,
-  pipelineEdited: PropTypes.bool,
-  updatingPipeline: PropTypes.bool,
-  saveAndClose: PropTypes.func
-};
-
-const ConnectedConfigActionButtons = connect(mapStateToProps)(ConfigActionButtons);
 
 export default class ConfigurationsActionButtons extends Component {
   state = {
-    updatingPipeline: false
+    saveLoading: false,
+    saveAndRunLoading: false,
+    saveAndScheduleLoading: false
   };
 
   static propTypes = {
     onClose: PropTypes.func,
-    activeTab: PropTypes.string
-  }
+    activeTab: PropTypes.string,
+    action: PropTypes.string
+  };
 
-  saveAndClose = (pipelineEdited) => {
-    applyRuntimeArgs();
-    if (pipelineEdited) {
-      this.setState({
-        updatingPipeline: true
-      });
-      updatePipeline()
-      .subscribe(() => {
-        this.props.onClose();
-      }, (err) => {
-        console.log(err);
-      }, () => {
-        this.setState({
-          updatingPipeline: false
-        });
-      });
-    } else {
+  static defaultProps = {
+    action: 'run'
+  };
+
+  closeModeless = () => {
+    if (typeof this.props.onClose === 'function') {
       this.props.onClose();
     }
   };
 
+  closeModelessAndRun = () => {
+    this.closeModeless();
+    runPipeline();
+  };
+
+  closeModelessAndSchedule = () => {
+    this.closeModeless();
+    schedulePipeline();
+  };
+
+  saveAndRun = (pipelineEdited) => {
+    this.saveAndAction(pipelineEdited, 'saveAndRunLoading', this.closeModelessAndRun);
+  }
+
+  saveAndSchedule = (pipelineEdited) => {
+    this.saveAndAction(pipelineEdited, 'saveAndScheduleLoading', this.closeModelessAndSchedule);
+  }
+
+  saveConfig = (pipelineEdited) => {
+    this.saveAndAction(pipelineEdited, 'saveLoading', this.closeModeless);
+  };
+
+  saveAndAction(pipelineEdited, loadingState, actionFn) {
+    applyRuntimeArgs();
+    if (!pipelineEdited) {
+      actionFn();
+      return;
+    }
+
+    this.setState({
+      [loadingState]: true
+    });
+    updatePipeline()
+    .subscribe(() => {
+      actionFn();
+    }, (err) => {
+      console.log(err);
+    }, () => {
+      this.setState({
+        [loadingState]: false
+      });
+    });
+  }
+
   render() {
+    let SaveAndActionComp;
+    if (this.props.action === 'run') {
+      SaveAndActionComp = (
+        <ConfigModelessSaveAndRunBtn
+          saveAndRun={this.saveAndRun}
+          saveAndRunLoading={this.state.saveAndRunLoading}
+        />
+      );
+    } else if (this.props.action === 'schedule') {
+      SaveAndActionComp = (
+        <ConfigModelessSaveAndScheduleBtn
+          saveAndSchedule={this.saveAndSchedule}
+          saveAndScheduleLoading={this.state.saveAndScheduleLoading}
+        />
+      );
+    }
     return (
-      <ConnectedConfigActionButtons
-        updatingPipeline={this.state.updatingPipeline}
-        saveAndClose={this.saveAndClose}
-        activeTab={this.props.activeTab}
-      />
+      <div className="configuration-step-navigation">
+        <div className="apply-run-container">
+          {SaveAndActionComp}
+          <ConfigModelessSaveBtn
+            saveConfig={this.saveConfig}
+            saveLoading={this.state.saveLoading}
+          />
+          <ConfigModelessRuntimeArgsCount
+            activeTab={this.props.activeTab}
+          />
+        </div>
+      </div>
     );
   }
 }

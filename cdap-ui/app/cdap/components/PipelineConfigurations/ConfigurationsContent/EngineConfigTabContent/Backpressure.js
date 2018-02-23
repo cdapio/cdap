@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 
 const mapStateToProps = (state, ownProps) => {
@@ -49,17 +49,13 @@ const Backpressure = ({backpressure, disabled, onToggle}) => {
           onToggle={onToggle.bind(null, !backpressure)}
           disabled={disabled}
         />
-        <IconSVG
-          name="icon-info-circle"
-          id="backpressure-info-icon"
-        />
-        <UncontrolledTooltip
-          target="backpressure-info-icon"
-          delay={{show: 250, hide: 0}}
-          placement="right"
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
         >
           Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process.
-        </UncontrolledTooltip>
+        </Popover>
       </div>
     </div>
   );

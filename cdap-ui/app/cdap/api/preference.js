@@ -20,7 +20,7 @@ import {apiCreator} from 'services/resource-helper';
 let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = '/namespaces/:namespace';
 
-const myPreferenceApi = {
+export const MyPreferenceApi = {
   getSystemPreferences: apiCreator(dataSrc, 'GET', 'REQUEST', '/preferences'),
   setSystemPreferences: apiCreator(dataSrc, 'PUT', 'REQUEST', '/preferences'),
   getNamespacePreferences: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/preferences`),
@@ -32,5 +32,3 @@ const myPreferenceApi = {
   getProgramPreferences: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/apps/:appId/:programType/:programId/preferences`),
   setProgramPreferences: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/apps/:appId/:programType/:programId/preferences`),
 };
-
-export default myPreferenceApi;

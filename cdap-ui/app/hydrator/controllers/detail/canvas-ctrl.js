@@ -141,9 +141,12 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.pipelineDetailStoreSubscription = this.PipelineDetailStore.subscribe(() => {
       let pipelineDetailStoreState = this.PipelineDetailStore.getState();
-      let runs = pipelineDetailStoreState.runs.reverse();
-      this.currentRun = pipelineDetailStoreState.currentRun;
-      if (this.currentRun) {
+      let runs = pipelineDetailStoreState.runs;
+      if (runs.length) {
+        this.currentRun = pipelineDetailStoreState.currentRun;
+        if (_.isEmpty(this.currentRun)) {
+          this.currentRun = runs[0];
+        }
         let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
         this.$interval.cancel(this.currentRunTimeCounter);
         if (status === 'Running') {
@@ -162,10 +165,11 @@ angular.module(PKG.name + '.feature.hydrator')
           statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
           status
         });
-        let runNumber = _.findIndex(runs, {runid: this.currentRun.runid});
+        let reversedRuns = window.CaskCommon.CDAPHelpers.reverseWithoutMutating(runs);
+        let runNumber = _.findIndex(reversedRuns, {runid: this.currentRun.runid});
         this.currentRunIndex = runNumber + 1;
+        this.totalRuns = runs.length;
       }
-      this.totalRuns = runs.length;
     });
 
     DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNode.bind(this));

@@ -16,39 +16,39 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyPipelineApi} from 'api/pipeline';
-import {fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
+import {setScheduleError, setScheduleButtonLoading} from 'components/PipelineDetails/store/ActionCreator';
 import PipelineScheduler from 'components/PipelineScheduler';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import StatusMapper from 'services/StatusMapper';
-import {GLOBALS} from 'services/global-constants';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import {schedulePipeline, suspendSchedule} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
+import PipelineConfigurations from 'components/PipelineConfigurations';
 
-export default class ScheduleButton extends Component {
+export default class PipelineScheduleButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     schedule: PropTypes.string,
     maxConcurrentRuns: PropTypes.number,
     pipelineName: PropTypes.string,
-    scheduleStatus: PropTypes.string
+    scheduleStatus: PropTypes.string,
+    scheduleButtonLoading: PropTypes.bool,
+    scheduleError: PropTypes.string,
+    runtimeArgs: PropTypes.array
   }
 
   state = {
     showScheduler: false,
-    scheduleStatus: this.props.scheduleStatus,
-    scheduleLoading: true,
-    scheduleError: null
+    showConfigModeless: false,
+    scheduleStatus: this.props.scheduleStatus
   };
 
   componentWillReceiveProps(nextProps) {
     let scheduleStatus = StatusMapper.lookupDisplayStatus(nextProps.scheduleStatus);
     if (scheduleStatus !== this.state.scheduleStatus) {
-      this.setState({
-        scheduleStatus,
-        scheduleLoading: false
-      });
+      this.setState({ scheduleStatus });
+      setScheduleButtonLoading(false);
     }
   }
 
@@ -56,74 +56,73 @@ export default class ScheduleButton extends Component {
     this.setState({
       showScheduler: !this.state.showScheduler
     });
-  }
+  };
 
-  scheduleOrSuspend = (scheduleApi) => {
+  toggleConfigModeless = () => {
     this.setState({
-      scheduleLoading: true
+      showConfigModeless: !this.state.showConfigModeless
     });
-    let params = {
-      namespace: getCurrentNamespace(),
-      appId: this.props.pipelineName,
-      scheduleId: GLOBALS.defaultScheduleId
-    };
-    scheduleApi(params)
-    .subscribe(() => {
-      this.setState({
-        scheduleLoading: false
-      });
-      fetchScheduleStatus(params);
-    }, (err) => {
-      this.setState({
-        scheduleLoading: false,
-        scheduleError: err.response || err
-      });
-    });
-  }
+  };
+
+  schedulePipelineOrToggleConfig = () => {
+    if (keyValuePairsHaveMissingValues(this.props.runtimeArgs)) {
+      this.toggleConfigModeless();
+    } else {
+      schedulePipeline();
+    }
+  };
 
   renderScheduleError() {
-    if (!this.state.scheduleError) {
+    if (!this.props.scheduleError) {
       return null;
     }
 
     return (
       <Alert
-        message={this.state.scheduleError}
+        message={this.props.scheduleError}
         type='error'
         showAlert={true}
-        onClose={() => this.setState({
-          scheduleError: null
-        })}
+        onClose={setScheduleError.bind(null, '')}
+      />
+    );
+  }
+
+  renderConfigModeless() {
+    if (!this.state.showConfigModeless) { return null; }
+
+    return (
+      <PipelineConfigurations
+        onClose={this.toggleConfigModeless}
+        isDetailView={true}
+        isBatch={this.props.isBatch}
+        pipelineName={this.props.pipelineName}
+        action='schedule'
       />
     );
   }
 
   renderScheduleButton() {
-    if ([StatusMapper.statusMap['DEPLOYED'], StatusMapper.statusMap['SCHEDULING']].indexOf(this.state.scheduleStatus) !== -1) {
+    if ([StatusMapper.statusMap['SCHEDULED'], StatusMapper.statusMap['SUSPENDING']].indexOf(this.state.scheduleStatus) !== -1) {
       return (
         <div
           onClick={this.toggleScheduler}
-          className={classnames("btn pipeline-scheduler-btn", {"btn-select" : this.state.showScheduler})}
-          disabled={this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULING']}
+          className="btn pipeline-action-btn pipeline-scheduler-btn"
+          disabled={this.state.scheduleStatus === StatusMapper.statusMap['SUSPENDING']}
         >
           <div className="btn-container">
             {
-              this.state.scheduleLoading ?
+              this.props.scheduleButtonLoading ?
                 <IconSVG
                   name="icon-spinner"
                   className="fa-spin"
                 />
               :
-                (
-                  <span className="double-line">
-                    <IconSVG
-                      name="icon-runtimestarttime"
-                      className="schedule-icon"
-                    />
-                    <div className="button-label">Schedule</div>
-                  </span>
-                )
+                <IconSVG
+                  name="icon-runtimestarttime"
+                  className="unschedule-icon"
+                />
             }
+            <div className="button-label">Unschedule</div>
           </div>
         </div>
       );
@@ -132,27 +131,23 @@ export default class ScheduleButton extends Component {
     return (
       <div
         onClick={this.toggleScheduler}
-        className="btn pipeline-scheduler-btn"
-        disabled={this.state.scheduleStatus === StatusMapper.statusMap['SUSPENDING']}
+        className={classnames("btn pipeline-action-btn pipeline-scheduler-btn", {"btn-select" : this.state.showScheduler})}
+        disabled={this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULING']}
       >
         <div className="btn-container">
           {
-            this.state.scheduleLoading ?
+            this.props.scheduleButtonLoading ?
               <IconSVG
                 name="icon-spinner"
                 className="fa-spin"
               />
             :
-              (
-                <span className="double-line">
-                  <IconSVG
-                    name="icon-runtimestarttime"
-                    className="unschedule-icon"
-                  />
-                  <div className="button-label">Unschedule</div>
-                </span>
-              )
+              <IconSVG
+                name="icon-runtimestarttime"
+                className="schedule-icon"
+              />
           }
+          <div className="button-label">Schedule</div>
         </div>
       </div>
     );
@@ -164,7 +159,7 @@ export default class ScheduleButton extends Component {
     }
 
     return (
-      <div className="pipeline-scheduler">
+      <div className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler})}>
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
         {
@@ -176,12 +171,13 @@ export default class ScheduleButton extends Component {
               isDetailView={true}
               pipelineName={this.props.pipelineName}
               scheduleStatus={this.state.scheduleStatus}
-              schedulePipeline={this.scheduleOrSuspend.bind(this, MyPipelineApi.schedule)}
-              suspendSchedule={this.scheduleOrSuspend.bind(this, MyPipelineApi.suspend)}
+              schedulePipeline={this.schedulePipelineOrToggleConfig}
+              suspendSchedule={suspendSchedule}
             />
           :
             null
         }
+        {this.renderConfigModeless()}
       </div>
     );
   }

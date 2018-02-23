@@ -26,8 +26,12 @@ $input-label-color: $grey-03;
       border-right: 1px solid $input-label-color;
     }
 
-    .resource-title {
-      font-weight: 500;
+    .resource-title-icon {
+      display: flex;
+
+      .resource-title {
+        font-weight: 500;
+      }
     }
 
     .resource-holder {

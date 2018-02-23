@@ -19,7 +19,7 @@ import {Provider} from 'react-redux';
 import PropTypes from 'prop-types';
 import {Observable} from 'rxjs/Observable';
 import {isDescendant} from 'services/helpers';
-import PipelineConfigurationsStore, {TAB_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import PipelineConfigurationsStore, {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
 import ConfigurationsSidePanel from 'components/PipelineConfigurations/ConfigurationsSidePanel';
 import ConfigurationsContent from 'components/PipelineConfigurations/ConfigurationsContent';
 import IconSVG from 'components/IconSVG';
@@ -32,7 +32,7 @@ export default class PipelineConfigurations extends Component {
     isPreview: PropTypes.bool,
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
-    config: PropTypes.object
+    action: PropTypes.string
   };
 
   static defaultProps = {
@@ -44,13 +44,6 @@ export default class PipelineConfigurations extends Component {
   state = {
     activeTab: TAB_OPTIONS.RUNTIME_ARGS,
     showAdvancedTabs: false
-  }
-
-  componentWillMount() {
-    PipelineConfigurationsStore.dispatch({
-      type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
-      payload: {...this.props.config}
-    });
   }
 
   componentDidMount() {
@@ -133,6 +126,7 @@ export default class PipelineConfigurations extends Component {
               isBatch={this.props.isBatch}
               isDetailView={this.props.isDetailView}
               onClose={this.props.onClose}
+              action={this.props.action}
             />
           </div>
         </div>

@@ -16,8 +16,11 @@
 
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/PipelineDetails/store';
+import {setRunButtonLoading, setRunError, setScheduleButtonLoading, setScheduleError, fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
+import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {GLOBALS} from 'services/global-constants';
 import {MyPipelineApi} from 'api/pipeline';
+import {MyProgramApi} from 'api/program';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -35,6 +38,16 @@ const revertRuntimeArgsToSavedValues = () => {
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
     payload: { runtimeArgs: cloneDeep(savedRuntimeArgs) }
   });
+};
+
+const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
+  let resolvedMacros = {...macrosMap};
+  for (let pref in resolvedPrefs) {
+    if (resolvedPrefs.hasOwnProperty(pref) && resolvedMacros.hasOwnProperty(pref)) {
+      resolvedMacros[pref] = resolvedPrefs[pref];
+    }
+  }
+  return resolvedMacros;
 };
 
 const updatePipelineEditStatus = () => {
@@ -143,9 +156,62 @@ const updatePipeline = () => {
   return publishObservable;
 };
 
+const runPipeline = () => {
+  setRunButtonLoading(true);
+  let { name, artifact } = PipelineDetailStore.getState();
+  let { runtimeArgs  } = PipelineConfigurationsStore.getState();
+
+  let params = {
+    namespace: getCurrentNamespace(),
+    appId: name,
+    programType: GLOBALS.programType[artifact.name],
+    programId: GLOBALS.programId[artifact.name],
+    action: 'start'
+  };
+  runtimeArgs = convertKeyValuePairsObjToMap(runtimeArgs);
+  MyProgramApi.action(params, runtimeArgs)
+  .subscribe(
+    () => {},
+    (err) => {
+    setRunButtonLoading(false);
+    setRunError(err.response || err);
+  });
+};
+
+const schedulePipeline = () => {
+  scheduleOrSuspendPipeline(MyPipelineApi.schedule);
+};
+
+const suspendSchedule = () => {
+  scheduleOrSuspendPipeline(MyPipelineApi.suspend);
+};
+
+const scheduleOrSuspendPipeline = (scheduleApi) => {
+  setScheduleButtonLoading(true);
+  let { name } = PipelineDetailStore.getState();
+
+  let params = {
+    namespace: getCurrentNamespace(),
+    appId: name,
+    scheduleId: GLOBALS.defaultScheduleId
+  };
+  scheduleApi(params)
+  .subscribe(() => {
+    setScheduleButtonLoading(false);
+    fetchScheduleStatus(params);
+  }, (err) => {
+    setScheduleButtonLoading(false);
+    setScheduleError(err.response || err);
+  });
+};
+
 export {
   applyRuntimeArgs,
   revertRuntimeArgsToSavedValues,
+  getMacrosResolvedByPrefs,
   updatePipelineEditStatus,
-  updatePipeline
+  updatePipeline,
+  runPipeline,
+  schedulePipeline,
+  suspendSchedule
 };

@@ -20,7 +20,7 @@ import {connect, Provider} from 'react-redux';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import Tags from 'components/Tags';
 import IconSVG from 'components/IconSVG';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {GLOBALS} from 'services/global-constants';
 
 const mapStateToPipelineTagsProps = (state) => {
@@ -63,16 +63,13 @@ const PipelineDetailsMetadata = ({name, artifactName, version, description}) => 
           {name}
         </h1>
         <span className="pipeline-description">
-          <IconSVG
-            id="pipeline-description-info-icon"
-            name="icon-info-circle"
-          />
-          <UncontrolledTooltip
-            target="pipeline-description-info-icon"
-            delay={{show: 250, hide: 0}}
+          <Popover
+            target={() => <IconSVG name="icon-info-circle" />}
+            showOn='Hover'
+            placement='bottom'
           >
             {description}
-          </UncontrolledTooltip>
+          </Popover>
         </span>
         <span className="pipeline-version">
           version {version}

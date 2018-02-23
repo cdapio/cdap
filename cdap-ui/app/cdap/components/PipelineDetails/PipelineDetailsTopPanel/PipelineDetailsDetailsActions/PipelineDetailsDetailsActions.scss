@@ -14,18 +14,22 @@
  * the License.
 */
 
-/* Doing these imports for now, will remove once we have the js for these tabs */
-@import "./ConfigurationsContent/PreviewConfigTabContent/PreviewConfigTabContent.scss";
-@import "./ConfigurationsContent/AlertsTabContent/AlertsTabContent.scss";
+@import "../../../../styles/variables.scss";
 
-$modeless-width: 830px;
-$modeless-height: 496px;
-$top-panel-height: 54px;
-$right-position: -360px;
+.pipeline-details-details-actions {
+  .pipeline-details-container {
+    .pipeline-details-btn {
+      .icon-info-circle {
+        color: $grey-02;
+      }
+    }
+  }
 
-.pipeline-configurations-content {
-  width: $modeless-width;
-  height: $modeless-height;
-  top: $top-panel-height;
-  right: $right-position;
+  .pipeline-actions-container {
+    .pipeline-actions-btn {
+      .icon-cog-empty {
+        fill: white;
+      }
+    }
+  }
 }

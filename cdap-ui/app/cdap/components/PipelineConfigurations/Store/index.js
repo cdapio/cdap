@@ -103,7 +103,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   runtimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   savedRuntimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   resolvedMacros: {},
-  customConfigKeyValuePairs: {},
+  customConfigKeyValuePairs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   postRunActions: [],
   properties: {},
   engine: HYDRATOR_DEFAULT_VALUES.engine,
@@ -122,7 +122,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   postActions: [],
   schedule: HYDRATOR_DEFAULT_VALUES.cron,
   maxConcurrentRuns: 1,
-  validToSave: true,
+  isMissingKeyValues: false,
   pipelineEdited: false
 };
 
@@ -217,8 +217,8 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
   return currentRuntimeArgs;
 };
 
-const validateConfig = (runtimeArguments, customConfig) => {
-  return !keyValuePairsHaveMissingValues(runtimeArguments) && !keyValuePairsHaveMissingValues(customConfig);
+const checkIfMissingKeyValues = (runtimeArguments, customConfig) => {
+  return keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig);
 };
 
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
@@ -233,7 +233,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
-        validToSave: validateConfig(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
+        isMissingKeyValues: checkIfMissingKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
       };
     case ACTIONS.SET_SAVED_RUNTIME_ARGS:
       return {
@@ -243,11 +243,15 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
       let runtimeArgs = getRuntimeArgsForDisplay(state.runtimeArgs, resolvedMacros);
+      let savedRuntimeArgs = cloneDeep(runtimeArgs);
+      let isMissingKeyValues = checkIfMissingKeyValues(runtimeArgs, state.customConfigKeyValuePairs);
 
       return {
         ...state,
         resolvedMacros,
-        runtimeArgs
+        runtimeArgs,
+        savedRuntimeArgs,
+        isMissingKeyValues
       };
     }
     case ACTIONS.RESET_RUNTIME_ARG_TO_RESOLVED_VALUE:
@@ -330,7 +334,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         customConfigKeyValuePairs: action.payload.keyValues,
-        validToSave: validateConfig(state.runtimeArgs, action.payload.keyValues)
+        isMissingKeyValues: checkIfMissingKeyValues(state.runtimeArgs, action.payload.keyValues)
       };
     case ACTIONS.SET_CUSTOM_CONFIG: {
       // Need to remove previous custom configs from config.properties before setting new ones

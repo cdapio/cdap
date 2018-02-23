@@ -15,42 +15,103 @@
 */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Provider, connect} from 'react-redux';
-import PipelineDetailStore from 'components/PipelineDetails/store';
-import {GLOBALS} from 'services/global-constants';
-import ScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ScheduleButton';
+import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
+import PipelineScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineScheduleButton';
 import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineConfigureButton';
+import PipelineStopButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton';
+import PipelineRunButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineRunButton';
+import PipelineSummaryButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineSummaryButton';
 
-const mapStateToScheduleButton = (state) => {
+const mapStateToConfigureButton = (state, ownProps) => {
   return {
-    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
-    schedule: state.config.schedule,
-    maxConcurrentRuns: state.config.maxConcurrentRuns,
-    pipelineName: state.name,
-    scheduleStatus: state.scheduleStatus
-  };
-};
-
-const mapStateToConfigureButton = (state) => {
-  return {
-    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
-    pipelineName: state.name,
-    config: state.config,
-    macrosMap: state.macrosMap,
+    isBatch: ownProps.isBatch,
+    pipelineName: ownProps.pipelineName,
+    resolvedMacros: state.resolvedMacros,
     runtimeArgs: state.runtimeArgs
   };
 };
 
-const ConnectedScheduleButton = connect(mapStateToScheduleButton, null)(ScheduleButton);
-const ConnectedConfigureButton = connect(mapStateToConfigureButton, null)(PipelineConfigureButton);
+const mapStateToRunButton = (state, ownProps) => {
+  return {
+    isBatch: ownProps.isBatch,
+    pipelineName: ownProps.pipelineName,
+    runButtonLoading: ownProps.runButtonLoading,
+    runError: ownProps.runError,
+    runtimeArgs: state.runtimeArgs
+  };
+};
 
-export default function PipelineDetailsButtons() {
+const mapStateToScheduleButton = (state, ownProps) => {
+  return {
+    isBatch: ownProps.isBatch,
+    pipelineName: ownProps.pipelineName,
+    schedule: ownProps.schedule,
+    maxConcurrentRuns: ownProps.maxConcurrentRuns,
+    scheduleStatus: ownProps.scheduleStatus,
+    scheduleButtonLoading: ownProps.scheduleButtonLoading,
+    scheduleError: ownProps.scheduleError,
+    runtimeArgs: state.runtimeArgs
+  };
+};
+
+const ConnectedConfigureButton = connect(mapStateToConfigureButton)(PipelineConfigureButton);
+const ConnectedRunButton = connect(mapStateToRunButton)(PipelineRunButton);
+const ConnectedScheduleButton = connect(mapStateToScheduleButton)(PipelineScheduleButton);
+
+// export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, scheduleButtonLoading, scheduleError}) {
+export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, runButtonLoading, runError, scheduleButtonLoading, scheduleError, stopButtonLoading, stopError}) {
   return (
-    <Provider store={PipelineDetailStore}>
+    <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
-        <ConnectedScheduleButton />
-        <ConnectedConfigureButton />
+        <ConnectedConfigureButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
+        <ConnectedScheduleButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+          schedule={schedule}
+          maxConcurrentRuns={maxConcurrentRuns}
+          scheduleStatus={scheduleStatus}
+          scheduleButtonLoading={scheduleButtonLoading}
+          scheduleError={scheduleError}
+        />
+        <PipelineStopButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+          runs={runs}
+          stopButtonLoading={stopButtonLoading}
+          stopError={stopError}
+        />
+        <ConnectedRunButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+          runButtonLoading={runButtonLoading}
+          runError={runError}
+        />
+        <PipelineSummaryButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
       </div>
     </Provider>
   );
 }
+
+PipelineDetailsButtons.propTypes = {
+  isBatch: PropTypes.boolean,
+  pipelineName: PropTypes.string,
+  schedule: PropTypes.string,
+  maxConcurrentRuns: PropTypes.number,
+  scheduleStatus: PropTypes.string,
+  runs: PropTypes.array,
+  currentRun: PropTypes.object,
+  runButtonLoading: PropTypes.bool,
+  runError: PropTypes.string,
+  scheduleButtonLoading: PropTypes.bool,
+  scheduleError: PropTypes.string,
+  stopButtonLoading: PropTypes.bool,
+  stopError: PropTypes.string,
+};

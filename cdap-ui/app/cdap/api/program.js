@@ -26,5 +26,6 @@ export const MyProgramApi = {
   runs: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/runs`),
   pollRuns: apiCreator(dataSrc, 'GET', 'POLL', `${basepath}/runs`),
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${basepath}/status`),
-  action: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:action`)
+  action: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:action`),
+  stopRun: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/runs/:runId/stop`)
 };

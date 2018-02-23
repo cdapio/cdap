@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {NUM_EXECUTORS_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 
@@ -50,17 +50,13 @@ const NumExecutors = ({numExecutors, onChange}) => {
           options={NUM_EXECUTORS_OPTIONS}
           onChange={onChange}
         />
-        <IconSVG
-          name="icon-info-circle"
-          id="num-executors-info-icon"
-        />
-        <UncontrolledTooltip
-          target="num-executors-info-icon"
-          delay={{show: 250, hide: 0}}
-          placement="right"
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
         >
           The number of executors to allocate for this pipeline on Apache Yarn.
-        </UncontrolledTooltip>
+        </Popover>
       </div>
     </div>
   );

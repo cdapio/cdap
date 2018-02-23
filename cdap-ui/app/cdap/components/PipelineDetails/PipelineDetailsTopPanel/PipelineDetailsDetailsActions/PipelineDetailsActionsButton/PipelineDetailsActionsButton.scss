@@ -14,18 +14,31 @@
  * the License.
 */
 
-/* Doing these imports for now, will remove once we have the js for these tabs */
-@import "./ConfigurationsContent/PreviewConfigTabContent/PreviewConfigTabContent.scss";
-@import "./ConfigurationsContent/AlertsTabContent/AlertsTabContent.scss";
+.pipeline-actions-container {
+  .popper {
+    z-index: 999;
+    min-width: 120px;
+    width: 120px;
 
-$modeless-width: 830px;
-$modeless-height: 496px;
-$top-panel-height: 54px;
-$right-position: -360px;
+    ul {
+      padding: 10px;
 
-.pipeline-configurations-content {
-  width: $modeless-width;
-  height: $modeless-height;
-  top: $top-panel-height;
-  right: $right-position;
+      li {
+        padding: 8px 4px 8px 0;
+      }
+
+      hr {
+        margin: 2px;
+      }
+    }
+  }
+}
+
+.pipeline-export-modal {
+  .textarea-container {
+    textarea {
+      padding-right: 55px;
+      font-family: monospace;
+    }
+  }
 }
