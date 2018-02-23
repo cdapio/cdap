@@ -25,7 +25,7 @@
   }
 
   &.add-entity-modal {
-    height: 80vh;
+    overflow: hidden;
   }
 
   &.modal-dialog {
@@ -42,7 +42,6 @@
 
       .modal-body {
         padding: 0;
-        height: calc(100% - 51px); // 100% - 51px for modal header
         background: #ffffff;
         > span,
         > span > div {
@@ -185,8 +184,13 @@
     &.modal-dialog {
       .modal-content {
         .modal-body {
-          max-height: 60vh;
-          overflow-y: hidden;
+          // Having a max-height on parent doesn't have a height reference for the child to take in.
+          // A 100% on max-height doesn't actually take the max-height of the parent but 100% of the HEIGHT of the parent.
+          // So instead of setting a max-height on the modal dialog and having the modal-body take 100% - 52px which doesn't apply
+          // proper scrolling on modal-body I am directly setting the max-height of the modal-body to be 75vh
+          // so that it scrolls normally and doesn't take up extra whitespace on a large display.
+          max-height: 75vh;
+          overflow-y: auto;
         }
       }
     }

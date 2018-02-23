@@ -117,6 +117,7 @@ export default class PlusButtonModal extends Component {
             transitionName="plus-button-modal-content"
             transitionEnterTimeout={500}
             transitionLeaveTimeout={300}
+            component="div"
           >
             {
               this.state.viewMode === 'marketplace' ?
