@@ -21,7 +21,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
 import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
 import {Link} from 'react-router-dom';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 require('./DataStreamCards.scss');
 
 export default function DatasetStreamCards({dataEntities}) {
@@ -34,7 +34,7 @@ export default function DatasetStreamCards({dataEntities}) {
       }
     };
     entity = parseMetadata(entity);
-    entity.uniqueId = shortid.generate();
+    entity.uniqueId = uuidV4();
     return entity;
   });
   return (

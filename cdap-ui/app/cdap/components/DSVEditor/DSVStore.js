@@ -16,7 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import DSVActions from 'components/DSVEditor/DSVActions';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
   type: '',
@@ -42,7 +42,7 @@ const DSV = (state = initialState, action = defaultAction) => {
       stateCopy = Object.assign({}, state);
       stateCopy.rows.splice(action.payload.index + 1, 0, {
         property: '',
-        uniqueId: shortid.generate()
+        uniqueId: uuidV4()
       });
       return stateCopy;
     case DSVActions.deleteRow:
@@ -51,7 +51,7 @@ const DSV = (state = initialState, action = defaultAction) => {
       if (!stateCopy.rows.length) {
         stateCopy.rows.push({
           property: '',
-          uniqueId: shortid.generate()
+          uniqueId: uuidV4()
         });
       }
       return stateCopy;

@@ -21,7 +21,7 @@ import {Observable} from 'rxjs/Observable';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import {preventPropagation, isDescendant} from 'services/helpers';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 require('./Popover.scss');
 
@@ -56,7 +56,7 @@ export default class Popover extends Component {
     showPopover: false
   };
 
-  id = `popover-${shortid.generate()}`;
+  id = `popover-${uuidV4()}`;
 
   hidePopoverEventHandler = (popoverId) => {
     if (this.id !== popoverId) {

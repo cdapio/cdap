@@ -28,7 +28,7 @@ import isObject from 'lodash/isObject';
 import sortBy from 'lodash/sortBy';
 import T from 'i18n-react';
 import {Link} from 'react-router-dom';
-const shortid = require('shortid');
+import uuidV4 from 'uuid/v4';
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 require('./NamespaceDropdown.scss');
@@ -333,7 +333,7 @@ export default class NamespaceDropdown extends Component {
                     return (
                       <div
                         className="clearfix namespace-container"
-                        key={shortid.generate()}
+                        key={uuidV4()}
                       >
                         <LinkEl
                           href={baseurl + `ns/${item.name}`}

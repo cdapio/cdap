@@ -34,7 +34,7 @@ import DeleteExperimentBtn from 'components/Experiments/DetailedView/DeleteExper
 import HyperParamsPopover from 'components/Experiments/DetailedView/HyperParamsPopover';
 import isNumber from 'lodash/isNumber';
 import isString from 'lodash/isString';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
@@ -193,7 +193,7 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
       "highlight": model.id === newlyTrainingModelId,
       "loading": !model.splitDetails
     }),
-    key: shortid.generate()
+    key: uuidV4()
   };
   if (!model.splitDetails) {
     return (
@@ -279,7 +279,7 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
       "active": model.active,
       "highlight": model.id === newlyTrainingModelId
     }),
-    key: shortid.generate()
+    key: uuidV4()
   };
   let inSplitStep = (['SPLITTING', 'DATA_READY', 'EMPTY'].indexOf(model.status) !== -1);
   if (inSplitStep) {

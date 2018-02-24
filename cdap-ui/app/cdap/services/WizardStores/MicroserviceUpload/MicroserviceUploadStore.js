@@ -20,7 +20,7 @@ import {getArtifactNameAndVersion, defaultAction, requiredFieldsCompleted} from 
 import head from 'lodash/head';
 import cloneDeep from 'lodash/cloneDeep';
 import isEmpty from 'lodash/isEmpty';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 
 // Defaults
@@ -79,7 +79,7 @@ const defaultPropertiesState = Object.assign({
     pairs : [{
       key : '',
       value : '',
-      uniqueId : shortid.generate()
+      uniqueId : uuidV4()
     }]
   }
 }, defaultState, { __complete: true });
@@ -475,14 +475,14 @@ const properties = (state = defaultPropertiesState, action = defaultAction) => {
           stateCopy.keyValues.pairs.push({
             key: pluginProperty,
             value: '',
-            uniqueId : shortid.generate()
+            uniqueId : uuidV4()
           });
         });
       } else {
         stateCopy.keyValues.pairs = [{
           key : '',
           value : '',
-          uniqueId : shortid.generate()
+          uniqueId : uuidV4()
         }];
       }
       break;

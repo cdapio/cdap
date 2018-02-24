@@ -22,7 +22,7 @@ import {MyMarketApi} from 'api/market';
 import T from 'i18n-react';
 import AbstractWizard from 'components/AbstractWizard';
 import classnames from 'classnames';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import moment from 'moment';
 import getIcon from 'services/market-action-icon-map';
 
@@ -107,7 +107,7 @@ export default class MarketEntityModal extends Component {
               return (
                 <div
                   className="action-container text-xs-center"
-                  key={shortid.generate()}
+                  key={uuidV4()}
                   onClick={this.openWizard.bind(this, index, action.type, action)}
                 >
                   <div

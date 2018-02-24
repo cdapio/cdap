@@ -26,7 +26,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import EntityIconMap from 'services/entity-icon-map';
 import {MyMetadataApi} from 'api/metadata';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
@@ -80,7 +80,7 @@ export default class AppOverview extends Component {
           let entityDetail = res[1];
           let properties = res[0];
           let programs = entityDetail.programs.map(prog => {
-            prog.uniqueId = shortid.generate();
+            prog.uniqueId = uuidV4();
             return prog;
           });
           let datasets = entityDetail.datasets.map(dataset => {
@@ -90,7 +90,7 @@ export default class AppOverview extends Component {
               },
               type: 'datasetinstance'
             };
-            dataset.uniqueId = shortid.generate();
+            dataset.uniqueId = uuidV4();
             return dataset;
           });
           let streams = entityDetail.streams.map(stream => {
@@ -100,7 +100,7 @@ export default class AppOverview extends Component {
               },
               type: 'stream'
             };
-            stream.uniqueId = shortid.generate();
+            stream.uniqueId = uuidV4();
             return stream;
           });
           entityDetail.streams = streams;

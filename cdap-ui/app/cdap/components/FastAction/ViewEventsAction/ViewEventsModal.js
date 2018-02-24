@@ -22,7 +22,7 @@ import T from 'i18n-react';
 import Datetime from 'react-datetime';
 import {MyStreamApi} from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 import CardActionFeedback from 'components/CardActionFeedback';
 
 require('./ViewEventsModal.scss');
@@ -100,7 +100,7 @@ export default class ViewEventsModal extends Component {
     MyStreamApi.viewEvents(params)
       .subscribe((res = []) => {
         let events = res.map((row) => {
-          row.uniqueId = shortid.generate();
+          row.uniqueId = uuidV4();
           row.headers = JSON.stringify(row.headers);
 
           return row;

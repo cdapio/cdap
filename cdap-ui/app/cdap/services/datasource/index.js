@@ -15,7 +15,7 @@
  */
 
 import Socket from '../socket';
-import uuid from 'uuid/v4';
+import uuidV4 from 'uuid/v4';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import 'rxjs/add/observable/combineLatest';
@@ -64,7 +64,7 @@ export default class Datasource {
 
   request(resource = {}) {
     let generatedResource = {
-      id: uuid(),
+      id: uuidV4(),
       json: resource.json === false ? false : true,
       method: resource.method || 'GET',
       suppressErrors: resource.suppressErrors || false
@@ -106,7 +106,7 @@ export default class Datasource {
 
   poll(resource = {}) {
     let generatedResource = {
-      id: uuid(),
+      id: uuidV4(),
       interval: resource.interval || 10000,
       json: resource.json || true,
       method: resource.method || 'GET',

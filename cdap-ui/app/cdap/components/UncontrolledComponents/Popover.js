@@ -22,14 +22,14 @@ import {isDescendant} from 'services/helpers';
 import Mousetrap from 'mousetrap';
 import {Observable} from 'rxjs/Observable';
 import classnames from 'classnames';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 export default class UncontrolledPopover extends Component {
   constructor(props) {
     super(props);
     this.state = {
       dropdownOpen: props.dropdownOpen,
-      id: shortid.generate()
+      id: uuidV4()
     };
     this.togglePopover = this.togglePopover.bind(this);
   }

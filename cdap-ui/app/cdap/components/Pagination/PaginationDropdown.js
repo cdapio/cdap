@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import T from 'i18n-react';
-import shortid from 'shortid';
+import uuidV4 from 'uuid/v4';
 
 require('./Pagination.scss');
 require('./PaginationDropdown.scss');
@@ -71,7 +71,7 @@ export default class PaginationDropdown extends Component {
             dropdownItems.map((item, index) => {
               return (
                 <DropdownItem
-                  key={shortid.generate()}
+                  key={uuidV4()}
                   onClick={this.props.onPageChange.bind(this, index+1)}
                 >
                   {item}
