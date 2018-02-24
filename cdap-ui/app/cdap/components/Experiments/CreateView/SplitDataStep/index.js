@@ -82,7 +82,7 @@ function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFina
   return (
     <div className="split-data-step">
       <h3>Split Data </h3>
-      <div>Create Test Dataset for this Model.</div>
+      <div>Create test dataset for this model.</div>
       <br />
       {renderSplitBtn(experimentId, splitInfo, createSplitAndUpdateStatus)}
       {
