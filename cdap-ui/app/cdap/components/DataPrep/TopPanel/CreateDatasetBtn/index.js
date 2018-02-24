@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import {preventPropagation} from 'services/helpers';
 import DataPrepStore from 'components/DataPrep/store/';
-import GetPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
+import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
 import {MyArtifactApi} from 'api/artifact';
 import {MyDatasetApi} from 'api/dataset';
 import {MyAppApi} from 'api/app';
@@ -141,7 +141,7 @@ export default class CreateDatasetBtn extends Component {
     });
     this.setState(state);
     if (!this.state.showModal) {
-      GetPipelineConfig().subscribe(
+      getPipelineConfig().subscribe(
         (res) => {
           this.setState({
             batchPipelineConfig: res.batchConfig
@@ -188,6 +188,8 @@ export default class CreateDatasetBtn extends Component {
     let databaseConfig = objectQuery(workspaceInfo, 'properties', 'databaseConfig');
     let s3Stage = pipelineConfig.config.stages.find(stage => stage.name === 'S3');
     let gcsStage = pipelineConfig.config.stages.find(stage => stage.name === 'GCS');
+    let bigqueryStage = pipelineConfig.config.stages.find(stage => stage.name === 'BigQueryTable');
+
     let macroMap = {};
     if (databaseConfig) {
       try {
@@ -214,7 +216,13 @@ export default class CreateDatasetBtn extends Component {
       accessKey: objectQuery(s3Stage, 'plugin', 'properties', 'accessKey') || '',
       bucket: objectQuery(gcsStage, 'plugin', 'properties', 'bucket') || '',
       serviceFilePath: objectQuery(gcsStage, 'plugin', 'properties', 'serviceFilePath') || '',
-      project: objectQuery(gcsStage, 'plugin', 'properties', 'project') || ''
+      project: objectQuery(gcsStage, 'plugin', 'properties', 'project') || '',
+      bqBucket: objectQuery(bigqueryStage, 'plugin', 'properties', 'bucket') || '',
+      bqServiceFilePath: objectQuery(bigqueryStage, 'plugin', 'properties', 'serviceFilePath') || '',
+      bqProject: objectQuery(bigqueryStage, 'plugin', 'properties', 'project') || '',
+      bqDataset: objectQuery(bigqueryStage, 'plugin', 'properties', 'dataset') || '',
+      bqTable: objectQuery(bigqueryStage, 'plugin', 'properties', 'table') || '',
+      bqSchema: objectQuery(bigqueryStage, 'plugin', 'properties', 'schema') || ''
     });
   }
 
@@ -278,6 +286,14 @@ export default class CreateDatasetBtn extends Component {
         recursive: 'false',
         schema: "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
         ignoreNonExistingFolders: "false"
+      },
+      'BigQueryTable': {
+        project: '${bqProject}',
+        serviceFilePath: '${bqServiceFilePath}',
+        bucket: '${bqBucket}',
+        dataset: '${bqDataset}',
+        table: '${bqTable}',
+        schema: '${bqSchema}'
       }
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {
@@ -345,6 +361,8 @@ export default class CreateDatasetBtn extends Component {
         pipelineName = 'one_time_copy_to_fs_from_s3';
       } else if (workspaceProps.connection === 'gcs') {
         pipelineName = 'one_time_copy_to_fs_from_gcs';
+      } else if (workspaceProps.connection === 'bigquery') {
+        pipelineName = 'one_time_copy_to_fs_from_bigquery';
       }
     } else {
       pipelineName = `one_time_copy_to_table`;
@@ -356,6 +374,8 @@ export default class CreateDatasetBtn extends Component {
         pipelineName = 'one_time_copy_to_table_from_s3';
       } else if (workspaceProps.connection === 'gcs') {
         pipelineName = 'one_time_copy_to_table_from_gcs';
+      } else if (workspaceProps.connection === 'bigquery') {
+        pipelineName = 'one_time_copy_to_table_from_bigquery';
       }
     }
 
@@ -369,7 +389,7 @@ export default class CreateDatasetBtn extends Component {
         let appAlreadyDeployed = res.find(app => app.id === pipelineName);
 
         if (!appAlreadyDeployed) {
-          let appConfigWithMacros= this.preparePipelineConfig();
+          let appConfigWithMacros = this.preparePipelineConfig();
           pipelineconfig = appConfigWithMacros.appConfig;
           macroMap = appConfigWithMacros.macroMap;
           pipelineconfig.name = pipelineName;
@@ -377,7 +397,6 @@ export default class CreateDatasetBtn extends Component {
             namespace,
             appId: pipelineName
           };
-
           // If it doesn't exist create a new pipeline with macros.
           return MyAppApi.deployApp(params, pipelineconfig);
         }
@@ -397,6 +416,7 @@ export default class CreateDatasetBtn extends Component {
           if (!macroMap) {
             macroMap = this.getAppConfigMacros();
           }
+
           // Once the pipeline is published start the workflow. Pass run time arguments for macros.
           return MyProgramApi.action({
             namespace,

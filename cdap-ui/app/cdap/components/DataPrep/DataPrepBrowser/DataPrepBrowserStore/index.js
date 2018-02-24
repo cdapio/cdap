@@ -18,13 +18,18 @@ import {createStore, combineReducers} from 'redux';
 import {defaultAction} from 'services/helpers';
 import {objectQuery} from 'services/helpers';
 const Actions = {
+  // Database
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
   SET_DATABASE_LOADING: 'SET_DATABASE_LOADING',
   SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER',
   SET_DATABASE_ERROR: 'SET_DATABASE_ERROR',
+
+  // Kafka
   SET_KAFKA_PROPERTIES: 'SET_KAFKA_PROPERTIES',
   SET_KAFKA_LOADING: 'SET_KAFKA_LOADING',
   SET_KAFKA_ERROR: 'SET_KAFKA_ERROR',
+
+  // S3
   SET_S3_LOADING: 'SET_S3_LOADING',
   SET_S3_ACTIVE_BUCKET_DETAILS: 'SET_S3_ACTIVE_BUCKET_DETAILS',
   SET_S3_CONNECTION_DETAILS: 'SET_S3_CONNECTION_DETAILS',
@@ -32,13 +37,22 @@ const Actions = {
   SET_S3_PREFIX: 'SET_S3_PREFIX',
   SET_S3_DATAVIEW: 'SET_S3_DATAVIEW',
   SET_S3_SEARCH: 'SET_S3_SEARCH',
+
+  // GCS
   SET_GCS_LOADING: 'SET_GCS_LOADING',
   SET_GCS_ACTIVE_BUCKET_DETAILS: 'SET_GCS_ACTIVE_BUCKET_DETAILS',
   SET_GCS_CONNECTION_DETAILS: 'SET_GCS_CONNECTION_DETAILS',
   SET_GCS_CONNECTION_ID: 'SET_GCS_CONNECTION_ID',
   SET_GCS_PREFIX: 'SET_GCS_PREFIX',
   SET_GCS_DATAVIEW: 'SET_GCS_DATAVIEW',
-  SET_GCS_SEARCH: 'SET_GCS_SEARCH'
+  SET_GCS_SEARCH: 'SET_GCS_SEARCH',
+
+  // Big Query
+  SET_BIGQUERY_CONNECTION_ID: 'SET_BIGQUERY_CONNECTION_ID',
+  SET_BIGQUERY_CONNECTION_DETAILS: 'SET_BIGQUERY_CONNECTION_DETAILS',
+  SET_BIGQUERY_LOADING: 'SET_BIGQUERY_LOADING',
+  SET_BIGQUERY_DATASET_LIST: 'SET_BIGQUERY_DATASET_LIST',
+  SET_BIGQUERY_TABLE_LIST: 'SET_BIGQUERY_TABLE_LIST'
 };
 
 export {Actions};
@@ -75,6 +89,16 @@ const defaultGCSValue = {
   activeBucketDetails: [],
   prefix: '',
   connectionId: ''
+};
+
+const defaultBigQueryValue = {
+  info: {},
+  loading: false,
+  error: null,
+  connectionId: '',
+  datasetId: null,
+  datasetList: [],
+  tableList: []
 };
 
 const defaultActiveBrowser = {
@@ -213,6 +237,44 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
   }
 };
 
+const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.SET_BIGQUERY_CONNECTION_ID:
+      return {
+        ...state,
+        connectionId: action.payload.connectionId
+      };
+    case Actions.SET_BIGQUERY_CONNECTION_DETAILS:
+      return {
+        ...state,
+        info: action.payload.info,
+        error: null
+      };
+    case Actions.SET_BIGQUERY_LOADING:
+      return {
+        ...state,
+        loading: true
+      };
+    case Actions.SET_BIGQUERY_DATASET_LIST:
+      return {
+        ...state,
+        loading: false,
+        datasetList: action.payload.datasetList,
+        datasetId: null
+      };
+    case Actions.SET_BIGQUERY_TABLE_LIST:
+      return {
+        ...state,
+        loading: false,
+        datasetList: [],
+        datasetId: action.payload.datasetId,
+        tableList: action.payload.tableList
+      };
+    default:
+      return state;
+  }
+};
+
 const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_ACTIVEBROWSER:
@@ -230,12 +292,14 @@ const DataPrepBrowserStore = createStore(
     kafka,
     activeBrowser,
     s3,
-    gcs
+    gcs,
+    bigquery
   }),
   {
     database: defaultDatabaseValue,
     kafka: defaultKafkaValue,
-    activeBrowser: defaultActiveBrowser
+    activeBrowser: defaultActiveBrowser,
+    bigquery: defaultBigQueryValue
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
