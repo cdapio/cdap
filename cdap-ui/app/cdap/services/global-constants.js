@@ -137,6 +137,16 @@ const GLOBALS = {
   defaultSchemaName: 'etlSchemaBody',
   defaultScheduleId: 'dataPipelineSchedule',
 
+  programType: {
+    'cdap-data-pipeline': 'workflows',
+    'cdap-data-streams': 'spark'
+  },
+
+  programId: {
+    'cdap-data-pipeline': 'DataPipelineWorkflow',
+    'cdap-data-streams': 'DataStreamsSparkStreaming'
+  },
+
   'en': {
     hydrator: {
       appLabel: 'Hydrator Pipeline',

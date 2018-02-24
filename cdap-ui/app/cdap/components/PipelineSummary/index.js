@@ -271,7 +271,7 @@ export default class PipelineSummary extends Component {
   }
   render() {
     return (
-      <div className="pipeline-summary">
+      <div className="pipeline-settings pipeline-summary">
         {
           this.renderTitleBar()
         }

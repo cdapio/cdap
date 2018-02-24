@@ -22,6 +22,7 @@ import Alert from 'components/Alert';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
+import {GLOBALS} from 'services/global-constants';
 
 export default class PipelineRunButton extends Component {
   static propTypes = {
@@ -38,11 +39,12 @@ export default class PipelineRunButton extends Component {
     this.setState({
       loading: true
     });
+    let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
     let params = {
       namespace: getCurrentNamespace(),
       appId: this.props.pipelineName,
-      programType: this.props.isBatch ? 'workflows' : 'spark',
-      programId: this.props.isBatch ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming',
+      programType: GLOBALS.programType[pipelineType],
+      programId: GLOBALS.programId[pipelineType],
       action: 'start'
     };
     let runtimeArgs = convertKeyValuePairsObjToMap(PipelineConfigurationsStore.getState().runtimeArgs);
@@ -110,7 +112,7 @@ export default class PipelineRunButton extends Component {
 
   render() {
     return (
-      <div className="pipeline-run">
+      <div className="pipeline-run-container">
         {this.renderRunError()}
         {this.renderPipelineRunButton()}
 

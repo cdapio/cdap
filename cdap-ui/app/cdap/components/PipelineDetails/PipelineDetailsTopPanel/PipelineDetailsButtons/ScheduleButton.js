@@ -164,7 +164,7 @@ export default class ScheduleButton extends Component {
     }
 
     return (
-      <div className="pipeline-scheduler">
+      <div className="pipeline-scheduler-container">
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
         {

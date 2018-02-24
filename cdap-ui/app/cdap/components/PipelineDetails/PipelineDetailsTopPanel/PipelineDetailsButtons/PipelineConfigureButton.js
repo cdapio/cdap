@@ -96,7 +96,7 @@ export default class PipelineConfigureButton extends Component {
 
   render() {
     return (
-      <div className="pipeline-configure">
+      <div className="pipeline-configure-container">
         {this.renderConfigureButton()}
         {
           this.state.showModeless ?

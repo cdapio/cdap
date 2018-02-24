@@ -21,6 +21,7 @@ import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store
 import ScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ScheduleButton';
 import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineConfigureButton';
 import PipelineRunButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineRunButton';
+import PipelineSummaryButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineSummaryButton';
 
 const mapStateToConfigureButton = (state, ownProps) => {
   return {
@@ -49,6 +50,10 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           scheduleStatus={scheduleStatus}
         />
         <PipelineRunButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
+        <PipelineSummaryButton
           isBatch={isBatch}
           pipelineName={pipelineName}
         />
