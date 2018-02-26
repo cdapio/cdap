@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.planner;
 
 import co.cask.cdap.etl.proto.Connection;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
@@ -40,23 +41,28 @@ import java.util.UUID;
 public class ConnectorDag extends Dag {
   private final Set<String> reduceNodes;
   private final Set<String> isolationNodes;
+  private final Set<String> multiPortNodes;
   // node name -> original node it was placed in front of
   private final Map<String, String> connectors;
 
   private ConnectorDag(Collection<Connection> connections,
                        Set<String> reduceNodes,
                        Set<String> isolationNodes,
+                       Set<String> multiPortNodes,
                        Map<String, String> connectors) {
     super(connections);
     this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
     this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
+    this.multiPortNodes = ImmutableSet.copyOf(multiPortNodes);
     this.connectors = new HashMap<>(connectors);
   }
 
-  public ConnectorDag(Dag dag, Set<String> reduceNodes, Set<String> isolationNodes, Map<String, String> connectors) {
+  public ConnectorDag(Dag dag, Set<String> reduceNodes, Set<String> isolationNodes, Set<String> multiPortNodes,
+                      Map<String, String> connectors) {
     super(dag);
     this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
     this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
+    this.multiPortNodes = ImmutableSet.copyOf(multiPortNodes);
     this.connectors = new HashMap<>(connectors);
   }
 
@@ -151,6 +157,121 @@ public class ConnectorDag extends Dag {
       accessibleReduceNodes = Sets.difference(accessibleReduceNodes, ImmutableSet.of(reduceNode));
       for (String accessibleReduceNode : accessibleReduceNodes) {
         addConnectorInFrontOf(accessibleReduceNode, addedAlready);
+      }
+    }
+
+    /*
+        As an optimization, check if any connectors can be merged together.
+        It is generally more performant to merge connectors if possible, as it will result in less I/O.
+        To do this, we get the parents for all connectors, stopping at any source. Other connectors count as sources.
+        Connectors can be merged if their branch inputs are exactly the same. For example, consider the following dag:
+
+          s1 -----|  |--> t1 --> r1.connector --> r1 --> sink1
+                  |--|
+               |--|  |--> t2 --> r2.connector --> r2 --> sink2
+          s2 --|
+               |--> t3
+
+        The branch for r1.connector is:
+
+          t1 --> r1.connector --> r1 --> sink1
+
+        with branch inputs [source1, source2]. The branch for r2.connector is:
+
+          t2 --> r2.connector --> r2 --> sink2
+
+        with branch inputs [source1, source2]. Since the branches have the same inputs, they can be merged to:
+
+          s1 -----|                         |--> t1 --> r1 --> sink1
+                  |-- s1.s2.out.connector --|
+               |--|                         |--> t2  --> r2 --> sink2
+          s2 --|
+               |--> t3
+
+        which will eventually be split to:
+
+          s1 -----|                         s1.s2.out.connector --> t1 --> r1 --> sink1
+                  |-- s1.s2.out.connector
+               |--|                         s1.s2.out.connector --> t2 --> r2 --> sink2
+          s2 --|
+               |--> t3
+     */
+    // map contains connector branch head inputs -> connector heads
+    Map<Set<String>, Set<ConnectorHead>> connectorsToMerge = new HashMap<>();
+    // stop at reduce and isolation nodes. This is so that each branch will not contain multiple connectors
+    Set<String> stopNodes = Sets.union(connectors.keySet(), Sets.union(isolationNodes, reduceNodes));
+    for (String connector : connectors.keySet()) {
+      List<String> branch = getBranch(connector, stopNodes);
+      String branchHead = branch.iterator().next();
+      Set<String> branchInputs = new HashSet<>(getNodeInputs(branchHead));
+      // We don't want to merge connectors if any of the branch inputs is a multiPort node.
+      // With a multiPort node, a connection to each connector is a subset of the full output.
+      // With a normal node, a connection to each connector is the full output.
+      // So in the normal node, it is fine to merge connections because the single connector will contain the
+      // same data that each individual connector would have contained.
+      // But with a multiPort node, each individual connector will contain different data, so they can't be merged.
+      if (branchInputs.isEmpty() || !Sets.intersection(multiPortNodes, branchInputs).isEmpty()) {
+        continue;
+      }
+      Set<ConnectorHead> connectorsWithSameInput = connectorsToMerge.get(branchInputs);
+      if (connectorsWithSameInput == null) {
+        connectorsWithSameInput = new HashSet<>();
+        connectorsToMerge.put(branchInputs, connectorsWithSameInput);
+      }
+      connectorsWithSameInput.add(new ConnectorHead(connector, branchHead));
+    }
+
+    for (Map.Entry<Set<String>, Set<ConnectorHead>> entry : connectorsToMerge.entrySet()) {
+      Set<String> branchInputs = entry.getKey();
+      Set<ConnectorHead> toMerge = entry.getValue();
+      if (toMerge.size() < 2) {
+        continue;
+      }
+      /*
+         At this point, we have something like:
+
+          s1 -----|  |--> t1 --> r1.connector --> r1 --> sink1
+                  |--|
+               |--|  |--> t2 --> r2.connector --> r2 --> sink2
+          s2 --|
+               |--> t3
+
+         Where branchInputs = [s1, s2] and toMerge = [r1.connector, r2.connector]
+
+         We need to move and merge the connectors to end up with:
+
+          s1 -----|                         |--> t1 --> r1.connector --> r1 --> sink1
+                  |-- s1.s2.out.connector --|
+               |--|                         |--> t2 --> r2.connector --> r2 --> sink2
+          s2 --|
+               |--> t3
+      */
+      // first add a connection from each branch input to a new connector node
+      // sort the inputs so the connector name is deterministic to make it easier to read and test
+      List<String> binputs = new ArrayList<>(branchInputs);
+      Collections.sort(binputs);
+      String connectorName = getConnectorName(Joiner.on(".").join(binputs).concat(".out"));
+      nodes.add(connectorName);
+      for (String branchInput : branchInputs) {
+        addConnection(branchInput, connectorName);
+      }
+      connectors.put(connectorName, connectorName);
+      for (ConnectorHead connectorHead : toMerge) {
+        // add connection from new connector to branch heads
+        addConnection(connectorName, connectorHead.branchHead);
+        // remove connection from branch inputs to branch heads
+        for (String branchInput : branchInputs) {
+          removeConnection(branchInput, connectorHead.branchHead);
+        }
+
+        // remove the original connectors
+        for (String connectorInput : getNodeInputs(connectorHead.connector)) {
+          for (String connectorOutput : getNodeOutputs(connectorHead.connector)) {
+            addConnection(connectorInput, connectorOutput);
+          }
+        }
+        removeNode(connectorHead.connector);
+        connectors.remove(connectorHead.connector);
       }
     }
 
@@ -322,15 +443,20 @@ public class ConnectorDag extends Dag {
       return getNodeInputs(inFrontOf).iterator().next();
     }
 
-    String connectorName = inFrontOf + ".connector";
-    if (nodes.contains(connectorName)) {
-      connectorName += UUID.randomUUID().toString();
-    }
+    String connectorName = getConnectorName(inFrontOf);
     insertInFront(connectorName, inFrontOf);
     // in case we ever have a connector placed in front of another connector
     String original = connectors.containsKey(inFrontOf) ? connectors.get(inFrontOf) : inFrontOf;
     connectors.put(connectorName, original);
     return connectorName;
+  }
+
+  private String getConnectorName(String base) {
+    String name = base + ".connector";
+    if (nodes.contains(name)) {
+      name += UUID.randomUUID().toString();
+    }
+    return name;
   }
 
   /**
@@ -390,6 +516,18 @@ public class ConnectorDag extends Dag {
     return Objects.hash(super.hashCode(), reduceNodes, connectors);
   }
 
+  /**
+   * Just a container to hold a connector and the head of the branch it is on
+   */
+  private static class ConnectorHead {
+    private final String connector;
+    private final String branchHead;
+
+    private ConnectorHead(String connector, String branchHead) {
+      this.connector = connector;
+      this.branchHead = branchHead;
+    }
+  }
 
   public static Builder builder() {
     return new Builder();
@@ -402,6 +540,7 @@ public class ConnectorDag extends Dag {
     private final Set<Connection> connections;
     private final Set<String> reduceNodes;
     private final Set<String> isolationNodes;
+    private final Set<String> multiPortNodes;
     private final Map<String, String> connectors;
     private Dag dag;
 
@@ -409,6 +548,7 @@ public class ConnectorDag extends Dag {
       this.connections = new HashSet<>();
       this.reduceNodes = new HashSet<>();
       this.isolationNodes = new HashSet<>();
+      this.multiPortNodes = new HashSet<>();
       this.connectors = new HashMap<>();
     }
 
@@ -429,6 +569,16 @@ public class ConnectorDag extends Dag {
 
     public Builder addIsolationNodes(Collection<String> nodes) {
       isolationNodes.addAll(nodes);
+      return this;
+    }
+
+    public Builder addMultiPortNodes(String... nodes) {
+      Collections.addAll(multiPortNodes, nodes);
+      return this;
+    }
+
+    public Builder addMultiPortNodes(Collection<String> nodes) {
+      multiPortNodes.addAll(nodes);
       return this;
     }
 
@@ -466,9 +616,9 @@ public class ConnectorDag extends Dag {
 
     public ConnectorDag build() {
       if (dag == null) {
-        return new ConnectorDag(connections, reduceNodes, isolationNodes, connectors);
+        return new ConnectorDag(connections, reduceNodes, isolationNodes, multiPortNodes, connectors);
       }
-      return new ConnectorDag(dag, reduceNodes, isolationNodes, connectors);
+      return new ConnectorDag(dag, reduceNodes, isolationNodes, multiPortNodes, connectors);
     }
   }
 }
