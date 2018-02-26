@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -55,6 +56,12 @@ public class StreamViewId extends NamespacedEntityId implements ParentedId<Strea
   @Override
   public String getEntityName() {
     return getView();
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+    return MetadataEntity.ofNamespace(namespace).append(MetadataEntity.STREAM, stream)
+      .append(MetadataEntity.VIEW, view);
   }
 
   @Override

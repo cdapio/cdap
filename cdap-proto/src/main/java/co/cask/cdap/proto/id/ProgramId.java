@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 import org.apache.twill.api.RunId;
@@ -75,6 +76,13 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   @Override
   public String getEntityName() {
     return getProgram();
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+    return MetadataEntity.ofNamespace(namespace).append(MetadataEntity.APPLICATION, application)
+      .append(MetadataEntity.VERSION, version).append(MetadataEntity.TYPE, type.getPrettyName())
+      .append(MetadataEntity.PROGRAM, program);
   }
 
   @Override
