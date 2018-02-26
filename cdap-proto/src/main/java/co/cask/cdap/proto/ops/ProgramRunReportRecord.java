@@ -35,6 +35,8 @@ public class ProgramRunReportRecord {
   @Nullable
   private final long start;
   @Nullable
+  private final long running;
+  @Nullable
   private final long end;
   @Nullable
   private final long duration;
@@ -45,24 +47,6 @@ public class ProgramRunReportRecord {
   @Nullable
   private final Map<String, String> runtimeArgs;
   @Nullable
-  private final int minMemory;
-  @Nullable
-  private final int maxMemory;
-  @Nullable
-  private final double averageMemory;
-  @Nullable
-  private final int minNumCores;
-  @Nullable
-  private final int maxNumCores;
-  @Nullable
-  private final double averageNumCores;
-  @Nullable
-  private final int minNumContainers;
-  @Nullable
-  private final int maxNumContainers;
-  @Nullable
-  private final double averageNumContainers;
-  @Nullable
   private final int numLogWarnings;
   @Nullable
   private final int numLogErrors;
@@ -70,11 +54,9 @@ public class ProgramRunReportRecord {
   private final int numRecordsOut;
 
   public ProgramRunReportRecord(String namespace, ArtifactMetaInfo artifact, ApplicationMetaInfo application,
-                                String programName, ProgramRunStatus status, long start, long end, long duration,
-                                String user, String startMethod, Map<String, String> runtimeArgs,
-                                int minMemory, int maxMemory, double averageMemory,
-                                int minNumCores, int maxNumCores, double averageNumCores,
-                                int minNumContainers, int maxNumContainers, double averageNumContainers,
+                                String programName, ProgramRunStatus status,
+                                long start, long running, long end, long duration, String user, String startMethod,
+                                Map<String, String> runtimeArgs,
                                 int numLogWarnings, int numLogErrors, int numRecordsOut) {
     this.namespace = namespace;
     this.artifact = artifact;
@@ -82,20 +64,12 @@ public class ProgramRunReportRecord {
     this.programName = programName;
     this.status = status;
     this.start = start;
+    this.running = running;
     this.end = end;
     this.duration = duration;
     this.user = user;
     this.startMethod = startMethod;
     this.runtimeArgs = runtimeArgs;
-    this.minMemory = minMemory;
-    this.maxMemory = maxMemory;
-    this.averageMemory = averageMemory;
-    this.minNumCores = minNumCores;
-    this.maxNumCores = maxNumCores;
-    this.averageNumCores = averageNumCores;
-    this.minNumContainers = minNumContainers;
-    this.maxNumContainers = maxNumContainers;
-    this.averageNumContainers = averageNumContainers;
     this.numLogWarnings = numLogWarnings;
     this.numLogErrors = numLogErrors;
     this.numRecordsOut = numRecordsOut;
@@ -129,6 +103,11 @@ public class ProgramRunReportRecord {
   }
 
   @Nullable
+  public long getRunning() {
+    return running;
+  }
+
+  @Nullable
   public long getEnd() {
     return end;
   }
@@ -151,51 +130,6 @@ public class ProgramRunReportRecord {
   @Nullable
   public Map<String, String> getRuntimeArgs() {
     return runtimeArgs;
-  }
-
-  @Nullable
-  public int getMinMemory() {
-    return minMemory;
-  }
-
-  @Nullable
-  public int getMaxMemory() {
-    return maxMemory;
-  }
-
-  @Nullable
-  public double getAverageMemory() {
-    return averageMemory;
-  }
-
-  @Nullable
-  public int getMinNumCores() {
-    return minNumCores;
-  }
-
-  @Nullable
-  public int getMaxNumCores() {
-    return maxNumCores;
-  }
-
-  @Nullable
-  public double getAverageNumCores() {
-    return averageNumCores;
-  }
-
-  @Nullable
-  public int getMinNumContainers() {
-    return minNumContainers;
-  }
-
-  @Nullable
-  public int getMaxNumContainers() {
-    return maxNumContainers;
-  }
-
-  @Nullable
-  public double getAverageNumContainers() {
-    return averageNumContainers;
   }
 
   @Nullable

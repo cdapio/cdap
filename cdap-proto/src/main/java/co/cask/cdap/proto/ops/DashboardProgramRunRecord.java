@@ -18,6 +18,8 @@ package co.cask.cdap.proto.ops;
 
 import co.cask.cdap.proto.ProgramRunStatus;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents a record of a program run information to be included in a dashboard detail view.
  */
@@ -26,20 +28,29 @@ public class DashboardProgramRunRecord {
   private final ArtifactMetaInfo artifact;
   private final String application;
   private final String program;
-  private final long duration;
   private final String user;
   private final String startMethod;
+  @Nullable
+  private final long start;
+  @Nullable
+  private final long running;
+  @Nullable
+  private final long end;
+  @Nullable
   private final ProgramRunStatus status;
 
   public DashboardProgramRunRecord(String namespace, ArtifactMetaInfo artifact, String application, String program,
-                                   long duration, String user, String startMethod, ProgramRunStatus status) {
+                                   String user, String startMethod, long start, long running, long end,
+                                   ProgramRunStatus status) {
     this.namespace = namespace;
     this.artifact = artifact;
     this.application = application;
     this.program = program;
-    this.duration = duration;
     this.user = user;
     this.startMethod = startMethod;
+    this.start = start;
+    this.running = running;
+    this.end = end;
     this.status = status;
   }
 
@@ -59,10 +70,6 @@ public class DashboardProgramRunRecord {
     return program;
   }
 
-  public long getDuration() {
-    return duration;
-  }
-
   public String getUser() {
     return user;
   }
@@ -71,6 +78,22 @@ public class DashboardProgramRunRecord {
     return startMethod;
   }
 
+  @Nullable
+  public long getStart() {
+    return start;
+  }
+
+  @Nullable
+  public long getRunning() {
+    return running;
+  }
+
+  @Nullable
+  public long getEnd() {
+    return end;
+  }
+
+  @Nullable
   public ProgramRunStatus getStatus() {
     return status;
   }
