@@ -620,7 +620,7 @@ public class Dag {
   private static class StopNodeCondition implements Predicate<String> {
     private final Set<String> stopNodes;
 
-    public StopNodeCondition(Set<String> stopNodes) {
+    private StopNodeCondition(Set<String> stopNodes) {
       this.stopNodes = stopNodes;
     }
 
