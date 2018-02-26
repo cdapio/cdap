@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -139,6 +140,15 @@ public abstract class EntityId implements IdCompatible {
   public abstract Iterable<String> toIdParts();
 
   public abstract String getEntityName();
+
+  /**
+   * @return The {@link MetadataEntity} which represents this {@link EntityId}. If an Entity supports metadata the
+   * Entityid of the entity must override this method and provide the correct implementation to convert the EntityId
+   * to {@link MetadataEntity}
+   */
+  public MetadataEntity toMetadataEntity() {
+    throw new UnsupportedOperationException("Metadata is not supported");
+  }
 
   public final EntityType getEntityType() {
     return entity;
