@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -45,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -90,9 +90,10 @@ public class PartitionedFileSetDefinition
       .addAll(properties.getProperties())
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
       .build();
+    DatasetProperties fileProperties = getFilesetProperties(properties, instanceName);
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(filesetDef.configure(FILESET_NAME, properties),
+      .datasets(filesetDef.configure(FILESET_NAME, fileProperties),
                 indexedTableDef.configure(PARTITION_TABLE_NAME, indexedTableProperties))
       .build();
   }
@@ -118,9 +119,10 @@ public class PartitionedFileSetDefinition
       .addAll(properties.getProperties())
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
       .build();
+    DatasetProperties fileProperties = getFilesetProperties(properties, currentSpec.getName());
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME, properties,
+      .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME, fileProperties,
                                                       currentSpec.getSpecification(FILESET_NAME)),
                 AbstractDatasetDefinition.reconfigure(indexedTableDef, PARTITION_TABLE_NAME, indexedTableProperties,
                                                       currentSpec.getSpecification(PARTITION_TABLE_NAME)))
@@ -187,5 +189,17 @@ public class PartitionedFileSetDefinition
         }
       }
     };
+  }
+
+  private DatasetProperties getFilesetProperties(DatasetProperties properties, String name) {
+    DatasetProperties.Builder fileProperties = DatasetProperties.builder()
+      .addAll(properties.getProperties());
+    // CDAP-13120 - if base path is not set, default it to the dataset name.
+    // otherwise, the embedded dataset name 'files' will get appended to the dataset name as the base path,
+    // and when the dataset is deleted, only the 'files' dir will be deleted and not the dataset name dir.
+    if (!properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
+      fileProperties.add(FileSetProperties.BASE_PATH, name);
+    }
+    return fileProperties.build();
   }
 }
