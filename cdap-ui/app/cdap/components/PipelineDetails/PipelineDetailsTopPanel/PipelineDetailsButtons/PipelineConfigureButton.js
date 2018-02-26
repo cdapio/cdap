@@ -81,7 +81,7 @@ export default class PipelineConfigureButton extends Component {
     return (
       <div
         onClick={this.getRuntimeArgumentsAndToggleModeless}
-        className={classnames("btn pipeline-configure-btn", {"btn-select" : this.state.showModeless})}
+        className={classnames("btn pipeline-action-btn pipeline-configure-btn", {"btn-select" : this.state.showModeless})}
       >
         <div className="btn-container">
           <IconSVG
@@ -96,7 +96,7 @@ export default class PipelineConfigureButton extends Component {
 
   render() {
     return (
-      <div className="pipeline-configure-container">
+      <div className="pipeline-action-container pipeline-configure-container">
         {this.renderConfigureButton()}
         {
           this.state.showModeless ?

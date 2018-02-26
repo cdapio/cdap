@@ -20,35 +20,51 @@ import {MyProgramApi} from 'api/program';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
-import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import {GLOBALS} from 'services/global-constants';
+import PipelineStopPopover from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton/PipelineStopPopover';
 
-export default class PipelineRunButton extends Component {
+export default class PipelineStopButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
+    currentRun: PropTypes.object,
+    runs: PropTypes.array
   }
 
   state = {
     loading: false,
-    runError: null
+    stopError: null,
+    disabled: false,
+    runningRuns: []
   };
 
-  runPipeline = () => {
+  componentWillReceiveProps(nextProps) {
+    let runningRuns = nextProps.runs.filter(run => run.status === 'RUNNING');
     this.setState({
-      loading: true
+      runningRuns,
+      disabled: runningRuns.length === 0
     });
+  }
+
+  stopPipeline = () => {
+    if (this.state.loading || this.state.disabled) {
+      return;
+    }
+
+    this.setState({ loading: true });
+    this.stopRun();
+  }
+
+  stopRun = (runId = this.props.currentRun.runid) => {
     let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
     let params = {
       namespace: getCurrentNamespace(),
       appId: this.props.pipelineName,
       programType: GLOBALS.programType[pipelineType],
       programId: GLOBALS.programId[pipelineType],
-      action: 'start'
+      runId
     };
-    let runtimeArgs = convertKeyValuePairsObjToMap(PipelineConfigurationsStore.getState().runtimeArgs);
-    MyProgramApi.action(params, runtimeArgs)
+    MyProgramApi.stopRun(params)
     .subscribe(() => {
       this.setState({
         loading: false
@@ -56,34 +72,42 @@ export default class PipelineRunButton extends Component {
     }, (err) => {
       this.setState({
         loading: false,
-        runError: err.response || err
+        stopError: err.response || err
       });
     });
   }
 
-  renderRunError() {
-    if (!this.state.runError) {
+  renderStopError() {
+    if (!this.state.stopError) {
       return null;
     }
 
     return (
       <Alert
-        message={this.state.runError}
+        message={this.state.stopError}
         type='error'
         showAlert={true}
         onClose={() => this.setState({
-          runError: null
+          stopError: null
         })}
       />
     );
   }
 
-  renderPipelineRunButton() {
+  renderPipelineStopButton() {
+    if (this.state.runningRuns.length > 1) {
+      return (
+        <PipelineStopPopover
+          runs={this.state.runningRuns}
+          stopRun={this.stopRun}
+        />
+      );
+    }
     return (
       <div
-        onClick={this.runPipeline}
-        className="btn pipeline-action-btn pipeline-run-btn"
-        disabled={this.state.loading}
+        onClick={this.stopPipeline}
+        className="btn pipeline-action-btn pipeline-stop-btn"
+        disabled={this.state.loading || this.state.disabled}
       >
         <div className="btn-container">
           {
@@ -95,12 +119,9 @@ export default class PipelineRunButton extends Component {
             :
               (
                 <span>
-                  <IconSVG
-                    name="icon-play"
-                    className="text-success"
-                  />
+                  <IconSVG name="icon-stop" />
                   <div className="button-label">
-                    Run
+                    Stop
                   </div>
                 </span>
               )
@@ -112,9 +133,9 @@ export default class PipelineRunButton extends Component {
 
   render() {
     return (
-      <div className="pipeline-action-container pipeline-run-container">
-        {this.renderRunError()}
-        {this.renderPipelineRunButton()}
+      <div className="pipeline-action-container pipeline-stop-container">
+        {this.renderStopError()}
+        {this.renderPipelineStopButton()}
 
       </div>
     );

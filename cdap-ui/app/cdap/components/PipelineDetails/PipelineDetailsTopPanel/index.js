@@ -35,7 +35,9 @@ const mapStateToButtonsProps = (state) => {
     pipelineName: state.name,
     schedule: state.config.schedule,
     maxConcurrentRuns: state.config.maxConcurrentRuns,
-    scheduleStatus: state.scheduleStatus
+    scheduleStatus: state.scheduleStatus,
+    runs: state.runs,
+    currentRun: state.currentRun
   };
 };
 

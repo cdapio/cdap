@@ -43,7 +43,7 @@ export default class PipelineSummaryButton extends Component {
     return (
       <div
         onClick={this.toggleSummary}
-        className={classnames("btn pipeline-summary-btn", {"btn-select" : this.state.showSummary})}
+        className={classnames("btn pipeline-action-btn pipeline-summary-btn", {"btn-select" : this.state.showSummary})}
       >
         <div className="btn-container">
           <IconSVG
@@ -62,7 +62,7 @@ export default class PipelineSummaryButton extends Component {
     let programId = GLOBALS.programId[pipelineType];
 
     return (
-      <div className="pipeline-summary-container">
+      <div className="pipeline-action-container pipeline-summary-container">
         {this.renderSummaryButton()}
         {
           this.state.showSummary ?

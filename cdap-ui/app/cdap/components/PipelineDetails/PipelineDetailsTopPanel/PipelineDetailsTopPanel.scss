@@ -102,19 +102,13 @@ $top-panel-height: 55px;
   }
 
   .pipeline-details-buttons {
-    .pipeline-scheduler-container,
-    .pipeline-configure-container,
-    .pipeline-run-container,
-    .pipeline-summary-container {
+    .pipeline-action-container {
       display: inline-block;
       height: $top-panel-height;
       position: relative;
     }
 
-    .pipeline-scheduler-btn,
-    .pipeline-configure-btn,
-    .pipeline-run-btn,
-    .pipeline-summary-btn {
+    .pipeline-action-btn  {
       height: 100%;
 
       .icon-svg {
@@ -149,6 +143,12 @@ $top-panel-height: 55px;
       .pipeline-summary {
         /* 50px header + 55px detail view top panel - 1px to overlap border */
         top: 104px;
+      }
+    }
+
+    .pipeline-stop-container {
+      .icon-stop {
+        color: $grey-03;
       }
     }
   }

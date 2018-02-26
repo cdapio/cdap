@@ -20,6 +20,7 @@ import {Provider, connect} from 'react-redux';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import ScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/ScheduleButton';
 import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineConfigureButton';
+import PipelineStopButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton';
 import PipelineRunButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineRunButton';
 import PipelineSummaryButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineSummaryButton';
 
@@ -28,13 +29,15 @@ const mapStateToConfigureButton = (state, ownProps) => {
     isBatch: ownProps.isBatch,
     pipelineName: ownProps.pipelineName,
     resolvedMacros: state.resolvedMacros,
-    runtimeArgs: state.runtimeArgs
+    runtimeArgs: state.runtimeArgs,
+    runs: ownProps.runs,
+    currentRun: ownProps.currentRun
   };
 };
 
 const ConnectedConfigureButton = connect(mapStateToConfigureButton)(PipelineConfigureButton);
 
-export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus}) {
+export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, currentRun}) {
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
@@ -48,6 +51,12 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           schedule={schedule}
           maxConcurrentRuns={maxConcurrentRuns}
           scheduleStatus={scheduleStatus}
+        />
+        <PipelineStopButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+          runs={runs}
+          currentRun={currentRun}
         />
         <PipelineRunButton
           isBatch={isBatch}
@@ -67,5 +76,7 @@ PipelineDetailsButtons.propTypes = {
   pipelineName: PropTypes.string,
   schedule: PropTypes.string,
   maxConcurrentRuns: PropTypes.number,
-  scheduleStatus: PropTypes.string
+  scheduleStatus: PropTypes.string,
+  runs: PropTypes.array,
+  currentRun: PropTypes.object,
 };
