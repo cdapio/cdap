@@ -185,6 +185,19 @@ const getRuns = (params) => {
     });
 };
 
+const pollRuns = (params) => {
+  return MyPipelineApi
+    .pollRuns(params)
+    .subscribe(runs => {
+      PipelineDetailStore.dispatch({
+        type: ACTIONS.SET_RUNS,
+        payload: { runs }
+      });
+    }, (err) => {
+      console.log(err);
+    });
+};
+
 const getNextRunTime = (params) => {
   MyPipelineApi
     .getNextRunTime(params)
@@ -271,6 +284,7 @@ export {
   setMaxConcurrentRuns,
   setCurrentRun,
   getRuns,
+  pollRuns,
   getNextRunTime,
   getStatistics,
   setMacros,

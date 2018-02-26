@@ -141,7 +141,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.pipelineDetailStoreSubscription = this.PipelineDetailStore.subscribe(() => {
       let pipelineDetailStoreState = this.PipelineDetailStore.getState();
-      let runs = pipelineDetailStoreState.runs.reverse();
+      let runs = pipelineDetailStoreState.runs.slice().reverse();
       this.currentRun = pipelineDetailStoreState.currentRun;
       if (this.currentRun) {
         let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
