@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -96,6 +97,11 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
   @Override
   public String getEntityName() {
     return getName();
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Metadata is not supported");
   }
 
   private static boolean isValidSecureKey(String name) {

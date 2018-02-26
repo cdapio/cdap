@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -56,6 +57,11 @@ public class NotificationFeedId extends NamespacedEntityId implements ParentedId
   @Override
   public String getEntityName() {
     return getFeed();
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Metadata is not supported");
   }
 
   @Override
