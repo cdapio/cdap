@@ -26,7 +26,6 @@ import co.cask.cdap.proto.ops.DashboardSummaryRecord;
 import co.cask.cdap.proto.ops.DashboardSummaryRequest;
 import co.cask.cdap.proto.ops.ExistingDashboardSummaryRecord;
 import co.cask.cdap.proto.ops.FilterDeserializer;
-import co.cask.cdap.proto.ops.ProgramRunOperationRequest;
 import co.cask.cdap.proto.ops.ProgramRunReport;
 import co.cask.cdap.proto.ops.ProgramRunReportRecord;
 import co.cask.cdap.proto.ops.ReportGenerationInfo;
@@ -76,7 +75,6 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportGenerationRequest.Filter.class, new FilterDeserializer())
     .create();
-  private static final Type OPERATION_REQUEST_TYPE = new TypeToken<ProgramRunOperationRequest>() { }.getType();
   private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
   private static final Type DASHBOARD_SUMMARY_REQUEST_TYPE = new TypeToken<DashboardSummaryRequest>() { }.getType();
 
@@ -147,11 +145,12 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
     for (int i = 0; i < 60; i++) {
       int m = i % 3;
       long startTs = 1516810000 + i * 100;
+      long runningTs = startTs + 100;
       long endTs = startTs + durations[m];
       runs.add(new ProgramRunReportRecord(namespaces[m], new ArtifactMetaInfo("USER", "CustomApp", "v1"),
                                           new ProgramRunReportRecord.ApplicationMetaInfo("CustomApp", "v1"), types[m],
-                                          statuses[m], startTs, endTs, durations[m], users[m], startMethods[m],
-                                          Collections.EMPTY_MAP, 50, 200, 100, 2, 10, 5, 1, 5, 3, 2, 4, 6));
+                                          statuses[m], startTs, runningTs, endTs, durations[m], users[m],
+                                          startMethods[m], Collections.EMPTY_MAP, 2, 4, 6));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new ProgramRunReport(offset, limit, 10000, runs)));
   }
@@ -199,23 +198,26 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
                                   @QueryParam("duration") String duration,
                                   @QueryParam("namespace") Set<String> namespaces)
     throws IOException, BadRequestException {
-    ProgramRunOperationRequest dashboardRequest = decodeRequestBody(request, OPERATION_REQUEST_TYPE);
     List<DashboardProgramRunRecord> dashboardDetails = new ArrayList<>();
     String[] namespaceArray = new String[namespaces.size()];
     namespaces.toArray(namespaceArray);
     String[] types = {"RealtimePipeline", "BatchPipeline", "MapReduce"};
     String[] users = {"Ajai", "Lea", "Mao"};
     String[] startMethods = {"Manual", "Scheduled", "Triggered"};
+    long startTs = Long.valueOf(start);
+    int durationTs = Integer.valueOf(duration);
 
     ProgramRunStatus[] statuses = {ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.RUNNING};
-    int[] durations = {400, 500, -1};
-    for (int i = 0; i < 60; i++) {
+    int numRuns = 60;
+    for (int i = 0; i < numRuns; i++) {
+      long currentStart = startTs + durationTs / numRuns * i;
       int m = i % 3;
       dashboardDetails.add(
         new DashboardProgramRunRecord(namespaceArray[i % namespaceArray.length],
                                       new ArtifactMetaInfo("USER", "CustomApp", "v1"),
-                                      types[m] + Integer.toString(i / 3), types[m], durations[m],
-                                      users[m], startMethods[m], statuses[m]));
+                                      types[m] + Integer.toString(i / 3), types[m],
+                                      users[m], startMethods[m], currentStart, currentStart + 100, currentStart + 200,
+                                      statuses[m]));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(dashboardDetails));
   }
