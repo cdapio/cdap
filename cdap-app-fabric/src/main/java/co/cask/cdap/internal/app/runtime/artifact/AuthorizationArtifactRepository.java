@@ -204,6 +204,9 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Map<String, String> properties) throws Exception {
+    if (artifactId.getNamespace().toEntityId().equals(NamespaceId.SYSTEM)) {
+      throw new IllegalArgumentException("Cannot add artifact in system namespace");
+    }
     // To add an artifact, a user must have ADMIN privilege on the artifact is being added
     // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = authenticationContext.getPrincipal();

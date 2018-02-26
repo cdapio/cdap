@@ -28,6 +28,9 @@ public final class NamespaceMeta {
   public static final NamespaceMeta DEFAULT =
     new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).setDescription("Default Namespace").build();
 
+  public static final NamespaceMeta SYSTEM =
+    new NamespaceMeta.Builder().setName(NamespaceId.SYSTEM).setDescription("System Namespace").build();
+
   private final String name;
   private final String description;
   private final NamespaceConfig config;

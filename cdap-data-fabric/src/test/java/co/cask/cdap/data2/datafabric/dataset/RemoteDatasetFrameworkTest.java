@@ -47,8 +47,6 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.SimpleKVTable;
-import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
@@ -210,14 +208,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   @Test
   public void testSystemNamespace() throws DatasetManagementException {
     DatasetFramework framework = getFramework();
-    // Adding module to system namespace should fail
-    try {
-      framework.addModule(NamespaceId.SYSTEM.datasetModule("keyValue"),
-                          new SingleTypeModule(SimpleKVTable.class));
-      Assert.fail("Should not be able to add a module to system namespace");
-    } catch (DatasetManagementException e) {
-      // expected
-    }
     try {
       framework.deleteModule(NamespaceId.SYSTEM.datasetModule("orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");

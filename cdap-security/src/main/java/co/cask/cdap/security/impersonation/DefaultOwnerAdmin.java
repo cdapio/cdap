@@ -20,8 +20,10 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.inject.Inject;
@@ -104,6 +106,9 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
 
   private NamespaceConfig getNamespaceConfig(NamespacedEntityId entityId) throws IOException {
     try {
+      if (entityId.getNamespaceId().equals(NamespaceId.SYSTEM)) {
+        return NamespaceMeta.SYSTEM.getConfig();
+      }
       return namespaceQueryAdmin.get(entityId.getNamespaceId()).getConfig();
     } catch (IOException e) {
       throw e;

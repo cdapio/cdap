@@ -31,11 +31,13 @@ import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
@@ -110,11 +112,13 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     .create();
   private static ArtifactRepository artifactRepository;
   private static MetadataClient metadataClient;
+  private static String systemArtifactsDir;
   protected static ClientConfig clientConfig;
 
   @BeforeClass
   public static void setup() throws IOException {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    systemArtifactsDir = getInjector().getInstance(CConfiguration.class).get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.METADATA_SERVICE);
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(metadataHttpDiscovered);
@@ -126,11 +130,11 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
     metadataClient = new MetadataClient(clientConfig);
   }
-
   @After
   public void wipeData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
     artifactRepository.clear(NamespaceId.SYSTEM);
+
   }
 
   // test deploying an application artifact that has a non-application as its main class
@@ -299,11 +303,9 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                         addArtifact(Id.Artifact.fromEntityId(defaultId), 
                                     Files.newInputStreamSupplier(systemArtifact), null)
                           .getStatusLine().getStatusCode());
-    // add a system artifact. currently can't do this through the rest api (by design)
-    // so bypass it and use the repository directly
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
 
-    artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId), systemArtifact, new HashSet<>(), null);
+    // add system artifact
+    addSystemArtifacts();
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -350,6 +352,28 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
     Assert.assertEquals("wordcount", actualInfo.getName());
     Assert.assertEquals("1.0.0", actualInfo.getVersion());
+    try {
+      ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
+      artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId),
+                                     systemArtifact, new HashSet<ArtifactRange>(), null);
+      Assert.fail();
+    } catch (Exception e) {
+      // no-op - expected exception while adding artifact in system namespace
+    }
+    cleanupSystemArtifactsDirectory();
+  }
+
+  private void addSystemArtifacts() throws Exception {
+    File destination = new File(systemArtifactsDir + "/wordcount-1.0.0.jar");
+    buildAppArtifact(WordCountApp.class, new Manifest(), destination);
+    artifactRepository.addSystemArtifacts();
+  }
+
+  private void cleanupSystemArtifactsDirectory() throws Exception {
+    File dir = new File(systemArtifactsDir);
+    for (File jarFile : DirUtils.listFiles(dir, "jar")) {
+      jarFile.delete();
+    }
   }
 
   /**
@@ -358,14 +382,10 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testSystemArtifactIsolation() throws Exception {
     // add the app in the default namespace
-    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
-
     ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
-    // add a system artifact. currently can't do this through the rest api (by design)
-    // so bypass it and use the repository directly
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
 
-    artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId), systemArtifact, new HashSet<>(), null);
+    // add system artifact wordcount
+    addSystemArtifacts();
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -408,18 +428,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
     // test delete /default/artifacts/wordcount/versions/1.0.0
     deleteArtifact(Id.Artifact.fromEntityId(defaultId), 404);
-
-    // test delete /system/artifacts/wordcount/versions/1.0.0
-    deleteArtifact(Id.Artifact.fromEntityId(systemId), 200);
+    cleanupSystemArtifactsDirectory();
   }
 
   @Test
   public void testPluginNamespaceIsolation() throws Exception {
-    // add a system artifact. currently can't do this through the rest api (by design)
-    // so bypass it and use the repository directly
+    // add a system artifact
     ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
-    artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId), systemArtifact, new HashSet<>(), null);
+    addSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),
@@ -521,6 +537,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     } finally {
       deleteNamespace("iso1");
       deleteNamespace("iso2");
+      cleanupSystemArtifactsDirectory();
     }
   }
 
