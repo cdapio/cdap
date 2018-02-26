@@ -1,8 +1,8 @@
 {
     "artifact": {
-        "name": "cdap-etl-batch",
+        "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
-        "version": "4.3.3"
+        "version": "4.3.4-SNAPSHOT"
     },
     "config": {
         "source": {
