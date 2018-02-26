@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -41,6 +42,11 @@ public class NamespaceId extends NamespacedEntityId {
   @Override
   public String getEntityName() {
     return getNamespace();
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+    return MetadataEntity.ofNamespace(namespace);
   }
 
   public ArtifactId artifact(String artifact, String version) {
