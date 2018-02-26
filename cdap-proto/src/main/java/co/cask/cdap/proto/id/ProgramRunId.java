@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
@@ -76,6 +77,11 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
   @Override
   public String getEntityName() {
     return run;
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Metadata is not supported");
   }
 
   public String getRun() {
