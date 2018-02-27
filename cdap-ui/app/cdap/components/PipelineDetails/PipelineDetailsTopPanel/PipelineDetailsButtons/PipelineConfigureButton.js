@@ -22,7 +22,7 @@ import PipelineConfigurations from 'components/PipelineConfigurations';
 import {MyPreferenceApi} from 'api/preference';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {revertRuntimeArgsToSavedValues, getPrefsRelevantToMacros} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {revertRuntimeArgsToSavedValues, getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
 import isEqual from 'lodash/isEqual';
 
 export default class PipelineConfigureButton extends Component {
@@ -45,14 +45,11 @@ export default class PipelineConfigureButton extends Component {
           appId: this.props.pipelineName
         })
         .subscribe(res => {
-          let relevantPrefs = getPrefsRelevantToMacros(res, this.props.resolvedMacros);
-          let storeState = PipelineConfigurationsStore.getState();
+          let newResolvedMacros = getMacrosResolvedByPrefs(res, this.props.resolvedMacros);
 
           // If preferences have changed, then update macro values with new preferences.
           // Otherwise, keep the values as they are
-          if (!storeState || (storeState && !isEqual(relevantPrefs, storeState.resolvedMacros))) {
-            let resolvedMacros = {...this.props.resolvedMacros, ...relevantPrefs};
-
+          if (!isEqual(newResolvedMacros, this.props.resolvedMacros)) {
             PipelineConfigurationsStore.dispatch({
               type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
               payload: { resolvedMacros: newResolvedMacros }

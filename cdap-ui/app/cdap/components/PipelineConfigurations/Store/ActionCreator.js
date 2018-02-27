@@ -37,14 +37,14 @@ const revertRuntimeArgsToSavedValues = () => {
   });
 };
 
-const getPrefsRelevantToMacros = (resolvedPrefs = {}, macrosMap = {}) => {
-  let relevantPrefs = {};
+const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
+  let resolvedMacros = {...macrosMap};
   for (let pref in resolvedPrefs) {
-    if (resolvedPrefs.hasOwnProperty(pref) && macrosMap.hasOwnProperty(pref)) {
-      relevantPrefs[pref] = resolvedPrefs[pref];
+    if (resolvedPrefs.hasOwnProperty(pref) && resolvedMacros.hasOwnProperty(pref)) {
+      resolvedMacros[pref] = resolvedPrefs[pref];
     }
   }
-  return relevantPrefs;
+  return resolvedMacros;
 };
 
 const updatePipelineEditStatus = () => {
@@ -156,7 +156,7 @@ const updatePipeline = () => {
 export {
   applyRuntimeArgs,
   revertRuntimeArgsToSavedValues,
-  getPrefsRelevantToMacros,
+  getMacrosResolvedByPrefs,
   updatePipelineEditStatus,
   updatePipeline
 };

@@ -21,7 +21,7 @@ import PipelineDetailsButtons from 'components/PipelineDetails/PipelineDetailsTo
 import PipelineDetailsDetailsActions from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {getPrefsRelevantToMacros} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
 import {MyPreferenceApi} from 'api/preference';
@@ -73,8 +73,7 @@ export default class PipelineDetailsTopPanel extends Component {
         });
 
         let currentAppPrefs = res[1];
-        let relevantPrefs = getPrefsRelevantToMacros(currentAppPrefs, macrosMap);
-        let resolvedMacros = {...macrosMap, ...relevantPrefs};
+        let resolvedMacros = getMacrosResolvedByPrefs(currentAppPrefs, macrosMap);
 
         PipelineConfigurationsStore.dispatch({
           type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
