@@ -33,7 +33,6 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetServiceTestBase;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TestObject;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -58,14 +57,9 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
             FileSetProperties.builder().setEnableExploreOnCreate(true).setExploreFormat("csv").build());
 
     testFix("timePartitionedFileSet",
-            FileSetProperties.builder()
-              .setBasePath("relative")
-              .add(PartitionedFileSetDefinition.NAME_AS_BASE_PATH_DEFAULT, "true").build());
+            FileSetProperties.builder().setBasePath("relative").build());
     testFix(TimePartitionedFileSet.class.getName(),
-            FileSetProperties.builder()
-              .setBasePath("relative")
-              .add("custom", "value")
-              .add(PartitionedFileSetDefinition.NAME_AS_BASE_PATH_DEFAULT, "true").build());
+            FileSetProperties.builder().setBasePath("relative").add("custom", "value").build());
 
     testFix("objectMappedTable",
             ObjectMappedTableProperties.builder().setType(TestObject.class)
