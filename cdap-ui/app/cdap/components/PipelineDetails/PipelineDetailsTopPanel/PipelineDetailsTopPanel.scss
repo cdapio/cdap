@@ -25,7 +25,7 @@ $top-panel-height: 55px;
   z-index: 999;
   width: 100%;
   display: grid;
-  grid-template-columns: 40% 40%;
+  grid-template-columns: 40% 40% 20%;
 
   .pipeline-metadata {
     padding-top: 5px;
@@ -149,6 +149,12 @@ $top-panel-height: 55px;
     .pipeline-stop-container {
       .icon-stop {
         color: $grey-03;
+      }
+    }
+
+    .pipeline-details-container {
+      .btn-container {
+        color: initial;
       }
     }
   }

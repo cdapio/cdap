@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import {Provider, connect} from 'react-redux';
 import PipelineDetailsMetadata from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsMetadata';
 import PipelineDetailsButtons from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons';
+import PipelineDetailsDetailsActions from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {getPrefsRelevantToMacros} from 'components/PipelineConfigurations/Store/ActionCreator';
@@ -90,6 +91,7 @@ export default class PipelineDetailsTopPanel extends Component {
         <div className = "pipeline-details-top-panel">
           <PipelineDetailsMetadata />
           <ConnectedPipelineDetailsButtons />
+          <PipelineDetailsDetailsActions />
         </div>
       </Provider>
     );
