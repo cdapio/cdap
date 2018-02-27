@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 
@@ -59,8 +60,9 @@ public class DatasetWithMRApp extends AbstractApplication {
     }
 
     public static class IdentityMapper extends Mapper<byte[], byte[], byte[], byte[]> {
-
+      private Metrics metrics;
       public void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
+        metrics.gauge("test.metric", 10);
         context.write(key, value);
       }
     }

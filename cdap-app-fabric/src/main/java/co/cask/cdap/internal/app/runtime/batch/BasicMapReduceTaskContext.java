@@ -43,6 +43,7 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
@@ -121,7 +122,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService) {
     super(program, programOptions, cConf,  ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
-          true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
+          true, metricsCollectionService, createMetricsTags(programOptions,
+                                                            taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, messagingService, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
@@ -257,13 +259,22 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
   }
 
-  private static Map<String, String> createMetricsTags(@Nullable String taskId,
+  private static Map<String, String> createMetricsTags(ProgramOptions programOptions,
+                                                       @Nullable String taskId,
                                                        @Nullable MapReduceMetrics.TaskType type,
                                                        @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
-    if (type != null && taskId != null) {
+    if (type != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
-      tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
+
+      if (taskId != null) {
+        String taskMetricsPreference =
+          programOptions.getUserArguments().asMap().get(SystemArguments.METRICS_CONTEXT_TASK_INCLUDED);
+        boolean taskLevelPreference = taskMetricsPreference == null ? true : Boolean.valueOf(taskMetricsPreference);
+        if (taskLevelPreference) {
+          tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
+        }
+      }
     }
 
     if (workflowProgramInfo != null) {

@@ -39,6 +39,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
@@ -196,6 +197,45 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
                           runtimeArguments,
                           AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
                           null);
+  }
+
+
+  @Test
+  public void testMapReduceMetricsControl() throws Exception {
+    final ApplicationWithPrograms app = deployApp(new NamespaceId("metrics_ns").toId(), AppWithMapReduce.class);
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    // do not emit metrics for this app
+    runtimeArguments.put("metric", "metric");
+    runtimeArguments.put("startTs", "1");
+    runtimeArguments.put("stopTs", "3");
+    runtimeArguments.put("tag", "tag1");
+    // Do not emit metrics for mapreduce
+    runtimeArguments.put(SystemArguments.METRICS_ENABLED, "false");
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, new BasicArguments(runtimeArguments));
+    Collection<MetricTimeSeries> metrics = getMetricTimeSeries();
+
+    Assert.assertEquals(0, metrics.size());
+
+    // emit metrics for mapreduce
+    runtimeArguments.put(SystemArguments.METRICS_ENABLED, "true");
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, new BasicArguments(runtimeArguments));
+    metrics = getMetricTimeSeries();
+
+    Assert.assertTrue(metrics.size() > 0);
+  }
+
+  private Collection<MetricTimeSeries> getMetricTimeSeries() {
+    return metricStore.query(new MetricDataQuery(
+      0,
+      System.currentTimeMillis() / 1000L,
+      Integer.MAX_VALUE,
+      "user.beforeSubmit",
+      AggregationFunction.SUM,
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "metrics_ns",
+                      Constants.Metrics.Tag.APP, "AppWithMapReduce",
+                      Constants.Metrics.Tag.MAPREDUCE, "AggregateTimeseriesByTag"),
+      Collections.<String>emptyList()));
   }
 
   private void testMapreduceWithFile(String inputDatasetName, String inputPaths,

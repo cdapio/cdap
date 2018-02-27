@@ -50,6 +50,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -148,15 +149,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.runId = ProgramRunners.getRunId(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
-    this.programMetrics = createProgramMetrics(program, runId, metricsService, metricsTags);
-    this.userMetrics = new ProgramUserMetrics(programMetrics);
-    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
-                                                          program.getType(),
-                                                          cConf);
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
     this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
+
+    this.programMetrics = createProgramMetrics(program, runId,
+                                               getMetricsService(cConf, metricsService, runtimeArgs), metricsTags);
+    this.userMetrics = new ProgramUserMetrics(programMetrics);
+    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
+                                                          program.getType(),
+                                                          cConf);
 
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
@@ -191,6 +194,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
+  }
+
+  private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
+                                                     Map<String, String> runtimeArgs) {
+    boolean  emitMetrics =
+      SystemArguments.isProgramMetricsEnabled(runtimeArgs,
+                                              cConf.getBoolean(Constants.Metrics.PROGRAM_METRICS_ENABLED));
+    return emitMetrics ? metricsService : new NoOpMetricsCollectionService();
   }
 
   /**
