@@ -75,7 +75,7 @@ export default function PipelineStopPopver({runs, stopRun}) {
           <span>Stop All</span>
         </span>
       </div>
-      <table className="table">
+      <table className="stop-btn-popover-table table">
         <thead>
           <tr>
             <th>Start Time</th>

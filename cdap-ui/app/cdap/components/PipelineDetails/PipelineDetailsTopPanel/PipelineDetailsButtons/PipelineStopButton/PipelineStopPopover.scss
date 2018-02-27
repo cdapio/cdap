@@ -14,10 +14,13 @@
  * the License.
 */
 
+@import "../../../../../styles/variables.scss";
+
 .stop-btn-popover {
   .popper {
     z-index: 999;
     width: 400px;
+    padding: 20px;
 
     .stop-btn-popover-header {
       display: flex;
@@ -29,6 +32,34 @@
 
       .stop-all-btn {
         cursor: pointer;
+        width: 90px;
+        border: 1px solid $grey-03;
+        padding: 5px;
+        border-radius: 3px;
+
+        &:hover {
+          background-color: $grey-07;
+        }
+      }
+    }
+
+    .table.stop-btn-popover-table {
+      background-color: white;
+
+      th, td {
+        font-size: 13px;
+        padding: 5px 10px;
+        border-bottom: 1px solid $grey-03;
+        cursor: auto;
+      }
+
+      td {
+        text-align: left;
+        color: initial;
+
+        a {
+          color: $brand-primary;
+        }
       }
     }
   }

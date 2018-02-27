@@ -52,10 +52,6 @@ export default class PipelineDetailsActionsButton extends Component {
     showDeleteConfirmationModal: false
   };
 
-  menu = {
-
-  }
-
   pipelineConfig = {
     name: this.props.pipelineName,
     description: this.props.description,
@@ -137,13 +133,13 @@ export default class PipelineDetailsActionsButton extends Component {
       return null;
     }
 
-    let confirmationText = `Are you sure you want to delete the pipeline ${this.props.pipelineName}?`;
+    const confirmationElem = () => <div>Are you sure you want to delete <strong><em>{this.props.pipelineName}</em></strong>?</div>;
 
     return (
       <ConfirmationModal
-        headerTitle='Delete Confirmation'
+        headerTitle='Delete Pipeline'
         toggleModal={this.toggleDeleteConfirmationModal}
-        confirmationText={confirmationText}
+        confirmationElem={confirmationElem()}
         confirmButtonText={'Delete'}
         confirmFn={this.deletePipeline}
         cancelFn={this.toggleDeleteConfirmationModal}
