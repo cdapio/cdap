@@ -15,18 +15,11 @@
  */
 
 /**
- * Similar to ellipsis.js filter, but show ellipses in the front instead
+ * Adds comma separator to numeric strings with ellipsis. e.g. '...11111' -> '...11,111'.
+ * If the string doesn't contain ellipses, then just returns the comma separated number as string.
  **/
-angular.module(PKG.name+'.filters').filter('myLeadingEllipsis', function() {
-  return function (input, limit, lastDigitsToShow) {
-    if (typeof input !== 'string') {
-      input = input.toString();
-    }
-
-    if (input.length > limit && limit > lastDigitsToShow) {
-      return '\u2026' + input.substring(input.length - lastDigitsToShow);
-    }
-
-    return input;
+angular.module(PKG.name+'.filters').filter('commaSeparatedNumber', function() {
+  return function (input) {
+    return parseInt(input, 10).toLocaleString('en');
   };
 });
