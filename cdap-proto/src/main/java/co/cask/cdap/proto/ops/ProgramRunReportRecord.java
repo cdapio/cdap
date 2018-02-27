@@ -25,11 +25,11 @@ import javax.annotation.Nullable;
  * Represents a record of a program run information to be included in a report.
  */
 public class ProgramRunReportRecord {
-  @Nullable
   private final String namespace;
   private final ArtifactMetaInfo artifact;
   private final ApplicationMetaInfo application;
-  private final String programName;
+  private final String type;
+  private final String program;
   @Nullable
   private final ProgramRunStatus status;
   @Nullable
@@ -54,14 +54,15 @@ public class ProgramRunReportRecord {
   private final int numRecordsOut;
 
   public ProgramRunReportRecord(String namespace, ArtifactMetaInfo artifact, ApplicationMetaInfo application,
-                                String programName, ProgramRunStatus status,
+                                String type, String program, ProgramRunStatus status,
                                 long start, long running, long end, long duration, String user, String startMethod,
                                 Map<String, String> runtimeArgs,
                                 int numLogWarnings, int numLogErrors, int numRecordsOut) {
     this.namespace = namespace;
     this.artifact = artifact;
     this.application = application;
-    this.programName = programName;
+    this.type = type;
+    this.program = program;
     this.status = status;
     this.start = start;
     this.running = running;
@@ -75,7 +76,6 @@ public class ProgramRunReportRecord {
     this.numRecordsOut = numRecordsOut;
   }
 
-  @Nullable
   public String getNamespace() {
     return namespace;
   }
@@ -88,8 +88,12 @@ public class ProgramRunReportRecord {
     return application;
   }
 
-  public String getProgramName() {
-    return programName;
+  public String getType() {
+    return type;
+  }
+
+  public String getProgram() {
+    return program;
   }
 
   @Nullable

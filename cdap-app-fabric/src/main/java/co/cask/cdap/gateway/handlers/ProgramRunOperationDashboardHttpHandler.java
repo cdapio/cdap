@@ -20,6 +20,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ops.ArtifactMetaInfo;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.proto.ops.DashboardSummaryRecord;
@@ -148,7 +149,8 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
       long runningTs = startTs + 100;
       long endTs = startTs + durations[m];
       runs.add(new ProgramRunReportRecord(namespaces[m], new ArtifactMetaInfo("USER", "CustomApp", "v1"),
-                                          new ProgramRunReportRecord.ApplicationMetaInfo("CustomApp", "v1"), types[m],
+                                          new ProgramRunReportRecord.ApplicationMetaInfo("CustomApp", "v1"),
+                                          ProgramType.WORKFLOW.name(), types[m],
                                           statuses[m], startTs, runningTs, endTs, durations[m], users[m],
                                           startMethods[m], Collections.EMPTY_MAP, 2, 4, 6));
     }
@@ -215,7 +217,7 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
       dashboardDetails.add(
         new DashboardProgramRunRecord(namespaceArray[i % namespaceArray.length],
                                       new ArtifactMetaInfo("USER", "CustomApp", "v1"),
-                                      types[m] + Integer.toString(i / 3), types[m],
+                                      types[m] + Integer.toString(i / 3), ProgramType.WORKFLOW.name(), types[m],
                                       users[m], startMethods[m], currentStart, currentStart + 100, currentStart + 200,
                                       statuses[m]));
     }
