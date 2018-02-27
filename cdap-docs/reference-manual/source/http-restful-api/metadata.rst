@@ -569,17 +569,12 @@ Entities that match the specified query and entity type are returned in the body
     "results": [
         {
             "entityId": {
-                "id": {
-                    "application": {
-                        "applicationId": "WordCount",
-                        "namespace": {
-                            "id": "default"
-                        }
-                    },
-                    "id": "RetrieveCounts",
-                    "type": "Service"
-                },
-                "type": "program"
+                "application": "WordCount",
+                "entity": "PROGRAM",
+                "namespace": "default",
+                "program": "RetrieveCounts",
+                "type": "Service",
+                "version": "-SNAPSHOT"
             },
             "metadata": {
                 "SYSTEM": {
@@ -598,17 +593,12 @@ Entities that match the specified query and entity type are returned in the body
         },
         {
             "entityId": {
-                "id": {
-                    "application": {
-                        "applicationId": "WordCount",
-                        "namespace": {
-                            "id": "default"
-                        }
-                    },
-                    "id": "WordCounter",
-                    "type": "Flow"
-                },
-                "type": "program"
+                "application": "WordCount",
+                "entity": "PROGRAM",
+                "namespace": "default",
+                "program": "WordCounter",
+                "type": "Flow",
+                "version": "-SNAPSHOT"
             },
             "metadata": {
                 "SYSTEM": {
@@ -802,41 +792,28 @@ Here is an example, pretty-printed::
       "data": {
           "dataset.default.purchases": {
               "entityId": {
-                  "id": {
-                      "instanceId": "purchases",
-                      "namespace": {
-                          "id": "default"
-                      }
-                  },
-                  "type": "datasetinstance"
+                  "dataset": "history",
+                  "entity": "DATASET",
+                  "namespace": "default"
               }
           },
           "stream.default.purchaseStream": {
               "entityId": {
-                  "id": {
-                      "namespace": {
-                          "id": "default"
-                      },
-                      "streamName": "purchaseStream"
-                  },
-                  "type": "stream"
+                  "entity": "STREAM",
+                  "namespace": "default",
+                  "stream": "purchaseStream"
               }
           }
       },
       "programs": {
           "flows.default.PurchaseHistory.PurchaseFlow": {
               "entityId": {
-                  "id": {
-                      "application": {
-                          "applicationId": "PurchaseHistory",
-                          "namespace": {
-                              "id": "default"
-                          }
-                      },
-                      "id": "PurchaseFlow",
-                      "type": "Flow"
-                  },
-                  "type": "program"
+                  "application": "PurchaseHistory",
+                  "entity": "PROGRAM",
+                  "namespace": "default",
+                  "program": "PurchaseFlow",
+                  "type": "Flow",
+                  "version": "-SNAPSHOT"
               }
           }
       }
@@ -1154,45 +1131,31 @@ Consider these relations from the output of a lineage API request::
     "data": {
       "dataset.default.purchases": {
         "entityId": {
-          "id": {
-            "instanceId": "purchases",
-            "namespace": {
-              "id": "default"
-            }
-          },
-          "type": "datasetinstance"
+            "dataset": "purchases",
+            "entity": "DATASET",
+            "namespace": "default"
         }
       },
     },
     "programs": {
       "mapreduce.default.PurchaseHistory.phase-1": {
         "entityId": {
-          "id": {
-            "application": {
-              "applicationId": "PurchaseHistory",
-              "namespace": {
-                "id": "default"
-              }
-            },
-            "id": "phase-1",
-            "type": "Mapreduce"
-          },
-          "type": "program"
+            "application": "PurchaseHistory",
+            "entity": "PROGRAM",
+            "namespace": "default",
+            "program": "phase-1",
+            "type": "Mapreduce",
+            "version": "-SNAPSHOT"
         }
       },
       "mapreduce.default.PurchaseHistory.phase-2": {
         "entityId": {
-          "id": {
-            "application": {
-              "applicationId": "PurchaseHistory",
-              "namespace": {
-                "id": "default"
-              }
-            },
-            "id": "phase-2",
-            "type": "Mapreduce"
-          },
-          "type": "program"
+            "application": "PurchaseHistory",
+            "entity": "PROGRAM",
+            "namespace": "default",
+            "program": "phase-2",
+            "type": "Mapreduce",
+            "version": "-SNAPSHOT"
         }
       }
     },
@@ -1222,30 +1185,21 @@ Rolling up the above using ``rollup=workflow`` would group the programs together
     "data": {
       "dataset.default.purchases": {
         "entityId": {
-          "id": {
-            "instanceId": "purchases",
-            "namespace": {
-                "id": "default"
-            }
-          },
-          "type": "datasetinstance"
+          "dataset": "purchases",
+          "entity": "DATASET",
+          "namespace": "default"
         }
       },
     },
     "programs": {
       "workflows.default.PurchaseHistory.DataPipelineWorkflow": {
         "entityId": {
-          "id": {
-            "application": {
-              "applicationId": "PurchaseHistory",
-              "namespace": {
-                "id": "default"
-              }
-            },
-            "id": "DataPipelineWorkflow",
-            "type": "Workflow"
-          },
-          "type": "program"
+            "application": "PurchaseHistory",
+            "entity": "PROGRAM",
+            "namespace": "default",
+            "program": "DataPipelineWorkflow",
+            "type": "Workflow",
+            "version": "-SNAPSHOT"
         }
       },
     },
@@ -1269,13 +1223,9 @@ with the metadata returned as a JSON string in the return body::
   [
       {
           "entityId": {
-              "id": {
-                  "namespace": {
-                      "id": "default"
-                  },
-                  "streamName": "purchaseStream"
-              },
-              "type": "stream"
+              "entity": "STREAM",
+              "namespace": "default",
+              "stream": "purchaseStream"
           },
           "properties": {},
           "scope": "USER",
@@ -1283,17 +1233,12 @@ with the metadata returned as a JSON string in the return body::
       },
       {
           "entityId": {
-              "id": {
-                  "application": {
-                      "applicationId": "PurchaseHistory",
-                      "namespace": {
-                          "id": "default"
-                      }
-                  },
-                  "id": "PurchaseFlow",
-                  "type": "Flow"
-              },
-              "type": "program"
+              "application": "PurchaseHistory",
+              "entity": "PROGRAM",
+              "namespace": "default",
+              "program": "PurchaseFlow",
+              "type": "Flow",
+              "version": "-SNAPSHOT"
           },
           "properties": {},
           "scope": "USER",
@@ -1303,13 +1248,9 @@ with the metadata returned as a JSON string in the return body::
       },
       {
           "entityId": {
-              "id": {
-                  "instanceId": "purchases",
-                  "namespace": {
-                      "id": "default"
-                  }
-              },
-              "type": "datasetinstance"
+              "dataset": "purchases",
+              "entity": "DATASET",
+              "namespace": "default"
           },
           "properties": {},
           "scope": "USER",
@@ -1317,13 +1258,10 @@ with the metadata returned as a JSON string in the return body::
       },
       {
           "entityId": {
-              "id": {
-                  "applicationId": "PurchaseHistory",
-                  "namespace": {
-                      "id": "default"
-                  }
-              },
-              "type": "application"
+              "application": "PurchaseHistory",
+              "entity": "APPLICATION",
+              "namespace": "default",
+              "version": "-SNAPSHOT"
           },
           "properties": {},
           "scope": "USER",

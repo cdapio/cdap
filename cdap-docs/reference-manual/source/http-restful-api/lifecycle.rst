@@ -1004,9 +1004,6 @@ To retrieve a schedule in an application, submit an HTTP GET request::
 
 The response will contain the schedule in the same form described in :ref:`http-restful-api-lifecycle-schedule-add`.
 
-Note: The response format has changed in CDAP 4.2.0. To retrieve the schedule in the ``ScheduleSpecification``
-format that was used in previous versions of CDAP, add a URL parameter ``?format=spec`` to the request URL.
-
 List Schedules
 --------------
 To list all of the schedules for an application, use an HTTP GET request::
@@ -1023,9 +1020,6 @@ To list all of the schedules of a workflow of an application, use an HTTP GET re
 
 The response will contain a list of schedules in the same form as described
 in :ref:`http-restful-api-lifecycle-schedule-add`.
-
-Note: The response format has changed in CDAP 4.2.0. To retrieve the schedules in the ``ScheduleSpecification``
-format that was used in previous versions of CDAP, add a URL parameter ``?format=spec`` to the request URL.
 
 .. list-table::
    :widths: 20 80

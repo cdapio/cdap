@@ -30,6 +30,35 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 5.0.0 <http://docs.cask.co/cdap/5.0.0/index.html>`__
+=============================================================
+Deprecated and Removed Features
+-------------------------------
+
+- The Following deprecations have been removed from the `cdap-api` module:
+	- Scheduling workflow using co.cask.cdap.api.schedule.Schedule in AbstractApplication is removed, Use co.cask.cdap.internal.schedule.ScheduleCreationSpec for scheduling workflow.
+	- Adding schedule using co.cask.cdap.api.schedule.Schedule is removed in ApplicationConfigurer, use co.cask.cdap.internal.schedule.ScheduleCreationSpec for adding schedules.
+	- Deprecated methods getStreams, getDatasetModules and getDatasetSpecs have been removed from FlowletDefinition.
+	- beforeSubmit and onFinish methods have been removed from Mapreduce, Spark interface. use ProgramLifecycle#initialize and ProgramLifecycle#destroy instead.
+	- RunConstraints, ScheduleSpecification and Schedule classes in package co.cask.cdap.api.schedule have been removed.
+	- WorkflowAction, WorkflowActionConfigurer, WorkflowActionSpecification, AbstractWorkflowAction have been removed from the package co.cask.cdap.api.workflow. Use CustomAction for workflows instead.
+	- WorkflowConfigurer#addAction(WorkflowAction action) has been removed, use addAction(CustomAction action) instead.
+	- MapReduceTaskContext#getInputName has been removed, use getInputContext instead.
+
+
+- The Following deprecations have been removed from the `cdap-proto` module:
+	- ApplicationDetail#getArtifactVersion has been removed, use ApplicationDetail#getArtifact instead.
+	- getId() method has been removed in ApplicationRecord, DatasetRecord, ProgramLiveInfo and ProgramRecord.
+	- Id class has been removed.
+	- ScheduleUpdateDetail has been removed, use ScheduleDetail instead.
+	- ScheduleType has been removed, use Trigger instead.
+	- Methods for getting ScheduleSpecification toScheduleSpec() and toScheduleSpecs(List<ScheduleDetail> details), have been removed from ScheduleDetail.
+	- Deprecated MetadataRecord class has been removed.
+
+- The Following deprecations have been removed from the `cdap-client` module:
+ 	- Removed Methods which were using the old co.cask.cdap.proto.Id classes in ApplicationClient, ArtifactClient, ClientConfig, DatsetClient, DatasetModuleClient, DatasetTypeClient, LineageClient, MetricsClient, ProgramClient, ScheduleClient, ServiceClient, StreamClient, StreamViewClient and WorkflowClient.
+ 	- Removed methods to add, update schedules using ScheduleInstanceConfiguration in ScheduleClient, use methods taking ScheduleDetail as parameter instead.
+
 
 `Release 4.3.3 <http://docs.cask.co/cdap/4.3.3/index.html>`__
 =============================================================
