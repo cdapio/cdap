@@ -574,6 +574,88 @@ public class ConnectorDagTest {
   }
 
   @Test
+  public void testMergedReduceBranches() {
+    /*
+              |--> n2(r) --|
+         n1 --|            |--> n4
+              |--> n3(r) --|
+     */
+    ConnectorDag cdag = ConnectorDag.builder()
+      .addConnection("n1", "n2")
+      .addConnection("n1", "n3")
+      .addConnection("n2", "n4")
+      .addConnection("n3", "n4")
+      .addReduceNodes("n2", "n3")
+      .build();
+    cdag.insertConnectors();
+    Set<Dag> actual = new HashSet<>(cdag.split());
+
+    /*
+                                  n1.out.connector --> n2(r) --> n4.connector
+        n1 --> n1.out.connector                                                 n4.connector --> n4
+                                  n1.out.connector --> n3(r) --> n4.connector
+     */
+    Dag dag1 = new Dag(ImmutableSet.of(new Connection("n1", "n1.out.connector")));
+    Dag dag2 = new Dag(ImmutableSet.of(new Connection("n1.out.connector", "n2"), new Connection("n2", "n4.connector")));
+    Dag dag3 = new Dag(ImmutableSet.of(new Connection("n1.out.connector", "n3"), new Connection("n3", "n4.connector")));
+    Dag dag4 = new Dag(ImmutableSet.of(new Connection("n4.connector", "n4")));
+    Assert.assertEquals(ImmutableSet.of(dag1, dag2, dag3, dag4), actual);
+
+    /*
+              |-- n2(r) --|
+         n1 --|           |-- n4
+              |-- n3 -----|
+     */
+    cdag = ConnectorDag.builder()
+      .addConnection("n1", "n2")
+      .addConnection("n1", "n3")
+      .addConnection("n2", "n4")
+      .addConnection("n3", "n4")
+      .addReduceNodes("n2")
+      .build();
+    cdag.insertConnectors();
+    actual = new HashSet<>(cdag.split());
+
+    /*
+             |--> n2.connector   n2.connector --> n2(r) --> n4.connector
+        n1 --|                                                              n4.connector --> n4
+             |--> n3 --> n4.connector
+     */
+    dag1 = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2.connector"),
+      new Connection("n1", "n3"),
+      new Connection("n3", "n4.connector")));
+    dag2 = new Dag(ImmutableSet.of(new Connection("n2.connector", "n2"), new Connection("n2", "n4.connector")));
+    dag3 = new Dag(ImmutableSet.of(new Connection("n4.connector", "n4")));
+    Assert.assertEquals(ImmutableSet.of(dag1, dag2, dag3), actual);
+
+
+    /*
+              |-- n2(r) --|
+         n1 --|           |-- n3
+              |-----------|
+     */
+    cdag = ConnectorDag.builder()
+      .addConnection("n1", "n2")
+      .addConnection("n1", "n3")
+      .addConnection("n2", "n3")
+      .addReduceNodes("n2")
+      .build();
+    cdag.insertConnectors();
+    actual = new HashSet<>(cdag.split());
+
+    /*
+             |--> n2.connector   n2.connector --> n2(r) --> n3.connector
+        n1 --|                                                              n3.connector --> n3
+             |--> n3.connector
+     */
+    dag1 = new Dag(ImmutableSet.of(new Connection("n1", "n2.connector"), new Connection("n1", "n3.connector")));
+    dag2 = new Dag(ImmutableSet.of(new Connection("n2.connector", "n2"), new Connection("n2", "n3.connector")));
+    dag3 = new Dag(ImmutableSet.of(new Connection("n3.connector", "n3")));
+    Assert.assertEquals(ImmutableSet.of(dag1, dag2, dag3), actual);
+  }
+
+  @Test
   public void testSplitDagWithMultiReduces() {
     /*
    n1 --|
