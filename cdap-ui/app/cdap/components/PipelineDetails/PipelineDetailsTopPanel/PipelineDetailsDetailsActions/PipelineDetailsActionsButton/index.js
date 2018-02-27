@@ -15,84 +15,117 @@
 */
 
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {Component} from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import PipelineExportModal from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton/PipelineExportModal';
 require('./PipelineDetailsActionsButton.scss');
 
-export default function PipelineDetailsActionsButton({pipelineName, description, artifact, config}) {
-  const getClonePipelineName = (name) => {
-    name = typeof a === 'string' ? name : name.toString();
-    let version = name.match(/(_v[\d]*)$/g);
-    let existingSuffix; // For cases where pipeline name is of type 'SamplePipeline_v2_v4_v333'
-    if (Array.isArray(version)) {
-      version = version.pop();
-      existingSuffix = version;
-      version = version.replace('_v', '');
-      version = '_v' + ((!isNaN(parseInt(version, 10)) ? parseInt(version, 10) : 1) + 1);
-    } else {
-      version = '_v1';
-    }
-    return name.split(existingSuffix)[0] + version;
+const getClonePipelineName = (name) => {
+  name = typeof a === 'string' ? name : name.toString();
+  let version = name.match(/(_v[\d]*)$/g);
+  let existingSuffix; // For cases where pipeline name is of type 'SamplePipeline_v2_v4_v333'
+  if (Array.isArray(version)) {
+    version = version.pop();
+    existingSuffix = version;
+    version = version.replace('_v', '');
+    version = '_v' + ((!isNaN(parseInt(version, 10)) ? parseInt(version, 10) : 1) + 1);
+  } else {
+    version = '_v1';
+  }
+  return name.split(existingSuffix)[0] + version;
+};
+
+export default class PipelineDetailsActionsButton extends Component {
+
+  static propTypes = {
+    pipelineName: PropTypes.string,
+    description: PropTypes.string,
+    artifact: PropTypes.object,
+    config: PropTypes.object
   };
 
-  const duplicateConfigAndNavigate = () => {
-    let bumpedVersionName = getClonePipelineName(pipelineName);
-    const pipelineConfig = {
-      name: bumpedVersionName,
-      description,
-      artifact,
-      config
-    };
-    window.localStorage.setItem(bumpedVersionName, JSON.stringify(pipelineConfig));
+  state = {
+    showExportModal: false
+  };
+
+  pipelineConfig = {
+    name: this.props.pipelineName,
+    description: this.props.description,
+    artifact: this.props.artifact,
+    config: this.props.config
+  };
+
+  duplicateConfigAndNavigate = () => {
+    let bumpedVersionName = getClonePipelineName(this.props.pipelineName);
+    let pipelineConfigWithBumpedVersion = {...this.pipelineConfig, name: bumpedVersionName};
+    window.localStorage.setItem(bumpedVersionName, JSON.stringify(pipelineConfigWithBumpedVersion));
     const hydratorLink = window.getHydratorUrl({
       stateName: 'hydrator.create',
       stateParams: {
         namespace: getCurrentNamespace(),
         cloneId: bumpedVersionName,
-        artifactType: artifact.name
+        artifactType: this.props.artifact.name
       }
     });
     window.location.href = hydratorLink;
   };
 
-  const ActionsBtnAndLabel = () => {
+  toggleExportModal = () => {
+    this.setState({ showExportModal: !this.state.showExportModal });
+  }
+
+  renderExportPipelineModal() {
+    if (!this.state.showExportModal) {
+      return null;
+    }
+
     return (
-      <div className="btn pipeline-action-btn pipeline-actions-btn">
-        <div className="btn-container">
-          <IconSVG name="icon-cog" />
-          <div className="button-label">
-            Actions
+      <PipelineExportModal
+        isOpen={this.state.showExportModal}
+        onClose={this.toggleExportModal}
+        pipelineConfig={this.pipelineConfig}
+      />
+    );
+  }
+
+  render() {
+    const ActionsBtnAndLabel = () => {
+      return (
+        <div className="btn pipeline-action-btn pipeline-actions-btn">
+          <div className="btn-container">
+            <IconSVG name="icon-cog" />
+            <div className="button-label">
+              Actions
+            </div>
           </div>
         </div>
+      );
+    };
+
+    return (
+      <div className="pipeline-action-container pipeline-actions-container">
+        <Popover
+          target={ActionsBtnAndLabel}
+          placement="bottom"
+          bubbleEvent={false}
+          className="pipeline-actions-popper"
+        >
+          <div>
+            <a onClick={this.duplicateConfigAndNavigate}>
+              Duplicate
+            </a>
+          </div>
+          <div>
+            <a onClick={this.toggleExportModal}>
+              Export
+            </a>
+          </div>
+          <div>Delete Pipeline</div>
+        </Popover>
+        {this.renderExportPipelineModal()}
       </div>
     );
-  };
-
-  return (
-    <div className="pipeline-action-container pipeline-actions-container">
-      <Popover
-        target={ActionsBtnAndLabel}
-        placement="bottom"
-        bubbleEvent={false}
-        className="pipeline-actions-popper"
-      >
-        <div>
-          <a onClick={duplicateConfigAndNavigate}>
-            Duplicate
-          </a>
-        </div>
-        <div>Export</div>
-        <div>Delete Pipeline</div>
-      </Popover>
-    </div>
-  );
+  }
 }
-
-PipelineDetailsActionsButton.propTypes = {
-  pipelineName: PropTypes.string,
-  description: PropTypes.string,
-  artifact: PropTypes.object,
-  config: PropTypes.object
-};
