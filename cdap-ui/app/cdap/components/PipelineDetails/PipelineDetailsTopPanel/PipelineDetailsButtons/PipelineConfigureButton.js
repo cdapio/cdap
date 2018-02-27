@@ -25,14 +25,14 @@ import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} f
 import {applyRuntimeArgs, revertRuntimeArgsToSavedValues} from 'components/PipelineConfigurations/Store/ActionCreator';
 import isEqual from 'lodash/isEqual';
 
-const getPrefsRelevantToMacros = (resolvedPrefs = {}, macrosMap = {}) => {
-  let relevantPrefs = {};
+const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
+  let resolvedMacros = {...macrosMap};
   for (let pref in resolvedPrefs) {
-    if (resolvedPrefs.hasOwnProperty(pref) && macrosMap.hasOwnProperty(pref)) {
-      relevantPrefs[pref] = resolvedPrefs[pref];
+    if (resolvedPrefs.hasOwnProperty(pref) && resolvedMacros.hasOwnProperty(pref)) {
+      resolvedMacros[pref] = resolvedPrefs[pref];
     }
   }
-  return relevantPrefs;
+  return resolvedMacros;
 };
 
 export default class PipelineConfigureButton extends Component {
@@ -56,17 +56,16 @@ export default class PipelineConfigureButton extends Component {
           appId: this.props.pipelineName
         })
         .subscribe(res => {
-          let relevantPrefs = getPrefsRelevantToMacros(res, this.props.macrosMap);
+          // let relevantPrefs = getMacrosResolvedByPrefs(res, this.props.macrosMap);
+          let newResolvedMacros = getMacrosResolvedByPrefs(res, this.props.macrosMap);
           let storeState = PipelineConfigurationsStore.getState();
 
           // If preferences have changed, then update macro values with new preferences.
           // Otherwise, keep the values as they are
-          if (!storeState || (storeState && !isEqual(relevantPrefs, storeState.resolvedMacros))) {
-            let resolvedMacros = {...this.props.macrosMap, ...relevantPrefs};
-
+          if (!storeState || (storeState && !isEqual(newResolvedMacros, storeState.resolvedMacros))) {
             PipelineConfigurationsStore.dispatch({
               type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
-              payload: { resolvedMacros }
+              payload: { resolvedMacros: newResolvedMacros }
             });
             applyRuntimeArgs();
           }
