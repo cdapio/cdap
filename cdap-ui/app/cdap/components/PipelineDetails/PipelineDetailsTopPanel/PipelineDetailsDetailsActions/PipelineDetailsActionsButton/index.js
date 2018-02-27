@@ -52,6 +52,10 @@ export default class PipelineDetailsActionsButton extends Component {
     showDeleteConfirmationModal: false
   };
 
+  menu = {
+
+  }
+
   pipelineConfig = {
     name: this.props.pipelineName,
     description: this.props.description,
@@ -173,21 +177,18 @@ export default class PipelineDetailsActionsButton extends Component {
           bubbleEvent={false}
           className="pipeline-actions-popper"
         >
-          <div>
-            <a onClick={this.duplicateConfigAndNavigate}>
+          <ul>
+            <li onClick={this.duplicateConfigAndNavigate}>
               Duplicate
-            </a>
-          </div>
-          <div>
-            <a onClick={this.toggleExportModal}>
+            </li>
+            <li onClick={this.toggleExportModal}>
               Export
-            </a>
-          </div>
-          <div>
-            <a onClick={this.toggleDeleteConfirmationModal}>
+            </li>
+            <hr />
+            <li onClick={this.toggleDeleteConfirmationModal}>
               Delete Pipeline
-            </a>
-          </div>
+            </li>
+          </ul>
         </Popover>
         {this.renderExportPipelineModal()}
         {this.renderDeleteConfirmationModal()}

@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import { ModalBody } from 'reactstrap';
+import { ModalBody, ModalFooter } from 'reactstrap';
 import HydratorModal from 'components/HydratorModal';
 import IconSVG from 'components/IconSVG';
 
@@ -38,11 +38,12 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
       toggle={onClose}
       size="lg"
       backdrop="static"
+      modalClassName="pipeline-export-modal hydrator-modal"
     >
       <div className="modal-header">
-        <h4 className="modal-title float-xs-left">
+        <h3 className="modal-title float-xs-left">
           <span>Export Pipeline Configuration</span>
-        </h4>
+        </h3>
         <div className="btn-group float-xs-right">
           <a
             className="btn"
@@ -59,28 +60,27 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
             <div className="textarea-container">
               <textarea
                 className="form-control"
-                value={JSON.stringify(pipelineConfig, null, 4)}
+                value={JSON.stringify(pipelineConfig, null, 2)}
               />
             </div>
           </div>
         </fieldset>
-        <br />
-        <div className="float-xs-right">
-          <div
-            className="btn btn-grey-cancel close-button"
-            onClick={onClose}
-          >
-            Close
-          </div>
-          <div
-            className="btn btn-blue"
-            onClick={exportPipeline}
-          >
-            Export
-            <a id="pipeline-export-config-link" />
-          </div>
-        </div>
       </ModalBody>
+      <ModalFooter>
+        <div
+          className="btn btn-grey-cancel close-button"
+          onClick={onClose}
+        >
+          Close
+        </div>
+        <div
+          className="btn btn-blue"
+          onClick={exportPipeline}
+        >
+          Export
+          <a id="pipeline-export-config-link" />
+        </div>
+      </ModalFooter>
     </HydratorModal>
   );
 }

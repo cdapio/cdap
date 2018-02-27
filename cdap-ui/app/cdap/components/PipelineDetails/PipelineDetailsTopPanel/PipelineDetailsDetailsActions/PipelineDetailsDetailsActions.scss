@@ -14,31 +14,12 @@
  * the License.
 */
 
-.pipeline-actions-container {
-  .popper {
-    z-index: 999;
-    min-width: 120px;
-    width: 120px;
-
-    ul {
-      padding: 10px;
-
-      li {
-        padding: 8px 4px 8px 0;
+.pipeline-details-details-actions {
+  .pipeline-details-container {
+    .pipeline-details-btn {
+      .icon-info-circle {
+        color: initial;
       }
-
-      hr {
-        margin: 2px;
-      }
-    }
-  }
-}
-
-.pipeline-export-modal {
-  .textarea-container {
-    textarea {
-      padding-right: 55px;
-      font-family: monospace;
     }
   }
 }

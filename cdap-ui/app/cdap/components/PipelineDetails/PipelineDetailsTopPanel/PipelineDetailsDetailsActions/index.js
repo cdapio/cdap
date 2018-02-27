@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import PipelineDetailsDetailsButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsDetailsButton';
 import PipelineDetailsActionsButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton';
+require('./PipelineDetailsDetailsActions.scss');
 
 const mapDetailsStateToProps = (state) => {
   return {
