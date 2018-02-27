@@ -18,7 +18,9 @@ import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
+import ConfirmationModal from 'components/ConfirmationModal';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {MyAppApi} from 'api/app';
 import PipelineExportModal from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton/PipelineExportModal';
 require('./PipelineDetailsActionsButton.scss');
 
@@ -38,7 +40,6 @@ const getClonePipelineName = (name) => {
 };
 
 export default class PipelineDetailsActionsButton extends Component {
-
   static propTypes = {
     pipelineName: PropTypes.string,
     description: PropTypes.string,
@@ -47,7 +48,8 @@ export default class PipelineDetailsActionsButton extends Component {
   };
 
   state = {
-    showExportModal: false
+    showExportModal: false,
+    showDeleteConfirmationModal: false
   };
 
   pipelineConfig = {
@@ -72,8 +74,44 @@ export default class PipelineDetailsActionsButton extends Component {
     window.location.href = hydratorLink;
   };
 
+  deletePipeline = () => {
+    let namespace = getCurrentNamespace();
+    let params = {
+      namespace,
+      appId: this.props.pipelineName
+    };
+    const pipelinesListLink = window.getHydratorUrl({
+      stateName: 'hydrator.list',
+      stateParams: {
+        namespace
+      }
+    });
+
+    MyAppApi.delete(params)
+      .subscribe(() => {
+        this.setState({
+          deleteErrMsg: '',
+          extendedDeleteErrMsg: ''
+        });
+        window.location.href = pipelinesListLink;
+      }, (err) => {
+        this.setState({
+          deleteErrMsg: 'There was a problem with the pipeline you were trying to delete',
+          extendedDeleteErrMsg: err
+        });
+      });
+  }
+
   toggleExportModal = () => {
     this.setState({ showExportModal: !this.state.showExportModal });
+  }
+
+  toggleDeleteConfirmationModal = () => {
+    this.setState({
+      showDeleteConfirmationModal: !this.state.showDeleteConfirmationModal,
+      deleteErrMsg: '',
+      extendedDeleteErrMsg: ''
+    });
   }
 
   renderExportPipelineModal() {
@@ -86,6 +124,29 @@ export default class PipelineDetailsActionsButton extends Component {
         isOpen={this.state.showExportModal}
         onClose={this.toggleExportModal}
         pipelineConfig={this.pipelineConfig}
+      />
+    );
+  }
+
+  renderDeleteConfirmationModal() {
+    if (!this.state.showDeleteConfirmationModal) {
+      return null;
+    }
+
+    let confirmationText = `Are you sure you want to delete the pipeline ${this.props.pipelineName}?`;
+
+    return (
+      <ConfirmationModal
+        headerTitle='Delete Confirmation'
+        toggleModal={this.toggleDeleteConfirmationModal}
+        confirmationText={confirmationText}
+        confirmButtonText={'Delete'}
+        confirmFn={this.deletePipeline}
+        cancelFn={this.toggleDeleteConfirmationModal}
+        isOpen={this.state.showDeleteConfirmationModal}
+        isLoading={this.state.loading}
+        errorMessage={this.state.deleteErrMsg}
+        extendedMessage={this.state.extendedDeleteErrMsg}
       />
     );
   }
@@ -122,9 +183,14 @@ export default class PipelineDetailsActionsButton extends Component {
               Export
             </a>
           </div>
-          <div>Delete Pipeline</div>
+          <div>
+            <a onClick={this.toggleDeleteConfirmationModal}>
+              Delete Pipeline
+            </a>
+          </div>
         </Popover>
         {this.renderExportPipelineModal()}
+        {this.renderDeleteConfirmationModal()}
       </div>
     );
   }
