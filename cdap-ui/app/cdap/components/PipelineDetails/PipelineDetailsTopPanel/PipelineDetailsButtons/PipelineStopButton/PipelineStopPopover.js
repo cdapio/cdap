@@ -18,24 +18,9 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
-// import {humanReadableDuration} from 'services/helpers';
+import Duration from 'components/Duration';
 import moment from 'moment';
 require('./PipelineStopPopover.scss');
-
-// require('./HyperParamsPopover.scss');
-
-// const getDuration = (startTime) => {
-//   this.currentRunTimeCounter = this.$interval(() => {
-//     let duration = humanReadableDuration(Math.floor(Date.now() / 1000) - startTime);
-//     this.currentRun = Object.assign({}, this.currentRun, {
-//       duration
-//     });
-//   }, 1000);
-
-//   let timeDifference = this.currentRun.end ? this.currentRun.end - startTime : Math.floor(Date.now() / 1000) - this.currentRun.start;
-//   this.currentRun = Object.assign({}, this.currentRun, {
-//     duration: humanReadableDuration(timeDifference),
-// }
 
 export default function PipelineStopPopver({runs, stopRun}) {
   const stopBtnAndLabel = () => {
@@ -89,7 +74,13 @@ export default function PipelineStopPopver({runs, stopRun}) {
               return (
                 <tr key={i}>
                   <td>{moment.unix(run.start).calendar()}</td>
-                  <td>10s</td>
+                  <td>
+                    <Duration
+                      targetTime={run.start}
+                      isMillisecond={false}
+                      showFullDuration={true}
+                    />
+                  </td>
                   <td>
                     <a onClick={stopRun.bind(null, run.runid)}>
                       Stop run

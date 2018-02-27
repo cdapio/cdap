@@ -19,7 +19,7 @@
 .stop-btn-popover {
   .popper {
     z-index: 999;
-    width: 400px;
+    width: 450px;
     padding: 20px;
 
     .stop-btn-popover-header {
@@ -36,6 +36,10 @@
         border: 1px solid $grey-03;
         padding: 5px;
         border-radius: 3px;
+
+        .icon-stop {
+          margin-right: 3px;
+        }
 
         &:hover {
           background-color: $grey-07;
