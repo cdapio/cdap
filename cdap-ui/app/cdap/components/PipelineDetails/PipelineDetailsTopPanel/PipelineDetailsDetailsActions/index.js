@@ -18,18 +18,26 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import PipelineDetailsDetailsButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsDetailsButton';
+import PipelineDetailsActionsButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton';
 
-const mapStateToProps = (state) => {
+const mapDetailsStateToProps = (state) => {
   return {
-    pipelineName: state.name
+    pipelineName: state.name,
+    description: state.description,
+    artifact: state.artifact,
+    config: state.config
   };
 };
 
-const PipelineDetailsDetailsActions = ({pipelineName}) => {
+const PipelineDetailsDetailsActions = ({pipelineName, description, artifact, config}) => {
   return (
     <div className="pipeline-details-buttons pipeline-details-details-actions">
-      <PipelineDetailsDetailsButton
+      <PipelineDetailsDetailsButton pipelineName={pipelineName} />
+      <PipelineDetailsActionsButton
         pipelineName={pipelineName}
+        description={description}
+        artifact={artifact}
+        config={config}
       />
     </div>
   );
@@ -37,7 +45,10 @@ const PipelineDetailsDetailsActions = ({pipelineName}) => {
 
 PipelineDetailsDetailsActions.propTypes = {
   pipelineName: PropTypes.string,
+  description: PropTypes.string,
+  artifact: PropTypes.object,
+  config: PropTypes.object
 };
 
-const ConnectedPipelineDetailsDetailsActions = connect(mapStateToProps)(PipelineDetailsDetailsActions);
+const ConnectedPipelineDetailsDetailsActions = connect(mapDetailsStateToProps)(PipelineDetailsDetailsActions);
 export default ConnectedPipelineDetailsDetailsActions;
