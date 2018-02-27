@@ -35,6 +35,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.explore.client.ExploreFacade;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -46,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -61,6 +63,8 @@ public class PartitionedFileSetDefinition
 
   protected static final String PARTITION_TABLE_NAME = "partitions";
   protected static final String FILESET_NAME = "files";
+  @VisibleForTesting
+  public static final String NAME_AS_BASE_PATH_DEFAULT = "name.as.base.path.default";
 
   private static final String INDEXED_COLS = Bytes.toString(PartitionedFileSetDataset.WRITE_PTR_COL) + ','
     + Bytes.toString(PartitionedFileSetDataset.CREATION_TIME_COL);
@@ -90,10 +94,27 @@ public class PartitionedFileSetDefinition
       .addAll(properties.getProperties())
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
       .build();
-    DatasetProperties fileProperties = getFilesetProperties(properties, instanceName);
+
+    Map<String, String> pfsProperties = new HashMap<>(properties.getProperties());
+
+    // this property allows us to distinguish between datasets that were created
+    // before base path was explicitly set and those created after.
+    // this is important to know when a pfs is updated, as we want to keep the old base path behavior for
+    // previously created datasets
+    String defaultBasePathStr = properties.getProperties().get(NAME_AS_BASE_PATH_DEFAULT);
+    boolean useNameAsBasePathDefault = defaultBasePathStr == null || Boolean.parseBoolean(defaultBasePathStr);
+    DatasetProperties.Builder fileProperties = DatasetProperties.builder()
+      .addAll(properties.getProperties());
+    // CDAP-13120 - if base path is not set, default it to the dataset name.
+    // otherwise, the embedded dataset name 'files' will get appended to the dataset name as the base path,
+    // and when the dataset is deleted, only the 'files' dir will be deleted and not the dataset name dir.
+    if (useNameAsBasePathDefault && !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
+      fileProperties.add(FileSetProperties.BASE_PATH, instanceName);
+      pfsProperties.put(NAME_AS_BASE_PATH_DEFAULT, Boolean.TRUE.toString());
+    }
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(filesetDef.configure(FILESET_NAME, fileProperties),
+      .properties(pfsProperties)
+      .datasets(filesetDef.configure(FILESET_NAME, fileProperties.build()),
                 indexedTableDef.configure(PARTITION_TABLE_NAME, indexedTableProperties))
       .build();
   }
@@ -114,16 +135,30 @@ public class PartitionedFileSetDefinition
         "Partitioning cannot be changed. Existing: %s, new: %s", oldPartitioning, newPartitioning));
     }
 
+    Map<String, String> pfsProperties = new HashMap<>(properties.getProperties());
+
     // define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
       .addAll(properties.getProperties())
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
       .build();
-    DatasetProperties fileProperties = getFilesetProperties(properties, currentSpec.getName());
+
+    // only set the default base path property if the default was set the last time it was configured,
+    // and no base path is in the current properties.
+    DatasetSpecification currentFileSpec = currentSpec.getSpecification(FILESET_NAME);
+    DatasetProperties.Builder newFileProperties = DatasetProperties.builder()
+      .addAll(properties.getProperties());
+    String useNameAsBasePathDefault = currentSpec.getProperty(NAME_AS_BASE_PATH_DEFAULT);
+    if (Boolean.parseBoolean(useNameAsBasePathDefault) &&
+      !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
+      newFileProperties.add(FileSetProperties.BASE_PATH, instanceName);
+      pfsProperties.put(NAME_AS_BASE_PATH_DEFAULT, Boolean.TRUE.toString());
+    }
+
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME, fileProperties,
-                                                      currentSpec.getSpecification(FILESET_NAME)),
+      .properties(pfsProperties)
+      .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME, newFileProperties.build(),
+                                                      currentFileSpec),
                 AbstractDatasetDefinition.reconfigure(indexedTableDef, PARTITION_TABLE_NAME, indexedTableProperties,
                                                       currentSpec.getSpecification(PARTITION_TABLE_NAME)))
       .build();
@@ -189,17 +224,5 @@ public class PartitionedFileSetDefinition
         }
       }
     };
-  }
-
-  private DatasetProperties getFilesetProperties(DatasetProperties properties, String name) {
-    DatasetProperties.Builder fileProperties = DatasetProperties.builder()
-      .addAll(properties.getProperties());
-    // CDAP-13120 - if base path is not set, default it to the dataset name.
-    // otherwise, the embedded dataset name 'files' will get appended to the dataset name as the base path,
-    // and when the dataset is deleted, only the 'files' dir will be deleted and not the dataset name dir.
-    if (!properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
-      fileProperties.add(FileSetProperties.BASE_PATH, name);
-    }
-    return fileProperties.build();
   }
 }

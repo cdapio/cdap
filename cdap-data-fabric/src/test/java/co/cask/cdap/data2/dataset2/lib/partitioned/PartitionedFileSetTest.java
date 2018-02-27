@@ -212,6 +212,21 @@ public class PartitionedFileSetTest {
   }
 
   @Test
+  public void testDefaultBasePath() throws Exception {
+    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testDefaultPath");
+    dsFrameworkUtil.createInstance("partitionedFileSet", id, PartitionedFileSetProperties.builder()
+      .setPartitioning(PARTITIONING_1)
+      .build());
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(id);
+    Location baseLocation = pfs.getEmbeddedFileSet().getBaseLocation();
+    Assert.assertEquals(baseLocation.getName(), id.getDataset());
+    Assert.assertTrue(baseLocation.exists());
+    Assert.assertTrue(baseLocation.isDirectory());
+    dsFrameworkUtil.deleteInstance(id);
+    Assert.assertFalse(baseLocation.exists());
+  }
+
+  @Test
   public void testPartitionConsumer() throws Exception {
     // exercises the edge case of partition consumption, when partitions are being consumed, while another in-progress
     // transaction has added a partition, but it has not yet committed, so the partition is not available for the
