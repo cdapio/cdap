@@ -75,16 +75,6 @@ export default class PipelineStopButton extends Component {
       runId
     };
     return MyProgramApi.stopRun(params);
-    // .subscribe(() => {
-    //   this.setState({
-    //     loading: false
-    //   });
-    // }, (err) => {
-    //   this.setState({
-    //     loading: false,
-    //     stopError: err.response || err
-    //   });
-    // });
   }
 
   renderStopError() {
