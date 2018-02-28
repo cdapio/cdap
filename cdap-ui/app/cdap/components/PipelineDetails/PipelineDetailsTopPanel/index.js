@@ -38,7 +38,9 @@ const mapStateToButtonsProps = (state) => {
     maxConcurrentRuns: state.config.maxConcurrentRuns,
     scheduleStatus: state.scheduleStatus,
     runs: state.runs,
-    currentRun: state.currentRun
+    currentRun: state.currentRun,
+    runButtonLoading: state.runButtonLoading,
+    runError: state.runError
   };
 };
 

@@ -16,59 +16,48 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyProgramApi} from 'api/program';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
-import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
-import {GLOBALS} from 'services/global-constants';
+import {runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
+import PipelineConfigurations from 'components/PipelineConfigurations';
 
 export default class PipelineRunButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
+    runButtonLoading: PropTypes.bool,
+    runError: PropTypes.string,
+    resolvedMacros: PropTypes.object,
+    runtimeArgs: PropTypes.array
   }
 
   state = {
-    loading: false,
-    runError: null
+    showConfigModeless: false
   };
 
-  runPipeline = () => {
+  toggleConfigModeless = () => {
     this.setState({
-      loading: true
+      showConfigModeless: !this.state.showConfigModeless
     });
-    let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
-    let params = {
-      namespace: getCurrentNamespace(),
-      appId: this.props.pipelineName,
-      programType: GLOBALS.programType[pipelineType],
-      programId: GLOBALS.programId[pipelineType],
-      action: 'start'
-    };
-    let runtimeArgs = convertKeyValuePairsObjToMap(PipelineConfigurationsStore.getState().runtimeArgs);
-    MyProgramApi.action(params, runtimeArgs)
-    .subscribe(() => {
-      this.setState({
-        loading: false
-      });
-    }, (err) => {
-      this.setState({
-        loading: false,
-        runError: err.response || err
-      });
-    });
-  }
+  };
+
+  runPipelineOrToggleConfig = () => {
+    if (keyValuePairsHaveMissingValues(this.props.runtimeArgs)) {
+      this.toggleConfigModeless();
+    } else {
+      runPipeline();
+    }
+  };
 
   renderRunError() {
-    if (!this.state.runError) {
+    if (!this.props.runError) {
       return null;
     }
 
     return (
       <Alert
-        message={this.state.runError}
+        message={this.props.runError}
         type='error'
         showAlert={true}
         onClose={() => this.setState({
@@ -78,16 +67,29 @@ export default class PipelineRunButton extends Component {
     );
   }
 
+  renderConfigModeless() {
+    if (!this.state.showConfigModeless) { return null; }
+
+    return (
+      <PipelineConfigurations
+        onClose={this.toggleConfigModeless}
+        isDetailView={true}
+        isBatch={this.props.isBatch}
+        pipelineName={this.props.pipelineName}
+      />
+    );
+  }
+
   renderPipelineRunButton() {
     return (
       <div
-        onClick={this.runPipeline}
+        onClick={this.runPipelineOrToggleConfig}
         className="btn pipeline-action-btn pipeline-run-btn"
-        disabled={this.state.loading}
+        disabled={this.props.runButtonLoading}
       >
         <div className="btn-container">
           {
-            this.state.loading ?
+            this.props.runButtonLoading ?
               <IconSVG
                 name="icon-spinner"
                 className="fa-spin"
@@ -115,7 +117,7 @@ export default class PipelineRunButton extends Component {
       <div className="pipeline-action-container pipeline-run-container">
         {this.renderRunError()}
         {this.renderPipelineRunButton()}
-
+        {this.renderConfigModeless()}
       </div>
     );
   }

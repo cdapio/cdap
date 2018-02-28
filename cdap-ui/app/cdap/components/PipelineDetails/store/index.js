@@ -35,6 +35,10 @@ const ACTIONS = {
   SET_USER_RUNTIME_ARGUMENTS: 'SET_USER_RUNTIME_ARGUMENTS',
   SET_MACROS_AND_USER_RUNTIME_ARGUMENTS: 'SET_MACROS_AND_USER_RUNTIME_ARGUMENTS',
   SET_RUNTIME_ARGUMENTS_FOR_DISPLAY: 'SET_RUNTIME_ARGUMENTS_FOR_DISPLAY',
+
+  // Loading and error states Actions
+  SET_RUN_BUTTON_LOADING: 'SET_RUN_BUTTON_LOADING',
+  SET_RUN_ERROR: 'SET_RUN_ERROR',
   RESET: 'RESET'
 };
 
@@ -60,7 +64,11 @@ const DEFAULT_PIPELINE_DETAILS = {
   userRuntimeArgumentsMap: {},
   // `runtimeArgsForDisplay` combines `macrosMap` and `userRuntimeArgumentsMap` objects
   // to create an object that can be used as a prop to the KeyValuePairs component
-  runtimeArgsForDisplay: {}
+  runtimeArgsForDisplay: {},
+
+  // loading and error states
+  runButtonLoading: false,
+  runError: ''
 };
 
 const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultAction) => {
@@ -162,6 +170,16 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       return {
         ...state,
         runtimeArgsForDisplay: action.payload.args
+      };
+    case ACTIONS.SET_RUN_BUTTON_LOADING:
+      return {
+        ...state,
+        runButtonLoading: action.payload.loading
+      };
+    case ACTIONS.SET_RUN_ERROR:
+      return {
+        ...state,
+        runError: action.payload.error
       };
     case ACTIONS.RESET:
       return DEFAULT_PIPELINE_DETAILS;

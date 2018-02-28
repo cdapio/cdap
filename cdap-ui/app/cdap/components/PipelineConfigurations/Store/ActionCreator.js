@@ -16,8 +16,11 @@
 
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/PipelineDetails/store';
+import {setRunButtonLoading, setRunError} from 'components/PipelineDetails/store/ActionCreator';
+import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {GLOBALS} from 'services/global-constants';
 import {MyPipelineApi} from 'api/pipeline';
+import {MyProgramApi} from 'api/program';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -153,10 +156,33 @@ const updatePipeline = () => {
   return publishObservable;
 };
 
+const runPipeline = () => {
+  setRunButtonLoading(true);
+  let { name, artifact } = PipelineDetailStore.getState();
+  let { runtimeArgs  } = PipelineConfigurationsStore.getState();
+
+  let params = {
+    namespace: getCurrentNamespace(),
+    appId: name,
+    programType: GLOBALS.programType[artifact.name],
+    programId: GLOBALS.programId[artifact.name],
+    action: 'start'
+  };
+  runtimeArgs = convertKeyValuePairsObjToMap(runtimeArgs);
+  MyProgramApi.action(params, runtimeArgs)
+  .subscribe(() => {
+    setRunButtonLoading(false);
+  }, (err) => {
+    setRunButtonLoading(false);
+    setRunError(err.response || err);
+  });
+};
+
 export {
   applyRuntimeArgs,
   revertRuntimeArgsToSavedValues,
   getMacrosResolvedByPrefs,
   updatePipelineEditStatus,
-  updatePipeline
+  updatePipeline,
+  runPipeline
 };

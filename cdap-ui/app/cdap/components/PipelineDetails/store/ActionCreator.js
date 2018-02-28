@@ -255,6 +255,20 @@ const setRuntimeArgsForDisplay = (args) => {
   });
 };
 
+const setRunButtonLoading = (loading) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_RUN_BUTTON_LOADING,
+    payload: { loading }
+  });
+};
+
+const setRunError = (error) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_RUN_ERROR,
+    payload: { error }
+  });
+};
+
 const reset = () => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.RESET
@@ -291,5 +305,7 @@ export {
   setUserRuntimeArguments,
   setMacrosAndUserRuntimeArguments,
   setRuntimeArgsForDisplay,
+  setRunButtonLoading,
+  setRunError,
   reset
 };

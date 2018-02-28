@@ -18,7 +18,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
-import {applyRuntimeArgs, updatePipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {applyRuntimeArgs, updatePipeline, runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 require('./ConfigurationsActionButtons.scss');
@@ -36,12 +36,28 @@ const mapStateToProps = (state, ownProps) => {
   };
 };
 
-const ConfigActionButtons = ({runtimeArgs, validToSave, pipelineEdited, updatingPipeline, saveAndClose, activeTab}) => {
+const ConfigActionButtons = ({runtimeArgs, validToSave, pipelineEdited, updatingPipeline, updatingPipelineAndRunning, saveAndClose, saveAndRun, activeTab}) => {
   return (
     <div className="configuration-step-navigation">
       <div className="apply-run-container">
         <button
-          className="btn btn-primary"
+          className="btn btn-primary apply-run"
+          disabled={updatingPipelineAndRunning || !validToSave}
+          onClick={saveAndRun.bind(this, pipelineEdited)}
+        >
+          <span>Save and Run</span>
+          {
+            updatingPipelineAndRunning ?
+              <IconSVG
+                name="icon-spinner"
+                className="fa-spin"
+              />
+            :
+              null
+          }
+        </button>
+        <button
+          className="btn btn-secondary"
           disabled={updatingPipeline || !validToSave}
           onClick={saveAndClose.bind(this, pipelineEdited)}
         >
@@ -81,19 +97,47 @@ ConfigActionButtons.propTypes = {
   validToSave: PropTypes.bool,
   pipelineEdited: PropTypes.bool,
   updatingPipeline: PropTypes.bool,
-  saveAndClose: PropTypes.func
+  updatingPipelineAndRunning: PropTypes.bool,
+  saveAndClose: PropTypes.func,
+  saveAndRun: PropTypes.func
 };
 
 const ConnectedConfigActionButtons = connect(mapStateToProps)(ConfigActionButtons);
 
 export default class ConfigurationsActionButtons extends Component {
   state = {
-    updatingPipeline: false
+    updatingPipeline: false,
+    updatingPipelineAndRunning: false
   };
 
   static propTypes = {
     onClose: PropTypes.func,
     activeTab: PropTypes.string
+  }
+
+  saveAndRun = (pipelineEdited) => {
+    applyRuntimeArgs();
+    if (pipelineEdited) {
+      this.setState({
+        updatingPipelineAndRunning: true
+      });
+      updatePipeline()
+      .subscribe(() => {
+        this.setState({
+          updatingPipelineAndRunning: false
+        });
+        this.props.onClose();
+        runPipeline();
+      }, (err) => {
+        console.log(err);
+        this.setState({
+          updatingPipelineAndRunning: false
+        });
+      });
+    } else {
+      runPipeline();
+      this.props.onClose();
+    }
   }
 
   saveAndClose = (pipelineEdited) => {
@@ -121,7 +165,9 @@ export default class ConfigurationsActionButtons extends Component {
     return (
       <ConnectedConfigActionButtons
         updatingPipeline={this.state.updatingPipeline}
+        updatingPipelineAndRunning={this.state.updatingPipelineAndRunning}
         saveAndClose={this.saveAndClose}
+        saveAndRun={this.saveAndRun}
         activeTab={this.props.activeTab}
       />
     );
