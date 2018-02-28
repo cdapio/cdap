@@ -16,7 +16,7 @@
 
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/PipelineDetails/store';
-import {setRunButtonLoading, setRunError} from 'components/PipelineDetails/store/ActionCreator';
+import {setRunButtonLoading, setRunError, setScheduleButtonLoading, setScheduleError, fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {GLOBALS} from 'services/global-constants';
 import {MyPipelineApi} from 'api/pipeline';
@@ -178,11 +178,31 @@ const runPipeline = () => {
   });
 };
 
+const scheduleOrSuspendPipeline = (scheduleApi) => {
+  setScheduleButtonLoading(true);
+  let { name } = PipelineDetailStore.getState();
+
+  let params = {
+    namespace: getCurrentNamespace(),
+    appId: name,
+    scheduleId: GLOBALS.defaultScheduleId
+  };
+  scheduleApi(params)
+  .subscribe(() => {
+    setScheduleButtonLoading(false);
+    fetchScheduleStatus(params);
+  }, (err) => {
+    setScheduleButtonLoading(false);
+    setScheduleError(err.response || err);
+  });
+};
+
 export {
   applyRuntimeArgs,
   revertRuntimeArgsToSavedValues,
   getMacrosResolvedByPrefs,
   updatePipelineEditStatus,
   updatePipeline,
-  runPipeline
+  runPipeline,
+  scheduleOrSuspendPipeline
 };

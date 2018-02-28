@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import {runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {setRunError} from 'components/PipelineDetails/store/ActionCreator';
 import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurations from 'components/PipelineConfigurations';
 
@@ -28,7 +29,6 @@ export default class PipelineRunButton extends Component {
     pipelineName: PropTypes.string,
     runButtonLoading: PropTypes.bool,
     runError: PropTypes.string,
-    resolvedMacros: PropTypes.object,
     runtimeArgs: PropTypes.array
   }
 
@@ -60,9 +60,7 @@ export default class PipelineRunButton extends Component {
         message={this.props.runError}
         type='error'
         showAlert={true}
-        onClose={() => this.setState({
-          runError: null
-        })}
+        onClose={setRunError.bind(null, '')}
       />
     );
   }

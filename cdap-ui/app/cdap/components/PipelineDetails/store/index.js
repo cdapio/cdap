@@ -39,6 +39,9 @@ const ACTIONS = {
   // Loading and error states Actions
   SET_RUN_BUTTON_LOADING: 'SET_RUN_BUTTON_LOADING',
   SET_RUN_ERROR: 'SET_RUN_ERROR',
+  SET_SCHEDULE_BUTTON_LOADING: 'SET_SCHEDULE_BUTTON_LOADING',
+  SET_SCHEDULE_ERROR: 'SET_SCHEDULE_ERROR',
+
   RESET: 'RESET'
 };
 
@@ -68,7 +71,9 @@ const DEFAULT_PIPELINE_DETAILS = {
 
   // loading and error states
   runButtonLoading: false,
-  runError: ''
+  runError: '',
+  scheduleButtonLoading: false,
+  scheduleError: '',
 };
 
 const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultAction) => {
@@ -180,6 +185,16 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       return {
         ...state,
         runError: action.payload.error
+      };
+    case ACTIONS.SET_SCHEDULE_BUTTON_LOADING:
+      return {
+        ...state,
+        scheduleButtonLoading: action.payload.loading
+      };
+    case ACTIONS.SET_SCHEDULE_ERROR:
+      return {
+        ...state,
+        scheduleError: action.payload.error
       };
     case ACTIONS.RESET:
       return DEFAULT_PIPELINE_DETAILS;

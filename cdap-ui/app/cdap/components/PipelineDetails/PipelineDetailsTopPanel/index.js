@@ -40,7 +40,9 @@ const mapStateToButtonsProps = (state) => {
     runs: state.runs,
     currentRun: state.currentRun,
     runButtonLoading: state.runButtonLoading,
-    runError: state.runError
+    runError: state.runError,
+    scheduleButtonLoading: state.scheduleButtonLoading,
+    scheduleError: state.scheduleError
   };
 };
 

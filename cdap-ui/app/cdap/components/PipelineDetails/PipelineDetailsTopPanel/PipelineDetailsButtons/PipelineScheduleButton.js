@@ -17,38 +17,38 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {MyPipelineApi} from 'api/pipeline';
-import {fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
+import {setScheduleError} from 'components/PipelineDetails/store/ActionCreator';
 import PipelineScheduler from 'components/PipelineScheduler';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import StatusMapper from 'services/StatusMapper';
-import {GLOBALS} from 'services/global-constants';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import {scheduleOrSuspendPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
+import PipelineConfigurations from 'components/PipelineConfigurations';
 
-export default class ScheduleButton extends Component {
+export default class PipelineScheduleButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     schedule: PropTypes.string,
     maxConcurrentRuns: PropTypes.number,
     pipelineName: PropTypes.string,
-    scheduleStatus: PropTypes.string
+    scheduleStatus: PropTypes.string,
+    scheduleButtonLoading: PropTypes.bool,
+    scheduleError: PropTypes.string,
+    runtimeArgs: PropTypes.array
   }
 
   state = {
     showScheduler: false,
-    scheduleStatus: this.props.scheduleStatus,
-    scheduleLoading: true,
-    scheduleError: null
+    showConfigModeless: false,
+    scheduleStatus: this.props.scheduleStatus
   };
 
   componentWillReceiveProps(nextProps) {
     let scheduleStatus = StatusMapper.lookupDisplayStatus(nextProps.scheduleStatus);
     if (scheduleStatus !== this.state.scheduleStatus) {
-      this.setState({
-        scheduleStatus,
-        scheduleLoading: false
-      });
+      this.setState({ scheduleStatus });
     }
   }
 
@@ -56,44 +56,47 @@ export default class ScheduleButton extends Component {
     this.setState({
       showScheduler: !this.state.showScheduler
     });
-  }
+  };
 
-  scheduleOrSuspend = (scheduleApi) => {
+  toggleConfigModeless = () => {
     this.setState({
-      scheduleLoading: true
+      showConfigModeless: !this.state.showConfigModeless
     });
-    let params = {
-      namespace: getCurrentNamespace(),
-      appId: this.props.pipelineName,
-      scheduleId: GLOBALS.defaultScheduleId
-    };
-    scheduleApi(params)
-    .subscribe(() => {
-      this.setState({
-        scheduleLoading: false
-      });
-      fetchScheduleStatus(params);
-    }, (err) => {
-      this.setState({
-        scheduleLoading: false,
-        scheduleError: err.response || err
-      });
-    });
-  }
+  };
+
+  schedulePipelineOrToggleConfig = () => {
+    if (keyValuePairsHaveMissingValues(this.props.runtimeArgs)) {
+      this.toggleConfigModeless();
+    } else {
+      scheduleOrSuspendPipeline(MyPipelineApi.schedule);
+    }
+  };
 
   renderScheduleError() {
-    if (!this.state.scheduleError) {
+    if (!this.props.scheduleError) {
       return null;
     }
 
     return (
       <Alert
-        message={this.state.scheduleError}
+        message={this.props.scheduleError}
         type='error'
         showAlert={true}
-        onClose={() => this.setState({
-          scheduleError: null
-        })}
+        onClose={setScheduleError.bind(null, '')}
+      />
+    );
+  }
+
+  renderConfigModeless() {
+    if (!this.state.showConfigModeless) { return null; }
+
+    return (
+      <PipelineConfigurations
+        onClose={this.toggleConfigModeless}
+        isDetailView={true}
+        isBatch={this.props.isBatch}
+        pipelineName={this.props.pipelineName}
+        scheduleAction={true}
       />
     );
   }
@@ -176,12 +179,13 @@ export default class ScheduleButton extends Component {
               isDetailView={true}
               pipelineName={this.props.pipelineName}
               scheduleStatus={this.state.scheduleStatus}
-              schedulePipeline={this.scheduleOrSuspend.bind(this, MyPipelineApi.schedule)}
-              suspendSchedule={this.scheduleOrSuspend.bind(this, MyPipelineApi.suspend)}
+              schedulePipeline={this.schedulePipelineOrToggleConfig}
+              suspendSchedule={scheduleOrSuspendPipeline.bind(null, MyPipelineApi.suspend)}
             />
           :
             null
         }
+        {this.renderConfigModeless()}
       </div>
     );
   }
