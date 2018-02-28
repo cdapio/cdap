@@ -52,8 +52,8 @@ const mapStateToScheduleButton = (state, ownProps) => {
     schedule: ownProps.schedule,
     maxConcurrentRuns: ownProps.maxConcurrentRuns,
     scheduleStatus: ownProps.scheduleStatus,
-    scheduleButtonLoading: ownProps.runButtonLoading,
-    scheduleError: ownProps.runError,
+    scheduleButtonLoading: ownProps.scheduleButtonLoading,
+    scheduleError: ownProps.scheduleError,
     runtimeArgs: state.runtimeArgs
   };
 };

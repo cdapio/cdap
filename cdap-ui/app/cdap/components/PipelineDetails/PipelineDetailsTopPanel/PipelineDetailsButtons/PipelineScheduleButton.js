@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {MyPipelineApi} from 'api/pipeline';
-import {setScheduleError} from 'components/PipelineDetails/store/ActionCreator';
+import {setScheduleError, setScheduleButtonLoading} from 'components/PipelineDetails/store/ActionCreator';
 import PipelineScheduler from 'components/PipelineScheduler';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
@@ -49,6 +49,7 @@ export default class PipelineScheduleButton extends Component {
     let scheduleStatus = StatusMapper.lookupDisplayStatus(nextProps.scheduleStatus);
     if (scheduleStatus !== this.state.scheduleStatus) {
       this.setState({ scheduleStatus });
+      setScheduleButtonLoading(false);
     }
   }
 
@@ -111,7 +112,7 @@ export default class PipelineScheduleButton extends Component {
         >
           <div className="btn-container">
             {
-              this.state.scheduleLoading ?
+              this.props.scheduleButtonLoading ?
                 <IconSVG
                   name="icon-spinner"
                   className="fa-spin"
@@ -140,7 +141,7 @@ export default class PipelineScheduleButton extends Component {
       >
         <div className="btn-container">
           {
-            this.state.scheduleLoading ?
+            this.props.scheduleButtonLoading ?
               <IconSVG
                 name="icon-spinner"
                 className="fa-spin"

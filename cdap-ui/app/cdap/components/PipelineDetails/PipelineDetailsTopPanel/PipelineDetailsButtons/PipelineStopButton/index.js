@@ -52,7 +52,17 @@ export default class PipelineStopButton extends Component {
     }
 
     this.setState({ loading: true });
-    this.stopRun();
+    this.stopRun()
+    .subscribe(() => {
+      this.setState({
+        loading: false
+      });
+    }, (err) => {
+      this.setState({
+        loading: false,
+        stopError: err.response || err
+      });
+    });
   }
 
   stopRun = (runId = this.props.currentRun.runid) => {
@@ -64,17 +74,17 @@ export default class PipelineStopButton extends Component {
       programId: GLOBALS.programId[pipelineType],
       runId
     };
-    MyProgramApi.stopRun(params)
-    .subscribe(() => {
-      this.setState({
-        loading: false
-      });
-    }, (err) => {
-      this.setState({
-        loading: false,
-        stopError: err.response || err
-      });
-    });
+    return MyProgramApi.stopRun(params);
+    // .subscribe(() => {
+    //   this.setState({
+    //     loading: false
+    //   });
+    // }, (err) => {
+    //   this.setState({
+    //     loading: false,
+    //     stopError: err.response || err
+    //   });
+    // });
   }
 
   renderStopError() {

@@ -72,7 +72,7 @@ const DEFAULT_PIPELINE_DETAILS = {
   // loading and error states
   runButtonLoading: false,
   runError: '',
-  scheduleButtonLoading: false,
+  scheduleButtonLoading: true,
   scheduleError: '',
 };
 
