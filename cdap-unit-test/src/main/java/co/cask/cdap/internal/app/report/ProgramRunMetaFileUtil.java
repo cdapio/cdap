@@ -56,6 +56,8 @@ public class ProgramRunMetaFileUtil {
     Schema.Field.of("statusInfo",  Schema.nullableOf(STARTING_INFO))
   ).toString();
 
+  public static final org.apache.avro.Schema STARTING_INFO_SCHEMA =
+    new org.apache.avro.Schema.Parser().parse(STARTING_INFO.toString());
   public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(SCHEMA_STRING);
 
   private static final class ProgramStartingInfo {
@@ -63,6 +65,10 @@ public class ProgramRunMetaFileUtil {
 
     ProgramStartingInfo(String user) {
       this.user = user;
+    }
+
+    public String getUser() {
+      return user;
     }
   }
 
@@ -85,12 +91,17 @@ public class ProgramRunMetaFileUtil {
 
   public static GenericData.Record createRecord(String program, String run, ProgramRunStatus status, long time,
                                                 @Nullable ProgramStartingInfo statusInfo) {
+    GenericData.Record statusInfoRecord = null;
+    if (statusInfo != null) {
+      statusInfoRecord = new GenericData.Record(STARTING_INFO_SCHEMA);
+      statusInfoRecord.put("user", statusInfo.getUser());
+    }
     GenericData.Record record = new GenericData.Record(SCHEMA);
     record.put("program", program);
     record.put("run", run);
     record.put("status", status.name());
     record.put("time", time);
-    record.put("statusInfo", statusInfo);
+    record.put("statusInfo", statusInfoRecord);
     return record;
   }
 }

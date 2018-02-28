@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.report;
 
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
@@ -35,7 +37,6 @@ import co.cask.cdap.proto.ops.ReportList;
 import co.cask.cdap.proto.ops.ReportStatus;
 import co.cask.cdap.proto.ops.ReportStatusInfo;
 import co.cask.cdap.proto.ops.ReportSummary;
-import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -44,16 +45,19 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.expressions.Aggregator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -64,7 +68,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -86,19 +89,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     new ReportStatusInfo("report1", 1516805201L, ReportStatus.COMPLETED),
     new ReportStatusInfo("report2", 1516805202L, ReportStatus.FAILED));
 
-  public static final ReportGenerationRequest MOCK_REPORT_GENERATION_REQUEST =
-    new ReportGenerationRequest(0, 1, ImmutableList.of("namespace", "duration", "user"),
-                                ImmutableList.of(
-                                  new ReportGenerationRequest.Sort("duration",
-                                                                   ReportGenerationRequest.Order.DESCENDING)),
-                                ImmutableList.of(
-                                  new ReportGenerationRequest.RangeFilter<>("duration",
-                                                                            new ReportGenerationRequest.Range<>(null,
-                                                                                                                30L))));
-
   @Override
   protected void configure() {
-    super.configure();
+    setMainClass(ReportGenerationSpark.class);
+    addHandlers(new ReportSparkHandler());
   }
 
   @Override
@@ -202,12 +196,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     @Override
     public Encoder<ReportRecordBuilder> bufferEncoder() {
-      return Encoders.bean(ReportRecordBuilder.class);
+      return (Encoder<ReportRecordBuilder>) Encoders.bean(ReportRecordBuilder.class);
     }
 
     @Override
     public Encoder<ReportRecordBuilder> outputEncoder() {
-      return Encoders.bean(ReportRecordBuilder.class);
+      return (Encoder<ReportRecordBuilder>) Encoders.bean(ReportRecordBuilder.class);
     }
   }
 
@@ -215,6 +209,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
    * A {@link SparkHttpServiceHandler} for read and generate report.
    */
   public static final class ReportSparkHandler extends AbstractSparkHttpServiceHandler {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
+
     @Override
     public void initialize(SparkHttpServiceContext context) throws Exception {
       super.initialize(context);
@@ -222,49 +219,55 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     @GET
     @Path("/reports")
-    public void getReports(FullHttpRequest request, HttpResponder responder,
+    public void getReports(HttpServiceRequest request, HttpServiceResponder responder,
                            @QueryParam("offset") String offsetString,
                            @QueryParam("limit") String limitString)
       throws IOException, BadRequestException {
       int offset = Integer.valueOf(offsetString);
       int limit = Integer.valueOf(limitString);
-      responder.sendJson(HttpResponseStatus.OK,
+      responder.sendJson(HttpResponseStatus.OK.code(),
                          GSON.toJson(new ReportList(offset, limit, MOCK_REPORT_STATUS_INFO.size(),
                                                     MOCK_REPORT_STATUS_INFO)));
     }
 
     @POST
     @Path("/reports")
-    public void executeReportGeneration(FullHttpRequest request, HttpResponder responder)
+    public void executeReportGeneration(HttpServiceRequest request, HttpServiceResponder responder)
       throws IOException, BadRequestException {
       String reportId = UUID.randomUUID().toString();
-      Executors.newSingleThreadExecutor().submit(() -> {
+//      Executors.newSingleThreadExecutor().submit(() -> {
 //          ReportGenerationRequest reportGenerationRequest =
 //            decodeRequestBody(request, REPORT_GENERATION_REQUEST_TYPE);
         String input = getContext().getRuntimeArguments().get("input");
         String output = getContext().getRuntimeArguments().get("output");
-        SparkSession sparkSession = new SparkSession(getContext().getSparkContext());
-        Dataset<Row> dataset = sparkSession.read().format("com.databricks.spark.avro").load(input);
-        dataset.groupBy("program", "run").agg(new ProgramRunMetaAggregator().toColumn().name("reportRecord"))
-          .select("reportRecord").write().json(output + "/" + reportId + ".json");
-      });
-      responder.sendJson(HttpResponseStatus.OK,
+        SQLContext sqlContext = new SQLContext(getContext().getSparkContext());
+        Dataset<Row> dataset = sqlContext.read().format("com.databricks.spark.avro").load(input);
+        dataset.groupBy("program", "run")
+          .agg(new ProgramRunMetaAggregator()
+                 .toColumn().name("reportRecord"))
+          .select("reportRecord").write().json(output);
+        LOG.info("Write report to " + output);
+//      });
+      responder.sendJson(HttpResponseStatus.OK.code(),
                          GSON.toJson(ImmutableMap.of("id", reportId)));
     }
 
     @GET
     @Path("/reports/{report-id}")
-    public void getReportStatus(HttpRequest request, HttpResponder responder,
+    public void getReportStatus(HttpServiceRequest request, HttpServiceResponder responder,
                                 @PathParam("report-id") String reportId,
                                 @QueryParam("share-id") String shareId) {
-      responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(new ReportGenerationInfo(1517410100L, ReportGenerationStatus.COMPLETED,
-                                                              MOCK_REPORT_GENERATION_REQUEST)));
+      String output = getContext().getRuntimeArguments().get("output");
+      File outputFile = new File(output);
+      ReportGenerationStatus status = outputFile.exists() ?
+        ReportGenerationStatus.COMPLETED : ReportGenerationStatus.RUNNING;
+      responder.sendJson(HttpResponseStatus.OK.code(),
+                         GSON.toJson(new ReportGenerationInfo(1517410100L, status, null)));
     }
 
     @GET
     @Path("reports/{report-id}/runs")
-    public void getReportRuns(FullHttpRequest request, HttpResponder responder,
+    public void getReportRuns(HttpServiceRequest request, HttpServiceResponder responder,
                               @PathParam("report-id") String reportId,
                               @QueryParam("offset") String offsetString,
                               @QueryParam("limit") String limitString,
@@ -289,12 +292,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
                                             statuses[m], startTs, runningTs, endTs, durations[m], users[m],
                                             startMethods[m], Collections.EMPTY_MAP, 2, 4, 6));
       }
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new ProgramRunReport(offset, limit, 10000, runs)));
+      responder.sendJson(HttpResponseStatus.OK.code(), GSON.toJson(new ProgramRunReport(offset, limit, 10000, runs)));
     }
 
     @GET
     @Path("/reports/{report-id}/summary")
-    public void getReportSummary(HttpRequest request, HttpResponder responder,
+    public void getReportSummary(HttpServiceRequest request, HttpServiceResponder responder,
                                  @PathParam("report-id") String reportId,
                                  @QueryParam("share-id") String shareId) {
       ReportSummary reportSummary =
@@ -310,21 +313,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
                           ImmutableList.of(new ReportSummary.ProgramRunStartMethod("MANUAL", 20),
                                            new ReportSummary.ProgramRunStartMethod("TIME", 20),
                                            new ReportSummary.ProgramRunStartMethod("PROGRAM_STATUS", 20)));
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(reportSummary));
+      responder.sendJson(HttpResponseStatus.OK.code(), GSON.toJson(reportSummary));
     }
 
     @DELETE
     @Path("/reports/{report-id}")
-    public void deleteReport(HttpRequest request, HttpResponder responder,
+    public void deleteReport(HttpServiceRequest request, HttpServiceResponder responder,
                              @PathParam("report-id") String reportId) {
-      responder.sendStatus(HttpResponseStatus.OK);
+      responder.sendStatus(HttpResponseStatus.OK.code());
     }
 
     @POST
     @Path("/reports/{report-id}/shareid")
-    public void shareReport(HttpRequest request, HttpResponder responder,
+    public void shareReport(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("report-id") String reportId) {
-      responder.sendJson(HttpResponseStatus.OK,
+      responder.sendJson(HttpResponseStatus.OK.code(),
                          GSON.toJson(ImmutableMap.of("shareid", UUID.randomUUID().toString())));
     }
   }

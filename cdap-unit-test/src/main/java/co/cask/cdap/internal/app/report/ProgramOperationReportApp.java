@@ -22,8 +22,11 @@ import co.cask.cdap.api.app.AbstractApplication;
  * An application that handles report generation.
  */
 public class ProgramOperationReportApp extends AbstractApplication {
+  public static final String NAME = "ProgramOperationReportApp";
+
   @Override
   public void configure() {
+    setName(NAME);
     addSpark(new ReportGenerationSpark());
   }
 }
