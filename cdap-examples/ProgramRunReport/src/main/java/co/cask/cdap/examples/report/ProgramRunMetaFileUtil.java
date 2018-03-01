@@ -14,11 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.report;
+package co.cask.cdap.examples.report;
 
-import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.proto.ProgramRunStatus;
 import com.google.common.collect.Iterables;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.file.DataFileWriter;
@@ -61,6 +59,7 @@ public class ProgramRunMetaFileUtil {
     Schema.Field.of("statusInfo",  Schema.nullableOf(STARTING_INFO))
   ).toString();
 
+  public static final String RUN_META_FILE = "/Users/Chengfeng/tmp/run_meta.avro";
   public static final org.apache.avro.Schema STARTING_INFO_SCHEMA =
     new org.apache.avro.Schema.Parser().parse(STARTING_INFO.toString());
   public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(SCHEMA_STRING);
@@ -94,7 +93,7 @@ public class ProgramRunMetaFileUtil {
     return records;
   }
 
-  public static GenericData.Record createRecord(String program, String run, ProgramRunStatus status, long time,
+  public static GenericData.Record createRecord(String program, String run, String status, long time,
                                                 @Nullable ProgramStartingInfo statusInfo) {
     GenericData.Record statusInfoRecord = null;
     if (statusInfo != null) {
@@ -104,7 +103,7 @@ public class ProgramRunMetaFileUtil {
     GenericData.Record record = new GenericData.Record(SCHEMA);
     record.put("program", program);
     record.put("run", run);
-    record.put("status", status.name());
+    record.put("status", status);
     record.put("time", time);
     record.put("statusInfo", statusInfoRecord);
     return record;
@@ -119,13 +118,13 @@ public class ProgramRunMetaFileUtil {
     String run = "randomRunId";
     long time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - TimeUnit.DAYS.toSeconds(1);
     long delay = TimeUnit.MINUTES.toSeconds(5);
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, ProgramRunStatus.STARTING, time,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
                                                               ProgramRunMetaFileUtil.startingInfo("user")));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, ProgramRunStatus.RUNNING,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
                                                               time + delay, null));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, ProgramRunStatus.STARTING,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
                                                               time + delay, null));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, ProgramRunStatus.RUNNING,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
                                                               time + 2 * delay, null));
     dataFileWriter.close();
   }

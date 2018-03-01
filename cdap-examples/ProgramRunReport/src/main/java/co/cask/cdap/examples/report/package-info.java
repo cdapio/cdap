@@ -13,17 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.internal.app.report;
-
-import co.cask.cdap.api.app.AbstractApplication;
-
 /**
- * An application that handles report generation.
+ * Package for HelloWorld example Application.
+ * 
+ * This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one Service.
+ * <uL>
+ *   <li>A Stream to send names to.</li>
+ *   <li>A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable</li>
+ *   <li>A Service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
+ * </uL>
  */
-public class ProgramOperationReportApp extends AbstractApplication {
-  @Override
-  public void configure() {
-
-  }
-}
+package co.cask.cdap.examples.helloworld;

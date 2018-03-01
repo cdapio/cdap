@@ -16,12 +16,14 @@
 
 package co.cask.cdap.internal.app.report;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
+import co.cask.cdap.api.spark.service.SparkHttpContentConsumer;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
 import co.cask.cdap.common.BadRequestException;
@@ -48,9 +50,8 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.DataFrame;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.GroupedData;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.expressions.Aggregator;
@@ -58,16 +59,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -80,6 +85,7 @@ import javax.ws.rs.QueryParam;
  * A spark program for generating report.
  */
 public class ReportGenerationSpark extends AbstractExtendedSpark implements JavaSparkMain {
+  private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationSpark.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportGenerationRequest.Filter.class, new FilterDeserializer())
     .create();
@@ -98,6 +104,22 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
+    String input = sec.getRuntimeArguments().get("input");
+    String output = sec.getRuntimeArguments().get("output");
+    SQLContext sqlContext = new SQLContext(jsc);
+    LOG.info("Created sqlContext");
+    DataFrame dataset = sqlContext.read().format("com.databricks.spark-avro").load(input);
+    LOG.info("Loaded input");
+    GroupedData groupedData = dataset.groupBy("program", "run");
+    LOG.info("Grouped data");
+    DataFrame agg = groupedData.agg(new ProgramRunMetaAggregator()
+                                      .toColumn(Encoders.bean(ReportRecordBuilder.class),
+                                                Encoders.bean(ReportRecordBuilder.class))
+                                      .alias("reportRecord"));
+    LOG.info("Aggregated data");
+    agg.select("reportRecord").write().json(output + "/reportId.json");
+    new File(output + "/_SUCCESS").createNewFile();
+    LOG.info("Wrote files to " + output);
   }
 
   /**
@@ -171,6 +193,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
    *
    */
   public static class ProgramRunMetaAggregator extends Aggregator<Row, ReportRecordBuilder, ReportRecordBuilder> {
+    private static final Logger LOG = LoggerFactory.getLogger(ProgramRunMetaAggregator.class);
 
     @Override
     public ReportRecordBuilder zero() {
@@ -179,6 +202,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     @Override
     public ReportRecordBuilder reduce(ReportRecordBuilder recordBuilder, Row row) {
+      LOG.info("reduce");
       recordBuilder.setProgramRunStatus(row.getAs("program"), row.getAs("run"), row.getAs("status"),
                                         row.getAs("time"), "user");
       return recordBuilder;
@@ -186,22 +210,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     @Override
     public ReportRecordBuilder merge(ReportRecordBuilder b1, ReportRecordBuilder b2) {
+      LOG.info("merge");
       return b1.merge(b2);
     }
 
     @Override
     public ReportRecordBuilder finish(ReportRecordBuilder reduction) {
+      LOG.info("finish");
       return reduction;
-    }
-
-    @Override
-    public Encoder<ReportRecordBuilder> bufferEncoder() {
-      return (Encoder<ReportRecordBuilder>) Encoders.bean(ReportRecordBuilder.class);
-    }
-
-    @Override
-    public Encoder<ReportRecordBuilder> outputEncoder() {
-      return (Encoder<ReportRecordBuilder>) Encoders.bean(ReportRecordBuilder.class);
     }
   }
 
@@ -232,24 +248,55 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     @POST
     @Path("/reports")
-    public void executeReportGeneration(HttpServiceRequest request, HttpServiceResponder responder)
+    public SparkHttpContentConsumer executeReportGeneration(HttpServiceRequest request, HttpServiceResponder responder)
       throws IOException, BadRequestException {
       String reportId = UUID.randomUUID().toString();
-//      Executors.newSingleThreadExecutor().submit(() -> {
+      String input = getContext().getRuntimeArguments().get("input");
+      String output = getContext().getRuntimeArguments().get("output");
+      File startedFile = new File(output + "/_START");
+      startedFile.createNewFile();
+      FileChannel outputChannel = new FileOutputStream(startedFile, false).getChannel();
+      return new SparkHttpContentConsumer() {
+
+        @Override
+        public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+          LOG.info("Received chunk ");
+          outputChannel.write(chunk);
+        }
+
+        @Override
+        public void onFinish(HttpServiceResponder responder) throws Exception {
+          outputChannel.close();
+          LOG.info("Finish writing file {} ", startedFile.getAbsolutePath());
+          Executors.newSingleThreadExecutor().submit(() -> {
 //          ReportGenerationRequest reportGenerationRequest =
 //            decodeRequestBody(request, REPORT_GENERATION_REQUEST_TYPE);
-        String input = getContext().getRuntimeArguments().get("input");
-        String output = getContext().getRuntimeArguments().get("output");
-        SQLContext sqlContext = new SQLContext(getContext().getSparkContext());
-        Dataset<Row> dataset = sqlContext.read().format("com.databricks.spark.avro").load(input);
-        dataset.groupBy("program", "run")
-          .agg(new ProgramRunMetaAggregator()
-                 .toColumn().name("reportRecord"))
-          .select("reportRecord").write().json(output);
-        LOG.info("Write report to " + output);
-//      });
-      responder.sendJson(HttpResponseStatus.OK.code(),
-                         GSON.toJson(ImmutableMap.of("id", reportId)));
+            SQLContext sqlContext = new SQLContext(getContext().getJavaSparkContext());
+            LOG.info("Created sqlContext");
+            DataFrame dataset = sqlContext.read().format("com.databricks.spark.avro").load(input);
+            LOG.info("Loaded input");
+            GroupedData groupedData = dataset.groupBy("program", "run");
+            LOG.info("Grouped data");
+            DataFrame agg = groupedData.agg(new ProgramRunMetaAggregator()
+                     .toColumn(Encoders.bean(ReportRecordBuilder.class), Encoders.bean(ReportRecordBuilder.class))
+                     .alias("reportRecord"));
+            LOG.info("Aggregated data");
+            agg.select("reportRecord").write().json(output + "/reportId.json");
+            LOG.info("Write report to " + output);
+          });
+          responder.sendJson(HttpResponseStatus.OK.code(),
+                             GSON.toJson(ImmutableMap.of("id", reportId)));
+        }
+
+        @Override
+        public void onError(HttpServiceResponder responder, Throwable failureCause) {
+          try {
+            outputChannel.close();
+          } catch (IOException e) {
+            LOG.warn("Failed to close file channel for file {}", startedFile.getAbsolutePath(), e);
+          }
+        }
+      };
     }
 
     @GET
@@ -326,7 +373,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     @POST
     @Path("/reports/{report-id}/shareid")
     public void shareReport(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("report-id") String reportId) {
+                                                @PathParam("report-id") String reportId) {
       responder.sendJson(HttpResponseStatus.OK.code(),
                          GSON.toJson(ImmutableMap.of("shareid", UUID.randomUUID().toString())));
     }

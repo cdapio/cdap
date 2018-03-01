@@ -14,18 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.report;
+package co.cask.cdap.examples.report;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ops.ReportGenerationRequest;
-import co.cask.cdap.proto.ops.ReportGenerationStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -44,9 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -54,24 +49,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
 /**
- * Test {@link ReportGenerationSpark}
+ * Test for {@link ProgramOperationReportApp}.
  */
-public class ReportGenerationTest extends TestFrameworkTestBase {
+public class ProgramRunReportTest extends TestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunReportTest.class);
   private static final Gson GSON = new Gson();
-  private static final ReportGenerationRequest MOCK_REPORT_GENERATION_REQUEST =
-    new ReportGenerationRequest(0, 1, ImmutableList.of("namespace", "duration", "user"),
-                                ImmutableList.of(
-                                  new ReportGenerationRequest.Sort("duration",
-                                                                   ReportGenerationRequest.Order.DESCENDING)),
-                                ImmutableList.of(
-                                  new ReportGenerationRequest.RangeFilter<>("duration",
-                                                                            new ReportGenerationRequest.Range<>(null,
-                                                                                                                30L))));
-
   private static String output;
   private static String metaFile;
   private static Class<? extends Application> reportAppClass;
@@ -91,13 +76,13 @@ public class ReportGenerationTest extends TestFrameworkTestBase {
     String run = "randomRunId";
     long time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - TimeUnit.DAYS.toSeconds(1);
     long delay = TimeUnit.MINUTES.toSeconds(5);
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, ProgramRunStatus.STARTING, time,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
                                                               ProgramRunMetaFileUtil.startingInfo("user")));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, ProgramRunStatus.RUNNING,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
                                                               time + delay, null));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, ProgramRunStatus.STARTING,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
                                                               time + delay, null));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, ProgramRunStatus.RUNNING,
+    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
                                                               time + 2 * delay, null));
     dataFileWriter.close();
   }
@@ -113,7 +98,9 @@ public class ReportGenerationTest extends TestFrameworkTestBase {
 
   @Test
   public void testReportGeneration() throws Exception {
-    ApplicationManager app = deployApplication(reportAppClass, reportApp);
+    File avroJar =
+      new File("/Users/Chengfeng/.m2/repository/com/databricks/spark-avro_2.10/3.2.0/spark-avro_2.10-3.2.0.jar");
+    ApplicationManager app = deployApplication(reportAppClass, reportApp, avroJar);
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName())
       .start(ImmutableMap.of("input", metaFile, "output", output));
     URL url = sparkManager.getServiceURL(5, TimeUnit.MINUTES);

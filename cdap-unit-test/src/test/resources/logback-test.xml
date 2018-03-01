@@ -29,7 +29,7 @@
     <logger name="org.apache.zookeeper.server" level="ERROR"/>
     <logger name="org.apache.zookeeper" level="ERROR"/>
     <logger name="com.ning" level="WARN"/>
-    <logger name="org.apache.spark" level="WARN"/>
+    <logger name="org.apache.spark" level="INFO"/>
     <logger name="org.spark-project" level="WARN"/>
     <logger name="org.apache.hadoop" level="WARN"/>
     <logger name="org.apache.hive" level="WARN"/>
