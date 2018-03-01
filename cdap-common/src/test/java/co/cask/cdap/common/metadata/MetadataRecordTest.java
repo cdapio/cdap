@@ -41,6 +41,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Tests for {@link MetadataRecord}
+ */
 public class MetadataRecordTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
@@ -107,5 +110,4 @@ public class MetadataRecordTest {
     String streamRecordJson = GSON.toJson(streamRecord);
     Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, MetadataRecord.class));
   }
-
 }

@@ -209,19 +209,6 @@ public class EntityIdTest {
     );
   }
 
-/*  @Test
-  public void testToFromOldId() {
-    for (EntityId id : ids) {
-      doTestToFromOldId(id);
-    }
-  }
-
-  private void doTestToFromOldId(EntityId id) {
-    Assert.assertEquals(
-      "doTestToFromOldId failed for class " + id.getClass().getName(),
-      id, id.toId().toEntityId());
-  }*/
-
   @Test
   public void testDatasetName() {
     DatasetId.fromString("dataset:foo.Zo123_-$$_-");
