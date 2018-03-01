@@ -91,7 +91,9 @@ export default class KeyValuePairs extends Component {
     });
     this.subscription = KeyValueStore.subscribe(() => {
       this.setState(KeyValueStore.getState().keyValues);
-      onKeyValueChange(KeyValueStore.getState().keyValues);
+      if (typeof onKeyValueChange === 'function') {
+        onKeyValueChange(KeyValueStore.getState().keyValues);
+      }
     });
   }
 

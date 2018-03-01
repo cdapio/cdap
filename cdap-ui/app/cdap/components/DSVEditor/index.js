@@ -78,7 +78,9 @@ export default class DSVEditor extends Component {
 
     this.sub = this.DSVStore.subscribe(() => {
       let rows = this.DSVStore.getState().DSV.rows;
-      onChange(rows);
+      if (typeof onChange === 'function') {
+        onChange(rows);
+      }
       this.setState({ rows });
     });
 

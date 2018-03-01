@@ -87,7 +87,6 @@ export default class PostRunActionsWizard extends Component {
     let Component;
     let props;
     let value = this.props.action.plugin.properties[name];
-    let onChangeFn = () => {};
     switch (type) {
       case 'select':
         Component = SelectWithOptions;
@@ -142,7 +141,6 @@ export default class PostRunActionsWizard extends Component {
         props = {
           values,
           placeholder: attributes['value-placeholder'],
-          onChange: onChangeFn,
           disabled: true
         };
         break;
@@ -157,7 +155,6 @@ export default class PostRunActionsWizard extends Component {
         });
         props = {
           keyValues: convertMapToKeyValuePairsObj(keyValuePairsMap),
-          onKeyValueChange: onChangeFn,
           disabled: true
         };
         break;
