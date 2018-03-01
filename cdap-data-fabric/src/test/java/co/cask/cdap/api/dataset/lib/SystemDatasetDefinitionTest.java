@@ -32,6 +32,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -193,7 +194,7 @@ public class SystemDatasetDefinitionTest {
   }
 
   @Test
-  public void testPFSReconfigure() {
+  public void testPFSReconfigure() throws IncompatibleUpdateException {
     DatasetDefinition pfsDef = registry.get(PartitionedFileSet.class.getName());
     Assert.assertTrue(pfsDef instanceof Reconfigurable);
 
@@ -227,6 +228,31 @@ public class SystemDatasetDefinitionTest {
     } catch (IncompatibleUpdateException e) {
       // expected
     }
+
+    // test reconfiguring a PFS created before CDAP-13120, with no defaulted base path
+    // no base path should be set for the reconfigured dataset either
+    DatasetProperties oldProps = PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addStringField("s").build())
+      .add(PartitionedFileSetDefinition.NAME_AS_BASE_PATH_DEFAULT, "false")
+      .build();
+    DatasetSpecification oldSpec = pfsDef.configure("pfs", oldProps);
+    DatasetSpecification newSpec = ((Reconfigurable) pfsDef).reconfigure("pfs", oldProps, oldSpec);
+    // make sure base path is not set
+    Assert.assertNull(newSpec.getSpecification("files").getProperty(FileSetProperties.BASE_PATH));
+
+    // test reconfiguring a PFS created after CDAP-13120, where base path is default to the dataset name
+    props = PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addStringField("s").build())
+      .build();
+    oldSpec = pfsDef.configure("pfs", props);
+    newSpec = ((Reconfigurable) pfsDef).reconfigure("pfs", props, oldSpec);
+    // make sure base path is similarly set, even when not explicitly given
+    Assert.assertEquals("pfs", newSpec.getSpecification("files").getProperty(FileSetProperties.BASE_PATH));
+
+    // make sure it is set for subsequent reconfigures as well
+    newSpec = ((Reconfigurable) pfsDef).reconfigure("pfs", props, oldSpec);
+    // make sure base path is similarly set, even when not explicitly given
+    Assert.assertEquals("pfs", newSpec.getSpecification("files").getProperty(FileSetProperties.BASE_PATH));
   }
 
   @Test
