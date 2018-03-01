@@ -26,6 +26,7 @@ import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpContentConsumer;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -34,7 +35,15 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.GroupedData;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.TypedColumn;
 import org.apache.spark.sql.expressions.Aggregator;
+import org.apache.spark.sql.expressions.MutableAggregationBuffer;
+import org.apache.spark.sql.expressions.UserDefinedAggregateFunction;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StringType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,12 +85,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     LOG.info("Loaded input");
     GroupedData groupedData = dataset.groupBy("program", "run");
     LOG.info("Grouped data");
-    DataFrame agg = groupedData.agg(new ProgramRunMetaAggregator()
-                                      .toColumn(Encoders.bean(ReportRecordBuilder.class),
-                                                Encoders.bean(ReportRecordBuilder.class))
-                                      .alias("reportRecord"));
+    TypedColumn aggColumn = new RowAggregator().toColumn(Encoders.INT(), Encoders.INT());
+    DataFrame agg = groupedData.agg(aggColumn);
     LOG.info("Aggregated data");
-    agg.select("reportRecord").write().json(output + "/reportId.json");
+    agg.select(aggColumn).write().json(output + "/reportId.json");
     new File(output + "/_SUCCESS").createNewFile();
     LOG.info("Wrote files to " + output);
   }
@@ -89,98 +96,75 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   /**
    *
    */
-  public static class ProgramStartingInfo implements Serializable {
-    private final String user;
+  public static class RowAgg extends UserDefinedAggregateFunction {
 
-    public ProgramStartingInfo(String user) {
-      this.user = user;
+    @Override
+    public StructType inputSchema() {
+      return DataTypes.createStructType(ImmutableList.of(
+        DataTypes.createStructField("program", DataTypes.StringType, false),
+        DataTypes.createStructField("run", DataTypes.StringType, false),
+        DataTypes.createStructField("status", DataTypes.StringType, false),
+        DataTypes.createStructField("time", DataTypes.LongType, false)));
     }
 
-    public String getUser() {
-      return user;
+    @Override
+    public StructType bufferSchema() {
+      return DataTypes.createStructType(ImmutableList.of(
+        DataTypes.createStructField("time", DataTypes.LongType, false)));
+    }
+
+    @Override
+    public DataType dataType() {
+      return DataTypes.LongType;
+    }
+
+    @Override
+    public boolean deterministic() {
+      return true;
+    }
+
+    @Override
+    public void initialize(MutableAggregationBuffer buffer) {
+      buffer.update(0, 0L);
+    }
+
+    @Override
+    public void update(MutableAggregationBuffer buffer, Row input) {
+      buffer.update(0, 1L);
+    }
+
+    @Override
+    public void merge(MutableAggregationBuffer buffer1, Row buffer2) {
+      buffer1.update(0, 2L);
+    }
+
+    @Override
+    public Object evaluate(Row buffer) {
+      return buffer.getList(0);
     }
   }
 
   /**
    *
    */
-  public static class StatusTime implements Serializable {
-    private final String status;
-    private final long time;
-
-    public StatusTime(String status, long time) {
-      this.status = status;
-      this.time = time;
-    }
-
-    public String getStatus() {
-      return status;
-    }
-
-    public long getTime() {
-      return time;
-    }
-  }
-
-  /**
-   *
-   */
-  public static class ReportRecordBuilder implements Serializable {
-    private String program;
-    private String run;
-    private List<StatusTime> statusTimes;
-    @Nullable
-    private ProgramStartingInfo programStartingInfo;
-
-    public ReportRecordBuilder() {
-      this.statusTimes = new ArrayList<>();
-    }
-
-    public void setProgramRunStatus(String program, String run, String status, long time, @Nullable String user) {
-      this.program = program;
-      this.run = run;
-      this.statusTimes.add(new StatusTime(status, time));
-      if (user != null) {
-        this.programStartingInfo = new ProgramStartingInfo(user);
-      }
-    }
-
-    public ReportRecordBuilder merge(ReportRecordBuilder other) {
-      this.statusTimes.addAll(other.statusTimes);
-      this.programStartingInfo = this.programStartingInfo != null ?
-        this.programStartingInfo : other.programStartingInfo;
-      return this;
-    }
-  }
-
-  /**
-   *
-   */
-  public static class ProgramRunMetaAggregator extends Aggregator<Row, ReportRecordBuilder, ReportRecordBuilder> {
-    private static final Logger LOG = LoggerFactory.getLogger(ProgramRunMetaAggregator.class);
-
+  public static class RowAggregator extends Aggregator<Integer, Integer, Integer> {
     @Override
-    public ReportRecordBuilder zero() {
-      return new ReportRecordBuilder();
+    public Integer zero() {
+      return 0;
     }
 
     @Override
-    public ReportRecordBuilder reduce(ReportRecordBuilder recordBuilder, Row row) {
-      LOG.info("reduce");
-      recordBuilder.setProgramRunStatus(row.getAs("program"), row.getAs("run"), row.getAs("status"),
-                                        row.getAs("time"), "user");
-      return recordBuilder;
+    public Integer reduce(Integer integer, Integer a) {
+      return 1;
     }
 
     @Override
-    public ReportRecordBuilder merge(ReportRecordBuilder b1, ReportRecordBuilder b2) {
-      LOG.info("merge");
-      return b1.merge(b2);
+    public Integer merge(Integer b1, Integer b2) {
+      return b1 + b2;
     }
 
     @Override
-    public ReportRecordBuilder finish(ReportRecordBuilder reduction) {
-      LOG.info("finish");
+    public Integer finish(Integer reduction) {
       return reduction;
     }
   }

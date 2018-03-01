@@ -82,7 +82,7 @@ public class ReportGenerationTest extends TestFrameworkTestBase {
     output = TEMP_FOLDER.newFolder().getAbsolutePath();
     reportAppClass = ProgramOperationReportApp.class;
     reportApp = createArtifactJarWithAvro(reportAppClass);
-    File tmpFile = File.createTempFile("ProgramRunMeta", ".avro", TEMP_FOLDER.newFolder());
+    File tmpFile = new File("/Users/Chengfeng/tmp/run_meta.avro");
     metaFile = tmpFile.getAbsolutePath();
     DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
@@ -109,6 +109,11 @@ public class ReportGenerationTest extends TestFrameworkTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, appClass.getPackage().getName());
     return new File(AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                      appClass, manifest, avroJar).toURI());
+  }
+
+  @Test
+  public void test() {
+
   }
 
   @Test

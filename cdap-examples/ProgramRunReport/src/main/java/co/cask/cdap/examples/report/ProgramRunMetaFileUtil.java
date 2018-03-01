@@ -55,8 +55,8 @@ public class ProgramRunMetaFileUtil {
     Schema.Field.of("program", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("run", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("status", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("time", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("statusInfo",  Schema.nullableOf(STARTING_INFO))
+    Schema.Field.of("time", Schema.of(Schema.Type.LONG))
+//    Schema.Field.of("statusInfo",  Schema.nullableOf(STARTING_INFO))
   ).toString();
 
   public static final String RUN_META_FILE = "/Users/Chengfeng/tmp/run_meta.avro";
@@ -105,7 +105,7 @@ public class ProgramRunMetaFileUtil {
     record.put("run", run);
     record.put("status", status);
     record.put("time", time);
-    record.put("statusInfo", statusInfoRecord);
+//    record.put("statusInfo", statusInfoRecord);
     return record;
   }
 

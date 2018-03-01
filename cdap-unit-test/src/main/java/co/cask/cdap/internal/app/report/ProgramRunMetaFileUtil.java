@@ -57,8 +57,8 @@ public class ProgramRunMetaFileUtil {
     Schema.Field.of("program", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("run", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("status", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("time", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("statusInfo",  Schema.nullableOf(STARTING_INFO))
+    Schema.Field.of("time", Schema.of(Schema.Type.LONG))
+//    Schema.Field.of("statusInfo",  Schema.nullableOf(STARTING_INFO))
   ).toString();
 
   public static final org.apache.avro.Schema STARTING_INFO_SCHEMA =
@@ -106,7 +106,7 @@ public class ProgramRunMetaFileUtil {
     record.put("run", run);
     record.put("status", status.name());
     record.put("time", time);
-    record.put("statusInfo", statusInfoRecord);
+//    record.put("statusInfo", statusInfoRecord);
     return record;
   }
 
