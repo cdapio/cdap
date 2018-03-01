@@ -226,35 +226,48 @@ public class DatasetAdminService {
   }
 
   public boolean exists(DatasetId datasetInstanceId) throws Exception {
-    return performDatasetAdmin(datasetInstanceId, DatasetAdmin::exists);
+    return performDatasetAdmin(datasetInstanceId, new Operation<Boolean>() {
+      @Override
+      public Boolean perform(DatasetAdmin admin) throws Exception {
+        return admin.exists();
+      }
+    });
   }
 
   public void truncate(DatasetId datasetInstanceId) throws Exception {
     LOG.info("Truncating dataset {}", datasetInstanceId);
-    performDatasetAdmin(datasetInstanceId, DatasetAdmin::truncate);
+    performDatasetAdmin(datasetInstanceId, new Operation<Void>() {
+      @Override
+      public Void perform(DatasetAdmin admin) throws Exception {
+        admin.truncate();
+        return null;
+      }
+    });
   }
 
   public void upgrade(DatasetId datasetInstanceId) throws Exception {
     LOG.info("Upgrading dataset {}", datasetInstanceId);
-    performDatasetAdmin(datasetInstanceId, DatasetAdmin::upgrade);
-  }
-
-  private void performDatasetAdmin(final DatasetId datasetInstanceId, VoidOperation operation) throws Exception {
-    performDatasetAdmin(datasetInstanceId, (Operation<Void>) admin -> {
-      operation.perform(admin);
-      return null;
+    performDatasetAdmin(datasetInstanceId, new Operation<Void>() {
+      @Override
+      public Void perform(DatasetAdmin admin) throws Exception {
+        admin.upgrade();
+        return null;
+      }
     });
   }
 
   private <T> T performDatasetAdmin(final DatasetId datasetInstanceId, Operation<T> operation) throws Exception {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      DatasetAdmin admin = impersonator.doAs(datasetInstanceId, (Callable<DatasetAdmin>) () -> {
-        DatasetAdmin admin1 = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
-        if (admin1 == null) {
-          throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+      DatasetAdmin admin = impersonator.doAs(datasetInstanceId, new Callable<DatasetAdmin>() {
+        @Override
+        public DatasetAdmin call() throws Exception {
+          DatasetAdmin admin1 = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
+          if (admin1 == null) {
+            throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+          }
+          // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
+          return new ImpersonatingDatasetAdmin(admin1, impersonator, datasetInstanceId);
         }
-        // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
-        return new ImpersonatingDatasetAdmin(admin1, impersonator, datasetInstanceId);
       });
       try {
         return operation.perform(admin);
@@ -281,9 +294,5 @@ public class DatasetAdminService {
 
   private interface Operation<T> {
     T perform(DatasetAdmin admin) throws Exception;
-  }
-
-  private interface VoidOperation {
-    void perform(DatasetAdmin admin) throws Exception;
   }
 }
