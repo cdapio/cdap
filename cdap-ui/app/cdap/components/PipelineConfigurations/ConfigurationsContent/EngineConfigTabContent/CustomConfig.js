@@ -126,7 +126,6 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
           {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
         </UncontrolledTooltip>
         <span className="float-xs-right num-rows">
-          {`${customConfigKeyValuePairs.pairs.length} `}
           {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
         </span>
       </span>

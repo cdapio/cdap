@@ -26,19 +26,12 @@ export default class PostRunActions extends Component {
   };
 
   state = {
-    activeActionWizard: null,
-    openActionWizard: false
+    activeActionWizard: null
   }
 
-  setActiveActionWizard = (action) => {
+  setActiveActionWizard = (action = null) => {
     this.setState({
       activeActionWizard: action
-    });
-  }
-
-  toggleActionWizard = () => {
-    this.setState({
-      openActionWizard: !this.state.openActionWizard
     });
   }
 
@@ -70,7 +63,7 @@ export default class PostRunActions extends Component {
                     <td>{action.plugin.name}</td>
                     <td>{action.plugin.properties.runCondition}</td>
                     <td className="text-center">
-                      <a onClick={() => {this.setActiveActionWizard(action); this.toggleActionWizard();}}>
+                      <a onClick={this.setActiveActionWizard.bind(this, action)}>
                         View
                       </a>
                     </td>
@@ -81,12 +74,12 @@ export default class PostRunActions extends Component {
           </tbody>
         </table>
         {
-          this.state.openActionWizard ?
+          this.state.activeActionWizard !== null ?
             (
               <PostRunActionsWizard
                 action={this.state.activeActionWizard}
-                isOpen={this.state.openActionWizard}
-                toggleModal={this.toggleActionWizard}
+                isOpen={this.state.activeActionWizard !== null}
+                toggleModal={this.setActiveActionWizard}
               />
             )
           :

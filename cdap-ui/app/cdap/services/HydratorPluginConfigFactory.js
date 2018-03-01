@@ -173,12 +173,12 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
   }
 
   // Parse configuration groups
-  angular.forEach( nodeConfig.groups.position, (groupName) => {
+  Object.keys(nodeConfig.groups.position).forEach((groupName) => {
     var group = nodeConfig.groups[groupName];
     var newGroup = {};
     newGroup.label = group.display;
     newGroup.fields = [];
-    angular.forEach(group.position, (fieldName) => {
+    Object.keys(group.position).forEach((fieldName) => {
       var copyOfField = group.fields[fieldName];
       var index = propertiesFromBackend.indexOf(fieldName);
       if (index!== -1) {
@@ -214,7 +214,7 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
       label: 'Generic',
       fields: []
     };
-    angular.forEach(propertiesFromBackend, (property) => {
+    propertiesFromBackend.forEach((property) => {
       genericGroup.fields.push({
         widget: 'textbox',
         label: property,

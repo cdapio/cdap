@@ -64,7 +64,6 @@ const ConfigActionButtons = ({runtimeArgs, validToSave, pipelineEdited, updating
           activeTab === TAB_OPTIONS.RUNTIME_ARGS ?
             (
               <span className="num-runtime-args">
-                {`${runtimeArgs.pairs.length} `}
                 {T.translate(`${PREFIX}.runtimeArgsCount`, {context: runtimeArgs.pairs.length})}
               </span>
             )
@@ -105,12 +104,10 @@ export default class ConfigurationsActionButtons extends Component {
       });
       updatePipeline()
       .subscribe(() => {
-        this.setState({
-          updatingPipeline: false
-        });
         this.props.onClose();
       }, (err) => {
         console.log(err);
+      }, () => {
         this.setState({
           updatingPipeline: false
         });

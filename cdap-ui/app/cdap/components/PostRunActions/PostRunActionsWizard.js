@@ -74,8 +74,8 @@ export default class PostRunActionsWizard extends Component {
   fetchWidgets(action) {
     let pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
     let {name, version, scope} = action.plugin.artifact;
-    let actionNameType = ''.concat(action.plugin.name, '-').concat(action.plugin.type);
-    let postRunActionPluginKey = ''.concat(actionNameType, '-').concat(name, '-').concat(version, '-').concat(scope);
+    let actionNameType = `${action.plugin.name}-${action.plugin.type}`;
+    let postRunActionPluginKey = `${actionNameType}-${name}-${version}-${scope}`;
     let pluginJson = pluginsMap[postRunActionPluginKey];
     let groupsConfig = generateNodeConfig(this.props.action._backendProperties, pluginJson.widgets);
     this.setState({
@@ -195,14 +195,14 @@ export default class PostRunActionsWizard extends Component {
       <fieldset disabled>
         <div className="confirm-step-content">
           {
-            this.state.groupsConfig.groups.map(group => {
+            this.state.groupsConfig.groups.map((group, index) => {
               return (
-                <div>
+                <div key={index}>
                   <div className="widget-group-container">
                     {
-                      group.fields.map(field => {
+                      group.fields.map((field, i) => {
                         return (
-                          <div>
+                          <div key={i}>
                             <div className="form-group">
                               <label className="control-label">
                                 <span>{field.label}</span>
