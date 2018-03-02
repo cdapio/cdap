@@ -38,8 +38,7 @@ public class MetadataEntity {
   private final List<KeyValue> details;
 
   private MetadataEntity(List<KeyValue> details) {
-    ArrayList<KeyValue> keyValues = new ArrayList<>(details);
-    this.details = Collections.unmodifiableList(keyValues);
+    this.details = Collections.unmodifiableList(new ArrayList<>(details));
   }
 
   /**

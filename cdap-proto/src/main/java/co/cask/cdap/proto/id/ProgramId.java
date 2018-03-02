@@ -79,7 +79,7 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   }
 
   @Override
-  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+  public MetadataEntity toMetadataEntity() {
     return MetadataEntity.ofNamespace(namespace).append(MetadataEntity.APPLICATION, application)
       .append(MetadataEntity.VERSION, version).append(MetadataEntity.TYPE, type.getPrettyName())
       .append(MetadataEntity.PROGRAM, program);

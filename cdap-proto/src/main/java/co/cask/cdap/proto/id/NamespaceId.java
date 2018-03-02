@@ -44,7 +44,7 @@ public class NamespaceId extends NamespacedEntityId {
   }
 
   @Override
-  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+  public MetadataEntity toMetadataEntity() {
     return MetadataEntity.ofNamespace(namespace);
   }
 

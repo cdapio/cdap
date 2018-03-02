@@ -136,6 +136,7 @@ public abstract class EntityId {
    * @return The {@link MetadataEntity} which represents this {@link EntityId}. If an Entity supports metadata the
    * Entityid of the entity must override this method and provide the correct implementation to convert the EntityId
    * to {@link MetadataEntity}
+   * @throws UnsupportedOperationException if the entityId does not support conversion to {@link MetadataEntity}
    */
   public MetadataEntity toMetadataEntity() {
     throw new UnsupportedOperationException("Metadata is not supported");

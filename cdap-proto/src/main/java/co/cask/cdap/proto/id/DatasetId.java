@@ -53,7 +53,7 @@ public class DatasetId extends NamespacedEntityId implements ParentedId<Namespac
   }
 
   @Override
-  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+  public MetadataEntity toMetadataEntity() {
     return MetadataEntity.ofDataset(namespace, dataset);
   }
 

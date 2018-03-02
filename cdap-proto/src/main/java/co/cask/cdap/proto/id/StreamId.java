@@ -51,7 +51,7 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
   }
 
   @Override
-  public MetadataEntity toMetadataEntity() throws UnsupportedOperationException {
+  public MetadataEntity toMetadataEntity() {
     return MetadataEntity.ofNamespace(namespace).append(MetadataEntity.STREAM, stream);
   }
 

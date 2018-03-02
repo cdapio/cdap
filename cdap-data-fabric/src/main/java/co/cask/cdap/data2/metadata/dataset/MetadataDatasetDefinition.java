@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 import com.google.common.base.Joiner;
 
 import java.io.IOException;
