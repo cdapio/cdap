@@ -30,7 +30,8 @@ export default class PipelineStopPopover extends Component {
   };
 
   state = {
-    currentLoadingStates: []
+    runsBeingStopped: [],
+    stopAllBtnLoading: false
   };
 
   stopBtnAndLabel = () => {
@@ -47,38 +48,40 @@ export default class PipelineStopPopover extends Component {
   };
 
   stopAllRuns = () => {
-    this.setState({ currentLoadingStates: 'all' });
+    if (!Array.isArray(this.props.runs) || typeof this.props.stopRun !== 'function') {
+      return;
+    }
+
+    this.setState({ stopAllBtnLoading: true });
     let stopRunObservables = this.props.runs.map(run => {
       return this.props.stopRun(run.runid);
     });
     Observable.forkJoin(stopRunObservables)
-      .subscribe(() => {
-        this.setState({ currentLoadingStates: [] });
-      }, (err) => {
+    .subscribe(() => {},
+      (err) => {
         console.log(err);
-        this.setState({ currentLoadingStates: [] });
+      }, () => {
+        this.setState({ stopAllBtnLoading: false });
       });
   };
 
   stopSingleRun = (runid) => {
-    if (this.state.currentLoadingStates === 'all' || this.state.currentLoadingStates.indexOf(runid) !== -1) {
+    if (this.state.stopAllBtnLoading || this.state.runsBeingStopped.indexOf(runid) !== -1 || typeof this.props.stopRun !== 'function') {
       return;
     }
 
     this.setState({
-      currentLoadingStates: [...this.state.currentLoadingStates, runid]
+      runsBeingStopped: [...this.state.runsBeingStopped, runid]
     });
     this.props.stopRun(runid)
-    .subscribe(() => {
-      this.setState({
-        currentLoadingStates: this.state.currentLoadingStates.filter(loadingRunId => loadingRunId !== runid)
+    .subscribe(() => {},
+      (err) => {
+        console.log(err);
+      }, () => {
+        this.setState({
+          runsBeingStopped: this.state.runsBeingStopped.filter(loadingRunId => loadingRunId !== runid)
+        });
       });
-    }, (err) => {
-      console.log(err);
-      this.setState({
-        currentLoadingStates: this.state.currentLoadingStates.filter(loadingRunId => loadingRunId !== runid)
-      });
-    });
   }
 
   render() {
@@ -90,7 +93,7 @@ export default class PipelineStopPopover extends Component {
         bubbleEvent={false}
         enableInteractionInPopover={true}
       >
-        <fieldset disabled={this.state.currentLoadingStates === 'all'}>
+        <fieldset disabled={this.state.stopAllBtnLoading}>
           <div className="stop-btn-popover-header">
             <strong>{`Current runs (${this.props.runs.length}`})</strong>
             <button
@@ -100,7 +103,7 @@ export default class PipelineStopPopover extends Component {
               <IconSVG name="icon-stop" />
               <span>Stop All</span>
               {
-                this.state.currentLoadingStates === 'all' ?
+                this.state.stopAllBtnLoading ?
                   <IconSVG
                     name="icon-spinner"
                     className="fa-spin"
@@ -133,7 +136,7 @@ export default class PipelineStopPopover extends Component {
                       </td>
                       <td>
                         {
-                          this.state.currentLoadingStates.indexOf(run.runid) !== -1 ?
+                          this.state.runsBeingStopped.indexOf(run.runid) !== -1 ?
                             <IconSVG
                               name="icon-spinner"
                               className="fa-spin"

@@ -170,12 +170,20 @@ const runPipeline = () => {
   };
   runtimeArgs = convertKeyValuePairsObjToMap(runtimeArgs);
   MyProgramApi.action(params, runtimeArgs)
-  .subscribe(() => {
-    setRunButtonLoading(false);
-  }, (err) => {
+  .subscribe(
+    () => {},
+    (err) => {
     setRunButtonLoading(false);
     setRunError(err.response || err);
   });
+};
+
+const schedulePipeline = () => {
+  scheduleOrSuspendPipeline(MyPipelineApi.schedule);
+};
+
+const suspendSchedule = () => {
+  scheduleOrSuspendPipeline(MyPipelineApi.suspend);
 };
 
 const scheduleOrSuspendPipeline = (scheduleApi) => {
@@ -204,5 +212,6 @@ export {
   updatePipelineEditStatus,
   updatePipeline,
   runPipeline,
-  scheduleOrSuspendPipeline
+  schedulePipeline,
+  suspendSchedule
 };

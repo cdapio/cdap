@@ -26,7 +26,7 @@ import ConfigurationsActionButtons from 'components/PipelineConfigurations/Confi
 import classnames from 'classnames';
 require('./ConfigurationsContent.scss');
 
-export default function ConfigurationsContent({isBatch, activeTab, isDetailView, onClose, scheduleAction}) {
+export default function ConfigurationsContent({isBatch, activeTab, isDetailView, onClose, saveAction}) {
   let ContentToShow;
   switch (activeTab) {
     case TAB_OPTIONS.RUNTIME_ARGS:
@@ -59,7 +59,7 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView,
       <ConfigurationsActionButtons
         onClose={onClose}
         activeTab={activeTab}
-        scheduleAction={scheduleAction}
+        saveAction={saveAction}
       />
     </div>
   );
@@ -70,5 +70,5 @@ ConfigurationsContent.propTypes = {
   activeTab: PropTypes.string,
   isDetailView: PropTypes.bool,
   onClose: PropTypes.func,
-  scheduleAction: PropTypes.bool
+  saveAction: PropTypes.func
 };

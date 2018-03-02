@@ -41,6 +41,8 @@ const ACTIONS = {
   SET_RUN_ERROR: 'SET_RUN_ERROR',
   SET_SCHEDULE_BUTTON_LOADING: 'SET_SCHEDULE_BUTTON_LOADING',
   SET_SCHEDULE_ERROR: 'SET_SCHEDULE_ERROR',
+  SET_STOP_BUTTON_LOADING: 'SET_STOP_BUTTON_LOADING',
+  SET_STOP_ERROR: 'SET_STOP_ERROR',
 
   RESET: 'RESET'
 };
@@ -74,6 +76,8 @@ const DEFAULT_PIPELINE_DETAILS = {
   runError: '',
   scheduleButtonLoading: true,
   scheduleError: '',
+  stopButtonLoading: true,
+  stopError: '',
 };
 
 const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultAction) => {
@@ -153,7 +157,8 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       return {
         ...state,
         runs: action.payload.runs,
-        currentRun: Object.keys(state.currentRun).length ? state.currentRun : action.payload.runs[0]
+        runButtonLoading: false,
+        stopButtonLoading: false
       };
     case ACTIONS.SET_STATISTICS:
       return {
@@ -195,6 +200,16 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
       return {
         ...state,
         scheduleError: action.payload.error
+      };
+    case ACTIONS.SET_STOP_BUTTON_LOADING:
+      return {
+        ...state,
+        stopButtonLoading: action.payload.loading
+      };
+    case ACTIONS.SET_STOP_ERROR:
+      return {
+        ...state,
+        stopError: action.payload.error
       };
     case ACTIONS.RESET:
       return DEFAULT_PIPELINE_DETAILS;

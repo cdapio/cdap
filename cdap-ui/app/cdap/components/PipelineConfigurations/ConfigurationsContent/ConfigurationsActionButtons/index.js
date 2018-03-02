@@ -18,8 +18,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
-import {applyRuntimeArgs, updatePipeline, runPipeline, scheduleOrSuspendPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {MyPipelineApi} from 'api/pipeline';
+import {applyRuntimeArgs, updatePipeline, runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 require('./ConfigurationsActionButtons.scss');
@@ -32,7 +31,7 @@ const mapStateToProps = (state, ownProps) => {
     validToSave: state.validToSave,
     pipelineEdited: state.pipelineEdited,
     updatingPipeline: ownProps.updatingPipeline,
-    updatingPipelineAndRunning: ownProps.updatingPipelineAndRunning,
+    updatingPipelineAndAction: ownProps.updatingPipelineAndAction,
     saveAndClose: ownProps.saveAndClose,
     saveAndAction: ownProps.saveAndAction,
     activeTab: ownProps.activeTab,
@@ -40,18 +39,18 @@ const mapStateToProps = (state, ownProps) => {
   };
 };
 
-const ConfigActionButtons = ({runtimeArgs, validToSave, pipelineEdited, updatingPipeline, updatingPipelineAndRunning, saveAndClose, saveAndAction, activeTab, actionLabel}) => {
+const ConfigActionButtons = ({runtimeArgs, validToSave, pipelineEdited, updatingPipeline, updatingPipelineAndAction, saveAndClose, saveAndAction, activeTab, actionLabel}) => {
   return (
     <div className="configuration-step-navigation">
       <div className="apply-run-container">
         <button
           className="btn btn-primary apply-run"
-          disabled={updatingPipelineAndRunning || !validToSave}
+          disabled={updatingPipelineAndAction || !validToSave}
           onClick={saveAndAction.bind(this, pipelineEdited)}
         >
           <span>{actionLabel}</span>
           {
-            updatingPipelineAndRunning ?
+            updatingPipelineAndAction ?
               <IconSVG
                 name="icon-spinner"
                 className="fa-spin"
@@ -101,7 +100,7 @@ ConfigActionButtons.propTypes = {
   validToSave: PropTypes.bool,
   pipelineEdited: PropTypes.bool,
   updatingPipeline: PropTypes.bool,
-  updatingPipelineAndRunning: PropTypes.bool,
+  updatingPipelineAndAction: PropTypes.bool,
   saveAndClose: PropTypes.func,
   saveAndAction: PropTypes.func,
   actionLabel: PropTypes.string
@@ -111,76 +110,85 @@ const ConnectedConfigActionButtons = connect(mapStateToProps)(ConfigActionButton
 
 export default class ConfigurationsActionButtons extends Component {
   state = {
+    // need 2 states here instead of just 1, to determine which button to show
+    // spinning wheel on
     updatingPipeline: false,
-    updatingPipelineAndRunning: false
+    updatingPipelineAndAction: false
   };
 
   static propTypes = {
     onClose: PropTypes.func,
     activeTab: PropTypes.string,
-    scheduleAction: PropTypes.bool
-  }
+    action: PropTypes.func
+  };
 
-  saveAndAction = (pipelineEdited) => {
-    applyRuntimeArgs();
-    if (pipelineEdited) {
-      this.setState({
-        updatingPipelineAndRunning: true
-      });
-      updatePipeline()
-      .subscribe(() => {
-        this.setState({
-          updatingPipelineAndRunning: false
-        });
-        this.props.onClose();
-        if (this.props.scheduleAction) {
-          scheduleOrSuspendPipeline(MyPipelineApi.schedule);
-        } else {
-          runPipeline();
-        }
-      }, (err) => {
-        console.log(err);
-        this.setState({
-          updatingPipelineAndRunning: false
-        });
-      });
-    } else {
-      if (this.props.scheduleAction) {
-        scheduleOrSuspendPipeline(MyPipelineApi.schedule);
-      } else {
-        runPipeline();
-      }
-      this.props.onClose();
-    }
-  }
+  static defaultProps = {
+    action: runPipeline
+  };
 
-  saveAndClose = (pipelineEdited) => {
-    applyRuntimeArgs();
-    if (pipelineEdited) {
-      this.setState({
-        updatingPipeline: true
-      });
-      updatePipeline()
-      .subscribe(() => {
-        this.props.onClose();
-      }, (err) => {
-        console.log(err);
-      }, () => {
-        this.setState({
-          updatingPipeline: false
-        });
-      });
-    } else {
+  close = () => {
+    if (typeof this.props.onClose === 'function') {
       this.props.onClose();
     }
   };
 
+  closeAndAction = () => {
+    this.close();
+    if (typeof this.props.action === 'function') {
+      this.props.action();
+    }
+  };
+
+  saveAndAction = (pipelineEdited) => {
+    applyRuntimeArgs();
+    if (!pipelineEdited) {
+      this.closeAndAction();
+      return;
+    }
+
+    this.setState({
+      updatingPipelineAndAction: true
+    });
+    updatePipeline()
+    .subscribe(() => {
+      this.closeAndAction();
+    }, (err) => {
+      console.log(err);
+    }, () => {
+      this.setState({
+        updatingPipelineAndAction: false
+      });
+    });
+  }
+
+  saveAndClose = (pipelineEdited) => {
+    applyRuntimeArgs();
+    if (!pipelineEdited) {
+      this.close();
+      return;
+    }
+
+    this.setState({
+      updatingPipeline: true
+    });
+    updatePipeline()
+    .subscribe(() => {
+      this.close();
+    }, (err) => {
+      console.log(err);
+    }, () => {
+      this.setState({
+        updatingPipeline: false
+      });
+    });
+  };
+
   render() {
-    let actionLabel = this.props.scheduleAction ? 'Save and Schedule' : 'Save and Run';
+    let actionLabel = this.props.action === runPipeline ? 'Save and Run' : 'Save and Schedule';
     return (
       <ConnectedConfigActionButtons
         updatingPipeline={this.state.updatingPipeline}
-        updatingPipelineAndRunning={this.state.updatingPipelineAndRunning}
+        updatingPipelineAndAction={this.state.updatingPipelineAndAction}
         saveAndClose={this.saveAndClose}
         saveAndAction={this.saveAndAction}
         activeTab={this.props.activeTab}

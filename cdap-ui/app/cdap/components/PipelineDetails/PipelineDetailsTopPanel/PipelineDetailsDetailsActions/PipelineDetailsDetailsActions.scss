@@ -14,11 +14,13 @@
  * the License.
 */
 
+@import "../../../../styles/variables.scss";
+
 .pipeline-details-details-actions {
   .pipeline-details-container {
     .pipeline-details-btn {
       .icon-info-circle {
-        color: initial;
+        color: $grey-01;
       }
     }
   }

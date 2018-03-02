@@ -29,9 +29,7 @@ const mapStateToConfigureButton = (state, ownProps) => {
     isBatch: ownProps.isBatch,
     pipelineName: ownProps.pipelineName,
     resolvedMacros: state.resolvedMacros,
-    runtimeArgs: state.runtimeArgs,
-    runs: ownProps.runs,
-    currentRun: ownProps.currentRun
+    runtimeArgs: state.runtimeArgs
   };
 };
 
@@ -62,7 +60,7 @@ const ConnectedConfigureButton = connect(mapStateToConfigureButton)(PipelineConf
 const ConnectedRunButton = connect(mapStateToRunButton)(PipelineRunButton);
 const ConnectedScheduleButton = connect(mapStateToScheduleButton)(PipelineScheduleButton);
 
-export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, currentRun, runButtonLoading, runError, scheduleButtonLoading, scheduleError}) {
+export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, runButtonLoading, runError, scheduleButtonLoading, scheduleError, stopButtonLoading, stopError}) {
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
@@ -83,7 +81,8 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           isBatch={isBatch}
           pipelineName={pipelineName}
           runs={runs}
-          currentRun={currentRun}
+          stopButtonLoading={stopButtonLoading}
+          stopError={stopError}
         />
         <ConnectedRunButton
           isBatch={isBatch}
@@ -111,5 +110,7 @@ PipelineDetailsButtons.propTypes = {
   runButtonLoading: PropTypes.bool,
   runError: PropTypes.string,
   scheduleButtonLoading: PropTypes.bool,
-  scheduleError: PropTypes.string
+  scheduleError: PropTypes.string,
+  stopButtonLoading: PropTypes.bool,
+  stopError: PropTypes.string,
 };

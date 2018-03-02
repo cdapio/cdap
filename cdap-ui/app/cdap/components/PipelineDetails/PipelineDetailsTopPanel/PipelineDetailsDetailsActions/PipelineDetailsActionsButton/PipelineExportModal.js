@@ -29,7 +29,9 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
     aElement.href = url;
     aElement.download = exportFileName + '.json';
     aElement.click();
-    onClose();
+    if (typeof onClose === 'function') {
+      onClose();
+    }
   };
 
   return (

@@ -121,7 +121,7 @@ $btn-border-color: $grey-05;
       &.btn-select,
       &:hover {
         background-color: $grey-08;
-        color: initial;
+        color: $grey-01;
       }
     }
 
@@ -190,7 +190,7 @@ $btn-border-color: $grey-05;
         margin-right: 2px;
 
         .btn-container {
-          color: initial;
+          color: $grey-01;
         }
       }
     }

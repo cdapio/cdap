@@ -22,50 +22,51 @@ import Alert from 'components/Alert';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {GLOBALS} from 'services/global-constants';
 import PipelineStopPopover from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton/PipelineStopPopover';
+import {setStopButtonLoading, setStopError} from 'components/PipelineDetails/store/ActionCreator';
+import isEqual from 'lodash/isEqual';
 
 export default class PipelineStopButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
     currentRun: PropTypes.object,
-    runs: PropTypes.array
+    runs: PropTypes.array,
+    stopButtonLoading: PropTypes.bool,
+    stopError: PropTypes.string
   }
 
   state = {
-    loading: false,
-    stopError: null,
-    disabled: false,
+    disabled: true,
     runningRuns: []
   };
 
   componentWillReceiveProps(nextProps) {
     let runningRuns = nextProps.runs.filter(run => run.status === 'RUNNING');
-    this.setState({
-      runningRuns,
-      disabled: runningRuns.length === 0
-    });
+    if (!isEqual(this.state.runningRuns, runningRuns)) {
+      this.setState({
+        runningRuns,
+        disabled: runningRuns.length === 0
+      });
+    }
   }
 
   stopPipeline = () => {
-    if (this.state.loading || this.state.disabled) {
+    if (this.props.stopButtonLoading || this.state.disabled) {
       return;
     }
 
-    this.setState({ loading: true });
+    setStopButtonLoading(true);
     this.stopRun()
-    .subscribe(() => {
-      this.setState({
-        loading: false
-      });
-    }, (err) => {
-      this.setState({
-        loading: false,
-        stopError: err.response || err
-      });
-    });
+    .subscribe(
+      () => {},
+      (err) => {
+        setStopButtonLoading(false);
+        setStopError(err.response || err);
+      }
+    );
   }
 
-  stopRun = (runId = this.props.currentRun.runid) => {
+  stopRun = (runId = this.props.runs[0].runid) => {
     let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
     let params = {
       namespace: getCurrentNamespace(),
@@ -78,13 +79,13 @@ export default class PipelineStopButton extends Component {
   }
 
   renderStopError() {
-    if (!this.state.stopError) {
+    if (!this.props.stopError) {
       return null;
     }
 
     return (
       <Alert
-        message={this.state.stopError}
+        message={this.props.stopError}
         type='error'
         showAlert={true}
         onClose={() => this.setState({
@@ -107,11 +108,11 @@ export default class PipelineStopButton extends Component {
       <div
         onClick={this.stopPipeline}
         className="btn pipeline-action-btn pipeline-stop-btn"
-        disabled={this.state.loading || this.state.disabled}
+        disabled={this.props.stopButtonLoading || this.state.disabled}
       >
         <div className="btn-container">
           {
-            this.state.loading ?
+            this.props.stopButtonLoading ?
               <IconSVG
                 name="icon-spinner"
                 className="fa-spin"
@@ -136,7 +137,6 @@ export default class PipelineStopButton extends Component {
       <div className="pipeline-action-container pipeline-stop-container">
         {this.renderStopError()}
         {this.renderPipelineStopButton()}
-
       </div>
     );
   }

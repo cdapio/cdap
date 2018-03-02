@@ -283,6 +283,20 @@ const setScheduleError = (error) => {
   });
 };
 
+const setStopButtonLoading = (loading) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_STOP_BUTTON_LOADING,
+    payload: { loading }
+  });
+};
+
+const setStopError = (error) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_STOP_ERROR,
+    payload: { error }
+  });
+};
+
 const reset = () => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.RESET
@@ -323,5 +337,7 @@ export {
   setRunError,
   setScheduleButtonLoading,
   setScheduleError,
+  setStopButtonLoading,
+  setStopError,
   reset
 };

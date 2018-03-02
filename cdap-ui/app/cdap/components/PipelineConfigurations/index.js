@@ -32,14 +32,13 @@ export default class PipelineConfigurations extends Component {
     isPreview: PropTypes.bool,
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
-    scheduleAction: PropTypes.bool
+    saveAction: PropTypes.func
   };
 
   static defaultProps = {
     isDetailView: false,
     isPreview: false,
-    isBatch: true,
-    scheduleAction: false
+    isBatch: true
   };
 
   state = {
@@ -127,7 +126,7 @@ export default class PipelineConfigurations extends Component {
               isBatch={this.props.isBatch}
               isDetailView={this.props.isDetailView}
               onClose={this.props.onClose}
-              scheduleAction={this.props.scheduleAction}
+              saveAction={this.props.saveAction}
             />
           </div>
         </div>

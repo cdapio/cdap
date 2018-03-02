@@ -16,14 +16,13 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyPipelineApi} from 'api/pipeline';
 import {setScheduleError, setScheduleButtonLoading} from 'components/PipelineDetails/store/ActionCreator';
 import PipelineScheduler from 'components/PipelineScheduler';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import StatusMapper from 'services/StatusMapper';
-import {scheduleOrSuspendPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {schedulePipeline, suspendSchedule} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurations from 'components/PipelineConfigurations';
 
@@ -69,7 +68,7 @@ export default class PipelineScheduleButton extends Component {
     if (keyValuePairsHaveMissingValues(this.props.runtimeArgs)) {
       this.toggleConfigModeless();
     } else {
-      scheduleOrSuspendPipeline(MyPipelineApi.schedule);
+      schedulePipeline();
     }
   };
 
@@ -97,7 +96,7 @@ export default class PipelineScheduleButton extends Component {
         isDetailView={true}
         isBatch={this.props.isBatch}
         pipelineName={this.props.pipelineName}
-        scheduleAction={true}
+        saveAction={schedulePipeline}
       />
     );
   }
@@ -181,7 +180,7 @@ export default class PipelineScheduleButton extends Component {
               pipelineName={this.props.pipelineName}
               scheduleStatus={this.state.scheduleStatus}
               schedulePipeline={this.schedulePipelineOrToggleConfig}
-              suspendSchedule={scheduleOrSuspendPipeline.bind(null, MyPipelineApi.suspend)}
+              suspendSchedule={suspendSchedule}
             />
           :
             null
