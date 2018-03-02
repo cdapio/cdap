@@ -32,7 +32,7 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;

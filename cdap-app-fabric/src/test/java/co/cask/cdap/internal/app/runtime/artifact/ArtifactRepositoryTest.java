@@ -59,7 +59,7 @@ import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

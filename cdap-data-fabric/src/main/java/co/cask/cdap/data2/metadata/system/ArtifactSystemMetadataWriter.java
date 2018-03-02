@@ -22,7 +22,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

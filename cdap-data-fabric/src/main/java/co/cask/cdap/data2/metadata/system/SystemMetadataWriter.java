@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 
 /**
  * Used write {@link MetadataScope#SYSTEM} metadata for an {@link Id.NamespacedId entity}.

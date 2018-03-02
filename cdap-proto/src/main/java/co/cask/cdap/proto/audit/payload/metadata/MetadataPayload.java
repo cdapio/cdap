@@ -19,7 +19,7 @@ package co.cask.cdap.proto.audit.payload.metadata;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.Map;
 import java.util.Objects;
