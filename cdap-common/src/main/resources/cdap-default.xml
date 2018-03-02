@@ -2340,6 +2340,16 @@
     </description>
   </property>
 
+  <!-- Runtime Configuration -->
+
+  <property>
+    <name>runtime.extensions.dir</name>
+    <value>/opt/cdap/master/ext/runtimeproviders</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master that
+      are scanned for program runtime extensions
+    </description>
+  </property>
 
   <!-- Queue Configuration -->
 

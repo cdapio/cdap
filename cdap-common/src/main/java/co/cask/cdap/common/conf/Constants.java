@@ -1316,6 +1316,13 @@ public final class Constants {
   }
 
   /**
+   * Constants for provisioners
+   */
+  public static final class Provisioner {
+    public static final String EXTENSIONS_DIR = "provisioner.extensions.dir";
+  }
+
+  /**
    * Constants for Replication
    */
   public static final class Replication {
