@@ -21,6 +21,7 @@ import Popover from 'components/Popover';
 import Duration from 'components/Duration';
 import moment from 'moment';
 import {Observable} from 'rxjs/Observable';
+import {setStopError} from 'components/PipelineDetails/store/ActionCreator';
 require('./PipelineStopPopover.scss');
 
 export default class PipelineStopPopover extends Component {
@@ -33,6 +34,27 @@ export default class PipelineStopPopover extends Component {
     runsBeingStopped: [],
     stopAllBtnLoading: false
   };
+
+  componentWillReceiveProps(nextProps) {
+    let runs = nextProps.runs;
+
+    // Here 'nextProps.runs' refer to running runs, so the runs that were being stopped
+    // won't even show up in the popover anymore, but we should still reset their states
+    if (!runs || !runs.length) {
+      this.setState({
+        runsBeingStopped: [],
+        stopAllBtnLoading: false
+      });
+    } else {
+      let runsBeingStopped = [...this.state.runsBeingStopped];
+      this.state.runsBeingStopped.forEach(runid => {
+        if (runs.indexOf(runid) === -1) {
+          runsBeingStopped.splice(runsBeingStopped.indexOf(runid), 1);
+        }
+      });
+      this.setState({ runsBeingStopped });
+    }
+  }
 
   stopBtnAndLabel = () => {
     return (
@@ -59,8 +81,7 @@ export default class PipelineStopPopover extends Component {
     Observable.forkJoin(stopRunObservables)
     .subscribe(() => {},
       (err) => {
-        console.log(err);
-      }, () => {
+        setStopError(err.response || err);
         this.setState({ stopAllBtnLoading: false });
       });
   };
@@ -76,8 +97,7 @@ export default class PipelineStopPopover extends Component {
     this.props.stopRun(runid)
     .subscribe(() => {},
       (err) => {
-        console.log(err);
-      }, () => {
+        setStopError(err.response || err);
         this.setState({
           runsBeingStopped: this.state.runsBeingStopped.filter(loadingRunId => loadingRunId !== runid)
         });
