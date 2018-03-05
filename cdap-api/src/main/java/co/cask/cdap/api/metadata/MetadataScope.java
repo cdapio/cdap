@@ -19,7 +19,7 @@ package co.cask.cdap.api.metadata;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Represents the scope of metadata for an metadata entity.
+ * Represents the scope of metadata for a metadata entity.
  */
 @Beta
 public enum MetadataScope {

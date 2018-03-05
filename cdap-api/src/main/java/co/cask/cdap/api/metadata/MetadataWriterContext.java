@@ -16,7 +16,6 @@
 package co.cask.cdap.api.metadata;
 
 import java.util.Map;
-import javax.ws.rs.NotFoundException;
 
 /**
  * The context for emitting metadata from programs
@@ -25,58 +24,54 @@ public interface MetadataWriterContext {
 
   /**
    * Adds the specified {@link Map} to the metadata of the specified {@link MetadataEntity metadataEntity}.
-   * Existing keys are updated with new values, newer keys are appended to the metadata.
-   *
-   * @throws NotFoundException if the specified entity was not found
+   * Existing keys will be updated with new values.
    */
-  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) throws NotFoundException;
+  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties);
 
   /**
    * Adds the specified tags to specified {@link MetadataEntity}.
-   *
-   * @throws NotFoundException if the specified entity was not found
    */
-  void addTags(MetadataEntity metadataEntity, String... tags) throws NotFoundException;
+  void addTags(MetadataEntity metadataEntity, String... tags);
+
+  /**
+   * Adds all the specified tags to specified {@link MetadataEntity}.
+   */
+  void addTags(MetadataEntity metadataEntity, Iterable<String> tags);
 
   /**
    * Removes all the user metadata (including properties and tags) for the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove user metadata for
-   * @throws NotFoundException if the specified entity was not found
    */
-  void removeMetadata(MetadataEntity metadataEntity) throws NotFoundException;
+  void removeMetadata(MetadataEntity metadataEntity);
 
   /**
    * Removes all properties from the user metadata of the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove properties for
-   * @throws NotFoundException if the specified entity was not found
    */
-  void removeProperties(MetadataEntity metadataEntity) throws NotFoundException;
+  void removeProperties(MetadataEntity metadataEntity);
 
   /**
    * Removes the specified keys from the user metadata properties of the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove
-   * @throws NotFoundException if the specified entity was not found
    */
-  void removeProperties(MetadataEntity metadataEntity, String... keys) throws NotFoundException;
+  void removeProperties(MetadataEntity metadataEntity, String... keys);
 
   /**
    * Removes all user tags from the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove tags for
-   * @throws NotFoundException if the specified entity was not found
    */
-  void removeTags(MetadataEntity metadataEntity) throws NotFoundException;
+  void removeTags(MetadataEntity metadataEntity);
 
   /**
    * Removes the specified user tags from the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tags the tags to remove
-   * @throws NotFoundException if the specified entity was not found
    */
-  void removeTags(MetadataEntity metadataEntity, String... tags) throws NotFoundException;
+  void removeTags(MetadataEntity metadataEntity, String... tags);
 }

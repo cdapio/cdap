@@ -16,6 +16,7 @@
 package co.cask.cdap.api.metadata;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -34,7 +35,7 @@ public class MetadataRecord {
    * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
   public MetadataRecord(MetadataEntity metadataEntity, MetadataScope scope) {
-    this(metadataEntity, scope, Collections.<String, String>emptyMap(), Collections.<String>emptySet());
+    this(metadataEntity, scope, Collections.emptyMap(), Collections.emptySet());
   }
 
   /**
@@ -48,7 +49,7 @@ public class MetadataRecord {
                         Set<String> tags) {
     this.metadataEntity = metadataEntity;
     this.scope = scope;
-    this.properties = properties;
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.tags = tags;
   }
 
