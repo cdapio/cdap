@@ -6593,9 +6593,9 @@ modify-filename@^1.0.0, modify-filename@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/modify-filename/-/modify-filename-1.1.0.tgz#9a2dec83806fbb2d975f22beec859ca26b393aa1"
 
-moment@2.15.0:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.15.0.tgz#cc9e33958bf4a99dea7111d5e62ed3c13fc96440"
+moment@2.21.0:
+  version "2.21.0"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.21.0.tgz#2a114b51d2a6ec9e6d83cf803f838a878d8a023a"
 
 mousetrap@1.6.0:
   version "1.6.0"
