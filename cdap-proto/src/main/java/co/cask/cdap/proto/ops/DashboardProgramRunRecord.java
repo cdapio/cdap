@@ -29,6 +29,7 @@ public class DashboardProgramRunRecord {
   private final String application;
   private final String type;
   private final String program;
+  private final String run;
   private final String user;
   private final String startMethod;
   @Nullable
@@ -41,7 +42,7 @@ public class DashboardProgramRunRecord {
   private final ProgramRunStatus status;
 
   public DashboardProgramRunRecord(String namespace, ArtifactMetaInfo artifact, String application,
-                                   String type, String program,
+                                   String type, String program, String run,
                                    String user, String startMethod, long start, long running, long end,
                                    ProgramRunStatus status) {
     this.namespace = namespace;
@@ -49,6 +50,7 @@ public class DashboardProgramRunRecord {
     this.application = application;
     this.type = type;
     this.program = program;
+    this.run = run;
     this.user = user;
     this.startMethod = startMethod;
     this.start = start;
@@ -75,6 +77,10 @@ public class DashboardProgramRunRecord {
 
   public String getProgram() {
     return program;
+  }
+
+  public String getRun() {
+    return run;
   }
 
   public String getUser() {

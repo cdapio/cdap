@@ -218,6 +218,7 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
         new DashboardProgramRunRecord(namespaceArray[i % namespaceArray.length],
                                       new ArtifactMetaInfo("USER", "CustomApp", "v1"),
                                       types[m] + Integer.toString(i / 3), ProgramType.WORKFLOW.name(), types[m],
+                                      UUID.randomUUID().toString(),
                                       users[m], startMethods[m], currentStart, currentStart + 100, currentStart + 200,
                                       statuses[m]));
     }
