@@ -201,4 +201,14 @@ $btn-border-color: $grey-05;
       }
     }
   }
+
+  .plus-button {
+    position: absolute;
+    right: 20px;
+    margin-top: 20px;
+
+    .popper {
+      display: none;
+    }
+  }
 }

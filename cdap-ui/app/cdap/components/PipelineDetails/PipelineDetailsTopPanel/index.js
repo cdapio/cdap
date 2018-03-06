@@ -22,6 +22,7 @@ import PipelineDetailsDetailsActions from 'components/PipelineDetails/PipelineDe
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
+import PlusButton from 'components/PlusButton';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
 import {MyPreferenceApi} from 'api/preference';
@@ -97,6 +98,7 @@ export default class PipelineDetailsTopPanel extends Component {
           <PipelineDetailsMetadata />
           <ConnectedPipelineDetailsButtons />
           <PipelineDetailsDetailsActions />
+          <PlusButton mode={PlusButton.MODE.resourcecenter} />
         </div>
       </Provider>
     );
