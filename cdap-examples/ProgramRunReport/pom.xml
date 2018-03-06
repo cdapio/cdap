@@ -28,12 +28,23 @@
     <artifactId>ProgramRunReport</artifactId>
     <name>ProgramRunReport</name>
     <packaging>jar</packaging>
-
+    <repositories>
+        <repository>
+            <id>scala-tools.org</id>
+            <name>Scala-tools Maven2 Repository</name>
+            <url>http://scala-tools.org/repo-releases</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.10</artifactId>
+            <artifactId>spark-sql_2.11</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala2.11.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
@@ -60,12 +71,20 @@
         </dependency>
         <dependency>
             <groupId>com.databricks</groupId>
-            <artifactId>spark-avro_2.10</artifactId>
-            <version>2.0.1</version>
+            <artifactId>spark-avro_2.11</artifactId>
+            <version>3.0.1</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+        </plugins>
+    </build>
     <properties>
-        <spark1.version>1.6.1</spark1.version>
         <app.main.class>co.cask.cdap.examples.report.ProgramOperationReportApp</app.main.class>
     </properties>
 </project>

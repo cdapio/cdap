@@ -27,29 +27,34 @@ import javax.annotation.Nullable;
 public class ReportRecordBuilder implements Serializable {
   private String program;
   private String run;
-  private List<StatusTime> statusTimes;
+  private List<String> statuses;
+  private List<Long> times;
   @Nullable
   private ProgramStartingInfo programStartingInfo;
 
   public ReportRecordBuilder() {
-    this.statusTimes = new ArrayList<>();
+    this.statuses = new ArrayList<>();
+    this.times = new ArrayList<>();
   }
 
   public void setProgramRunStatus(String program, String run, String status, long time, @Nullable String user) {
-    this.program = program;
-    this.run = run;
-    StatusTime statusTime = new StatusTime();
-    statusTime.setStatus(status);
-    statusTime.setTime(time);
-    this.statusTimes.add(statusTime);
+    this.program = program == null ? this.program : program;
+    this.run = run == null ? this.run : run;
+    if (status != null) {
+      statuses.add(status);
+    }
+    if (status != null) {
+      times.add(time);
+    }
     if (user != null) {
-      this.programStartingInfo = new ProgramStartingInfo();
-      this.programStartingInfo.setUser(user);
+      programStartingInfo = new ProgramStartingInfo();
+      programStartingInfo.setUser(user);
     }
   }
 
   public ReportRecordBuilder merge(ReportRecordBuilder other) {
-    this.statusTimes.addAll(other.statusTimes);
+    this.statuses.addAll(other.statuses);
+    this.times.addAll(other.times);
     this.programStartingInfo = this.programStartingInfo != null ?
       this.programStartingInfo : other.programStartingInfo;
     return this;
@@ -71,12 +76,20 @@ public class ReportRecordBuilder implements Serializable {
     this.run = run;
   }
 
-  public List<StatusTime> getStatusTimes() {
-    return statusTimes;
+  public List<String> getStatuses() {
+    return statuses;
   }
 
-  public void setStatusTimes(List<StatusTime> statusTimes) {
-    this.statusTimes = statusTimes;
+  public void setStatuses(List<String> statuses) {
+    this.statuses = statuses;
+  }
+
+  public List<Long> getTimes() {
+    return times;
+  }
+
+  public void setTimes(List<Long> times) {
+    this.times = times;
   }
 
   @Nullable

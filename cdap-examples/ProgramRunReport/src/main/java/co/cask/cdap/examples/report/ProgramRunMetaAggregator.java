@@ -16,6 +16,8 @@
 
 package co.cask.cdap.examples.report;
 
+import org.apache.spark.sql.Encoder;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.Aggregator;
 
@@ -31,17 +33,31 @@ public class ProgramRunMetaAggregator extends Aggregator<Row, ReportRecordBuilde
 
   @Override
   public ReportRecordBuilder reduce(ReportRecordBuilder recordBuilder, Row row) {
-    recordBuilder.setProgramRunStatus("program", "run", "STARTING", 1000L, "user");
+    if (row.getAs("status") == null) {
+      return recordBuilder;
+    }
+    recordBuilder.setProgramRunStatus(row.getAs("program"), row.getAs("run"), row.getAs("status"),
+                                      row.getAs("time"), "user");
     return recordBuilder;
   }
 
   @Override
   public ReportRecordBuilder merge(ReportRecordBuilder b1, ReportRecordBuilder b2) {
-    return b1;
+    return b1.merge(b2);
   }
 
   @Override
   public ReportRecordBuilder finish(ReportRecordBuilder reduction) {
     return reduction;
+  }
+
+  @Override
+  public Encoder<ReportRecordBuilder> bufferEncoder() {
+    return (Encoder<ReportRecordBuilder>) Encoders.kryo(ReportRecordBuilder.class);
+  }
+
+  @Override
+  public Encoder<ReportRecordBuilder> outputEncoder() {
+    return (Encoder<ReportRecordBuilder>) Encoders.kryo(ReportRecordBuilder.class);
   }
 }

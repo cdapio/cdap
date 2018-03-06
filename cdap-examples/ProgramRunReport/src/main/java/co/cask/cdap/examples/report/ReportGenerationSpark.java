@@ -30,19 +30,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrame;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.GroupedData;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.TypedColumn;
-import org.apache.spark.sql.expressions.Aggregator;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.MutableAggregationBuffer;
 import org.apache.spark.sql.expressions.UserDefinedAggregateFunction;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StringType;
-import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,14 +44,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -79,18 +68,19 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
     SQLContext sqlContext = new SQLContext(jsc);
+
     LOG.info("Created sqlContext");
-    DataFrame dataset = sqlContext.read().format("com.databricks.spark.avro")
-      .load("/Users/Chengfeng/tmp/run_meta.avro");
-    LOG.info("Loaded input");
-    GroupedData groupedData = dataset.groupBy("program", "run");
-    LOG.info("Grouped data");
-    TypedColumn aggColumn = new RowAggregator().toColumn(Encoders.INT(), Encoders.INT());
-    DataFrame agg = groupedData.agg(aggColumn);
-    LOG.info("Aggregated data");
-    agg.select(aggColumn).write().json(output + "/reportId.json");
-    new File(output + "/_SUCCESS").createNewFile();
-    LOG.info("Wrote files to " + output);
+//    DataSet<Row> dataset = sqlContext.read().format("com.databricks.spark.avro")
+// .load("/Users/Chengfeng/tmp/run_meta.avro");
+//    LOG.info("Loaded input");
+//    GroupedData groupedData = dataset.groupBy("program", "run");
+//    LOG.info("Grouped data");
+//    TypedColumn aggColumn = new RowAggregator().toColumn(Encoders.INT(), Encoders.INT());
+//    DataFrame agg = groupedData.agg(aggColumn);
+//    LOG.info("Aggregated data");
+//    agg.select(aggColumn).write().json(output + "/reportId.json");
+//    new File(output + "/_SUCCESS").createNewFile();
+//    LOG.info("Wrote files to " + output);
   }
 
   /**
@@ -144,30 +134,40 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     }
   }
 
-  /**
-   *
-   */
-  public static class RowAggregator extends Aggregator<Integer, Integer, Integer> {
-    @Override
-    public Integer zero() {
-      return 0;
-    }
-
-    @Override
-    public Integer reduce(Integer integer, Integer a) {
-      return 1;
-    }
-
-    @Override
-    public Integer merge(Integer b1, Integer b2) {
-      return b1 + b2;
-    }
-
-    @Override
-    public Integer finish(Integer reduction) {
-      return reduction;
-    }
-  }
+//  /**
+//   *
+//   */
+//  public static class RowAggregator extends Aggregator<Integer, Integer, Integer> {
+//    @Override
+//    public Integer zero() {
+//      return 0;
+//    }
+//
+//    @Override
+//    public Integer reduce(Integer integer, Integer a) {
+//      return 1;
+//    }
+//
+//    @Override
+//    public Integer merge(Integer b1, Integer b2) {
+//      return b1 + b2;
+//    }
+//
+//    @Override
+//    public Integer finish(Integer reduction) {
+//      return reduction;
+//    }
+//
+//    @Override
+//    public Encoder<Integer> bufferEncoder() {
+//      return null;
+//    }
+//
+//    @Override
+//    public Encoder<Integer> outputEncoder() {
+//      return null;
+//    }
+//  }
 
   /**
    * A {@link SparkHttpServiceHandler} for read and generate report.
@@ -203,23 +203,23 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         public void onFinish(HttpServiceResponder responder) throws Exception {
           outputChannel.close();
           LOG.info("Finish writing file {} ", startedFile.getAbsolutePath());
-          Executors.newSingleThreadExecutor().submit(() -> {
-//          ReportGenerationRequest reportGenerationRequest =
-//            decodeRequestBody(request, REPORT_GENERATION_REQUEST_TYPE);
-            SQLContext sqlContext = new SQLContext(getContext().getJavaSparkContext());
-            LOG.info("Created sqlContext");
-            DataFrame dataset = sqlContext.read().format("com.databricks.spark.avro").load(input);
-            LOG.info("Loaded input");
-            GroupedData groupedData = dataset.groupBy("program", "run");
-            LOG.info("Grouped data");
-            DataFrame agg = groupedData.agg(new ProgramRunMetaAggregator()
-                                              .toColumn(Encoders.bean(ReportRecordBuilder.class),
-                                                        Encoders.bean(ReportRecordBuilder.class))
-                                              .alias("reportRecord"));
-            LOG.info("Aggregated data");
-            agg.select("reportRecord").write().json(output + "/reportId.json");
-            LOG.info("Write report to " + output);
-          });
+//          Executors.newSingleThreadExecutor().submit(() -> {
+////          ReportGenerationRequest reportGenerationRequest =
+////            decodeRequestBody(request, REPORT_GENERATION_REQUEST_TYPE);
+//            SQLContext sqlContext = new SQLContext(getContext().getJavaSparkContext());
+//            LOG.info("Created sqlContext");
+//            DataFrame dataset = sqlContext.read().format("com.databricks.spark.avro").load(input);
+//            LOG.info("Loaded input");
+//            GroupedData groupedData = dataset.groupBy("program", "run");
+//            LOG.info("Grouped data");
+//            DataFrame agg = groupedData.agg(new ProgramRunMetaAggregator()
+//                                              .toColumn(Encoders.bean(ReportRecordBuilder.class),
+//                                                        Encoders.bean(ReportRecordBuilder.class))
+//                                              .alias("reportRecord"));
+//            LOG.info("Aggregated data");
+//            agg.select("reportRecord").write().json(output + "/reportId.json");
+//            LOG.info("Write report to " + output);
+//          });
           responder.sendJson(200,
                              GSON.toJson(ImmutableMap.of("id", reportId)));
         }
