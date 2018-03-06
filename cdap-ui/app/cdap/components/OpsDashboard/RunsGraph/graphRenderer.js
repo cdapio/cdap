@@ -15,6 +15,9 @@
  */
 
 import * as d3 from 'd3';
+import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+
+const AXIS_BUFFER = 1.1;
 
 export function renderGraph(selector, containerWidth, containerHeight, data) {
   let margin = {
@@ -44,18 +47,13 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
   let yRight = d3.scaleLinear()
     .rangeRound([height, 0]);
 
-  const colorMap = {
-    manual: '#979fbb',
-    schedule: '#454A57',
-    running: '#0076dc',
-    successful: '#3cc801',
-    failed: '#d40001'
-  };
-
   // SETTING DOMAINS
   x.domain(data.map((d) => d.time));
-  yLeft.domain([0, d3.max(data, (d) => Math.max(d.manual + d.schedule, d.running + d.successful + d.failed) )]);
-  yRight.domain([0, d3.max(data, (d) => d.delay)]);
+
+  let yLeftMax = d3.max(data, (d) => Math.max(d.manual + d.schedule, d.running + d.successful + d.failed) );
+  let yRightMax = d3.max(data, (d) => d.delay);
+  yLeft.domain([0, yLeftMax * AXIS_BUFFER]);
+  yRight.domain([0, yRightMax * AXIS_BUFFER]);
 
 
   // RENDER AXIS
@@ -65,7 +63,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
   // X Axis
   let xAxis = d3.axisBottom(x)
     .tickSizeInner(-height)
-    .tickSizeOuter(0);
+    .tickSizeOuter(0)
+    .tickFormat(d3.timeFormat('%-I %p'));
 
   let axisOffset = barWidth + barPadding * 2;
   let xAxisGroup = chart.append('g')
@@ -77,7 +76,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     .remove();
 
   xAxisGroup.selectAll('text')
-    .attr('x', -axisOffset);
+    .attr('x', -axisOffset)
+    .attr('y', 10);
 
   xAxisGroup.select('.tick:last-child')
     .select('line')
@@ -101,7 +101,6 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     return x(d.time) + barPadding * 2;
   }
 
-
   // Start method
   let barStartMethod = chart.append('g')
     .attr('class', 'bar-start-method');
@@ -112,8 +111,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
 
   // Schedule
   startMethod.append('rect')
-    .attr('class', 'bar')
-    .attr('fill', colorMap['schedule'])
+    .attr('class', 'bar schedule')
     .attr('width', barWidth)
     .attr('x', getXLocation)
     .attr('y', (d) => yLeft(d.schedule))
@@ -121,8 +119,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
 
   // Manual
   startMethod.append('rect')
-    .attr('class', 'bar')
-    .attr('fill', colorMap['manual'])
+    .attr('class', 'bar manual')
     .attr('width', barWidth)
     .attr('x', getXLocation)
     .attr('y', (d) => yLeft(d.manual) - (height - yLeft(d.schedule)) )
@@ -143,8 +140,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
 
   // Running
   statistics.append('rect')
-    .attr('class', 'bar')
-    .attr('fill', colorMap['running'])
+    .attr('class', 'bar running')
     .attr('width', barWidth)
     .attr('x', getXLocation)
     .attr('y', (d) => yLeft(d.running))
@@ -152,8 +148,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
 
   // Successful
   statistics.append('rect')
-    .attr('class', 'bar')
-    .attr('fill', colorMap['successful'])
+    .attr('class', 'bar successful')
     .attr('width', barWidth)
     .attr('x', getXLocation)
     .attr('y', (d) => yLeft(d.successful) - (height - yLeft(d.running)))
@@ -161,8 +156,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
 
   // Failed
   statistics.append('rect')
-    .attr('class', 'bar')
-    .attr('fill', colorMap['failed'])
+    .attr('class', 'bar failed')
     .attr('width', barWidth)
     .attr('x', getXLocation)
     .attr('y', (d) => yLeft(d.failed) - (height - yLeft(d.running)) - (height - yLeft(d.successful)))
@@ -183,11 +177,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
 
   pathGroup.append('path')
     .datum(data)
-    .attr('fill', 'none')
-    .attr('stroke', '#bbbbbb')
-    .attr('stroke-linejoin', 'round')
-    .attr('stroke-linecap', 'round')
-    .attr('stroke-width', 1.5)
+    .attr('class', 'delay-path')
     .attr('d', line);
 
   pathGroup.append('g')
@@ -195,12 +185,38 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     .selectAll('circle')
       .data(data)
     .enter().append('circle')
-      .attr('class', 'dot')
+      .attr('class', 'dot delay-dot')
       .attr('r', 5)
       .attr('cx', (d) => x(d.time))
-      .attr('cy', (d) => yRight(d.delay))
-      .style('fill', '#bbbbbb')
-      .style('stroke', 'white')
-      .style('stroke-width', 2);
+      .attr('cy', (d) => yRight(d.delay));
 
+
+  // Hover and Click Events Handler
+  let stepWidth = x.bandwidth();
+  let handlerGroup = chart.append('g')
+    .attr('class', 'handler');
+
+  let handler = handlerGroup.selectAll('rect')
+    .data(data)
+    .enter();
+
+  handler.append('rect')
+    .attr('class', 'handler-selector pointer')
+    .attr('opacity', 0)
+    .attr('data', (d) => d.time)
+    .attr('width', stepWidth)
+    .attr('x', getXLocation)
+    .attr('height', height);
+
+  d3.selectAll('.handler-selector')
+    .on('click', (data) => {
+      console.log('data', data);
+
+      DashboardStore.dispatch({
+        type: DashboardActions.setDisplayBucket,
+        payload: {
+          displayBucketInfo: data
+        }
+      });
+    });
 }

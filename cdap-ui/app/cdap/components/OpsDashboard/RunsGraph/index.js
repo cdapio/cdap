@@ -16,53 +16,174 @@
 
 import React, { Component } from 'react';
 import {renderGraph} from 'components/OpsDashboard/RunsGraph/graphRenderer';
-
-import DATA from './data';
+import IconSVG from 'components/IconSVG';
+import MyOperationsApi from 'api/operations';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import moment from 'moment';
+import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
+import ToggleRunsList from 'components/OpsDashboard/RunsGraph/ToggleRunsList';
 
 require('./RunsGraph.scss');
 
+const RUNS_GRAPH_CONTAINER = 'runs-graph-container';
+
 export default class ClassName extends Component {
   state = {
-    data: []
+    loading: true,
+    data: [],
+    pipelineCount: 0,
+    customAppCount: 0
   };
 
-  componentWillMount() {
-    let data = DATA.split('\n').map((line) => {
-      let split = line.split(',');
-      let time = split.shift();
-
-      split = split.map(item => parseInt(item, 10));
-
-      return {
-        time,
-        manual: split[0],
-        schedule: split[1],
-        running: split[2],
-        successful: split[3],
-        failed: split[4],
-        delay: split[5]
-      };
-    });
-
-    this.setState({data});
+  componentDidMount() {
+    this.getData();
   }
 
-  componentDidMount() {
-    let width = 1100,
-        height = 400;
-    renderGraph('#runs-graph', width, height, this.state.data);
+  getData() {
+    let start = moment().subtract(24, 'h').format('x'),
+        duration = 1440;
+
+    start = parseInt(start, 10);
+
+    let params = {
+      start,
+      duration, // 24 hours in minutes
+      namespace: getCurrentNamespace()
+    };
+
+    MyOperationsApi.getDashboard(params)
+      .subscribe((res) => {
+        let {
+          pipelineCount,
+          customAppCount,
+          buckets
+        } = parseDashboardData(res, start, duration);
+
+        let data = Object.keys(buckets).map((time) => {
+          return {
+            ...buckets[time],
+            time
+          };
+        });
+
+        this.setState({
+          pipelineCount,
+          customAppCount,
+          data,
+          loading: false
+        });
+
+        // Render Graph
+        let containerElem = document.getElementById(RUNS_GRAPH_CONTAINER);
+
+        let width = containerElem.offsetWidth,
+            height = 230;
+        renderGraph('#runs-graph', width, height, this.state.data);
+      });
   }
 
   render() {
     return (
       <div className="runs-graph-container">
-        <h1 className="text-xs-center">
-          Runs Graph
-        </h1>
+        <div className="top-panel">
+          <div className="title">
+            Runs Timeline
+          </div>
 
-        <div className="runs-graph">
-          <svg id="runs-graph" />
+          <div className="type-selector">
+            <div className="type-item">
+              <IconSVG name="icon-check-square" />
+              <span>Pipelines ({this.state.pipelineCount})</span>
+            </div>
+
+            <div className="type-item">
+              <IconSVG name="icon-check-square" />
+              <span>Custom Apps ({this.state.customAppCount})</span>
+            </div>
+          </div>
+
+          <div className="display-picker">
+            <div className="time-picker">
+              <div>Last 24 hours</div>
+            </div>
+
+            <div className="display-type">
+              <span className="active">Chart</span>
+              <span className="separator">|</span>
+              <span>Table</span>
+            </div>
+          </div>
         </div>
+
+        <div className="runs-graph-container">
+          <div id={RUNS_GRAPH_CONTAINER}>
+            <svg id="runs-graph" />
+          </div>
+        </div>
+
+        <div className="legends">
+          <div className="start-method-legend">
+            <div className="select-item">
+              <IconSVG name="icon-check-square" />
+              <IconSVG
+                name="icon-circle"
+                className="manual"
+              />
+              <span>Manually started runs</span>
+            </div>
+
+            <div className="select-item">
+              <IconSVG name="icon-check-square" />
+              <IconSVG
+                name="icon-circle"
+                className="schedule"
+              />
+              <span>Scheduled/triggered runs</span>
+            </div>
+          </div>
+
+          <div className="status-legend">
+            <div className="select-item">
+              <IconSVG name="icon-check-square" />
+              <IconSVG
+                name="icon-circle"
+                className="running"
+              />
+              <span>Running</span>
+            </div>
+
+            <div className="select-item">
+              <IconSVG name="icon-check-square" />
+              <IconSVG
+                name="icon-circle"
+                className="successful"
+              />
+              <span>Successful runs</span>
+            </div>
+
+            <div className="select-item">
+              <IconSVG name="icon-check-square" />
+              <IconSVG
+                name="icon-circle"
+                className="failed"
+              />
+              <span>Failed runs</span>
+            </div>
+          </div>
+
+          <div className="delay-legend">
+            <div className="select-item">
+              <IconSVG name="icon-check-square" />
+              <IconSVG
+                name="icon-circle"
+                className="delay"
+              />
+              <span>Delay between starting and running</span>
+            </div>
+          </div>
+        </div>
+
+        <ToggleRunsList />
       </div>
     );
   }

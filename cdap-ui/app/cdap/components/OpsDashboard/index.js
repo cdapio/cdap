@@ -16,13 +16,39 @@
 
 import React, { Component } from 'react';
 import RunsGraph from 'components/OpsDashboard/RunsGraph';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import {Provider} from 'react-redux';
+import DashboardStore from 'components/OpsDashboard/store/DashboardStore';
+import RunsList from 'components/OpsDashboard/RunsList';
+
+require('./OpsDashboard.scss');
 
 export default class OpsDashboard extends Component {
   render() {
     return (
-      <div className="ops-dashboard">
-        <RunsGraph />
-      </div>
+      <Provider store={DashboardStore}>
+        <div className="ops-dashboard">
+          <div className="header clearfix">
+            <div className="links float-xs-left">
+              <span className="active">Run Monitor</span>
+              <span className="separator">|</span>
+              <span>Reports</span>
+            </div>
+
+            <div className="namespace-picker float-xs-right">
+              <div className="namespace-list">
+                Monitor Namespace <strong>{getCurrentNamespace()}</strong>
+              </div>
+              <div className="monitor-more">
+                Monitor More
+              </div>
+            </div>
+          </div>
+
+          <RunsGraph />
+          <RunsList />
+        </div>
+      </Provider>
     );
   }
 }
