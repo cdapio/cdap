@@ -103,7 +103,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   runtimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   savedRuntimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   resolvedMacros: {},
-  customConfigKeyValuePairs: {},
+  customConfigKeyValuePairs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   postRunActions: [],
   properties: {},
   engine: HYDRATOR_DEFAULT_VALUES.engine,
@@ -243,11 +243,15 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
       let runtimeArgs = getRuntimeArgsForDisplay(state.runtimeArgs, resolvedMacros);
+      let savedRuntimeArgs = cloneDeep(runtimeArgs);
+      let validToSave = validateConfig(runtimeArgs, state.customConfigKeyValuePairs);
 
       return {
         ...state,
         resolvedMacros,
-        runtimeArgs
+        runtimeArgs,
+        savedRuntimeArgs,
+        validToSave
       };
     }
     case ACTIONS.RESET_RUNTIME_ARG_TO_RESOLVED_VALUE:

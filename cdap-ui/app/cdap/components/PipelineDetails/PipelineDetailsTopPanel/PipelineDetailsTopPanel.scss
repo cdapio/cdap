@@ -17,6 +17,7 @@
 @import '../../../styles/variables.scss';
 $pipeline-type-icon-size: 20px;
 $top-panel-height: 55px;
+$btn-border-color: $grey-05;
 
 .pipeline-details-top-panel {
   height: $top-panel-height;
@@ -25,7 +26,7 @@ $top-panel-height: 55px;
   z-index: 999;
   width: 100%;
   display: grid;
-  grid-template-columns: 40% 40%;
+  grid-template-columns: 40% 40% 20%;
 
   .pipeline-metadata {
     padding-top: 5px;
@@ -102,29 +103,32 @@ $top-panel-height: 55px;
   }
 
   .pipeline-details-buttons {
-    .pipeline-scheduler,
-    .pipeline-configure {
+    .pipeline-action-container {
       display: inline-block;
-      height: $top-panel-height;
       position: relative;
+      margin: 6px 0;
     }
 
-    .pipeline-scheduler-btn,
-    .pipeline-configure-btn {
+    .pipeline-action-btn {
       height: 100%;
+      padding: 0 12px;
 
       .icon-svg {
         height: 21px;
         width: 21px;
       }
 
-      &.btn-select {
+      &.btn-select,
+      &:hover {
         background-color: $grey-08;
+        color: $grey-01;
       }
     }
 
-    .pipeline-scheduler {
+    .pipeline-scheduler-container {
       .pipeline-scheduler-btn {
+        border-right: 1px solid $btn-border-color;
+
         .icon-runtimestarttime {
           &.unschedule-icon {
             color: $brand-primary;
@@ -133,12 +137,78 @@ $top-panel-height: 55px;
       }
     }
 
-    .pipeline-configure {
+    .pipeline-configure-container {
       .pipeline-configure-btn {
+        border-right: 1px solid $btn-border-color;
+
         .icon-sliders {
           transform: rotate(90deg);
         }
       }
+    }
+
+    .pipeline-summary-container {
+      .pipeline-summary-btn {
+        border-left: 1px solid $btn-border-color;
+      }
+
+      .pipeline-summary {
+        /* 50px header + 55px detail view top panel - 1px to overlap border */
+        top: 104px;
+      }
+    }
+
+    .pipeline-stop-container {
+      margin: 6px 6px 6px 8px;
+
+      .icon-stop {
+        color: $grey-03;
+      }
+    }
+
+    .pipeline-run-container {
+      margin: 6px 8px 6px 0;
+    }
+
+    .pipeline-run-container,
+    .pipeline-stop-container {
+      height: 42px;
+
+      .pipeline-run-btn,
+      .pipeline-stop-btn {
+        border: 1px solid $btn-border-color;
+        border-radius: 5px;
+        padding-top: 1px;
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+
+    .pipeline-details-container {
+      .pipeline-details-btn {
+        border-right: 1px solid $btn-border-color;
+        margin-right: 2px;
+
+        .btn-container {
+          color: $grey-01;
+        }
+      }
+    }
+
+    .pipeline-actions-container {
+      .pipeline-actions-btn {
+        border-left: 1px solid $btn-border-color;
+      }
+    }
+  }
+
+  .plus-button {
+    position: absolute;
+    right: 20px;
+    margin-top: 20px;
+
+    .popper {
+      display: none;
     }
   }
 }

@@ -283,6 +283,14 @@ const composeEnhancers = (storeTitle) =>
       name: storeTitle
     }) : compose;
 
+const reverseWithoutMutating = (array) => {
+  let newArray = [];
+  for (let i = array.length - 1; i >= 0; i--) {
+    newArray.push(array[i]);
+  }
+  return newArray;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -310,5 +318,6 @@ export {
   ONE_MONTH_SECONDS,
   ONE_YEAR_SECONDS,
   isNumeric,
-  wholeArrayIsNumeric
+  wholeArrayIsNumeric,
+  reverseWithoutMutating
 };

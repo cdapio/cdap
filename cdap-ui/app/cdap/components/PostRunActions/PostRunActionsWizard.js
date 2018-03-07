@@ -241,7 +241,6 @@ export default class PostRunActionsWizard extends Component {
         toggle={this.toggleAndPreventPropagation}
         backdrop="static"
         modalClassName="post-run-actions-modal hydrator-modal"
-        zIndex={1061}
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
         <div className="modal-header">
