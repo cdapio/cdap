@@ -22,6 +22,12 @@
 
   &.cask-market {
     height: 75vh;
+    .modal-body {
+      height: calc(100% - 51px);
+      > div {
+        height: 100%;
+      }
+    }
   }
 
   &.add-entity-modal {
