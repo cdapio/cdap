@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,24 @@ class HydratorPlusPlusHydratorService {
     } else {
       return this._parseOldConfig(pipeline, isStudio);
     }
+  }
+
+  getNodesFromStages(stages) {
+    let nodes = stages.map(stage => {
+      let nodeInfo = angular.extend(stage, {
+        type: stage.plugin.type,
+        label: stage.plugin.label,
+        icon: this.DAGPlusPlusFactory.getIcon(stage.plugin.name)
+      });
+      return nodeInfo;
+    });
+    return nodes;
+  }
+
+  getNodesMap(nodes) {
+    let nodesMap = {};
+    nodes.forEach(node => nodesMap[node.name] = node);
+    return nodesMap;
   }
 
   _parseNewConfigStages(config, isStudio) {

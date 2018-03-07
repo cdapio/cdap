@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,30 +15,48 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions, $stateParams, PipelineAvailablePluginsActions) {
+  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, HydratorPlusPlusDetailMetricsActions, $stateParams, PipelineAvailablePluginsActions, GLOBALS) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
-    HydratorPlusPlusDetailRunsStore.init(rPipelineDetail);
-    HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
-
+    const actionCreator = window.CaskCommon.PipelineDetailActionCreator;
     this.pipelineType = rPipelineDetail.artifact.name;
+    let programType = this.pipelineType === GLOBALS.etlDataPipeline ? 'workflows' : 'spark';
+    let programName = this.pipelineType === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
+    let scheduleId = GLOBALS.defaultScheduleId;
 
+    let currentRunId;
+    let pluginsFetched = false;
+
+    actionCreator.init(rPipelineDetail);
     let runid = $stateParams.runid;
     if (runid) {
-      HydratorPlusPlusDetailActions.setCurrentRun(runid);
+      actionCreator.setCurrentRun(runid);
     }
-    var params = HydratorPlusPlusDetailRunsStore.getParams();
-    params.scope = $scope;
-    var currentRunId;
-    this.PipelineAvailablePluginsActions = PipelineAvailablePluginsActions;
 
-    this.PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, rPipelineDetail.config.stages);
+    actionCreator.getRuns({
+      namespace: $stateParams.namespace,
+      appId: rPipelineDetail.name,
+      programType,
+      programName
+    });
 
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(function () {
+    actionCreator.fetchScheduleStatus({
+      namespace: $stateParams.namespace,
+      appId: rPipelineDetail.name,
+      scheduleId
+    });
 
-      var latestRunId = HydratorPlusPlusDetailRunsStore.getLatestMetricRunId();
-      var latestRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
+    let pipelineDetailStoreSubscription = window.CaskCommon.PipelineDetailStore.subscribe(() => {
+      let pipelineDetailStoreState = window.CaskCommon.PipelineDetailStore.getState();
 
-      if (currentRunId === latestRunId) {
+      if (!pluginsFetched) {
+        PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, pipelineDetailStoreState.config.stages);
+        pluginsFetched = true;
+      }
+
+      let latestRun = pipelineDetailStoreState.currentRun;
+      let latestRunId = latestRun.runid;
+
+      if (!latestRunId || currentRunId === latestRunId) {
         return;
       }
 
@@ -46,34 +64,26 @@ angular.module(PKG.name + '.feature.hydrator')
       // When current run id changes reset the metrics in the DAG.
       HydratorPlusPlusDetailMetricsActions.reset();
 
-      if (latestRunId) {
-        var appParams = HydratorPlusPlusDetailRunsStore.getParams();
-        var logsParams = HydratorPlusPlusDetailRunsStore.getLogsParams();
-        var metricParams = {
-          namespace: appParams.namespace,
-          app: appParams.app,
-          run: latestRunId
-        };
-        var programType = HydratorPlusPlusDetailRunsStore.getMetricProgramType();
-        metricParams[programType] = logsParams.programId;
-        if (latestRun.status !== 'RUNNING') {
-          HydratorPlusPlusDetailMetricsActions.requestForMetrics(metricParams);
-        } else {
-          HydratorPlusPlusDetailMetricsActions.pollForMetrics(metricParams);
-        }
+      let metricProgramType = programType === 'workflows' ? 'workflow' : programType;
+
+      let metricParams = {
+        namespace: $stateParams.namespace,
+        app: rPipelineDetail.name,
+        run: latestRunId,
+        [metricProgramType]: programName
+      };
+
+      if (latestRun.status !== 'RUNNING') {
+        HydratorPlusPlusDetailMetricsActions.requestForMetrics(metricParams);
+      } else {
+        HydratorPlusPlusDetailMetricsActions.pollForMetrics(metricParams);
       }
-
     });
-
-    HydratorPlusPlusDetailActions.pollRuns(
-      HydratorPlusPlusDetailRunsStore.getApi(),
-      params
-    );
 
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
-      HydratorPlusPlusDetailRunsStore.reset();
-      HydratorPlusPlusDetailNonRunsStore.reset();
+      actionCreator.reset();
+      pipelineDetailStoreSubscription();
       HydratorPlusPlusDetailMetricsActions.reset();
     });
   });
