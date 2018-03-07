@@ -19,19 +19,70 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import PipelineConfigurations from 'components/PipelineConfigurations';
+import myPreferenceApi from 'api/preference';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {applyRuntimeArgs, revertRuntimeArgsToSavedValues} from 'components/PipelineConfigurations/Store/ActionCreator';
+import isEqual from 'lodash/isEqual';
+
+const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
+  let resolvedMacros = {...macrosMap};
+  for (let pref in resolvedPrefs) {
+    if (resolvedPrefs.hasOwnProperty(pref) && resolvedMacros.hasOwnProperty(pref)) {
+      resolvedMacros[pref] = resolvedPrefs[pref];
+    }
+  }
+  return resolvedMacros;
+};
 
 export default class PipelineConfigureButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
-    config: PropTypes.object
+    config: PropTypes.object,
+    macrosMap: PropTypes.array,
+    runtimeArgs: PropTypes.array
   };
 
   state = {
     showModeless: false
   };
 
+  getRuntimeArgumentsAndToggleModeless = () => {
+    if (Object.keys(this.props.macrosMap).length !== 0 && !this.state.showModeless) {
+      myPreferenceApi
+        .getAppPreferencesResolved({
+          namespace: getCurrentNamespace(),
+          appId: this.props.pipelineName
+        })
+        .subscribe(res => {
+          // let relevantPrefs = getMacrosResolvedByPrefs(res, this.props.macrosMap);
+          let newResolvedMacros = getMacrosResolvedByPrefs(res, this.props.macrosMap);
+          let storeState = PipelineConfigurationsStore.getState();
+
+          // If preferences have changed, then update macro values with new preferences.
+          // Otherwise, keep the values as they are
+          if (!storeState || (storeState && !isEqual(newResolvedMacros, storeState.resolvedMacros))) {
+            PipelineConfigurationsStore.dispatch({
+              type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
+              payload: { resolvedMacros: newResolvedMacros }
+            });
+            applyRuntimeArgs();
+          }
+
+          this.toggleModeless();
+        }, (err) => {
+          console.log(err);
+        });
+    } else {
+      this.toggleModeless();
+    }
+  };
+
   toggleModeless = () => {
+    if (this.state.showModeless) {
+      revertRuntimeArgsToSavedValues();
+    }
     this.setState({
       showModeless: !this.state.showModeless
     });
@@ -40,7 +91,7 @@ export default class PipelineConfigureButton extends Component {
   renderConfigureButton() {
     return (
       <div
-        onClick={this.toggleModeless}
+        onClick={this.getRuntimeArgumentsAndToggleModeless}
         className={classnames("btn pipeline-configure-btn", {"btn-select" : this.state.showModeless})}
       >
         <div className="btn-container">

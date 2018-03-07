@@ -143,26 +143,28 @@ angular.module(PKG.name + '.feature.hydrator')
       let pipelineDetailStoreState = this.PipelineDetailStore.getState();
       let runs = pipelineDetailStoreState.runs.reverse();
       this.currentRun = pipelineDetailStoreState.currentRun;
-      let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
-      this.$interval.cancel(this.currentRunTimeCounter);
-      if (status === 'Running') {
-        this.currentRunTimeCounter = this.$interval(() => {
-          let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.start);
-          this.currentRun = Object.assign({}, this.currentRun, {
-            duration
-          });
-        }, 1000);
+      if (this.currentRun) {
+        let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
+        this.$interval.cancel(this.currentRunTimeCounter);
+        if (status === 'Running') {
+          this.currentRunTimeCounter = this.$interval(() => {
+            let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.start);
+            this.currentRun = Object.assign({}, this.currentRun, {
+              duration
+            });
+          }, 1000);
+        }
+        let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
+        this.currentRun = Object.assign({}, this.currentRun, {
+          duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
+          startTime: this.currentRun.start ? this.moment(this.currentRun.start * 1000).format('hh:mm:ss a') : null,
+          starting: !this.currentRun.start ? this.currentRun.starting : null,
+          statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
+          status
+        });
+        let runNumber = _.findIndex(runs, {runid: this.currentRun.runid});
+        this.currentRunIndex = runNumber + 1;
       }
-      let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
-      this.currentRun = Object.assign({}, this.currentRun, {
-        duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
-        startTime: this.currentRun.start ? this.moment(this.currentRun.start * 1000).format('hh:mm:ss a') : null,
-        starting: !this.currentRun.start ? this.currentRun.starting : null,
-        statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
-        status
-      });
-      let runNumber = _.findIndex(runs, {runid: this.currentRun.runid});
-      this.currentRunIndex = runNumber + 1;
       this.totalRuns = runs.length;
     });
 
