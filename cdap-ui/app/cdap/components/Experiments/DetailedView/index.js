@@ -22,12 +22,13 @@ import {
   getExperimentDetails,
   getModelsInExperiment,
   getModelStatus,
-  updatePaginationForModels,
+  updateQueryParametersForModels,
   handleModelsPageChange,
   resetExperimentDetailStore,
   resetNewlyTrainingModel,
   setAlgorithmsList
 } from 'components/Experiments/store/ActionCreator';
+import {MMDS_SORT_METHODS, MMDS_SORT_COLUMN} from 'components/Experiments/store';
 import ConnectedTopPanel from 'components/Experiments/DetailedView/TopPanel';
 import ModelsTableWrapper from 'components/Experiments/DetailedView/ModelsTable';
 import Mousetrap from 'mousetrap';
@@ -50,8 +51,18 @@ export default class ExperimentDetails extends Component {
     Mousetrap.bind('left', this.goToPreviousPage);
     setAlgorithmsList();
     let { experimentId } = this.props.match.params;
-    let { offset: modelsOffset, limit: modelsLimit } = this.getQueryObject(queryString.parse(this.props.location.search));
-    updatePaginationForModels({modelsOffset, modelsLimit});
+    let {
+      offset: modelsOffset,
+      limit: modelsLimit,
+      sortMethod: modelsSortMethod,
+      sortColumn: modelsSortColumn
+    } = this.getQueryObject(queryString.parse(this.props.location.search));
+    updateQueryParametersForModels({
+      modelsOffset,
+      modelsLimit,
+      modelsSortMethod,
+      modelsSortColumn
+    });
     getExperimentDetails(experimentId);
     getModelsInExperiment(experimentId).subscribe(({models}) => {
       models.forEach(model => this.modelStatusObservables.push(getModelStatus(experimentId, model.id)));
@@ -103,8 +114,10 @@ export default class ExperimentDetails extends Component {
     }
     let {
       offset = DEFAULT_EXPERIMENT_DETAILS.modelsOffset,
-      limit = DEFAULT_EXPERIMENT_DETAILS.modelsLimit
+      limit = DEFAULT_EXPERIMENT_DETAILS.modelsLimit,
+      sort
     } = query;
+    let sortMethod, sortColumn;
     offset = parseInt(offset, 10);
     limit = parseInt(limit, 10);
     if (isNaN(offset)) {
@@ -113,7 +126,15 @@ export default class ExperimentDetails extends Component {
     if (isNaN(limit)) {
       limit = DEFAULT_EXPERIMENT_DETAILS.modelsLimit;
     }
-    return { offset, limit };
+    if (!sort) {
+      sortMethod = MMDS_SORT_METHODS.ASC;
+      sortColumn = MMDS_SORT_COLUMN;
+    } else {
+      let sortSplit = sort.split(' ');
+      sortColumn = sortSplit[0] || MMDS_SORT_COLUMN;
+      sortMethod = sortSplit[1] || MMDS_SORT_METHODS.ASC;
+    }
+    return { offset, limit, sortMethod, sortColumn };
   };
 
   render() {

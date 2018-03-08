@@ -15,7 +15,12 @@
 */
 
 @import "../../../styles/variables.scss";
+@import "../../../styles/mixins.scss";
 @import "../ExperimentsVariables.scss";
+
+.experiments-list-container {
+  height: 100%;
+}
 
 .experiments-listview {
   padding: 0 $listview-padding;
@@ -40,7 +45,6 @@
   }
   > .clearfix {
     margin-top: 20px;
-    height: calc(100% - 380px); // 50px (top panel) + 307 for chart + 20px margin top in this element
     .pagination-with-title {
       margin-right: 0;
     }
@@ -50,6 +54,44 @@
     .table-scroll {
       height: calc(100% - 70px); // 70px for pagination + table header. .table-scroll is the table body
       overflow-y: auto;
+    }
+  }
+
+  @include grid();
+
+  .grid.grid-container {
+    // 50px (top panel) + 310 for chart + 51px for pagination
+    max-height: calc(100% - 411px);
+
+    .grid-header {
+      .grid-item {
+        grid-template-rows: auto;
+      }
+      .sortable-header {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        &:hover {
+          text-decoration: underline;
+        }
+        .icon-svg {
+          font-size: 1.3rem;
+        }
+      }
+    }
+
+    .grid-item {
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: 50px;
+      > div {
+        padding: 0;
+      }
+      small {
+        color: $cdap-lightgray;
+      }
+    }
+    a.grid-item {
+      color: inherit;
     }
   }
   .table {

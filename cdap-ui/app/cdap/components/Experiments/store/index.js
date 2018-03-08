@@ -21,12 +21,23 @@ const ACTIONS = {
   SET_EXPERIMENTS_LIST: 'SET_EXPERIMENTS_LIST',
   SET_EXPERIMENTS_LOADING: 'SET_EXPERIMENTS_LOADING',
   SET_MODELS_IN_EXPERIMENT: 'SET_MODELS_IN_EXPERIMENT',
+  SET_EXPERIMENTS_SORT: 'SET_EXPERIMENTS_SORT',
+  SET_QUERY_PARAMS: 'SET_QUERY_PARAMS',
   SET_PAGINATION: 'SET_PAGINATION'
 };
+
+export const MMDS_SORT_METHODS = {
+  ASC: 'asc',
+  DESC: 'desc'
+};
+
+export const MMDS_SORT_COLUMN = 'name';
 
 export const DEFAULT_EXPERIMENTS = {
   list: [],
   offset: 0,
+  sortMethod: MMDS_SORT_METHODS.ASC,
+  sortColumn: MMDS_SORT_COLUMN,
   totalPages: 0,
   totalCount: 0,
   limit: 10,
@@ -67,6 +78,19 @@ const experiments = (state = DEFAULT_EXPERIMENTS, action = defaultAction) => {
           }
           return experiment;
         })
+      };
+    case ACTIONS.SET_EXPERIMENTS_SORT:
+      return {
+        ...state,
+        sortMethod: action.payload.sortMethod,
+        sortColumn: action.payload.sortColumn
+      };
+    case ACTIONS.SET_QUERY_PARAMS:
+      return {
+        ...state,
+        sortMethod: action.payload.sortMethod,
+        sortColumn: action.payload.sortColumn,
+        offset: action.payload.offset
       };
     default:
       return state;
