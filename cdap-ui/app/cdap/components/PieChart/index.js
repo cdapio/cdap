@@ -31,7 +31,7 @@ export default class PieChart extends Component {
   };
   state = {
     data: this.props.data,
-    id: uuidV4()
+    id: `pie-${uuidV4()}`
   };
   componentDidMount() {
     this.drawPie();

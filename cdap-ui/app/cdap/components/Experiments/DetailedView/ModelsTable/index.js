@@ -40,7 +40,7 @@ import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
 
 require('./DetailedViewModelsTable.scss');
-
+const MODELSTATES = ['PREPARING', 'SPLITTING', 'DATA_READY'];
 let tableHeaders = [
   {
     label: 'Model Name',
@@ -281,7 +281,7 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
     }),
     key: uuidV4()
   };
-  let inSplitStep = (['SPLITTING', 'DATA_READY', 'EMPTY'].indexOf(model.status) !== -1);
+  let inSplitStep = (MODELSTATES.indexOf(model.status) !== -1);
   if (inSplitStep) {
     Component = Link;
     props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${model.id}`;
