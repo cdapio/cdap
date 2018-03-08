@@ -16,18 +16,44 @@
 
 package co.cask.cdap.internal.provision;
 
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-
-import java.util.Map;
-
 /**
- * Provides provisioners.
+ * Cluster operations.
  */
-public interface ProvisionerProvider {
+public class ClusterOp {
+  private final Type type;
+  private final Status status;
+
+  public ClusterOp(Type type, Status status) {
+    this.type = type;
+    this.status = status;
+  }
+
+  public Type getType() {
+    return type;
+  }
+
+  public Status getStatus() {
+    return status;
+  }
 
   /**
-   * @return map from provisioner name to provisioner
+   * Status of a provisioner operation.
    */
-  Map<String, Provisioner> loadProvisioners();
+  public enum Status {
+    REQUESTING_CREATE,
+    POLLING_CREATE,
+    CREATED,
+    REQUESTING_DELETE,
+    POLLING_DELETE,
+    FAILED,
+    ORPHANED
+  }
 
+  /**
+   * Type of operation
+   */
+  public enum Type {
+    PROVISION,
+    DEPROVISION
+  }
 }

@@ -72,7 +72,6 @@ public final class RunRecordMeta extends RunRecord {
     this.artifactId = artifactId;
     this.principal = principal;
   }
-
   @Nullable
   public String getTwillRunId() {
     return twillRunId;

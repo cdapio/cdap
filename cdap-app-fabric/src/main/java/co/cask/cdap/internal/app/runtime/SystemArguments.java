@@ -26,6 +26,9 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.proto.profile.ProvisionerPropertyValue;
 import co.cask.http.NettyHttpService;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
@@ -74,6 +77,11 @@ public final class SystemArguments {
   // Keys for http service
   public static final String SERVICE_THREADS = "system.service.threads";
   public static final String SERVICE_THREAD_KEEPALIVE_SECS = "system.service.thread.keepalive.secs";
+
+  // Keys for profiles
+  public static final String PROFILE_NAME = "system.profile.name";
+  public static final String PROFILE_PROVISIONER = "system.profile.provisioner";
+  public static final String PROFILE_PROPERTIES_PREFIX = "system.profile.properties.";
 
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
@@ -334,6 +342,52 @@ public final class SystemArguments {
       builder.setExecThreadKeepAliveSeconds(keepAliveSecs);
     }
     return builder;
+  }
+
+  /**
+   * Adds any profile related arguments to the map
+   *
+   * @param args arguments to add to
+   * @param profile the profile to add
+   */
+  public static void addProfileArgs(Map<String, String> args, Profile profile) {
+    args.put(PROFILE_NAME, profile.getScopedName());
+    args.put(PROFILE_PROVISIONER, profile.getProvisioner().getName());
+    for (ProvisionerPropertyValue property : profile.getProvisioner().getProperties()) {
+      String key = PROFILE_PROPERTIES_PREFIX + property.getName();
+      if (!property.isEditable()) {
+        args.put(key, property.getValue());
+      } else if (!args.containsKey(key)) {
+        args.put(key, property.getValue());
+      }
+    }
+  }
+
+  /**
+   * Get the name of the provisioner for the profile
+   *
+   * @param args arguments
+   * @return name of the provisioner for the profile
+   */
+  public static String getProfileProvisioner(Map<String, String> args) {
+    return args.get(PROFILE_PROVISIONER);
+  }
+
+  /**
+   * Get the name of the provisioner for the profile
+   *
+   * @param args arguments
+   * @return name of the provisioner for the profile
+   */
+  public static Map<String, String> getProfileProperties(Map<String, String> args) {
+    Map<String, String> properties = new HashMap<>();
+    for (Map.Entry<String, String> arg : args.entrySet()) {
+      if (arg.getKey().startsWith(PROFILE_PROPERTIES_PREFIX)) {
+        String key = arg.getKey().substring(PROFILE_PROPERTIES_PREFIX.length());
+        properties.put(key, arg.getValue());
+      }
+    }
+    return properties;
   }
 
   /**

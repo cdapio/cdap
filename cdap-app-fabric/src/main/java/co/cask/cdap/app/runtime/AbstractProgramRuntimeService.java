@@ -105,9 +105,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
+  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
     ProgramId programId = programDescriptor.getProgramId();
-    RunId runId = RunIds.generate();
 
     // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
     programStateWriter.start(programId.run(runId), options, null, programDescriptor.getArtifactId().toApiArtifactId());

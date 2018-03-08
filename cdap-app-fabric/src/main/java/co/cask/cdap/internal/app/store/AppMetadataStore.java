@@ -109,6 +109,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_MESSAGE = "msg";
   private static final Map<ProgramRunStatus, String> STATUS_TYPE_MAP = ImmutableMap.<ProgramRunStatus, String>builder()
+    .put(ProgramRunStatus.PENDING, TYPE_RUN_RECORD_STARTING)
     .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_STARTING)
     .put(ProgramRunStatus.RUNNING, TYPE_RUN_RECORD_STARTED)
     .put(ProgramRunStatus.SUSPENDED, TYPE_RUN_RECORD_SUSPENDED)
@@ -347,7 +348,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     RunRecordMeta meta = RunRecordMeta.builder()
       .setProgramRunId(programRunId)
       .setStartTime(startTs)
-      .setStatus(ProgramRunStatus.STARTING)
+      .setStatus(ProgramRunStatus.PENDING)
       .setProperties(getRecordProperties(systemArgs, runtimeArgs))
       .setSystemArgs(systemArgs)
       .setCluster(cluster)
@@ -444,6 +445,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
+    // can come from provisioning if there was an error while provisioning,
+    // such as some resources could be provisioned but other could not
+    // for example, if 3 out of 5 nodes were provisioned, but the other 2 could not due to quota restrictions
     if (clusterStatus != ProgramRunClusterStatus.PROVISIONED && clusterStatus != ProgramRunClusterStatus.PROVISIONING) {
       LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
                programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONING);
@@ -498,6 +502,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
+    // existing cluster status must be provisioning or deprovisioning.
+    // can come from provisioning if there was an error during the provisioning state,
+    // before the provisioner could be called
     if (clusterStatus != ProgramRunClusterStatus.DEPROVISIONING &&
       clusterStatus != ProgramRunClusterStatus.PROVISIONING) {
       LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
@@ -806,7 +813,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   private boolean isValid(RunRecordMeta existing, byte[] sourceId, String recordType) {
     byte[] existingSourceId = existing.getSourceId();
-    if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) <= 0) {
+    if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) < 0) {
       LOG.debug("Current source id '{}' is not larger than the existing source id '{}' in the existing " +
                   "run record meta '{}'. Skip recording program {}.",
                 Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing, recordType);
@@ -880,6 +887,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
         }
         runRecords.putAll(getHistoricalRuns(programId, status, startTime, endTime, limit - runRecords.size(), filter));
         return runRecords;
+      case PENDING:
       case STARTING:
         Predicate<RunRecordMeta> stateFilter = record -> record.getStatus() == status;
         if (filter != null) {

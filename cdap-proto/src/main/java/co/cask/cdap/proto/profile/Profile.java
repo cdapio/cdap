@@ -50,6 +50,10 @@ public class Profile {
     return name;
   }
 
+  public String getScopedName() {
+    return scope.name() + ":" + name;
+  }
+
   public EntityScope getScope() {
     return scope;
   }

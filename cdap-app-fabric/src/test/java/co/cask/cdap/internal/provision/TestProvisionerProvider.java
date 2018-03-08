@@ -17,17 +17,18 @@
 package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
 /**
- * Provides provisioners.
+ * Provider for test provisioners.
  */
-public interface ProvisionerProvider {
+public class TestProvisionerProvider implements ProvisionerProvider {
+  private static final Map<String, Provisioner> PROVISIONERS = ImmutableMap.of("yarn", new TestProvisioner());
 
-  /**
-   * @return map from provisioner name to provisioner
-   */
-  Map<String, Provisioner> loadProvisioners();
-
+  @Override
+  public Map<String, Provisioner> loadProvisioners() {
+    return PROVISIONERS;
+  }
 }

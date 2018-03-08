@@ -19,12 +19,17 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
@@ -32,42 +37,60 @@ import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.provision.ProvisionerDataset;
+import co.cask.cdap.internal.provision.ProvisionerNotifier;
+import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.logging.LogEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,42 +109,53 @@ import javax.annotation.Nullable;
 /**
  * Service that manages lifecycle of Programs.
  */
-public class ProgramLifecycleService extends AbstractIdleService {
+public class ProgramLifecycleService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleService.class);
 
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+  private static final String NAME = "program.lifecycle.service";
 
   private final Store store;
+  private final ProfileStore profileStore;
   private final ProgramRuntimeService runtimeService;
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final ProvisionerNotifier provisionerNotifier;
+  private final ProgramStateWriter programStateWriter;
+  private final DatasetFramework datasetFramework;
+  private final ProvisioningService provisioningService;
 
   @Inject
-  ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService,
+  ProgramLifecycleService(MessagingService messagingService, CConfiguration cConf,
+                          DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                          MetricsCollectionService metricsCollectionService,
+                          Store store, ProfileStore profileStore, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
-                          AuthenticationContext authenticationContext) {
+                          AuthenticationContext authenticationContext,
+                          ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
+                          ProvisioningService provisioningService) {
+    super(NAME, cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+          false, cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE),
+          cConf.getInt(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
+          messagingService, datasetFramework, txClient, metricsCollectionService);
     this.store = store;
+    this.profileStore = profileStore;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
     this.preferencesStore = preferencesStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    LOG.info("Starting ProgramLifecycleService");
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    LOG.info("Shutting down ProgramLifecycleService");
+    this.provisionerNotifier = provisionerNotifier;
+    this.programStateWriter = programStateWriter;
+    this.datasetFramework = datasetFramework;
+    this.provisioningService = provisioningService;
   }
 
   /**
@@ -162,9 +196,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
       throw new NotFoundException(programId);
     }
 
-    // A program is running if there are any RUNNING or STARTING run records
-    boolean runningRunRecords = !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty();
-    if (runningRunRecords || !store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty()) {
+    // A program is running if there are any PENDING, STARTING, or RUNNING
+    // A program is starting if it's cluster is provisioning, or if the actual program is starting
+    if (!store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty() ||
+      !store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty() ||
+      !store.getRuns(programId, ProgramRunStatus.PENDING, 0, Long.MAX_VALUE, 1).isEmpty()) {
       return ProgramStatus.RUNNING;
     }
     return ProgramStatus.STOPPED;
@@ -223,6 +259,74 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param programId the {@link ProgramId} to start/stop
    * @param overrides the arguments to override in the program's configured user arguments before starting
    * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @return {@link RunId}
+   * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
+   * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
+   * @throws IOException if there is an error starting the program
+   * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
+   *                               a user requires {@link Action#EXECUTE} on the program
+   * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
+   */
+  public synchronized RunId run(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isRunningInSameProgram(programId)) {
+      throw new ConflictException(String.format("Program %s is already running in an version of the same application",
+                                                programId));
+    }
+    if (!isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
+      throw new ConflictException(String.format("Program %s is already running", programId));
+    }
+
+    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
+    Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
+    if (overrides != null) {
+      userArgs.putAll(overrides);
+    }
+    String scopedProfile = userArgs.get(SystemArguments.PROFILE_NAME);
+    ProfileId profileId = scopedProfile == null ?
+      ProfileId.DEFAULT : ProfileId.fromScopedName(programId.getNamespaceId(), scopedProfile);
+    Profile profile = profileStore.getProfile(profileId);
+    ProvisionerSpecification spec = provisioningService.getProvisionerSpec(profile.getProvisioner().getName());
+    if (spec == null) {
+      throw new NotFoundException(String.format("Provisioner '%s' not found.", profile.getProvisioner().getName()));
+    }
+    SystemArguments.addProfileArgs(userArgs, profile);
+
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(sysArgs),
+                                                             new BasicArguments(userArgs), debug);
+    return runInternal(programId, programOptions);
+  }
+
+
+  /**
+   * Runs a Program without authorization.
+   *
+   * Note that this method should only be called through internal service, it does not have auth check for starting the
+   * program.
+   *
+   * @param programId  the {@link ProgramId program} to run
+   * @param programOptions program options
+   * @return {@link RunId}
+   * @throws IOException if there is an error starting the program
+   * @throws NotFoundException if the namespace, application, or program is not found
+   */
+  public synchronized RunId runInternal(ProgramId programId,
+                                        ProgramOptions programOptions) throws NotFoundException, IOException {
+    LOG.info("{} tries to run {} Program {}", authenticationContext.getPrincipal().getName(), programId.getType(),
+             programId.getProgram());
+    RunId runId = RunIds.generate();
+    ProgramDescriptor programDescriptor = store.loadProgram(programId);
+    provisionerNotifier.provisioning(programId.run(runId), programOptions, programDescriptor);
+    return runId;
+  }
+
+
+  /**
+   * Starts a Program with the specified argument overrides, skipping cluster lifecycle steps in the run.
+   *
+   * @param programId the {@link ProgramId} to start/stop
+   * @param overrides the arguments to override in the program's configured user arguments before starting
+   * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
    * @return {@link ProgramController}
    * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
@@ -234,57 +338,37 @@ public class ProgramLifecycleService extends AbstractIdleService {
   public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
     throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && isRunningInSameProgram(programId)) {
+    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isRunningInSameProgram(programId)) {
       throw new ConflictException(String.format("Program %s is already running in an version of the same application",
                                                 programId));
     }
-    if (isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
+    if (!isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
       throw new ConflictException(String.format("Program %s is already running", programId));
     }
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
+    sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = startInternal(programId, sysArgs, userArgs, debug);
-    if (runtimeInfo == null) {
-      throw new IOException(String.format("Failed to start program %s", programId));
-    }
-    return runtimeInfo.getController();
+    BasicArguments systemArguments = new BasicArguments(sysArgs);
+    BasicArguments userArguments = new BasicArguments(userArgs);
+    ProgramOptions options = new SimpleProgramOptions(programId, systemArguments, userArguments, debug);
+    ProgramDescriptor programDescriptor = store.loadProgram(programId);
+    RunId runId = RunIds.generate();
+    return startRun(programDescriptor, options, programId.run(runId));
   }
 
-  /**
-   * Start a Program.
-   *
-   * Note that this method can only be called through internal service, it does not have auth check for starting the
-   * program.
-   *
-   * @param programId  the {@link ProgramId program} to start
-   * @param systemArgs system arguments
-   * @param userArgs user arguments
-   * @param debug enable debug mode
-   * @return {@link ProgramRuntimeService.RuntimeInfo}
-   * @throws IOException if there is an error starting the program
-   * @throws ProgramNotFoundException if program is not found
-   * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
-   *                               a user requires {@link Action#EXECUTE} on the program
-   * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
-   */
-  public ProgramRuntimeService.RuntimeInfo startInternal(final ProgramId programId,
-                                                         final Map<String, String> systemArgs,
-                                                         final Map<String, String> userArgs,
-                                                         boolean debug) throws Exception {
-    LOG.info("{} tries to start {} Program {}", authenticationContext.getPrincipal().getName(), programId.getType(),
-             programId.getProgram());
-    ProgramDescriptor programDescriptor = store.loadProgram(programId);
-    BasicArguments systemArguments = new BasicArguments(systemArgs);
-    BasicArguments userArguments = new BasicArguments(userArgs);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
-      programId, systemArguments, userArguments, debug));
-
-    return runtimeInfo;
+  private synchronized ProgramController startRun(ProgramDescriptor programDescriptor, ProgramOptions programOptions,
+                                                  ProgramRunId programRunId) throws IOException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, programOptions,
+                                                                       RunIds.fromString(programRunId.getRun()));
+    if (runtimeInfo == null) {
+      throw new IOException(String.format("Failed to start program %s", programRunId));
+    }
+    return runtimeInfo.getController();
   }
 
   /**
@@ -530,25 +614,25 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   private boolean isRunning(ProgramId programId) throws Exception {
-    return ProgramStatus.STOPPED != getProgramStatus(programId);
+    return ProgramStatus.RUNNING == getProgramStatus(programId);
   }
 
   /**
-   * Returns whether the given program is running in any versions of the app.
+   * Returns whether the given program is running in all versions of the app.
    * @param programId the id of the program for which the running status in all versions of the app is found
-   * @return whether the given program is running in any versions of the app
+   * @return whether the given program is running in all versions of the app
    * @throws NotFoundException if the application to which this program belongs was not found
    */
   private boolean isRunningInSameProgram(ProgramId programId) throws Exception {
     // check that app exists
     Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(programId.getParent());
-    if (appIds == null) {
+    if (appIds == null || appIds.isEmpty()) {
       throw new NotFoundException(Id.Application.from(programId.getNamespace(), programId.getApplication()));
     }
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     for (ApplicationId appId : appIds) {
       ProgramId pId = appId.program(programId.getType(), programId.getProgram());
-      if (getExistingAppProgramStatus(appSpec, pId).equals(ProgramStatus.RUNNING)) {
+      if (!getExistingAppProgramStatus(appSpec, pId).equals(ProgramStatus.RUNNING)) {
         return true;
       }
     }
@@ -777,5 +861,85 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return runRecord == null || !activeStates.contains(runRecord.getStatus())
       ? Collections.emptyMap()
       : Collections.singletonMap(programId.run(runId), runRecord);
-  };
+  }
+
+  @Nullable
+  @Override
+  protected String loadMessageId(DatasetContext datasetContext) throws Exception {
+    ProvisionerDataset.createIfNotExists(datasetFramework);
+    ProvisionerDataset store = ProvisionerDataset.get(datasetContext);
+    return store.getSubscriberState(NAME);
+  }
+
+  @Override
+  protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
+    ProvisionerDataset store = ProvisionerDataset.get(datasetContext);
+    store.persistSubscriberState(NAME, messageId);
+  }
+
+  @Override
+  protected void processMessages(DatasetContext datasetContext,
+                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+    while (messages.hasNext()) {
+      Notification notification = messages.next().getSecond();
+      Map<String, String> properties = notification.getProperties();
+
+      // Required parameters
+      String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
+      String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
+
+      // Ignore notifications which specify an invalid ProgramRunId, which shouldn't happen
+      if (programRun == null) {
+        return;
+      }
+      ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
+
+      // only listen for cluster provisioned events
+      if (clusterStatusStr == null) {
+        return;
+      }
+      ProgramRunClusterStatus clusterStatus;
+      try {
+        clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Ignore notification with invalid program run cluster status {} for program {}",
+                 clusterStatusStr, programRun);
+        return;
+      }
+      if (clusterStatus == ProgramRunClusterStatus.PROVISIONED) {
+        // need to check this in case this is a retry
+        // can happen, for example, if we failed to persist the message state
+        if (runtimeService.lookup(programRunId.getParent(), RunIds.fromString(programRunId.getRun())) != null) {
+          return;
+        }
+
+        String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
+        Map<String, String> userArguments = userArgumentsString == null ?
+          Collections.emptyMap() : GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
+        String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+        Map<String, String> systemArguments = systemArgumentsString == null ?
+          Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+        boolean debug = Boolean.parseBoolean(properties.get(ProgramOptionConstants.DEBUG_ENABLED));
+        String userId = properties.get(ProgramOptionConstants.USER_ID);
+        ProgramDescriptor programDescriptor =
+          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+
+        String oldUser = SecurityRequestContext.getUserId();
+        try {
+          SecurityRequestContext.setUserId(userId);
+          ProgramOptions programOptions = new SimpleProgramOptions(programRunId.getParent(),
+                                                                   new BasicArguments(systemArguments),
+                                                                   new BasicArguments(userArguments),
+                                                                   debug);
+          try {
+            startRun(programDescriptor, programOptions, programRunId);
+          } catch (Exception e) {
+            programStateWriter.error(programRunId, e);
+          }
+        } finally {
+          SecurityRequestContext.setUserId(oldUser);
+        }
+      }
+    }
+  }
 }

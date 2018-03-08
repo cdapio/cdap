@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
@@ -51,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -76,11 +78,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final AtomicBoolean upgradeComplete;
   private final DatasetFramework datasetFramework;
   private final String recordedProgramStatusPublishTopic;
+  private final ProvisionerNotifier provisionerNotifier;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                       MetricsCollectionService metricsCollectionService) {
+                                       MetricsCollectionService metricsCollectionService,
+                                       ProvisionerNotifier provisionerNotifier) {
     super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), false,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
@@ -89,6 +93,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.datasetFramework = datasetFramework;
     this.upgradeComplete = new AtomicBoolean(false);
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
+    this.provisionerNotifier = provisionerNotifier;
   }
 
   @Nullable
@@ -166,23 +171,23 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
     long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
+    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+    Map<String, String> systemArguments = systemArgumentsString == null ?
+      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+    boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
+    boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
+
     RunRecordMeta recordedRunRecord;
     switch (programRunStatus) {
       case STARTING:
-        String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-        if (systemArgumentsString == null) {
-          LOG.warn("Ignore program starting notification for program {} without system arguments, {}",
-                   programRunId, notification);
-          return;
+        // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
+        // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
+        if (isInWorkflow || skipProvisioning) {
+          writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONING, notification, messageIdBytes,
+                             appMetadataStore);
+          writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONED, notification, messageIdBytes,
+                             appMetadataStore);
         }
-        Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-
-        // TODO: CDAP-13096 move to provisioner status subscriber
-        // for now, save these states here to follow correct lifecycle
-        writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONING, notification, messageIdBytes,
-                           appMetadataStore);
-        writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONED, notification, messageIdBytes,
-                           appMetadataStore);
         recordedRunRecord = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                                 systemArguments, messageIdBytes);
         break;
@@ -231,7 +236,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     if (recordedRunRecord != null) {
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
       if (programRunStatus.isEndState()) {
-        // TODO: send a notification to deprovision the cluster
+        // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
+        // instead, we just record the state as deprovisioned without notifying the provisioner
+        if (isInWorkflow || skipProvisioning) {
+          writeClusterStatus(programRunId, ProgramRunClusterStatus.DEPROVISIONING, notification, messageIdBytes,
+                             appMetadataStore);
+          writeClusterStatus(programRunId, ProgramRunClusterStatus.DEPROVISIONED, notification, messageIdBytes,
+                             appMetadataStore);
+        } else {
+          provisionerNotifier.deprovisioning(programRunId);
+        }
       }
     }
   }

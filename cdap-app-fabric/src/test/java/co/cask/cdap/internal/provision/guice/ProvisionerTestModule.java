@@ -14,22 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package co.cask.cdap.internal.provision.guice;
 
+import co.cask.cdap.internal.provision.ProvisionerNotificationSubscriberService;
+import co.cask.cdap.internal.provision.ProvisionerProvider;
+import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.internal.provision.TestProvisionerProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 
 /**
- * Guice module for provisioner classes.
+ * Guice module for provisioner unit test classes.
  */
-public class ProvisionerModule extends AbstractModule {
+public class ProvisionerTestModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(ProvisionerProvider.class).to(TestProvisionerProvider.class);
     bind(ProvisioningService.class).in(Scopes.SINGLETON);
-    bind(ProvisionerProvider.class).to(ProvisionerExtensionLoader.class);
-    bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
     bind(ProvisionerNotificationSubscriberService.class).in(Scopes.SINGLETON);
   }
 
 }
+

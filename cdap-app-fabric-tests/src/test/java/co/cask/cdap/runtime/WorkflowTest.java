@@ -85,7 +85,8 @@ public class WorkflowTest {
     store.setProvisioning(id.run(pid), ImmutableMap.of(), ImmutableMap.of(),
                           AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStart(id.run(pid), null, ImmutableMap.of(), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id.run(pid), null, ImmutableMap.of(),
+                   AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id.run(pid), startTime + startDelaySecs, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
