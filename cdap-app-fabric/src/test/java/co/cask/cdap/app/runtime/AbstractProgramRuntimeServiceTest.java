@@ -59,7 +59,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -109,20 +108,12 @@ public class AbstractProgramRuntimeServiceTest {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
       final ProgramController controller =
-        runtimeService.run(descriptor, new SimpleProgramOptions(program.getId())).getController();
-      Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
-        @Override
-        public ProgramController.State call() throws Exception {
-          return controller.getState();
-        }
-      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+        runtimeService.run(descriptor, new SimpleProgramOptions(program.getId()), RunIds.generate()).getController();
+      Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
+                    5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return runtimeService.list(ProgramType.WORKER).isEmpty();
-        }
-      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
+      Tasks.waitFor(true, () ->  runtimeService.list(ProgramType.WORKER).isEmpty(),
+                    5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
     } finally {
       runtimeService.stopAndWait();
     }
@@ -206,13 +197,10 @@ public class AbstractProgramRuntimeServiceTest {
             program.getId(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
             new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
 
-          final ProgramController controller = runtimeService.run(descriptor, programOptions).getController();
-          Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
-            @Override
-            public ProgramController.State call() throws Exception {
-              return controller.getState();
-            }
-          }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+          final ProgramController controller = runtimeService.run(descriptor, programOptions, RunIds.generate())
+            .getController();
+          Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
+                        5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
           // Should get an argument
           Arguments args = argumentsMap.get(program.getId());
@@ -230,7 +218,7 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRunnerFactory createProgramRunnerFactory() {
-    return createProgramRunnerFactory(new HashMap<ProgramId, Arguments>());
+    return createProgramRunnerFactory(new HashMap<>());
   }
 
   /**
@@ -240,23 +228,15 @@ public class AbstractProgramRuntimeServiceTest {
    * @param argumentsMap the map to be populated with the user arguments for each run.
    */
   private ProgramRunnerFactory createProgramRunnerFactory(final Map<ProgramId, Arguments> argumentsMap) {
-    return new ProgramRunnerFactory() {
-      @Override
-      public ProgramRunner create(ProgramType programType) {
-        return new ProgramRunner() {
-          @Override
-          public ProgramController run(Program program, ProgramOptions options) {
-            ProgramId programId = program.getId();
-            argumentsMap.put(programId, options.getUserArguments());
+    return programType -> (program, options) -> {
+      ProgramId programId = program.getId();
+      argumentsMap.put(programId, options.getUserArguments());
 
-            Service service = new FastService();
-            ProgramController controller = new ProgramControllerServiceAdapter(service,
-                                                                               programId.run(RunIds.generate()));
-            service.start();
-            return controller;
-          }
-        };
-      }
+      Service service = new FastService();
+      ProgramController controller = new ProgramControllerServiceAdapter(service,
+                                                                         programId.run(RunIds.generate()));
+      service.start();
+      return controller;
     };
   }
 

@@ -265,7 +265,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       systemArtifactLoader.start(),
       programRuntimeService.start(),
-      programLifecycleService.start(),
       metricsCollectionService.start(),
       programNotificationSubscriberService.start()
     ).get();
@@ -289,7 +288,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     systemArtifactLoader.stopAndWait();
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
-    programLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
   }
 }

@@ -33,7 +33,6 @@ public interface ProgramStateWriter {
    *
    * @param programRunId the id of the program run
    * @param twillRunId the run id of the twill application
-   * @param artifactId artifact id of the program
    */
   void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
              ArtifactId artifactId);

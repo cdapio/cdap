@@ -16,11 +16,13 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
@@ -31,15 +33,21 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -48,6 +56,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -59,6 +69,7 @@ public class ProgramNotificationSubscriberServiceTest {
   private static AppMetadataStore metadataStoreDataset;
   private static TransactionExecutor txnl;
   private static ProgramStateWriter programStateWriter;
+  private static ProvisionerNotifier provisionerNotifier;
 
   @BeforeClass
   public static void setupClass() throws Exception {
@@ -75,6 +86,7 @@ public class ProgramNotificationSubscriberServiceTest {
     txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
 
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    provisionerNotifier = injector.getInstance(ProvisionerNotifier.class);
   }
 
   @After
@@ -91,12 +103,24 @@ public class ProgramNotificationSubscriberServiceTest {
   @Test
   public void testAppSpecNotRequiredToWriteState() throws Exception {
     ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
-    ProgramOptions programOptions = new SimpleProgramOptions(programId);
+    Map<String, String> systemArguments = new HashMap<>();
+    systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
+                                                             new BasicArguments());
     ProgramRunId runId = programId.run(RunIds.generate());
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
-    programStateWriter.start(runId, programOptions, null, artifactId);
 
-    Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {
+    Cluster cluster = new Cluster("name", ClusterStatus.RUNNING, Collections.emptyList(), Collections.emptyMap());
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      "name", "1.0.0", "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
+    provisionerNotifier.provisioning(runId, programOptions, programDescriptor, "Bob");
+    provisionerNotifier.provisioned(runId, programOptions, programDescriptor, "Bob", cluster);
+
+    Tasks.waitFor(ProgramRunStatus.PENDING, () -> txnl.execute(() -> {
                     RunRecordMeta meta = metadataStoreDataset.getRun(runId);
                     if (meta == null) {
                       return null;
@@ -104,20 +128,6 @@ public class ProgramNotificationSubscriberServiceTest {
                     Assert.assertEquals(artifactId, meta.getArtifactId());
                     return meta.getStatus();
                   }),
-                  10, TimeUnit.SECONDS);
-
-    programStateWriter.running(runId, UUID.randomUUID().toString());
-    Tasks.waitFor(ProgramRunStatus.RUNNING, () -> txnl.execute(() -> {
-      RunRecordMeta meta = metadataStoreDataset.getRun(runId);
-      return meta == null ? null : meta.getStatus();
-    }),
-                  10, TimeUnit.SECONDS);
-
-    programStateWriter.killed(runId);
-    Tasks.waitFor(ProgramRunStatus.KILLED, () -> txnl.execute(() -> {
-      RunRecordMeta meta = metadataStoreDataset.getRun(runId);
-      return meta == null ? null : meta.getStatus();
-    }),
                   10, TimeUnit.SECONDS);
   }
 }

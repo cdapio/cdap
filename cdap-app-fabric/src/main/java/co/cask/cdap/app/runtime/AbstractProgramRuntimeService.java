@@ -22,7 +22,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -105,9 +104,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
+  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
     ProgramId programId = programDescriptor.getProgramId();
-    RunId runId = RunIds.generate();
 
     // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
     programStateWriter.start(programId.run(runId), options, null, programDescriptor.getArtifactId().toApiArtifactId());

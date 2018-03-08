@@ -29,6 +29,8 @@ public final class ProgramOptionConstants {
 
   public static final String CLUSTER_SIZE = "clusterSize";
 
+  public static final String DEBUG_ENABLED = "debugEnabled";
+
   public static final String PROGRAM_STATUS = "programStatus";
 
   public static final String PROGRAM_RUN_ID = "programRunId";
@@ -42,6 +44,8 @@ public final class ProgramOptionConstants {
   public static final String LOGICAL_START_TIME = "logical.start.time";
 
   public static final String END_TIME = "endTime";
+
+  public static final String PROGRAM_DESCRIPTOR = "programDescriptor";
 
   public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 
@@ -76,6 +80,10 @@ public final class ProgramOptionConstants {
   public static final String TRIGGERING_SCHEDULE_INFO = "triggeringScheduleInfo";
 
   public static final String PROGRAM_ERROR = "programError";
+
+  public static final String USER_ID = "userId";
+
+  public static final String SKIP_PROVISIONING = "skipProvisioning";
 
   /**
    * Option to a local file path of a directory containing plugins artifacts.

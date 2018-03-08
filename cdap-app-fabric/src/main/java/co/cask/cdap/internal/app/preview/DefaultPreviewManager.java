@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -228,6 +229,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new LoggingModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new ProvisionerModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -79,7 +79,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
-  private final ProgramLifecycleService programLifecycleService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
@@ -133,7 +132,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
-    this.programLifecycleService = programLifecycleService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
@@ -160,7 +158,6 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programNotificationSubscriberService.start(),
-        programLifecycleService.start(),
         runRecordCorrectorService.start(),
         pluginService.start(),
         coreSchedulerService.start()
@@ -217,7 +214,6 @@ public class AppFabricServer extends AbstractIdleService {
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
-    programLifecycleService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
     if (appVersionUpgradeService != null) {
