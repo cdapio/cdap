@@ -41,10 +41,16 @@
   .grid.grid-container {
     max-height: calc(100% - 32px);
     height: 100%;
+    .grid-header {
+      .sortable-header {
+        cursor: pointer;
+      }
+    }
     .grid-header,
     .grid-body {
       .grid-item {
         grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+        padding: 7px;
         &:hover {
           [class*="icon-"] {
             color: $blue-03;
@@ -54,7 +60,6 @@
     }
     .grid-body {
       .grid-item {
-        padding: 7px 7px;
         &.opened {
           grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
           background: $grey-08;

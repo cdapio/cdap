@@ -15,10 +15,11 @@
 */
 
 import experimentsStore, {ACTIONS} from 'components/Experiments/store';
-import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
+import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS, MODELS_SORT_METHODS} from 'components/Experiments/store/experimentDetailStore';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import AlgorithmsListStore, {ACTIONS as AlgorithmsStoreActions} from 'components/Experiments/store/AlgorithmsListStore';
+import queryString from 'query-string';
 
 function setExperimentsLoading() {
   experimentsStore.dispatch({
@@ -97,12 +98,18 @@ function getModelsInExperiment(experimentId) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_LOADING
   });
-  let { modelsOffset: offset, modelsLimit: limit } = experimentDetailsStore.getState();
+  let {
+    modelsOffset: offset,
+    modelsLimit: limit,
+    modelsSortMethod,
+    modelsSortColumn
+  } = experimentDetailsStore.getState();
   let ModelsObservable$ = myExperimentsApi.getModelsInExperiment({
     namespace: getCurrentNamespace(),
     experimentId,
     offset,
-    limit
+    limit,
+    sort: `${modelsSortColumn} ${modelsSortMethod}`
   });
 
   ModelsObservable$.subscribe(res => {
@@ -127,8 +134,23 @@ function handleModelsPageChange({ selected }) {
       modelsOffset: selected * modelsLimit
     }
   });
-  updateQueryStringWithModelsOffset();
-  getExperimentDetails(experimentId);
+  updateQueryForModelsListView();
+  getModelsInExperiment(experimentId);
+}
+
+function handleModelsSorting(field) {
+  let { modelsSortMethod, modelsSortColumn, name: experimentId } = experimentDetailsStore.getState();
+  let newSortField = (field !== modelsSortColumn) ? field : modelsSortColumn;
+  let newSortMethod = MODELS_SORT_METHODS.ASC === modelsSortMethod ? MODELS_SORT_METHODS.DESC : MODELS_SORT_METHODS.ASC;
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODELS_SORT,
+    payload: {
+      modelsSortMethod: newSortMethod,
+      modelsSortColumn: newSortField
+    }
+  });
+  updateQueryForModelsListView();
+  getModelsInExperiment(experimentId);
 }
 
 function updatePaginationForModels({ modelsLimit, modelsOffset }) {
@@ -141,12 +163,24 @@ function updatePaginationForModels({ modelsLimit, modelsOffset }) {
   });
 }
 
-function updateQueryStringWithModelsOffset() {
-  let { modelsOffset: offset, modelsLimit: limit } = experimentDetailsStore.getState();
-  let query = `offset=${offset}&limit=${limit}`;
+function updateQueryForModelsListView() {
+  let {
+    modelsOffset: offset,
+    modelsLimit: limit,
+    modelsSortMethod,
+    modelsSortColumn
+  } = experimentDetailsStore.getState();
+  let query = queryString.parse(location.search);
+  if (query.offset) {
+    offset = query.offset;
+  }
+  if (query.limit) {
+    limit = query.limit;
+  }
+  let newQuery = `offset=${offset}&limit=${limit}&sort=${modelsSortMethod}&${modelsSortColumn}`;
   let obj = {
     title: document.title,
-    url: `${location.pathname}?${query}`
+    url: `${location.pathname}?${newQuery}`
   };
   history.pushState(obj, obj.title, obj.url);
 }
@@ -294,6 +328,7 @@ export {
   setAlgorithmsList,
   updatePaginationForModels,
   handleModelsPageChange,
+  handleModelsSorting,
   handlePageChange,
   updatePagination,
   resetExperimentDetailStore,

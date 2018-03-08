@@ -29,7 +29,12 @@ const ACTIONS = {
   SET_MODEL_PAGINATION: 'SET_MODEL_PAGINATION',
   SET_NEWLY_TRAINING_MODEL: 'SET_NEWLY_TRAINING_MODEL',
   RESET_NEWLY_TRAINING_MODEL: 'RESET_NEWLY_TRAINING_MODEL',
+  SET_MODELS_SORT: 'SET_MODELS_SORT',
   RESET: 'RESET'
+};
+export const MODELS_SORT_METHODS = {
+  ASC: 'asc',
+  DESC: 'desc'
 };
 
 export const DEFAULT_EXPERIMENT_DETAILS = {
@@ -47,6 +52,8 @@ export const DEFAULT_EXPERIMENT_DETAILS = {
   modelsLimit: 10,
   modelsTotalCount: 0,
   modelsTotalPages: 0,
+  modelsSortMethod: 'asc',
+  modelsSortColumn: 'name',
   loading: false
 };
 
@@ -153,6 +160,12 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
           return model;
         })
       };
+      case ACTIONS.SET_MODELS_SORT:
+        return {
+          ...state,
+          modelsSortMethod: action.payload.modelsSortMethod,
+          modelsSortColumn: action.payload.modelsSortColumn
+        };
     default:
       return state;
   }

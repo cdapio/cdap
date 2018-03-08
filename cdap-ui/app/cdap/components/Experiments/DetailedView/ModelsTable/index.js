@@ -19,7 +19,12 @@ import React from 'react';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
-import {handleModelsPageChange, getAlgorithmLabel, setActiveModel} from 'components/Experiments/store/ActionCreator';
+import {
+  handleModelsPageChange,
+  handleModelsSorting,
+  getAlgorithmLabel,
+  setActiveModel
+} from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';
@@ -335,8 +340,10 @@ function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel) {
  });
 }
 
-function renderGrid(models, outcomeType, experimentId, newlyTrainingModel) {
+function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod) {
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
+  const renderSortIcon = (sortMethod) =>
+    sortMethod === 'asc' ? <IconSVG name="icon-caret-down" /> : <IconSVG name="icon-caret-up" />;
   return (
     <div className={classnames("grid grid-container", {
       "classification": NUMBER_TYPES.indexOf(outcomeType) === -1
@@ -346,9 +353,20 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel) {
           <strong></strong>
           {
             newHeaders.map(header => {
+              if (modelsSortColumn === header.property) {
+                return (
+                  <strong
+                    onClick={handleModelsSorting.bind(null, header.property)}
+                    className='sortable-header'
+                  >
+                    <span>{header.label}</span>
+                    { renderSortIcon(modelsSortMethod) }
+                  </strong>
+                );
+              }
               return (
                 <strong>
-                  {header.label}
+                  <span>{header.label}</span>
                 </strong>
               );
             })
@@ -363,7 +381,18 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel) {
   );
 }
 
-function ModelsTable({experimentId, modelsList, loading, outcomeType, modelsTotalPages, modelsCurrentPage, modelsTotalCount, newlyTrainingModel}) {
+function ModelsTable({
+  experimentId,
+  modelsList,
+  loading,
+  outcomeType,
+  modelsTotalPages,
+  modelsCurrentPage,
+  modelsTotalCount,
+  newlyTrainingModel,
+  modelsSortColumn,
+  modelsSortMethod
+}) {
   if (loading || isEmpty(experimentId)) {
     return (
       <LoadingSVGCentered />
@@ -389,7 +418,7 @@ function ModelsTable({experimentId, modelsList, loading, outcomeType, modelsTota
           numberOfEntities={modelsTotalCount}
         />
       </div>
-      {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel)}
+      {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod)}
     </div>
   );
 }
@@ -402,6 +431,8 @@ ModelsTable.propTypes = {
   modelsTotalPages: PropTypes.number,
   modelsCurrentPage: PropTypes.number,
   modelsTotalCount: PropTypes.number,
+  modelsSortMethod: PropTypes.string,
+  modelsSortColumn: PropTypes.string,
   newlyTrainingModel: PropTypes.bool
 };
 
@@ -414,7 +445,9 @@ const mapStateToProps = (state) => {
     modelsTotalPages: state.modelsTotalPages,
     modelsCurrentPage: state.modelsOffset === 0 ? 1 : Math.ceil((state.modelsOffset + 1) / state.modelsLimit),
     modelsTotalCount: state.modelsTotalCount,
-    newlyTrainingModel: state.newlyTrainingModel
+    newlyTrainingModel: state.newlyTrainingModel,
+    modelsSortMethod: state.modelsSortMethod,
+    modelsSortColumn: state.modelsSortColumn
   };
 };
 
