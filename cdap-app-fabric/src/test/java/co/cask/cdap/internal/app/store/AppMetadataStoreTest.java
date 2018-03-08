@@ -78,12 +78,14 @@ public class AppMetadataStoreTest {
   }
 
   private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
-    metadataStoreDataset.recordProgramProvisioning(programRunId,
-                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null, null,
+    long startTime = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+    metadataStoreDataset.recordProgramProvisioning(programRunId, startTime,
+                                                   Collections.emptyMap(), Collections.emptyMap(),
                                                    AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-    metadataStoreDataset.recordProgramStart(programRunId, null, null,
+    metadataStoreDataset.recordProgramStart(programRunId, startTime, null,
+                                            Collections.emptyMap(), Collections.emptyMap(),
                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
   }
 
@@ -242,7 +244,8 @@ public class AppMetadataStoreTest {
       recordProvisionAndStart(programRunId6, metadataStoreDataset);
       metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      metadataStoreDataset.recordProgramStart(programRunId6, null, ImmutableMap.of(),
+      metadataStoreDataset.recordProgramStart(programRunId6, RunIds.getTime(runId5, TimeUnit.SECONDS), null,
+                                              Collections.emptyMap(), Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
@@ -251,11 +254,12 @@ public class AppMetadataStoreTest {
     final RunId runId7 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId7 = program.run(runId7);
     txnl.execute(() -> {
+      long startTime = RunIds.getTime(runId7, TimeUnit.SECONDS);
       recordProvisionAndStart(programRunId7, metadataStoreDataset);
-      metadataStoreDataset.recordProgramRunning(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                                null,
+      metadataStoreDataset.recordProgramRunning(programRunId7, startTime, null,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      metadataStoreDataset.recordProgramStart(programRunId7, null, ImmutableMap.of(),
+      metadataStoreDataset.recordProgramStart(programRunId7, startTime, null,
+                                              Collections.emptyMap(), Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
       // STARTING status is ignored since there's an existing RUNNING record
@@ -274,13 +278,14 @@ public class AppMetadataStoreTest {
     final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId = program.run(runId);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId,
-                                                     RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
-                                                     null, null,
+      long startTime = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+      metadataStoreDataset.recordProgramProvisioning(programRunId, startTime,
+                                                     Collections.emptyMap(), Collections.emptyMap(),
                                                      AppFabricTestHelper.createSourceId(startSourceId));
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                     AppFabricTestHelper.createSourceId(startSourceId + 1));
-      metadataStoreDataset.recordProgramStart(programRunId, null, null,
+      metadataStoreDataset.recordProgramStart(programRunId, startTime, null,
+                                              Collections.emptyMap(), Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(startSourceId + 2));
       metadataStoreDataset.recordProgramRunning(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
                                                 null, AppFabricTestHelper.createSourceId(runningSourceId));

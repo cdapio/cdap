@@ -152,7 +152,7 @@ class AbstractAppCreationService extends AbstractExecutionThreadService {
 
     for (Map.Entry<ProgramId, Map<String, String>> programEntry : programIdMap.entrySet()) {
       try {
-        programLifecycleService.start(programEntry.getKey(), programEntry.getValue(), false);
+        programLifecycleService.run(programEntry.getKey(), programEntry.getValue(), false);
       } catch (IOException ex) {
         // Might happen if the program is being started in parallel through UI
         LOG.debug("Tried to start {} program but had a conflict. {}", programEntry.getKey(), ex.getMessage());

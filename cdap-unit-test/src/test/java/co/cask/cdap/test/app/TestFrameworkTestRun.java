@@ -254,7 +254,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, history.size());
 
     countService.start();
-    countService.waitForStatus(true);
+    countService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     Assert.assertEquals(2, countService.getProvisionedInstances());
 
     // requesting with ProgramRunStatus.KILLED returns empty list
@@ -2149,6 +2149,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     } catch (Exception e) {
       Assert.assertTrue(Throwables.getRootCause(e) instanceof ConflictException);
     }
+    workerManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     workerManager.stop();
 
     // Start the workflow

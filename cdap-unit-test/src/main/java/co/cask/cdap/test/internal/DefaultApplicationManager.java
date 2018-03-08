@@ -24,6 +24,7 @@ import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
@@ -164,7 +165,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
                                                 programId.getVersion(), programId.getProgram(), programId.getType());
-      return "RUNNING".equals(status);
+      return !ProgramStatus.STOPPED.name().equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

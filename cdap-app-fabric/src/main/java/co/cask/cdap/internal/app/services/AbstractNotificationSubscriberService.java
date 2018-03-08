@@ -171,8 +171,9 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      *
      * @param context the dataset context
      * @param lastFetchedMessageId the message id to persist
+     * @throws Exception if there was an error persisting the message
      */
-    protected abstract void persistMessageId(DatasetContext context, String lastFetchedMessageId);
+    protected abstract void persistMessageId(DatasetContext context, String lastFetchedMessageId) throws Exception;
 
     @Override
     public void run() {

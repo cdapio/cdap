@@ -27,6 +27,7 @@ public class ProvisionerModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(ProvisioningService.class).in(Scopes.SINGLETON);
+    bind(ProvisionerNotificationSubscriberService.class).in(Scopes.SINGLETON);
   }
 
 }

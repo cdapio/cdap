@@ -20,6 +20,7 @@ package co.cask.cdap.proto;
  * Program level status types.
  */
 public enum ProgramStatus {
+  STARTING,
   RUNNING,
   STOPPED
 }

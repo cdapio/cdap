@@ -689,7 +689,8 @@ public class LineageAdminTest extends AppFabricTestBase {
     store.setProvisioning(id.run(pid), startTime, runtimeArgs, systemArgs,
                           AppFabricTestHelper.createSourceId(++sourceId));
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStart(id.run(pid), null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id.run(pid), startTime, null, runtimeArgs, systemArgs,
+                   AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
@@ -714,10 +715,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "workflowNodeId");
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
     for (ProgramRunId run : runs) {
-      store.setProvisioning(run, RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS),
-                            emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
+      long startTime = RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS);
+      store.setProvisioning(run, startTime, emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
       store.setProvisioned(run, 0, AppFabricTestHelper.createSourceId(++sourceId));
-      store.setStart(run, null, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
+      store.setStart(run, startTime, null, emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
       store.setRunning(run, RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS) + 1, null,
                        AppFabricTestHelper.createSourceId(++sourceId));
     }

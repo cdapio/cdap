@@ -32,6 +32,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
+import co.cask.cdap.internal.provision.ProvisionerNotificationSubscriberService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
@@ -78,6 +79,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProvisionerNotificationSubscriberService provisionerNotificationSubscriberService;
   private final ProgramLifecycleService programLifecycleService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final SystemArtifactLoader systemArtifactLoader;
@@ -107,6 +109,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ProgramRuntimeService programRuntimeService,
                          RunRecordCorrectorService runRecordCorrectorService,
                          ApplicationLifecycleService applicationLifecycleService,
+                         ProvisionerNotificationSubscriberService provisionerNotificationSubscriberService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
                          ProgramLifecycleService programLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
@@ -130,6 +133,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
+    this.provisionerNotificationSubscriberService = provisionerNotificationSubscriberService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.programLifecycleService = programLifecycleService;
     this.runRecordCorrectorService = runRecordCorrectorService;
@@ -157,6 +161,7 @@ public class AppFabricServer extends AbstractIdleService {
         systemArtifactLoader.start(),
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
+        provisionerNotificationSubscriberService.start(),
         programNotificationSubscriberService.start(),
         programLifecycleService.start(),
         runRecordCorrectorService.start(),
@@ -216,6 +221,7 @@ public class AppFabricServer extends AbstractIdleService {
     notificationService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     programLifecycleService.stopAndWait();
+    provisionerNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
     if (appVersionUpgradeService != null) {

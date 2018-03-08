@@ -60,7 +60,7 @@ public class LastRunConstraintTest {
                                   final Map<String, String> systemArgs) {
     store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id, startTime, null, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
   

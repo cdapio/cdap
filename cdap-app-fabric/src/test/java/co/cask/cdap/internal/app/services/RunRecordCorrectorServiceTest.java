@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -94,18 +95,20 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     for (int i = 0; i < 10; i++) {
       ProgramRunId serviceId = NamespaceId.DEFAULT.app("test").service("service" + i).run(RunIds.generate());
-      store.setProvisioning(serviceId, RunIds.getTime(serviceId.getRun(), TimeUnit.SECONDS), Collections.emptyMap(),
+      long startTime = RunIds.getTime(serviceId.getRun(), TimeUnit.SECONDS);
+      store.setProvisioning(serviceId, startTime, Collections.emptyMap(),
                             Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
       store.setProvisioned(serviceId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-      store.setStart(serviceId, null, Collections.emptyMap(),
+      store.setStart(serviceId, startTime, null, Collections.emptyMap(), Collections.emptyMap(),
                      Bytes.toBytes(sourceId.getAndIncrement()));
       expectedStates.put(serviceId, ProgramRunStatus.FAILED);
 
       ProgramRunId workerId = new NamespaceId("ns").app("test").service("worker" + i).run(RunIds.generate());
-      store.setProvisioning(workerId, RunIds.getTime(serviceId.getRun(), TimeUnit.SECONDS), Collections.emptyMap(),
+      startTime = RunIds.getTime(workerId.getRun(), TimeUnit.SECONDS);
+      store.setProvisioning(workerId, startTime, Collections.emptyMap(),
                             Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
       store.setProvisioned(workerId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-      store.setStart(workerId, null, Collections.emptyMap(),
+      store.setStart(workerId, startTime, null, Collections.emptyMap(), Collections.emptyMap(),
                      Bytes.toBytes(sourceId.getAndIncrement()));
       store.setRunning(workerId, System.currentTimeMillis(), null, Bytes.toBytes(sourceId.getAndIncrement()));
       expectedStates.put(workerId, ProgramRunStatus.FAILED);
@@ -113,10 +116,11 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     // Write a flow with suspend state
     ProgramRunId flowId = new NamespaceId("ns").app("test").service("flow").run(RunIds.generate());
-    store.setProvisioning(flowId, RunIds.getTime(flowId.getRun(), TimeUnit.SECONDS), Collections.emptyMap(),
+    long startTime = RunIds.getTime(flowId.getRun(), TimeUnit.SECONDS);
+    store.setProvisioning(flowId, startTime, Collections.emptyMap(),
                           Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
     store.setProvisioned(flowId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setStart(flowId, null, Collections.emptyMap(),
+    store.setStart(flowId, startTime, null, Collections.emptyMap(), Collections.emptyMap(),
                    Bytes.toBytes(sourceId.getAndIncrement()));
     store.setRunning(flowId, System.currentTimeMillis(),
                      null, Bytes.toBytes(sourceId.getAndIncrement()));
@@ -125,18 +129,18 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     // Write two MR in starting state. One with workflow information, one without.
     ProgramRunId mrId = NamespaceId.DEFAULT.app("app").mr("mr").run(RunIds.generate());
-    store.setProvisioning(mrId, RunIds.getTime(mrId.getRun(), TimeUnit.SECONDS), Collections.emptyMap(),
+    startTime = RunIds.getTime(mrId.getRun(), TimeUnit.SECONDS);
+    store.setProvisioning(mrId, startTime, Collections.emptyMap(),
                           Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
     store.setProvisioned(mrId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setStart(mrId, null, Collections.emptyMap(),
+    store.setStart(mrId, startTime, null, Collections.emptyMap(), Collections.emptyMap(),
                    Bytes.toBytes(sourceId.getAndIncrement()));
     expectedStates.put(mrId, ProgramRunStatus.FAILED);
 
     ProgramRunId workflowId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
     ProgramRunId mrInWorkflowId = workflowId.getParent().getParent().mr("mrInWorkflow").run(RunIds.generate());
-    store.setProvisioning(mrInWorkflowId,
-                          RunIds.getTime(mrInWorkflowId.getRun(), TimeUnit.SECONDS),
-                          Collections.emptyMap(),
+    startTime = RunIds.getTime(mrInWorkflowId.getRun(), TimeUnit.SECONDS);
+    store.setProvisioning(mrInWorkflowId, startTime, Collections.emptyMap(),
                           ImmutableMap.of(
                             ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
                             ProgramOptionConstants.WORKFLOW_RUN_ID, workflowId.getRun(),
@@ -144,7 +148,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
                           ),
                           Bytes.toBytes(sourceId.getAndIncrement()));
     store.setProvisioned(mrInWorkflowId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setStart(mrInWorkflowId, null,
+    store.setStart(mrInWorkflowId, startTime, null, Collections.emptyMap(),
                    ImmutableMap.of(
                      ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowId.getRun(),
@@ -154,10 +158,11 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     expectedStates.put(workflowId, ProgramRunStatus.STARTING);
 
     // Write the workflow in RUNNING state.
-    store.setProvisioning(workflowId, RunIds.getTime(workflowId.getRun(), TimeUnit.SECONDS), Collections.emptyMap(),
+    startTime = RunIds.getTime(workflowId.getRun(), TimeUnit.SECONDS);
+    store.setProvisioning(workflowId, startTime, Collections.emptyMap(),
                           Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
     store.setProvisioned(workflowId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setStart(workflowId, null, Collections.emptyMap(),
+    store.setStart(workflowId, startTime, null, Collections.emptyMap(), Collections.emptyMap(),
                    Bytes.toBytes(sourceId.getAndIncrement()));
     store.setRunning(workflowId, System.currentTimeMillis(), null, Bytes.toBytes(sourceId.getAndIncrement()));
     expectedStates.put(workflowId, ProgramRunStatus.RUNNING);
@@ -227,9 +232,9 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
   }
 
   private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) throws Exception {
-    Tasks.waitFor(true, () -> {
+    Tasks.waitFor(ImmutablePair.of(programRunId, expectedStatus), () -> {
       RunRecordMeta runRecord = store.getRun(programRunId);
-      return runRecord != null && Objects.equals(expectedStatus, runRecord.getStatus());
+      return ImmutablePair.of(programRunId, runRecord == null ? null : runRecord.getStatus());
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 

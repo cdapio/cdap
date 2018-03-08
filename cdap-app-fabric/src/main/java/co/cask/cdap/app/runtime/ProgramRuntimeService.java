@@ -51,9 +51,10 @@ public interface ProgramRuntimeService extends Service {
    *
    * @param programDescriptor describing the program to run
    * @param options {@link ProgramOptions} that are needed by the program.
+   * @param runId {@link RunId} for the program run
    * @return A {@link ProgramController} for the running program.
    */
-  RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options);
+  RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId);
 
   /**
    * Find the {@link RuntimeInfo} for a running program with the given {@link RunId}.

@@ -60,7 +60,6 @@ public final class RunRecordMeta extends RunRecord {
     this.twillRunId = twillRunId;
     this.sourceId = sourceId;
   }
-
   @Nullable
   public String getTwillRunId() {
     return twillRunId;

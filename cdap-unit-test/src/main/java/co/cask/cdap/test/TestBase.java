@@ -79,6 +79,8 @@ import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import co.cask.cdap.internal.provision.ProvisionerModule;
+import co.cask.cdap.internal.provision.ProvisionerNotificationSubscriberService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -186,6 +188,7 @@ public class TestBase {
   private static boolean firstInit = true;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
+  private static ProvisionerNotificationSubscriberService provisionerNotificationSubscriberService;
   private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static Scheduler scheduler;
   private static ExploreExecutorService exploreExecutorService;
@@ -275,6 +278,7 @@ public class TestBase {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new ProvisionerModule(),
       new PreviewHttpModule(),
       new AbstractModule() {
         @Override
@@ -311,6 +315,10 @@ public class TestBase {
     programLifecycleService.startAndWait();
     programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
     programNotificationSubscriberService.startAndWait();
+    provisionerNotificationSubscriberService = injector.getInstance(ProvisionerNotificationSubscriberService.class);
+    provisionerNotificationSubscriberService.startAndWait();
+    programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
+    programLifecycleService.startAndWait();
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
@@ -498,6 +506,8 @@ public class TestBase {
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
+    programLifecycleService.stopAndWait();
+    provisionerNotificationSubscriberService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
