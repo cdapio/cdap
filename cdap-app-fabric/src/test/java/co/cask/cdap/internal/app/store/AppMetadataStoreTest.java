@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -81,10 +82,7 @@ public class AppMetadataStoreTest {
   }
 
   private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
-
-    metadataStoreDataset.recordProgramProvisioning(programRunId,
-                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null,
-                                                   new HashMap<>(),
+    metadataStoreDataset.recordProgramProvisioning(programRunId, null, new HashMap<>(),
                                                    AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                    ARTIFACT_ID);
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
@@ -100,7 +98,7 @@ public class AppMetadataStoreTest {
     DatasetId storeTable = NamespaceId.DEFAULT.dataset("testOldRunRecordFormat");
     datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
 
-    Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
+    Table table = datasetFramework.getDataset(storeTable, Collections.emptyMap(), null);
     Assert.assertNotNull(table);
     final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf, new AtomicBoolean(false));
     TransactionExecutor txnl = txExecutorFactory.createExecutor(
@@ -162,6 +160,45 @@ public class AppMetadataStoreTest {
     assertPersistedStatus(metadataStoreDataset, txnl, 1L, 100L, 10L, ProgramRunStatus.RUNNING);
     // KILLED status is persisted with the largest sourceId
     assertPersistedStatus(metadataStoreDataset, txnl, 1L, 10L, 100L, ProgramRunStatus.KILLED);
+  }
+
+  @Test
+  public void testProvisioningFailure() throws Exception {
+    AppMetadataStore metadataStoreDataset = getMetadataStore("testProvisioningFailure");
+
+    TransactionExecutor txnl = getTxExecutor(metadataStoreDataset);
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    RunId runId1 = RunIds.generate();
+    ProgramRunId programRunId1 = program.run(runId1);
+
+    // test state transition from provisioning -> deprovisioning. This can happen if there is a provisioning failure
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramProvisioning(programRunId1, Collections.emptyMap(), Collections.emptyMap(),
+                                                     AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                     ARTIFACT_ID);
+      metadataStoreDataset.recordProgramDeprovisioning(programRunId1,
+                                                       AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId1);
+      Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
+      Assert.assertEquals(ProgramRunClusterStatus.DEPROVISIONING, runRecordMeta.getCluster().getStatus());
+    });
+
+    RunId runId2 = RunIds.generate();
+    ProgramRunId programRunId2 = program.run(runId2);
+    // test state transition from provisioning -> deprovisioned. This can happen if there is a provisioning failure
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramProvisioning(programRunId2, Collections.emptyMap(), Collections.emptyMap(),
+                                                     AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                     ARTIFACT_ID);
+      metadataStoreDataset.recordProgramDeprovisioned(programRunId2,
+                                                      AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);
+      Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
+      Assert.assertEquals(ProgramRunClusterStatus.DEPROVISIONED, runRecordMeta.getCluster().getStatus());
+    });
   }
 
   @Test
@@ -248,7 +285,7 @@ public class AppMetadataStoreTest {
       recordProvisionAndStart(programRunId6, metadataStoreDataset);
       metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      metadataStoreDataset.recordProgramStart(programRunId6, null, ImmutableMap.of(),
+      metadataStoreDataset.recordProgramStart(programRunId6, null, Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
@@ -257,11 +294,11 @@ public class AppMetadataStoreTest {
     final RunId runId7 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId7 = program.run(runId7);
     txnl.execute(() -> {
+      long startTime = RunIds.getTime(runId7, TimeUnit.SECONDS);
       recordProvisionAndStart(programRunId7, metadataStoreDataset);
-      metadataStoreDataset.recordProgramRunning(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                                null,
+      metadataStoreDataset.recordProgramRunning(programRunId7, startTime, null,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      metadataStoreDataset.recordProgramStart(programRunId7, null, ImmutableMap.of(),
+      metadataStoreDataset.recordProgramStart(programRunId7, null, Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
       // STARTING status is ignored since there's an existing RUNNING record
@@ -280,9 +317,7 @@ public class AppMetadataStoreTest {
     final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId = program.run(runId);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId,
-                                                     RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
-                                                     null, new HashMap<>(),
+      metadataStoreDataset.recordProgramProvisioning(programRunId, null, new HashMap<>(),
                                                      AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                     AppFabricTestHelper.createSourceId(startSourceId + 1));

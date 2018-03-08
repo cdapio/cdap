@@ -55,7 +55,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   public void testFlowManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
     FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
-    flowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 20, TimeUnit.SECONDS);
     flowManager.stop();
   }
 

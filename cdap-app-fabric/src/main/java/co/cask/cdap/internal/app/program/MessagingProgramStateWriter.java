@@ -68,12 +68,12 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
                     ArtifactId artifactId) {
     long startTime = RunIds.getTime(RunIds.fromString(programRunId.getRun()), TimeUnit.MILLISECONDS);
     if (startTime == -1) {
-      // If RunId is not time-based, use current time as start time
-      startTime = System.currentTimeMillis();
+      // This should never happen, as all runids should be time-based
+      throw new IllegalStateException(
+        String.format("Program run id '%s' does not contain the start time.", programRunId));
     }
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-      .put(ProgramOptionConstants.START_TIME, String.valueOf(startTime))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
       .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))

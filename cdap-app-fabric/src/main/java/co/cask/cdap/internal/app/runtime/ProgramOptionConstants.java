@@ -25,6 +25,10 @@ public final class ProgramOptionConstants {
 
   public static final String TWILL_RUN_ID = "twillRunId";
 
+  public static final String CLUSTER_STATUS = "clusterStatus";
+
+  public static final String CLUSTER_SIZE = "clusterSize";
+
   public static final String PROGRAM_STATUS = "programStatus";
 
   public static final String PROGRAM_RUN_ID = "programRunId";
@@ -36,8 +40,6 @@ public final class ProgramOptionConstants {
   public static final String HOST = "host";
 
   public static final String LOGICAL_START_TIME = "logical.start.time";
-
-  public static final String START_TIME = "startTime";
 
   public static final String END_TIME = "endTime";
 
