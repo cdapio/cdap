@@ -29,7 +29,7 @@ export default class UncontrolledPopover extends Component {
     super(props);
     this.state = {
       dropdownOpen: props.dropdownOpen,
-      id: uuidV4()
+      id: `popover-${uuidV4()}`
     };
     this.togglePopover = this.togglePopover.bind(this);
   }
