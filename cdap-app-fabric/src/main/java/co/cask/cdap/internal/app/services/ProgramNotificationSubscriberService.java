@@ -30,9 +30,11 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -116,60 +118,73 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     Map<String, String> properties = notification.getProperties();
     // Required parameters
     String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-    String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
+    String programStatusStr = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
+    String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
 
-    // Ignore notifications which specify an invalid ProgramRunId or ProgramRunStatus, which shouldn't happen
-    if (programRun == null || programStatus == null) {
+    // Ignore notifications which specify an invalid ProgramRunId, which shouldn't happen
+    if (programRun == null) {
       LOG.warn("Ignore notification that misses program run state information, {}", notification);
       return;
     }
-
-    ProgramRunStatus programRunStatus;
-    try {
-      programRunStatus = ProgramRunStatus.valueOf(programStatus);
-    } catch (IllegalArgumentException e) {
-      LOG.warn("Ignore notification with invalid program run status {} for program {}, {}",
-               programStatus, programRun, notification);
-      return;
-    }
-
     ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
 
+    ProgramRunStatus programRunStatus = null;
+    if (programStatusStr != null) {
+      try {
+        programRunStatus = ProgramRunStatus.valueOf(programStatusStr);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Ignore notification with invalid program run status {} for program {}, {}",
+                 programStatusStr, programRun, notification);
+        return;
+      }
+    }
+
+    ProgramRunClusterStatus clusterStatus = null;
+    if (clusterStatusStr != null) {
+      try {
+        clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Ignore notification with invalid program run cluster status {} for program {}",
+                 clusterStatusStr, programRun);
+        return;
+      }
+    }
+
+    if (programRunStatus != null) {
+      writeProgramStatus(programRunId, programRunStatus, notification, messageIdBytes, appMetadataStore);
+    }
+    if (clusterStatus != null) {
+      writeClusterStatus(programRunId, clusterStatus, notification, messageIdBytes, appMetadataStore);
+    }
+  }
+
+  private void writeProgramStatus(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
+                                  Notification notification, byte[] messageIdBytes,
+                                  AppMetadataStore appMetadataStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
+    Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
     long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
-    ProgramRunStatus recordedStatus;
-    switch(programRunStatus) {
+    RunRecordMeta recordedRunRecord;
+    switch (programRunStatus) {
       case STARTING:
-        long startTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.START_TIME);
-        String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
         String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-        if (userArgumentsString == null || systemArgumentsString == null) {
-          LOG.warn("Ignore program starting notification for program {} without {} arguments, {}",
-                   programRunId, (userArgumentsString == null) ? "user" : "system", notification);
-          return;
-        }
-        if (startTimeSecs == -1) {
-          LOG.warn("Ignore program starting notification for program {} without start time, {}",
+        if (systemArgumentsString == null) {
+          LOG.warn("Ignore program starting notification for program {} without system arguments, {}",
                    programRunId, notification);
           return;
         }
-        String artifactIdString = notification.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
-        ArtifactId artifactId = null;
-        // can be null for notifications before upgrading that were not processed earlier
-        if (artifactIdString != null) {
-          artifactId = GSON.fromJson(artifactIdString, ArtifactId.class);
-        }
-        Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
         Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+
         // TODO: CDAP-13096 move to provisioner status subscriber
         // for now, save these states here to follow correct lifecycle
-        appMetadataStore.recordProgramProvisioning(programRunId, startTimeSecs, userArguments, systemArguments,
-                                                   messageIdBytes, artifactId);
-        appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
-        recordedStatus = appMetadataStore.recordProgramStart(programRunId, twillRunId,
-                                                             systemArguments, messageIdBytes);
+        writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONING, notification, messageIdBytes,
+                           appMetadataStore);
+        writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONED, notification, messageIdBytes,
+                           appMetadataStore);
+        recordedRunRecord = appMetadataStore.recordProgramStart(programRunId, twillRunId,
+                                                                systemArguments, messageIdBytes);
         break;
       case RUNNING:
         long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
@@ -179,14 +194,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                    programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
           return;
         }
-        recordedStatus =
+        recordedRunRecord =
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         break;
       case SUSPENDED:
-        recordedStatus = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes);
+        recordedRunRecord = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes);
         break;
       case RESUMING:
-        recordedStatus = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes);
+        recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes);
         break;
       case COMPLETED:
       case KILLED:
@@ -195,7 +210,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                    programRunId, notification);
           return;
         }
-        recordedStatus =
+        recordedRunRecord =
           appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, null, messageIdBytes);
         break;
       case FAILED:
@@ -205,7 +220,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           return;
         }
         BasicThrowable cause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
-        recordedStatus =
+        recordedRunRecord =
           appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, cause, messageIdBytes);
         break;
       default:
@@ -213,8 +228,50 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         LOG.error("Unsupported program status {} for program {}, {}", programRunStatus, programRunId, notification);
         return;
     }
-    if (recordedStatus != null) {
-      publishRecordedStatus(notification, programRunId, recordedStatus);
+    if (recordedRunRecord != null) {
+      publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
+      if (programRunStatus.isEndState()) {
+        // TODO: send a notification to deprovision the cluster
+      }
+    }
+  }
+
+  private void writeClusterStatus(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
+                                  Notification notification, byte[] messageIdBytes,
+                                  AppMetadataStore appMetadataStore) {
+    Map<String, String> properties = notification.getProperties();
+
+    switch (clusterStatus) {
+      case PROVISIONING:
+        String artifactIdString = notification.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
+        ArtifactId artifactId = null;
+        // can be null for notifications before upgrading that were not processed earlier
+        if (artifactIdString != null) {
+          artifactId = GSON.fromJson(artifactIdString, ArtifactId.class);
+        }
+        String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
+        String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+        if (userArgumentsString == null || systemArgumentsString == null) {
+          LOG.warn("Ignore program provisioning notification for program {} without {} arguments",
+                   programRunId, (userArgumentsString == null) ? "user" : "system", notification);
+          return;
+        }
+        Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
+        Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+        appMetadataStore.recordProgramProvisioning(programRunId, userArguments, systemArguments, messageIdBytes,
+                                                   artifactId);
+        break;
+      case PROVISIONED:
+        String clusterSizeStr = properties.get(ProgramOptionConstants.CLUSTER_SIZE);
+        int clusterSize = clusterSizeStr == null ? 0 : Integer.parseInt(clusterSizeStr);
+        appMetadataStore.recordProgramProvisioned(programRunId, clusterSize, messageIdBytes);
+        break;
+      case DEPROVISIONING:
+        appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
+        break;
+      case DEPROVISIONED:
+        appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
+        break;
     }
   }
 

@@ -310,7 +310,6 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * a higher source id, this call will be ignored.
    *
    * @param programRunId program run
-   * @param startTs start time of the run
    * @param runtimeArgs runtime arguments
    * @param systemArgs system arguments
    * @param sourceId unique id representing the source of program run status, such as the message id of the program
@@ -322,11 +321,16 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @return {@link ProgramRunClusterStatus#PROVISIONING} if it is successfully persisted, {@code null} otherwise.
    */
   @Nullable
-  public ProgramRunClusterStatus recordProgramProvisioning(ProgramRunId programRunId, long startTs,
-                                                           Map<String, String> runtimeArgs,
-                                                           Map<String, String> systemArgs,
-                                                           byte[] sourceId, @Nullable ArtifactId artifactId) {
+  public RunRecordMeta recordProgramProvisioning(ProgramRunId programRunId, Map<String, String> runtimeArgs,
+                                                 Map<String, String> systemArgs, byte[] sourceId,
+                                                 @Nullable ArtifactId artifactId) {
     MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
+    long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+    if (startTs == -1L) {
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have " +
+                  "a timestamp in the run id.");
+      return null;
+    }
 
     RunRecordMeta existing = getRun(programRunId);
     // for some reason, there is an existing run record.
@@ -339,6 +343,25 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       return null;
     }
 
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONING, null, null);
+    RunRecordMeta meta = RunRecordMeta.builder()
+      .setProgramRunId(programRunId)
+      .setStartTime(startTs)
+      .setStatus(ProgramRunStatus.STARTING)
+      .setProperties(getRecordProperties(systemArgs, runtimeArgs))
+      .setSystemArgs(systemArgs)
+      .setCluster(cluster)
+      .setSourceId(sourceId)
+      .setArtifactId(artifactId)
+      .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
+      .build();
+    write(key, meta);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONING, programRunId);
+    return meta;
+  }
+
+  // return the property map to set in the RunRecordMeta
+  private Map<String, String> getRecordProperties(Map<String, String> systemArgs, Map<String, String> runtimeArgs) {
     String workflowRunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       workflowRunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
@@ -349,21 +372,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     if (workflowRunId != null) {
       builder.put("workflowrunid", workflowRunId);
     }
-
-    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONING, null, null);
-    RunRecordMeta meta = RunRecordMeta.builder()
-      .setProgramRunId(programRunId)
-      .setStartTime(startTs)
-      .setStatus(ProgramRunStatus.STARTING)
-      .setProperties(builder.build())
-      .setSystemArgs(systemArgs)
-      .setCluster(cluster)
-      .setSourceId(sourceId)
-      .setArtifactId(artifactId)
-      .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
-      .build();
-    write(key, meta);
-    return ProgramRunClusterStatus.PROVISIONING;
+    return builder.build();
   }
 
   /**
@@ -376,10 +385,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunClusterStatus#PROVISIONED} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public ProgramRunClusterStatus recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId) {
+  public RunRecordMeta recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId) {
     MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
 
     RunRecordMeta existing = getRun(programRunId);
@@ -402,12 +411,12 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, numNodes);
     RunRecordMeta meta = RunRecordMeta.builder(existing)
-      .setStatus(ProgramRunStatus.STARTING)
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
     write(key, meta);
-    return ProgramRunClusterStatus.PROVISIONED;
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONED, programRunId);
+    return meta;
   }
 
   /**
@@ -419,10 +428,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunClusterStatus#DEPROVISIONING} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public ProgramRunClusterStatus recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId) {
     MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
 
     RunRecordMeta existing = getRun(programRunId);
@@ -435,27 +444,33 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
-    if (clusterStatus != ProgramRunClusterStatus.PROVISIONED) {
+    if (clusterStatus != ProgramRunClusterStatus.PROVISIONED && clusterStatus != ProgramRunClusterStatus.PROVISIONING) {
       LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
                programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONING);
       return null;
     }
-    if (!existing.getStatus().isEndState()) {
+    if (clusterStatus == ProgramRunClusterStatus.PROVISIONED && !existing.getStatus().isEndState()) {
       LOG.warn("Ignoring unexpected request to transition program run {} from program state {} to cluster state {}.",
                programRunId, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONING);
       return null;
     }
 
+    delete(existing);
     key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
 
+    // if the previous state was provisioning, that means we've transitioned here from a failure
+    ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
+      ProgramRunStatus.FAILED : existing.getStatus();
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING,
                                                       null, existing.getCluster().getNumNodes());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
+      .setStatus(newStatus)
       .build();
     write(key.build(), meta);
-    return ProgramRunClusterStatus.DEPROVISIONING;
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONING, programRunId);
+    return meta;
   }
 
   /**
@@ -467,10 +482,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunClusterStatus#DEPROVISIONED} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public ProgramRunClusterStatus recordProgramDeprovisioned(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramDeprovisioned(ProgramRunId programRunId, byte[] sourceId) {
     MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
 
     RunRecordMeta existing = getRun(programRunId);
@@ -483,27 +498,34 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
-    if (clusterStatus != ProgramRunClusterStatus.DEPROVISIONING) {
+    if (clusterStatus != ProgramRunClusterStatus.DEPROVISIONING &&
+      clusterStatus != ProgramRunClusterStatus.PROVISIONING) {
       LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
                programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONED);
       return null;
     }
-    if (!existing.getStatus().isEndState()) {
+    if (clusterStatus == ProgramRunClusterStatus.DEPROVISIONING && !existing.getStatus().isEndState()) {
       LOG.warn("Ignoring unexpected request to transition program run {} from program state {} to cluster state {}.",
                programRunId, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONED);
       return null;
     }
 
+    delete(existing);
     key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
 
+    // if the previous state was provisioning, that means we've transitioned here from a failure
+    ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
+      ProgramRunStatus.FAILED : existing.getStatus();
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED,
                                                       null, existing.getCluster().getNumNodes());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
+      .setStatus(newStatus)
       .build();
     write(key.build(), meta);
-    return ProgramRunClusterStatus.DEPROVISIONED;
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONED, programRunId);
+    return meta;
   }
 
   /**
@@ -515,12 +537,19 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunStatus#STARTING} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
-  public ProgramRunStatus recordProgramStart(ProgramRunId programRunId, String twillRunId,
-                                             Map<String, String> systemArgs, byte[] sourceId) {
-    MDSKey.Builder keyBuilder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId.getParent());
+  @Nullable
+  public RunRecordMeta recordProgramStart(ProgramRunId programRunId, @Nullable String twillRunId,
+                                          Map<String, String> systemArgs, byte[] sourceId) {
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
     RunRecordMeta existing = getRun(programRunId);
+    RunRecordMeta meta;
+
+    if (systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STARTING, null, sourceId);
+    }
+
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.STARTING);
@@ -529,28 +558,22 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     if (!isValid(existing, sourceId, "start")) {
       return null;
     }
-    if (existing.getStatus() != null && existing.getStatus() != ProgramRunStatus.STARTING) {
+    if (existing.getStatus() != ProgramRunStatus.STARTING) {
       LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
                programRunId, existing.getStatus(), ProgramRunStatus.STARTING);
       return null;
     }
 
-    if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
-      // Program is started by Workflow. Add row corresponding to its node state.
-      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STARTING, null, sourceId);
-    }
-
     // Delete the old run record
     delete(existing);
-
-    MDSKey key = keyBuilder.add(programRunId.getRun()).build();
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    meta = RunRecordMeta.builder(existing)
       .setStatus(ProgramRunStatus.STARTING)
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
       .build();
     write(key, meta);
-    return ProgramRunStatus.STARTING;
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.STARTING, programRunId);
+    return meta;
   }
 
   /**
@@ -562,10 +585,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunStatus#RUNNING} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
-  public ProgramRunStatus recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
-                                               byte[] sourceId) {
+  public RunRecordMeta recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
+                                            byte[] sourceId) {
     MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programRunId).build();
     return recordProgramRunning(programRunId, stateChangeTime, twillRunId, key, sourceId);
   }
@@ -581,8 +604,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     recordProgramRunning(programRunId, stateChangeTime, twillRunId, key, sourceId);
   }
 
-  private ProgramRunStatus recordProgramRunning(ProgramRunId programRunId, long runTs, String twillRunId,
-                                                MDSKey key, byte[] sourceId) {
+  @Nullable
+  private RunRecordMeta recordProgramRunning(ProgramRunId programRunId, long runTs, String twillRunId,
+                                             MDSKey key, byte[] sourceId) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -616,7 +640,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       .setSourceId(sourceId)
       .build();
     write(key, meta);
-    return ProgramRunStatus.RUNNING;
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.RUNNING, programRunId);
+    return meta;
   }
 
   /**
@@ -626,10 +651,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunStatus#SUSPENDED} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public ProgramRunStatus recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -640,8 +665,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       // Skip recording suspend if the existing record is not valid
       return null;
     }
-    recordProgramSuspendResume(programRunId, sourceId, existing, "suspend");
-    return ProgramRunStatus.SUSPENDED;
+    return recordProgramSuspendResume(programRunId, sourceId, existing, "suspend");
   }
 
   /**
@@ -651,10 +675,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunStatus#RUNNING} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public ProgramRunStatus recordProgramResumed(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramResumed(ProgramRunId programRunId, byte[] sourceId) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -667,25 +691,22 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
     // Only if existingRecords is empty & upgrade is not complete & the version is default version,
     // also try to get the record without the version string
-    if (existing == null) {
-      if (!upgradeComplete.get() && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-        MDSKey key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programRunId.getParent())
-          .add(programRunId.getRun())
-          .build();
-        existing = get(key, RunRecordMeta.class);
-      }
-      if (existing == null) {
-        LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program suspend.",
-                  programRunId.getParent(), programRunId.getRun());
-        return null;
-      }
+    if (!upgradeComplete.get() && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
+      MDSKey key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programRunId.getParent())
+        .add(programRunId.getRun())
+        .build();
+      existing = get(key, RunRecordMeta.class);
     }
-    recordProgramSuspendResume(programRunId, sourceId, existing, "resume");
-    return ProgramRunStatus.RUNNING;
+    if (existing == null) {
+      LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program suspend.",
+                programRunId.getParent(), programRunId.getRun());
+      return null;
+    }
+    return recordProgramSuspendResume(programRunId, sourceId, existing, "resume");
   }
 
-  private void recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
-                                          RunRecordMeta existing, String action) {
+  private RunRecordMeta recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
+                                                   RunRecordMeta existing, String action) {
     String toType = TYPE_RUN_RECORD_SUSPENDED;
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
 
@@ -696,7 +717,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     // Delete the old run record
     delete(existing);
     MDSKey key = getProgramKeyBuilder(toType, programRunId).build();
-    write(key, RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId).build());
+    RunRecordMeta meta = RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId).build();
+    write(key, meta);
+    LOG.trace("Recorded {} for program {}", toStatus, programRunId);
+    return meta;
   }
 
   /**
@@ -709,9 +733,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return the program run status that is successfully persisted, {@code null} otherwise.
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
-  public ProgramRunStatus recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
+  @Nullable
+  public RunRecordMeta recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
                                             @Nullable BasicThrowable failureCause, byte[] sourceId) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
     return recordProgramStop(programRunId, stopTs, runStatus, failureCause, builder, sourceId);
@@ -724,9 +749,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     recordProgramStop(programRunId, stopTs, runStatus, failureCause, builder, sourceId);
   }
 
-  private ProgramRunStatus recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
-                                             @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
-                                             byte[] sourceId) {
+  @Nullable
+  private RunRecordMeta recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
+                                          @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
+                                          byte[] sourceId) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -752,8 +778,14 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     MDSKey key = builder.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
-    write(key, RunRecordMeta.builder(existing).setStopTime(stopTs).setStatus(runStatus).setSourceId(sourceId).build());
-    return runStatus;
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setStopTime(stopTs)
+      .setStatus(runStatus)
+      .setSourceId(sourceId)
+      .build();
+    write(key, meta);
+    LOG.trace("Recorded {} for program {}", runStatus, programRunId);
+    return meta;
   }
 
   /**
@@ -849,7 +881,11 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
         runRecords.putAll(getHistoricalRuns(programId, status, startTime, endTime, limit - runRecords.size(), filter));
         return runRecords;
       case STARTING:
-        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTING, startTime, endTime, limit, filter);
+        Predicate<RunRecordMeta> stateFilter = record -> record.getStatus() == status;
+        if (filter != null) {
+          stateFilter = stateFilter.and(filter);
+        }
+        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTING, startTime, endTime, limit, stateFilter);
       case RUNNING:
         return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, filter);
       case SUSPENDED:
@@ -870,7 +906,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       return running;
     }
 
-    // Then query for started run record
+    // Then query for starting run record
     RunRecordMeta starting = getUnfinishedRun(programRun, TYPE_RUN_RECORD_STARTING);
     if (starting != null) {
       return starting;

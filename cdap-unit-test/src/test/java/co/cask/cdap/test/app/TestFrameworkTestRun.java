@@ -2149,6 +2149,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     } catch (Exception e) {
       Assert.assertTrue(Throwables.getRootCause(e) instanceof ConflictException);
     }
+    workerManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     workerManager.stop();
 
     // Start the workflow

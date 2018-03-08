@@ -28,6 +28,7 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -79,9 +80,9 @@ public class WorkflowTest {
 
   private int sourceId;
 
-  private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime,
-                                  ArtifactId artifactId) {
-    store.setProvisioning(id.run(pid), startTime, ImmutableMap.of(), ImmutableMap.of(),
+  private void setStartAndRunning(Store store, ProgramId id, String pid, ArtifactId artifactId) {
+    long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
+    store.setProvisioning(id.run(pid), ImmutableMap.of(), ImmutableMap.of(),
                           AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id.run(pid), null, ImmutableMap.of(), AppFabricTestHelper.createSourceId(++sourceId));
@@ -108,12 +109,10 @@ public class WorkflowTest {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Starting");
-        long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         ArtifactId artifactId =
           controller.getProgramRunId().getNamespaceId().artifact("test", "1.0").toApiArtifactId();
         setStartAndRunning(injector.getInstance(Store.class), controller.getProgramRunId().getParent(),
-                           controller.getProgramRunId().getRun(),
-                           nowSecs, artifactId);
+                           controller.getProgramRunId().getRun(), artifactId);
       }
 
       @Override
@@ -216,12 +215,10 @@ public class WorkflowTest {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Initializing");
-        long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         ArtifactId artifactId =
           controller.getProgramRunId().getNamespaceId().artifact("test", "1.0").toApiArtifactId();
         setStartAndRunning(injector.getInstance(Store.class), controller.getProgramRunId().getParent(),
-                                                         controller.getProgramRunId().getRun(),
-                                                         nowSecs, artifactId);
+                           controller.getProgramRunId().getRun(), artifactId);
       }
 
       @Override
