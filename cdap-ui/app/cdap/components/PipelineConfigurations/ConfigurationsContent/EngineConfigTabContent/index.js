@@ -86,6 +86,7 @@ export default class EngineConfigTabContent extends Component {
           isDetailView={this.props.isDetailView}
           showCustomConfig={this.state.showCustomConfig}
           toggleCustomConfig={this.toggleCustomConfig}
+          isBatch={this.props.isBatch}
         />
       </div>
     );

@@ -33,6 +33,21 @@
     .provided-label {
       width: initial;
     }
+
+    .provided-popover {
+      display: inline-block;
+      cursor: pointer;
+
+      .icon-caret-square-o-down {
+        margin-left: 5px;
+        transform: translateY(-1px);
+      }
+
+      .popper {
+        min-width: 90px;
+        width: 90px;
+      }
+    }
   }
 
   .runtime-arguments-values {

@@ -35,7 +35,9 @@ const mapStateToConfigureButton = (state) => {
   return {
     isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
     pipelineName: state.name,
-    config: state.config
+    config: state.config,
+    macrosMap: state.macrosMap,
+    runtimeArgs: state.runtimeArgs
   };
 };
 

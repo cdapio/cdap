@@ -14,17 +14,28 @@
  * the License.
 */
 
-import React from 'react';
+import React, { Component } from 'react';
 import PipelineDetailsMetadata from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsMetadata';
 import PipelineDetailsButtons from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons';
+import PipelineDetailStore from 'components/PipelineDetails/store';
+import {fetchMacros} from 'components/PipelineDetails/store/ActionCreator';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./PipelineDetailsTopPanel.scss');
 
-export default function PipelineDetailsTopPanel() {
-  return (
-    <div className = "pipeline-details-top-panel">
-      <PipelineDetailsMetadata />
-      <PipelineDetailsButtons />
-    </div>
-  );
+export default class PipelineDetailsTopPanel extends Component {
+  componentDidMount() {
+    fetchMacros({
+      namespace: getCurrentNamespace(),
+      appId: PipelineDetailStore.getState().name
+    });
+  }
+  render() {
+    return (
+      <div className = "pipeline-details-top-panel">
+        <PipelineDetailsMetadata />
+        <PipelineDetailsButtons />
+      </div>
+    );
+  }
 }
