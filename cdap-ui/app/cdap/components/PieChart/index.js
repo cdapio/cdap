@@ -31,7 +31,7 @@ export default class PieChart extends Component {
   };
   state = {
     data: this.props.data,
-    id: uuidV4()
+    id: `A-${uuidV4()}`
   };
   componentDidMount() {
     this.drawPie();
@@ -70,7 +70,7 @@ export default class PieChart extends Component {
   };
   render() {
     return (
-      <div id={this.state.id}>
+      <div id={`${this.state.id}`}>
         <svg
           width={this.props.width || "50"}
           height={this.props.height || "50"}

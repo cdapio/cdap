@@ -16,12 +16,12 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import d3 from 'd3';
+import *  as d3Lib from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 const HEIGHT_OF_PIE_CHART = 190;
-const colorScale = d3.scale.category20();
+const colorScale = d3Lib.scale.category20();
 const ModelStatusesDistribution = ({modelStatuses}) => {
   if (!modelStatuses.length) {
     return (
