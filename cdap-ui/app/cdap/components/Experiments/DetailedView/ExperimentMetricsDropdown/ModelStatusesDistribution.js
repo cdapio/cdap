@@ -21,7 +21,7 @@ import PieChartWithLegends from 'components/PieChartWithLegend';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 const HEIGHT_OF_PIE_CHART = 190;
-const colorScale = d3Lib.scale.category20();
+const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
 const ModelStatusesDistribution = ({modelStatuses}) => {
   if (!modelStatuses.length) {
     return (

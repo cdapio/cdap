@@ -22,7 +22,7 @@ import TopPanel from 'components/Experiments/TopPanel';
 import SortableStickyTable from 'components/SortableStickyTable';
 import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
-import *  as d3Lib from 'd3';
+import * as d3Lib from 'd3';
 import ExperimentsListBarChart from 'components/Experiments/ListView/ExperimentsListBarChart';
 import PlusButton from 'components/PlusButton';
 import InvalidPageView from 'components/Experiments/ListView/InvalidPageView';
@@ -57,7 +57,7 @@ const tableHeaders = [
   }
 ];
 
-const colorScale = d3Lib.scale.category20();
+  const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
 const PLUSBUTTONCONTEXTMENUITEMS = [
   {
     label: 'Create a new Experiment',
