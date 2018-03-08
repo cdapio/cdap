@@ -28,12 +28,19 @@ public class ProvisionerProperty<T> {
   protected final String label;
   protected final String description;
   protected final String type;
+  // This variable indicates whether the provisioner property is required.
+  protected final boolean isRequired;
 
   public ProvisionerProperty(String name, String label, String description, String type) {
+    this(name, label, description, type, true);
+  }
+
+  public ProvisionerProperty(String name, String label, String description, String type, boolean isRequired) {
     this.name = name;
     this.label = label;
     this.description = description;
     this.type = type;
+    this.isRequired = isRequired;
   }
 
   /**
@@ -60,11 +67,12 @@ public class ProvisionerProperty<T> {
     return Objects.equals(name, that.name) &&
       Objects.equals(label, that.label) &&
       Objects.equals(description, that.description) &&
-      Objects.equals(type, that.type);
+      Objects.equals(type, that.type) &&
+      Objects.equals(isRequired, that.isRequired);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, label, description, type);
+    return Objects.hash(name, label, description, type, isRequired);
   }
 }
