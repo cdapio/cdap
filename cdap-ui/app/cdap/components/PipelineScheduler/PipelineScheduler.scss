@@ -163,10 +163,10 @@ $secondary-btn-color: $brand-primary;
           &.btn-secondary {
             color: $secondary-btn-color;
             margin-left: 16px;
+          }
 
-            .icon-spinner {
-              margin-left: 5px;
-            }
+          .icon-spinner {
+            margin-left: 5px;
           }
         }
       }

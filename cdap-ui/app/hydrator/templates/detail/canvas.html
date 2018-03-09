@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016-2017 Cask Data, Inc.
+  Copyright © 2016-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -13,49 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
-<div class="run-level-information"
-      ng-class="{'no-runs': !CanvasCtrl.currentRunIndex || !CanvasCtrl.totalRuns}">
-  <h3 class="run-number-container">
-    <span ng-if="CanvasCtrl.currentRunIndex && CanvasCtrl.totalRuns">
-      Run {{CanvasCtrl.currentRunIndex}} of {{CanvasCtrl.totalRuns}}
-    </span>
-    <span ng-if="!CanvasCtrl.currentRunIndex || !CanvasCtrl.totalRuns">
-      No Runs
-    </span>
-  </h3>
-
-  <span>
-    <span
-      class="status-bubble"
-      ng-class="CanvasCtrl.currentRun.statusCssClass"
-    >
-    </span>
-    <strong ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.currentRun.status}}</strong>
-    <strong ng-if="!CanvasCtrl.currentRun.startTime && !CanvasCtrl.currentRun.starting">Deployed</strong>
-    <strong ng-if="CanvasCtrl.currentRun.starting">Starting</strong>
-  </span>
-  <span>
-    <strong> Duration </strong>
-    <span ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.currentRun.duration}}</span>
-    <span ng-if="!CanvasCtrl.currentRun.startTime">--</span>
-  </span>
-  <span>
-    <strong> Start Time </strong>
-    <span ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.currentRun.startTime}}</span>
-    <span ng-if="!CanvasCtrl.currentRun.startTime">--</span>
-  </span>
-  <span>
-    <strong> Log Warnings: </strong>
-    <span ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.logsMetrics['system.app.log.warn'] || '0'}}</span>
-    <span ng-if="!CanvasCtrl.currentRun.startTime">--</span>
-  </span>
-  <span>
-    <strong> Log Errors: </strong>
-    <span ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.logsMetrics['system.app.log.error'] || '0'}}</span>
-    <span ng-if="!CanvasCtrl.currentRun.startTime">--</span>
-  </span>
-</div>
+<pipeline-details-run-level-info></pipeline-details-run-level-info>
 
 <my-dag-plus
   data-is-disabled="true"

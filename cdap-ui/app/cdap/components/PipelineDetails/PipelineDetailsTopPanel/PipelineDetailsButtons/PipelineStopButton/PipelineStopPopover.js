@@ -22,11 +22,13 @@ import Duration from 'components/Duration';
 import moment from 'moment';
 import {Observable} from 'rxjs/Observable';
 import {setStopError} from 'components/PipelineDetails/store/ActionCreator';
+import classnames from 'classnames';
 require('./PipelineStopPopover.scss');
 
 export default class PipelineStopPopover extends Component {
   static propTypes = {
     runs: PropTypes.array,
+    currentRunId: PropTypes.string,
     stopRun: PropTypes.func
   };
 
@@ -136,6 +138,7 @@ export default class PipelineStopPopover extends Component {
           <table className="stop-btn-popover-table table">
             <thead>
               <tr>
+                <th></th>
                 <th>Start Time</th>
                 <th>Duration</th>
                 <th></th>
@@ -145,7 +148,18 @@ export default class PipelineStopPopover extends Component {
               {
                 this.props.runs.map((run, i) => {
                   return (
-                    <tr key={i}>
+                    <tr
+                      key={i}
+                      className={classnames({"current-run-row": run.runid === this.props.currentRunId})}
+                    >
+                      <td>
+                        {
+                          run.runid === this.props.currentRunId ?
+                            <IconSVG name="icon-check" />
+                          :
+                            null
+                        }
+                      </td>
                       <td>{moment.unix(run.start).calendar()}</td>
                       <td>
                         <Duration
@@ -180,8 +194,3 @@ export default class PipelineStopPopover extends Component {
     );
   }
 }
-
-PipelineStopPopover.propTypes = {
-  runs: PropTypes.array,
-  stopRun: PropTypes.func
-};

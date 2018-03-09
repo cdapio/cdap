@@ -15,20 +15,15 @@
 */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
-import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
+import {updateKeyValueStore} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {convertMapToKeyValuePairsObj, convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import RuntimeArgsPairs from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/RuntimeArgsPairs';
 import ProvidedPopover from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/ProvidedPopover';
+import classnames from 'classnames';
+import isEmpty from 'lodash/isEmpty';
 require('./RuntimeArgsTabContent.scss');
-
-const updateKeyValueStore = () => {
-  let runtimeArgsPairs = PipelineConfigurationsStore.getState().runtimeArgs.pairs;
-  KeyValueStore.dispatch({
-    type: KeyValueStoreActions.onUpdate,
-    payload: { pairs: runtimeArgsPairs }
-  });
-};
 
 const toggleAllProvided = (isProvided) => {
   let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
@@ -44,20 +39,74 @@ const toggleAllProvided = (isProvided) => {
   updateKeyValueStore();
 };
 
-export default function RuntimeArgsTabContent() {
+const onPaste = (dataObj, index) => {
+  let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
+
+  // If the selected key-value pair is empty, remove it first before pasting new content
+  if (!runtimeArgs.pairs[index].key.length && !runtimeArgs.pairs[index].value.length) {
+    runtimeArgs.pairs.splice(index, 1);
+  }
+
+  // If there are existing keys, replace the value, and add the remaining
+  runtimeArgs.pairs.forEach(runtimeArgsPair => {
+    let key = runtimeArgsPair.key;
+    if (key in dataObj) {
+      runtimeArgsPair.value = dataObj[key];
+      delete dataObj[key];
+    }
+  });
+  if (!isEmpty(dataObj)) {
+    let remainingRuntimeArgs = convertMapToKeyValuePairsObj(dataObj);
+    runtimeArgs.pairs = runtimeArgs.pairs.concat(remainingRuntimeArgs.pairs);
+  }
+  PipelineConfigurationsStore.dispatch({
+    type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
+    payload: { runtimeArgs }
+  });
+  updateKeyValueStore();
+};
+
+export default function RuntimeArgsTabContent({isHistoricalRun}) {
+  let runtimeArgs = PipelineConfigurationsStore.getState().runtimeArgs;
+  let runtimeArgsObj = convertKeyValuePairsObjToMap(runtimeArgs);
+  let noRuntimeArgs = isEmpty(runtimeArgsObj);
+
+  let stepContentHeading;
+  if (isHistoricalRun) {
+    if (noRuntimeArgs) {
+      stepContentHeading = (
+        <div className="step-content-heading">
+          No Runtime Arguments were used for this run
+        </div>
+      );
+    } else {
+      stepContentHeading = (
+        <div className="step-content-heading">
+          Runtime Arguments used for this run
+        </div>
+      );
+    }
+  } else {
+    stepContentHeading = (
+      <div>
+        <div className="step-content-heading">
+          Specify Runtime Arguments or Update the Ones Derived from Preferences
+        </div>
+        <div className="step-content-subtitle">
+          By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       id="runtime-arguments-tab-content"
       className="configuration-step-content configuration-content-container"
     >
-      <div className="step-content-heading">
-        Specify Runtime Arguments or Update the Ones Derived from Preferences
-        <div className="step-content-subtitle">
-          By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
-        </div>
-      </div>
+      {stepContentHeading}
       <div className="runtime-arguments-labels key-value-pair-labels">
-        <span className="key-label">
+        <span className={classnames("key-label", {"wider": isHistoricalRun})}>
           Name
         </span>
         <span className="value-label">
@@ -65,13 +114,19 @@ export default function RuntimeArgsTabContent() {
         </span>
         <ProvidedPopover
           toggleAllProvided={toggleAllProvided}
+          disabled={isHistoricalRun}
         />
       </div>
       <div className="runtime-arguments-values key-value-pair-values">
         <RuntimeArgsPairs
-          updateKeyValueStore={updateKeyValueStore}
+          disabled={isHistoricalRun}
+          onPaste={onPaste}
         />
       </div>
     </div>
   );
 }
+
+RuntimeArgsTabContent.propTypes = {
+  isHistoricalRun: PropTypes.bool
+};

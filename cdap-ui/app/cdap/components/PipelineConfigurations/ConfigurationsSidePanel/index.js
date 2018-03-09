@@ -21,7 +21,9 @@ import IconSVG from 'components/IconSVG';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
 require('./ConfigurationsSidePanel.scss');
 
-export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatch, activeTab, onTabChange, showAdvancedTabs, toggleAdvancedTabs}) {
+export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatch, isHistoricalRun, activeTab, onTabChange, showAdvancedTabs, toggleAdvancedTabs}) {
+  // Currently we only have runtime arguments info of a historical run, so will
+  // only show the Runtime Arguments tab for now
   return (
     <div className="configurations-side-panel">
       <div className="configurations-tabs">
@@ -48,7 +50,7 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
             null
         }
         {
-          isDetailView || isPreview ?
+          (isDetailView || isPreview) && !isHistoricalRun ?
             <div
               className="configuration-tab toggle-advanced-options"
               onClick={toggleAdvancedTabs}
@@ -104,6 +106,7 @@ ConfigurationsSidePanel.propTypes = {
   isDetailView: PropTypes.bool,
   isPreview: PropTypes.bool,
   isBatch: PropTypes.bool,
+  isHistoricalRun: PropTypes.bool,
   activeTab: PropTypes.string,
   onTabChange: PropTypes.func,
   showAdvancedTabs: PropTypes.bool,

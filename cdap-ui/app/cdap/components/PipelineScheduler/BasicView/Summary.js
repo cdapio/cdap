@@ -35,11 +35,11 @@ const mapStateToMaxConcurrentRunsSummaryProps = (state) => {
 const SummaryComponent = ({state}) => {
   switch (state.intervalOption) {
     case INTERVAL_OPTIONS['5MIN']:
-      return <span>every 5 minutes</span>;
+      return <span>every 5 minutes.</span>;
     case INTERVAL_OPTIONS['10MIN']:
-      return <span>every 10 minutes</span>;
+      return <span>every 10 minutes.</span>;
     case INTERVAL_OPTIONS['30MIN']:
-      return <span>every 30 minutes</span>;
+      return <span>every 30 minutes.</span>;
     case INTERVAL_OPTIONS.HOURLY:
       return (
         <span>
@@ -52,9 +52,9 @@ const SummaryComponent = ({state}) => {
           }
           {
             state.startingAtMinute === 0 ?
-              'on the hour'
+              'on the hour.'
             :
-              `${moment().minute(state.startingAtMinute).format('mm')} minutes past the hour`
+              `${moment().minute(state.startingAtMinute).format('mm')} minutes past the hour.`
           }
         </span>
       );
@@ -67,7 +67,7 @@ const SummaryComponent = ({state}) => {
             :
               `every ${state.dayInterval} days, `
           }
-          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}`}
+          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
         </span>
       );
     case INTERVAL_OPTIONS.WEEKLY:
@@ -84,21 +84,21 @@ const SummaryComponent = ({state}) => {
               </span>
 
           }
-          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}`}
+          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
         </span>
       );
     case INTERVAL_OPTIONS.MONTHLY:
       return (
         <span>
           {`every ${moment().date(state.dateOfMonthInterval).format('Do')} day of the month, `}
-          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}`}
+          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
         </span>
       );
     case INTERVAL_OPTIONS.YEARLY:
       return (
         <span>
           {`every year on ${moment().month(state.monthInterval).format('MMM')} ${moment().date(state.dateOfMonthInterval).format('Do')}`}
-          {` at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}`}
+          {` at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
         </span>
       );
   }
@@ -113,9 +113,9 @@ const MaxConcurrentRunsSummary = ({maxConcurrentRuns}) => {
     <span>
       {
         maxConcurrentRuns === 1 ?
-          'The pipeline cannot have concurrent runs'
+          'The pipeline cannot have concurrent runs.'
         :
-          `The pipeline can have ${maxConcurrentRuns} concurrent runs`
+          `The pipeline can have ${maxConcurrentRuns} concurrent runs.`
       }
     </span>
   );

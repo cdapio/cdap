@@ -19,19 +19,22 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import T from 'i18n-react';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
-require('./ConfigurationsActionButtons.scss');
+import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
+import isEmpty from 'lodash/isEmpty';
 
 const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
 const mapStateToProps = (state, ownProps) => {
   return {
     runtimeArgs: state.runtimeArgs,
-    activeTab: ownProps.activeTab
+    activeTab: ownProps.activeTab,
+    isHistoricalRun: ownProps.isHistoricalRun
   };
 };
 
-const ConfigModelessRuntimeArgsCount = ({runtimeArgs, activeTab}) => {
-  if (activeTab !== TAB_OPTIONS.RUNTIME_ARGS) {
+const ConfigModelessRuntimeArgsCount = ({runtimeArgs, activeTab, isHistoricalRun}) => {
+  let runtimeArgsObj = convertKeyValuePairsObjToMap(runtimeArgs);
+  if (activeTab !== TAB_OPTIONS.RUNTIME_ARGS || (isHistoricalRun && isEmpty(runtimeArgsObj))) {
     return null;
   }
 
@@ -44,7 +47,8 @@ const ConfigModelessRuntimeArgsCount = ({runtimeArgs, activeTab}) => {
 
 ConfigModelessRuntimeArgsCount.propTypes = {
   runtimeArgs: PropTypes.object,
-  activeTab: PropTypes.string
+  activeTab: PropTypes.string,
+  isHistoricalRun: PropTypes.bool
 };
 
 const ConnectedConfigModelessRuntimeArgsCount = connect(mapStateToProps)(ConfigModelessRuntimeArgsCount);

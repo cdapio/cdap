@@ -47,16 +47,19 @@ export default class PipelineScheduler extends Component {
     this.state = {
       isScheduleChanged: false,
       savingSchedule: false,
+      savingAndScheduling: false,
       scheduleStatus: this.props.scheduleStatus
     };
 
     this.schedulerStoreSubscription = PipelineSchedulerStore.subscribe(() => {
-      let currentCron = PipelineSchedulerStore.getState().cron;
-      if (currentCron !== this.props.schedule && !this.state.isScheduleChanged) {
+      let state = PipelineSchedulerStore.getState();
+      let currentCron = state.cron;
+      let curretMaxConcurrentRuns = state.maxConcurrentRuns;
+      if ((currentCron !== this.props.schedule || curretMaxConcurrentRuns !== this.props.maxConcurrentRuns) && !this.state.isScheduleChanged) {
         this.setState({
           isScheduleChanged: true
         });
-      } else if (currentCron === this.props.schedule && this.state.isScheduleChanged) {
+      } else if (currentCron === this.props.schedule && curretMaxConcurrentRuns === this.props.maxConcurrentRuns && this.state.isScheduleChanged) {
         this.setState({
           isScheduleChanged: false
         });
@@ -132,8 +135,10 @@ export default class PipelineScheduler extends Component {
       return;
     }
 
+    let savingState = shouldSchedule ? 'savingAndScheduling' : 'savingSchedule';
+
     this.setState({
-      savingSchedule: true
+      [savingState]: true
     });
 
     let {name, description, artifact, config, principal} = PipelineDetailStore.getState();
@@ -155,7 +160,7 @@ export default class PipelineScheduler extends Component {
     })
     .subscribe(() => {
       this.setState({
-        savingSchedule: false
+        [savingState]: false
       });
       this.props.onClose();
       if (shouldSchedule) {
@@ -164,7 +169,7 @@ export default class PipelineScheduler extends Component {
     }, (err) => {
       console.log(err);
       this.setState({
-        savingSchedule: false
+        [savingState]: false
       });
     });
 
@@ -231,16 +236,25 @@ export default class PipelineScheduler extends Component {
         <button
           className="btn btn-primary start-schedule-btn"
           onClick={this.startScheduleAndClose}
-          disabled={this.state.savingSchedule}
+          disabled={this.state.savingSchedule || this.state.savingAndScheduling}
         >
           <span>
             {this.state.isScheduleChanged ? 'Save and Start Schedule' : 'Start Schedule'}
+            {
+               this.state.savingAndScheduling ?
+                <IconSVG
+                  name="icon-spinner"
+                  className="fa-spin"
+                />
+              :
+                null
+            }
           </span>
         </button>
         <button
           className="btn btn-secondary start-schedule-btn"
           onClick={this.saveSchedule.bind(this, false)}
-          disabled={this.state.savingSchedule}
+          disabled={this.state.savingSchedule || this.state.savingAndScheduling}
         >
           <span>Save Schedule</span>
           {

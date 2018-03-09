@@ -17,6 +17,8 @@
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/PipelineDetails/store';
 import {setRunButtonLoading, setRunError, setScheduleButtonLoading, setScheduleError, fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
+import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
+import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {GLOBALS} from 'services/global-constants';
 import {MyPipelineApi} from 'api/pipeline';
@@ -32,11 +34,31 @@ const applyRuntimeArgs = () => {
   });
 };
 
-const revertRuntimeArgsToSavedValues = () => {
+const revertConfigsToSavedValues = () => {
   let savedRuntimeArgs = PipelineConfigurationsStore.getState().savedRuntimeArgs;
+  KeyValueStore.dispatch({
+    type: KeyValueStoreActions.onUpdate,
+    payload: { pairs: savedRuntimeArgs.pairs }
+  });
+  PipelineConfigurationsStore.dispatch({
+    type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
+    payload: {...PipelineDetailStore.getState().config}
+  });
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
     payload: { runtimeArgs: cloneDeep(savedRuntimeArgs) }
+  });
+  PipelineConfigurationsStore.dispatch({
+    type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
+    payload: { open: false }
+  });
+};
+
+const updateKeyValueStore = () => {
+  let runtimeArgsPairs = PipelineConfigurationsStore.getState().runtimeArgs.pairs;
+  KeyValueStore.dispatch({
+    type: KeyValueStoreActions.onUpdate,
+    payload: { pairs: runtimeArgsPairs }
   });
 };
 
@@ -205,13 +227,21 @@ const scheduleOrSuspendPipeline = (scheduleApi) => {
   });
 };
 
+const reset = () => {
+  PipelineConfigurationsStore.dispatch({
+    type: PipelineConfigurationsActions.RESET
+  });
+};
+
 export {
   applyRuntimeArgs,
-  revertRuntimeArgsToSavedValues,
+  revertConfigsToSavedValues,
+  updateKeyValueStore,
   getMacrosResolvedByPrefs,
   updatePipelineEditStatus,
   updatePipeline,
   runPipeline,
   schedulePipeline,
-  suspendSchedule
+  suspendSchedule,
+  reset
 };

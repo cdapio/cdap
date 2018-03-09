@@ -23,12 +23,13 @@ import IconSVG from 'components/IconSVG';
 const mapStateToProps = (state, ownProps) => {
   return {
     containsMacros: Object.keys(state.resolvedMacros).length > 0,
-    toggleAllProvided: ownProps.toggleAllProvided
+    toggleAllProvided: ownProps.toggleAllProvided,
+    disabled: ownProps.disabled
   };
 };
 
-const ProvidedPopover = ({containsMacros, toggleAllProvided}) => {
-  if (!containsMacros) { return null; }
+const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
+  if (!containsMacros || disabled) { return null; }
 
   return (
     <span>
@@ -55,7 +56,8 @@ const ProvidedPopover = ({containsMacros, toggleAllProvided}) => {
 
 ProvidedPopover.propTypes = {
   containsMacros: PropTypes.bool,
-  toggleAllProvided: PropTypes.func
+  toggleAllProvided: PropTypes.func,
+  disabled: PropTypes.bool
 };
 
 const ConnectedProvidedPopover = connect(mapStateToProps)(ProvidedPopover);

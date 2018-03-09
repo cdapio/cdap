@@ -50,4 +50,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('pipelineScheduler', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineScheduler);
+  })
+  .directive('pipelineDetailsRunLevelInfo', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineDetailsRunLevelInfo);
   });

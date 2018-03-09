@@ -100,6 +100,7 @@ export default class PipelineStopButton extends Component {
       return (
         <PipelineStopPopover
           runs={this.state.runningRuns}
+          currentRunId={this.props.currentRun.runid}
           stopRun={this.stopRun}
         />
       );

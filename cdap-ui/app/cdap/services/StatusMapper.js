@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,27 @@
  * the License.
 */
 
+import {PROGRAM_STATUSES} from 'services/global-constants';
+
 const statusMap = {
-  'DEPLOYED': 'Deployed',
-  'SUBMITTING': 'Submitting',
-  'RUNNING': 'Running',
-  'SUCCEEDED': 'Succeeded',
-  'FAILED': 'Failed',
-  'DRAFT': 'Draft',
-  'STOPPED': 'Stopped',
-  'COMPLETED': 'Succeeded',
-  'KILLED': 'Stopped',
-  'KILLED_BY_TIMER': 'Succeeded',
-  'DEPLOY_FAILED': 'Failed',
-  'RUN_FAILED': 'Failed',
-  'SUSPENDED': 'Deployed',
-  'SCHEDULED': 'Scheduled',
-  'STARTING': 'Starting',
-  'SCHEDULING': 'Scheduling',
-  'STOPPING': 'Stopping',
-  'SUSPENDING': 'Suspending',
+  [PROGRAM_STATUSES.DEPLOYED]: 'Deployed',
+  [PROGRAM_STATUSES.SUBMITTING]: 'Submitting',
+  [PROGRAM_STATUSES.RUNNING]: 'Running',
+  [PROGRAM_STATUSES.SUCCEEDED]: 'Succeeded',
+  [PROGRAM_STATUSES.FAILED]: 'Failed',
+  [PROGRAM_STATUSES.DRAFT]: 'Draft',
+  [PROGRAM_STATUSES.STOPPED]: 'Stopped',
+  [PROGRAM_STATUSES.COMPLETED]: 'Succeeded',
+  [PROGRAM_STATUSES.KILLED]: 'Stopped',
+  [PROGRAM_STATUSES.KILLED_BY_TIMER]: 'Succeeded',
+  [PROGRAM_STATUSES.DEPLOY_FAILED]: 'Failed',
+  [PROGRAM_STATUSES.RUN_FAILED]: 'Failed',
+  [PROGRAM_STATUSES.SUSPENDED]: 'Deployed',
+  [PROGRAM_STATUSES.SCHEDULED]: 'Scheduled',
+  [PROGRAM_STATUSES.STARTING]: 'Starting',
+  [PROGRAM_STATUSES.SCHEDULING]: 'Scheduling',
+  [PROGRAM_STATUSES.STOPPING]: 'Stopping',
+  [PROGRAM_STATUSES.SUSPENDING]: 'Suspending',
 };
 
 function lookupDisplayStatus (systemStatus) {
