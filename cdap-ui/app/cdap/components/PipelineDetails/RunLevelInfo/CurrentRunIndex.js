@@ -18,7 +18,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {reverseArrayWithoutMutating} from 'services/helpers';
+import {reverseArrayWithoutMutating, objectQuery} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
 import {setCurrentRunId} from 'components/PipelineDetails/store/ActionCreator';
 
@@ -31,7 +31,7 @@ const mapStateToProps = (state) => {
 
 const CurrentRunIndex = ({runs, currentRun}) => {
   let reversedRuns = reverseArrayWithoutMutating(runs);
-  let currentRunIndex = findIndex(reversedRuns, {runid: currentRun.runid});
+  let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
 
   if (!reversedRuns || currentRunIndex === -1) {
     return (

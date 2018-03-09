@@ -18,6 +18,7 @@ import React from 'react';
 import {Provider} from 'react-redux';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import CurrentRunIndex from 'components/PipelineDetails/RunLevelInfo/CurrentRunIndex';
+import RunStatus from 'components/PipelineDetails/RunLevelInfo/RunStatus';
 import RunStartTime from 'components/PipelineDetails/RunLevelInfo/RunStartTime';
 import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
 require('./RunLevelInfo.scss');
@@ -27,6 +28,7 @@ export default function RunLevelInfo() {
     <Provider store={PipelineDetailStore}>
       <div className="pipeline-details-run-level-info">
         <CurrentRunIndex />
+        <RunStatus />
         <RunStartTime />
         <RunDuration />
       </div>

@@ -25,7 +25,7 @@ $border-color: $grey-05;
   z-index: 998;
   padding: 10px 10px 0 10px;
 
-  div.run-info-container {
+  .run-info-container {
     display: inline-block;
     padding-left: 15px;
     padding-right: 15px;
@@ -58,6 +58,21 @@ $border-color: $grey-05;
         &:disabled {
           opacity: 0.5;
         }
+      }
+    }
+  }
+
+  .run-status-container {
+    .run-status-bubble {
+      padding-right: 3px;
+
+      &.status-light-grey { color: $grey-03; }
+      &.status-light-green { color: $green-01; }
+      &.status-light-red { color: $red-02; }
+      &.status-blue { color: $blue-02; }
+
+      .icon-svg {
+        transform: translateY(-1px);
       }
     }
   }

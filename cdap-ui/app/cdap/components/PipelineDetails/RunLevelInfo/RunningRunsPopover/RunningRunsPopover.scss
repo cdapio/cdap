@@ -14,51 +14,26 @@
  * the License.
 */
 
-@import "../../../../../styles/variables.scss";
+@import '../../../../styles/variables.scss';
 
-.stop-btn-popover {
+.running-runs-popover {
+  display: inline-block;
+  margin-left: 2px;
+
+  .running-runs-toggle {
+    cursor: pointer;
+
+    a {
+      text-decoration: none;
+    }
+  }
+
   .popper {
     z-index: 999;
     width: 450px;
     padding: 20px;
 
-    .stop-btn-popover-header {
-      display: flex;
-      justify-content: space-between;
-
-      strong {
-        font-size: 15px;
-      }
-
-      .stop-all-btn {
-        cursor: pointer;
-        width: 105px;
-        border: 1px solid $grey-03;
-        padding: 5px;
-        border-radius: 3px;
-
-        .icon-stop {
-          margin-right: 3px;
-        }
-
-        .icon-spinner {
-          margin-left: 3px;
-        }
-
-        &:hover {
-          &:not(:disabled) {
-            background-color: $grey-07;
-          }
-        }
-
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      }
-    }
-
-    .table.stop-btn-popover-table {
+    .table.running-runs-popover-table {
       background-color: white;
 
       th,
@@ -78,10 +53,7 @@
       td {
         text-align: left;
         color: $grey-01;
-
-        a {
-          color: $brand-primary;
-        }
+        cursor: pointer;
 
         .icon-check {
           color: $blue-02;
@@ -94,13 +66,6 @@
         td:first-child {
           background-color: white;
         }
-      }
-    }
-
-    fieldset:disabled {
-      a {
-        opacity: 0.5;
-        cursor: not-allowed;
       }
     }
   }
