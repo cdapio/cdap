@@ -15,19 +15,27 @@
 */
 
 import React from 'react';
+import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {reverseArrayWithoutMutating} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
 import {setCurrentRunId} from 'components/PipelineDetails/store/ActionCreator';
 
-export default function CurrentRunIndex({runs, currentRun}) {
+const mapStateToProps = (state) => {
+  return {
+    runs: state.runs,
+    currentRun: state.currentRun
+  };
+};
+
+const CurrentRunIndex = ({runs, currentRun}) => {
   let reversedRuns = reverseArrayWithoutMutating(runs);
   let currentRunIndex = findIndex(reversedRuns, {runid: currentRun.runid});
 
   if (!reversedRuns || currentRunIndex === -1) {
     return (
-      <div className="run-number-container">
+      <div className="run-number-container run-info-container">
         <h4>No Runs</h4>
       </div>
     );
@@ -42,7 +50,7 @@ export default function CurrentRunIndex({runs, currentRun}) {
   }
 
   return (
-    <div className="run-number-container">
+    <div className="run-number-container run-info-container">
       <h4 className="run-number">
         {`Run ${currentRunIndex + 1} of ${runs.length}`}
       </h4>
@@ -62,9 +70,13 @@ export default function CurrentRunIndex({runs, currentRun}) {
       </div>
     </div>
   );
-}
+};
 
 CurrentRunIndex.propTypes = {
   runs: PropTypes.array,
   currentRun: PropTypes.object
 };
+
+const ConnectedCurrentRunIndex = connect(mapStateToProps)(CurrentRunIndex);
+
+export default ConnectedCurrentRunIndex;

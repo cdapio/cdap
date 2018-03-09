@@ -25,13 +25,21 @@ $border-color: $grey-05;
   z-index: 998;
   padding: 10px 10px 0 10px;
 
-  div.run-number-container {
+  div.run-info-container {
     display: inline-block;
-    padding-right: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
+    text-align: center;
     border-right: 1px solid $border-color;
+  }
+
+  div.run-number-container {
+    padding-left: 0;
+    padding-right: 20px;
+    text-align: left;
 
     h4.run-number {
-      font-weight: 500;
+      font-weight: bold;
       margin-top: 0;
       margin-bottom: 0;
     }

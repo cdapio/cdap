@@ -15,25 +15,20 @@
 */
 
 import React from 'react';
-import {Provider, connect} from 'react-redux';
+import {Provider} from 'react-redux';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import CurrentRunIndex from 'components/PipelineDetails/RunLevelInfo/CurrentRunIndex';
+import RunStartTime from 'components/PipelineDetails/RunLevelInfo/RunStartTime';
+import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
 require('./RunLevelInfo.scss');
-
-const mapStateToProps = (state) => {
-  return {
-    runs: state.runs,
-    currentRun: state.currentRun
-  };
-};
-
-const ConnectedCurrentRunIndex = connect(mapStateToProps)(CurrentRunIndex);
 
 export default function RunLevelInfo() {
   return (
     <Provider store={PipelineDetailStore}>
       <div className="pipeline-details-run-level-info">
-        <ConnectedCurrentRunIndex />
+        <CurrentRunIndex />
+        <RunStartTime />
+        <RunDuration />
       </div>
     </Provider>
   );
