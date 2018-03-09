@@ -57,7 +57,7 @@ const tableHeaders = [
   }
 ];
 
-const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
+const colorScale = d3Lib.scale.category20();
 const PLUSBUTTONCONTEXTMENUITEMS = [
   {
     label: 'Create a new Experiment',

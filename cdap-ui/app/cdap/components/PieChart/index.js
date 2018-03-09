@@ -49,11 +49,11 @@ export default class PieChart extends Component {
         radius = Math.min(width, height) / 2,
         g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-    var pie = d3Lib.pie()
+    var pie = d3Lib.layout.pie()
         .sort(null)
         .value(function(d) { return d.count; });
 
-    var path = d3Lib.arc()
+    var path = d3Lib.svg.arc()
         .outerRadius(radius - 10)
         .innerRadius(0);
 
