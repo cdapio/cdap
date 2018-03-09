@@ -44,6 +44,9 @@
     .grid-header {
       .sortable-header {
         cursor: pointer;
+        &:hover {
+          text-decoration: underline;
+        }
       }
     }
     .grid-header,
