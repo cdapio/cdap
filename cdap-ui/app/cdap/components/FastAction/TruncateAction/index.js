@@ -104,7 +104,7 @@ export default class TruncateAction extends Component {
   render() {
     const actionLabel = T.translate('features.FastAction.truncateLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
-    const tooltipID = `${this.props.entity.uniqueId}-truncate`;
+    const tooltipID = `truncate-${this.props.entity.uniqueId}`;
     let truncateActionClassNames = 'icon-cut';
     return (
       <span className="btn btn-secondary btn-sm">

@@ -57,7 +57,7 @@ export default class SendEventAction extends Component {
   }
 
   render() {
-    let tooltipID = `${this.props.entity.uniqueId}-sendevents`;
+    let tooltipID = `sendevents-${this.props.entity.uniqueId}`;
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton
