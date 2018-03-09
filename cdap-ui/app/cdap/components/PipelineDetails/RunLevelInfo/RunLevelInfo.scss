@@ -24,6 +24,7 @@ $border-color: $grey-05;
   border-bottom: 1px solid $border-color;
   z-index: 998;
   padding: 10px 10px 0 10px;
+  color: $grey-02;
 
   .run-info-container {
     display: inline-block;
@@ -73,6 +74,17 @@ $border-color: $grey-05;
 
       .icon-svg {
         transform: translateY(-1px);
+      }
+    }
+  }
+
+  .run-logs-container {
+    a {
+      color: $grey-02;
+      text-decoration: none;
+
+      .icon-file-text-o {
+        font-size: 18px;
       }
     }
   }
