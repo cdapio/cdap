@@ -111,7 +111,7 @@ export default class DeleteAction extends Component {
   render() {
     const actionLabel = T.translate('features.FastAction.deleteLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
-    const tooltipID = `${this.props.entity.uniqueId}-delete`;
+    const tooltipID = `delete-${this.props.entity.uniqueId}`;
 
     return (
       <span className="btn btn-secondary btn-sm">

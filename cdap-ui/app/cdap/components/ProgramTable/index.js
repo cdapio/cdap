@@ -83,7 +83,7 @@ export default class ProgramTable extends Component {
         programType: prog.type,
         type: 'program',
         id: prog.id,
-        uniqueId: uuidV4()
+        uniqueId: `program-${uuidV4()}`
       });
     });
   }

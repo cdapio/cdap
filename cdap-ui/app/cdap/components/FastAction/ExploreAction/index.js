@@ -117,7 +117,7 @@ export default class ExploreAction extends Component {
     }
   }
   render() {
-    let tooltipID = `${this.props.entity.uniqueId}-explore`;
+    let tooltipID = `explore-${this.props.entity.uniqueId}`;
     let showRunningQueriesNotification = this.state.showRunningQueriesDoneLabel && this.state.runningQueries && objectQuery(this.props.argsToAction, 'showQueriesCount');
     return (
       <span className={classnames("btn btn-secondary btn-sm", {'fast-action-with-popover': showRunningQueriesNotification})}>
