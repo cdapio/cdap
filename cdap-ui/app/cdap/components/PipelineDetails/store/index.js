@@ -143,9 +143,12 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
         nextRunTime: action.payload.nextRunTime
       };
     case ACTIONS.SET_CURRENT_RUN_ID: {
+      let currentRunId = action.payload.runId;
+      let currentRun = state.runs.find(run => run.runid === currentRunId) || state.currentRun;
       return {
         ...state,
-        currentRunId: action.payload.runId,
+        currentRunId,
+        currentRun
       };
     }
     case ACTIONS.SET_RUNS: {

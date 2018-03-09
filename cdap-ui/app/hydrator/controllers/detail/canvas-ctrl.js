@@ -165,7 +165,7 @@ angular.module(PKG.name + '.feature.hydrator')
           statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
           status
         });
-        let reversedRuns = window.CaskCommon.CDAPHelpers.reverseWithoutMutating(runs);
+        let reversedRuns = window.CaskCommon.CDAPHelpers.reverseArrayWithoutMutating(runs);
         let runNumber = _.findIndex(reversedRuns, {runid: this.currentRun.runid});
         this.currentRunIndex = runNumber + 1;
         this.totalRuns = runs.length;
