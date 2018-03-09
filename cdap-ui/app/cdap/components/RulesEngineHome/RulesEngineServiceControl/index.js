@@ -57,9 +57,9 @@ export default class RulesEngineServiceControl extends Component {
     })
       .subscribe(
         this.props.onServiceStart,
-        (err) => {
+        () => {
           this.setState({
-            error: typeof err === 'object' ? err.error : err,
+            error: T.translate(`${PREFIX}.errorMessage`),
             loading: false
           });
         }

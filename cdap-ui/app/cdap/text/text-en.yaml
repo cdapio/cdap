@@ -1125,6 +1125,7 @@ features:
       description: "Data Scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
       enableBtnLabel: Enable MMDS
       errorTitle: Enabling MMDS Failed
+      errorMessage: Please check logs for more information
       title: Welcome to Model Management and Distribution Service
 
   FileBrowser:
@@ -1678,6 +1679,7 @@ features:
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
       errorTitle: Enabling Rules Engine Failed
+      errorMessage: Please check logs for more information
       title: Welcome to Rules Engine Management
     RulesList:
       dropContainerText: Add a rule by dragging and dropping from the Rules tab

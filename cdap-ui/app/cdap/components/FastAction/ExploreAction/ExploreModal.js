@@ -236,7 +236,7 @@ export default class ExploreModal extends Component {
 
   render() {
     const renderQueryRow = (query) => {
-      let id = uuidV4();
+      let id = `explore-${uuidV4()}`;
       return (
         <tr key={id}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
@@ -261,13 +261,13 @@ export default class ExploreModal extends Component {
                     disabled="disabled"
                     >
                     <i
-                      id={`${id}-download`}
+                      id={`download-${id}`}
                       className="fa fa-download"
                     ></i>
                     {
                       !query.is_active ?
                         <UncontrolledTooltip
-                          target={`${id}-download`}
+                          target={`download-${id}`}
                           placement="left"
                           delay={300}
                         >
@@ -295,13 +295,13 @@ export default class ExploreModal extends Component {
               >
                 <i
                   className="fa fa-eye"
-                  id={`${id}-explore`}
+                  id={`explore-${id}`}
                   delay={300}
                 ></i>
               {
                 !query.is_active?
                   <UncontrolledTooltip
-                      target={`${id}-explore`}
+                      target={`explore-${id}`}
                       placement="top"
                     >
                       <div className="text-xs-left">
@@ -330,7 +330,7 @@ export default class ExploreModal extends Component {
                   <thead>
                     <tr>
                       {
-                        query.schema.map(s => (<th key={uuidV4()}>{s.name}</th>))
+                        query.schema.map(s => (<th key={`A-${uuidV4()}`}>{s.name}</th>))
                       }
                     </tr>
                   </thead>
@@ -340,7 +340,7 @@ export default class ExploreModal extends Component {
                         .preview
                         .map((row) => {
                           return (
-                            <tr key={uuidV4()}>
+                            <tr key={`A-${uuidV4()}`}>
                               {
                                 !row.columns ?
                                   T.translate('features.FastAction.viewEvents.noResults')
@@ -355,7 +355,7 @@ export default class ExploreModal extends Component {
                                     }
 
                                     return (
-                                      <td key={uuidV4()}>
+                                      <td key={`A-${uuidV4()}`}>
                                         {content}
                                       </td>
                                     );
@@ -376,7 +376,7 @@ export default class ExploreModal extends Component {
         );
       };
       return (
-        <tr key={uuidV4()}>
+        <tr key={`A-${uuidV4()}`}>
           <td colSpan="4" className="preview-cell">
             {
               query.schema && !query.preview ?
