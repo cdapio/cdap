@@ -15,14 +15,26 @@
 */
 
 import React from 'react';
-import {Provider} from 'react-redux';
+import {Provider, connect} from 'react-redux';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import CurrentRunIndex from 'components/PipelineDetails/RunLevelInfo/CurrentRunIndex';
 import RunLogs from 'components/PipelineDetails/RunLevelInfo/RunLogs';
 import RunStatus from 'components/PipelineDetails/RunLevelInfo/RunStatus';
 import RunStartTime from 'components/PipelineDetails/RunLevelInfo/RunStartTime';
 import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
+import RunNumWarnings from 'components/PipelineDetails/RunLevelInfo/RunNumWarnings';
+import RunNumErrors from 'components/PipelineDetails/RunLevelInfo/RunNumErrors';
+
 require('./RunLevelInfo.scss');
+
+const mapStateToProps = (state) => {
+  return {
+    currentRun: state.currentRun
+  };
+};
+
+const ConnectedRunNumWarnings = connect(mapStateToProps)(RunNumWarnings);
+const ConnectedRunNumErrors = connect(mapStateToProps)(RunNumErrors);
 
 export default function RunLevelInfo() {
   return (
@@ -33,6 +45,8 @@ export default function RunLevelInfo() {
         <RunStatus />
         <RunStartTime />
         <RunDuration />
+        <ConnectedRunNumWarnings />
+        <ConnectedRunNumErrors />
       </div>
     </Provider>
   );
