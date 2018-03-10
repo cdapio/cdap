@@ -15,17 +15,19 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailMetricsStore, $uibModal, MyPipelineStatusMapper, moment, $interval, $scope) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, $uibModal, MyPipelineStatusMapper, moment, $interval, $scope) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.PipelineDetailStore = window.CaskCommon.PipelineDetailStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
-    this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
+    this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.MyPipelineStatusMapper = MyPipelineStatusMapper;
     this.$interval = $interval;
     this.moment = moment;
     this.currentRunTimeCounter = null;
+    this.metrics = {};
+    this.logsMetrics = {};
     try {
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
     } catch (e) {
@@ -131,13 +133,11 @@ angular.module(PKG.name + '.feature.hydrator')
 
       return obj;
     }
-    this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
-    this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
 
-    this.HydratorPlusPlusDetailMetricsStore.registerOnChangeListener(function () {
-      this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
-      this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
-    }.bind(this));
+    this.pipelineMetricsStoreSubscription = this.PipelineMetricsStore.subscribe(() => {
+      this.metrics = convertMetricsArrayIntoObject(this.PipelineMetricsStore.getState().metrics);
+      this.logsMetrics = this.PipelineMetricsStore.getState().logsMetrics;
+    });
 
     this.pipelineDetailStoreSubscription = this.PipelineDetailStore.subscribe(() => {
       let pipelineDetailStoreState = this.PipelineDetailStore.getState();
@@ -175,6 +175,7 @@ angular.module(PKG.name + '.feature.hydrator')
     DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNode.bind(this));
 
     $scope.$on('$destroy', () => {
+      this.pipelineMetricsStoreSubscription();
       this.pipelineDetailStoreSubscription();
     });
   });
