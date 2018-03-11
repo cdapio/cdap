@@ -115,7 +115,9 @@ export default class OverviewMetaSection extends Component {
     let description =  objectQuery(this.props, 'entity', 'properties', 'description');
     // have to generate new uniqueId here, because we don't want the fast actions here to
     // trigger the tooltips on the card view
-    let entity = Object.assign({}, this.props.entity, {uniqueId: uuidV4()});
+    let entity = Object.assign({}, this.props.entity, {
+      uniqueId: `meta-${uuidV4()}`
+    });
     return (
       <div className="overview-meta-section">
         <h2 title={this.props.entity.id}>
