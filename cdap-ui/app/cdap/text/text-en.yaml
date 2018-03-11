@@ -76,12 +76,12 @@ commons:
       plural: Stream Views
       singular: Stream View
   formatLabel: Format
-  hydrator: Cask Hydrator
+  hydrator: Cuervo Hydrator
   keyValPairs:
     keyPlaceholder: key
     reset: Reset
     valuePlaceholder: value
-  market: Cask Market
+  market: Cuervo Market
   milliSecondsShortLabel: ms
   nameLabel: Name
   noLabel: No
@@ -93,15 +93,15 @@ commons:
   secShortLabel: sec
   stream: Stream
   then: Then
-  tracker: Cask Tracker
+  tracker: Cuervo Tracker
   typeLabel: Type
   when: When
-  wrangler: Cask Wrangler
+  wrangler: Cuervo Wrangler
   yesLabel: Yes
 features:
   AboutPage:
     copyright:
-      firstLine: Copyright © 2014-2017 Cask Data, Inc.
+      firstLine: Copyright © 2014-2017 Cuervo, Inc.
       secondLine:
         view: "View "
         termsAndConditions: Terms and Conditions
@@ -235,7 +235,7 @@ features:
         clear: Clear
         entities: " new entities; or"
         filter: " your filters; or"
-        Market: " Cask Market"
+        Market: " Cuervo Market"
         search: " your search; or"
       default: No entities found in namespace "{namespace}"
       filter: No entities found for your selection
@@ -849,15 +849,15 @@ features:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
     PipelineError:
-      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Cask Market.
+      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Cuervo Market.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
       defaultMessage: Error adding to pipeline.
       fileBatch: Unable to find Core Plugins. Please make sure Core Plugins are available.
       fileRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available.
-      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market.
-      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market.
-      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market.
-      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market
+      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Cuervo Market.
+      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Cuervo Market.
+      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Cuervo Market.
+      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Cuervo Market
     sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
@@ -936,7 +936,7 @@ features:
         uploadSubTitle: Select the file to be uploaded to the workspace
         uploadBtnLabel: Upload
     Upgrade:
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Cuervo Market."
     WorkspaceTabs:
       DeleteModal:
         cancelButton: No, keep tab open
@@ -995,7 +995,7 @@ features:
         DatabaseOptions:
           install: "Install Driver: "
           installedLabel: Driver Installed
-          market: Cask Market
+          market: Cuervo Market
           optionsTitle: Select the type of database you want to connect to
           upload: Upload
         ModalHeader:
@@ -1672,10 +1672,10 @@ features:
         b3: "Fully integrated: The Rules Engine is available as a library to integrate with JBoss, WebLogic, Spring, and SQL tools"
         b4: "Scalable: The Rules Engine is horizontally scalable, i.e. it scales out with your big data environment"
         b5: "Easy governance: The Rules engine provides a centralized repository for policies and transformations"
-        title: "Benefits of the Cask Rules Engine include:"
+        title: "Benefits of the Cuervo Rules Engine include:"
       checkMessage: Checking if Rules Engine is available...
       contactMessage: Contact support@cask.co to enable
-      description: Cask Distributed Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
+      description: Cuervo Distributed Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
       errorTitle: Enabling Rules Engine Failed
@@ -1713,10 +1713,10 @@ features:
     getUpdates: Get Updates
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to
-    titleTwo: Cask Data Application Platform
+    titleTwo: Cuervo Data Application Platform
     registration-zero: I
     registration-one: would like to receive product updates and
-    registration-two: newsletters from Cask at this email address
+    registration-two: newsletters from Cuervo at this email address
 
   SpotlightSearch:
     SpotlightModal:
@@ -1896,7 +1896,7 @@ features:
       subtitle: You can now create a pipeline using the library.
     licenseStep:
       agreeAndActionBtnLabel: Agree
-      backToCaskBtnLabel: Back to Cask Market
+      backToCaskBtnLabel: Back to Cuervo Market
       termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
