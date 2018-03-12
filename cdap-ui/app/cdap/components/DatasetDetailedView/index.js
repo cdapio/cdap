@@ -219,7 +219,7 @@ export default class DatasetDetailedView extends Component {
             currentStateIcon="icon-datasets"
             currentStateLabel={T.translate('commons.dataset')}
           />
-          <PlusButton />
+          <PlusButton mode={PlusButton.MODE.resourcecenter} />
         </div>
         <OverviewMetaSection
           entity={this.state.entityDetail}
