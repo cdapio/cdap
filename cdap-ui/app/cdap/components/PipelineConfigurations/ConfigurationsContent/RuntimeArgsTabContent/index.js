@@ -17,22 +17,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
-import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
+import {updateKeyValueStore} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
 import RuntimeArgsPairs from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/RuntimeArgsPairs';
 import ProvidedPopover from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/ProvidedPopover';
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 require('./RuntimeArgsTabContent.scss');
-
-const updateKeyValueStore = () => {
-  let runtimeArgsPairs = PipelineConfigurationsStore.getState().runtimeArgs.pairs;
-  KeyValueStore.dispatch({
-    type: KeyValueStoreActions.onUpdate,
-    payload: { pairs: runtimeArgsPairs }
-  });
-};
 
 const toggleAllProvided = (isProvided) => {
   let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
@@ -116,7 +107,6 @@ export default function RuntimeArgsTabContent({isHistoricalRun}) {
       </div>
       <div className="runtime-arguments-values key-value-pair-values">
         <RuntimeArgsPairs
-          updateKeyValueStore={updateKeyValueStore}
           disabled={isHistoricalRun}
           onPaste={onPaste}
         />

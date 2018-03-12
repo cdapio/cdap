@@ -36,7 +36,15 @@ const CurrentRunIndex = ({runs, currentRun}) => {
   if (!reversedRuns || currentRunIndex === -1) {
     return (
       <div className="run-number-container run-info-container">
-        <h4>No Runs</h4>
+        <h4 className="run-number">No Runs</h4>
+        <div className="run-number-switches">
+          <button disabled>
+            <IconSVG name="icon-caret-left" />
+          </button>
+          <button disabled>
+            <IconSVG name="icon-caret-right" />
+          </button>
+        </div>
       </div>
     );
   }
