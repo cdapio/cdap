@@ -20,6 +20,7 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {GLOBALS} from 'services/global-constants';
+import {objectQuery} from 'services/helpers';
 
 const mapStateToProps = (state) => {
   return {
@@ -33,12 +34,12 @@ const RunLogs = ({currentRun, appId, artifactName}) => {
   let namespace = getCurrentNamespace(),
       programType = GLOBALS.programType[artifactName],
       programId = GLOBALS.programId[artifactName],
-      runId = currentRun.runid;
+      runId = objectQuery(currentRun, 'runid');
 
   let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
 
   return (
-    <div className="run-logs-container run-info-container">
+    <div className="run-info-container run-logs-container">
       <a href={path} target="_blank">
         <div>
           <IconSVG name="icon-file-text-o" />

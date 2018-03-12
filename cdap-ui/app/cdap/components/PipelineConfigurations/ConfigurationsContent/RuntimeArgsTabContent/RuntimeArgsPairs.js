@@ -18,9 +18,11 @@ import KeyValuePairs from 'components/KeyValuePairs';
 import {connect} from 'react-redux';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
   return {
-    keyValues: state.runtimeArgs
+    keyValues: state.runtimeArgs,
+    disabled: ownProps.disabled,
+    onPaste: ownProps.onPaste
   };
 };
 

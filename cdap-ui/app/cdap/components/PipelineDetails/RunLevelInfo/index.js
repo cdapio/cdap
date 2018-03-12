@@ -18,21 +18,26 @@ import React from 'react';
 import {Provider, connect} from 'react-redux';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import CurrentRunIndex from 'components/PipelineDetails/RunLevelInfo/CurrentRunIndex';
+import RunConfigs from 'components/PipelineDetails/RunLevelInfo/RunConfigs';
 import RunLogs from 'components/PipelineDetails/RunLevelInfo/RunLogs';
 import RunStatus from 'components/PipelineDetails/RunLevelInfo/RunStatus';
 import RunStartTime from 'components/PipelineDetails/RunLevelInfo/RunStartTime';
 import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
 import RunNumWarnings from 'components/PipelineDetails/RunLevelInfo/RunNumWarnings';
 import RunNumErrors from 'components/PipelineDetails/RunLevelInfo/RunNumErrors';
+import {GLOBALS} from 'services/global-constants';
 
 require('./RunLevelInfo.scss');
 
 const mapStateToProps = (state) => {
   return {
-    currentRun: state.currentRun
+    currentRun: state.currentRun,
+    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
+    pipelineName: state.name
   };
 };
 
+const ConnectedRunConfigs = connect(mapStateToProps)(RunConfigs);
 const ConnectedRunNumWarnings = connect(mapStateToProps)(RunNumWarnings);
 const ConnectedRunNumErrors = connect(mapStateToProps)(RunNumErrors);
 
@@ -41,6 +46,7 @@ export default function RunLevelInfo() {
     <Provider store={PipelineDetailStore}>
       <div className="pipeline-details-run-level-info">
         <CurrentRunIndex />
+        <ConnectedRunConfigs />
         <RunLogs />
         <RunStatus />
         <RunStartTime />

@@ -84,12 +84,12 @@
         }
 
         .icon-check {
-          color: $blue-02;
+          color: $green-02;
         }
       }
 
       tr.current-run-row {
-        background-color: $orange-05;
+        background-color: rgba($yellow-02, 0.3);
 
         td:first-child {
           background-color: white;

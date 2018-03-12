@@ -24,10 +24,10 @@
   .runtime-arguments-labels {
     .key-label {
       width: 34%;
-    }
 
-    .value-label {
-      width: 44%;
+      &.wider {
+        width: 44%;
+      }
     }
 
     .provided-label {
@@ -60,6 +60,10 @@
     .key-value-pair-preference {
       input[type="text"] {
         width: 35%;
+
+        &.wider {
+          width: 45%;
+        }
       }
 
       input[type="checkbox"] {

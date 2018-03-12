@@ -88,4 +88,38 @@ $border-color: $grey-05;
       }
     }
   }
+
+  .run-configs-container {
+    cursor: pointer;
+    position: relative;
+
+    &.active,
+    &:hover {
+      background-color: $grey-07;
+    }
+
+    .icon-sliders {
+      transform: rotate(90deg);
+      font-size: 18px;
+    }
+
+    .pipeline-configurations-content {
+      right: 0;
+      left: -80px;
+      height: 400px;
+      top: 44px;
+
+      .configuration-content {
+        text-align: left;
+
+        #runtime-arguments-tab-content {
+          .runtime-arguments-values {
+            /* For this height we can fit 3 key-value pairs.
+            144px = (32px row height + 16px margin bottom) * 3 */
+            max-height: 144px;
+          }
+        }
+      }
+    }
+  }
 }
