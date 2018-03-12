@@ -29,12 +29,14 @@ public interface MetadataWriterContext {
   void addProperties(MetadataEntity metadataEntity, Map<String, String> properties);
 
   /**
-   * Adds the specified tags to specified {@link MetadataEntity}.
+   * Adds the specified tags to specified {@link MetadataEntity}. If a given tag already exists for the metadata
+   * entity it will be skipped.
    */
   void addTags(MetadataEntity metadataEntity, String... tags);
 
   /**
-   * Adds all the specified tags to specified {@link MetadataEntity}.
+   * Adds all the specified tags to specified {@link MetadataEntity}. If a given tag already exists for the metadata
+   * entity it will be skipped.
    */
   void addTags(MetadataEntity metadataEntity, Iterable<String> tags);
 

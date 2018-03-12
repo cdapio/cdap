@@ -17,6 +17,7 @@ package co.cask.cdap.api.metadata;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class MetadataRecord {
     this.metadataEntity = metadataEntity;
     this.scope = scope;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
-    this.tags = tags;
+    this.tags = Collections.unmodifiableSet(new HashSet<>(tags));
   }
 
   public MetadataEntity getMetadataEntity() {

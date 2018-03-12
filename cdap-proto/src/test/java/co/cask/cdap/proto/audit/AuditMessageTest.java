@@ -49,8 +49,7 @@ public class AuditMessageTest {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
-  private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {
-  }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() { }.getType();
 
   @Test
   public void testCreateMessage() throws Exception {
