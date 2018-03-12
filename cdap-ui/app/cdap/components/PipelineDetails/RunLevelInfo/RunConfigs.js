@@ -66,7 +66,7 @@ export default class RunConfigs extends Component {
     });
   };
 
-  renderConfigureButton() {
+  renderRunConfigsButton() {
     return (
       <div
         onClick={this.getRuntimeArgsAndToggleModeless}
@@ -83,7 +83,7 @@ export default class RunConfigs extends Component {
   render() {
     return (
       <div className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}>
-        {this.renderConfigureButton()}
+        {this.renderRunConfigsButton()}
         {
           this.state.showModeless ?
             <PipelineConfigurations

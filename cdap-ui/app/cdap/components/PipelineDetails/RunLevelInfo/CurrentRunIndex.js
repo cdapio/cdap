@@ -86,5 +86,4 @@ CurrentRunIndex.propTypes = {
 };
 
 const ConnectedCurrentRunIndex = connect(mapStateToProps)(CurrentRunIndex);
-
 export default ConnectedCurrentRunIndex;

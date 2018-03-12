@@ -98,6 +98,7 @@ export default function RunningRunsPopover({runs, currentRunId, pipelineId}) {
     </Popover>
   );
 }
+
 RunningRunsPopover.propTypes = {
   runs: PropTypes.array,
   currentRunId: PropTypes.string,

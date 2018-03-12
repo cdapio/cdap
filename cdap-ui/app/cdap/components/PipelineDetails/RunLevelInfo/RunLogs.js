@@ -57,5 +57,4 @@ RunLogs.propTypes = {
 };
 
 const ConnectedRunLogs = connect(mapStateToProps)(RunLogs);
-
 export default ConnectedRunLogs;

@@ -49,5 +49,5 @@ ConfigModelessRuntimeArgsCount.propTypes = {
   isHistoricalRun: PropTypes.bool
 };
 
-const ConnectedConfigModelessRuntimeArgsCountBtn = connect(mapStateToProps)(ConfigModelessRuntimeArgsCount);
-export default ConnectedConfigModelessRuntimeArgsCountBtn;
+const ConnectedConfigModelessRuntimeArgsCount = connect(mapStateToProps)(ConfigModelessRuntimeArgsCount);
+export default ConnectedConfigModelessRuntimeArgsCount;

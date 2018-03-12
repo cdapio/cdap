@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/metrics';
+const basepath = '/metrics/query';
 
 export const MyMetricApi = {
-  query: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/query`)
+  query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath )
 };
