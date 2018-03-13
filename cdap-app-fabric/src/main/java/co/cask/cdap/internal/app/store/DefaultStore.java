@@ -64,7 +64,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -95,6 +94,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -186,41 +186,39 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final ProgramId id, final String pid, final long startTime,
+  public void setStart(final ProgramRunId id, final long startTime,
                        final String twillRunId, final Map<String, String> runtimeArgs,
                        final Map<String, String> systemArgs, final byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs, systemArgs,
+      getAppMetadataStore(context).recordProgramStart(id, startTime, twillRunId, runtimeArgs, systemArgs,
                                                       sourceId);
     });
   }
 
   @Override
-  public void setRunning(final ProgramId id, final String pid, final long runTime, final String twillRunId,
-                         final byte[] sourceId) {
+  public void setRunning(final ProgramRunId id, final long runTime, final String twillRunId, final byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramRunning(id, pid, runTime, twillRunId, sourceId);
+      getAppMetadataStore(context).recordProgramRunning(id, runTime, twillRunId, sourceId);
     });
   }
 
   @Override
-  public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus,
-                      byte[] sourceId) {
-    setStop(id, pid, endTime, runStatus, null, sourceId);
+  public void setStop(final ProgramRunId id, final long endTime, final ProgramRunStatus runStatus, byte[] sourceId) {
+    setStop(id, endTime, runStatus, null, sourceId);
   }
 
   @Override
-  public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus,
+  public void setStop(final ProgramRunId id, final long endTime, final ProgramRunStatus runStatus,
                       final BasicThrowable failureCause, final byte[] sourceId) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     Transactionals.execute(transactional, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
-      metaStore.recordProgramStop(id, pid, endTime, runStatus, failureCause, sourceId);
+      metaStore.recordProgramStop(id, endTime, runStatus, failureCause, sourceId);
 
       // This block has been added so that completed workflow runs can be logged to the workflow dataset
-      WorkflowId workflowId = new WorkflowId(id.getParent(), id.getProgram());
+      WorkflowId workflowId = new WorkflowId(id.getParent().getParent(), id.getProgram());
       if (id.getType() == ProgramType.WORKFLOW && runStatus == ProgramRunStatus.COMPLETED) {
-        recordCompletedWorkflow(metaStore, getWorkflowDataset(context), workflowId, pid);
+        recordCompletedWorkflow(metaStore, getWorkflowDataset(context), workflowId, id.getRun());
       }
       // todo: delete old history data
     });
@@ -228,7 +226,7 @@ public class DefaultStore implements Store {
 
   private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowDataset workflowDataset,
                                        WorkflowId workflowId, String runId) {
-    RunRecordMeta runRecord = metaStore.getRun(workflowId, runId);
+    RunRecordMeta runRecord = metaStore.getRun(workflowId.run(runId));
     if (runRecord == null) {
       return;
     }
@@ -251,7 +249,7 @@ public class DefaultStore implements Store {
         WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         ProgramId innerProgram = app.program(programType, entry.getKey());
-        RunRecordMeta innerProgramRun = metaStore.getRun(innerProgram, entry.getValue());
+        RunRecordMeta innerProgramRun = metaStore.getRun(innerProgram.run(entry.getValue()));
         if (innerProgramRun != null && innerProgramRun.getStatus().equals(ProgramRunStatus.COMPLETED)) {
           Long stopTs = innerProgramRun.getStopTs();
           // since the program is completed, the stop ts cannot be null
@@ -286,16 +284,16 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setSuspend(final ProgramId id, final String pid, final byte[] sourceId) {
+  public void setSuspend(final ProgramRunId id, final byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramSuspend(id, pid, sourceId);
+      getAppMetadataStore(context).recordProgramSuspend(id, sourceId);
     });
   }
 
   @Override
-  public void setResume(final ProgramId id, final String pid, final byte[] sourceId) {
+  public void setResume(final ProgramRunId id, final byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramResumed(id, pid, sourceId);
+      getAppMetadataStore(context).recordProgramResumed(id, sourceId);
     });
   }
 
@@ -327,14 +325,14 @@ public class DefaultStore implements Store {
 
   @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
-                                     final long startTime, final long endTime, final int limit) {
+                                                  final long startTime, final long endTime, final int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
-                                     final long startTime, final long endTime, final int limit,
-                                     @Nullable final Predicate<RunRecordMeta> filter) {
+                                                  final long startTime, final long endTime, final int limit,
+                                                  @Nullable final Predicate<RunRecordMeta> filter) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, filter);
     });
@@ -386,14 +384,13 @@ public class DefaultStore implements Store {
   /**
    * Returns run record for a given run.
    *
-   * @param id program id
-   * @param runId run id
+   * @param id program run id
    * @return run record for runid
    */
   @Override
-  public RunRecordMeta getRun(final ProgramId id, final String runId) {
+  public RunRecordMeta getRun(final ProgramRunId id) {
     return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getRun(id, runId);
+      return getAppMetadataStore(context).getRun(id);
     });
   }
 
@@ -593,7 +590,7 @@ public class DefaultStore implements Store {
   @Override
   public Map<String, String> getRuntimeArguments(final ProgramRunId programRunId) {
     return Transactionals.execute(transactional, context -> {
-      RunRecordMeta runRecord = getAppMetadataStore(context).getRun(programRunId.getParent(), programRunId.getRun());
+      RunRecordMeta runRecord = getAppMetadataStore(context).getRun(programRunId);
       if (runRecord != null) {
         Map<String, String> properties = runRecord.getProperties();
         Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), STRING_MAP_TYPE);

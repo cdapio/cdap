@@ -679,18 +679,16 @@ public class LineageAdminTest extends AppFabricTestBase {
   }
 
   private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime) {
-    setStartAndRunning(store, id, pid, startTime, ImmutableMap.<String, String>of(),
-                       ImmutableMap.<String, String>of());
-
+    setStartAndRunning(store, id, pid, startTime, ImmutableMap.of(), ImmutableMap.of());
   }
 
 
   private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setStart(id, pid, startTime, null, runtimeArgs, systemArgs,
+    store.setStart(id.run(pid), startTime, null, runtimeArgs, systemArgs,
                    AppFabricTestHelper.createSourceId(++sourceId));
-    store.setRunning(id, pid, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   private void addRuns(Store store, ProgramRunId... runs) {
@@ -714,11 +712,9 @@ public class LineageAdminTest extends AppFabricTestBase {
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "workflowNodeId");
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
     for (ProgramRunId run : runs) {
-      store.setStart(run.getParent(), run.getEntityName(), RunIds.getTime(
-                     RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS), null,
+      store.setStart(run, RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS), null,
                      emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
-      store.setRunning(run.getParent(), run.getEntityName(), RunIds.getTime(
-                       RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS) + 1, null,
+      store.setRunning(run, RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS) + 1, null,
                        AppFabricTestHelper.createSourceId(++sourceId));
     }
   }

@@ -34,7 +34,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -69,24 +68,20 @@ public class WorkflowTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
-
-    @Override
-    public File get() {
-      try {
-        return tmpFolder.newFolder();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = () -> {
+    try {
+      return tmpFolder.newFolder();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   };
 
   private int sourceId;
 
   private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime) {
-    store.setStart(id, pid, startTime, null, ImmutableMap.<String, String>of(),
-                   ImmutableMap.<String, String>of(), AppFabricTestHelper.createSourceId(++sourceId));
-    store.setRunning(id, pid, startTime + startDelaySecs, null, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id.run(pid), startTime, null, ImmutableMap.of(),
+                   ImmutableMap.of(), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id.run(pid), startTime + startDelaySecs, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
 
@@ -96,12 +91,7 @@ public class WorkflowTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
     final Injector injector = AppFabricTestHelper.getInjector();
     final ProgramDescriptor programDescriptor = Iterators.filter(
-      app.getPrograms().iterator(), new Predicate<ProgramDescriptor>() {
-        @Override
-        public boolean apply(ProgramDescriptor input) {
-          return input.getProgramId().getType() == ProgramType.WORKFLOW;
-        }
-      }).next();
+      app.getPrograms().iterator(), input -> input.getProgramId().getType() == ProgramType.WORKFLOW).next();
 
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
@@ -210,12 +200,7 @@ public class WorkflowTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
     final Injector injector = AppFabricTestHelper.getInjector();
     final ProgramDescriptor programDescriptor = Iterators.filter(
-      app.getPrograms().iterator(), new Predicate<ProgramDescriptor>() {
-        @Override
-        public boolean apply(ProgramDescriptor input) {
-          return input.getProgramId().getType() == ProgramType.WORKFLOW;
-        }
-      }).next();
+      app.getPrograms().iterator(), input -> input.getProgramId().getType() == ProgramType.WORKFLOW).next();
 
     final SettableFuture<String> completion = SettableFuture.create();
     final ProgramController controller = AppFabricTestHelper.submit(app,

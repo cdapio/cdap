@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -95,42 +94,41 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     for (int i = 0; i < 10; i++) {
       ProgramRunId serviceId = NamespaceId.DEFAULT.app("test").service("service" + i).run(RunIds.generate());
-      store.setStart(serviceId.getParent(), serviceId.getRun(), RunIds.getTime(serviceId.getRun(), TimeUnit.SECONDS),
-                     null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+      store.setStart(serviceId, RunIds.getTime(serviceId.getRun(), TimeUnit.SECONDS),
+                     null, Collections.emptyMap(), Collections.emptyMap(),
                      Bytes.toBytes(sourceId.getAndIncrement()));
       expectedStates.put(serviceId, ProgramRunStatus.FAILED);
 
       ProgramRunId workerId = new NamespaceId("ns").app("test").service("worker" + i).run(RunIds.generate());
-      store.setStart(workerId.getParent(), workerId.getRun(), RunIds.getTime(workerId.getRun(), TimeUnit.SECONDS),
-                     null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+      store.setStart(workerId, RunIds.getTime(workerId.getRun(), TimeUnit.SECONDS),
+                     null, Collections.emptyMap(), Collections.emptyMap(),
                      Bytes.toBytes(sourceId.getAndIncrement()));
-      store.setRunning(workerId.getParent(), workerId.getRun(), System.currentTimeMillis(),
-                       null, Bytes.toBytes(sourceId.getAndIncrement()));
+      store.setRunning(workerId, System.currentTimeMillis(), null, Bytes.toBytes(sourceId.getAndIncrement()));
       expectedStates.put(workerId, ProgramRunStatus.FAILED);
     }
 
     // Write a flow with suspend state
     ProgramRunId flowId = new NamespaceId("ns").app("test").service("flow").run(RunIds.generate());
-    store.setStart(flowId.getParent(), flowId.getRun(), RunIds.getTime(flowId.getRun(), TimeUnit.SECONDS),
-                   null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+    store.setStart(flowId, RunIds.getTime(flowId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.emptyMap(), Collections.emptyMap(),
                    Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setRunning(flowId.getParent(), flowId.getRun(), System.currentTimeMillis(),
+    store.setRunning(flowId, System.currentTimeMillis(),
                      null, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setSuspend(flowId.getParent(), flowId.getRun(), Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setSuspend(flowId, Bytes.toBytes(sourceId.getAndIncrement()));
     expectedStates.put(flowId, ProgramRunStatus.SUSPENDED);
 
     // Write two MR in starting state. One with workflow information, one without.
     ProgramRunId mrId = NamespaceId.DEFAULT.app("app").mr("mr").run(RunIds.generate());
-    store.setStart(mrId.getParent(), mrId.getRun(), RunIds.getTime(mrId.getRun(), TimeUnit.SECONDS),
-                   null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+    store.setStart(mrId, RunIds.getTime(mrId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.emptyMap(), Collections.emptyMap(),
                    Bytes.toBytes(sourceId.getAndIncrement()));
     expectedStates.put(mrId, ProgramRunStatus.FAILED);
 
     ProgramRunId workflowId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
     ProgramRunId mrInWorkflowId = workflowId.getParent().getParent().mr("mrInWorkflow").run(RunIds.generate());
-    store.setStart(mrInWorkflowId.getParent(), mrInWorkflowId.getRun(),
+    store.setStart(mrInWorkflowId,
                    RunIds.getTime(mrInWorkflowId.getRun(), TimeUnit.SECONDS),
-                   null, Collections.<String, String>emptyMap(),
+                   null, Collections.emptyMap(),
                    ImmutableMap.of(
                      ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowId.getRun(),
@@ -140,11 +138,10 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     expectedStates.put(workflowId, ProgramRunStatus.STARTING);
 
     // Write the workflow in RUNNING state.
-    store.setStart(workflowId.getParent(), workflowId.getRun(), RunIds.getTime(workflowId.getRun(), TimeUnit.SECONDS),
-                   null, Collections.<String, String>emptyMap(), Collections.<String, String>emptyMap(),
+    store.setStart(workflowId, RunIds.getTime(workflowId.getRun(), TimeUnit.SECONDS),
+                   null, Collections.emptyMap(), Collections.emptyMap(),
                    Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setRunning(workflowId.getParent(), workflowId.getRun(), System.currentTimeMillis(),
-                     null, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(workflowId, System.currentTimeMillis(), null, Bytes.toBytes(sourceId.getAndIncrement()));
     expectedStates.put(workflowId, ProgramRunStatus.RUNNING);
 
     // Use a ProgramRuntimeService that only reports running state based on a set of know ids
@@ -174,7 +171,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     ProgramStateWriter programStateWriter = new NoOpProgramStateWriter() {
       @Override
       public void error(ProgramRunId programRunId, Throwable failureCause) {
-        store.setStop(programRunId.getParent(), programRunId.getRun(), System.currentTimeMillis(),
+        store.setStop(programRunId, System.currentTimeMillis(),
                       ProgramRunStatus.FAILED, new BasicThrowable(failureCause),
                       Bytes.toBytes(sourceId.getAndIncrement()));
       }
@@ -196,7 +193,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     // Remove the workflow from the running set and mark it as completed
     runningSet.remove(workflowId.getParent());
-    store.setStop(workflowId.getParent(), workflowId.getRun(), System.currentTimeMillis(),
+    store.setStop(workflowId, System.currentTimeMillis(),
                   ProgramRunStatus.COMPLETED, Bytes.toBytes(sourceId.getAndIncrement()));
 
     fixer.fixRunRecords();
@@ -213,7 +210,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) throws Exception {
     Tasks.waitFor(true, () -> {
-      RunRecordMeta runRecord = store.getRun(programRunId.getParent(), programRunId.getRun());
+      RunRecordMeta runRecord = store.getRun(programRunId);
       return runRecord != null && Objects.equals(expectedStatus, runRecord.getStatus());
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
@@ -232,12 +229,8 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("dataset.*.keep.local", "true"));
 
     // Wait until we have a COMPLETED run record
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS);
+    Tasks.waitFor(1, () -> getProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.COMPLETED).size(),
+                  5, TimeUnit.SECONDS);
 
     // Get the RunRecord
     List<RunRecord> runRecords = getProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.COMPLETED);
@@ -271,11 +264,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
                                        runtimeService, namespaceAdmin, datasetFramework).startUp();
 //
     // Wait for the deletion of the local dataset
-    Tasks.waitFor(0, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1), properties).size();
-      }
-    }, 30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+    Tasks.waitFor(0, () -> datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1), properties).size(),
+                  30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
   }
 }

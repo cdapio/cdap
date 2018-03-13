@@ -47,7 +47,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
@@ -200,7 +199,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       // Program matched
-      RunRecordMeta record = store.getRun(programId, runId.getId());
+      RunRecordMeta record = store.getRun(programId.run(runId.getId()));
       if (record == null) {
         return null;
       }
@@ -261,14 +260,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    Collection<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING,
-                                                               new Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(RunRecordMeta record) {
-        return record.getTwillRunId() != null
-          && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()));
-      }
-    }).values();
+    Collection<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
+      record.getTwillRunId() != null
+        && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
 
     for (RunRecordMeta record : activeRunRecords) {
       String twillRunId = record.getTwillRunId();
@@ -387,7 +381,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     private final YarnClient yarnClient;
 
     ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
-      super(metricsCollectionService.getContext(ImmutableMap.<String, String>of()));
+      super(metricsCollectionService.getContext(ImmutableMap.of()));
 
       YarnClient yarnClient = YarnClient.createYarnClient();
       yarnClient.init(hConf);

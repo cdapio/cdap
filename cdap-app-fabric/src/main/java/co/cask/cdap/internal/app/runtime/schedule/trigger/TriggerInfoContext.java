@@ -91,14 +91,12 @@ public class TriggerInfoContext {
    * @return run time arguments as a map for the specified program and runId, null if not found
    */
   public Map<String, String> getProgramRuntimeArguments(ProgramRunId programRunId) {
-    RunRecordMeta runRecordMeta = store.getRun(programRunId.getParent(), programRunId.getRun());
+    RunRecordMeta runRecordMeta = store.getRun(programRunId);
     if (runRecordMeta == null) {
       return Collections.emptyMap();
     }
     Map<String, String> properties = runRecordMeta.getProperties();
     String runtimeArgsJson = properties.get("runtimeArgs");
-    return runtimeArgsJson == null
-      ? Collections.<String, String>emptyMap()
-      : GSON.<Map<String, String>>fromJson(runtimeArgsJson, STRING_STRING_MAP);
+    return runtimeArgsJson == null ? Collections.emptyMap() : GSON.fromJson(runtimeArgsJson, STRING_STRING_MAP);
   }
 }

@@ -313,7 +313,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     if (!appSpec.getWorkflows().containsKey(workflow)) {
       throw new NotFoundException(workflowId);
     }
-    if (store.getRun(workflowId, runId) == null) {
+    if (store.getRun(workflowId.run(runId)) == null) {
       throw new NotFoundException(workflowId.run(runId));
     }
     return store.getWorkflowToken(workflowId, runId);
@@ -341,7 +341,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
 
     ProgramRunId workflowRunId = workflowProgramId.run(runId);
-    if (store.getRun(workflowProgramId, runId) == null) {
+    if (store.getRun(workflowRunId) == null) {
       throw new NotFoundException(workflowRunId);
     }
 
@@ -431,7 +431,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new ProgramNotFoundException(programId);
     }
 
-    if (store.getRun(programId, runId) == null) {
+    if (store.getRun(programId.run(runId)) == null) {
       throw new NotFoundException(new ProgramRunId(programId.getNamespace(), programId.getApplication(),
                                                    programId.getType(), programId.getProgram(), runId));
     }

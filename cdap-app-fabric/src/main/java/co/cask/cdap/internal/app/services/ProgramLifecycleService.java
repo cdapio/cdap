@@ -398,7 +398,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         ProgramRunId activeRunId = programId.run(iterator.next());
         RunRecordMeta runRecord = activeRunRecords.get(activeRunId);
         if (runRecord == null) {
-          runRecord = store.getRun(programId, activeRunId.getRun());
+          runRecord = store.getRun(activeRunId);
         }
         // Check if the program is actually started from workflow and the workflow is running
         if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
@@ -819,7 +819,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     if (runId == null) {
       return store.getActiveRuns(programId);
     }
-    RunRecordMeta runRecord = store.getRun(programId, runId);
+    RunRecordMeta runRecord = store.getRun(programId.run(runId));
     EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.STARTING,
                                                         ProgramRunStatus.RUNNING,
                                                         ProgramRunStatus.SUSPENDED);

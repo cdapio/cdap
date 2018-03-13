@@ -21,8 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -35,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class MetadataStoreDatasetTest {
   @ClassRule
@@ -54,16 +53,13 @@ public class MetadataStoreDatasetTest {
     final Map<MDSKey, Integer> expectedMapHalf = new HashMap<>();
 
     // Write some values
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        for (int i = 0; i < 5; ++i) {
-          MDSKey mdsKey = new MDSKey.Builder().add(i).build();
-          metadataStoreDataset.write(mdsKey, i);
-          expectedMap.put(mdsKey, i);
-          if ((i % 2) == 0) {
-            expectedMapHalf.put(mdsKey, i);
-          }
+    txnl.execute(() ->  {
+      for (int i = 0; i < 5; ++i) {
+        MDSKey mdsKey = new MDSKey.Builder().add(i).build();
+        metadataStoreDataset.write(mdsKey, i);
+        expectedMap.put(mdsKey, i);
+        if ((i % 2) == 0) {
+          expectedMapHalf.put(mdsKey, i);
         }
       }
     });
@@ -71,61 +67,39 @@ public class MetadataStoreDatasetTest {
     // Fetch one record at a time
     for (int i = 0; i < 5; ++i) {
       final int fv = i;
-      txnl.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          Map<MDSKey, Integer> val = metadataStoreDataset.listKV(new MDSKey.Builder().add(0).build(),
-                                                                 new MDSKey.Builder().add(5).build(),
-                                                                 Integer.class, 1,
-                                                                 new Predicate<Integer>() {
-                                                                   @Override
-                                                                   public boolean apply(Integer input) {
-                                                                     return input == fv;
-                                                                   }
-                                                                 });
-          Assert.assertEquals(1, val.size());
-          Assert.assertEquals(fv, (int) Iterables.get(val.values(), 0));
-        }
+      txnl.execute(() -> {
+        Map<MDSKey, Integer> val = metadataStoreDataset.listKV(new MDSKey.Builder().add(0).build(),
+                                                               new MDSKey.Builder().add(5).build(),
+                                                               Integer.class, 1,
+                                                               input -> input == fv);
+        Assert.assertEquals(1, val.size());
+        Assert.assertEquals(fv, (int) Iterables.get(val.values(), 0));
       });
     }
 
     // Fetch two records at a time
     for (int i = 0; i < 4; ++i) {
       final int fv = i;
-      txnl.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          Map<MDSKey, Integer> val = metadataStoreDataset.listKV(new MDSKey.Builder().add(0).build(),
-                                                                 new MDSKey.Builder().add(5).build(),
-                                                                 Integer.class, 2,
-                                                                 new Predicate<Integer>() {
-                                                                   @Override
-                                                                   public boolean apply(Integer input) {
-                                                                     return input == fv || input == fv + 1;
-                                                                   }
-                                                                 });
-          Assert.assertEquals(2, val.size());
-          Assert.assertEquals(fv, (int) Iterables.get(val.values(), 0));
-          Assert.assertEquals(fv + 1, (int) Iterables.get(val.values(), 1));
-        }
+      txnl.execute(() -> {
+        Map<MDSKey, Integer> val = metadataStoreDataset.listKV(new MDSKey.Builder().add(0).build(),
+                                                               new MDSKey.Builder().add(5).build(),
+                                                               Integer.class, 2,
+                                                               input -> input == fv || input == fv + 1);
+        Assert.assertEquals(2, val.size());
+        Assert.assertEquals(fv, (int) Iterables.get(val.values(), 0));
+        Assert.assertEquals(fv + 1, (int) Iterables.get(val.values(), 1));
       });
     }
 
     // Fetch all keys using keySet
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Map<MDSKey, Integer> val = metadataStoreDataset.listKV(expectedMap.keySet(), Integer.class, 5);
-        Assert.assertEquals(expectedMap, val);
-      }
+    txnl.execute(() -> {
+      Map<MDSKey, Integer> val = metadataStoreDataset.listKV(expectedMap.keySet(), Integer.class, 5);
+      Assert.assertEquals(expectedMap, val);
     });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Map<MDSKey, Integer> valHalf = metadataStoreDataset.listKV(expectedMapHalf.keySet(), Integer.class, 5);
-        Assert.assertEquals(expectedMapHalf, valHalf);
-      }
+    txnl.execute(() -> {
+      Map<MDSKey, Integer> valHalf = metadataStoreDataset.listKV(expectedMapHalf.keySet(), Integer.class, 5);
+      Assert.assertEquals(expectedMapHalf, valHalf);
     });
   }
 
@@ -141,14 +115,11 @@ public class MetadataStoreDatasetTest {
 
     // Write some values
     final List<Integer> expected = new ArrayList<>();
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        for (int i = 0; i < 25; ++i) {
-          MDSKey mdsKey = new MDSKey.Builder().add(i).build();
-          metadataStoreDataset.write(mdsKey, i);
-          expected.add(i);
-        }
+    txnl.execute(() -> {
+      for (int i = 0; i < 25; ++i) {
+        MDSKey mdsKey = new MDSKey.Builder().add(i).build();
+        metadataStoreDataset.write(mdsKey, i);
+        expected.add(i);
       }
     });
 
@@ -162,12 +133,7 @@ public class MetadataStoreDatasetTest {
     while (true) {
       final ScanFunction function = new ScanFunction(scanLimit);
       final MDSKey finalStart = start;
-      txnl.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          metadataStoreDataset.scan(finalStart, end, Integer.class, function);
-        }
-      });
+      txnl.execute(() -> metadataStoreDataset.scan(finalStart, end, Integer.class, function));
       if (function.getNumProcessed() == 0) {
         break;
       }

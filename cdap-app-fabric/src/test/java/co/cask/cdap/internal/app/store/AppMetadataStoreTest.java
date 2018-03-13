@@ -30,13 +30,11 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Function;
 import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
-import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
@@ -90,48 +88,39 @@ public class AppMetadataStoreTest {
     Assert.assertNotNull(table);
     final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf, new AtomicBoolean(false));
     TransactionExecutor txnl = txExecutorFactory.createExecutor(
-      Collections.singleton((TransactionAware) metadataStoreDataset));
+      Collections.singleton(metadataStoreDataset));
 
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.values()[ProgramType.values().length - 1],
                                                   "program");
     final RunId runId = RunIds.generate();
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStart(program, runId.getId(),
-                                                RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramRunningOldFormat(
-          program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS), null,
-          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      }
+    final ProgramRunId programRunId = program.run(runId);
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStart(programRunId,
+                                              RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null,
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramRunningOldFormat(
+        programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null,
+        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
     });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Set<RunId> runIds = metadataStoreDataset.getRunningInRange(0, Long.MAX_VALUE);
-        Assert.assertEquals(1, runIds.size());
-        RunRecordMeta meta = metadataStoreDataset.getRun(program, runIds.iterator().next().getId());
-        Assert.assertNotNull(meta);
-        Assert.assertEquals(runId.getId(), meta.getPid());
-      }
+    txnl.execute(() -> {
+      Set<RunId> runIds = metadataStoreDataset.getRunningInRange(0, Long.MAX_VALUE);
+      Assert.assertEquals(1, runIds.size());
+      RunRecordMeta meta = metadataStoreDataset.getRun(program.run(runIds.iterator().next().getId()));
+      Assert.assertNotNull(meta);
+      Assert.assertEquals(runId.getId(), meta.getPid());
     });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStopOldFormat(
-          program, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-          ProgramRunStatus.COMPLETED, null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        Map<ProgramRunId, RunRecordMeta> runRecordMap = metadataStoreDataset.getRuns(
-          program, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, Integer.MAX_VALUE, null);
-        Assert.assertEquals(1, runRecordMap.size());
-        ProgramRunId programRunId = runRecordMap.keySet().iterator().next();
-        Assert.assertEquals(program, programRunId.getParent());
-        Assert.assertEquals(runId.getId(), programRunId.getRun());
-      }
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStopOldFormat(
+        programRunId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+        ProgramRunStatus.COMPLETED, null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      Map<ProgramRunId, RunRecordMeta> runRecordMap = metadataStoreDataset.getRuns(
+        program, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, Integer.MAX_VALUE, null);
+      Assert.assertEquals(1, runRecordMap.size());
+      ProgramRunId fetchedRunId = runRecordMap.keySet().iterator().next();
+      Assert.assertEquals(programRunId, fetchedRunId);
     });
   }
 
@@ -139,13 +128,13 @@ public class AppMetadataStoreTest {
     DatasetId storeTable = NamespaceId.DEFAULT.dataset(tableName);
     datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
 
-    Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
+    Table table = datasetFramework.getDataset(storeTable, ImmutableMap.of(), null);
     Assert.assertNotNull(table);
     return new AppMetadataStore(table, cConf, new AtomicBoolean(false));
   }
 
   private TransactionExecutor getTxExecutor(AppMetadataStore metadataStoreDataset) {
-    return txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) metadataStoreDataset));
+    return txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
   }
 
   @Test
@@ -168,125 +157,111 @@ public class AppMetadataStoreTest {
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
     final RunId runId1 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId1 = program.run(runId1);
     final AtomicLong sourceId = new AtomicLong();
     // No status can be persisted if STARTING is not present
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramRunning(program, runId1.getId(), RunIds.getTime(runId1, TimeUnit.SECONDS),
-                                                  null,
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId1.getId(), RunIds.getTime(runId1, TimeUnit.SECONDS),
-                                               ProgramRunStatus.COMPLETED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId1.getId());
-        // no run record is expected to be persisted without STARTING persisted
-        Assert.assertNull(runRecordMeta);
-      }
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramRunning(programRunId1, RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                                null,
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId1, RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                             ProgramRunStatus.COMPLETED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId1);
+      // no run record is expected to be persisted without STARTING persisted
+      Assert.assertNull(runRecordMeta);
     });
     final RunId runId2 = RunIds.generate(runIdTime.incrementAndGet());
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramSuspend(program, runId2.getId(),
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramResumed(program, runId2.getId(),
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId2.getId());
-        // no run record is expected to be persisted without STARTING persisted
-        Assert.assertNull(runRecordMeta);
-      }
+    final ProgramRunId programRunId2 = program.run(runId2);
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramSuspend(programRunId2,
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramResumed(programRunId2,
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);
+      // no run record is expected to be persisted without STARTING persisted
+      Assert.assertNull(runRecordMeta);
     });
     final RunId runId3 = RunIds.generate(runIdTime.incrementAndGet());
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStop(program, runId3.getId(), RunIds.getTime(runId3, TimeUnit.SECONDS),
-                                               ProgramRunStatus.COMPLETED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId3.getId(), RunIds.getTime(runId3, TimeUnit.SECONDS),
-                                               ProgramRunStatus.KILLED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId3.getId(), RunIds.getTime(runId3, TimeUnit.SECONDS),
-                                               ProgramRunStatus.FAILED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId3.getId());
-        // no run record is expected to be persisted without STARTING persisted
-        Assert.assertNull(runRecordMeta);
-      }
+    final ProgramRunId programRunId3 = program.run(runId3);
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStop(programRunId3, RunIds.getTime(runId3, TimeUnit.SECONDS),
+                                             ProgramRunStatus.COMPLETED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId3, RunIds.getTime(runId3, TimeUnit.SECONDS),
+                                             ProgramRunStatus.KILLED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId3, RunIds.getTime(runId3, TimeUnit.SECONDS),
+                                             ProgramRunStatus.FAILED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId3);
+      // no run record is expected to be persisted without STARTING persisted
+      Assert.assertNull(runRecordMeta);
     });
     final RunId runId4 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId4 = program.run(runId4);
     // Once a stop status is reached, any incoming status will be ignored
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStart(program, runId4.getId(), RunIds.getTime(runId4, TimeUnit.SECONDS),
-                                                null, ImmutableMap.of(), ImmutableMap.of(),
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId4.getId(), RunIds.getTime(runId4, TimeUnit.SECONDS),
-                                               ProgramRunStatus.COMPLETED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId4.getId(), RunIds.getTime(runId4, TimeUnit.SECONDS),
-                                               ProgramRunStatus.KILLED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId4.getId());
-        // KILLED after COMPLETED is ignored
-        Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecordMeta.getStatus());
-      }
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStart(programRunId4, RunIds.getTime(runId4, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId4, RunIds.getTime(runId4, TimeUnit.SECONDS),
+                                             ProgramRunStatus.COMPLETED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId4, RunIds.getTime(runId4, TimeUnit.SECONDS),
+                                             ProgramRunStatus.KILLED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId4);
+      // KILLED after COMPLETED is ignored
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecordMeta.getStatus());
     });
     final RunId runId5 = RunIds.generate(runIdTime.incrementAndGet());
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStart(program, runId5.getId(), RunIds.getTime(runId5, TimeUnit.SECONDS),
-                                                null, ImmutableMap.of(), ImmutableMap.of(),
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId5.getId(), RunIds.getTime(runId5, TimeUnit.SECONDS),
-                                               ProgramRunStatus.FAILED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStop(program, runId5.getId(), RunIds.getTime(runId5, TimeUnit.SECONDS),
-                                               ProgramRunStatus.COMPLETED, null,
-                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId5.getId());
-        // COMPLETED after FAILED is ignored
-        Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
-      }
+    final ProgramRunId programRunId5 = program.run(runId5);
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStart(programRunId5, RunIds.getTime(runId5, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId5, RunIds.getTime(runId5, TimeUnit.SECONDS),
+                                             ProgramRunStatus.FAILED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStop(programRunId5, RunIds.getTime(runId5, TimeUnit.SECONDS),
+                                             ProgramRunStatus.COMPLETED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId5);
+      // COMPLETED after FAILED is ignored
+      Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
     });
     final RunId runId6 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId6 = program.run(runId6);
     // STARTING status will be ignored if there's any existing record
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStart(program, runId6.getId(), RunIds.getTime(runId6, TimeUnit.SECONDS),
-                                                null, ImmutableMap.of(), ImmutableMap.of(),
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStart(programRunId6, RunIds.getTime(runId6, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramSuspend(program, runId6.getId(),
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStart(program, runId6.getId(), RunIds.getTime(runId6, TimeUnit.SECONDS),
-                                                null, ImmutableMap.of(), ImmutableMap.of(),
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId6.getId());
-        // STARTING status is ignored since there's an existing SUSPENDED record
-        Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
-      }
+      metadataStoreDataset.recordProgramStart(programRunId6, RunIds.getTime(runId6, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
+      // STARTING status is ignored since there's an existing SUSPENDED record
+      Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
     });
     final RunId runId7 = RunIds.generate(runIdTime.incrementAndGet());
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStart(program, runId7.getId(), RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                                null, ImmutableMap.of(), ImmutableMap.of(),
+    final ProgramRunId programRunId7 = program.run(runId7);
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStart(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramRunning(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
+                                                null,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramRunning(program, runId7.getId(), RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                                  null,
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        metadataStoreDataset.recordProgramStart(program, runId7.getId(), RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                                null, ImmutableMap.of(), ImmutableMap.of(),
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(program, runId7.getId());
-        // STARTING status is ignored since there's an existing RUNNING record
-        Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
-      }
+      metadataStoreDataset.recordProgramStart(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
+      // STARTING status is ignored since there's an existing RUNNING record
+      Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
     });
   }
 
@@ -299,20 +274,17 @@ public class AppMetadataStoreTest {
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
     final AtomicReference<RunRecordMeta> resultRecord = new AtomicReference<>();
     final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                                null, ImmutableMap.<String, String>of(),
-                                                ImmutableMap.<String, String>of(),
-                                                AppFabricTestHelper.createSourceId(startSourceId));
-        metadataStoreDataset.recordProgramRunning(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                                  null, AppFabricTestHelper.createSourceId(runningSourceId));
-        metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                               ProgramRunStatus.KILLED,
-                                               null, AppFabricTestHelper.createSourceId(killedSourceId));
-        resultRecord.set(metadataStoreDataset.getRun(program, runId.getId()));
-      }
+    final ProgramRunId programRunId = program.run(runId);
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramStart(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
+                                              null, ImmutableMap.of(), ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(startSourceId));
+      metadataStoreDataset.recordProgramRunning(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
+                                                null, AppFabricTestHelper.createSourceId(runningSourceId));
+      metadataStoreDataset.recordProgramStop(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
+                                             ProgramRunStatus.KILLED,
+                                             null, AppFabricTestHelper.createSourceId(killedSourceId));
+      resultRecord.set(metadataStoreDataset.getRun(programRunId));
     });
     Assert.assertEquals(expectedRunStatus, resultRecord.get().getStatus());
   }
@@ -329,24 +301,22 @@ public class AppMetadataStoreTest {
       final ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
                                                     "program" + i);
       final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
+      final ProgramRunId programRunId = program.run(runId);
       expected.add(RunIds.getTime(runId, TimeUnit.MILLISECONDS));
       // Start the program and stop it
       final int j = i;
       // A sourceId to keep incrementing for each call of app meta data store persisting
-      txnl.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          metadataStoreDataset.recordProgramStart(
-            program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS), null, ImmutableMap.<String, String>of(),
-            ImmutableMap.<String, String>of(), AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-          metadataStoreDataset.recordProgramRunning(
-            program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS) + 1, null,
-            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-          metadataStoreDataset.recordProgramStop(
-            program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-            STOP_STATUSES.get(j % STOP_STATUSES.size()),
-            null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        }
+      txnl.execute(() -> {
+        metadataStoreDataset.recordProgramStart(
+          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null, ImmutableMap.of(),
+          ImmutableMap.of(), AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        metadataStoreDataset.recordProgramRunning(
+          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS) + 1, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        metadataStoreDataset.recordProgramStop(
+          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
+          STOP_STATUSES.get(j % STOP_STATUSES.size()),
+          null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       });
     }
 
@@ -381,33 +351,25 @@ public class AppMetadataStoreTest {
   private void runScan(TransactionExecutor txnl, final AppMetadataStore metadataStoreDataset,
                        final Set<Long> expected, final long startTime, final long stopTime)
     throws InterruptedException, TransactionFailureException {
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // Run the scan
-        Set<Long> actual = new TreeSet<>();
-        int maxScanTimeMillis = 25;
-        // Create a ticker that counts one millisecond per element, so that we can test batching
-        // Hence number of elements per batch = maxScanTimeMillis
-        CountingTicker countingTicker = new CountingTicker(1);
-        List<Iterable<RunId>> batches =
-          metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime, maxScanTimeMillis,
-                                                          countingTicker);
-        Iterable<RunId> runIds = Iterables.concat(batches);
-        Iterables.addAll(actual, Iterables.transform(runIds, new Function<RunId, Long>() {
-          @Override
-          public Long apply(RunId input) {
-            return RunIds.getTime(input, TimeUnit.MILLISECONDS);
-          }
-        }));
+    txnl.execute(() -> {
+      // Run the scan
+      Set<Long> actual = new TreeSet<>();
+      int maxScanTimeMillis = 25;
+      // Create a ticker that counts one millisecond per element, so that we can test batching
+      // Hence number of elements per batch = maxScanTimeMillis
+      CountingTicker countingTicker = new CountingTicker(1);
+      List<Iterable<RunId>> batches =
+        metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime, maxScanTimeMillis,
+                                                        countingTicker);
+      Iterable<RunId> runIds = Iterables.concat(batches);
+      Iterables.addAll(actual, Iterables.transform(runIds, input -> RunIds.getTime(input, TimeUnit.MILLISECONDS)));
 
-        Assert.assertEquals(expected, actual);
-        int numBatches = Iterables.size(batches);
-        // Each batch needs 2 extra calls to Ticker.read, once during init and once for final condition check
-        // Hence the number of batches should be --
-        // (num calls to Ticker.read - (2 * numBatches)) / number of elements per batch
-        Assert.assertEquals((countingTicker.getNumProcessed() - (2 * numBatches)) / maxScanTimeMillis, numBatches);
-      }
+      Assert.assertEquals(expected, actual);
+      int numBatches = Iterables.size(batches);
+      // Each batch needs 2 extra calls to Ticker.read, once during init and once for final condition check
+      // Hence the number of batches should be --
+      // (num calls to Ticker.read - (2 * numBatches)) / number of elements per batch
+      Assert.assertEquals((countingTicker.getNumProcessed() - (2 * numBatches)) / maxScanTimeMillis, numBatches);
     });
   }
 
@@ -434,8 +396,7 @@ public class AppMetadataStoreTest {
         expectedHalf.add(runId.toString());
       }
 
-      ProgramRunId programRunId = new ProgramRunId(program.getNamespace(), program.getApplication(),
-                                                   program.getType(), program.getProgram(), runId.toString());
+      ProgramRunId programRunId = program.run(runId);
       programRunIdSet.add(programRunId);
 
       //Add every other programRunId
@@ -444,44 +405,36 @@ public class AppMetadataStoreTest {
       }
 
       // A sourceId to keep incrementing for each call of app meta data store persisting
-      txnl.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-
-          // Start the program and stop it
-          metadataStoreDataset.recordProgramStart(
-            program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null,
-            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-          metadataStoreDataset.recordProgramRunning(
-            program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS), null,
-            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-          metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                                 ProgramRunStatus.values()[index % ProgramRunStatus.values().length],
-                                                 null,
-                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-        }
+      txnl.execute(() -> {
+        // Start the program and stop it
+        metadataStoreDataset.recordProgramStart(
+          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        metadataStoreDataset.recordProgramRunning(
+          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        metadataStoreDataset.recordProgramStop(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
+                                               ProgramRunStatus.values()[index % ProgramRunStatus.values().length],
+                                               null,
+                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       });
     }
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-
-        Map<ProgramRunId, RunRecordMeta> runMap = metadataStoreDataset.getRuns(programRunIdSet);
-        Set<String> actual = new TreeSet<>();
-        for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMap.entrySet()) {
-          actual.add(entry.getValue().getPid());
-        }
-        Assert.assertEquals(expected, actual);
-
-
-        Map<ProgramRunId, RunRecordMeta> runMapHalf = metadataStoreDataset.getRuns(programRunIdSetHalf);
-        Set<String> actualHalf = new TreeSet<>();
-        for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMapHalf.entrySet()) {
-          actualHalf.add(entry.getValue().getPid());
-        }
-        Assert.assertEquals(expectedHalf, actualHalf);
+    txnl.execute(() -> {
+      Map<ProgramRunId, RunRecordMeta> runMap = metadataStoreDataset.getRuns(programRunIdSet);
+      Set<String> actual = new TreeSet<>();
+      for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMap.entrySet()) {
+        actual.add(entry.getValue().getPid());
       }
+      Assert.assertEquals(expected, actual);
+
+
+      Map<ProgramRunId, RunRecordMeta> runMapHalf = metadataStoreDataset.getRuns(programRunIdSetHalf);
+      Set<String> actualHalf = new TreeSet<>();
+      for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMapHalf.entrySet()) {
+        actualHalf.add(entry.getValue().getPid());
+      }
+      Assert.assertEquals(expectedHalf, actualHalf);
     });
   }
 
