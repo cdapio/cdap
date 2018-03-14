@@ -32,6 +32,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -186,7 +187,7 @@ public class UnitTestManager extends AbstractTestManager {
       ApplicationId applicationId = new ApplicationId(namespace.getNamespace(), configurer.getName());
 
       ArtifactSummary artifactSummary = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
-      appFabricClient.deployApplication(applicationId.toId(),
+      appFabricClient.deployApplication(Id.Application.fromEntityId(applicationId),
                                         new AppRequest(artifactSummary, configObject));
       return appManagerFactory.create(applicationId);
     } catch (Exception e) {
@@ -206,7 +207,7 @@ public class UnitTestManager extends AbstractTestManager {
   }
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
-    artifactRepository.addArtifact(artifactId.toId(), artifactFile);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), artifactFile);
     return artifactManagerFactory.create(artifactId);
   }
 
@@ -248,7 +249,7 @@ public class UnitTestManager extends AbstractTestManager {
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents, null);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), pluginJar, parents, null);
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
   }
@@ -270,7 +271,7 @@ public class UnitTestManager extends AbstractTestManager {
                                            @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
                                            Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents,
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), pluginJar, parents,
                                    additionalPlugins, Collections.<String, String>emptyMap());
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
@@ -393,7 +394,7 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public StreamManager getStreamManager(StreamId streamId) {
-    return streamManagerFactory.create(streamId.toId());
+    return streamManagerFactory.create(Id.Stream.fromEntityId(streamId));
   }
 
   @Override
@@ -450,7 +451,7 @@ public class UnitTestManager extends AbstractTestManager {
     Files.copy(Locations.newInputSupplier(jar), destination);
     jar.delete();
 
-    artifactRepository.addArtifact(artifactId.toId(), destination);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), destination);
     Preconditions.checkState(destination.delete());
   }
 }

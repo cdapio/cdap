@@ -44,7 +44,6 @@ export default class Overview extends Component {
     };
     this.typeToComponentMap = {
       'application': AppOverview,
-      'datasetinstance': DatasetOverview,
       'dataset': DatasetOverview,
       'stream': StreamOverview
     };
@@ -67,7 +66,7 @@ export default class Overview extends Component {
         loading: true
       });
       let {id: entityId, type: entityType} = searchState.overviewEntity;
-      let entityTypeLabel = entityType === 'datasetinstance' ? 'dataset' : entityType;
+      let entityTypeLabel = entityType;
       entityType = convertEntityTypeToApi(entityType);
       let namespace = NamespaceStore.getState().selectedNamespace;
 

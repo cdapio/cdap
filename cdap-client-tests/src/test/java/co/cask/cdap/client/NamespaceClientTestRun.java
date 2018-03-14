@@ -21,7 +21,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
@@ -125,14 +125,14 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   private void verifyReservedCreate() throws Exception {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setName(Id.Namespace.DEFAULT);
+    builder.setName(NamespaceId.DEFAULT);
     try {
       namespaceClient.create(builder.build());
       Assert.fail(String.format("Must not create '%s' namespace", Id.Namespace.DEFAULT));
     } catch (BadRequestException e) {
       // expected
     }
-    builder.setName(Id.Namespace.SYSTEM);
+    builder.setName(NamespaceId.SYSTEM);
     try {
       namespaceClient.create(builder.build());
       Assert.fail(String.format("Must not create '%s' namespace", Id.Namespace.SYSTEM));

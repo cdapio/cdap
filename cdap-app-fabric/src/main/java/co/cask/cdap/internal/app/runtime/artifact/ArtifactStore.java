@@ -38,6 +38,7 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -49,7 +50,6 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -769,7 +769,7 @@ public class ArtifactStore {
    */
   @VisibleForTesting
   void clear(final NamespaceId namespace) throws IOException {
-    final Id.Namespace namespaceId = namespace.toId();
+    final Id.Namespace namespaceId = Id.Namespace.fromEntityId(namespace);
     namespacedLocationFactory.get(namespace).append(ARTIFACTS_PATH).delete(true);
 
     Transactionals.execute(transactional, context -> {
@@ -978,7 +978,8 @@ public class ArtifactStore {
     ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
     Id.Namespace artifactNamespace = artifactColumn.artifactId.getNamespace();
     // filter out plugins whose artifacts are not in the system namespace and not in this namespace
-    if (!Id.Namespace.SYSTEM.equals(artifactNamespace) && !artifactNamespace.equals(namespace.toId())) {
+    if (!Id.Namespace.SYSTEM.equals(artifactNamespace) &&
+      !artifactNamespace.equals(Id.Namespace.fromEntityId(namespace))) {
       return null;
     }
     PluginData pluginData = GSON.fromJson(Bytes.toString(column.getValue()), PluginData.class);

@@ -54,7 +54,6 @@ import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;

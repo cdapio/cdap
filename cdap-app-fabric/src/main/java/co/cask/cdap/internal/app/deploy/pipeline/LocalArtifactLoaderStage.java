@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
@@ -98,12 +99,13 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                                                                    classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
 
-    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(cConf, deploymentInfo.getNamespaceId().toId(),
-                                                                         artifactId.toId(), appClassName,
-                                                                         artifactRepository, artifactClassLoader,
-                                                                         deploymentInfo.getApplicationName(),
-                                                                         deploymentInfo.getApplicationVersion(),
-                                                                         configString);
+    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(
+      cConf, Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId()),
+      Id.Artifact.fromEntityId(artifactId), appClassName,
+      artifactRepository, artifactClassLoader,
+      deploymentInfo.getApplicationName(),
+      deploymentInfo.getApplicationVersion(),
+      configString);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);

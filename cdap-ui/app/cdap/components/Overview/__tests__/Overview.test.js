@@ -122,7 +122,7 @@ describe('Unit tests for Overview component', () => {
       payload: {
         overviewEntity: {
           "id": "TestDataset",
-          "type": "datasetinstance"
+          "type": "dataset"
         }
       }
     });
@@ -131,7 +131,7 @@ describe('Unit tests for Overview component', () => {
     expect(loading).toBe(false);
     expect(showOverview).toBe(true);
     expect(entity.id).toBe('TestDataset');
-    expect(entity.type).toBe('datasetinstance');
+    expect(entity.type).toBe('dataset');
     expect(tag.name).toBe('DatasetOverview');
   });
 

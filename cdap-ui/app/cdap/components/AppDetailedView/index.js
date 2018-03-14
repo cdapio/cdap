@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import OverviewHeader from 'components/Overview/OverviewHeader';
 import {MyMetadataApi} from 'api/metadata';
+import EntityType from 'services/metadata-parser/EntityType';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -102,20 +103,16 @@ export default class AppDetailedView extends Component {
             });
             let datasets = entityDetail.datasets.map(dataset => {
               dataset.entityId = {
-                id: {
-                  instanceId: dataset.name
-                },
-                type: 'datasetinstance'
+                dataset: dataset.name,
+                entity: EntityType.dataset
               };
               dataset.uniqueId = uuidV4();
               return dataset;
             });
             let streams = entityDetail.streams.map(stream => {
               stream.entityId = {
-                id: {
-                  streamName: stream.name
-                },
-                type: 'stream'
+                stream: stream.name,
+                entity: EntityType.stream
               };
               stream.uniqueId = uuidV4();
               return stream;

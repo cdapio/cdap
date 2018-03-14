@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.DefaultId;
 
 /**
@@ -29,7 +30,8 @@ public final class Specifications {
   private Specifications() {}
 
   public static ApplicationSpecification from(Application app) {
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(DefaultId.NAMESPACE.toId(), DefaultId.ARTIFACT.toId(),
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.fromEntityId(DefaultId.NAMESPACE),
+                                                                  Id.Artifact.fromEntityId(DefaultId.ARTIFACT),
                                                                   app);
     app.configure(appConfigurer, new DefaultApplicationContext());
     return appConfigurer.createSpecification(null);

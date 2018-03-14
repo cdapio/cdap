@@ -26,7 +26,7 @@ import java.util.Objects;
 public final class NamespaceMeta {
 
   public static final NamespaceMeta DEFAULT =
-    new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).setDescription("Default Namespace").build();
+    new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).setDescription("Default Namespace").build();
 
   private final String name;
   private final String description;
@@ -87,11 +87,6 @@ public final class NamespaceMeta {
 
     public Builder setName(NamespaceId id) {
       this.name = id.getNamespace();
-      return this;
-    }
-
-    public Builder setName(Id.Namespace id) {
-      this.name = id.getId();
       return this;
     }
 

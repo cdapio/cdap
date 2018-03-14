@@ -35,9 +35,6 @@ commons:
       programs: Programs
       operations: Operations
       writes: Writes
-    datasetinstance:
-      plural: Datasets
-      singular: Dataset
     flow:
       plural: Flows
       singular: Flow

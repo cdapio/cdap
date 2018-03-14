@@ -15,10 +15,8 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.codec.IdTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -38,7 +36,6 @@ import java.util.Map;
 public class EntityIdTest {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.class, new IdTypeAdapter())
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
@@ -213,19 +210,6 @@ public class EntityIdTest {
   }
 
   @Test
-  public void testToFromOldId() {
-    for (EntityId id : ids) {
-      doTestToFromOldId(id);
-    }
-  }
-
-  private void doTestToFromOldId(EntityId id) {
-    Assert.assertEquals(
-      "doTestToFromOldId failed for class " + id.getClass().getName(),
-      id, id.toId().toEntityId());
-  }
-
-  @Test
   public void testDatasetName() {
     DatasetId.fromString("dataset:foo.Zo123_-$$_-");
     DatasetId dataset = DatasetId.fromString("dataset:foo.app.meta");
@@ -299,11 +283,11 @@ public class EntityIdTest {
     Assert.assertEquals(expectedHierarchy, program.getHierarchy());
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+/*  @Test(expected = UnsupportedOperationException.class)
   public void testInstanceId() {
     InstanceId instanceId = new InstanceId("mycdap");
     instanceId.toId();
-  }
+  }*/
 
   @Test
   public void testArtifactId() {

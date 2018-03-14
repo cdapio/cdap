@@ -24,6 +24,7 @@ import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification
 import co.cask.cdap.api.spark.dynamic.SparkCompiler
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler
 import co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
+import co.cask.cdap.common.id.Id
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory
@@ -32,7 +33,6 @@ import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer
 import co.cask.cdap.internal.lang.Reflections
 import co.cask.cdap.internal.specification.DataSetFieldExtractor
 import co.cask.cdap.internal.specification.PropertyFieldExtractor
-import co.cask.cdap.proto.Id
 
 import java.lang
 import java.util

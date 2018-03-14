@@ -35,6 +35,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -58,7 +59,6 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -237,7 +237,7 @@ public class AppFabricTestHelper {
     ArtifactId artifactId = new ArtifactId(appClass.getSimpleName(), artifactVersion, ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    artifactRepository.addArtifact(Artifacts.toArtifactId(namespace.toEntityId(), artifactId).toId(),
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toArtifactId(namespace.toEntityId(), artifactId)),
                                    new File(deployedJar.toURI()));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),

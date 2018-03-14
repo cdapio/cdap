@@ -19,7 +19,7 @@ package co.cask.cdap.proto.artifact;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 /**
@@ -87,7 +87,7 @@ public final class ArtifactRanges {
     }
     String name = artifactRangeStr.substring(0, versionStartIndex);
 
-    if (!Id.Artifact.isValidName(name)) {
+    if (!ArtifactId.isValidArtifactId(name)) {
       throw new InvalidArtifactRangeException(
         String.format("Invalid artifact range %s. Artifact name '%s' is invalid.", artifactRangeStr, name));
     }

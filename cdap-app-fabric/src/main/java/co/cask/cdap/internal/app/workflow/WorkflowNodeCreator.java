@@ -22,10 +22,10 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.customaction.DefaultCustomActionConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 
 /**

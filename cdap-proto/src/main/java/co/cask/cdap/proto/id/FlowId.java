@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 
 /**
@@ -29,11 +28,6 @@ public class FlowId extends ProgramId implements ParentedId<ApplicationId> {
 
   public FlowId(ApplicationId appId, String flow) {
     super(appId, ProgramType.FLOW, flow);
-  }
-
-  @Override
-  public Id.Flow toId() {
-    return Id.Flow.from(super.getParent().toId(), super.getProgram());
   }
 
   public static FlowId fromString(String string) {

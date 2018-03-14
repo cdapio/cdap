@@ -16,17 +16,13 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.spark.AbstractSpark
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkMain
-import co.cask.cdap.api.workflow.Value
-import co.cask.cdap.api.workflow.WorkflowForkNode
-import com.google.common.base.Stopwatch
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-
 import java.io.File
 import java.util.concurrent.TimeUnit
+
+import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.workflow.{Value, WorkflowForkNode}
+import com.google.common.base.Stopwatch
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConversions._
 

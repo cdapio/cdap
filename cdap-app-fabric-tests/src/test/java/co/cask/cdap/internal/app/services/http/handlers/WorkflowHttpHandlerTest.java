@@ -32,12 +32,12 @@ import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -229,19 +229,19 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     ProgramId workflowId = new ProgramId(TEST_NAMESPACE2, WorkflowAppWithLocalDatasets.NAME, ProgramType.WORKFLOW,
                                          WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
 
-    startProgram(workflowId.toId(), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
-                                                    "done.file", doneFile.getAbsolutePath(),
-                                                    "dataset.*.keep.local", "true"));
+    startProgram(Id.Program.fromEntityId(workflowId), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
+                                                                      "done.file", doneFile.getAbsolutePath(),
+                                                                      "dataset.*.keep.local", "true"));
 
     while (!waitFile.exists()) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
-    String runId = getRunIdOfRunningProgram(workflowId.toId());
+    String runId = getRunIdOfRunningProgram(Id.Program.fromEntityId(workflowId));
 
     doneFile.createNewFile();
 
-    waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
+    waitState(Id.Program.fromEntityId(workflowId), ProgramStatus.STOPPED.name());
 
     Map<String, DatasetSpecificationSummary> localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
     Assert.assertEquals(2, localDatasetSummaries.size());
@@ -261,7 +261,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     waitFile = new File(tmpFolder.newFolder() + "/wait.file");
     doneFile = new File(tmpFolder.newFolder() + "/done.file");
 
-    startProgram(workflowId.toId(), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
+    startProgram(Id.Program.fromEntityId(workflowId), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
                                                     "done.file", doneFile.getAbsolutePath(),
                                                     "dataset.MyTable.keep.local", "true"));
 
@@ -269,11 +269,11 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
-    runId = getRunIdOfRunningProgram(workflowId.toId());
+    runId = getRunIdOfRunningProgram(Id.Program.fromEntityId(workflowId));
 
     doneFile.createNewFile();
 
-    waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
+    waitState(Id.Program.fromEntityId(workflowId), ProgramStatus.STOPPED.name());
     localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
     Assert.assertEquals(1, localDatasetSummaries.size());
     keyValueTableSummary = new DatasetSpecificationSummary("MyTable." + runId, keyValueTableType,
@@ -429,15 +429,15 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     startProgram(workflow, Collections.singletonMap("sleep.ms", Long.toString(Long.MAX_VALUE)), 200);
     waitState(workflow, ProgramStatus.RUNNING.name());
 
-    String runId = getRunIdOfRunningProgram(workflow.toId());
-    suspendWorkflow(workflow.toId(), runId, 200);
+    String runId = getRunIdOfRunningProgram(Id.Program.fromEntityId(workflow));
+    suspendWorkflow(Id.Program.fromEntityId(workflow), runId, 200);
 
     // Workflow status should be SUSPENDED
     waitState(workflow, ProgramStatus.STOPPED.name());
 
-    stopProgram(workflow.toId(), runId, 200);
+    stopProgram(Id.Program.fromEntityId(workflow), runId, 200);
     waitState(workflow, ProgramStatus.STOPPED.name());
-    verifyProgramRuns(workflow.toId(), ProgramRunStatus.KILLED, 0);
+    verifyProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.KILLED, 0);
   }
 
   @Category(XSlowTests.class)
@@ -710,7 +710,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     runtimeArguments.put("dataset.unknown.dataset", "false");
     runtimeArguments.put("dataset.*.read.timeout", "60");
 
-    setAndTestRuntimeArgs(programId.toId(), runtimeArguments);
+    setAndTestRuntimeArgs(Id.Program.fromEntityId(programId), runtimeArguments);
 
     // Start the workflow
     startProgram(programId, 200);
@@ -729,11 +729,11 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
                                              "Please stop the Workflow.",
                                            mr1ProgramId.run(oneMRHistoryRuns.get(0).getPid()), workflowRunId);
-    stopProgram(mr1ProgramId.toId(), oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
+    stopProgram(Id.Program.fromEntityId(mr1ProgramId), oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
 
-    verifyProgramRuns(programId.toId(), ProgramRunStatus.COMPLETED);
+    verifyProgramRuns(Id.Program.fromEntityId(programId), ProgramRunStatus.COMPLETED);
 
-    workflowHistoryRuns = getProgramRuns(programId.toId(), ProgramRunStatus.COMPLETED);
+    workflowHistoryRuns = getProgramRuns(Id.Program.fromEntityId(programId), ProgramRunStatus.COMPLETED);
 
     oneMRHistoryRuns = getProgramRuns(mr1ProgramId, ProgramRunStatus.COMPLETED);
 

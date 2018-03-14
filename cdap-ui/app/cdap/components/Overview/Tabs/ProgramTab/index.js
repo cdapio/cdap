@@ -60,38 +60,35 @@ export default class ProgramsTab extends Component {
   }
   setRunningPrograms() {
     let namespace = NamespaceStore.getState().selectedNamespace;
-    this.state
-        .entity
-        .programs
-        .forEach(program => {
-          let params = {
-            namespace,
-            appId: program.app,
-            programType: convertProgramToApi(program.type),
-            programId: program.name
-          };
-          let subscription =  MyProgramApi
-            .pollRuns(params)
-            .combineLatest(MyProgramApi.pollStatus(params))
-            .subscribe(res => {
-              let runningPrograms = this.state.runningPrograms;
-              let programState = runningPrograms.filter(prog => prog.name === program.name && prog.app === program.app);
-              if (programState.length) {
-                runningPrograms = runningPrograms.filter(prog => prog.name !== program.name || (prog.name === program.name && prog.app !== program.app));
-              }
-              runningPrograms.push(Object.assign({}, !isEmpty(programState) ? programState[0] : {}, {
-                latestRun: objectQuery(res, 0, 0) || {},
-                status: res[1].status === 'RUNNING' ? 1 : 0,
-                backendStatus: res[1].status,
-                name: program.name,
-                app: program.app
-              }));
-              this.setState({
-                runningPrograms
-              });
-            });
-          this.statusSubscriptions.push(subscription);
+    this.state.entity.programs.forEach(program => {
+      let params = {
+        namespace,
+        appId: program.app,
+        programType: convertProgramToApi(program.type),
+        programId: program.name
+      };
+      let subscription =  MyProgramApi
+        .pollRuns(params)
+        .combineLatest(MyProgramApi.pollStatus(params))
+        .subscribe(res => {
+          let runningPrograms = this.state.runningPrograms;
+          let programState = runningPrograms.filter(prog => prog.name === program.name && prog.app === program.app);
+          if (programState.length) {
+            runningPrograms = runningPrograms.filter(prog => prog.name !== program.name || (prog.name === program.name && prog.app !== program.app));
+          }
+          runningPrograms.push(Object.assign({}, !isEmpty(programState) ? programState[0] : {}, {
+            latestRun: objectQuery(res, 0, 0) || {},
+            status: res[1].status === 'RUNNING' ? 1 : 0,
+            backendStatus: res[1].status,
+            name: program.name,
+            app: program.app
+          }));
+          this.setState({
+            runningPrograms
+          });
         });
+      this.statusSubscriptions.push(subscription);
+    });
   }
   render() {
     let runningProgramsCount = 0;

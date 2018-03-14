@@ -30,7 +30,6 @@ import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;

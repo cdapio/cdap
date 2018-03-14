@@ -37,6 +37,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PluginClassDeserializer;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -188,7 +189,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                                        propertiesRequest.getVersion());
       ArtifactDetail artifactDetail;
       try {
-        artifactDetail = artifactRepository.getArtifact(artifactId.toId());
+        artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
       } catch (ArtifactNotFoundException e) {
         continue;
       }
@@ -276,7 +277,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
+      ArtifactDetail detail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
@@ -303,7 +304,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId.toId());
+      ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
       Map<String, String> properties = artifactDetail.getMeta().getProperties();
       Map<String, String> result;
 
@@ -345,7 +346,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      artifactRepository.writeArtifactProperties(artifactId.toId(), properties);
+      artifactRepository.writeArtifactProperties(Id.Artifact.fromEntityId(artifactId), properties);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
@@ -372,7 +373,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      artifactRepository.writeArtifactProperty(artifactId.toId(), key, value);
+      artifactRepository.writeArtifactProperty(Id.Artifact.fromEntityId(artifactId), key, value);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
@@ -394,7 +395,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
+      ArtifactDetail detail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
       responder.sendString(HttpResponseStatus.OK, detail.getMeta().getProperties().get(key));
     } catch (IOException e) {
       LOG.error("Exception reading property for artifact {}.", artifactId, e);
@@ -414,7 +415,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      artifactRepository.deleteArtifactProperties(artifactId.toId());
+      artifactRepository.deleteArtifactProperties(Id.Artifact.fromEntityId(artifactId));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception deleting properties for artifact {}.", artifactId, e);
@@ -435,7 +436,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      artifactRepository.deleteArtifactProperty(artifactId.toId(), key);
+      artifactRepository.deleteArtifactProperty(Id.Artifact.fromEntityId(artifactId), key);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception updating properties for artifact {}.", artifactId, e);
@@ -458,7 +459,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
-        artifactRepository.getPlugins(namespace, artifactId.toId());
+        artifactRepository.getPlugins(namespace, Id.Artifact.fromEntityId(artifactId));
       Set<String> pluginTypes = Sets.newHashSet();
       for (Set<PluginClass> pluginClasses : plugins.values()) {
         for (PluginClass pluginClass : pluginClasses) {
@@ -489,7 +490,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
-        artifactRepository.getPlugins(namespace, artifactId.toId(), pluginType);
+        artifactRepository.getPlugins(namespace, Id.Artifact.fromEntityId(artifactId), pluginType);
       List<PluginSummary> pluginSummaries = Lists.newArrayList();
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> pluginsEntry : plugins.entrySet()) {
@@ -536,7 +537,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
     try {
       PluginEndpoint pluginEndpoint =
-        pluginService.getPluginEndpoint(namespace, artifactId.toId(), pluginType, pluginName, methodName);
+        pluginService.getPluginEndpoint(namespace, Id.Artifact.fromEntityId(artifactId),
+                                        pluginType, pluginName, methodName);
       Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (JsonSyntaxException e) {
@@ -601,8 +603,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       SortedMap<ArtifactDescriptor, PluginClass> plugins =
-        artifactRepository.getPlugins(namespace, parentArtifactId.toId(), pluginType, pluginName, predicate,
-                                      limitNumber, sortOrder);
+        artifactRepository.getPlugins(namespace, Id.Artifact.fromEntityId(parentArtifactId),
+                                      pluginType, pluginName, predicate, limitNumber, sortOrder);
       List<PluginInfo> pluginInfos = Lists.newArrayList();
 
       // flatten the map
@@ -718,7 +720,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, version);
 
             // add the artifact to the repo
-            artifactRepository.addArtifact(artifactId.toId(), uploadedFile, parentArtifacts, additionalPluginClasses);
+            artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId),
+                                           uploadedFile, parentArtifacts, additionalPluginClasses);
             responder.sendString(HttpResponseStatus.OK, "Artifact added successfully");
           } catch (ArtifactRangeNotFoundException e) {
             responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -782,7 +785,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      artifactRepository.deleteArtifact(artifactId.toId());
+      artifactRepository.deleteArtifact(Id.Artifact.fromEntityId(artifactId));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception deleting artifact named {} for namespace {} from the store.", artifactName, namespaceId, e);
@@ -815,7 +818,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @PathParam("artifact-version") String artifactVersion) {
     try {
       ArtifactDetail artifactDetail = artifactRepository.getArtifact(
-        new ArtifactId(namespaceId, artifactName, artifactVersion).toId());
+        Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersion));
       responder.sendString(HttpResponseStatus.OK, artifactDetail.getDescriptor().getLocation().toURI().getPath());
     } catch (Exception e) {
       LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);

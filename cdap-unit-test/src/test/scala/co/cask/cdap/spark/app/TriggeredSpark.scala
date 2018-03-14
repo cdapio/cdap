@@ -17,11 +17,8 @@
 package co.cask.cdap.spark.app
 
 import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo
-import co.cask.cdap.api.spark.AbstractSpark
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkMain
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
+import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import org.apache.spark.{SparkConf, SparkContext}
 
 /**
   * Unit test for accessing triggering schedule info from Spark program launched by schedule.

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+const EntityType = {
+  application: 'APPLICATION',
+  artifact: 'ARTIFACT',
+  dataset: 'DATASET',
+  program: 'PROGRAM',
+  stream: 'STREAM',
+  view: 'VIEW'
+};
 
-import co.cask.cdap.proto.Id;
-
-/**
- * Compatibility from {@link Id} to {@link EntityId}.
- */
-public interface EntityIdCompatible {
-  /**
-   * @return the {@link EntityId} corresponding to {@code this}
-   */
-  EntityId toEntityId();
-}
+export default EntityType;

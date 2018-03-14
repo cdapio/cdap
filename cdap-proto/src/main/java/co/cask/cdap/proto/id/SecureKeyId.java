@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -46,12 +45,6 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
                                                          " numbers, _, and -", name));
     }
     this.name = name;
-  }
-
-  @Override
-  public Id toId() {
-    throw new UnsupportedOperationException(
-      String.format("%s does not have old %s class", SecureKeyId.class.getName(), Id.class.getName()));
   }
 
   @Override

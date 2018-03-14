@@ -32,6 +32,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -43,7 +44,6 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
@@ -427,7 +427,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          @Nullable final String ownerPrincipal,
                                          final boolean updateSchedules) throws IOException {
 
-    Id.Namespace idNamespace = namespace.toId();
+    Id.Namespace idNamespace = Id.Namespace.fromEntityId(namespace);
     Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",

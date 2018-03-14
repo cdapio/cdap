@@ -16,9 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;

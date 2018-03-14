@@ -28,12 +28,12 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.DefaultEndpointPluginContext;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
@@ -266,7 +266,8 @@ public class PluginService extends AbstractIdleService {
                                            Set<ArtifactRange> parentArtifactRanges,
                                            String methodName)
     throws NotFoundException, IOException, ClassNotFoundException {
-    Id.Artifact artifactId = Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId());
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(namespace),
+                                              artifactDetail.getDescriptor().getArtifactId());
     Set<PluginClass> pluginClasses = artifactDetail.getMeta().getClasses().getPlugins();
     PluginClass pluginClass = null;
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.context;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -27,7 +28,6 @@ import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;

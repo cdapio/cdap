@@ -33,6 +33,7 @@ import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.FilterClassLoader;
@@ -56,7 +57,6 @@ import co.cask.cdap.internal.app.runtime.plugin.InvalidPluginConfigException;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -587,7 +587,7 @@ public class ArtifactRepositoryTest {
     Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
       APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(childId.toId(), jarFile, parents, null);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(childId), jarFile, parents, null);
 
     // create grandchild
     co.cask.cdap.proto.id.ArtifactId grandchildId = NamespaceId.DEFAULT.artifact("grandchild", "1.0.0");
@@ -596,7 +596,7 @@ public class ArtifactRepositoryTest {
     parents = ImmutableSet.of(new ArtifactRange(
       childId.getNamespace(), childId.getArtifact(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(grandchildId.toId(), jarFile, parents, null);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(grandchildId), jarFile, parents, null);
 
     // try and create great grandchild, should fail
     co.cask.cdap.proto.id.ArtifactId greatGrandchildId = NamespaceId.DEFAULT.artifact("greatgrandchild", "1.0.0");
@@ -606,7 +606,7 @@ public class ArtifactRepositoryTest {
       grandchildId.getNamespace(), grandchildId.getArtifact(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     try {
-      artifactRepository.addArtifact(greatGrandchildId.toId(), jarFile, parents, null);
+      artifactRepository.addArtifact(Id.Artifact.fromEntityId(greatGrandchildId), jarFile, parents, null);
       Assert.fail("Artifact repository is not supposed to allow great grandparents.");
     } catch (InvalidArtifactException e) {
       // expected
@@ -625,7 +625,7 @@ public class ArtifactRepositoryTest {
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
       new ArtifactRange(a2Id.getNamespace(), a2Id.getArtifact(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(a1Id.toId(), jarFile, parents, null);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(a1Id), jarFile, parents, null);
 
     // create a2 artifact that extends a1, which should be invalid
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin2.class.getPackage().getName());
@@ -634,7 +634,7 @@ public class ArtifactRepositoryTest {
       new ArtifactRange(a1Id.getNamespace(), a1Id.getArtifact(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     try {
-      artifactRepository.addArtifact(a2Id.toId(), jarFile, parents, null);
+      artifactRepository.addArtifact(Id.Artifact.fromEntityId(a2Id), jarFile, parents, null);
       Assert.fail("Artifact repository did not catch a cyclic dependency.");
     } catch (InvalidArtifactException e) {
       // expected
@@ -697,8 +697,8 @@ public class ArtifactRepositoryTest {
     NamespaceId namespace1 = Ids.namespace("ns1");
     NamespaceId namespace2 = Ids.namespace("ns2");
 
-    Id.Artifact pluginArtifactId1 = Id.Artifact.from(namespace1.toId(), "myPlugin", "1.0");
-    Id.Artifact pluginArtifactId2 = Id.Artifact.from(namespace2.toId(), "myPlugin", "1.0");
+    Id.Artifact pluginArtifactId1 = Id.Artifact.from(Id.Namespace.fromEntityId(namespace1), "myPlugin", "1.0");
+    Id.Artifact pluginArtifactId2 = Id.Artifact.from(Id.Namespace.fromEntityId(namespace2), "myPlugin", "1.0");
 
     try {
       // create plugin artifact in namespace1 that extends the system artifact

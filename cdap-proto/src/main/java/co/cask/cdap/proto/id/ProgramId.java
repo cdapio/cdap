@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 import org.apache.twill.api.RunId;
@@ -123,11 +122,6 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
                                               type, program);
     }
     return hashCode;
-  }
-
-  @Override
-  public Id.Program toId() {
-    return Id.Program.from(getNamespace(), getApplication(), type, program);
   }
 
   @SuppressWarnings("unused")

@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -101,11 +100,6 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   @Override
   public ApplicationId getParent() {
     return new ApplicationId(namespace, application, version);
-  }
-
-  @Override
-  public Id.Schedule toId() {
-    return Id.Schedule.from(Id.Application.from(namespace, application), schedule);
   }
 
   @SuppressWarnings("unused")

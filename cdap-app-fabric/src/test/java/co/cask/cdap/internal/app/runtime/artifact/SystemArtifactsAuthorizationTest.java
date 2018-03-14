@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -119,7 +120,7 @@ public class SystemArtifactsAuthorizationTest {
     SecurityRequestContext.setUserId("bob");
     // deleting a system artifact should fail because bob does not have admin privileges on the artifact
     try {
-      artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+      artifactRepository.deleteArtifact(Id.Artifact.fromEntityId(SYSTEM_ARTIFACT));
       Assert.fail("Deleting a system artifact should have failed because alice does not have admin privileges on " +
                     "the artifact.");
     } catch (UnauthorizedException expected) {
@@ -141,7 +142,7 @@ public class SystemArtifactsAuthorizationTest {
     Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactSummary.getScope().name().toLowerCase());
 
     // test the getArtifact API
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(SYSTEM_ARTIFACT.toId());
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(SYSTEM_ARTIFACT));
     co.cask.cdap.api.artifact.ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
     Assert.assertEquals(SYSTEM_ARTIFACT.getArtifact(), artifactId.getName());
     Assert.assertEquals(SYSTEM_ARTIFACT.getVersion(), artifactId.getVersion().getVersion());
@@ -157,14 +158,14 @@ public class SystemArtifactsAuthorizationTest {
     }
 
     try {
-      artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+      artifactRepository.deleteArtifact(Id.Artifact.fromEntityId(SYSTEM_ARTIFACT));
       Assert.fail();
     } catch (UnauthorizedException e) {
       // expected
     }
     // deleting system artifact should succeed if alice has ADMIN on the artifact
     authorizer.grant(Authorizable.fromEntityId(SYSTEM_ARTIFACT), ALICE, EnumSet.of(Action.ADMIN));
-    artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+    artifactRepository.deleteArtifact(Id.Artifact.fromEntityId(SYSTEM_ARTIFACT));
 
     // clean up privilege
     authorizer.revoke(Authorizable.fromEntityId(SYSTEM_ARTIFACT));

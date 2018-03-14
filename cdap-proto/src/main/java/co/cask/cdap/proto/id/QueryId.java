@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Collections;
@@ -63,11 +62,6 @@ public class QueryId extends EntityId {
       this.hashCode = hashCode = Objects.hash(super.hashCode(), handle);
     }
     return hashCode;
-  }
-
-  @Override
-  public Id.QueryHandle toId() {
-    return Id.QueryHandle.from(handle);
   }
 
   @SuppressWarnings("unused")

@@ -92,7 +92,7 @@ SendEventAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     uniqueId: PropTypes.string,
-    type: PropTypes.oneOf(['datasetinstance', 'stream']).isRequired,
+    type: PropTypes.oneOf(['dataset', 'stream']).isRequired,
   }),
   onSuccess: PropTypes.func,
   opened: PropTypes.bool

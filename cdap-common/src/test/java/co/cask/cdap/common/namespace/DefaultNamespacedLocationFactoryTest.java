@@ -19,7 +19,6 @@ package co.cask.cdap.common.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -48,7 +47,7 @@ public class DefaultNamespacedLocationFactoryTest {
     NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
 
     NamespaceId ns1 = new NamespaceId("ns1");
-    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
+    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).build();
     NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setRootDirectory("/ns1").build();
 
     nsAdmin.create(defaultNSMeta);

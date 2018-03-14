@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
+import EntityType from 'services/metadata-parser/EntityType';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -85,20 +86,16 @@ export default class AppOverview extends Component {
           });
           let datasets = entityDetail.datasets.map(dataset => {
             dataset.entityId = {
-              id: {
-                instanceId: dataset.name
-              },
-              type: 'datasetinstance'
+              dataset: dataset.name,
+              entity: EntityType.dataset
             };
             dataset.uniqueId = uuidV4();
             return dataset;
           });
           let streams = entityDetail.streams.map(stream => {
             stream.entityId = {
-              id: {
-                streamName: stream.name
-              },
-              type: 'stream'
+              stream: stream.name,
+              entity: EntityType.stream
             };
             stream.uniqueId = uuidV4();
             return stream;
@@ -148,9 +145,7 @@ export default class AppOverview extends Component {
     let icon = EntityIconMap[artifactName] || EntityIconMap['application'];
     let entityType = [
       'cdap-data-pipeline',
-      'cdap-data-streams',
-      'cdap-batch',
-      'cdap-realtime'
+      'cdap-data-streams'
     ]
       .indexOf(artifactName) !== -1 ? artifactName : 'application';
 

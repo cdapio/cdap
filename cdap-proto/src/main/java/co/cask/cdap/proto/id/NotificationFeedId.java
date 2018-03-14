@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -81,11 +80,6 @@ public class NotificationFeedId extends NamespacedEntityId implements ParentedId
       this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, category, feed);
     }
     return hashCode;
-  }
-
-  @Override
-  public Id.NotificationFeed toId() {
-    return Id.NotificationFeed.from(namespace, category, feed);
   }
 
   @SuppressWarnings("unused")

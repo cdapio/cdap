@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -81,11 +80,6 @@ public class DatasetTypeId extends NamespacedEntityId implements ParentedId<Name
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, type));
-  }
-
-  @Override
-  public Id.DatasetType toId() {
-    return Id.DatasetType.from(namespace, type);
   }
 
   public static DatasetTypeId fromString(String string) {

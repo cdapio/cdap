@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -130,7 +131,7 @@ public class StandaloneTester extends ExternalResource {
     ArtifactRepository artifactRepository = standaloneMain.getInjector().getInstance(ArtifactRepository.class);
 
     ArtifactId artifactId = NamespaceId.SYSTEM.artifact(name, version.getVersion());
-    artifactRepository.addArtifact(artifactId.toId(), artifactFile, parentArtifacts, null);
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), artifactFile, parentArtifacts, null);
   }
 
   private String getLocalHostname() {

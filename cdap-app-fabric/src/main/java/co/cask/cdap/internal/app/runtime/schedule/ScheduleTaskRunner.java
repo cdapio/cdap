@@ -24,6 +24,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -86,10 +87,10 @@ public final class ScheduleTaskRunner {
 
     Map<String, String> userArgs = Maps.newHashMap();
     userArgs.putAll(schedule.getProperties());
-    userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
+    userArgs.putAll(propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId)));
 
     Map<String, String> systemArgs = Maps.newHashMap();
-    systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
+    systemArgs.putAll(propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId)));
 
     // Let the triggers update the arguments first before setting the triggering schedule info
     ((SatisfiableTrigger) job.getSchedule().getTrigger()).updateLaunchArguments(job.getSchedule(),

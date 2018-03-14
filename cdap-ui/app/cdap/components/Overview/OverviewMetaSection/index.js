@@ -74,7 +74,7 @@ export default class OverviewMetaSection extends Component {
   }
 
   renderDatasetInfo() {
-    if (this.props.entity.type !== 'datasetinstance') { return null; }
+    if (this.props.entity.type !== 'dataset') { return null; }
 
     let type = objectQuery(this.props, 'entity', 'properties', 'type');
     type = type.split('.');
@@ -140,7 +140,7 @@ export default class OverviewMetaSection extends Component {
             }
             <small>
               {
-                ['datasetinstance', 'stream'].indexOf(this.props.entity.type) !== -1 ?
+                ['dataset', 'stream'].indexOf(this.props.entity.type) !== -1 ?
                   T.translate('features.Overview.deployedLabel.data')
                 :
                   T.translate('features.Overview.deployedLabel.app')

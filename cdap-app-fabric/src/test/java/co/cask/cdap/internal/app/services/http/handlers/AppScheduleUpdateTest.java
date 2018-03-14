@@ -20,8 +20,8 @@ import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -47,7 +47,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
 
-    Id.Artifact artifactId = Id.Artifact.from(TEST_NAMESPACE_META2.getNamespaceId().toId(),
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META2.getNamespaceId()),
                                               AppWithSchedule.NAME, VERSION1);
     addAppArtifact(artifactId, AppWithSchedule.class);
     AppRequest<? extends Config> request = new AppRequest<>(

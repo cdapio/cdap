@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,35 +29,35 @@ import StatusMapper from 'services/StatusMapper';
 
 require('./HistoryTab.scss');
 
-export default class HistoryTab extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      history: null,
-      entity: props.entity
-    };
-    this.pollSubscriptions = [];
-    this.tableHeaders = [
-      {
-        property: 'programName',
-        label: T.translate('features.AppDetailedView.History.nameLabel')
-      },
-      {
-        property: 'start',
-        label: T.translate('features.AppDetailedView.History.startLabel')
-      },
-      {
-        label: T.translate('features.AppDetailedView.History.runIDLabel')
-      },
-      {
-        property: 'status',
-        label: T.translate('features.AppDetailedView.History.statusLabel')
-      },
-      {
-        label: T.translate('features.FastAction.logLabel')
-      }
-    ];
+const tableHeaders = [
+  {
+    property: 'programName',
+    label: T.translate('features.AppDetailedView.History.nameLabel')
+  },
+  {
+    property: 'start',
+    label: T.translate('features.AppDetailedView.History.startLabel')
+  },
+  {
+    label: T.translate('features.AppDetailedView.History.runIDLabel')
+  },
+  {
+    property: 'status',
+    label: T.translate('features.AppDetailedView.History.statusLabel')
+  },
+  {
+    label: T.translate('features.FastAction.logLabel')
   }
+];
+
+export default class HistoryTab extends Component {
+  state = {
+    history: null,
+    entity: this.props.entity
+  };
+
+  pollSubscriptions = [];
+
   componentWillMount() {
     this.state
         .entity
@@ -116,7 +116,7 @@ export default class HistoryTab extends Component {
       });
   }
 
-  renderTableBody(history) {
+  renderTableBody = (history) => {
     let historyState = history || this.state.history;
     return (
       <tbody>
@@ -160,7 +160,7 @@ export default class HistoryTab extends Component {
             <div className="history-tab">
               <SortableTable
                 entities={this.state.history}
-                tableHeaders={this.tableHeaders}
+                tableHeaders={tableHeaders}
                 renderTableBody={this.renderTableBody}
               />
             </div>

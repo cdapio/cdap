@@ -16,7 +16,6 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -72,11 +71,6 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
       this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, stream);
     }
     return hashCode;
-  }
-
-  @Override
-  public Id.Stream toId() {
-    return Id.Stream.from(namespace, stream);
   }
 
   @SuppressWarnings("unused")

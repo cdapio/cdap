@@ -80,7 +80,7 @@ export default class DeleteAction extends Component {
         params.artifactId = this.props.entity.id;
         params.version = this.props.entity.version;
         break;
-      case 'datasetinstance':
+      case 'dataset':
         api = MyDatasetApi.delete;
         params.datasetId = this.props.entity.id;
         break;
@@ -160,7 +160,7 @@ DeleteAction.propTypes = {
     uniqueId: PropTypes.string,
     version: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
-    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired
+    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired
   }),
   onSuccess: PropTypes.func
 };

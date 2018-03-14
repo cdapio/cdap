@@ -43,7 +43,7 @@ public class RemoveMetadataPropertyCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String property = arguments.get("property");
-    client.removeProperty(entity.toId(), property);
+    client.removeProperty(entity, property);
     output.println("Successfully removed metadata property");
   }
 

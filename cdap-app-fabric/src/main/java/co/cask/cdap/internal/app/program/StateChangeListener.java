@@ -19,8 +19,6 @@ package co.cask.cdap.internal.app.program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.AbstractProgramController;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -33,6 +33,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
@@ -492,7 +493,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testDeleteApplication() throws Exception {
-    namespaceClient.create(new NamespaceMeta.Builder().setName(TEST_NAMESPACE1.toId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(TEST_NAMESPACE1).build());
     appClient.deploy(TEST_NAMESPACE1, createAppJarFile(WordCountApp.class));
     ProgramId programId = TEST_NAMESPACE1.app("WordCountApp").flow("WordCountFlow");
 
@@ -836,7 +837,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     File systemArtifact = createArtifactJarFile(WordCountApp.class, "wordcount", "1.0.0", new Manifest());
 
     StandaloneTester tester = STANDALONE.get();
-    tester.addSystemArtifact(systemId.getArtifact(), systemId.toId().getVersion(), systemArtifact, null);
+    tester.addSystemArtifact(systemId.getArtifact(),
+                             Id.Artifact.fromEntityId(systemId).getVersion(), systemArtifact, null);
 
     // verify that user metadata can be added for system-scope artifacts
     Map<String, String> userProperties = ImmutableMap.of("systemArtifactKey", "systemArtifactValue");

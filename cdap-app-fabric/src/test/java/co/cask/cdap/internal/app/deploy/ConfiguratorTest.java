@@ -26,6 +26,7 @@ import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -33,7 +34,6 @@ import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepositor
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;

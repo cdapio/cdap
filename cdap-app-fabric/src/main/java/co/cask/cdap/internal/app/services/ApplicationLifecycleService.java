@@ -43,6 +43,7 @@ import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -59,7 +60,6 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetDetail;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -343,7 +343,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
-    Id.Artifact artifactId = Artifacts.toArtifactId(appId.getParent(), newArtifactId).toId();
+    Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toArtifactId(appId.getParent(), newArtifactId));
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
                      programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
   }
@@ -537,7 +537,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ensureNoRunningPrograms(appId);
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
-      throw new NotFoundException(appId.toId());
+      throw new NotFoundException(Id.Application.fromEntityId(appId));
     }
 
     removeAppInternal(appId, spec);

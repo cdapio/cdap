@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -39,7 +40,7 @@ public class ArtifactExistenceVerifier implements EntityExistenceVerifier<Artifa
   @Override
   public void ensureExists(ArtifactId artifactId) throws ArtifactNotFoundException {
     try {
-      artifactStore.getArtifact(artifactId.toId());
+      artifactStore.getArtifact(Id.Artifact.fromEntityId(artifactId));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

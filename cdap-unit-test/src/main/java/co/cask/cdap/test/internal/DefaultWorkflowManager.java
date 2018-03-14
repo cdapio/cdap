@@ -18,8 +18,8 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;

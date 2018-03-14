@@ -16,8 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;

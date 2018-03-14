@@ -26,6 +26,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -228,18 +229,18 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
       .app(WorkflowAppWithLocalDataset.APP_NAME)
       .workflow(WorkflowAppWithLocalDataset.WORKFLOW_NAME);
 
-    startProgram(workflow.toId(), ImmutableMap.of("dataset.*.keep.local", "true"));
+    startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("dataset.*.keep.local", "true"));
 
     // Wait until we have a COMPLETED run record
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return getProgramRuns(workflow.toId(), ProgramRunStatus.COMPLETED).size();
+        return getProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.COMPLETED).size();
       }
     }, 5, TimeUnit.SECONDS);
 
     // Get the RunRecord
-    List<RunRecord> runRecords = getProgramRuns(workflow.toId(), ProgramRunStatus.COMPLETED);
+    List<RunRecord> runRecords = getProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.COMPLETED);
 
     Assert.assertEquals(1, runRecords.size());
 

@@ -29,13 +29,13 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -77,8 +77,9 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.loggingContext = createLoggingContext(program.getId().toId(), getRunId());
-    this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId().toId(), getRunId().getId()),
+    this.loggingContext = createLoggingContext(Id.Program.fromEntityId(program.getId()), getRunId());
+    this.streamWriter = streamWriterFactory.create(new Id.Run(Id.Program.fromEntityId(program.getId()),
+                                                              getRunId().getId()),
                                                    getOwners(),
                                                    retryStrategy);
   }

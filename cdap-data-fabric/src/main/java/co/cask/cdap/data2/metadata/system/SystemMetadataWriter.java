@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.metadata.system;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.metadata.MetadataScope;
 
 /**

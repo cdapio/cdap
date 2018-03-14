@@ -73,7 +73,7 @@ public class LineageTestRun extends MetadataTestBase {
     DatasetId dataset = namespace.dataset(AllProgramsApp.DATASET_NAME);
     StreamId stream = namespace.stream(AllProgramsApp.STREAM_NAME);
 
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
     try {
       appClient.deploy(namespace, createAppJarFile(AllProgramsApp.class));
 

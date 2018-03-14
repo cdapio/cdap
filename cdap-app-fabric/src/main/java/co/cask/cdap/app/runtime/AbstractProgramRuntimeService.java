@@ -25,6 +25,7 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -143,7 +144,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return noAuthArtifactRepository.getArtifact(artifactId.toId());
+    return noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
   }
 
   /**
@@ -245,7 +246,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(artifactId.toId()), destFile);
+        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }

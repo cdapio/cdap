@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -122,12 +122,12 @@ export default class DatasetDetailedView extends Component {
         .subscribe(
           (res) => {
             let appId;
-            let programs = res[1].map((program) => {
-              program.uniqueId = uuidV4();
-              appId = program.application.applicationId;
-              program.app = appId;
-              program.name = program.id;
-              return program;
+            let programs = res[1].map((programObj) => {
+              programObj.uniqueId = uuidV4();
+              appId = programObj.application;
+              programObj.app = appId;
+              programObj.name = programObj.program;
+              return programObj;
             });
 
             let entityDetail = {
@@ -136,7 +136,7 @@ export default class DatasetDetailedView extends Component {
               name: appId, // FIXME: Finalize on entity detail for fast action
               app: appId,
               id: datasetId,
-              type: 'datasetinstance',
+              type: 'dataset',
               properties: res[0]
             };
 
@@ -219,7 +219,7 @@ export default class DatasetDetailedView extends Component {
             currentStateIcon="icon-datasets"
             currentStateLabel={T.translate('commons.dataset')}
           />
-          <PlusButton />
+          <PlusButton mode={PlusButton.MODE.resourcecenter} />
         </div>
         <OverviewMetaSection
           entity={this.state.entityDetail}

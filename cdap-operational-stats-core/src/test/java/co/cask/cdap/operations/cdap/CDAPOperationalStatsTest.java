@@ -19,6 +19,7 @@ package co.cask.cdap.operations.cdap;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -55,7 +56,7 @@ public class CDAPOperationalStatsTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE).build());
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    AppFabricTestHelper.deployApplication(NAMESPACE.toId(), AllProgramsApp.class, null, cConf);
+    AppFabricTestHelper.deployApplication(Id.Namespace.fromEntityId(NAMESPACE), AllProgramsApp.class, null, cConf);
     TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
     Transaction tx1 = txClient.startShort();
     txClient.canCommitOrThrow(tx1, Collections.singleton(Bytes.toBytes("foo")));

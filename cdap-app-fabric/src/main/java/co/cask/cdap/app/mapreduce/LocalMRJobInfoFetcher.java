@@ -23,7 +23,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
 import co.cask.cdap.proto.ProgramType;

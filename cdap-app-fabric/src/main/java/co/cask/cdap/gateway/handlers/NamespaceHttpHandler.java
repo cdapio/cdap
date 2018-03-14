@@ -24,7 +24,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpHandler;
@@ -89,9 +88,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId) throws Exception {
-    Id.Namespace namespace;
+    NamespaceId namespace;
     try {
-      namespace = Id.Namespace.from(namespaceId);
+      namespace = new NamespaceId(namespaceId);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException("Namespace id can contain only alphanumeric characters or '_'.");
     }

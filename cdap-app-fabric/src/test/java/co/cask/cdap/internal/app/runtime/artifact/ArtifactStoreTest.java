@@ -30,11 +30,11 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
@@ -114,7 +114,7 @@ public class ArtifactStoreTest {
 
     // no artifact by namespace, artifact name, and version should throw an exception
     try {
-      artifactStore.getArtifact(Id.Artifact.from(namespace.toId(), "something", "1.0.0"));
+      artifactStore.getArtifact(Id.Artifact.from(Id.Namespace.fromEntityId(namespace), "something", "1.0.0"));
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -379,14 +379,14 @@ public class ArtifactStoreTest {
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
     // write a plugins artifact in namespace1
     NamespaceId namespace1 = Ids.namespace("ns1");
-    Id.Artifact artifact1 = Id.Artifact.from(namespace1.toId(), "plugins1", "1.0.0");
+    Id.Artifact artifact1 = Id.Artifact.from((Id.Namespace.fromEntityId(namespace1)), "plugins1", "1.0.0");
     ArtifactMeta meta1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin).build(), usableBy);
     String contents1 = "plugin1 contents";
     writeArtifact(artifact1, meta1, contents1);
 
     // write a plugins artifact in namespace2
     NamespaceId namespace2 = Ids.namespace("ns2");
-    Id.Artifact artifact2 = Id.Artifact.from(namespace2.toId(), "plugins2", "1.0.0");
+    Id.Artifact artifact2 = Id.Artifact.from(Id.Namespace.fromEntityId(namespace2), "plugins2", "1.0.0");
     ArtifactMeta meta2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin).build(), usableBy);
     String contents2 = "plugin2 contents";
     writeArtifact(artifact2, meta2, contents2);
@@ -1275,24 +1275,24 @@ public class ArtifactStoreTest {
   public void testUniversalPlugin() throws Exception {
     // First, deploy an artifact in the SYSTEM scope that doesn't have any plugin inside.
     ArtifactId artifactId = NamespaceId.SYSTEM.artifact("artifact", "1.0.0");
-    writeArtifact(artifactId.toId(), new ArtifactMeta(ArtifactClasses.builder().build()), "test");
+    writeArtifact(Id.Artifact.fromEntityId(artifactId), new ArtifactMeta(ArtifactClasses.builder().build()), "test");
 
     // Deploy an artifact that has a plugin in the DEFAULT scope, but without any parent artifact
     PluginClass pluginClass1 = new PluginClass("type1", "plugin1", "plugin1", "plugin1", null, Collections.emptyMap());
     ArtifactId pluginArtifactId1 = NamespaceId.DEFAULT.artifact("plugin-artifact1", "0.0.1");
-    writeArtifact(pluginArtifactId1.toId(),
+    writeArtifact(Id.Artifact.fromEntityId(pluginArtifactId1),
                   new ArtifactMeta(ArtifactClasses.builder().addPlugin(pluginClass1).build()), "test");
 
     // Get the available plugins for the artifact, should get the plugin1
-    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT,
-                                                                                             artifactId.toId());
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, Id.Artifact.fromEntityId(artifactId));
     Assert.assertEquals(1, plugins.size());
     List<PluginClass> pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
     Assert.assertEquals(1, pluginsClasses.size());
     Assert.assertEquals(pluginClass1, pluginsClasses.get(0));
 
     // Get the available plugins for the plugin artifact itself, should also get the plugin1
-    plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, pluginArtifactId1.toId());
+    plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, Id.Artifact.fromEntityId(pluginArtifactId1));
     Assert.assertEquals(1, plugins.size());
     pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
     Assert.assertEquals(1, pluginsClasses.size());
@@ -1304,11 +1304,12 @@ public class ArtifactStoreTest {
     ArtifactRange parentArtifactRange = new ArtifactRange(artifactId.getNamespace(),
                                                           artifactId.getArtifact(),
                                                           ArtifactVersionRange.parse("[1.0.0,2.0.0)"));
-    writeArtifact(pluginArtifactId2.toId(), new ArtifactMeta(ArtifactClasses.builder().addPlugin(pluginClass2).build(),
-                                                             Collections.singleton(parentArtifactRange)), "test");
+    writeArtifact(Id.Artifact.fromEntityId(pluginArtifactId2),
+                  new ArtifactMeta(ArtifactClasses.builder().addPlugin(pluginClass2).build(),
+                                   Collections.singleton(parentArtifactRange)), "test");
 
     // Get the available plugins for the artifact again, should get plugin1 and plugin2
-    plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId.toId());
+    plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, Id.Artifact.fromEntityId(artifactId));
     Assert.assertEquals(2, plugins.size());
 
     // Get and verify the plugins.
@@ -1320,7 +1321,8 @@ public class ArtifactStoreTest {
 
     // Get available plugin by type.
     for (PluginClass pluginClass : Arrays.asList(pluginClass1, pluginClass2)) {
-      plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId.toId(), pluginClass.getType());
+      plugins = artifactStore.getPluginClasses(NamespaceId.DEFAULT,
+                                               Id.Artifact.fromEntityId(artifactId), pluginClass.getType());
       Assert.assertEquals(1, plugins.size());
       pluginsClasses = plugins.values().stream().flatMap(Set::stream).collect(Collectors.toList());
       Assert.assertEquals(1, pluginsClasses.size());

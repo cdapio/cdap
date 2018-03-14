@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDatasetDefinition;
-import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDefinition;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 

@@ -22,6 +22,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
@@ -64,10 +65,10 @@ public abstract class PluginFinderTestBase extends AppFabricTestBase {
     ArtifactRepository artifactRepo = getInjector().getInstance(ArtifactRepository.class);
 
     ArtifactId appArtifactId = NamespaceId.DEFAULT.artifact("app", "1.0");
-    artifactRepo.addArtifact(appArtifactId.toId(), appArtifact);
+    artifactRepo.addArtifact(Id.Artifact.fromEntityId(appArtifactId), appArtifact);
 
     ArtifactId pluginArtifactId = NamespaceId.DEFAULT.artifact("plugin", "1.0");
-    artifactRepo.addArtifact(pluginArtifactId.toId(), pluginArtifact, Collections.singleton(
+    artifactRepo.addArtifact(Id.Artifact.fromEntityId(pluginArtifactId), pluginArtifact, Collections.singleton(
       new ArtifactRange(appArtifactId.getNamespace(), appArtifactId.getArtifact(),
                         new ArtifactVersion(appArtifactId.getVersion()), true,
                         new ArtifactVersion(appArtifactId.getVersion()), true)), null);
@@ -92,7 +93,7 @@ public abstract class PluginFinderTestBase extends AppFabricTestBase {
 
     // Deploy the same plugin artifact to the system namespace, without any parent
     ArtifactId systemPluginArtifactId = NamespaceId.SYSTEM.artifact("pluginsystem", "1.0");
-    artifactRepo.addArtifact(systemPluginArtifactId.toId(), pluginArtifact);
+    artifactRepo.addArtifact(Id.Artifact.fromEntityId(systemPluginArtifactId), pluginArtifact);
     entry = finder.findPlugin(NamespaceId.DEFAULT, appArtifactId, "dummy", "Plugin1", new PluginSelector());
     // The selector always select the last one, hence the USER once will be selected
     Assert.assertNotNull(entry);

@@ -34,6 +34,7 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -53,7 +54,6 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -241,8 +241,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
     ProgramId wordcountFlow1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
 
-    Id.Application wordCountAppDefault = wordCountApp1.toId();
-    Id.Program wordcountFlowDefault = wordcountFlow1.toId();
+    Id.Application wordCountAppDefault = Id.Application.fromEntityId(wordCountApp1);
+    Id.Program wordcountFlowDefault = Id.Program.fromEntityId(wordcountFlow1);
 
     ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", VERSION2);
     ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
@@ -284,7 +284,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
     ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
-    Id.Program wordFrequencyServiceDefault = wordFrequencyService1.toId();
+    Id.Program wordFrequencyServiceDefault = Id.Program.fromEntityId(wordFrequencyService1);
     // service is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
     // start service
@@ -965,7 +965,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
-    Id.Namespace idTestNamespace2 = testNamespace2.toId();
+    Id.Namespace idTestNamespace2 = Id.Namespace.fromEntityId(testNamespace2);
     Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
     addAppArtifact(artifactId, AppWithMultipleSchedules.class);
     AppRequest<? extends Config> appRequest = new AppRequest<>(
@@ -1179,7 +1179,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testSchedules() throws Exception {
     // deploy an app with schedule
-    Id.Artifact artifactId = Id.Artifact.from(TEST_NAMESPACE_META1.getNamespaceId().toId(),
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META1.getNamespaceId()),
                                               AppWithSchedule.NAME, VERSION1);
     addAppArtifact(artifactId, AppWithSchedule.class);
     AppRequest<? extends Config> request = new AppRequest<>(
@@ -1224,7 +1224,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
 
-    Id.Artifact artifactId = Id.Artifact.from(TEST_NAMESPACE_META2.getNamespaceId().toId(),
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META2.getNamespaceId()),
                                               AppWithSchedule.NAME, VERSION1);
     addAppArtifact(artifactId, AppWithSchedule.class);
     AppRequest<? extends Config> request = new AppRequest<>(

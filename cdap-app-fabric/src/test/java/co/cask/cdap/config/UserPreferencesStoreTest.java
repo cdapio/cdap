@@ -16,8 +16,8 @@
 
 package co.cask.cdap.config;
 
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;

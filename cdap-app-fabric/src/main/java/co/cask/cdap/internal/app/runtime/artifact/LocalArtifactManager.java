@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -75,7 +76,7 @@ public final class LocalArtifactManager extends AbstractArtifactManager {
 
     return Retries.callWithRetries(() -> {
       try {
-        ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId.toId());
+        ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
         return artifactDetail.getDescriptor().getLocation();
       } catch (IOException | RuntimeException e) {
         throw e;

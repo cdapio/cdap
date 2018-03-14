@@ -20,8 +20,8 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -73,7 +73,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public MapReduceManager getMapReduceManager(String programName) {
     ProgramId programId = application.mr(programName);
-    return new DefaultMapReduceManager(programId.toId(), this);
+    return new DefaultMapReduceManager(Id.Program.fromEntityId(programId), this);
   }
 
   @Override

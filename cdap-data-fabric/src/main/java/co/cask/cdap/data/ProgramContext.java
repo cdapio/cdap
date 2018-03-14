@@ -16,8 +16,6 @@
 
 package co.cask.cdap.data;
 
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
 

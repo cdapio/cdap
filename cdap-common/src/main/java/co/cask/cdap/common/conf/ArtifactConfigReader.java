@@ -20,7 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.artifact.ArtifactRanges;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;

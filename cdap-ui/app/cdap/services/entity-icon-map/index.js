@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,19 @@
  */
 
 const EntityIconMap = {
-  application: 'icon-fist',
-  artifact: 'icon-archive',
   'cdap-data-pipeline': 'icon-ETLBatch',
   'cdap-data-streams': 'icon-sparkstreaming',
-  datasetinstance: 'icon-datasets',
-  stream: 'icon-streams',
-  view: 'icon-streamview',
-  'Workflow': 'icon-workflow',
-  'Spark': 'icon-spark',
+  'Flow': 'icon-tigon',
   'Mapreduce': 'icon-mapreduce',
   'Service': 'icon-service',
+  'Spark': 'icon-spark',
   'Worker': 'icon-worker',
-  'Flow': 'icon-tigon'
+  'Workflow': 'icon-workflow',
+  application: 'icon-fist',
+  artifact: 'icon-archive',
+  dataset: 'icon-datasets',
+  stream: 'icon-streams',
+  view: 'icon-streamview'
 };
 
 export default EntityIconMap;

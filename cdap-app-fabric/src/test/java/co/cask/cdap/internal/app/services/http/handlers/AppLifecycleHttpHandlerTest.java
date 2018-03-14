@@ -27,9 +27,9 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -137,7 +137,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testOwnerUsingArtifact() throws Exception {
     ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "wordCountArtifact", "1.0.0");
-    addAppArtifact(artifactId.toId(), WordCountApp.class);
+    addAppArtifact(Id.Artifact.fromEntityId(artifactId), WordCountApp.class);
     ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
     // deploy an app with a owner
     String ownerPrincipal = "alice/somehost.net@somekdc.net";

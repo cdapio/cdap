@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.customaction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -25,7 +26,6 @@ import co.cask.cdap.internal.customaction.DefaultCustomActionSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
