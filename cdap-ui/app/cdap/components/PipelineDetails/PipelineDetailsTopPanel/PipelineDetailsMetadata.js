@@ -59,7 +59,10 @@ const PipelineDetailsMetadata = ({name, artifactName, version, description}) => 
               <IconSVG name = "icon-sparkstreaming" />
           }
         </span>
-        <h1 className="pipeline-name">
+        <h1
+          className="pipeline-name"
+          title={name}
+        >
           {name}
         </h1>
         <span className="pipeline-description">
