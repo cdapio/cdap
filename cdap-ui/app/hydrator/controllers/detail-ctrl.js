@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.hydrator')
     let programName = this.pipelineType === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
     let scheduleId = GLOBALS.defaultScheduleId;
 
-    let currentRunId;
+    let currentRun, metricsObservable;
     let pluginsFetched = false;
 
     pipelineDetailsActionCreator.init(rPipelineDetail);
@@ -61,28 +61,35 @@ angular.module(PKG.name + '.feature.hydrator')
         return;
       }
 
-      let latestRunId = latestRun.runid;
-      if (currentRunId === latestRunId) {
+      // let latestRunId = latestRun.runid;
+      if (currentRun && currentRun.runid === latestRun.runid && currentRun.status === latestRun.status) {
         return;
       }
 
-      currentRunId = latestRunId;
       // When current run id changes reset the metrics in the DAG.
-      pipelineMetricsActionCreator.reset();
+      if (currentRun && currentRun.runid !== latestRun.runid) {
+        pipelineMetricsActionCreator.reset();
+      }
+
+      currentRun = latestRun;
 
       let metricProgramType = programType === 'workflows' ? 'workflow' : programType;
 
       let metricParams = {
         namespace: $stateParams.namespace,
         app: rPipelineDetail.name,
-        run: latestRunId,
+        run: latestRun.runid,
         [metricProgramType]: programName
       };
 
+      if (metricsObservable) {
+        metricsObservable.unsubscribe();
+      }
+
       if (latestRun.status !== 'RUNNING') {
-        pipelineMetricsActionCreator.requestForMetrics(metricParams);
+        pipelineMetricsActionCreator.getMetrics(metricParams);
       } else {
-        pipelineMetricsActionCreator.pollForMetrics(metricParams);
+        metricsObservable = pipelineMetricsActionCreator.pollForMetrics(metricParams);
       }
     });
 
@@ -90,6 +97,9 @@ angular.module(PKG.name + '.feature.hydrator')
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
       if (runsPoll) {
         runsPoll.unsubscribe();
+      }
+      if (metricsObservable) {
+        metricsObservable.unsubscribe();
       }
       pipelineDetailsActionCreator.reset();
       pipelineDetailStoreSubscription();

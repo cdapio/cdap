@@ -19,37 +19,25 @@ import MetricsQueryHelper from 'services/MetricsQueryHelper';
 import {MyMetricApi} from 'api/metric';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineMetricsStore, {PipelineMetricsActions} from 'services/PipelineMetricsStore';
+import {Observable} from 'rxjs/Observable';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-let metricsPoll;
-
-const requestForMetrics = (params) => {
-  getMetrics(params, 'REQUEST');
-};
 
 const pollForMetrics = (params) => {
-  if (metricsPoll) {
-    metricsPoll.unsubscribe();
-  }
-  metricsPoll = getMetrics(params, 'POLL');
-  return metricsPoll;
+  return Observable.interval(2000).subscribe(() => {
+    getMetrics(params);
+  });
 };
 
-function getMetrics(params, type) {
-  let searchApi;
-  if (type === 'REQUEST') {
-    searchApi = dataSrc.request.bind(dataSrc);
-  } else if (type === 'POLL') {
-    searchApi = dataSrc.poll.bind(dataSrc);
-  }
-
+function getMetrics(params) {
   let metricParams = MetricsQueryHelper.tagsToParams(params);
   let metricSearchPath = '/metrics/search?target=metric&' + metricParams;
   let metricsSearchReqObj = {
     _cdapPath: metricSearchPath,
     method: 'POST'
   };
-  return searchApi(metricsSearchReqObj)
+  // return searchApi(metricsSearchReqObj)
+  dataSrc.request(metricsSearchReqObj)
     .subscribe(res => {
       let config = PipelineDetailStore.getState().config;
       let stagesArray, source, sinks, transforms;
@@ -154,17 +142,13 @@ const setMetricsTabActive = (metricsTabActive, portsToShow) => {
 };
 
 const reset = () => {
-  if (metricsPoll) {
-    metricsPoll.unsubscribe();
-  }
-  metricsPoll = null;
   PipelineMetricsStore.dispatch({
     type: PipelineMetricsActions.RESET
   });
 };
 
 export {
-  requestForMetrics,
+  getMetrics,
   pollForMetrics,
   setMetricsTabActive,
   reset

@@ -137,6 +137,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.pipelineMetricsStoreSubscription = this.PipelineMetricsStore.subscribe(() => {
       this.metrics = convertMetricsArrayIntoObject(this.PipelineMetricsStore.getState().metrics);
       this.logsMetrics = this.PipelineMetricsStore.getState().logsMetrics;
+      $scope.$apply();
     });
 
     this.pipelineDetailStoreSubscription = this.PipelineDetailStore.subscribe(() => {
