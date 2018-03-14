@@ -16,6 +16,7 @@
 package co.cask.cdap.api.lineage;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -31,7 +32,7 @@ public class Destination {
   private Destination(String name, @Nullable String namespace, Map<String, String> properties) {
     this.name = name;
     this.namespace = namespace;
-    this.properties = Collections.unmodifiableMap(properties);
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**

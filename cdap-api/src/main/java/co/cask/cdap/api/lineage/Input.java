@@ -24,19 +24,21 @@ import javax.annotation.Nullable;
  * Represents input to the field level operation.
  */
 public class Input {
-  private final Schema.Field field;
+  private final String name;
   private final Source source;
 
-  private Input(Schema.Field field, @Nullable Source source) {
-    this.field = field;
+  private Input(String name, @Nullable Source source) {
+    this.name = name;
     this.source = source;
   }
 
   /**
+   * Return the Input name. The name could be complete path to the {@link Schema.Field}
+   * if it is created from it.
    * @return the field
    */
-  public Schema.Field getField() {
-    return field;
+  public String getField() {
+    return name;
   }
 
   /**
@@ -60,14 +62,35 @@ public class Input {
   /**
    * Create an Input from the specified field belonging to the given source.
    * @param field the field representing the input
-   * @param source the {@link Source} from where the field is coming from. As a part of
-   *               field level operations, field will get transformed into different field.
-   *               Provide source ONLY when the field is directly read from the Source, otherwise
-   *               it should be set to {@code null}
-   * @return
+   * @param source the {@link Source} is optional. If it is provided,
+   *               this Input from the field will be associated with
+   *               the provided source in the lineage.
+   * @return the Input
    */
   public static Input ofField(Schema.Field field, @Nullable Source source) {
-    return new Input(field, source);
+    // ToDo: Currently we use the name of the field. However we want to generate
+    // the complete field path from the field once we add capability to refer to the parent.
+    return new Input(field.getName(), source);
+  }
+
+  /**
+   * Create an Input with the specified name.
+   * @param name representing the input
+   * @return the Input
+   */
+  public static Input of(String name) {
+    return of(name, null);
+  }
+
+  /**
+   * Create an Input with specified name and source.
+   * @param name the input name
+   * @param source the {@link Source} is optional. If it is provided, this Input will
+   *               be associated with the provided source in the lineage.
+   * @return the Input
+   */
+  public static Input of(String name, @Nullable Source source) {
+    return new Input(name, source);
   }
 
   @Override
@@ -81,11 +104,11 @@ public class Input {
 
     Input that = (Input) o;
 
-    return Objects.equals(field, that.field) && Objects.equals(source, that.source);
+    return Objects.equals(name, that.name) && Objects.equals(source, that.source);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(field, source);
+    return Objects.hash(name, source);
   }
 }

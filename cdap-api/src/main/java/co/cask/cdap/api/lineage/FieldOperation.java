@@ -69,8 +69,8 @@ public class FieldOperation {
   public static class Builder {
     private final String name;
     private String description;
-    private Set<Input> inputs;
-    private Set<Output> outputs;
+    private final Set<Input> inputs;
+    private final Set<Output> outputs;
 
     public Builder(String name) {
       this.name = name;
@@ -89,7 +89,7 @@ public class FieldOperation {
       return this;
     }
 
-    public Builder addInputs(Collection<Input> inputs) {
+    public Builder addInputs(Collection<? extends Input> inputs) {
       this.inputs.addAll(inputs);
       return this;
     }
@@ -99,7 +99,7 @@ public class FieldOperation {
       return this;
     }
 
-    public Builder addOutputs(Collection<Output> outputs) {
+    public Builder addOutputs(Collection<? extends Output> outputs) {
       this.outputs.addAll(outputs);
       return this;
     }
