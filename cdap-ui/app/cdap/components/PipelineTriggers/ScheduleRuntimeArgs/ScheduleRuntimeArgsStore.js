@@ -28,6 +28,7 @@ const SCHEDULERUNTIMEARGSACTIONS = {
   SETARGSVALUE: 'SETARGSVALUE',
   BULKSETARGSVALUE: 'BULKSETARGSVALUE',
   SETDISABLED: 'SETDISABLED',
+  SETSTAGEWIDGETJSON: 'SETSTAGEWIDGETJSON',
   RESET: 'RESET'
 };
 
@@ -56,6 +57,7 @@ const DEFAULTARGS = {
     id: null
   },
   argsMapping: DEFAULTARGSMAPPING,
+  stageWidgetJsonMap: {},
   disabled: false
 };
 
@@ -157,6 +159,14 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
       });
     case SCHEDULERUNTIMEARGSACTIONS.RESET:
       return DEFAULTARGS;
+    case SCHEDULERUNTIMEARGSACTIONS.SETSTAGEWIDGETJSON:
+      return {
+        ...state,
+        stageWidgetJsonMap: {
+          ...state.stageWidgetJsonMap,
+          [action.payload.stageid]: action.payload.stageWidgetJson || {}
+        }
+      };
     default:
       return state;
   }
