@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import moment from 'moment';
+import {humanReadableDate} from 'services/helpers';
 
 const mapStateToProps = (state) => {
   return {
@@ -34,7 +34,7 @@ const RunStartTime = ({currentRun}) => {
       <span>
         {
           currentRun && currentRun.start ?
-            `${moment(currentRun.start * 1000).format('hh:mm:ss a')}`
+            `${humanReadableDate(currentRun.start)}`
           :
             '--'
         }

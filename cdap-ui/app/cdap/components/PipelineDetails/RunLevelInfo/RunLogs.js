@@ -39,14 +39,14 @@ const RunLogs = ({currentRun, appId, artifactName}) => {
   let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
 
   return (
-    <div className="run-info-container run-logs-container">
-      <a href={path} target="_blank">
-        <div>
+    <a href={path} target="_blank">
+      <div className="run-info-container run-logs-container">
+        <div className="run-logs-btn">
           <IconSVG name="icon-file-text-o" />
+          <div>Run Logs</div>
         </div>
-        <span>Run Logs</span>
-      </a>
-    </div>
+      </div>
+    </a>
   );
 };
 

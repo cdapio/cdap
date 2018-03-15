@@ -28,7 +28,7 @@ const mapStateToProps = (state, ownProps) => {
 
 const RunNumErrorsComp = ({logsMetrics, currentRun}) => {
   return (
-    <div className="run-info-container">
+    <div className="run-info-container run-errors-container">
       <div>
         <strong>Errors</strong>
       </div>

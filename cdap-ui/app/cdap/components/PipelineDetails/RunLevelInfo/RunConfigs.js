@@ -68,21 +68,19 @@ export default class RunConfigs extends Component {
 
   renderRunConfigsButton() {
     return (
-      <div
-        onClick={this.getRuntimeArgsAndToggleModeless}
-        className="run-configs-btn"
-      >
-        <div className="btn-container">
-          <IconSVG name="icon-sliders" />
-          <div className="button-label">Run Configs</div>
-        </div>
+      <div className="run-configs-btn">
+        <IconSVG name="icon-sliders" />
+        <div className="button-label">Run Configs</div>
       </div>
     );
   }
 
   render() {
     return (
-      <div className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}>
+      <div
+        className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}
+        onClick={this.getRuntimeArgsAndToggleModeless}
+      >
         {this.renderRunConfigsButton()}
         {
           this.state.showModeless ?

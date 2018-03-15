@@ -15,6 +15,7 @@
 */
 
 @import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
 
 $border-color: $grey-05;
 
@@ -23,21 +24,30 @@ $border-color: $grey-05;
   width: 100%;
   border-bottom: 1px solid $border-color;
   z-index: 998;
-  padding: 10px 10px 0 10px;
+  padding: 0 10px;
   color: $grey-02;
+  position: absolute;
 
   .run-info-container {
     display: inline-block;
     padding-left: 15px;
     padding-right: 15px;
+    padding-top: 10px;
     text-align: center;
-    border-right: 1px solid $border-color;
+    background: $grey-08;
+    position: relative;
+    height: 100%;
+
+    &:after {
+      @include border-element(-17px);
+    }
   }
 
   div.run-number-container {
     padding-left: 0;
     padding-right: 20px;
     text-align: left;
+    bottom: 2px;
 
     h4.run-number {
       font-weight: bold;
@@ -78,14 +88,28 @@ $border-color: $grey-05;
     }
   }
 
+  .run-configs-container,
   .run-logs-container {
-    a {
+    border-left: 1px solid $grey-08;
+    border-right: 1px solid $grey-08;
+
+    &.active,
+    &:hover {
+      background-color: $grey-07;
+      border-left: 1px solid $grey-05;
+      border-right: 1px solid $grey-05;
+
+      &:after {
+        display: none;
+      }
+    }
+  }
+
+  .run-logs-container {
+    .run-logs-btn {
+      border: 1px solid transparent;
       color: $grey-02;
       text-decoration: none;
-
-      .icon-file-text-o {
-        font-size: 18px;
-      }
     }
   }
 
@@ -93,9 +117,12 @@ $border-color: $grey-05;
     cursor: pointer;
     position: relative;
 
-    &.active,
-    &:hover {
-      background-color: $grey-07;
+    &:after {
+      right: -18px;
+    }
+
+    .run-configs-btn {
+      border: 1px solid transparent;
     }
 
     .icon-sliders {
@@ -107,7 +134,12 @@ $border-color: $grey-05;
       right: 0;
       left: -80px;
       height: 400px;
-      top: 44px;
+      top: 55px;
+      cursor: default;
+
+      .pipeline-configurations-header {
+        background-color: $grey-07;
+      }
 
       .configuration-content {
         text-align: left;
@@ -120,6 +152,12 @@ $border-color: $grey-05;
           }
         }
       }
+    }
+  }
+
+  .run-errors-container {
+    &:after {
+      display: none;
     }
   }
 }
