@@ -286,7 +286,7 @@ const composeEnhancers = (storeTitle) =>
 
 const reverseArrayWithoutMutating = (array) => {
   if (isNil(array)) {
-    return null;
+    return [];
   }
 
   let newArray = [];
