@@ -52,6 +52,10 @@ $input-label-color: $grey-03;
         margin-bottom: 12px;
       }
 
+      .add-custom-config-headers {
+        display: flex;
+      }
+
       .custom-config-values {
         /* 144px = 32px (height of input box) * 3
                  + 16px (margin between each boxes) * 3 */
@@ -62,6 +66,7 @@ $input-label-color: $grey-03;
 
       .num-rows {
         color: $input-label-color;
+        margin-left: auto;
       }
     }
   }

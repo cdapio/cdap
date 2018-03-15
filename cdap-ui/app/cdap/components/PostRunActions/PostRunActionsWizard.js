@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import AvailablePluginsStore from 'services/AvailablePluginsStore';
 import {MyArtifactApi} from 'api/artifact';
@@ -203,17 +203,13 @@ export default class PostRunActionsWizard extends Component {
                             <div className="form-group">
                               <label className="control-label">
                                 <span>{field.label}</span>
-                                <IconSVG
-                                  name="icon-info-circle"
-                                  id={`post-run-action-${field.name}`}
-                                />
-                                <UncontrolledTooltip
-                                  target={`post-run-action-${field.name}`}
-                                  delay={{show: 250, hide: 0}}
-                                  placement="right"
+                                <Popover
+                                  target={() => <IconSVG name="icon-info-circle" />}
+                                  showOn='Hover'
+                                  placement='right'
                                 >
                                   {field.description}
-                                </UncontrolledTooltip>
+                                </Popover>
                                 { this.props.action._backendProperties[field.name].required ? <IconSVG name = "icon-asterisk" /> : null}
                               </label>
                               {this.getComponentFromWidgetType(field['widget-type'], field.name, field['widget-attributes'])}
@@ -241,7 +237,6 @@ export default class PostRunActionsWizard extends Component {
         toggle={this.toggleAndPreventPropagation}
         backdrop="static"
         modalClassName="post-run-actions-modal hydrator-modal"
-        zIndex={1061}
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
         <div className="modal-header">

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import KeyValuePairs from 'components/KeyValuePairs';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {getEngineDisplayLabel, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
@@ -80,17 +80,13 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
           <IconSVG name={showCustomConfig ? "icon-caret-down" : "icon-caret-right"} />
           Show Custom Config
         </a>
-        <IconSVG
-          name="icon-info-circle"
-          id="custom-config-info-icon"
-        />
-        <UncontrolledTooltip
-          target="custom-config-info-icon"
-          delay={{show: 250, hide: 0}}
-          placement="right"
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
         >
           {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
-        </UncontrolledTooltip>
+        </Popover>
         {
           showCustomConfig ?
             (
@@ -111,24 +107,22 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
 
   const DetailViewCustomConfigLabel = () => {
     return (
-      <span>
+      <div>
         <hr />
-        <label>Custom Config</label>
-        <IconSVG
-          name="icon-info-circle"
-          id="custom-config-info-icon"
-        />
-        <UncontrolledTooltip
-          target="custom-config-info-icon"
-          delay={{show: 250, hide: 0}}
-          placement="right"
-        >
-          {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
-        </UncontrolledTooltip>
-        <span className="float-xs-right num-rows">
-          {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
-        </span>
-      </span>
+        <div className="add-custom-config-headers">
+          <label>Custom Config</label>
+          <Popover
+            target={() => <IconSVG name="icon-info-circle" />}
+            showOn='Hover'
+            placement='right'
+          >
+            {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
+          </Popover>
+          <span className="float-xs-right num-rows">
+            {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
+          </span>
+        </div>
+      </div>
     );
   };
 

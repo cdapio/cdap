@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 
@@ -49,17 +49,13 @@ const StageLogging = ({stageLogging, onToggle}) => {
           isOn={stageLogging}
           onToggle={onToggle.bind(null, !stageLogging)}
         />
-        <IconSVG
-          name="icon-info-circle"
-          id="stagelogging-info-icon"
-        />
-        <UncontrolledTooltip
-          target="stagelogging-info-icon"
-          delay={{show: 250, hide: 0}}
-          placement="right"
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
         >
           Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources.
-        </UncontrolledTooltip>
+        </Popover>
       </div>
     </div>
   );

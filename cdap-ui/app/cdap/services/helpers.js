@@ -94,6 +94,7 @@ function humanReadableDate(date, isMilliseconds) {
   return (moment(date * 1000)).format(format);
 }
 
+const ONE_SECOND_MS = 1000;
 const ONE_MIN_SECONDS = 60;
 const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
 const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
@@ -283,6 +284,14 @@ const composeEnhancers = (storeTitle) =>
       name: storeTitle
     }) : compose;
 
+const reverseWithoutMutating = (array) => {
+  let newArray = [];
+  for (let i = array.length - 1; i >= 0; i--) {
+    newArray.push(array[i]);
+  }
+  return newArray;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -303,6 +312,7 @@ export {
   isPluginSink,
   isBatchPipeline,
   composeEnhancers,
+  ONE_SECOND_MS,
   ONE_MIN_SECONDS,
   ONE_HOUR_SECONDS,
   ONE_DAY_SECONDS,
@@ -310,5 +320,6 @@ export {
   ONE_MONTH_SECONDS,
   ONE_YEAR_SECONDS,
   isNumeric,
-  wholeArrayIsNumeric
+  wholeArrayIsNumeric,
+  reverseWithoutMutating
 };

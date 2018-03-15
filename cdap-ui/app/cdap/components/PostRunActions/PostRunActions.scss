@@ -82,3 +82,25 @@ $fourth-column-width: 53px;
     }
   }
 }
+
+/* Only applying the styles to the post run actions modal in detail view for
+now, since we haven't migrated the one in Studio to use the new component yet */
+.state-hydrator-detail {
+  .post-run-actions-modal {
+    .modal-dialog {
+      .modal-content {
+        .modal-body {
+          .confirm-step-content {
+            .control-label {
+              display: flex;
+
+              .icon-asterisk {
+                top: 5px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

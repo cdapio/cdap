@@ -16,7 +16,6 @@
 
 import {MyPipelineApi} from 'api/pipeline';
 import PipelineDetailStore, {ACTIONS} from 'components/PipelineDetails/store';
-import {objectQuery} from 'services/helpers';
 
 const init = (pipeline) => {
   PipelineDetailStore.dispatch({
@@ -48,29 +47,6 @@ const fetchScheduleStatus = (params) => {
         payload: {
           scheduleStatus: schedule.status
         }
-      });
-    }, (err) => {
-      console.log(err);
-    });
-};
-
-const fetchMacros = (params) => {
-  MyPipelineApi
-    .fetchMacros(params)
-    .subscribe(macrosSpec => {
-      let macrosMap = {};
-      let macros = [];
-      macrosSpec.map(ms => {
-        if (objectQuery(ms, 'spec', 'properties', 'macros', 'lookupProperties')) {
-          macros = macros.concat(ms.spec.properties.macros.lookupProperties);
-        }
-      });
-      macros.forEach(macro => {
-        macrosMap[macro] = '';
-      });
-      PipelineDetailStore.dispatch({
-        type: ACTIONS.SET_MACROS_MAP,
-        payload: { macrosMap }
       });
     }, (err) => {
       console.log(err);
@@ -189,9 +165,9 @@ const setMaxConcurrentRuns = (maxConcurrentRuns) => {
   });
 };
 
-const setCurrentRun = (runId) => {
+const setCurrentRunId = (runId) => {
   PipelineDetailStore.dispatch({
-    type: ACTIONS.SET_CURRENT_RUN,
+    type: ACTIONS.SET_CURRENT_RUN_ID,
     payload: { runId }
   });
 };
@@ -199,6 +175,19 @@ const setCurrentRun = (runId) => {
 const getRuns = (params) => {
   MyPipelineApi
     .getRuns(params)
+    .subscribe(runs => {
+      PipelineDetailStore.dispatch({
+        type: ACTIONS.SET_RUNS,
+        payload: { runs }
+      });
+    }, (err) => {
+      console.log(err);
+    });
+};
+
+const pollRuns = (params) => {
+  return MyPipelineApi
+    .pollRuns(params)
     .subscribe(runs => {
       PipelineDetailStore.dispatch({
         type: ACTIONS.SET_RUNS,
@@ -266,6 +255,48 @@ const setRuntimeArgsForDisplay = (args) => {
   });
 };
 
+const setRunButtonLoading = (loading) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_RUN_BUTTON_LOADING,
+    payload: { loading }
+  });
+};
+
+const setRunError = (error) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_RUN_ERROR,
+    payload: { error }
+  });
+};
+
+const setScheduleButtonLoading = (loading) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_SCHEDULE_BUTTON_LOADING,
+    payload: { loading }
+  });
+};
+
+const setScheduleError = (error) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_SCHEDULE_ERROR,
+    payload: { error }
+  });
+};
+
+const setStopButtonLoading = (loading) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_STOP_BUTTON_LOADING,
+    payload: { loading }
+  });
+};
+
+const setStopError = (error) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_STOP_ERROR,
+    payload: { error }
+  });
+};
+
 const reset = () => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.RESET
@@ -277,7 +308,6 @@ export {
   setOptionalProperty,
   setSchedule,
   fetchScheduleStatus,
-  fetchMacros,
   setEngine,
   setBatchInterval,
   setMemoryMB,
@@ -294,13 +324,20 @@ export {
   setCheckpointing,
   setNumRecordsPreview,
   setMaxConcurrentRuns,
-  setCurrentRun,
+  setCurrentRunId,
   getRuns,
+  pollRuns,
   getNextRunTime,
   getStatistics,
   setMacros,
   setUserRuntimeArguments,
   setMacrosAndUserRuntimeArguments,
   setRuntimeArgsForDisplay,
+  setRunButtonLoading,
+  setRunError,
+  setScheduleButtonLoading,
+  setScheduleError,
+  setStopButtonLoading,
+  setStopError,
   reset
 };

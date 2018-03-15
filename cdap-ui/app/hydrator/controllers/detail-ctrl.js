@@ -29,10 +29,10 @@ angular.module(PKG.name + '.feature.hydrator')
     actionCreator.init(rPipelineDetail);
     let runid = $stateParams.runid;
     if (runid) {
-      actionCreator.setCurrentRun(runid);
+      actionCreator.setCurrentRunId(runid);
     }
 
-    actionCreator.getRuns({
+    let runsPoll = actionCreator.pollRuns({
       namespace: $stateParams.namespace,
       appId: rPipelineDetail.name,
       programType,
@@ -86,6 +86,9 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
+      if (runsPoll) {
+        runsPoll.unsubscribe();
+      }
       actionCreator.reset();
       pipelineDetailStoreSubscription();
       HydratorPlusPlusDetailMetricsActions.reset();

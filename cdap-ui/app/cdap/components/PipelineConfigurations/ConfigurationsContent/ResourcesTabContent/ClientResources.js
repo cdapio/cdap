@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
@@ -51,20 +51,18 @@ const mapDispatchToProps = (dispatch) => {
 const ClientResources = ({virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) => {
   return (
     <div className="col-xs-4 client">
-      <span className="resource-title">
-        Client
-      </span>
-      <IconSVG
-        name="icon-info-circle"
-        id="client-resources-info-icon"
-      />
-      <UncontrolledTooltip
-        target="client-resources-info-icon"
-        delay={{show: 250, hide: 0}}
-        placement="right"
-      >
-        Resources for the client process which launches the Apache Spark Streaming pipeline
-      </UncontrolledTooltip>
+      <div className="resource-title-icon">
+        <span className="resource-title">
+          Client
+        </span>
+        <Popover
+          target={() => <IconSVG name="icon-info-circle" />}
+          showOn='Hover'
+          placement='right'
+        >
+          Resources for the client process which launches the Apache Spark Streaming pipeline
+        </Popover>
+      </div>
       <PipelineResources
         virtualCores={virtualCores}
         onVirtualCoresChange={onVirtualCoresChange}

@@ -32,6 +32,7 @@ export const MyPipelineApi = {
 
   getStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
   getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/runs`),
+  pollRuns: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/runs`),
   getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/nextruntime)`),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
 };
