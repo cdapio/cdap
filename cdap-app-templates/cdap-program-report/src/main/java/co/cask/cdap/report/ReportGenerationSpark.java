@@ -18,7 +18,9 @@ package co.cask.cdap.report;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
@@ -29,6 +31,7 @@ import co.cask.cdap.api.spark.service.SparkHttpContentConsumer;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -39,6 +42,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.twill.filesystem.Location;
@@ -64,6 +71,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.GET;
@@ -115,6 +123,47 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       reportGen = new ReportGen(getContext().getSparkContext());
       executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
       runningReportGeneration = new ConcurrentHashMap<>();
+      try {
+        context.getAdmin().createDataset(ProgramOperationReportApp.RUN_META_FILESET, FileSet.class.getName(),
+                                         FileSetProperties.builder().build());
+      } catch (InstanceConflictException e) {
+        // It's ok if the dataset already exists
+      }
+      populateMetaFiles();
+    }
+
+    private void populateMetaFiles() throws Exception {
+      Location metaBaseLocation = Transactionals.execute(getContext(), context -> {
+          return context.<FileSet>getDataset(ProgramOperationReportApp.RUN_META_FILESET).getBaseLocation();
+        });
+      DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
+      DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
+      for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
+        Location nsLocation = metaBaseLocation.append(namespace);
+        nsLocation.mkdirs();
+        LOG.info("nsLocation {} exists='{}', isDir='{}'", nsLocation, nsLocation.exists(), nsLocation.isDirectory());
+        for (int i = 0; i < 5; i++) {
+          long time = 1520808000L + 1000 * i;
+          Location reportLocation = nsLocation.append(Long.toString(time));
+          reportLocation.createNew();
+          LOG.info("reportLocation {} exists='{}', isDir='{}'", reportLocation, reportLocation.exists(),
+                   reportLocation.isDirectory());
+          dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
+          String program = namespace + ".SmartWorkflow";
+          String run = "randomRunId";
+          long delay = TimeUnit.MINUTES.toSeconds(5);
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
+                                                                    ProgramRunMetaFileUtil.startingInfo("user")));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
+                                                                    time + delay, null));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
+                                                                    time + delay, null));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
+                                                                    time + 2 * delay, null));
+          dataFileWriter.close();
+        }
+        LOG.info("nsLocation.list() = {}", nsLocation.list());
+      }
     }
 
     @GET

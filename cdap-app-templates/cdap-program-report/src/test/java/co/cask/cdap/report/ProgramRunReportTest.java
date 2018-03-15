@@ -63,7 +63,7 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
 
   @Test
   public void testGenerateReport() throws Exception {
-    generateProgramRunMetaFiles();
+//    generateProgramRunMetaFiles();
     LOG.info("Generated run meta files");
     ApplicationManager app = deployApplication(ProgramOperationReportApp.class);
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
