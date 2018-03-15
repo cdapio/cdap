@@ -17,6 +17,7 @@
 import {createStore} from 'redux';
 import {composeEnhancers} from 'services/helpers';
 import {defaultAction} from 'services/helpers';
+import {MMDS_SORT_METHODS, MMDS_SORT_COLUMN} from 'components/Experiments/store';
 
 const ACTIONS = {
   SET_EXPERIMENT_DETAILS: 'SET_EXPERIMENT_DETAILS',
@@ -27,8 +28,10 @@ const ACTIONS = {
   SET_SPLITS: 'SET_SPLITS',
   SET_MODEL_STATUS: 'SET_MODEL_STATUS',
   SET_MODEL_PAGINATION: 'SET_MODEL_PAGINATION',
+  SET_MODELS_QUERY_PARAMS: 'SET_MODELS_QUERY_PARAMS',
   SET_NEWLY_TRAINING_MODEL: 'SET_NEWLY_TRAINING_MODEL',
   RESET_NEWLY_TRAINING_MODEL: 'RESET_NEWLY_TRAINING_MODEL',
+  SET_MODELS_SORT: 'SET_MODELS_SORT',
   RESET: 'RESET'
 };
 
@@ -47,6 +50,8 @@ export const DEFAULT_EXPERIMENT_DETAILS = {
   modelsLimit: 10,
   modelsTotalCount: 0,
   modelsTotalPages: 0,
+  modelsSortMethod: MMDS_SORT_METHODS.ASC,
+  modelsSortColumn: MMDS_SORT_COLUMN,
   loading: false
 };
 
@@ -112,6 +117,14 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
         modelsOffset: action.payload.modelsOffset,
         modelsLimit: action.payload.modelsLimit || state.modelsLimit
       };
+    case ACTIONS.SET_MODELS_QUERY_PARAMS:
+      return {
+        ...state,
+        modelsOffset: action.payload.modelsOffset,
+        modelsLimit: action.payload.modelsLimit || state.modelsLimit,
+        modelsSortMethod: action.payload.modelsSortMethod,
+        modelsSortColumn: action.payload.modelsSortColumn
+      };
     case ACTIONS.SET_ACTIVE_MODEL:
       return {
         ...state,
@@ -153,6 +166,12 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
           return model;
         })
       };
+      case ACTIONS.SET_MODELS_SORT:
+        return {
+          ...state,
+          modelsSortMethod: action.payload.modelsSortMethod,
+          modelsSortColumn: action.payload.modelsSortColumn
+        };
     default:
       return state;
   }

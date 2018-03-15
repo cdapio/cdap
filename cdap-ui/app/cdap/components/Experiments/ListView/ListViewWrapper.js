@@ -19,18 +19,17 @@ import React from 'react';
 import {connect} from 'react-redux';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import TopPanel from 'components/Experiments/TopPanel';
-import SortableStickyTable from 'components/SortableStickyTable';
 import PieChart from 'components/PieChart';
 import PaginationWithTitle from 'components/PaginationWithTitle';
-import d3 from 'd3';
+import * as d3Lib from 'd3';
 import ExperimentsListBarChart from 'components/Experiments/ListView/ExperimentsListBarChart';
 import PlusButton from 'components/PlusButton';
 import InvalidPageView from 'components/Experiments/ListView/InvalidPageView';
 import EmptyListView from 'components/Experiments/ListView/EmptyListView';
 import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link } from 'react-router-dom';
-import {handlePageChange} from 'components/Experiments/store/ActionCreator';
-
+import {handlePageChange, handleExperimentsSort} from 'components/Experiments/store/ActionCreator';
+import IconSVG from 'components/IconSVG';
 
 require('./ListView.scss');
 
@@ -57,7 +56,7 @@ const tableHeaders = [
   }
 ];
 
-const colorScale = d3.scale.category20();
+const colorScale = d3Lib.scale.category20();
 const PLUSBUTTONCONTEXTMENUITEMS = [
   {
     label: 'Create a new Experiment',
@@ -67,11 +66,14 @@ const PLUSBUTTONCONTEXTMENUITEMS = [
 
 const getAlgoDistribution = (models) => {
   if (!models.length) {
-    return null;
+    return [];
   }
   let modelsMap = {};
   models.forEach(model => {
     let algo = model.algorithm;
+    if (!algo) {
+      return;
+    }
     if (!modelsMap[algo]) {
       modelsMap = {
         ...modelsMap,
@@ -94,8 +96,8 @@ const getAlgoDistribution = (models) => {
   return Object.keys(modelsMap).map(m => modelsMap[m]);
 };
 
-const renderTableBody = (entities) => {
-  let list = entities.map(entity => {
+const renderGrid = (experiments, sortMethod, sortColumn) => {
+  let list = experiments.map(entity => {
     let models = entity.models || [];
     let modelsCount = entity.modelsCount;
     return {
@@ -107,32 +109,60 @@ const renderTableBody = (entities) => {
       algorithmTypes: getAlgoDistribution(models)
     };
   });
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  const renderSortIcon = (sortMethod) =>
+    sortMethod === 'asc' ? <IconSVG name="icon-caret-down" /> : <IconSVG name="icon-caret-up" />;
+
   return (
-    <table className="table">
-      <tbody>
+    <div className="grid grid-container">
+      <div className="grid-header">
+        <div className="grid-item">
+          {
+            tableHeaders.map((header, i) => {
+              if (sortColumn === header.property) {
+                return (
+                  <strong
+                    className="sortable-header"
+                    key={i}
+                    onClick={handleExperimentsSort.bind(null, header.property)}
+                  >
+                    <span>{header.label}</span>
+                    {renderSortIcon(sortMethod)}
+                  </strong>
+                );
+              }
+              return (
+                <strong >
+                  {header.label}
+                </strong>
+              );
+            })
+          }
+        </div>
+      </div>
+      <div className="grid-body">
         {
-          list.map(entity => {
+          list.map(experiment => {
             return (
-              <tr>
-                <Link to={`/ns/${namespace}/experiments/${entity.name}`}>
-                  <td>
-                    <h5>
-                      <div>{entity.name}</div>
-                      <small>{entity.description}</small>
-                    </h5>
-                  </td>
-                  <td>{entity.numOfModels}</td>
-                  <td>{entity.numOfDeployedModels}</td>
-                  <td>{!entity.algorithmTypes ? null : <PieChart data={entity.algorithmTypes} />}</td>
-                  <td>{entity.testData}</td>
-                </Link>
-              </tr>
+              <Link
+                to={`/ns/${getCurrentNamespace()}/experiments/${experiment.name}`}
+                className="grid-item"
+              >
+                <div>
+                  <h5>
+                    <div>{experiment.name}</div>
+                    <small>{experiment.description}</small>
+                  </h5>
+                </div>
+                <div>{experiment.numOfModels}</div>
+                <div>{experiment.numOfDeployedModels}</div>
+                <div>{!experiment.algorithmTypes.length ? '--' : <PieChart data={experiment.algorithmTypes} />}</div>
+                <div>{experiment.testData}</div>
+              </Link>
             );
           })
         }
-      </tbody>
-    </table>
+      </div>
+    </div>
   );
 };
 
@@ -158,7 +188,15 @@ const getDataForGroupedChart = (experiments) => {
   return data;
 };
 
-function ExperimentsListView({ loading, list, totalPages, currentPage, totalCount }) {
+function ExperimentsListView({
+  loading,
+  list,
+  totalPages,
+  currentPage,
+  totalCount,
+  sortMethod,
+  sortColumn
+}) {
   if (loading) {
     return <LoadingSVGCentered />;
   }
@@ -200,12 +238,8 @@ function ExperimentsListView({ loading, list, totalPages, currentPage, totalCoun
           title={totalCount > 1 ? "Experiments" : "Experiment"}
           numberOfEntities={totalCount}
         />
-        <SortableStickyTable
-          entities={list}
-          tableHeaders={tableHeaders}
-          renderTableBody={renderTableBody}
-        />
       </div>
+      { renderGrid(list, sortMethod, sortColumn) }
     </div>
   );
 }
@@ -215,7 +249,9 @@ ExperimentsListView.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object),
   totalPages: PropTypes.number,
   currentPage: PropTypes.number,
-  totalCount: PropTypes.number
+  totalCount: PropTypes.number,
+  sortMethod: PropTypes.string,
+  sortColumn: PropTypes.string
 };
 
 const mapStateToProps = (state) => {
@@ -224,7 +260,9 @@ const mapStateToProps = (state) => {
     list: state.experiments.list,
     totalPages: state.experiments.totalPages,
     currentPage: state.experiments.offset === 0 ? 1 : Math.ceil((state.experiments.offset + 1) / state.experiments.limit),
-    totalCount: state.experiments.totalCount
+    totalCount: state.experiments.totalCount,
+    sortMethod: state.experiments.sortMethod,
+    sortColumn: state.experiments.sortColumn
   };
 };
 
