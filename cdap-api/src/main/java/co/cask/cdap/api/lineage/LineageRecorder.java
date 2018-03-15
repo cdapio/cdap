@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.lineage;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Record the lineage.
@@ -25,8 +25,7 @@ public interface LineageRecorder {
   /**
    * Record the field level operations against the given {@link Destination}.
    *
-   * @param destination the destination for which to record field operations
-   * @param operations The {@link List} of field operations.
+   * @param operations The {@link Collection} of operations.
    */
-  void record(Destination destination, List<? extends Operation> operations);
+  void record(Collection<? extends Operation> operations);
 }

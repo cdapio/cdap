@@ -16,6 +16,7 @@
 package co.cask.cdap.api.lineage;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,8 +32,8 @@ public class Operation {
   private Operation(String name, String description, Set<Input> inputs, Set<Output> outputs) {
     this.name = name;
     this.description = description;
-    this.inputs = inputs;
-    this.outputs = outputs;
+    this.inputs = Collections.unmodifiableSet(new HashSet<>(inputs));
+    this.outputs = Collections.unmodifiableSet(new HashSet<>(outputs));
   }
 
   /**
