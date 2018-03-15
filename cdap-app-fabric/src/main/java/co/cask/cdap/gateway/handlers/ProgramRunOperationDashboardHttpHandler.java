@@ -31,9 +31,6 @@ import co.cask.cdap.proto.ops.ProgramRunReportRecord;
 import co.cask.cdap.proto.ops.ReportGenerationInfo;
 import co.cask.cdap.proto.ops.ReportGenerationRequest;
 import co.cask.cdap.proto.ops.ReportGenerationStatus;
-import co.cask.cdap.proto.ops.ReportList;
-import co.cask.cdap.proto.ops.ReportStatus;
-import co.cask.cdap.proto.ops.ReportStatusInfo;
 import co.cask.cdap.proto.ops.ReportSummary;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableList;
@@ -78,10 +75,10 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
   private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
   private static final Type DASHBOARD_SUMMARY_REQUEST_TYPE = new TypeToken<DashboardSummaryRequest>() { }.getType();
 
-  public static final List<ReportStatusInfo> MOCK_REPORT_STATUS_INFO = ImmutableList.of(
-    new ReportStatusInfo("report0", 1516805200L, ReportStatus.RUNNING),
-    new ReportStatusInfo("report1", 1516805201L, ReportStatus.COMPLETED),
-    new ReportStatusInfo("report2", 1516805202L, ReportStatus.FAILED));
+//  public static final List<ReportStatusInfo> MOCK_REPORT_STATUS_INFO = ImmutableList.of(
+//    new ReportStatusInfo("report0", 1516805200L, ReportStatus.RUNNING),
+//    new ReportStatusInfo("report1", 1516805201L, ReportStatus.COMPLETED),
+//    new ReportStatusInfo("report2", 1516805202L, ReportStatus.FAILED));
 
   public static final ReportGenerationRequest MOCK_REPORT_GENERATION_REQUEST =
     new ReportGenerationRequest(0, 1, ImmutableList.of("namespace", "duration", "user"),
@@ -101,9 +98,9 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
     throws IOException, BadRequestException {
     int offset = Integer.valueOf(offsetString);
     int limit = Integer.valueOf(limitString);
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(new ReportList(offset, limit, MOCK_REPORT_STATUS_INFO.size(),
-                                                  MOCK_REPORT_STATUS_INFO)));
+//    responder.sendJson(HttpResponseStatus.OK,
+//                       GSON.toJson(new ReportList(offset, limit, MOCK_REPORT_STATUS_INFO.size(),
+//                                                  MOCK_REPORT_STATUS_INFO)));
   }
 
   @POST

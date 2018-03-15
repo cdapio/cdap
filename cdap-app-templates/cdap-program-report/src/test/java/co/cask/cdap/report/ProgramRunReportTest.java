@@ -26,6 +26,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -74,7 +75,7 @@ import java.util.jar.Manifest;
 //  }
 //}
 
-public class ProgramRunReportTest extends TestBase {
+public class ProgramRunReportTest extends TestBaseWithSpark2 {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -96,6 +97,7 @@ public class ProgramRunReportTest extends TestBase {
     File avroJar =
       new File("/Users/Chengfeng/.m2/repository/com/databricks/spark-avro_2.10/3.2.0/spark-avro_2.10-3.2.0.jar");
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, appClass.getPackage().getName());
+    new File(AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
     return new File(AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                      appClass, manifest, avroJar).toURI());
   }

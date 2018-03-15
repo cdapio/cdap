@@ -17,6 +17,8 @@
 package co.cask.cdap.report;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 
 /**
  * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one service.
@@ -29,7 +31,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 public class ProgramOperationReportApp extends AbstractApplication {
   public static final String NAME = "ProgramOperationReportApp";
   public static final String RUN_META_FILESET = "RunMetaFileset";
-  public static final String REPORT_FILESET = "ReportFieset";
+  public static final String REPORT_FILESET = "ReportFileset";
 
   @Override
   public void configure() {
@@ -39,10 +41,9 @@ public class ProgramOperationReportApp extends AbstractApplication {
 //      .setEnableExploreOnCreate(false)
 //      .setDescription("Fileset for storing ")
 //      .build());
-//    createDataset(REPORT_FILESET, FileSet.class, FileSetProperties.builder()
-//      .setEnableExploreOnCreate(false)
-//      .setDescription("fileSet")
-//      .build());
-//    addSpark(new ReportGenerationSparkSpecification());
+    createDataset(REPORT_FILESET, FileSet.class, FileSetProperties.builder()
+      .setEnableExploreOnCreate(false)
+      .setDescription("fileSet")
+      .build());
   }
 }

@@ -14,19 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.report;
-
-import co.cask.cdap.api.app.AbstractApplication;
+package co.cask.cdap.report;
 
 /**
- * An application that handles report generation.
+ * Represents the status information of a report.
  */
-public class ProgramOperationReportApp extends AbstractApplication {
-  public static final String NAME = "ProgramOperationReportApp";
+public class ReportStatusInfo {
+  private final String id;
+  private final long created;
+  private final ReportStatus status;
 
-  @Override
-  public void configure() {
-    setName(NAME);
-    addSpark(new ReportGenerationSpark());
+  public ReportStatusInfo(String id, long created, ReportStatus status) {
+    this.id = id;
+    this.created = created;
+    this.status = status;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public long getCreated() {
+    return created;
+  }
+
+  public ReportStatus getStatus() {
+    return status;
   }
 }

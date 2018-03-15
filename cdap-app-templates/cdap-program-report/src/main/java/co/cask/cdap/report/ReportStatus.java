@@ -14,31 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.ops;
+package co.cask.cdap.report;
 
 /**
- * Represents the status information of a report.
+ * Represents the status of a report generation job.
  */
-public class ReportStatusInfo {
-  private final String id;
-  private final long created;
-  private final ReportStatus status;
-
-  public ReportStatusInfo(String id, long created, ReportStatus status) {
-    this.id = id;
-    this.created = created;
-    this.status = status;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public long getCreated() {
-    return created;
-  }
-
-  public ReportStatus getStatus() {
-    return status;
-  }
+public enum ReportStatus {
+  RUNNING,
+  COMPLETED,
+  FAILED
 }
