@@ -283,7 +283,11 @@ const composeEnhancers = (storeTitle) =>
       name: storeTitle
     }) : compose;
 
-const reverseWithoutMutating = (array) => {
+const reverseArrayWithoutMutating = (array) => {
+  if (isNil(array)) {
+    return [];
+  }
+
   let newArray = [];
   for (let i = array.length - 1; i >= 0; i--) {
     newArray.push(array[i]);
@@ -320,5 +324,5 @@ export {
   ONE_YEAR_SECONDS,
   isNumeric,
   wholeArrayIsNumeric,
-  reverseWithoutMutating
+  reverseArrayWithoutMutating
 };

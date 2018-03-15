@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusDetailMetricsStore, HydratorPlusPlusNodeService) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -38,7 +38,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.avsc = avsc;
     this.LogViewerStore = LogViewerStore;
-    this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
+    this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.setDefaults(rPlugin);
     this.tabs = [
@@ -100,11 +100,11 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.activeTab = 1;
     if (this.isPreviewMode && !rPlugin.isAction) {
       this.activeTab = 2;
-    } else if (this.HydratorPlusPlusDetailMetricsStore.state.metricsTabActive) {
+    } else if (this.PipelineMetricsStore.getState().metricsTabActive) {
       this.activeTab = 4;
     }
 
-    this.portMetricsToShow = this.HydratorPlusPlusDetailMetricsStore.state.portsToShow;
+    this.portMetricsToShow = this.PipelineMetricsStore.getState().portsToShow;
 
     this.$scope.$on('modal.closing', () => {
       this.updateNodeStateIfDirty();

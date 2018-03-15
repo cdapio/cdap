@@ -324,10 +324,10 @@
       </div>
 
       <div class="configuration-step-navigation">
-        <div class="apply-run-container"
+        <div class="apply-action-container"
               ng-if="RealtimePipelineConfigCtrl.isDeployed || RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
-            class="btn btn-primary apply-run"
+            class="btn btn-primary apply-action"
             ng-if="RealtimePipelineConfigCtrl.isDeployed"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled() || RealtimePipelineConfigCtrl.startingPipeline || RealtimePipelineConfigCtrl.updatingPipeline"
             ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">
@@ -335,7 +335,7 @@
             <span ng-if="RealtimePipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
           </button>
           <button
-            class="btn btn-primary apply-run"
+            class="btn btn-primary apply-action"
             ng-if="RealtimePipelineConfigCtrl.showPreviewConfig"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">

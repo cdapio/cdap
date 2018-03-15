@@ -38,6 +38,12 @@ export default class PipelineConfigureButton extends Component {
   };
 
   getRuntimeArgumentsAndToggleModeless = () => {
+    // This is a hack: If the user opens the Configure modeless by clicking on the
+    // 'Run Configs' button in the run-level section, and then click on this ('Configure')
+    // button in the top panel, then the modeless will show up twice and things will break
+    if (!this.state.showModeless && document.getElementsByClassName('pipeline-configurations-content').length > 0) {
+      return;
+    }
     if (Object.keys(this.props.resolvedMacros).length !== 0 && !this.state.showModeless) {
       MyPreferenceApi
         .getAppPreferencesResolved({

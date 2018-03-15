@@ -22,11 +22,11 @@ import PipelineConfigTabContent from 'components/PipelineConfigurations/Configur
 import EngineConfigTabContent from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent';
 import ResourcesTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent';
 import AlertsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/AlertsTabContent';
-import ConfigurationsActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigurationsActionButtons';
+import ConfigModelessActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons';
 import classnames from 'classnames';
 require('./ConfigurationsContent.scss');
 
-export default function ConfigurationsContent({isBatch, activeTab, isDetailView, onClose, action}) {
+export default function ConfigurationsContent({isBatch, activeTab, isDetailView, isHistoricalRun, onClose, action}) {
   let ContentToShow;
   switch (activeTab) {
     case TAB_OPTIONS.RUNTIME_ARGS:
@@ -55,11 +55,13 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView,
       <ContentToShow
         isBatch={isBatch}
         isDetailView={isDetailView}
+        isHistoricalRun={isHistoricalRun}
       />
-      <ConfigurationsActionButtons
+      <ConfigModelessActionButtons
         onClose={onClose}
         activeTab={activeTab}
         action={action}
+        isHistoricalRun={isHistoricalRun}
       />
     </div>
   );
@@ -69,6 +71,7 @@ ConfigurationsContent.propTypes = {
   isBatch: PropTypes.bool,
   activeTab: PropTypes.string,
   isDetailView: PropTypes.bool,
+  isHistoricalRun: PropTypes.bool,
   onClose: PropTypes.func,
   action: PropTypes.string
 };

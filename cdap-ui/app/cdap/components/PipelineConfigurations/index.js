@@ -32,7 +32,8 @@ export default class PipelineConfigurations extends Component {
     isPreview: PropTypes.bool,
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
-    action: PropTypes.string
+    action: PropTypes.string,
+    isHistoricalRun: PropTypes.bool
   };
 
   static defaultProps = {
@@ -80,16 +81,19 @@ export default class PipelineConfigurations extends Component {
   }
 
   renderHeader() {
+    let headerLabel;
+    if (this.props.isHistoricalRun) {
+      headerLabel = 'Run Configurations';
+    } else {
+      headerLabel = 'Configure';
+      if (this.props.pipelineName.length) {
+        headerLabel += ` "${this.props.pipelineName}"`;
+      }
+    }
     return (
       <div className="pipeline-configurations-header modeless-header">
         <div className="modeless-title">
-          Configure
-          {
-            this.props.pipelineName.length ?
-              ` "${this.props.pipelineName}"`
-            :
-              null
-          }
+          {headerLabel}
         </div>
         <div className="btn-group">
           <a
@@ -116,6 +120,7 @@ export default class PipelineConfigurations extends Component {
               isDetailView={this.props.isDetailView}
               isPreview={this.props.isPreview}
               isBatch={this.props.isBatch}
+              isHistoricalRun={this.props.isHistoricalRun}
               activeTab={this.state.activeTab}
               onTabChange={this.setActiveTab}
               showAdvancedTabs={this.state.showAdvancedTabs}
@@ -125,6 +130,7 @@ export default class PipelineConfigurations extends Component {
               activeTab={this.state.activeTab}
               isBatch={this.props.isBatch}
               isDetailView={this.props.isDetailView}
+              isHistoricalRun={this.props.isHistoricalRun}
               onClose={this.props.onClose}
               action={this.props.action}
             />

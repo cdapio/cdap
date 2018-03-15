@@ -17,6 +17,8 @@
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/PipelineDetails/store';
 import {setRunButtonLoading, setRunError, setScheduleButtonLoading, setScheduleError, fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
+import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
+import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {GLOBALS} from 'services/global-constants';
 import {MyPipelineApi} from 'api/pipeline';
@@ -34,9 +36,21 @@ const applyRuntimeArgs = () => {
 
 const revertRuntimeArgsToSavedValues = () => {
   let savedRuntimeArgs = PipelineConfigurationsStore.getState().savedRuntimeArgs;
+  KeyValueStore.dispatch({
+    type: KeyValueStoreActions.onUpdate,
+    payload: { pairs: savedRuntimeArgs.pairs }
+  });
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
     payload: { runtimeArgs: cloneDeep(savedRuntimeArgs) }
+  });
+};
+
+const updateKeyValueStore = () => {
+  let runtimeArgsPairs = PipelineConfigurationsStore.getState().runtimeArgs.pairs;
+  KeyValueStore.dispatch({
+    type: KeyValueStoreActions.onUpdate,
+    payload: { pairs: runtimeArgsPairs }
   });
 };
 
@@ -208,6 +222,7 @@ const scheduleOrSuspendPipeline = (scheduleApi) => {
 export {
   applyRuntimeArgs,
   revertRuntimeArgsToSavedValues,
+  updateKeyValueStore,
   getMacrosResolvedByPrefs,
   updatePipelineEditStatus,
   updatePipeline,

@@ -127,6 +127,7 @@ export default class KeyValuePairs extends Component {
                   keyPlaceholder={this.props.keyPlaceholder}
                   valuePlaceholder={this.props.valuePlaceholder}
                   disabled={this.props.disabled}
+                  onPaste={this.props.onPaste}
                 />
               </Provider>
             </div>
@@ -153,5 +154,6 @@ KeyValuePairs.propTypes = {
   getResettedKeyValue: PropTypes.func,
   keyPlaceholder: PropTypes.string,
   valuePlaceholder: PropTypes.string,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
+  onPaste: PropTypes.func
 };

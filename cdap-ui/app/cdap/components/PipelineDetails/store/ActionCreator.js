@@ -193,6 +193,14 @@ const pollRuns = (params) => {
         type: ACTIONS.SET_RUNS,
         payload: { runs }
       });
+
+      // When there are new runs, always set current run to most recent run
+      if (runs.length) {
+        PipelineDetailStore.dispatch({
+          type: ACTIONS.SET_CURRENT_RUN_ID,
+          payload: { runId: runs[0].runid }
+        });
+      }
     }, (err) => {
       console.log(err);
     });

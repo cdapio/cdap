@@ -15,20 +15,10 @@
 */
 
 @import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
 $pipeline-type-icon-size: 20px;
 $top-panel-height: 55px;
 $btn-border-color: $grey-03;
-
-@mixin border-element($right: -16px, $top: 28px) {
-  content: "";
-  position: absolute;
-  height: 1px;
-  border-bottom: 1px solid $grey-05;
-  width: 33px;
-  right: $right;
-  top: $top;
-  transform: rotate(90deg);
-}
 
 .pipeline-details-top-panel {
   height: $top-panel-height;
@@ -66,6 +56,11 @@ $btn-border-color: $grey-03;
         font-weight: 500;
         margin: 0 3px 0 0;
         color: $grey-01;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        /* to leave some space for the pipeline type icon and pipeline version */
+        max-width: calc(100% - 180px);
       }
 
       .pipeline-description {
@@ -82,6 +77,10 @@ $btn-border-color: $grey-03;
     }
 
     .pipeline-tags {
+      overflow: hidden;
+      max-width: 100%;
+      white-space: nowrap;
+
       .tags-holder {
         .btn.btn-secondary {
           &.user-tags {
@@ -185,7 +184,7 @@ $btn-border-color: $grey-03;
       }
 
       &:after {
-        @include border-element();
+        @include border-element(-17px);
       }
     }
 
@@ -237,7 +236,7 @@ $btn-border-color: $grey-03;
 
     .pipeline-actions-container {
       margin-left: 3px;
-      border-bottom: 1px solid $btn-border-color;
+      border-bottom: 1px solid $grey-08;
 
       .pipeline-actions-popper {
         height: 100%;
