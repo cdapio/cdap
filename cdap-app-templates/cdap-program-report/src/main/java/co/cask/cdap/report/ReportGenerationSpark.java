@@ -126,10 +126,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       try {
         context.getAdmin().createDataset(ProgramOperationReportApp.RUN_META_FILESET, FileSet.class.getName(),
                                          FileSetProperties.builder().build());
+        populateMetaFiles();
       } catch (InstanceConflictException e) {
         // It's ok if the dataset already exists
       }
-      populateMetaFiles();
     }
 
     private void populateMetaFiles() throws Exception {
