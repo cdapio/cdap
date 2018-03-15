@@ -35,9 +35,9 @@ public class Input {
   /**
    * Return the Input name. The name could be complete path to the {@link Schema.Field}
    * if it is created from it.
-   * @return the field
+   * @return the name of the Input
    */
-  public String getField() {
+  public String getName() {
     return name;
   }
 
