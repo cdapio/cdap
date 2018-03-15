@@ -22,6 +22,9 @@ import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToCheckpointingProps = (state) => {
   return {
@@ -43,7 +46,9 @@ const mapDispatchToCheckpointingProps = (dispatch) => {
 const Checkpointing = ({checkpointing, onToggle}) => {
   return (
     <div className="label-with-toggle checkpointing row">
-      <span className="toggle-label col-xs-4">Checkpointing</span>
+      <span className="toggle-label col-xs-4">
+        {T.translate(`${PREFIX}.checkpointing`)}
+      </span>
       <div className="col-xs-7 toggle-container">
         <ToggleSwitch
           isOn={checkpointing}
@@ -54,7 +59,7 @@ const Checkpointing = ({checkpointing, onToggle}) => {
           showOn='Hover'
           placement='right'
         >
-          Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures.
+          {T.translate(`${PREFIX}.checkpointingTooltip`)}
         </Popover>
       </div>
     </div>

@@ -23,6 +23,9 @@ import {setRunError} from 'components/PipelineDetails/store/ActionCreator';
 import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurations from 'components/PipelineConfigurations';
 import {revertConfigsToSavedValues} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineRunButton extends Component {
   static propTypes = {
@@ -103,7 +106,9 @@ export default class PipelineRunButton extends Component {
               (
                 <span className="text-success">
                   <IconSVG name="icon-spinner" className="fa-spin" />
-                  <div className="button-label">Starting</div>
+                  <div className="button-label">
+                    {T.translate(`${PREFIX}.starting`)}
+                  </div>
                 </span>
               )
 
@@ -111,7 +116,9 @@ export default class PipelineRunButton extends Component {
               (
                 <span className="text-success">
                   <IconSVG name="icon-play"/>
-                  <div className="button-label">Run</div>
+                  <div className="button-label">
+                    {T.translate(`${PREFIX}.run`)}
+                  </div>
                 </span>
               )
           }

@@ -19,6 +19,9 @@ import {connect} from 'react-redux';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {BATCH_INTERVAL_RANGE, BATCH_INTERVAL_UNITS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToSelectBatchIntervalRangeProps = (state) => {
   return {
@@ -68,7 +71,9 @@ const SelectBatchIntervalUnit = connect(
 const BatchInterval = () => {
   return (
     <div className="label-with-toggle batch-interval form-group row">
-      <span className="toggle-label col-xs-4">Batch Interval</span>
+      <span className="toggle-label col-xs-4">
+        {T.translate(`${PREFIX}.batchInterval`)}
+      </span>
       <div className="col-xs-7">
         <SelectBatchIntervalRange className="form-control small-dropdown" />
         <SelectBatchIntervalUnit className="form-control small-dropdown batch-interval-unit" />

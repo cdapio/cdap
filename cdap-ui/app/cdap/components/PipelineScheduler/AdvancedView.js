@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {setStateFromCron} from 'components/PipelineScheduler/Store/ActionCreator';
 import {ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler.advanced';
 
 const mapStateToCronInputProps = (state, ownProps) => {
   return {
@@ -73,27 +76,27 @@ export default function AdvancedView() {
   return (
     <div className="schedule-type-content">
       <div className="schedule-advanced-header">
-        Schedule this pipeline by using Cron syntax
+        {T.translate(`${PREFIX}.header`)}
       </div>
       <div className="schedule-advanced-values">
         <ConnectedCronInput
-          label={"Min"}
+          label={T.translate(`${PREFIX}.min`)}
           index={0}
         />
         <ConnectedCronInput
-          label={"Hour"}
+          label={T.translate(`${PREFIX}.hour`)}
           index={1}
         />
         <ConnectedCronInput
-          label={"Day"}
+          label={T.translate(`${PREFIX}.day`)}
           index={2}
         />
         <ConnectedCronInput
-          label={"Month"}
+          label={T.translate(`${PREFIX}.month`)}
           index={3}
         />
         <ConnectedCronInput
-          label={"Days of the Week"}
+          label={T.translate(`${PREFIX}.daysOfWeek`)}
           index={4}
           colWidth={3}
         />

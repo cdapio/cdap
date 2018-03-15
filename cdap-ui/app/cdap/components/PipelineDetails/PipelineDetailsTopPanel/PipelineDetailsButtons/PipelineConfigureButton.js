@@ -24,6 +24,9 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {revertConfigsToSavedValues, getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
 import isEqual from 'lodash/isEqual';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineConfigureButton extends Component {
   static propTypes = {
@@ -90,7 +93,9 @@ export default class PipelineConfigureButton extends Component {
             name="icon-sliders"
             className="configure-icon"
           />
-          <div className="button-label">Configure</div>
+          <div className="button-label">
+            {T.translate(`${PREFIX}.configure`)}
+          </div>
         </div>
       </div>
     );

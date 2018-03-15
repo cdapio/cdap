@@ -19,7 +19,10 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
+import T from 'i18n-react';
 require('./ConfigurationsSidePanel.scss');
+
+const PREFIX = 'features.PipelineConfigurations';
 
 export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatch, isHistoricalRun, activeTab, onTabChange, showAdvancedTabs, toggleAdvancedTabs}) {
   // Currently we only have runtime arguments info of a historical run, so will
@@ -33,7 +36,7 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
               className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.RUNTIME_ARGS})}
               onClick={onTabChange.bind(null, TAB_OPTIONS.RUNTIME_ARGS)}
             >
-              Runtime Arguments
+              {T.translate(`${PREFIX}.RuntimeArgs.title`)}
             </div>
           :
             null
@@ -44,7 +47,7 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
               className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.PREVIEW_CONFIG})}
               onClick={onTabChange.bind(null, TAB_OPTIONS.PREVIEW_CONFIG)}
             >
-              Preview Config
+              {T.translate(`${PREFIX}.PreviewConfig.title`)}
             </div>
           :
             null
@@ -56,7 +59,7 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
               onClick={toggleAdvancedTabs}
             >
               <IconSVG name={showAdvancedTabs ? "icon-caret-down" : "icon-caret-right"} />
-              <span>Advanced options</span>
+              <span>{T.translate(`${PREFIX}.advancedOptions`)}</span>
             </div>
           :
             null
@@ -68,19 +71,19 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
                 className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.PIPELINE_CONFIG})}
                 onClick={onTabChange.bind(null, TAB_OPTIONS.PIPELINE_CONFIG)}
               >
-                Pipeline Config
+                {T.translate(`${PREFIX}.PipelineConfig.title`)}
               </div>
               <div
                 className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.ENGINE_CONFIG})}
                 onClick={onTabChange.bind(null, TAB_OPTIONS.ENGINE_CONFIG)}
               >
-                Engine Config
+                {T.translate(`${PREFIX}.EngineConfig.title`)}
               </div>
               <div
                 className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.RESOURCES, "disabled": isPreview})}
                 onClick={onTabChange.bind(null, TAB_OPTIONS.RESOURCES)}
               >
-                Resources
+                {T.translate(`${PREFIX}.Resources.title`)}
               </div>
               {
                 isBatch ?
@@ -88,7 +91,7 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
                     className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.ALERTS, "disabled": isPreview})}
                     onClick={onTabChange.bind(null, TAB_OPTIONS.ALERTS)}
                   >
-                    Alerts
+                    {T.translate(`${PREFIX}.Alerts.title`)}
                   </div>
                 :
                   null

@@ -21,6 +21,9 @@ import SelectWithOptions from 'components/SelectWithOptions';
 import {INTERVAL_OPTIONS, MINUTE_OPTIONS, HOUR_OPTIONS_CLOCK, AM_PM_OPTIONS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
 import {updateCron} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler.startingAt';
 
 const mapStateToStartingAtMinuteProps = (state) => {
   return {
@@ -109,7 +112,7 @@ const StartingAtComponent = ({intervalOption}) => {
       SelectComponent = (
         <span className="schedule-values">
           <SelectStartingAtMinute className="form-control small-dropdown" />
-          <span>past the hour</span>
+          <span>{T.translate(`${PREFIX}.pastTheHour`)}</span>
         </span>
       );
       break;
@@ -134,7 +137,7 @@ const StartingAtComponent = ({intervalOption}) => {
   return (
     <div className={classnames('form-group row', {'invisible': shouldHideComponent})}>
       <label className="col-xs-3 control-label">
-        Starting at
+        {T.translate(`${PREFIX}.label`)}
       </label>
       <div className="col-xs-4 schedule-values-container">
         {SelectComponent}

@@ -18,6 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {Provider, connect} from 'react-redux';
 import PipelineMetricsStore from 'services/PipelineMetricsStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -30,7 +33,7 @@ const RunNumErrorsComp = ({logsMetrics, currentRun}) => {
   return (
     <div className="run-info-container run-errors-container">
       <div>
-        <strong>Errors</strong>
+        <strong>{T.translate(`${PREFIX}.errors`)}</strong>
       </div>
       <span>
         {

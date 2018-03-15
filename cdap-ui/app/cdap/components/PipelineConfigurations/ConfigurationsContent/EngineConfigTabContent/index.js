@@ -21,7 +21,10 @@ import EngineRadioInput from 'components/PipelineConfigurations/ConfigurationsCo
 import Backpressure from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/Backpressure';
 import NumExecutors from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/NumExecutors';
 import CustomConfig from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/CustomConfig';
+import T from 'i18n-react';
 require('./EngineConfigTabContent.scss');
+
+const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
 export default class EngineConfigTabContent extends Component {
   static propTypes = {
@@ -44,11 +47,11 @@ export default class EngineConfigTabContent extends Component {
       <div className="engine-config-radio">
         <label className="radio-inline radio-spark">
           <EngineRadioInput value={ENGINE_OPTIONS.SPARK} />
-          Spark
+          {T.translate('commons.entity.spark.singular')}
         </label>
         <label className="radio-inline radio-mapReduce">
           <EngineRadioInput value={ENGINE_OPTIONS.MAPREDUCE} />
-          MapReduce
+          {T.translate('commons.entity.mapreduce.singular')}
         </label>
       </div>
     );
@@ -73,7 +76,7 @@ export default class EngineConfigTabContent extends Component {
       >
         <fieldset disabled={this.props.isDetailView}>
           <div className="step-content-heading">
-            {`Select the type of engine running your ${pipelineTypeLabel} pipeline`}
+            {T.translate(`${PREFIX}.contentHeading`, {pipelineTypeLabel})}
           </div>
           {
             this.props.isBatch ?

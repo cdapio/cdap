@@ -22,6 +22,9 @@ import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.Resources';
 
 const mapStateToProps = (state) => {
   return {
@@ -53,14 +56,14 @@ const ClientResources = ({virtualCores, onVirtualCoresChange, memoryMB, onMemory
     <div className="col-xs-4 client">
       <div className="resource-title-icon">
         <span className="resource-title">
-          Client
+          {T.translate(`${PREFIX}.client`)}
         </span>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
           showOn='Hover'
           placement='right'
         >
-          Resources for the client process which launches the Apache Spark Streaming pipeline
+          {T.translate(`${PREFIX}.clientTooltip`)}
         </Popover>
       </div>
       <PipelineResources

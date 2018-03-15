@@ -23,6 +23,9 @@ import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
 import {ENGINE_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.Resources';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -52,6 +55,7 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 const ExecutorResources = ({isBatch, engine, virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) => {
+  let isMapReduce = engine === ENGINE_OPTIONS.MAPREDUCE && isBatch;
   return (
     <div
       className={classnames("executor", {
@@ -61,7 +65,12 @@ const ExecutorResources = ({isBatch, engine, virtualCores, onVirtualCoresChange,
     >
       <div className="resource-title-icon">
         <span className="resource-title">
-          {engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ? 'Mapper/Reducer' : 'Executor'}
+          {
+            isMapReduce ?
+              T.translate(`${PREFIX}.executorMapReduce`)
+            :
+              T.translate(`${PREFIX}.executor`)
+          }
         </span>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
@@ -69,10 +78,10 @@ const ExecutorResources = ({isBatch, engine, virtualCores, onVirtualCoresChange,
           placement='right'
         >
           {
-            engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ?
-              'Resources for the executor process which initializes the pipeline'
+            isMapReduce ?
+              T.translate(`${PREFIX}.executorMapReduceTooltip`)
             :
-              'Resources for executor processes which run tasks in an Apache Spark pipeline'
+              T.translate(`${PREFIX}.executorTooltip`)
           }
         </Popover>
       </div>

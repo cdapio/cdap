@@ -22,6 +22,9 @@ import PipelineSummary from 'components/PipelineSummary';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import {GLOBALS} from 'services/global-constants';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineSummaryButton extends Component {
   static propTypes = {
@@ -50,7 +53,9 @@ export default class PipelineSummaryButton extends Component {
             name="icon-line-chart"
             className="summary-icon"
           />
-          <div className="button-label">Summary</div>
+          <div className="button-label">
+            {T.translate(`${PREFIX}.summary`)}
+          </div>
         </div>
       </div>
     );

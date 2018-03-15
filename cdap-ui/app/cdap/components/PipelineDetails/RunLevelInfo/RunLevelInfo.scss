@@ -37,6 +37,7 @@ $border-color: $grey-05;
     text-align: center;
     background: $grey-08;
     position: relative;
+
     /* Have to do this instead of height: 100% because of issue in Firefox */
     height: 53px;
 

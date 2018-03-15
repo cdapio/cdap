@@ -19,6 +19,9 @@ import SelectWithOptions from 'components/SelectWithOptions';
 import {INTERVAL_OPTIONS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
 import {updateCron} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler.intervalOptions';
 
 const mapStateToIntervalOptionProps = (state) => {
   return {
@@ -52,7 +55,7 @@ export default function IntervalOption() {
   return (
     <div className="form-group row">
       <label className="col-xs-3 control-label">
-        Pipeline run repeats
+        {T.translate(`${PREFIX}.heading`)}
       </label>
       <div className="col-xs-4 schedule-values-container">
         <SelectIntervalOption className="form-control" />

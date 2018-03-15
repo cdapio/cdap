@@ -17,6 +17,9 @@
 import React, { Component } from 'react';
 import PostRunActions from 'components/PostRunActions';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.Alerts';
 
 export default class AlertsTabContent extends Component {
   render() {
@@ -27,7 +30,7 @@ export default class AlertsTabContent extends Component {
         className="configuration-step-content configuration-content-container"
       >
         <div className="step-content-heading">
-          Set alerts for your batch pipeline
+          {T.translate(`${PREFIX}.contentHeading`)}
         </div>
         <PostRunActions
           actions={postActions}

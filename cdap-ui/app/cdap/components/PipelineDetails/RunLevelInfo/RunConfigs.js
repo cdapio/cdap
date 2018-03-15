@@ -23,6 +23,9 @@ import PipelineConfigurations from 'components/PipelineConfigurations';
 import {objectQuery} from 'services/helpers';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel';
 
 export default class RunConfigs extends Component {
   static propTypes = {
@@ -80,7 +83,9 @@ export default class RunConfigs extends Component {
         onClick={this.getRuntimeArgsAndToggleModeless}
       >
         <IconSVG name="icon-sliders" />
-        <div className="button-label">Run Configs</div>
+        <div className="button-label">
+          {T.translate(`${PREFIX}.configs`)}
+        </div>
       </div>
     );
   }
@@ -89,7 +94,9 @@ export default class RunConfigs extends Component {
     const ConfigsBtnComp = () => (
       <div className="run-configs-btn">
         <IconSVG name="icon-sliders" />
-        <div className="button-label">Run Configs</div>
+        <div className="button-label">
+          {T.translate(`${PREFIX}.configs`)}
+        </div>
       </div>
     );
 
@@ -101,7 +108,7 @@ export default class RunConfigs extends Component {
           placement='bottom'
           className="run-info-container run-configs-container disabled"
         >
-          This pipeline has never been run
+          {T.translate(`${PREFIX}.pipelineNeverRun`)}
         </Popover>
       );
     }

@@ -29,6 +29,9 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import StatusMapper from 'services/StatusMapper';
 import {isDescendant} from 'services/helpers';
 import {Observable} from 'rxjs/Observable';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler';
 
 require('./PipelineScheduler.scss');
 
@@ -182,7 +185,7 @@ export default class PipelineScheduler extends Component {
     return (
       <div className="pipeline-scheduler-header modeless-header">
         <div className="modeless-title">
-          Configure Schedule for Pipeline
+          {T.translate(`${PREFIX}.header`)}
           {
             this.props.pipelineName.length ?
               ` ${this.props.pipelineName}`
@@ -210,7 +213,7 @@ export default class PipelineScheduler extends Component {
             className="btn btn-primary schedule-btn"
             onClick={this.suspendSchedule}
           >
-            Suspend Schedule
+            {T.translate(`${PREFIX}.suspendSchedule`)}
           </button>
         </div>
       );
@@ -224,7 +227,7 @@ export default class PipelineScheduler extends Component {
             onClick={this.saveSchedule.bind(this, false)}
           >
             <span>
-              Save Schedule
+              {T.translate(`${PREFIX}.saveSchedule`)}
             </span>
           </button>
         </div>
@@ -239,7 +242,12 @@ export default class PipelineScheduler extends Component {
           disabled={this.state.savingSchedule || this.state.savingAndScheduling}
         >
           <span>
-            {this.state.isScheduleChanged ? 'Save and Start Schedule' : 'Start Schedule'}
+            {
+              this.state.isScheduleChanged ?
+                T.translate(`${PREFIX}.saveAndStartSchedule`)
+              :
+                T.translate(`${PREFIX}.startSchedule`)
+            }
             {
                this.state.savingAndScheduling ?
                 <IconSVG
@@ -256,7 +264,7 @@ export default class PipelineScheduler extends Component {
           onClick={this.saveSchedule.bind(this, false)}
           disabled={this.state.savingSchedule || this.state.savingAndScheduling}
         >
-          <span>Save Schedule</span>
+          <span>{T.translate(`${PREFIX}.saveSchedule`)}</span>
           {
              this.state.savingSchedule ?
               <IconSVG

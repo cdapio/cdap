@@ -22,6 +22,9 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import {GLOBALS} from 'services/global-constants';
 import {objectQuery} from 'services/helpers';
 import Popover from 'components/Popover';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel';
 
 const mapStateToProps = (state) => {
   return {
@@ -36,7 +39,7 @@ const RunLogs = ({currentRun, runs, appId, artifactName}) => {
   const LogsBtnComp = () => (
     <div className="run-logs-btn">
       <IconSVG name="icon-file-text-o" />
-      <div>Run Logs</div>
+      <div>{T.translate(`${PREFIX}.logs`)}</div>
     </div>
   );
 
@@ -48,7 +51,7 @@ const RunLogs = ({currentRun, runs, appId, artifactName}) => {
         placement='bottom'
         className="run-info-container run-logs-container disabled"
       >
-        This pipeline has never been run
+        {T.translate(`${PREFIX}.pipelineNeverRun`)}
       </Popover>
     );
   }

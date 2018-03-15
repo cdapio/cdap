@@ -25,6 +25,9 @@ import StatusMapper from 'services/StatusMapper';
 import {schedulePipeline, suspendSchedule} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurations from 'components/PipelineConfigurations';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineScheduleButton extends Component {
   static propTypes = {
@@ -122,7 +125,9 @@ export default class PipelineScheduleButton extends Component {
                   className="unschedule-icon"
                 />
             }
-            <div className="button-label">Unschedule</div>
+            <div className="button-label">
+              {T.translate(`${PREFIX}.unschedule`)}
+            </div>
           </div>
         </div>
       );
@@ -147,7 +152,9 @@ export default class PipelineScheduleButton extends Component {
                 className="schedule-icon"
               />
           }
-          <div className="button-label">Schedule</div>
+          <div className="button-label">
+            {T.translate(`${PREFIX}.schedule`)}
+          </div>
         </div>
       </div>
     );

@@ -18,6 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -35,7 +38,7 @@ const ConfigModelessSaveAndRunBtn = ({isMissingKeyValues, pipelineEdited, saveAn
       disabled={saveAndRunLoading || isMissingKeyValues}
       onClick={saveAndRun.bind(this, pipelineEdited)}
     >
-      <span>Save and Run</span>
+      <span>{T.translate(`${PREFIX}.saveAndRun`)}</span>
       {
         saveAndRunLoading ?
           <IconSVG

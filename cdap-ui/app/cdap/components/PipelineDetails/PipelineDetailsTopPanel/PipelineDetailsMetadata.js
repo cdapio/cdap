@@ -22,6 +22,9 @@ import Tags from 'components/Tags';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import {GLOBALS} from 'services/global-constants';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 const mapStateToPipelineTagsProps = (state) => {
   let {name} = state;
@@ -75,7 +78,7 @@ const PipelineDetailsMetadata = ({name, artifactName, version, description}) => 
           </Popover>
         </span>
         <span className="pipeline-version">
-          version {version}
+          {T.translate(`${PREFIX}.version`, {version})}
         </span>
       </div>
       <div className="pipeline-tags">

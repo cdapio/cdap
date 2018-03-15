@@ -22,6 +22,9 @@ import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToInstrumentationProps = (state) => {
   return {
@@ -43,7 +46,9 @@ const mapDispatchToInstrumentationProps = (dispatch) => {
 const Instrumentation = ({instrumentation, onToggle}) => {
   return (
     <div className="label-with-toggle instrumentation row">
-      <span className="toggle-label col-xs-4">Instrumentation</span>
+      <span className="toggle-label col-xs-4">
+        {T.translate(`${PREFIX}.instrumentation`)}
+      </span>
       <div className="col-xs-7 toggle-container">
         <ToggleSwitch
           isOn={instrumentation}
@@ -54,7 +59,7 @@ const Instrumentation = ({instrumentation, onToggle}) => {
           showOn='Hover'
           placement='right'
         >
-          Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources.
+          {T.translate(`${PREFIX}.instrumentationTooltip`)}
         </Popover>
       </div>
     </div>

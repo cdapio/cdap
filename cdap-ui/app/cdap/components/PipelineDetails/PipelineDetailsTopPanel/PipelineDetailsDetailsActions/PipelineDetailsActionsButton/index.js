@@ -23,7 +23,10 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import {MyAppApi} from 'api/app';
 import PipelineExportModal from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton/PipelineExportModal';
 import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
+import T from 'i18n-react';
 require('./PipelineDetailsActionsButton.scss');
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 const getClonePipelineName = (name) => {
   name = typeof a === 'string' ? name : name.toString();
@@ -97,7 +100,7 @@ export default class PipelineDetailsActionsButton extends Component {
         window.location.href = pipelinesListLink;
       }, (err) => {
         this.setState({
-          deleteErrMsg: 'There was a problem with the pipeline you were trying to delete',
+          deleteErrMsg: T.translate(`${PREFIX}.deleteError`),
           extendedDeleteErrMsg: err
         });
       });
@@ -135,18 +138,25 @@ export default class PipelineDetailsActionsButton extends Component {
 
     if (count > 0) {
       let triggersText = triggeredPipelines.map((pipeline) => pipeline.application).join(', ');
-      let triggerPluralCheck = count > 1 ? 'pipelines' : 'pipeline';
 
       return (
         <div>
-          Pipeline <strong><em>{this.props.pipelineName}</em></strong> is configured to trigger {triggerPluralCheck} <em>{triggersText}</em>. Triggers will be deleted if pipeline <strong><em>{this.props.pipelineName}</em></strong> is deleted. Are you sure you want to proceed?
+          {T.translate(`${PREFIX}.deleteConfirmation.pipeline`)}
+          <strong><em>{this.props.pipelineName}</em></strong>
+          {T.translate(`${PREFIX}.deleteConfirmation.trigger`)}
+          {T.translate(`${PREFIX}.deleteConfirmation.triggerPluralCheck`, {context: count})}
+          <em>{triggersText}</em>
+          {T.translate(`${PREFIX}.deleteConfirmation.triggerDelete`)}
+          <strong><em>{this.props.pipelineName}</em></strong>
+          {T.translate(`${PREFIX}.deleteConfirmation.proceedPrompt`)}
         </div>
       );
     }
 
     return (
       <div>
-        Are you sure you want to delete the pipeline <strong><em>{this.props.pipelineName}</em></strong>?
+        {T.translate(`${PREFIX}.deleteConfirmation.confirmPrompt`)}
+        <strong><em>{this.props.pipelineName}</em></strong>?
       </div>
     );
   }
@@ -158,10 +168,10 @@ export default class PipelineDetailsActionsButton extends Component {
 
     return (
       <ConfirmationModal
-        headerTitle='Delete Pipeline'
+        headerTitle={T.translate(`${PREFIX}.delete`)}
         toggleModal={this.toggleDeleteConfirmationModal}
         confirmationElem={this.getDeleteConfirmationElem()}
-        confirmButtonText={'Delete'}
+        confirmButtonText={T.translate(`${PREFIX}.deleteConfirmation.confirm`)}
         confirmFn={this.deletePipeline}
         cancelFn={this.toggleDeleteConfirmationModal}
         isOpen={this.state.showDeleteConfirmationModal}
@@ -179,7 +189,7 @@ export default class PipelineDetailsActionsButton extends Component {
           <div className="btn-container">
             <IconSVG name="icon-cog-empty" />
             <div className="button-label">
-              Actions
+              {T.translate(`${PREFIX}.actions`)}
             </div>
           </div>
         </div>
@@ -196,14 +206,14 @@ export default class PipelineDetailsActionsButton extends Component {
         >
           <ul>
             <li onClick={this.duplicateConfigAndNavigate}>
-              Duplicate
+              {T.translate(`${PREFIX}.duplicate`)}
             </li>
             <li onClick={this.toggleExportModal}>
-              Export
+              {T.translate(`${PREFIX}.export`)}
             </li>
             <hr />
             <li onClick={this.toggleDeleteConfirmationModal}>
-              Delete Pipeline
+              {T.translate(`${PREFIX}.delete`)}
             </li>
           </ul>
         </Popover>

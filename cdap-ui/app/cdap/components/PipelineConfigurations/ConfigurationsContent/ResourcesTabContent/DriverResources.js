@@ -23,6 +23,9 @@ import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.Resources';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -60,14 +63,14 @@ const DriverResources = ({isBatch, virtualCores, onVirtualCoresChange, memoryMB,
     >
       <div className="resource-title-icon">
         <span className="resource-title">
-          Driver
+          {T.translate(`${PREFIX}.driver`)}
         </span>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
           showOn='Hover'
           placement='right'
         >
-          Resources for the driver process which initializes the pipeline
+          {T.translate(`${PREFIX}.driverTooltip`)}
         </Popover>
       </div>
       <PipelineResources

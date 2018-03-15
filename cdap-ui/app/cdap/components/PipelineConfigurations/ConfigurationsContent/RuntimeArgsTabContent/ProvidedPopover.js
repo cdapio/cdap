@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.RuntimeArgs.ProvidedPopover';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -34,7 +37,7 @@ const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
   return (
     <span>
       <span className="provided-label">
-        Provided
+        {T.translate(`${PREFIX}.provided`)}
       </span>
       <Popover
         target={() => <IconSVG name="icon-caret-square-o-down" />}
@@ -43,10 +46,10 @@ const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
       >
         <ul>
           <li onClick={toggleAllProvided.bind(null, false)}>
-            Clear All
+            {T.translate(`${PREFIX}.clearAll`)}
           </li>
           <li onClick={toggleAllProvided.bind(null, true)}>
-            Select All
+            {T.translate(`${PREFIX}.selectAll`)}
           </li>
         </ul>
       </Popover>

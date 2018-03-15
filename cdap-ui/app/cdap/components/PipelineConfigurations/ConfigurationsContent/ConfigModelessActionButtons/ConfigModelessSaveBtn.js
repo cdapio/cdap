@@ -18,6 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -39,7 +42,7 @@ const ConfigModelessSaveBtn = ({isMissingKeyValues, pipelineEdited, saveLoading,
         saveLoading ?
           (
             <span>
-              Saving
+              {T.translate(`${PREFIX}.saving`)}
               <IconSVG
                 name="icon-spinner"
                 className="fa-spin"
@@ -47,7 +50,7 @@ const ConfigModelessSaveBtn = ({isMissingKeyValues, pipelineEdited, saveLoading,
              </span>
           )
         :
-          <span>Save</span>
+          <span>{T.translate(`${PREFIX}.save`)}</span>
       }
     </button>
   );

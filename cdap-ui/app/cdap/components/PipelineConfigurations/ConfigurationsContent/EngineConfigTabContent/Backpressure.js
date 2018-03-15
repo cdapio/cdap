@@ -21,6 +21,9 @@ import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -42,7 +45,9 @@ const mapDispatchToProps = (dispatch) => {
 const Backpressure = ({backpressure, disabled, onToggle}) => {
   return (
     <div className="label-with-toggle backpressure row">
-      <span className="toggle-label col-xs-4">Backpressure</span>
+      <span className="toggle-label col-xs-4">
+        {T.translate(`${PREFIX}.backpressure`)}
+      </span>
       <div className="col-xs-7 toggle-container">
         <ToggleSwitch
           isOn={backpressure}
@@ -54,7 +59,7 @@ const Backpressure = ({backpressure, disabled, onToggle}) => {
           showOn='Hover'
           placement='right'
         >
-          Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process.
+          {T.translate(`${PREFIX}.backpressureTooltip`)}
         </Popover>
       </div>
     </div>

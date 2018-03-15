@@ -23,7 +23,10 @@ import moment from 'moment';
 import {Observable} from 'rxjs/Observable';
 import {setStopError} from 'components/PipelineDetails/store/ActionCreator';
 import classnames from 'classnames';
+import T from 'i18n-react';
 require('./PipelineStopPopover.scss');
+
+const PREFIX = 'features.PipelineDetails.TopPanel.StopPopover';
 
 export default class PipelineStopPopover extends Component {
   static propTypes = {
@@ -64,7 +67,7 @@ export default class PipelineStopPopover extends Component {
         <div className="btn-container">
           <IconSVG name="icon-stop" />
           <div className="button-label">
-            Stop
+            {T.translate('features.PipelineDetails.TopPanel.stop')}
           </div>
         </div>
       </div>
@@ -117,13 +120,15 @@ export default class PipelineStopPopover extends Component {
       >
         <fieldset disabled={this.state.stopAllBtnLoading}>
           <div className="stop-btn-popover-header">
-            <strong>{`Current runs (${this.props.runs.length}`})</strong>
+            <strong>
+              {T.translate(`${PREFIX}.currentRuns`, {numRuns: this.props.runs.length})}
+            </strong>
             <button
               className="stop-all-btn"
               onClick={this.stopAllRuns}
             >
               <IconSVG name="icon-stop" />
-              <span>Stop All</span>
+              <span>{T.translate(`${PREFIX}.stopAll`)}</span>
               {
                 this.state.stopAllBtnLoading ?
                   <IconSVG
@@ -139,8 +144,8 @@ export default class PipelineStopPopover extends Component {
             <thead>
               <tr>
                 <th></th>
-                <th>Start Time</th>
-                <th>Duration</th>
+                <th>{T.translate('features.PipelineDetails.startTime')}</th>
+                <th>{T.translate('features.PipelineDetails.duration')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -178,7 +183,7 @@ export default class PipelineStopPopover extends Component {
                           :
                             (
                               <a onClick={this.stopSingleRun.bind(this, run.runid)}>
-                                Stop run
+                                {T.translate(`${PREFIX}.stopRun`)}
                               </a>
                             )
                         }

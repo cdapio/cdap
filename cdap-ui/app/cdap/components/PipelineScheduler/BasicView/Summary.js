@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import moment from 'moment';
 import {INTERVAL_OPTIONS} from 'components/PipelineScheduler/Store';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler.summary';
 
 const mapStateToSummaryProps = (state) => {
   return {
@@ -33,6 +36,10 @@ const mapStateToMaxConcurrentRunsSummaryProps = (state) => {
 };
 
 const SummaryComponent = ({state}) => {
+  let minuteMoment = moment().minute(state.startingAtMinute).format('mm');
+  let dateOfMonthMoment = moment().date(state.dateOfMonthInterval).format('Do');
+  let monthMoment = moment().month(state.monthInterval).format('MMM');
+
   switch (state.intervalOption) {
     case INTERVAL_OPTIONS['5MIN']:
       return <span>every 5 minutes.</span>;
@@ -43,18 +50,17 @@ const SummaryComponent = ({state}) => {
     case INTERVAL_OPTIONS.HOURLY:
       return (
         <span>
-          every
           {
             state.hourInterval === 1 ?
-              ' hour, '
+              T.translate(`${PREFIX}.everyHour`)
             :
-              ` ${state.hourInterval} hours, `
+              T.translate(`${PREFIX}.everyNumHours`, {num: state.hourInterval})
           }
           {
             state.startingAtMinute === 0 ?
-              'on the hour.'
+              T.translate(`${PREFIX}.onTheHour`)
             :
-              `${moment().minute(state.startingAtMinute).format('mm')} minutes past the hour.`
+              T.translate(`${PREFIX}.numMinsPastTheHour`, {num: minuteMoment})
           }
         </span>
       );
@@ -63,11 +69,15 @@ const SummaryComponent = ({state}) => {
         <span>
           {
             state.dayInterval === 1 ?
-              'everyday, '
+              T.translate(`${PREFIX}.everyDay`)
             :
-              `every ${state.dayInterval} days, `
+              T.translate(`${PREFIX}.everyNumDays`, {num: state.dayInterval})
           }
-          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
+          {T.translate(`${PREFIX}.atHourMinuteAMPM`, {
+            hour: state.startingAtHour,
+            min: minuteMoment,
+            AMPM: state.startingAtAMPM
+          })}
         </span>
       );
     case INTERVAL_OPTIONS.WEEKLY:
@@ -75,30 +85,45 @@ const SummaryComponent = ({state}) => {
         <span>
           {
             state.daysOfWeekInterval.length === 7 ?
-              'everyday, '
+              T.translate(`${PREFIX}.everyDay`)
             :
               <span>
-                {`every `}
+                {T.translate(`${PREFIX}.every`)}
                 {/* need to do -1 because our backend expects Sun-Sat values as 1-7, but moment() expects 0-6 instead */}
                 {state.daysOfWeekInterval.map(day => `${moment().day(parseInt(day, 10)-1).format('dddd')}, `)}
               </span>
 
           }
-          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
+          {T.translate(`${PREFIX}.atHourMinuteAMPM`, {
+            hour: state.startingAtHour,
+            min: minuteMoment,
+            AMPM: state.startingAtAMPM
+          })}
         </span>
       );
     case INTERVAL_OPTIONS.MONTHLY:
       return (
         <span>
-          {`every ${moment().date(state.dateOfMonthInterval).format('Do')} day of the month, `}
-          {`at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
+          {T.translate(`${PREFIX}.everyDateOfMonth`, {date: dateOfMonthMoment})}
+          {T.translate(`${PREFIX}.atHourMinuteAMPM`, {
+            hour: state.startingAtHour,
+            min: minuteMoment,
+            AMPM: state.startingAtAMPM
+          })}
         </span>
       );
     case INTERVAL_OPTIONS.YEARLY:
       return (
         <span>
-          {`every year on ${moment().month(state.monthInterval).format('MMM')} ${moment().date(state.dateOfMonthInterval).format('Do')}`}
-          {` at ${state.startingAtHour}:${moment().minute(state.startingAtMinute).format('mm')}${state.startingAtAMPM}.`}
+          {T.translate(`${PREFIX}.everyYearOn`, {
+            month: monthMoment,
+            dateOfMonth: dateOfMonthMoment
+          })}
+          {T.translate(`${PREFIX}.atHourMinuteAMPM`, {
+            hour: state.startingAtHour,
+            min: minuteMoment,
+            AMPM: state.startingAtAMPM
+          })}
         </span>
       );
   }
@@ -113,9 +138,9 @@ const MaxConcurrentRunsSummary = ({maxConcurrentRuns}) => {
     <span>
       {
         maxConcurrentRuns === 1 ?
-          'The pipeline cannot have concurrent runs.'
+          T.translate(`${PREFIX}.cannotMaxConcurrentRuns`)
         :
-          `The pipeline can have ${maxConcurrentRuns} concurrent runs.`
+          T.translate(`${PREFIX}.canMaxConcurrentRuns`, {num: maxConcurrentRuns})
       }
     </span>
   );
@@ -138,11 +163,11 @@ export default function Summary() {
   return (
     <div className="form-group row summary">
       <label className="col-xs-3 control-label">
-        Summary
+        {T.translate(`${PREFIX}.label`)}
       </label>
       <div className="col-xs-8 schedule-values-container">
         <div>
-          <span>This pipeline is scheduled to run </span>
+          <span>{T.translate(`${PREFIX}.scheduledToRun`)}</span>
           <ConnectedSummaryComponent />
         </div>
         <div>

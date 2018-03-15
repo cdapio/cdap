@@ -23,7 +23,10 @@ import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions, T
 import ConfigurationsSidePanel from 'components/PipelineConfigurations/ConfigurationsSidePanel';
 import ConfigurationsContent from 'components/PipelineConfigurations/ConfigurationsContent';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
 require('./PipelineConfigurations.scss');
+
+const PREFIX = 'features.PipelineConfigurations';
 
 export default class PipelineConfigurations extends Component {
   static propTypes = {
@@ -101,9 +104,9 @@ export default class PipelineConfigurations extends Component {
   renderHeader() {
     let headerLabel;
     if (this.props.isHistoricalRun) {
-      headerLabel = 'Run Configurations';
+      headerLabel = T.translate(`${PREFIX}.titleHistorical`);
     } else {
-      headerLabel = 'Configure';
+      headerLabel = T.translate(`${PREFIX}.title`);
       if (this.props.pipelineName.length) {
         headerLabel += ` "${this.props.pipelineName}"`;
       }

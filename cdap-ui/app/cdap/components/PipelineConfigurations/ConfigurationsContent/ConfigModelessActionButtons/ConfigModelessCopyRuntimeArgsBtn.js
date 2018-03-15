@@ -20,6 +20,9 @@ import {connect} from 'react-redux';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import isEmpty from 'lodash/isEmpty';
 import Clipboard from 'clipboard';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -43,9 +46,9 @@ const ConfigModelessCopyRuntimeArgsComp = ({runtimeArgs, setRuntimeArgsCopiedSta
       <span>
         {
           runtimeArgsCopied ?
-            'Runtime Arguments Copied'
+            T.translate(`${PREFIX}.runtimeArgsCopied`)
           :
-            'Copy Runtime Arguments'
+            T.translate(`${PREFIX}.copyRuntimeArgs`)
         }
       </span>
     </button>

@@ -20,7 +20,10 @@ import Instrumentation from 'components/PipelineConfigurations/ConfigurationsCon
 import StageLogging from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/StageLogging';
 import Checkpointing from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Checkpointing';
 import BatchInterval from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/BatchInterval';
+import T from 'i18n-react';
 require('./PipelineConfigTabContent.scss');
+
+const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 export default function PipelineConfigTabContent({isBatch}) {
   return (
@@ -29,7 +32,7 @@ export default function PipelineConfigTabContent({isBatch}) {
       className="configuration-step-content"
     >
       <div className="step-content-heading">
-        Set configurations for this pipeline
+        {T.translate(`${PREFIX}.contentHeading`)}
       </div>
       {
         !isBatch ?

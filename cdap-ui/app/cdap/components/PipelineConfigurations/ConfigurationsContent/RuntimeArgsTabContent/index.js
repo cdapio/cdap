@@ -23,7 +23,10 @@ import RuntimeArgsPairs from 'components/PipelineConfigurations/ConfigurationsCo
 import ProvidedPopover from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/ProvidedPopover';
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
+import T from 'i18n-react';
 require('./RuntimeArgsTabContent.scss');
+
+const PREFIX = 'features.PipelineConfigurations.RuntimeArgs';
 
 const toggleAllProvided = (isProvided) => {
   let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
@@ -76,13 +79,13 @@ export default function RuntimeArgsTabContent({isHistoricalRun}) {
     if (noRuntimeArgs) {
       stepContentHeading = (
         <div className="step-content-heading">
-          No Runtime Arguments were used for this run
+          {T.translate(`${PREFIX}.contentHeading3`)}
         </div>
       );
     } else {
       stepContentHeading = (
         <div className="step-content-heading">
-          Runtime Arguments used for this run
+          {T.translate(`${PREFIX}.contentHeading2`)}
         </div>
       );
     }
@@ -90,10 +93,10 @@ export default function RuntimeArgsTabContent({isHistoricalRun}) {
     stepContentHeading = (
       <div>
         <div className="step-content-heading">
-          Specify Runtime Arguments or Update the Ones Derived from Preferences
+          {T.translate(`${PREFIX}.contentHeading1`)}
         </div>
         <div className="step-content-subtitle">
-          By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
+          {T.translate(`${PREFIX}.contentSubtitle`)}
         </div>
       </div>
     );
@@ -107,10 +110,10 @@ export default function RuntimeArgsTabContent({isHistoricalRun}) {
       {stepContentHeading}
       <div className="runtime-arguments-labels key-value-pair-labels">
         <span className={classnames("key-label", {"wider": isHistoricalRun})}>
-          Name
+          {T.translate('commons.nameLabel')}
         </span>
         <span className="value-label">
-          Value
+          {T.translate('commons.valueLabel')}
         </span>
         <ProvidedPopover
           toggleAllProvided={toggleAllProvided}

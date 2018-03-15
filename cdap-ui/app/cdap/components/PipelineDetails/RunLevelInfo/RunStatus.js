@@ -21,6 +21,9 @@ import StatusMapper from 'services/StatusMapper';
 import IconSVG from 'components/IconSVG';
 import RunningRunsPopover from 'components/PipelineDetails/RunLevelInfo/RunningRunsPopover';
 import {PROGRAM_STATUSES} from 'services/global-constants';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel';
 
 const mapStateToProps = (state) => {
   return {
@@ -45,7 +48,7 @@ const RunStatus = ({runs, currentRun, pipelineId}) => {
   return (
     <div className="run-info-container run-status-container">
       <div>
-        <strong>Status</strong>
+        <strong>{T.translate(`${PREFIX}.status`)}</strong>
       </div>
       <span className={`run-status-bubble ${statusCSSClass}`}>
         <IconSVG name="icon-circle" />

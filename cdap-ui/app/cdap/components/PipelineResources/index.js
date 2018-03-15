@@ -18,7 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import SelectWithOptions from 'components/SelectWithOptions';
 import range from 'lodash/range';
+import T from 'i18n-react';
 
+const PREFIX = 'features.PipelineResources';
 const CORE_OPTIONS = range(1, 21);
 
 export default function PipelineResources({virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) {
@@ -26,7 +28,7 @@ export default function PipelineResources({virtualCores, onVirtualCoresChange, m
     <div className="resource-holder">
       <div className="resource-group row">
         <span className="col-xs-4 control-label">
-          CPU
+          {T.translate(`${PREFIX}.cpu`)}
         </span>
         <SelectWithOptions
           className="small-dropdown form-control"
@@ -37,7 +39,7 @@ export default function PipelineResources({virtualCores, onVirtualCoresChange, m
       </div>
       <div className="resource-group row">
         <span className="col-xs-4 control-label">
-          Memory
+          {T.translate(`${PREFIX}.memory`)}
         </span>
         <input
           className="memoryMB-input"
@@ -47,7 +49,7 @@ export default function PipelineResources({virtualCores, onVirtualCoresChange, m
           onChange={onMemoryMBChange}
         />
         <span className="control-label mb">
-          MB
+          {T.translate(`${PREFIX}.mb`)}
         </span>
       </div>
     </div>

@@ -19,6 +19,9 @@ import React from 'react';
 import { ModalBody, ModalFooter } from 'reactstrap';
 import HydratorModal from 'components/HydratorModal';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
   const exportPipeline = () => {
@@ -44,7 +47,9 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
     >
       <div className="modal-header">
         <h3 className="modal-title float-xs-left">
-          <span>Export Pipeline Configuration</span>
+          <span>
+            {T.translate(`${PREFIX}.exportModalTitle`)}
+          </span>
         </h3>
         <div className="btn-group float-xs-right">
           <a
@@ -73,13 +78,13 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
           className="btn btn-grey-cancel close-button"
           onClick={onClose}
         >
-          Close
+          {T.translate('commons.close')}
         </div>
         <div
           className="btn btn-blue"
           onClick={exportPipeline}
         >
-          Export
+          {T.translate(`${PREFIX}.export`)}
           <a id="pipeline-export-config-link" />
         </div>
       </ModalFooter>

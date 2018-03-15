@@ -18,6 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {humanReadableDate} from 'services/helpers';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails';
 
 const mapStateToProps = (state) => {
   return {
@@ -29,7 +32,7 @@ const RunStartTime = ({currentRun}) => {
   return (
     <div className="run-info-container">
       <div>
-        <strong>Start Time</strong>
+        <strong>{T.translate(`${PREFIX}.startTime`)}</strong>
       </div>
       <span>
         {

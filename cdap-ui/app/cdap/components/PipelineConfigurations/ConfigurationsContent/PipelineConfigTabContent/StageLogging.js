@@ -22,6 +22,9 @@ import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToStageLoggingProps = (state) => {
   return {
@@ -43,7 +46,9 @@ const mapDispatchToStageLoggingProps = (dispatch) => {
 const StageLogging = ({stageLogging, onToggle}) => {
   return (
     <div className="label-with-toggle stageLogging row">
-      <span className="toggle-label col-xs-4">Stage Level Logging</span>
+      <span className="toggle-label col-xs-4">
+        {T.translate(`${PREFIX}.stageLogging`)}
+      </span>
       <div className="col-xs-7 toggle-container">
         <ToggleSwitch
           isOn={stageLogging}
@@ -54,7 +59,7 @@ const StageLogging = ({stageLogging, onToggle}) => {
           showOn='Hover'
           placement='right'
         >
-          Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources.
+          {T.translate(`${PREFIX}.stageLoggingTooltip`)}
         </Popover>
       </div>
     </div>

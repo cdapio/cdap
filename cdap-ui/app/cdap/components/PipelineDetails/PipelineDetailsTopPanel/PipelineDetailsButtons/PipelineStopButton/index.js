@@ -24,6 +24,9 @@ import {GLOBALS} from 'services/global-constants';
 import PipelineStopPopover from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton/PipelineStopPopover';
 import {setStopButtonLoading, setStopError} from 'components/PipelineDetails/store/ActionCreator';
 import isEqual from 'lodash/isEqual';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineStopButton extends Component {
   static propTypes = {
@@ -117,14 +120,18 @@ export default class PipelineStopButton extends Component {
               (
                 <span>
                   <IconSVG name="icon-spinner" className="fa-spin" />
-                  <div className="button-label">Stopping</div>
+                  <div className="button-label">
+                    {T.translate(`${PREFIX}.stopping`)}
+                  </div>
                 </span>
               )
             :
               (
                 <span>
                   <IconSVG name="icon-stop" />
-                  <div className="button-label">Stop</div>
+                  <div className="button-label">
+                    {T.translate(`${PREFIX}.stop`)}
+                  </div>
                 </span>
               )
           }

@@ -23,6 +23,9 @@ import {connect} from 'react-redux';
 import classnames from 'classnames';
 import moment from 'moment';
 import {Input} from 'reactstrap';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler.repeatEvery';
 
 const mapStateToHourIntervalProps = (state) => {
   return {
@@ -159,7 +162,7 @@ const RepeatEveryComponent = ({intervalOption}) => {
       SelectComponent = (
         <span className="schedule-values">
           <SelectHourInterval className="form-control small-dropdown" />
-          <span>hour(s)</span>
+          <span>{T.translate(`${PREFIX}.hour`)}</span>
         </span>
       );
       break;
@@ -167,7 +170,7 @@ const RepeatEveryComponent = ({intervalOption}) => {
       SelectComponent = (
         <span className="schedule-values">
           <SelectDayInterval className="form-control small-dropdown" />
-          <span>day(s)</span>
+          <span>{T.translate(`${PREFIX}.day`)}</span>
         </span>
       );
       break;
@@ -196,7 +199,7 @@ const RepeatEveryComponent = ({intervalOption}) => {
       SelectComponent = (
         <span className="schedule-values">
           <SelectDateOfMonthInterval className="form-control small-dropdown" />
-          <span>day of the month</span>
+          <span>{T.translate(`${PREFIX}.dayOfMonth`)}</span>
         </span>
       );
       break;
@@ -215,7 +218,7 @@ const RepeatEveryComponent = ({intervalOption}) => {
   return (
     <div className={classnames('form-group row', {'invisible': shouldHideComponent})}>
       <label className="col-xs-3 control-label">
-        Repeats every
+        {T.translate(`${PREFIX}.label`)}
       </label>
       <div className="col-xs-4 schedule-values-container">
         {SelectComponent}

@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import AbsLinkTo from 'components/AbsLinkTo';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default function PipelineDetailsDetailsButton({pipelineName}) {
   let context = {
@@ -33,7 +36,7 @@ export default function PipelineDetailsDetailsButton({pipelineName}) {
           <div className="btn-container">
             <IconSVG name="icon-info-circle"/>
             <div className="button-label">
-              Details
+              {T.translate(`${PREFIX}.details`)}
             </div>
           </div>
         </div>

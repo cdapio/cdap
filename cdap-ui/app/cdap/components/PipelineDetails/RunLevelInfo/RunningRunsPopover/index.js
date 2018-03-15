@@ -24,8 +24,10 @@ import classnames from 'classnames';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {reverseArrayWithoutMutating} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
-
+import T from 'i18n-react';
 require('./RunningRunsPopover.scss');
+
+const PREFIX = 'features.PipelineDetails';
 
 export default function RunningRunsPopover({runs, currentRunId, pipelineId}) {
   let reversedRuns = reverseArrayWithoutMutating(runs);
@@ -34,7 +36,12 @@ export default function RunningRunsPopover({runs, currentRunId, pipelineId}) {
   const runningRunsLabel = () => {
     return (
       <span className="running-runs-toggle">
-        <a>{`(${currentRunIndex + 1} of ${runs.length})`}</a>
+        <a>
+          {T.translate(`${PREFIX}.RunLevel.currentIndex`, {
+            currentRunIndex: currentRunIndex + 1,
+            numRuns: runs.length
+          })}
+        </a>
       </span>
     );
   };
@@ -60,14 +67,14 @@ export default function RunningRunsPopover({runs, currentRunId, pipelineId}) {
       enableInteractionInPopover={true}
     >
       <div>
-        <strong>Runs currently running - select one to view</strong>
+        <strong>{T.translate(`${PREFIX}.RunLevel.runsCurrentlyRunning`)}</strong>
       </div>
       <table className="running-runs-popover-table table">
         <thead>
           <tr>
             <th></th>
-            <th>Start Time</th>
-            <th>Duration</th>
+            <th>{T.translate(`${PREFIX}.startTime`)}</th>
+            <th>{T.translate(`${PREFIX}.duration`)}</th>
           </tr>
         </thead>
         <tbody>

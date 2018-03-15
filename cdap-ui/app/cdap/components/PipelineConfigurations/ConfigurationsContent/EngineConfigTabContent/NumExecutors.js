@@ -21,6 +21,9 @@ import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {NUM_EXECUTORS_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
 const mapStateToProps = (state) => {
   let numExecutorsKeyName = window.CDAP_CONFIG.isEnterprise ? 'system.spark.spark.executor.instances' : 'system.spark.spark.master';
@@ -42,7 +45,9 @@ const mapDispatchToProps = (dispatch) => {
 const NumExecutors = ({numExecutors, onChange}) => {
   return (
     <div className="label-with-toggle numExecutors form-group row">
-      <span className="toggle-label col-xs-4">Number of Executors</span>
+      <span className="toggle-label col-xs-4">
+        {T.translate(`${PREFIX}.numExecutors`)}
+      </span>
       <div className="col-xs-7">
         <SelectWithOptions
           className="form-control small-dropdown"
@@ -56,7 +61,7 @@ const NumExecutors = ({numExecutors, onChange}) => {
           placement='right'
           className="num-executors-tooltip"
         >
-          The number of executors to allocate for this pipeline on Apache Yarn.
+          {T.translate(`${PREFIX}.numExecutorsTooltip`)}
         </Popover>
       </div>
     </div>

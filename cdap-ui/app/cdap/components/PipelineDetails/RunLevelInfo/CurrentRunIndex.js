@@ -21,6 +21,9 @@ import IconSVG from 'components/IconSVG';
 import {reverseArrayWithoutMutating, objectQuery} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
 import {setCurrentRunId} from 'components/PipelineDetails/store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel';
 
 const mapStateToProps = (state) => {
   return {
@@ -36,7 +39,9 @@ const CurrentRunIndex = ({runs, currentRun}) => {
   if (!reversedRuns || currentRunIndex === -1) {
     return (
       <div className="run-number-container run-info-container">
-        <h4 className="run-number">No Runs</h4>
+        <h4 className="run-number">
+          {T.translate(`${PREFIX}.noRuns`)}
+        </h4>
         <div className="run-number-switches">
           <button disabled>
             <IconSVG name="icon-caret-left" />
@@ -60,7 +65,7 @@ const CurrentRunIndex = ({runs, currentRun}) => {
   return (
     <div className="run-number-container run-info-container">
       <h4 className="run-number">
-        {`Run ${currentRunIndex + 1} of ${runs.length}`}
+        {T.translate(`${PREFIX}.currentRunIndex`, {currentRunIndex: currentRunIndex + 1, numRuns: runs.length})}
       </h4>
       <div className="run-number-switches">
         <button

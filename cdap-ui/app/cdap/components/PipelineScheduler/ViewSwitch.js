@@ -20,6 +20,9 @@ import {connect} from 'react-redux';
 import classnames from 'classnames';
 import {SCHEDULE_VIEWS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
 import {setStateFromCron} from 'components/PipelineScheduler/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineScheduler';
 
 const mapStateToBasicViewSwitchProps = (state) => {
   return {
@@ -66,7 +69,7 @@ const BasicViewSwitch = ({scheduleView, onClick}) => {
       className={classnames('col-xs-3 schedule-type schedule-type-basic', { 'active': scheduleView === SCHEDULE_VIEWS.BASIC })}
       onClick={onClick}
     >
-      Basic
+      {T.translate(`${PREFIX}.basic`)}
     </span>
   );
 };
@@ -82,7 +85,7 @@ const AdvancedViewSwitch = ({scheduleView, onClick}) => {
       className={classnames('col-xs-4 schedule-type schedule-type-advanced', { 'active': scheduleView === SCHEDULE_VIEWS.ADVANCED })}
       onClick={onClick}
     >
-      Advanced
+      {T.translate(`${PREFIX}.advanced.label`)}
     </span>
   );
 };

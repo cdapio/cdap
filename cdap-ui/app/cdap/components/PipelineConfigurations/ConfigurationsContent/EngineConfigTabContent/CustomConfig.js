@@ -70,6 +70,8 @@ const mapStateToCustomConfigProps = (state, ownProps) => {
 };
 
 const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConfig, engine, customConfigKeyValuePairs}) => {
+  let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
+
   const StudioViewCustomConfigLabel = () => {
     return (
       <span>
@@ -78,14 +80,14 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
           onClick={toggleCustomConfig}
         >
           <IconSVG name={showCustomConfig ? "icon-caret-down" : "icon-caret-right"} />
-          Show Custom Config
+          {T.translate(`${PREFIX}.showCustomConfig`)}
         </a>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
           showOn='Hover'
           placement='right'
         >
-          {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
+          {T.translate(`${PREFIX}.customConfigTooltip`, {engineDisplayLabel})}
         </Popover>
         {
           showCustomConfig ?
@@ -110,13 +112,13 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
       <div>
         <hr />
         <div className="add-custom-config-headers">
-          <label>Custom Config</label>
+          <label>{T.translate(`${PREFIX}.customConfig`)}</label>
           <Popover
             target={() => <IconSVG name="icon-info-circle" />}
             showOn='Hover'
             placement='right'
           >
-            {`Enter key-value pairs of configuration parameters that will be passed to the underlying ${getEngineDisplayLabel(engine)} program.`}
+            {T.translate(`${PREFIX}.customConfigTooltip`, {engineDisplayLabel})}
           </Popover>
           <span className="float-xs-right num-rows">
             {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
@@ -139,8 +141,12 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
           (
             <div>
               <div className="custom-config-labels key-value-pair-labels">
-                <span className="key-label">Name</span>
-                <span className="value-label">Value</span>
+                <span className="key-label">
+                  {T.translate('commons.nameLabel')}
+                </span>
+                <span className="value-label">
+                  {T.translate('commons.valueLabel')}
+                </span>
               </div>
               <div className="custom-config-values key-value-pair-values">
                 <ConnectedCustomConfigKeyValuePairs isBatch={isBatch} />

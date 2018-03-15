@@ -21,7 +21,10 @@ import {getEngineDisplayLabel} from 'components/PipelineConfigurations/Store';
 import DriverResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/DriverResources';
 import ExecutorResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ExecutorResources';
 import ClientResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ClientResources';
+import T from 'i18n-react';
 require('./ResourcesTabContent.scss');
+
+const PREFIX = 'features.PipelineConfigurations.Resources';
 
 const mapStateToStepContentHeadingProps = (state, ownProps) => {
   return {
@@ -30,9 +33,10 @@ const mapStateToStepContentHeadingProps = (state, ownProps) => {
   };
 };
 const StepContentHeading = ({isBatch, engine}) => {
+  let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
   return (
     <div className="step-content-heading">
-      {`Specify the resources for the following processes of the ${getEngineDisplayLabel(engine, isBatch)} program`}
+      {T.translate(`${PREFIX}.contentHeading`, {engineDisplayLabel})}
     </div>
   );
 };
