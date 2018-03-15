@@ -33,7 +33,6 @@ export default class PipelineConfigurations extends Component {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
     action: PropTypes.string,
-    actionLabel: PropTypes.string,
     isHistoricalRun: PropTypes.bool
   };
 
@@ -134,7 +133,6 @@ export default class PipelineConfigurations extends Component {
               isHistoricalRun={this.props.isHistoricalRun}
               onClose={this.props.onClose}
               action={this.props.action}
-              actionLabel={this.props.actionLabel}
             />
           </div>
         </div>

@@ -92,7 +92,7 @@ export default class RunConfigs extends Component {
               isHistoricalRun={true}
               isBatch={this.props.isBatch}
               pipelineName={this.props.pipelineName}
-              actionLabel="Copy Runtime Arguments"
+              action="copy"
             />
           :
             null

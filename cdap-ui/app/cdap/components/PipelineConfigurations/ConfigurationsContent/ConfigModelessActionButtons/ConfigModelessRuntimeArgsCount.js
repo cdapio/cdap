@@ -17,10 +17,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
+import T from 'i18n-react';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
-import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
+
 const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
 const mapStateToProps = (state, ownProps) => {
@@ -31,11 +32,12 @@ const mapStateToProps = (state, ownProps) => {
   };
 };
 
-const ConfigModelessRuntimeArgsCount = ({activeTab, runtimeArgs, isHistoricalRun}) => {
+const ConfigModelessRuntimeArgsCount = ({runtimeArgs, activeTab, isHistoricalRun}) => {
   let runtimeArgsObj = convertKeyValuePairsObjToMap(runtimeArgs);
   if (activeTab !== TAB_OPTIONS.RUNTIME_ARGS || (isHistoricalRun && isEmpty(runtimeArgsObj))) {
     return null;
   }
+
   return (
     <span className="num-runtime-args">
       {T.translate(`${PREFIX}.runtimeArgsCount`, {context: runtimeArgs.pairs.length})}

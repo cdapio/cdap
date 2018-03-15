@@ -24,7 +24,6 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {revertRuntimeArgsToSavedValues, getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
 import isEqual from 'lodash/isEqual';
-import {runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 export default class PipelineConfigureButton extends Component {
   static propTypes = {
@@ -109,7 +108,6 @@ export default class PipelineConfigureButton extends Component {
               isDetailView={true}
               isBatch={this.props.isBatch}
               pipelineName={this.props.pipelineName}
-              action={runPipeline}
             />
           :
             null

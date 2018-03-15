@@ -16,31 +16,32 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {applyRuntimeArgs, updatePipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
-import ConfigModelessPrimaryActionBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessPrimaryActionBtn';
-import ConfigModelessSecondaryActionBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSecondaryActionBtn';
+import {applyRuntimeArgs, updatePipeline, runPipeline, schedulePipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import ConfigModelessSaveAndRunBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveAndRunBtn';
+import ConfigModelessSaveAndScheduleBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveAndScheduleBtn';
+import ConfigModelessSaveBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveBtn';
 import ConfigModelessRuntimeArgsCount from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessRuntimeArgsCount';
+import ConfigModelessCopyRuntimeArgsBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessCopyRuntimeArgsBtn';
 
 require('./ConfigModelessActionButtons.scss');
 
 export default class ConfigModelessActionButtons extends Component {
   state = {
-    // need 2 states here instead of just 1, to determine which button to show
-    // spinning wheel on
-    updatingPipeline: false,
-    updatingPipelineAndRunOrSchedule: false
+    saveLoading: false,
+    saveAndRunLoading: false,
+    saveAndScheduleLoading: false,
+    runtimeArgsCopied: false
   };
 
   static propTypes = {
     onClose: PropTypes.func,
     activeTab: PropTypes.string,
-    action: PropTypes.func,
-    actionLabel: PropTypes.string,
+    action: PropTypes.string,
     isHistoricalRun: PropTypes.bool
   };
 
   static defaultProps = {
-    actionLabel: 'Save and Run'
+    action: 'run'
   };
 
   closeModeless = () => {
@@ -49,74 +50,93 @@ export default class ConfigModelessActionButtons extends Component {
     }
   };
 
-  closeModelessAndRunOrSchedule = () => {
+  closeModelessAndRun = () => {
     this.closeModeless();
-    if (typeof this.props.action === 'function') {
-      this.props.action();
-    }
+    runPipeline();
   };
 
-  saveAndRunOrSchedule = (pipelineEdited) => {
-    if (!this.props.isHistoricalRun) {
-      applyRuntimeArgs();
-    }
-    if (!pipelineEdited) {
-      this.closeModelessAndRunOrSchedule();
-      return;
-    }
+  closeModelessAndSchedule = () => {
+    this.closeModeless();
+    schedulePipeline();
+  };
 
-    this.setState({
-      updatingPipelineAndRunOrSchedule: true
-    });
-    updatePipeline()
-    .subscribe(() => {
-      this.closeModelessAndRunOrSchedule();
-    }, (err) => {
-      console.log(err);
-    }, () => {
-      this.setState({
-        updatingPipelineAndRunOrSchedule: false
-      });
-    });
+  saveAndRun = (pipelineEdited) => {
+    this.saveAndAction(pipelineEdited, 'saveAndRunLoading', this.closeModelessAndRun);
   }
 
-  saveAndCloseModeless = (pipelineEdited) => {
+  saveAndSchedule = (pipelineEdited) => {
+    this.saveAndAction(pipelineEdited, 'saveAndScheduleLoading', this.closeModelessAndSchedule);
+  }
+
+  saveConfig = (pipelineEdited) => {
+    this.saveAndAction(pipelineEdited, 'saveLoading', this.closeModeless);
+  };
+
+  saveAndAction(pipelineEdited, loadingState, actionFn) {
     applyRuntimeArgs();
     if (!pipelineEdited) {
-      this.closeModeless();
+      actionFn();
       return;
     }
 
     this.setState({
-      updatingPipeline: true
+      [loadingState]: true
     });
     updatePipeline()
-    .subscribe(() => {
-      this.closeModeless();
-    }, (err) => {
-      console.log(err);
-    }, () => {
-      this.setState({
-        updatingPipeline: false
+      .subscribe(() => {
+        actionFn();
+      }, (err) => {
+        console.log(err);
+      }, () => {
+        this.setState({
+          [loadingState]: false
+        });
       });
+  }
+
+  setRuntimeArgsCopiedState = () => {
+    this.setState({
+      runtimeArgsCopied: true
     });
   };
 
   render() {
+    let ActionComp;
+    if (this.props.action === 'run') {
+      ActionComp = (
+        <ConfigModelessSaveAndRunBtn
+          saveAndRun={this.saveAndRun}
+          saveAndRunLoading={this.state.saveAndRunLoading}
+        />
+      );
+    } else if (this.props.action === 'schedule') {
+      ActionComp = (
+        <ConfigModelessSaveAndScheduleBtn
+          saveAndSchedule={this.saveAndSchedule}
+          saveAndScheduleLoading={this.state.saveAndScheduleLoading}
+        />
+      );
+    } else if (this.props.action === 'copy') {
+      ActionComp = (
+        <ConfigModelessCopyRuntimeArgsBtn
+          setRuntimeArgsCopiedState={this.setRuntimeArgsCopiedState}
+          runtimeArgsCopied={this.state.runtimeArgsCopied}
+        />
+      );
+    }
     return (
       <div className="configuration-step-navigation">
         <div className="apply-action-container">
-          <ConfigModelessPrimaryActionBtn
-            updatingPipelineAndRunOrSchedule={this.state.updatingPipelineAndRunOrSchedule}
-            saveAndRunOrSchedule={this.saveAndRunOrSchedule}
-            actionLabel={this.props.actionLabel}
-            isHistoricalRun={this.props.isHistoricalRun}
-          />
-          <ConfigModelessSecondaryActionBtn
-            updatingPipeline={this.state.updatingPipeline}
-            saveAndCloseModeless={this.saveAndCloseModeless}
-            isHistoricalRun={this.props.isHistoricalRun}
-          />
+          {ActionComp}
+          {
+            !this.props.isHistoricalRun ?
+              <ConfigModelessSaveBtn
+                saveConfig={this.saveConfig}
+                saveLoading={this.state.saveLoading}
+              />
+            :
+              null
+          }
           <ConfigModelessRuntimeArgsCount
             activeTab={this.props.activeTab}
             isHistoricalRun={this.props.isHistoricalRun}

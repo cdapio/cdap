@@ -26,7 +26,7 @@ import ConfigModelessActionButtons from 'components/PipelineConfigurations/Confi
 import classnames from 'classnames';
 require('./ConfigurationsContent.scss');
 
-export default function ConfigurationsContent({isBatch, activeTab, isDetailView, isHistoricalRun, onClose, action, actionLabel}) {
+export default function ConfigurationsContent({isBatch, activeTab, isDetailView, isHistoricalRun, onClose, action}) {
   let ContentToShow;
   switch (activeTab) {
     case TAB_OPTIONS.RUNTIME_ARGS:
@@ -61,7 +61,6 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView,
         onClose={onClose}
         activeTab={activeTab}
         action={action}
-        actionLabel={actionLabel}
         isHistoricalRun={isHistoricalRun}
       />
     </div>
@@ -74,6 +73,5 @@ ConfigurationsContent.propTypes = {
   isDetailView: PropTypes.bool,
   isHistoricalRun: PropTypes.bool,
   onClose: PropTypes.func,
-  action: PropTypes.string,
-  actionLabel: PropTypes.string
+  action: PropTypes.string
 };
