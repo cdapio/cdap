@@ -16,26 +16,19 @@
 
 package co.cask.cdap.report;
 
-import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -46,34 +39,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Manifest;
-
-///**
-// * Test for {@link ProgramOperationReportApp}.
-// */
-//public class ProgramRunReportTest {
-//  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunReportTest.class);
-//  private static final Gson GSON = new Gson();
-//
-//  @Test
-//  public void test() {
-//    try {
-//      ProgramRunMetaFileUtil.main(new String[0]);
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
-//    LOG.info(GSON.toJson(MOCK_REPORT_GENERATION_REQUEST));
-//  }
-//}
 
 public class ProgramRunReportTest extends TestBaseWithSpark2 {
   @ClassRule
@@ -83,45 +54,11 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
   private static final Gson GSON = new Gson();
   private static String reportBasePath;
   private static String metaBasePath;
-  private static File reportApp;
 
   @BeforeClass
   public static void init() throws Exception {
-    reportBasePath = TEMP_FOLDER.newFolder().getAbsolutePath() + "/report";
-    metaBasePath = TEMP_FOLDER.newFolder().getAbsolutePath() + "/meta";
-//    reportApp = createArtifactJarWithAvro(reportAppClass);
-  }
-
-  private static File createArtifactJarWithAvro(Class<? extends Application> appClass) throws IOException {
-    Manifest manifest = new Manifest();
-    File avroJar =
-      new File("/Users/Chengfeng/.m2/repository/com/databricks/spark-avro_2.10/3.2.0/spark-avro_2.10-3.2.0.jar");
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, appClass.getPackage().getName());
-    new File(AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-    return new File(AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-                                                     appClass, manifest, avroJar).toURI());
-  }
-
-  public void testReportGeneration() throws Exception {
-    File avroJar =
-      new File("/Users/Chengfeng/.m2/repository/com/databricks/spark-avro_2.10/3.2.0/spark-avro_2.10-3.2.0.jar");
-    ApplicationManager app = deployApplication(ProgramOperationReportApp.class, reportApp, avroJar);
-    SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName())
-      .start(ImmutableMap.of("input", metaBasePath, "reportBasePath", reportBasePath));
-    URL url = sparkManager.getServiceURL(5, TimeUnit.MINUTES);
-    Assert.assertNotNull(url);
-//    URL reportURL = url.toURI().resolve("reports").toURL();
-//    HttpURLConnection urlConnection = (HttpURLConnection) reportURL.openConnection();
-//
-//    // POST request
-//    urlConnection.setDoOutput(true);
-//    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(urlConnection.getOutputStream(), "UTF-8"))) {
-//      writer.print(GSON.toJson(MOCK_REPORT_GENERATION_REQUEST));
-//    }
-//    Assert.assertEquals(200, urlConnection.getResponseCode());
-    File successFile = new File(reportBasePath + "/_SUCCESS");
-    Tasks.waitFor(true, () -> (successFile.exists()), 5, TimeUnit.MINUTES);
-    LOG.info("Report file: {}", Files.readAllLines(Paths.get(reportBasePath + "/reportId.json")));
+    reportBasePath = new File(TEMP_FOLDER.newFolder(), "report").getAbsolutePath();
+    metaBasePath =  new File(TEMP_FOLDER.newFolder(), "meta").getAbsolutePath();
   }
 
   @Test
@@ -160,23 +97,30 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
     DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
-      Location nsLocation = runMeta.get().getLocation(namespace);
-      nsLocation.createNew();
-      dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, nsLocation.getOutputStream());
-      String program = namespace + ".SmartWorkflow";
-      String run = "randomRunId";
-
-      long time = 1520808000L;
-      long delay = TimeUnit.MINUTES.toSeconds(5);
-      dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
-                                                                ProgramRunMetaFileUtil.startingInfo("user")));
-      dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
-                                                                time + delay, null));
-      dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
-                                                                time + delay, null));
-      dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
-                                                                time + 2 * delay, null));
-      dataFileWriter.close();
+      Location nsLocation = runMeta.get().getBaseLocation().append(namespace);
+      nsLocation.mkdirs();
+      LOG.info("nsLocation {} exists='{}', isDir='{}'", nsLocation, nsLocation.exists(), nsLocation.isDirectory());
+      for (int i = 0; i < 5; i++) {
+        long time = 1520808000L + 1000 * i;
+        Location reportLocation = nsLocation.append(Long.toString(time));
+        reportLocation.createNew();
+        LOG.info("reportLocation {} exists='{}', isDir='{}'", reportLocation, reportLocation.exists(),
+                 reportLocation.isDirectory());
+        dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
+        String program = namespace + ".SmartWorkflow";
+        String run = "randomRunId";
+        long delay = TimeUnit.MINUTES.toSeconds(5);
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
+                                                                  ProgramRunMetaFileUtil.startingInfo("user")));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
+                                                                  time + delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
+                                                                  time + delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
+                                                                  time + 2 * delay, null));
+        dataFileWriter.close();
+      }
+      LOG.info("nsLocation.list() = {}", nsLocation.list());
     }
   }
 }

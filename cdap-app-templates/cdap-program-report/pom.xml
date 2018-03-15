@@ -121,7 +121,7 @@
     <dependency>
       <groupId>com.databricks</groupId>
       <artifactId>spark-avro_2.11</artifactId>
-      <version>3.0.1</version>
+      <version>4.0.0</version>
     </dependency>
     <!-- Hadoop Dependencies -->
     <dependency>
