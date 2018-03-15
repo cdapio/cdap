@@ -19,10 +19,12 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
+let artifactBasePath = `/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties`;
 let statsPath = `${basepath}/workflows/:workflowId/statistics?start=0`;
 
 export const MyPipelineApi = {
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
   pollStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
+  fetchWidgetJson: apiCreator(dataSrc, 'GET', 'REQUEST', artifactBasePath)
 };

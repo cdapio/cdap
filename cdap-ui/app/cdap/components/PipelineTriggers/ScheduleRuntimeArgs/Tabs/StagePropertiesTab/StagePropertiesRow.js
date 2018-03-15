@@ -74,18 +74,25 @@ export default class StagePropertiesRow extends Component {
     setArgMapping(constructedKey, this.state.triggeredPipelineMacro, 'properties', oldValue);
   };
 
-  getDisplaForPropertyName = () => {
-    if (!this.state.property) {
-      return [DEFAULTPROPERTYMESSAGE];
-    }
-    return [this.state.property, DEFAULTPROPERTYMESSAGE];
-  };
-
   getDisplayForTriggeredPipelineMacro = () => {
     if (!this.state.triggeredPipelineMacro) {
       return [DEFAULTTRIGGEREDMACROMESSAGE];
     }
     return [this.state.triggeredPipelineMacro, DEFAULTTRIGGEREDMACROMESSAGE];
+  };
+
+  getPropertyLabel = (property) => {
+    if (property === DEFAULTPROPERTYMESSAGE) {
+      return DEFAULTPROPERTYMESSAGE;
+    }
+    let {args} = ScheduleRuntimeArgsStore.getState();
+    let {stageWidgetJsonMap} = args;
+    let properties = [];
+    stageWidgetJsonMap[this.state.stage]['configuration-groups'].map(group => {
+      properties = properties.concat(group.properties);
+    });
+    let matchProperty = properties.filter(prop => prop.name === property);
+    return !matchProperty.length ? property : matchProperty[0].label;
   };
 
   render() {
@@ -95,6 +102,13 @@ export default class StagePropertiesRow extends Component {
     if (stage) {
       properties = stage.properties;
     }
+    properties = [DEFAULTPROPERTYMESSAGE].concat(properties);
+    properties = properties.map(prop => {
+      return {
+        id: prop,
+        label: this.getPropertyLabel(prop)
+      };
+    });
     return (
       <Row>
         <Col xs={3}>
@@ -123,15 +137,19 @@ export default class StagePropertiesRow extends Component {
         <Col xs={4}>
           <div className="select-dropdown">
             <select
-              value={this.state.property}
               onChange={this.onPropertyChange}
+              value={this.state.property}
             >
               {
-                this.getDisplaForPropertyName()
-                .concat(properties)
-                .map((prop, i) => {
+                properties.map((prop, i) => {
                   return (
-                    <option key={i}>{prop}</option>
+                    <option
+                      key={i}
+                      value={prop.id}
+                      selected={prop.id === this.state.property}
+                    >
+                      {prop.label}
+                    </option>
                   );
                 })
               }
