@@ -79,7 +79,7 @@ export default class SetPreferenceAction extends Component {
     let iconClasses = classnames({'fa-lg': this.props.setAtNamespaceLevel}, {'text-success': this.state.preferencesSaved});
     let tooltipID = `${this.namespace}-setpreferences`;
     if (this.props.entity) {
-      tooltipID = `${this.props.entity.uniqueId}-setpreferences`;
+      tooltipID = `setpreferences-${this.props.entity.uniqueId}`;
     }
     return (
       <span className="btn btn-secondary btn-sm">
