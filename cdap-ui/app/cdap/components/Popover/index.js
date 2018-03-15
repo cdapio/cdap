@@ -135,7 +135,8 @@ export default class Popover extends Component {
           id={this.id}
           placement={this.props.placement || 'auto'}
           className={classnames("popper", {
-          'hide': !this.state.showPopover
+          'hide': !this.state.showPopover,
+          'tooltip': this.props.showOn === 'Hover'
           })}
           onClick={this.handleBubbleEvent}
         >

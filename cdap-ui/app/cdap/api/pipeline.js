@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,19 @@ import {apiCreator} from 'services/resource-helper';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
 let statsPath = `${basepath}/workflows/:workflowId/statistics?start=0`;
+let schedulePath = `${basepath}/schedules/:scheduleId`;
+let programPath = `${basepath}/:programType/:programName`;
 
 export const MyPipelineApi = {
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
-  pollStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
+
+  schedule: apiCreator(dataSrc, 'POST', 'REQUEST', `${schedulePath}/resume`),
+  suspend: apiCreator(dataSrc, 'POST', 'REQUEST', `${schedulePath}/suspend`),
+  getScheduleStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${schedulePath}/status`),
+
+  getStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
+  getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/runs`),
+  pollRuns: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/runs`),
+  getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/nextruntime)`),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
 };

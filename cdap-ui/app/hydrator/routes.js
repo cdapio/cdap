@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       })
         .state('hydrator.create', {
-          url: '/studio?artifactType&draftId&workspaceId&configParams&rulesengineid&resourceCenterId',
+          url: '/studio?artifactType&draftId&workspaceId&configParams&rulesengineid&resourceCenterId&cloneId',
           onEnter: function() {
             document.title = 'CDAP | Studio';
           },
@@ -128,6 +128,15 @@ angular.module(PKG.name + '.feature.hydrator')
                   defer.resolve(false);
                 }
                 $window.localStorage.removeItem($stateParams.rulesengineid);
+              } else if ($stateParams.cloneId) {
+                try {
+                  let configParams = $window.localStorage.getItem($stateParams.cloneId);
+                  let config = JSON.parse(configParams);
+                  defer.resolve(config);
+                } catch (e) {
+                  defer.resolve(false);
+                }
+                $window.localStorage.removeItem($stateParams.cloneId);
               } else {
                 defer.resolve(false);
               }
@@ -317,9 +326,7 @@ angular.module(PKG.name + '.feature.hydrator')
               controllerAs: 'DetailCtrl'
             },
             'toppanel@hydrator.detail': {
-              templateUrl: '/assets/features/hydrator/templates/detail/top-panel.html',
-              controller: 'HydratorDetailTopPanelController',
-              controllerAs: 'TopPanelCtrl'
+              templateUrl: '/assets/features/hydrator/templates/detail/top-panel.html'
             },
             'canvas@hydrator.detail': {
               templateUrl: '/assets/features/hydrator/templates/detail/canvas.html',

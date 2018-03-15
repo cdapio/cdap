@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal, HydratorPlusPlusDetailRunsStore, MyPipelineStatusMapper, moment, $interval) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailMetricsStore, $uibModal, MyPipelineStatusMapper, moment, $interval, $scope) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
-    this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
+    this.PipelineDetailStore = window.CaskCommon.PipelineDetailStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
@@ -32,9 +32,10 @@ angular.module(PKG.name + '.feature.hydrator')
       console.log('ERROR in configuration from backend: ', e);
       return;
     }
-    var obj = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
+    let pipelineConfig = this.PipelineDetailStore.getState().config;
+    let nodes = this.HydratorPlusPlusHydratorService.getNodesFromStages(pipelineConfig.stages);
 
-    this.DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
+    this.DAGPlusPlusNodesActionsFactory.createGraphFromConfig(nodes, pipelineConfig.connections, pipelineConfig.comments);
 
     this.updateNodesAndConnections = function () {
       var activeNode = this.DAGPlusPlusNodesStore.getActiveNodeId();
@@ -45,13 +46,12 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     };
 
-
     this.setActiveNode = function() {
       var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
       if (!nodeId) {
         return;
       }
-      let pluginNode = this.HydratorPlusPlusDetailNonRunsStore.getPluginObject(nodeId);
+      let pluginNode = nodes.find(node => node.name === nodeId);
       this.$uibModal
           .open({
             windowTemplateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/popover-template.html',
@@ -68,26 +68,31 @@ angular.module(PKG.name + '.feature.hydrator')
               rDisabled: function() {
                 return true;
               },
-              rNodeMetricsContext: function() {
-                var appParams = HydratorPlusPlusDetailRunsStore.getParams();
-                var latestRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
-                var logsParams = HydratorPlusPlusDetailRunsStore.getLogsParams();
-                let runs = HydratorPlusPlusDetailRunsStore.getRuns();
+              rNodeMetricsContext: function($stateParams, GLOBALS) {
+                'ngInject';
+                let pipelineDetailStoreState = window.CaskCommon.PipelineDetailStore.getState();
+                let programType = pipelineDetailStoreState.artifact.name === GLOBALS.etlDataPipeline ? 'workflow' : 'spark';
+                let programId = pipelineDetailStoreState.artifact.name === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
+
                 return {
-                  runRecord: latestRun,
-                  runs,
-                  namespace: appParams.namespace,
-                  app: appParams.app,
-                  programType: HydratorPlusPlusDetailRunsStore.getMetricProgramType(),
-                  programId: logsParams.programId
+                  runRecord: pipelineDetailStoreState.currentRun,
+                  runs: pipelineDetailStoreState.runs,
+                  namespace: $stateParams.namespace,
+                  app: pipelineDetailStoreState.name,
+                  programType,
+                  programId
                 };
               },
-              rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
+              rPlugin: function(HydratorPlusPlusNodeService, HydratorPlusPlusHydratorService, GLOBALS) {
+                'ngInject';
                 let pluginId = pluginNode.name;
-                let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
-                let artifactVersion = HydratorPlusPlusDetailNonRunsStore.getArtifact().version;
-                let sourceConnections = HydratorPlusPlusDetailNonRunsStore.getSourceConnections(pluginId);
-                let sourceNodes = HydratorPlusPlusDetailNonRunsStore.getSourceNodes(pluginId);
+                let pipelineDetailStoreState = window.CaskCommon.PipelineDetailStore.getState();
+                let appType = pipelineDetailStoreState.artifact.name;
+                let artifactVersion = pipelineDetailStoreState.artifact.version;
+                let sourceConnections = pipelineDetailStoreState.config.connections.filter(conn => conn.to === pluginId);
+                let nodes = HydratorPlusPlusHydratorService.getNodesFromStages(pipelineDetailStoreState.config.stages);
+                let nodesMap = HydratorPlusPlusHydratorService.getNodesMap(nodes);
+                let sourceNodes = sourceConnections.map(conn => nodesMap[conn.from]);
                 return HydratorPlusPlusNodeService
                   .getPluginInfo(pluginNode, appType, sourceConnections, sourceNodes, artifactVersion)
                   .then((nodeWithInfo) => (
@@ -102,7 +107,7 @@ angular.module(PKG.name + '.feature.hydrator')
                       isCondition: GLOBALS.pluginConvert[nodeWithInfo.type] === 'condition',
                     }
                   ));
-              }]
+              }
             }
           })
           .result
@@ -134,31 +139,42 @@ angular.module(PKG.name + '.feature.hydrator')
       this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
     }.bind(this));
 
-    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(() => {
-      let runs = HydratorPlusPlusDetailRunsStore.getRuns().reverse();
-      this.currentRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
-      let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
-      this.$interval.cancel(this.currentRunTimeCounter);
-      if (status === 'Running') {
-        this.currentRunTimeCounter = this.$interval(() => {
-          let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.start);
-          this.currentRun = Object.assign({}, this.currentRun, {
-            duration
-          });
-        }, 1000);
+    this.pipelineDetailStoreSubscription = this.PipelineDetailStore.subscribe(() => {
+      let pipelineDetailStoreState = this.PipelineDetailStore.getState();
+      let runs = pipelineDetailStoreState.runs;
+      if (runs.length) {
+        this.currentRun = pipelineDetailStoreState.currentRun;
+        if (_.isEmpty(this.currentRun)) {
+          this.currentRun = runs[0];
+        }
+        let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
+        this.$interval.cancel(this.currentRunTimeCounter);
+        if (status === 'Running') {
+          this.currentRunTimeCounter = this.$interval(() => {
+            let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.start);
+            this.currentRun = Object.assign({}, this.currentRun, {
+              duration
+            });
+          }, 1000);
+        }
+        let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
+        this.currentRun = Object.assign({}, this.currentRun, {
+          duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
+          startTime: this.currentRun.start ? this.moment(this.currentRun.start * 1000).format('hh:mm:ss a') : null,
+          starting: !this.currentRun.start ? this.currentRun.starting : null,
+          statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
+          status
+        });
+        let reversedRuns = window.CaskCommon.CDAPHelpers.reverseWithoutMutating(runs);
+        let runNumber = _.findIndex(reversedRuns, {runid: this.currentRun.runid});
+        this.currentRunIndex = runNumber + 1;
+        this.totalRuns = runs.length;
       }
-      let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
-      this.currentRun = Object.assign({}, this.currentRun, {
-        duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
-        startTime: this.currentRun.start ? this.moment(this.currentRun.start * 1000).format('hh:mm:ss a') : null,
-        starting: !this.currentRun.start ? this.currentRun.starting : null,
-        statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
-        status
-      });
-      let runNumber = _.findIndex(runs, {runid: this.currentRun.runid});
-      this.currentRunIndex = runNumber + 1;
-      this.totalRuns = runs.length;
     });
 
     DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNode.bind(this));
+
+    $scope.$on('$destroy', () => {
+      this.pipelineDetailStoreSubscription();
+    });
   });

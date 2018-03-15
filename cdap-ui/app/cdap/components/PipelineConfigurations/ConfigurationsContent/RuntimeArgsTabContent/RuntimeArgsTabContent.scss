@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+#runtime-arguments-tab-content {
+  .step-content-heading {
+    .step-content-subtitle {
+      font-weight: initial;
+      font-size: 12px;
+    }
+  }
+  .runtime-arguments-labels {
+    .key-label {
+      width: 34%;
+    }
+
+    .value-label {
+      width: 44%;
+    }
+
+    .provided-label {
+      width: initial;
+    }
+
+    .provided-popover {
+      display: inline-block;
+      cursor: pointer;
+
+      .icon-caret-square-o-down {
+        margin-left: 5px;
+        transform: translateY(-1px);
+      }
+
+      .popper {
+        min-width: 90px;
+        width: 90px;
+      }
+    }
+  }
+
+  .runtime-arguments-values {
+    /* 192px = 32px (height of input box) * 4
+             + 16px (margin between each boxes) * 4 */
+    max-height: 192px;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    .key-value-pair-preference {
+      input[type="text"] {
+        width: 35%;
+      }
+
+      input[type="checkbox"] {
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+        margin: 0 16px 0 8px;
+      }
+
+      .btn-link {
+        padding: 6px 8px;
+      }
+    }
+  }
+}
