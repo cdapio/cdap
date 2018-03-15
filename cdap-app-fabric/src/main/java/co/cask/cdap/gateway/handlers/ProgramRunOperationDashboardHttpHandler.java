@@ -140,7 +140,8 @@ public class ProgramRunOperationDashboardHttpHandler extends AbstractAppFabricHt
     String[] users = {"Ajai", "Lea", "Mao"};
     String[] startMethods = {"Manual", "Scheduled", "Triggered"};
 
-    ProgramRunStatus[] statuses = {ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.KILLED};
+    String[] statuses = {ProgramRunStatus.COMPLETED.name(), ProgramRunStatus.FAILED.name(),
+      ProgramRunStatus.KILLED.name()};
     int[] durations = {400, 500, 600};
     for (int i = 0; i < 60; i++) {
       int m = i % 3;

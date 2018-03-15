@@ -336,7 +336,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         long endTs = startTs + durations[m];
         runs.add(new ProgramRunReportRecord(namespaces[m], new ArtifactMetaInfo("USER", "CustomApp", "v1"),
                                             new ProgramRunReportRecord.ApplicationMetaInfo("CustomApp", "v1"), types[m],
-                                            statuses[m], startTs, runningTs, endTs, durations[m], users[m],
+                                            statuses[m].name(), startTs, runningTs, endTs, durations[m], users[m],
                                             startMethods[m], Collections.EMPTY_MAP, 2, 4, 6));
       }
       responder.sendJson(HttpResponseStatus.OK.code(), GSON.toJson(new ProgramRunReport(offset, limit, 10000, runs)));

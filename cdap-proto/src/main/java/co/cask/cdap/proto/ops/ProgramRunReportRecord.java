@@ -16,8 +16,6 @@
 
 package co.cask.cdap.proto.ops;
 
-import co.cask.cdap.proto.ProgramRunStatus;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -31,15 +29,15 @@ public class ProgramRunReportRecord {
   private final ApplicationMetaInfo application;
   private final String programName;
   @Nullable
-  private final ProgramRunStatus status;
+  private final String status;
   @Nullable
-  private final long start;
+  private final Long start;
   @Nullable
-  private final long running;
+  private final Long running;
   @Nullable
-  private final long end;
+  private final Long end;
   @Nullable
-  private final long duration;
+  private final Long duration;
   @Nullable
   private final String user;
   @Nullable
@@ -47,14 +45,14 @@ public class ProgramRunReportRecord {
   @Nullable
   private final Map<String, String> runtimeArgs;
   @Nullable
-  private final int numLogWarnings;
+  private final Integer numLogWarnings;
   @Nullable
-  private final int numLogErrors;
+  private final Integer numLogErrors;
   @Nullable
-  private final int numRecordsOut;
+  private final Integer numRecordsOut;
 
   public ProgramRunReportRecord(String namespace, ArtifactMetaInfo artifact, ApplicationMetaInfo application,
-                                String programName, ProgramRunStatus status,
+                                String programName, String status,
                                 long start, long running, long end, long duration, String user, String startMethod,
                                 Map<String, String> runtimeArgs,
                                 int numLogWarnings, int numLogErrors, int numRecordsOut) {
@@ -93,27 +91,27 @@ public class ProgramRunReportRecord {
   }
 
   @Nullable
-  public ProgramRunStatus getStatus() {
+  public String getStatus() {
     return status;
   }
 
   @Nullable
-  public long getStart() {
+  public Long getStart() {
     return start;
   }
 
   @Nullable
-  public long getRunning() {
+  public Long getRunning() {
     return running;
   }
 
   @Nullable
-  public long getEnd() {
+  public Long getEnd() {
     return end;
   }
 
   @Nullable
-  public long getDuration() {
+  public Long getDuration() {
     return duration;
   }
 
@@ -133,17 +131,17 @@ public class ProgramRunReportRecord {
   }
 
   @Nullable
-  public int getNumLogWarnings() {
+  public Integer getNumLogWarnings() {
     return numLogWarnings;
   }
 
   @Nullable
-  public int getNumLogErrors() {
+  public Integer getNumLogErrors() {
     return numLogErrors;
   }
 
   @Nullable
-  public int getNumRecordsOut() {
+  public Integer getNumRecordsOut() {
     return numRecordsOut;
   }
 
