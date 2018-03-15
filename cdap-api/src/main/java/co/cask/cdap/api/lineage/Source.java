@@ -70,10 +70,12 @@ public class Source {
   /**
    * Return the source as defined by the provided dataset name.
    * @param datasetName the name of the dataset
-   * @param namespace the name of the namespace
+   * @param namespace the name of the namespace, when {@code null} is provided
+   *                  the namespace in which program runs is considered as the
+   *                  namespace for the Source
    * @return the Source
    */
-  public static Source ofDataset(String datasetName, String namespace) {
+  public static Source ofDataset(String datasetName, @Nullable String namespace) {
     return ofDataset(datasetName, namespace, Collections.emptyMap());
   }
 
@@ -89,11 +91,13 @@ public class Source {
   /**
    * Return the source as defined by the provided dataset name.
    * @param datasetName the name of the dataset
-   * @param namespace the name of the namespace
+   * @param namespace the name of the namespace, when {@code null} is provided
+   *                  the namespace in which program runs is considered as the
+   *                  namespace for the Source
    * @param properties the properties to be associated with the source for lineage purpose
    * @return the Source
    */
-  public static Source ofDataset(String datasetName, String namespace, Map<String, String> properties) {
+  public static Source ofDataset(String datasetName, @Nullable String namespace, Map<String, String> properties) {
     return new Source(datasetName, namespace, properties);
   }
 

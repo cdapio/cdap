@@ -22,13 +22,13 @@ import java.util.Set;
 /**
  * Represents a single operation happening on the set of {@link Input}s to create set of {@link Output}s.
  */
-public class FieldOperation {
+public class Operation {
   private final String name;
   private final String description;
   private final Set<Input> inputs;
   private final Set<Output> outputs;
 
-  private FieldOperation(String name, String description, Set<Input> inputs, Set<Output> outputs) {
+  private Operation(String name, String description, Set<Input> inputs, Set<Output> outputs) {
     this.name = name;
     this.description = description;
     this.inputs = inputs;
@@ -64,7 +64,7 @@ public class FieldOperation {
   }
 
   /**
-   * Builder for creating FieldOperation
+   * Builder for creating Operation
    */
   public static class Builder {
     private final String name;
@@ -104,8 +104,8 @@ public class FieldOperation {
       return this;
     }
 
-    public FieldOperation build() {
-      return new FieldOperation(name, description, inputs, outputs);
+    public Operation build() {
+      return new Operation(name, description, inputs, outputs);
     }
   }
 }

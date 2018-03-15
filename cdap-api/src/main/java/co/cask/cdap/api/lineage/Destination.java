@@ -46,6 +46,7 @@ public class Destination {
    * @return the namespace name if the destination exist in different namespace,
    * otherwise {@code null} is returned
    */
+  @Nullable
   public String getNamespace() {
     return namespace;
   }
@@ -69,10 +70,12 @@ public class Destination {
   /**
    * Return the destination as defined by the provided dataset name.
    * @param datasetName the name of the dataset
-   * @param namespace the name of the namespace
+   * @param namespace the name of the namespace, when {@code null} is provided
+   *                  the namespace in which program runs is considered as the
+   *                  namespace for the Destination
    * @return the Source
    */
-  public static Destination ofDataset(String datasetName, String namespace) {
+  public static Destination ofDataset(String datasetName, @Nullable String namespace) {
     return ofDataset(datasetName, namespace, Collections.emptyMap());
   }
 
@@ -88,11 +91,13 @@ public class Destination {
   /**
    * Return the destination as defined by the provided dataset name.
    * @param datasetName the name of the dataset
-   * @param namespace the name of the namespace
+   * @param namespace the name of the namespace, when {@code null} is provided
+   *                  the namespace in which program runs is considered as the
+   *                  namespace for the Destination
    * @param properties the properties to be associated with the destination for lineage purpose
    * @return the Destination
    */
-  public static Destination ofDataset(String datasetName, String namespace, Map<String, String> properties) {
+  public static Destination ofDataset(String datasetName, @Nullable String namespace, Map<String, String> properties) {
     return new Destination(datasetName, namespace, properties);
   }
 

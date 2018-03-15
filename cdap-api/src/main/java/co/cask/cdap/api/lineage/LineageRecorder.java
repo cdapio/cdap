@@ -26,7 +26,7 @@ public interface LineageRecorder {
    * Record the field level operations against the given {@link Destination}.
    *
    * @param destination the destination for which to record field operations
-   * @param fieldOperations The {@link List} of field operations.
+   * @param operations The {@link List} of field operations.
    */
-  void record(Destination destination, List<FieldOperation> fieldOperations);
+  void record(Destination destination, List<Operation> operations);
 }
