@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
-import d3 from 'd3';
+import * as d3Lib from 'd3';
 import uuidV4 from 'uuid/v4';
 import isNil from 'lodash/isNil';
 
@@ -43,17 +43,17 @@ export default class PieChart extends Component {
     if (isNil(this.state.data) || (Array.isArray(this.state.data) && !this.state.data.length)) {
       return;
     }
-    var svg = d3.select(`#${this.state.id} svg`),
+    var svg = d3Lib.select(`#${this.state.id} svg`),
         width = +svg.attr("width"),
         height = +svg.attr("height"),
         radius = Math.min(width, height) / 2,
         g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-    var pie = d3.layout.pie()
+    var pie = d3Lib.layout.pie()
         .sort(null)
         .value(function(d) { return d.count; });
 
-    var path = d3.svg.arc()
+    var path = d3Lib.svg.arc()
         .outerRadius(radius - 10)
         .innerRadius(0);
 

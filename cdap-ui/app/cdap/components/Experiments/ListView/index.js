@@ -18,8 +18,8 @@ import React, { Component } from 'react';
 import Helmet from 'react-helmet';
 import ExperimentsListViewWrapper from 'components/Experiments/ListView/ListViewWrapper';
 import { Provider } from 'react-redux';
-import experimentsStore, { DEFAULT_EXPERIMENTS } from 'components/Experiments/store';
-import { getExperimentsList, setAlgorithmsList, updatePagination, handlePageChange } from 'components/Experiments/store/ActionCreator';
+import experimentsStore, { DEFAULT_EXPERIMENTS, MMDS_SORT_METHODS, MMDS_SORT_COLUMN } from 'components/Experiments/store';
+import { getExperimentsList, setAlgorithmsList, updateQueryParameters, handlePageChange } from 'components/Experiments/store/ActionCreator';
 import queryString from 'query-string';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
@@ -61,8 +61,8 @@ export default class ExperimentsList extends Component {
 
   parseUrlAndUpdateStore = (nextProps) => {
     let props = nextProps || this.props;
-    let { offset, limit } = this.getQueryObject(queryString.parse(props.location.search));
-    updatePagination({ offset, limit });
+    let { offset, limit, sortMethod, sortColumn } = this.getQueryObject(queryString.parse(props.location.search));
+    updateQueryParameters({ offset, limit, sortMethod, sortColumn });
   };
 
   getQueryObject = (query) => {
@@ -71,8 +71,10 @@ export default class ExperimentsList extends Component {
     }
     let {
       offset = DEFAULT_EXPERIMENTS.offset,
-      limit = DEFAULT_EXPERIMENTS.limit
+      limit = DEFAULT_EXPERIMENTS.limit,
+      sort
     } = query;
+    let sortMethod, sortColumn;
     offset = parseInt(offset, 10);
     limit = parseInt(limit, 10);
     if (isNaN(offset)) {
@@ -81,13 +83,21 @@ export default class ExperimentsList extends Component {
     if (isNaN(limit)) {
       limit = DEFAULT_EXPERIMENTS.limit;
     }
-    return { offset, limit };
+    if (!sort) {
+      sortMethod = MMDS_SORT_METHODS.ASC;
+      sortColumn = MMDS_SORT_COLUMN;
+    } else {
+      let sortSplit = sort.split(' ');
+      sortColumn = sortSplit[0] || MMDS_SORT_COLUMN;
+      sortMethod = sortSplit[1] || MMDS_SORT_METHODS.ASC;
+    }
+    return { offset, limit, sortMethod, sortColumn };
   };
 
   render() {
     return (
       <Provider store={experimentsStore}>
-        <div>
+        <div className="experiments-list-container">
           <Helmet title="CDAP | All Experiments" />
           <ExperimentsListViewWrapper />
         </div>

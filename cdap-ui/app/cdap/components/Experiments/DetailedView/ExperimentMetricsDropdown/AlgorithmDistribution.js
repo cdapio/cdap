@@ -16,13 +16,13 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import d3 from 'd3';
+import * as d3Lib from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
 import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 const HEIGHT_OF_PIE_CHART = 190;
-const colorScale = d3.scale.category20();
+const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
 const AlgorithmDistribution = ({algorithms}) => {
   if (!algorithms.length) {
     return (
