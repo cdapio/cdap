@@ -15,71 +15,50 @@
  */
 
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import {connect} from 'react-redux';
 import {renderGraph} from 'components/OpsDashboard/RunsGraph/graphRenderer';
-import IconSVG from 'components/IconSVG';
-import MyOperationsApi from 'api/operations';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import moment from 'moment';
-import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
 import ToggleRunsList from 'components/OpsDashboard/RunsGraph/ToggleRunsList';
+import Legends from 'components/OpsDashboard/RunsGraph/Legends';
+import TypeSelector from 'components/OpsDashboard/RunsGraph/TypeSelector';
+import {Observable} from 'rxjs/Observable';
 
 require('./RunsGraph.scss');
 
 const RUNS_GRAPH_CONTAINER = 'runs-graph-container';
+const GRAPH_HEIGHT = 230;
 
-export default class RunsGraph extends Component {
-  state = {
-    loading: true,
-    data: [],
-    pipelineCount: 0,
-    customAppCount: 0
+class RunsGraphView extends Component {
+  static propTypes = {
+    loading: PropTypes.bool,
+    data: PropTypes.array,
+    legends: PropTypes.object
   };
 
   componentDidMount() {
-    this.getData();
+    // update graph on window resize
+    this.windowResize$ = Observable.fromEvent(window, 'resize')
+      .debounceTime(500)
+      .subscribe(() => {
+        this.renderGraph();
+      });
   }
 
-  getData() {
-    let start = moment().subtract(24, 'h').format('x'),
-        duration = 1440;
+  componentWillReceiveProps(nextProps) {
+    this.renderGraph(nextProps);
+  }
 
-    start = parseInt(start, 10);
+  componentWillUnmount() {
+    if (this.windowResize$ && this.windowResize$.unsubscribe) {
+      this.windowResize$.unsubscribe();
+    }
+  }
 
-    let params = {
-      start,
-      duration, // 24 hours in minutes
-      namespace: getCurrentNamespace()
-    };
+  renderGraph(props = this.props) {
+    let containerElem = document.getElementById(RUNS_GRAPH_CONTAINER);
 
-    MyOperationsApi.getDashboard(params)
-      .subscribe((res) => {
-        let {
-          pipelineCount,
-          customAppCount,
-          buckets
-        } = parseDashboardData(res, start, duration);
-
-        let data = Object.keys(buckets).map((time) => {
-          return {
-            ...buckets[time],
-            time
-          };
-        });
-
-        this.setState({
-          pipelineCount,
-          customAppCount,
-          data,
-          loading: false
-        });
-
-        // Render Graph
-        let containerElem = document.getElementById(RUNS_GRAPH_CONTAINER);
-
-        let width = containerElem.offsetWidth,
-            height = 230;
-        renderGraph('#runs-graph', width, height, this.state.data);
-      });
+    let width = containerElem.offsetWidth;
+    renderGraph('#runs-graph', width, GRAPH_HEIGHT, props.data, props.legends);
   }
 
   render() {
@@ -90,17 +69,7 @@ export default class RunsGraph extends Component {
             Runs Timeline
           </div>
 
-          <div className="type-selector">
-            <div className="type-item">
-              <IconSVG name="icon-check-square" />
-              <span>Pipelines ({this.state.pipelineCount})</span>
-            </div>
-
-            <div className="type-item">
-              <IconSVG name="icon-check-square" />
-              <span>Custom Apps ({this.state.customAppCount})</span>
-            </div>
-          </div>
+          <TypeSelector />
 
           <div className="display-picker">
             <div className="time-picker">
@@ -121,70 +90,24 @@ export default class RunsGraph extends Component {
           </div>
         </div>
 
-        <div className="legends">
-          <div className="start-method-legend">
-            <div className="select-item">
-              <IconSVG name="icon-check-square" />
-              <IconSVG
-                name="icon-circle"
-                className="manual"
-              />
-              <span>Manually started runs</span>
-            </div>
-
-            <div className="select-item">
-              <IconSVG name="icon-check-square" />
-              <IconSVG
-                name="icon-circle"
-                className="schedule"
-              />
-              <span>Scheduled/triggered runs</span>
-            </div>
-          </div>
-
-          <div className="status-legend">
-            <div className="select-item">
-              <IconSVG name="icon-check-square" />
-              <IconSVG
-                name="icon-circle"
-                className="running"
-              />
-              <span>Running</span>
-            </div>
-
-            <div className="select-item">
-              <IconSVG name="icon-check-square" />
-              <IconSVG
-                name="icon-circle"
-                className="successful"
-              />
-              <span>Successful runs</span>
-            </div>
-
-            <div className="select-item">
-              <IconSVG name="icon-check-square" />
-              <IconSVG
-                name="icon-circle"
-                className="failed"
-              />
-              <span>Failed runs</span>
-            </div>
-          </div>
-
-          <div className="delay-legend">
-            <div className="select-item">
-              <IconSVG name="icon-check-square" />
-              <IconSVG
-                name="icon-circle"
-                className="delay"
-              />
-              <span>Delay between starting and running</span>
-            </div>
-          </div>
-        </div>
+        <Legends />
 
         <ToggleRunsList />
       </div>
     );
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    loading: state.dashboard.loading,
+    data: state.dashboard.data,
+    legends: state.legends
+  };
+};
+
+const RunsGraph = connect(
+  mapStateToProps
+)(RunsGraphView);
+
+export default RunsGraph;

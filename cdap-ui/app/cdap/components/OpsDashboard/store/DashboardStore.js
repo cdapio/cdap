@@ -15,10 +15,17 @@
  */
 
 import {combineReducers, createStore} from 'redux';
+import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
 
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
   toggleDisplayRuns: 'DASHBOARD_TOGGLE_DISPLAY_RUNS',
+  toggleLegend: 'DASHBOARD_TOGGLE_LEGEND',
+  togglePipeline: 'DASHBOARD_TOGGLE_PIPELINE',
+  toggleCustomApp: 'DAHBOARD_TOGGLE_CUSTOM_APP',
+  enableLoading: 'DASHBOARD_ENABLE_LOADING',
+  setData: 'DAHBOARD_SET_DATA',
+  updateData: 'DASHBOARD_UPDATE_DATA',
   reset: 'DASHBOARD_RESET'
 };
 
@@ -28,16 +35,41 @@ const defaultAction = {
 };
 
 const defaultInitialState = {
+  rawData: [],
+  startTime: null,
+  duration: null,
   data: [],
   pipelineCount: 0,
   customAppCount: 0,
   loading: false,
   displayRunsList: false,
-  displayBucketInfo: null
+  displayBucketInfo: null,
+  pipeline: true,
+  customApp: true
+};
+
+const legendsInitialState = {
+  manual: true,
+  schedule: true,
+  success: true,
+  failed: true,
+  running: false,
+  delay: true
 };
 
 const dashboard = (state = defaultInitialState, action = defaultAction) => {
   switch (action.type) {
+    case DashboardActions.setData:
+      return {
+        ...state,
+        rawData: action.payload.rawData,
+        data: action.payload.data,
+        pipelineCount: action.payload.pipelineCount,
+        customAppCount: action.payload.customAppCount,
+        startTime: action.payload.startTime,
+        duration: action.payload.duration,
+        loading: false
+      };
     case DashboardActions.setDisplayBucket:
       return {
         ...state,
@@ -49,6 +81,23 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         ...state,
         displayRunsList: !state.displayRunsList
       };
+    case DashboardActions.togglePipeline:
+      return {
+        ...state,
+        pipeline: !state.pipeline,
+        data: parseDashboardData(state.rawData, state.startTime, state.duration, !state.pipeline, state.customApp).data
+      };
+    case DashboardActions.toggleCustomApp:
+      return {
+        ...state,
+        customApp: !state.customApp,
+        data: parseDashboardData(state.rawData, state.startTime, state.duration, state.pipeline, !state.customApp).data
+      };
+    case DashboardActions.enableLoading:
+      return {
+        ...state,
+        loading: true
+      };
     case DashboardActions.reset:
       return defaultInitialState;
     default:
@@ -56,12 +105,28 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
   }
 };
 
+const legends = (state = legendsInitialState, action = defaultAction) => {
+  switch (action.type) {
+    case DashboardActions.toggleLegend:
+      return {
+        ...state,
+        [action.payload.type]: !state[action.payload.type]
+      };
+    case DashboardActions.reset:
+      return legendsInitialState;
+    default:
+      return state;
+  }
+};
+
 const DashboardStore = createStore(
   combineReducers({
-    dashboard
+    dashboard,
+    legends
   }),
   {
-    dashboard: defaultInitialState
+    dashboard: defaultInitialState,
+    legends: legendsInitialState
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
