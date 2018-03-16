@@ -18,7 +18,7 @@
      ng-class="{'active': MacroWidget.isMacro }">
   <label
     class="col-xs-3 control-label"
-    ng-if="(['javascript-editor', 'python-editor', 'scala-editor'].indexOf(MacroWidget.field['widget-type']) === -1)"
+    ng-if="(MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) === -1)"
     uib-tooltip="{{::MacroWidget.field.description}}"
     tooltip-placement="right"
     tooltip-append-to-body="true"
@@ -27,8 +27,8 @@
   </label>
 
   <div ng-class="{
-        'col-xs-8': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(MacroWidget.field['widget-type']) === -1),
-        'col-xs-11 code-editor': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(MacroWidget.field['widget-type']) !== -1)
+        'col-xs-8': (MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) === -1),
+        'col-xs-11 code-editor': (MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) !== -1)
       }">
 
     <div
@@ -40,7 +40,7 @@
       -->
       <fieldset
         ng-disabled="MacroWidget.disabled"
-        ng-if="(['javascript-editor', 'python-editor', 'scala-editor'].indexOf(MacroWidget.field['widget-type']) === -1)"
+        ng-if="(MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) === -1)"
         ng-class="{
           'highlight-error': !MacroWidget.node.warning &&
               MacroWidget.node._backendProperties[MacroWidget.field.name].required &&
@@ -69,7 +69,7 @@
         ace-editor requires 'onFocus' event to enable copy paste functionality as part of the directive. When we wrap everything in <fieldset>
         and disable it in published mode the 'onFocus' event doesn't gets propagated to its children ergo ace-editor not knowing about 'onFocus' event. This prevents the user from copying the snippet (CMD + C) from the editor in published mode. Source JIRA: https://issues.cask.co/browse/CDAP-6074
       -->
-      <div ng-if="(['javascript-editor', 'python-editor', 'scala-editor'].indexOf(MacroWidget.field['widget-type']) !== -1)">
+      <div ng-if="(MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) !== -1)">
         <div data-name="MacroWidget.field"
              class="my-widget-container"
              ng-class="{'select-wrapper': MacroWidget.field.widget === 'select'}"
@@ -96,11 +96,41 @@
               !MacroWidget.node.plugin.properties[MacroWidget.field.name]
         }"
       >
+        <!-- If its macro enabled show a textbox -->
         <input
           id="macro-input-{{MacroWidget.field.name}}"
           type="text"
           class="form-control"
+          ng-if="(MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) === -1)"
           ng-model="MacroWidget.node.plugin.properties[MacroWidget.field.name]" />
+        <!--
+          But, if its a code editor, just give a visual feedback but don't change the editor.
+          There might be macros-like strings inside a code so don't change anything.
+        -->
+          <fieldset
+            ng-disabled="MacroWidget.disabled"
+            ng-if="(MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) !== -1)"
+            ng-class="{
+              'highlight-error': !MacroWidget.node.warning &&
+                  MacroWidget.node._backendProperties[MacroWidget.field.name].required &&
+                  !MacroWidget.node.plugin.properties[MacroWidget.field.name]
+            }"
+          >
+            <div data-name="MacroWidget.field"
+                class="my-widget-container"
+                ng-class="{'select-wrapper': MacroWidget.field.widget === 'select'}"
+                data-model="MacroWidget.node.plugin.properties[MacroWidget.field.name]"
+                data-myconfig="MacroWidget.field"
+                disabled="MacroWidget.disabled"
+                data-properties="MacroWidget.node.plugin.properties"
+                widget-disabled="MacroWidget.node.pluginTemplate && MacroWidget.node.lock[MacroWidget.field.name]"
+                input-schema="MacroWidget.node.inputSchema"
+                stage-name="MacroWidget.node.plugin.label"
+                is-field-required="MacroWidget.node._backendProperties[MacroWidget.field.name].required"
+                node="MacroWidget.node"
+                widget-container>
+            </div>
+          </fieldset>
       </fieldset>
     </div>
   </div>
