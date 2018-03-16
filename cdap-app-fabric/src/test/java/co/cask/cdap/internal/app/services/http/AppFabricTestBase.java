@@ -283,6 +283,7 @@ public abstract class AppFabricTestBase {
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
     cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
     cConf.setBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE, true);
+    cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, tmpFolder.newFolder("system-artifacts").getAbsolutePath());
     return cConf;
   }
 
@@ -1107,8 +1108,12 @@ public abstract class AppFabricTestBase {
     if (!name.endsWith(".jar")) {
       name += ".jar";
     }
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     File destination = new File(tmpFolder.newFolder(), name);
+    return buildAppArtifact(cls, manifest, destination);
+  }
+
+  protected File buildAppArtifact(Class<?> cls, Manifest manifest, File destination) throws IOException {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     Files.copy(Locations.newInputSupplier(appJar), destination);
     return destination;
   }

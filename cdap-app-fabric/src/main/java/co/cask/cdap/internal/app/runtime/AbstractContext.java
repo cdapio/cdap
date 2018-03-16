@@ -361,12 +361,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments,
                                           final AccessType accessType) throws DatasetInstantiationException {
-    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
-      throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. " +
-                                                              "Cannot access %s namespace.",
-                                                            name, NamespaceId.SYSTEM, NamespaceId.SYSTEM));
-    }
-
     return Retries.callWithRetries(new Retries.Callable<T, DatasetInstantiationException>() {
       @Override
       public T call() throws DatasetInstantiationException {

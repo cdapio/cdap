@@ -191,6 +191,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
   public final <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
                                                 boolean bypass, AccessType accessType)
     throws DatasetInstantiationException {
+    if (namespace.equals(NamespaceId.SYSTEM.getNamespace()) && !this.namespace.equals(NamespaceId.SYSTEM)) {
+      throw new DatasetInstantiationException(
+        String.format("Cannot access dataset %s in system namespace, from %s namespace",
+                      name, this.namespace.getNamespace()));
+    }
     // apply actual runtime arguments on top of the context's runtime arguments for this dataset
     Map<String, String> dsArguments = RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
     dsArguments.putAll(arguments);

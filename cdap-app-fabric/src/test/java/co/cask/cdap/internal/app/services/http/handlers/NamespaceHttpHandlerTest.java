@@ -414,7 +414,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(namespace);
 
     NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
-                                                           NamespaceConfig.class);
+                                           NamespaceConfig.class);
     Assert.assertEquals("prod", config.getSchedulerQueueName());
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());

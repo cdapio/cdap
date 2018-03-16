@@ -169,7 +169,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
-
     // null means use name provided by app spec
     try {
       return deployApplication(responder, namespace, null, archiveName, configString, ownerPrincipal, updateSchedules);
@@ -543,7 +542,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      namespaceQueryAdmin.get(namespace);
+      if (!namespace.equals(NamespaceId.SYSTEM)) {
+        namespaceQueryAdmin.get(namespace);
+      }
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {

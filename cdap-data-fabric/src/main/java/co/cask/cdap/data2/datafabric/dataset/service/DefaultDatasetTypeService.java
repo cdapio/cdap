@@ -193,11 +193,6 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   public BodyConsumer addModule(final DatasetModuleId datasetModuleId, final String className,
                                 final boolean forceUpdate) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
-    if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      throw new UnsupportedOperationException(
-        String.format("Cannot add module '%s' to '%s' namespace.",
-                      datasetModuleId.getModule(), datasetModuleId.getNamespace()));
-    }
     ensureNamespaceExists(namespaceId);
 
     // It is now determined that a new dataset module will be deployed. First grant privileges, then deploy the module.

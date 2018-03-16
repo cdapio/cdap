@@ -236,7 +236,11 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
     String namespaceId = propertyMap.get(Constants.Logging.TAG_NAMESPACE_ID);
 
-    if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
+    // If logs are from applications in system namespace,
+    // their path will include application and program similar to other namespaces,
+    // else the path will include component and service
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)
+      && !propertyMap.containsKey(Constants.Logging.TAG_APPLICATION_ID)) {
       Preconditions.checkArgument(propertyMap.containsKey(Constants.Logging.TAG_SERVICE_ID),
                                   "%s is expected but not found in the context %s",
                                   Constants.Logging.TAG_SERVICE_ID, propertyMap);

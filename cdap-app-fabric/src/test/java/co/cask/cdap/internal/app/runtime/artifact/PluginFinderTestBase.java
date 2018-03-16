@@ -35,6 +35,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -48,6 +49,12 @@ import java.util.jar.Manifest;
  *
  */
 public abstract class PluginFinderTestBase extends AppFabricTestBase {
+  private static ArtifactRepository artifactRepo;
+
+  @BeforeClass
+  public static void setup() throws Exception {
+    artifactRepo = getInjector().getInstance(DefaultArtifactRepository.class);
+  }
 
   @AfterClass
   public static void finish() throws Exception {
@@ -61,8 +68,6 @@ public abstract class PluginFinderTestBase extends AppFabricTestBase {
     // Deploy some artifacts
     File appArtifact = createAppJar(PluginTestApp.class);
     File pluginArtifact = createPluginJar(Plugin1.class);
-
-    ArtifactRepository artifactRepo = getInjector().getInstance(ArtifactRepository.class);
 
     ArtifactId appArtifactId = NamespaceId.DEFAULT.artifact("app", "1.0");
     artifactRepo.addArtifact(Id.Artifact.fromEntityId(appArtifactId), appArtifact);

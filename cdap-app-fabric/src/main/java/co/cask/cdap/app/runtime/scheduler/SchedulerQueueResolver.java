@@ -23,6 +23,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
@@ -35,6 +36,7 @@ import javax.annotation.Nullable;
  */
 public class SchedulerQueueResolver {
   private final String defaultQueue;
+  private final String systemQueue;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   /**
@@ -43,6 +45,7 @@ public class SchedulerQueueResolver {
   @Inject
   public SchedulerQueueResolver(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
+    this.systemQueue = cConf.get(Constants.Service.SCHEDULER_QUEUE, "");
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
@@ -61,6 +64,9 @@ public class SchedulerQueueResolver {
    */
   @Nullable
   public String getQueue(Id.Namespace namespaceId) throws IOException, NamespaceNotFoundException {
+    if (namespaceId.equals(Id.Namespace.SYSTEM)) {
+      return systemQueue;
+    }
     NamespaceMeta meta;
     try {
       meta = namespaceQueryAdmin.get(namespaceId.toEntityId());

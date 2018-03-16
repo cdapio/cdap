@@ -194,6 +194,13 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   @Override
   public void addInput(Input input, @Nullable Class<?> mapperCls) {
+    if (input.getNamespace() != null && input.getNamespace().equals(NamespaceId.SYSTEM.getNamespace())
+      && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
+      // trying to access system namespace from a program outside system namespace is not allowed
+      throw new IllegalArgumentException(String.format("Accessing Input %s in system namespace " +
+                                                         "is not allowed from the namespace %s",
+                                                       input.getName(), getProgram().getNamespaceId()));
+    }
     if (input instanceof Input.DatasetInput) {
       Input.DatasetInput datasetInput = (Input.DatasetInput) input;
       Input.InputFormatProviderInput createdInput = createInput(datasetInput);
@@ -218,6 +225,13 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   @Override
   public void addOutput(Output output) {
+    if (output.getNamespace() != null && output.getNamespace().equals(NamespaceId.SYSTEM.getNamespace())
+      && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
+      // trying to access system namespace from a program outside system namespace is not allowed
+      throw new IllegalArgumentException(String.format("Accessing Output %s in system namespace " +
+                                                         "is not allowed from the namespace %s",
+                                                       output.getName(), getProgram().getNamespaceId()));
+    }
     String alias = output.getAlias();
     if (this.outputs.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
