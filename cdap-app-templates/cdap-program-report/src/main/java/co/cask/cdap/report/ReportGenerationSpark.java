@@ -311,6 +311,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       Location startFile = reportBaseDir.append(START_FILE);
       try {
         startFile.createNew();
+        LOG.info("startFile {} exists='{}', isDir='{}'", startFile, startFile.exists(), startFile.isDirectory());
       } catch (IOException e) {
         LOG.error("Failed to create startFile {}", startFile.toURI(), e);
         throw e;
