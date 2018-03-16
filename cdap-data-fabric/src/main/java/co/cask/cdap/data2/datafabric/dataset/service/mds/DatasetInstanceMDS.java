@@ -24,7 +24,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -32,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -68,23 +68,14 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
   }
 
   public Collection<DatasetSpecification> getAll(NamespaceId namespaceId) {
-    Predicate<DatasetSpecification> localDatasetFilter = new Predicate<DatasetSpecification>() {
-      @Override
-      public boolean apply(@Nullable DatasetSpecification input) {
-        return input != null
-          && !Boolean.parseBoolean(input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
-      }
-    };
+    Predicate<DatasetSpecification> localDatasetFilter = input -> input != null
+      && !Boolean.parseBoolean(input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
     return getAll(namespaceId, localDatasetFilter);
   }
 
   public Collection<DatasetSpecification> get(NamespaceId namespaceId, final Map<String, String> properties) {
-    Predicate<DatasetSpecification> propertyFilter = new Predicate<DatasetSpecification>() {
-      @Override
-      public boolean apply(@Nullable DatasetSpecification input) {
-        return input != null && Maps.difference(properties, input.getProperties()).entriesOnlyOnLeft().isEmpty();
-      }
-    };
+    Predicate<DatasetSpecification> propertyFilter = input -> input != null
+      && Maps.difference(properties, input.getProperties()).entriesOnlyOnLeft().isEmpty();
 
     return getAll(namespaceId, propertyFilter);
   }

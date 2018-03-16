@@ -20,7 +20,6 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorker;
-import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.FlowMapReduceApp;
 import co.cask.cdap.NoProgramsApp;
 import co.cask.cdap.ToyApp;
@@ -63,7 +62,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -114,19 +112,17 @@ public class DefaultStoreTest {
     admin.create(NamespaceMeta.DEFAULT);
   }
 
-  private void setStartAndRunning(final ProgramId id, final String pid, final long startTime) {
-    setStartAndRunning(id, pid, startTime, ImmutableMap.<String, String>of(),
-                       ImmutableMap.<String, String>of());
+  private void setStartAndRunning(final ProgramRunId id, final long startTime) {
+    setStartAndRunning(id, startTime, ImmutableMap.of(), ImmutableMap.of());
 
   }
 
-
-  private void setStartAndRunning(final ProgramId id, final String pid, final long startTime,
+  private void setStartAndRunning(final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setStart(id, pid, startTime, null, runtimeArgs, systemArgs,
+    store.setStart(id, startTime, null, runtimeArgs, systemArgs,
                    AppFabricTestHelper.createSourceId(++sourceId));
-    store.setRunning(id, pid, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   @Test
@@ -146,8 +142,9 @@ public class DefaultStoreTest {
     ProgramId programId = new ProgramId("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
     String pid = RunIds.generate().getId();
-    store.setStop(programId, pid, now, ProgramController.State.ERROR.getRunStatus(), ByteBuffer.allocate(0).array());
-    Assert.assertNull(store.getRun(programId, pid));
+    store.setStop(programId.run(pid), now, ProgramController.State.ERROR.getRunStatus(),
+                  ByteBuffer.allocate(0).array());
+    Assert.assertNull(store.getRun(programId.run(pid)));
   }
 
   @Test
@@ -158,16 +155,16 @@ public class DefaultStoreTest {
     ApplicationId appId1 = namespaceId.app("app1");
     ProgramId programId1 = appId1.workflow("pgm1");
     RunId run1 = RunIds.generate();
-    setStartAndRunning(programId1, run1.getId(), runIdToSecs(run1));
-    store.setSuspend(programId1, run1.getId(), AppFabricTestHelper.createSourceId(++sourceId));
+    setStartAndRunning(programId1.run(run1.getId()), runIdToSecs(run1));
+    store.setSuspend(programId1.run(run1.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     store.removeApplication(appId1);
     Assert.assertTrue(store.getRuns(programId1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
 
     // Test delete namespace
     ProgramId programId2 = namespaceId.app("app2").workflow("pgm2");
     RunId run2 = RunIds.generate();
-    setStartAndRunning(programId2, run2.getId(), runIdToSecs(run2));
-    store.setSuspend(programId2, run2.getId(), AppFabricTestHelper.createSourceId(++sourceId));
+    setStartAndRunning(programId2.run(run2.getId()), runIdToSecs(run2));
+    store.setSuspend(programId2.run(run2.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     store.removeAll(namespaceId);
     nsStore.delete(namespaceId);
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
@@ -190,7 +187,7 @@ public class DefaultStoreTest {
     ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId);
 
     // start Workflow
-    setStartAndRunning(workflowRun.getParent(), workflowRun.getRun(), currentTime);
+    setStartAndRunning(workflowRun, currentTime);
 
     // start MapReduce as a part of Workflow
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
@@ -199,11 +196,10 @@ public class DefaultStoreTest {
 
     RunId mapReduceRunId = RunIds.generate(currentTime + 10);
 
-    setStartAndRunning(mapReduceProgram, mapReduceRunId.getId(), currentTime + 10,
-                       ImmutableMap.<String, String>of(), systemArgs);
+    setStartAndRunning(mapReduceProgram.run(mapReduceRunId.getId()), currentTime + 10, ImmutableMap.of(), systemArgs);
 
     // stop the MapReduce program
-    store.setStop(mapReduceProgram, mapReduceRunId.getId(), currentTime + 50, ProgramRunStatus.COMPLETED,
+    store.setStop(mapReduceProgram.run(mapReduceRunId.getId()), currentTime + 50, ProgramRunStatus.COMPLETED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // start Spark program as a part of Workflow
@@ -212,17 +208,17 @@ public class DefaultStoreTest {
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
-    setStartAndRunning(sparkProgram, sparkRunId.getId(), currentTime + 60,
-                       ImmutableMap.<String, String>of(), systemArgs);
+    setStartAndRunning(sparkProgram.run(sparkRunId.getId()), currentTime + 60,
+                       ImmutableMap.of(), systemArgs);
 
     // stop the Spark program with failure
     NullPointerException npe = new NullPointerException("dataset not found");
     IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
-    store.setStop(sparkProgram, sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED,
+    store.setStop(sparkProgram.run(sparkRunId.getId()), currentTime + 100, ProgramRunStatus.FAILED,
                   new BasicThrowable(iae), AppFabricTestHelper.createSourceId(++sourceId));
 
     // stop Workflow
-    store.setStop(workflowRun.getParent(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED,
+    store.setStop(workflowRun, currentTime + 110, ProgramRunStatus.FAILED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRun);
@@ -262,13 +258,13 @@ public class DefaultStoreTest {
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
     RunId run1 = RunIds.generate(now - 10000);
-    setStartAndRunning(programId, run1.getId(), runIdToSecs(run1));
+    setStartAndRunning(programId.run(run1.getId()), runIdToSecs(run1));
     RunId run2 = RunIds.generate(now - 10000);
-    setStartAndRunning(programId, run2.getId(), runIdToSecs(run2));
+    setStartAndRunning(programId.run(run2.getId()), runIdToSecs(run2));
 
-    store.setStop(programId, run1.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus(),
+    store.setStop(programId.run(run1.getId()), nowSecs, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus(),
+    store.setStop(programId.run(run2.getId()), nowSecs, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     Map<ProgramRunId, RunRecordMeta> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
@@ -289,40 +285,40 @@ public class DefaultStoreTest {
     long startTimeDelaySecs = 1;
 
     RunId run1 = RunIds.generate(now - 20000);
-    setStartAndRunning(programId, run1.getId(), runIdToSecs(run1));
-    store.setStop(programId, run1.getId(), startTimeSecs - 10, ProgramController.State.ERROR.getRunStatus(),
+    setStartAndRunning(programId.run(run1.getId()), runIdToSecs(run1));
+    store.setStop(programId.run(run1.getId()), startTimeSecs - 10, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // record another finished flow
     RunId run2 = RunIds.generate(now - 10000);
-    setStartAndRunning(programId, run2.getId(), runIdToSecs(run2));
-    store.setStop(programId, run2.getId(), startTimeSecs - 5, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(programId.run(run2.getId()), runIdToSecs(run2));
+    store.setStop(programId.run(run2.getId()), startTimeSecs - 5, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // record a suspended flow
     RunId run21 = RunIds.generate(now - 7500);
-    setStartAndRunning(programId, run21.getId(), runIdToSecs(run21));
-    store.setSuspend(programId, run21.getId(), AppFabricTestHelper.createSourceId(++sourceId));
+    setStartAndRunning(programId.run(run21.getId()), runIdToSecs(run21));
+    store.setSuspend(programId.run(run21.getId()), AppFabricTestHelper.createSourceId(++sourceId));
 
     // record not finished flow
     RunId run3 = RunIds.generate(now);
-    setStartAndRunning(programId, run3.getId(), runIdToSecs(run3));
+    setStartAndRunning(programId.run(run3.getId()), runIdToSecs(run3));
 
     // For a RunRecordMeta that has not yet been completed, getStopTs should return null
-    RunRecordMeta runRecord = store.getRun(programId, run3.getId());
+    RunRecordMeta runRecord = store.getRun(programId.run(run3.getId()));
     Assert.assertNotNull(runRecord);
     Assert.assertNull(runRecord.getStopTs());
 
     // record run of different program
     ProgramId programId2 = new ProgramId("account1", "application1", ProgramType.FLOW, "flow2");
     RunId run4 = RunIds.generate(now - 5000);
-    setStartAndRunning(programId2, run4.getId(), runIdToSecs(run4));
-    store.setStop(programId2, run4.getId(), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(programId2.run(run4.getId()), runIdToSecs(run4));
+    store.setStop(programId2.run(run4.getId()), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // record for different account
-    setStartAndRunning(new ProgramId("account2", "application1", ProgramType.FLOW, "flow1"),
-                       run3.getId(), runIdToSecs(run3));
+    setStartAndRunning(new ProgramId("account2", "application1", ProgramType.FLOW, "flow1").run(run3.getId()),
+                       runIdToSecs(run3));
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     Map<ProgramRunId, RunRecordMeta> successHistorymap = store.getRuns(programId, ProgramRunStatus.COMPLETED,
@@ -374,26 +370,26 @@ public class DefaultStoreTest {
     // Get a run record for running program
     RunRecordMeta expectedRunning = runningHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedRunning);
-    RunRecordMeta actualRunning = store.getRun(programId, expectedRunning.getPid());
+    RunRecordMeta actualRunning = store.getRun(programId.run(expectedRunning.getPid()));
     Assert.assertEquals(expectedRunning, actualRunning);
 
     // Get a run record for completed run
     RunRecordMeta expectedCompleted = successHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedCompleted);
-    RunRecordMeta actualCompleted = store.getRun(programId, expectedCompleted.getPid());
+    RunRecordMeta actualCompleted = store.getRun(programId.run(expectedCompleted.getPid()));
     Assert.assertEquals(expectedCompleted, actualCompleted);
 
     // Get a run record for suspended run
     RunRecordMeta expectedSuspended = suspendedHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedSuspended);
-    RunRecordMeta actualSuspended = store.getRun(programId, expectedSuspended.getPid());
+    RunRecordMeta actualSuspended = store.getRun(programId.run(expectedSuspended.getPid()));
     Assert.assertEquals(expectedSuspended, actualSuspended);
 
     // Backwards compatibility test with random UUIDs
     // record finished flow
     RunId run5 = RunIds.fromString(UUID.randomUUID().toString());
-    setStartAndRunning(programId, run5.getId(), startTimeSecs - 8);
-    store.setStop(programId, run5.getId(), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(programId.run(run5.getId()), startTimeSecs - 8);
+    store.setStop(programId.run(run5.getId()), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
     RunRecordMeta expectedRecord5 = new RunRecordMeta(programId.run(run5), startTimeSecs - 8,
                                                       startTimeSecs - 8 + startTimeDelaySecs, startTimeSecs - 4,
@@ -402,61 +398,61 @@ public class DefaultStoreTest {
 
     // record not finished flow
     RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
-    setStartAndRunning(programId, run6.getId(), startTimeSecs - 2);
+    setStartAndRunning(programId.run(run6.getId()), startTimeSecs - 2);
     RunRecordMeta expectedRecord6 = new RunRecordMeta(programId.run(run6), startTimeSecs - 2,
                                                       startTimeSecs - 2 + startTimeDelaySecs, null,
                                                       ProgramRunStatus.RUNNING, noRuntimeArgsProps, null, null,
                                                       AppFabricTestHelper.createSourceId(sourceId));
 
     // Get run record for run5
-    RunRecordMeta actualRecord5 = store.getRun(programId, run5.getId());
+    RunRecordMeta actualRecord5 = store.getRun(programId.run(run5.getId()));
     Assert.assertEquals(expectedRecord5, actualRecord5);
 
     // Get run record for run6
 
-    RunRecordMeta actualRecord6 = store.getRun(programId, run6.getId());
+    RunRecordMeta actualRecord6 = store.getRun(programId.run(run6.getId()));
     Assert.assertEquals(expectedRecord6, actualRecord6);
 
     // Record flow that starts but encounters error before it runs
     RunId run7 = RunIds.fromString(UUID.randomUUID().toString());
     Map<String, String> emptyArgs = ImmutableMap.of();
-    store.setStart(programId, run7.getId(), startTimeSecs, null, emptyArgs, null,
+    store.setStart(programId.run(run7.getId()), startTimeSecs, null, emptyArgs, null,
                    AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStop(programId, run7.getId(), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
+    store.setStop(programId.run(run7.getId()), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
     RunRecordMeta expectedRunRecord7 = new RunRecordMeta(programId.run(run7), startTimeSecs, null, startTimeSecs + 1,
                                                          ProgramRunStatus.FAILED, noRuntimeArgsProps, null, null,
                                                          AppFabricTestHelper.createSourceId(sourceId));
-    RunRecordMeta actualRecord7 = store.getRun(programId, run7.getId());
+    RunRecordMeta actualRecord7 = store.getRun(programId.run(run7.getId()));
     Assert.assertEquals(expectedRunRecord7, actualRecord7);
 
     // Record flow that starts and suspends before it runs
     RunId run8 = RunIds.fromString(UUID.randomUUID().toString());
-    store.setStart(programId, run8.getId(), startTimeSecs, null, emptyArgs, null,
+    store.setStart(programId.run(run8.getId()), startTimeSecs, null, emptyArgs, null,
                    AppFabricTestHelper.createSourceId(++sourceId));
-    store.setSuspend(programId, run8.getId(), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(programId.run(run8.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     RunRecordMeta expectedRunRecord8 = new RunRecordMeta(programId.run(run8), startTimeSecs, null, null,
                                                          ProgramRunStatus.SUSPENDED, noRuntimeArgsProps, null, null,
                                                          AppFabricTestHelper.createSourceId(sourceId));
-    RunRecordMeta actualRecord8 = store.getRun(programId, run8.getId());
+    RunRecordMeta actualRecord8 = store.getRun(programId.run(run8.getId()));
     Assert.assertEquals(expectedRunRecord8, actualRecord8);
 
     // Record flow that is killed while suspended
     RunId run9 = RunIds.fromString(UUID.randomUUID().toString());
-    setStartAndRunning(programId, run9.getId(), startTimeSecs);
-    store.setSuspend(programId, run9.getId(), AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStop(programId, run9.getId(), startTimeSecs + 5, ProgramRunStatus.KILLED,
+    setStartAndRunning(programId.run(run9.getId()), startTimeSecs);
+    store.setSuspend(programId.run(run9.getId()), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStop(programId.run(run9.getId()), startTimeSecs + 5, ProgramRunStatus.KILLED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     RunRecordMeta expectedRunRecord9 = new RunRecordMeta(programId.run(run9), startTimeSecs, startTimeSecs + 1,
                                                          startTimeSecs + 5, ProgramRunStatus.KILLED,
                                                          noRuntimeArgsProps, null, null,
                                                          AppFabricTestHelper.createSourceId(sourceId));
-    RunRecordMeta actualRecord9 = store.getRun(programId, run9.getId());
+    RunRecordMeta actualRecord9 = store.getRun(programId.run(run9.getId()));
     Assert.assertEquals(expectedRunRecord9, actualRecord9);
 
     // Non-existent run record should give null
-    Assert.assertNull(store.getRun(programId, UUID.randomUUID().toString()));
+    Assert.assertNull(store.getRun(programId.run(UUID.randomUUID().toString())));
 
     // Searching for history in wrong time range should give us no results
     Assert.assertTrue(
@@ -754,11 +750,11 @@ public class DefaultStoreTest {
     ProgramRunId workflowProgramRunId = workflowProgramId.run(workflowRunId);
 
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    setStartAndRunning(flowProgramId, flowRunId, nowSecs,
+    setStartAndRunning(flowProgramId.run(flowRunId), nowSecs,
                        ImmutableMap.of("model", "click"), null);
-    setStartAndRunning(mapreduceProgramId, mapreduceRunId, nowSecs,
+    setStartAndRunning(mapreduceProgramId.run(mapreduceRunId), nowSecs,
                        ImmutableMap.of("path", "/data"), null);
-    setStartAndRunning(workflowProgramId, workflowRunId, nowSecs,
+    setStartAndRunning(workflowProgramId.run(workflowRunId), nowSecs,
                        ImmutableMap.of("whitelist", "cask"), null);
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
@@ -813,21 +809,21 @@ public class DefaultStoreTest {
 
     long now = System.currentTimeMillis();
 
-    setStartAndRunning(flowProgramId1, "flowRun1", now - 1000);
-    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(flowProgramId1.run("flowRun1"), now - 1000);
+    store.setStop(flowProgramId1.run("flowRun1"), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(mapreduceProgramId1, "mrRun1", now - 1000);
-    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(mapreduceProgramId1.run("mrRun1"), now - 1000);
+    store.setStop(mapreduceProgramId1.run("mrRun1"), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
-    setStartAndRunning(workflowProgramId1, runId.getId(), now - 1000);
-    store.setStop(workflowProgramId1, runId.getId(), now, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(workflowProgramId1.run(runId.getId()), now - 1000);
+    store.setStop(workflowProgramId1.run(runId.getId()), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId2, "flowRun2", now - 1000);
-    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(flowProgramId2.run("flowRun2"), now - 1000);
+    store.setStop(flowProgramId2.run("flowRun2"), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     verifyRunHistory(flowProgramId1, 1);
@@ -872,11 +868,11 @@ public class DefaultStoreTest {
     Assert.assertNotNull(store.getApplication(appId));
 
     long now = System.currentTimeMillis();
-    setStartAndRunning(flowProgramId, "flowRun1", now - 3000);
-    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus(),
+    setStartAndRunning(flowProgramId.run("flowRun1"), now - 3000);
+    store.setStop(flowProgramId.run("flowRun1"), now - 100, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId, "flowRun2", now - 2000);
+    setStartAndRunning(flowProgramId.run("flowRun2"), now - 2000);
 
     // even though there's two separate run records (one that's complete and one that's active), only one should be
     // returned by the query, because the limit parameter of 1 is being passed in.
@@ -951,16 +947,15 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
-  private static final Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
-
   @Test
   public void testRunningInRangeSimple() throws Exception {
-    Id.Run run1 = new Id.Run(Id.Program.from("d", "a1", ProgramType.FLOW, "f1"), RunIds.generate(20000).getId());
-    Id.Run run2 = new Id.Run(Id.Program.from("d", "a2", ProgramType.MAPREDUCE, "f2"), RunIds.generate(10000).getId());
-    Id.Run run3 = new Id.Run(Id.Program.from("d", "a3", ProgramType.WORKER, "f3"), RunIds.generate(40000).getId());
-    Id.Run run4 = new Id.Run(Id.Program.from("d", "a4", ProgramType.SERVICE, "f4"), RunIds.generate(70000).getId());
-    Id.Run run5 = new Id.Run(Id.Program.from("d", "a5", ProgramType.SPARK, "f5"), RunIds.generate(30000).getId());
-    Id.Run run6 = new Id.Run(Id.Program.from("d", "a6", ProgramType.WORKFLOW, "f6"), RunIds.generate(60000).getId());
+    NamespaceId ns = new NamespaceId("d");
+    ProgramRunId run1 = ns.app("a1").program(ProgramType.FLOW, "f1").run(RunIds.generate(20000).getId());
+    ProgramRunId run2 = ns.app("a2").program(ProgramType.MAPREDUCE, "f2").run(RunIds.generate(10000).getId());
+    ProgramRunId run3 = ns.app("a3").program(ProgramType.WORKER, "f3").run(RunIds.generate(40000).getId());
+    ProgramRunId run4 = ns.app("a4").program(ProgramType.SERVICE, "f4").run(RunIds.generate(70000).getId());
+    ProgramRunId run5 = ns.app("a5").program(ProgramType.SPARK, "f5").run(RunIds.generate(30000).getId());
+    ProgramRunId run6 = ns.app("a6").program(ProgramType.WORKFLOW, "f6").run(RunIds.generate(60000).getId());
 
     writeStartRecord(run1);
     writeStartRecord(run2);
@@ -994,13 +989,13 @@ public class DefaultStoreTest {
     TreeSet<Long> suspendedPrograms = new TreeSet<>();
     TreeSet<Long> runningPrograms = new TreeSet<>();
     for (int i = 0; i < 99; ++i) {
-      Id.Application application = Id.Application.from("default", "app" + i);
-      Id.Program program = Id.Program.from(application, ProgramType.values()[i % ProgramType.values().length],
-                                           "program" + i);
+      ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
+      ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
+                                              "program" + i);
       long startTime = (i + 1) * 10000;
       RunId runId = RunIds.generate(startTime);
       allPrograms.add(startTime);
-      Id.Run run = new Id.Run(program, runId.getId());
+      ProgramRunId run = program.run(runId.getId());
       writeStartRecord(run);
 
       // For every 3rd program starting from 0th, write stop record
@@ -1060,43 +1055,32 @@ public class DefaultStoreTest {
                         runIdsToTime(store.getRunningInRange(1, 45 * 10)));
   }
 
-  private void writeStartRecord(Id.Run run) {
-    ProgramId programId = run.getProgram().toEntityId();
-    long startTimeSecs = RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS);
-    setStartAndRunning(programId, run.getId(), startTimeSecs);
-    Assert.assertNotNull(store.getRun(programId, run.getId()));
+  private void writeStartRecord(ProgramRunId run) {
+    long startTimeSecs = RunIds.getTime(RunIds.fromString(run.getRun()), TimeUnit.SECONDS);
+    setStartAndRunning(run, startTimeSecs);
+    Assert.assertNotNull(store.getRun(run));
   }
 
-  private void writeStopRecord(Id.Run run, long stopTimeInMillis) {
-    ProgramId programId = run.getProgram().toEntityId();
-    store.setStop(programId, run.getId(), TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
+  private void writeStopRecord(ProgramRunId run, long stopTimeInMillis) {
+    store.setStop(run, TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
                   ProgramRunStatus.COMPLETED, AppFabricTestHelper.createSourceId(++sourceId));
-    Assert.assertNotNull(store.getRun(programId, run.getId()));
+    Assert.assertNotNull(store.getRun(run));
   }
 
-  private void writeSuspendedRecord(Id.Run run) {
-    ProgramId programId = run.getProgram().toEntityId();
-    store.setSuspend(programId, run.getId(), AppFabricTestHelper.createSourceId(++sourceId));
-    Assert.assertNotNull(store.getRun(programId, run.getId()));
+  private void writeSuspendedRecord(ProgramRunId run) {
+    store.setSuspend(run, AppFabricTestHelper.createSourceId(++sourceId));
+    Assert.assertNotNull(store.getRun(run));
   }
 
-  private Set<Long> runsToTime(Id.Run... runIds) {
-    Iterable<Long> transformedRunIds = Iterables.transform(ImmutableSet.copyOf(runIds), new Function<Id.Run, Long>() {
-      @Override
-      public Long apply(Id.Run input) {
-        return RunIds.getTime(RunIds.fromString(input.getId()), TimeUnit.MILLISECONDS);
-      }
-    });
+  private Set<Long> runsToTime(ProgramRunId... runIds) {
+    Iterable<Long> transformedRunIds = Iterables.transform(ImmutableSet.copyOf(runIds), runId ->
+      RunIds.getTime(RunIds.fromString(runId.getRun()), TimeUnit.MILLISECONDS));
     return ImmutableSortedSet.copyOf(transformedRunIds);
   }
 
   private SortedSet<Long> runIdsToTime(Set<RunId> runIds) {
-    Iterable<Long> transformedRunIds = Iterables.transform(runIds, new Function<RunId, Long>() {
-      @Override
-      public Long apply(RunId input) {
-        return RunIds.getTime(input, TimeUnit.MILLISECONDS);
-      }
-    });
+    Iterable<Long> transformedRunIds = Iterables.transform(runIds,
+                                                           runId -> RunIds.getTime(runId, TimeUnit.MILLISECONDS));
     return ImmutableSortedSet.copyOf(transformedRunIds);
   }
 }

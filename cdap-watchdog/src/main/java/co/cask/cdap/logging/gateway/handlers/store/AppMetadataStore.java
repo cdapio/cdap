@@ -23,7 +23,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
 import java.util.List;
@@ -117,12 +116,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       MDSKey stopKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(0)).build();
       List<RunRecordMeta> runRecords =
         list(startKey, stopKey, RunRecordMeta.class, 1,  // Should have only one record for this runid
-             new Predicate<RunRecordMeta>() {
-               @Override
-               public boolean apply(RunRecordMeta input) {
-                 return input.getPid().equals(runid);
-               }
-             });
+             input -> input.getPid().equals(runid));
       return Iterables.getFirst(runRecords, null);
     }
   }

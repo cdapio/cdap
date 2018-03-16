@@ -33,7 +33,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +44,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 /**
  * The base implementation of the service that periodically scans for program runs that no longer running.
@@ -191,42 +191,40 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
    */
   private Predicate<RunRecordMeta> createFilter(final Set<ProgramRunId> excludedIds) {
     final long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    return new Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(RunRecordMeta record) {
-        ProgramRunId programRunId = record.getProgramRunId();
+    return record -> {
+      ProgramRunId programRunId = record.getProgramRunId();
 
-        if (excludedIds.contains(programRunId)) {
+      if (excludedIds.contains(programRunId)) {
+        return false;
+      }
+
+      // When a program starts, a STARTING state will be record into the Store and it can happen before
+      // the insertion of RuntimeInfo into the ProgramRuntimeService, since writing to Store and launching program
+      // happens asynchronously.
+      // Therefore, add some time buffer so that we don't incorrectly 'fix' runs that are actually starting
+      long timeSinceStart = now - record.getStartTs();
+
+      ProgramId programId = programRunId.getParent();
+
+      // If it is running inside workflow, check if the workflow is running.
+      // If the workflow is still running, then we don't fix this run record.
+      // This is because it won't be found via the ProgramRuntimeService
+      Map<String, String> systemArgs = record.getSystemArgs();
+      String workflowName = systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
+      String workflowRunId = systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+      if (workflowName != null && workflowRunId != null) {
+        ProgramId workflowProgramId = programId.getParent().program(ProgramType.WORKFLOW, workflowName);
+
+        // If the workflow is still running, ignore the record.
+        if (runtimeService.list(workflowProgramId).containsKey(RunIds.fromString(workflowRunId))) {
           return false;
         }
-
-        // When a program starts, a STARTING state will be record into the Store and it can happen before
-        // the insertion of RuntimeInfo into the ProgramRuntimeService, since writing to Store and launching program
-        // happens asynchronously.
-        // Therefore, add some time buffer so that we don't incorrectly 'fix' runs that are actually starting
-        long timeSinceStart = now - record.getStartTs();
-
-        ProgramId programId = programRunId.getParent();
-
-        // If it is running inside workflow, check if the workflow is running.
-        // If the workflow is still running, then we don't fix this run record.
-        // This is because it won't be found via the ProgramRuntimeService
-        Map<String, String> systemArgs = record.getSystemArgs();
-        String workflowName = systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
-        String workflowRunId = systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
-        if (workflowName != null && workflowRunId != null) {
-          ProgramId workflowProgramId = programId.getParent().program(ProgramType.WORKFLOW, workflowName);
-
-          // If the workflow is still running, ignore the record.
-          if (runtimeService.list(workflowProgramId).containsKey(RunIds.fromString(workflowRunId))) {
-            return false;
-          }
-        }
-
-        // Check if it is not actually running.
-        return timeSinceStart > startTimeoutSecs
-          && !runtimeService.list(programId).containsKey(RunIds.fromString(programRunId.getRun()));
       }
+
+      // Check if it is not actually running.
+      return timeSinceStart > startTimeoutSecs
+        && !runtimeService.list(programId).containsKey(RunIds.fromString(programRunId.getRun()));
+
     };
   }
 }

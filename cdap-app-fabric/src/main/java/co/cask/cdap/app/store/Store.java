@@ -39,7 +39,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
-import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
 
 import java.io.IOException;
@@ -47,17 +46,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
  * Responsible for managing {@link Program} and {@link Application} metadata.
  */
 public interface Store extends RuntimeStore {
+
   /**
    * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
    *
-   * @param id id of the program
-   * @param pid run id
+   * @param id run id of the program
    * @param startTime start timestamp in seconds
    * @param twillRunId Twill run id
    * @param runtimeArgs the runtime arguments for this program run
@@ -65,66 +65,61 @@ public interface Store extends RuntimeStore {
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+  void setStart(ProgramRunId id, long startTime, @Nullable String twillRunId,
                 Map<String, String> runtimeArgs, Map<String, String> systemArgs, byte[] sourceId);
 
   /**
    * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
    *
-   * @param id id of the program
-   * @param pid run id
+   * @param id run id of the program
    * @param twillRunId Twill run id
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId, byte[] sourceId);
+  void setRunning(ProgramRunId id, long runTime, @Nullable String twillRunId, byte[] sourceId);
 
   /**
    * Logs end of program run and sets the run status to one of: {@link ProgramRunStatus#COMPLETED},
    * or {@link ProgramRunStatus#KILLED}.
    *
-   * @param id id of the program
-   * @param pid run id
+   * @param id run id of the program
    * @param endTime end timestamp in seconds
    * @param runStatus {@link ProgramRunStatus} of program run
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus, byte[] sourceId);
+  void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus, byte[] sourceId);
 
   /**
    * Logs end of program run and sets the run status to {@link ProgramRunStatus#FAILED} with a failure cause.
    *
-   * @param id id of the program
-   * @param pid run id
+   * @param id run id of the program
    * @param endTime end timestamp in seconds
    * @param runStatus {@link ProgramRunStatus} of program run
    * @param failureCause failure cause if the program failed to execute
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
+  void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus,
                @Nullable BasicThrowable failureCause, byte[] sourceId);
 
   /**
    * Logs suspend of a program run and sets the run status to {@link ProgramRunStatus#SUSPENDED}.
    *
-   * @param id id of the program
-   * @param pid run id
+   * @param id run id of the program
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setSuspend(ProgramId id, String pid, byte[] sourceId);
+  void setSuspend(ProgramRunId id, byte[] sourceId);
 
   /**
    * Logs resume of a program run and sets the run status to {@link ProgramRunStatus#RUNNING}.
    *
-   * @param id id of the program
-   * @param pid run id
+   * @param id run id of the program
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setResume(ProgramId id, String pid, byte[] sourceId);
+  void setResume(ProgramRunId id, byte[] sourceId);
 
   /**
    * Loads a given program.
@@ -217,12 +212,11 @@ public interface Store extends RuntimeStore {
   /**
    * Fetches the run record for particular run of a program.
    *
-   * @param id        id of the program
-   * @param runid     run id of the program
+   * @param id        run id of the program
    * @return          run record for the specified program and runid, null if not found
    */
   @Nullable
-  RunRecordMeta getRun(ProgramId id, String runid);
+  RunRecordMeta getRun(ProgramRunId id);
 
   /**
    * Creates a new stream if it does not exist.

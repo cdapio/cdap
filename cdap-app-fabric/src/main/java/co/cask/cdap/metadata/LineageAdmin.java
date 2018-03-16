@@ -283,12 +283,7 @@ public class LineageAdmin {
     // TODO: These scans could be expensive. CDAP-7571.
     Map<ProgramRunId, RunRecordMeta> workflowRunRecordMap =
       store.getRuns(ProgramRunStatus.ALL,
-                    new Predicate<RunRecordMeta>() {
-                      @Override
-                      public boolean apply(RunRecordMeta input) {
-                        return workflowIDs.contains(input.getPid());
-                      }
-                    });
+                    input ->  workflowIDs.contains(input.getPid()));
 
     // Create a map from RunId to ProgramId for all workflows
     Map<String, ProgramRunId> workflowIdMap = new HashMap<>();

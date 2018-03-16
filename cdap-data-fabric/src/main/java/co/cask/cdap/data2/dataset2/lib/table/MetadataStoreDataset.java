@@ -30,9 +30,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -44,6 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -93,11 +92,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
 
     byte[] value = row.get(COLUMN);
-    if (value == null) {
-      return false;
-    }
-
-    return true;
+    return value != null;
   }
 
   @Nullable
@@ -119,8 +114,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   @Nullable
   public <T> T getFirst(MDSKey id, Type typeOfT) {
     try {
-      Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
-      try {
+      try (Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()))) {
         Row row = scan.next();
         if (row == null || row.isEmpty()) {
           return null;
@@ -132,8 +126,6 @@ public class MetadataStoreDataset extends AbstractDataset {
         }
 
         return deserialize(id, value, typeOfT);
-      } finally {
-        scan.close();
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -171,7 +163,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   // lists all that has same first id parts, with a limit
   public <T> List<T> list(MDSKey id, Type typeOfT, int limit) {
-    return list(id, null, typeOfT, limit, Predicates.<T>alwaysTrue());
+    return list(id, null, typeOfT, limit, x -> true);
   }
 
   // lists all that has first id parts in range of startId and stopId
@@ -187,7 +179,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   // returns mapping of  all that has same first id parts, with a limit
   public <T> Map<MDSKey, T> listKV(MDSKey id, Type typeOfT, int limit) {
-    return listKV(id, null, typeOfT, limit, Predicates.<T>alwaysTrue());
+    return listKV(id, null, typeOfT, limit, x -> true);
   }
 
   // returns mapping of all that has first id parts in range of startId and stopId
@@ -221,7 +213,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
           KeyValue<T> kv = new KeyValue<>(key, value);
           // Combined Filter doesn't pass
-          if (combinedFilter != null && !combinedFilter.apply(kv)) {
+          if (combinedFilter != null && !combinedFilter.test(kv)) {
             continue;
           }
 
@@ -250,12 +242,12 @@ public class MetadataStoreDataset extends AbstractDataset {
           T value = deserialize(key, columnValue, typeOfT);
 
           // Key Filter doesn't pass
-          if (keyFilter != null && !keyFilter.apply(key)) {
+          if (keyFilter != null && !keyFilter.test(key)) {
             continue;
           }
 
           // If Value Filter doesn't pass
-          if (valueFilter != null && !valueFilter.apply(value)) {
+          if (valueFilter != null && !valueFilter.test(value)) {
             continue;
           }
 
@@ -267,11 +259,6 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  // returns mapping of all that has first id parts in range of startId and stopId
-  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit, Predicate<T> filter) {
-    return listKV(runScan, typeOfT, limit, null, filter);
   }
 
   // TODO: We should avoid this duplicate code. CDAP-7569.
@@ -309,7 +296,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   // returns mapping of all that match the given keySet
   public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit) {
-    return listKV(keySet, typeOfT, limit, Predicates.<KeyValue<T>>alwaysTrue());
+    return listKV(keySet, typeOfT, limit, x -> true);
   }
 
   /**
@@ -369,7 +356,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   public void deleteAll(MDSKey id) {
-    deleteAll(id, Predicates.<MDSKey>alwaysTrue());
+    deleteAll(id, x -> true);
   }
 
   public void deleteAll(MDSKey id, @Nullable Predicate<MDSKey> filter) {
@@ -386,7 +373,7 @@ public class MetadataStoreDataset extends AbstractDataset {
           }
 
           MDSKey key = new MDSKey(next.getRow());
-          if (filter != null && !filter.apply(key)) {
+          if (filter != null && !filter.test(key)) {
             continue;
           }
           table.delete(new Delete(next.getRow()).add(COLUMN));
@@ -451,6 +438,7 @@ public class MetadataStoreDataset extends AbstractDataset {
       builder.add(programRunId.getVersion());
       builder.add(programRunId.getType().name());
       builder.add(programRunId.getProgram());
+      builder.add(programRunId.getRun());
     }
     return builder;
   }
@@ -473,6 +461,7 @@ public class MetadataStoreDataset extends AbstractDataset {
       builder.add(programRunId.getApplication());
       builder.add(programRunId.getType().name());
       builder.add(programRunId.getProgram());
+      builder.add(programRunId.getRun());
     }
     return builder;
   }

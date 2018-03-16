@@ -241,7 +241,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
       throw new NotFoundException(programId);
     }
-    RunRecordMeta runRecordMeta = store.getRun(programId, runId);
+    RunRecordMeta runRecordMeta = store.getRun(run);
     if (runRecordMeta == null) {
       throw new NotFoundException(run);
     }
@@ -480,7 +480,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                 programType));
     }
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    RunRecordMeta runRecordMeta = store.getRun(progId, runid);
+    RunRecordMeta runRecordMeta = store.getRun(progId.run(runid));
     if (runRecordMeta != null) {
       RunRecord runRecord = new RunRecord(runRecordMeta);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
