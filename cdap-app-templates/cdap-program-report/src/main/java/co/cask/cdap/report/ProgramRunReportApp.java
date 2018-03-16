@@ -28,7 +28,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
  *   <li>A service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
  * </uL>
  */
-public class ProgramOperationReportApp extends AbstractApplication {
+public class ProgramRunReportApp extends AbstractApplication {
   public static final String NAME = "ProgramOperationReportApp";
   public static final String RUN_META_FILESET = "RunMetaFileset";
   public static final String REPORT_FILESET = "ReportFileset";

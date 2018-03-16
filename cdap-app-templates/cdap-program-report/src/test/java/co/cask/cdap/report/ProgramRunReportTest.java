@@ -65,7 +65,7 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
   public void testGenerateReport() throws Exception {
 //    generateProgramRunMetaFiles();
     LOG.info("Generated run meta files");
-    ApplicationManager app = deployApplication(ProgramOperationReportApp.class);
+    ApplicationManager app = deployApplication(ProgramRunReportApp.class);
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
     URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
     Assert.assertNotNull(url);
@@ -91,9 +91,9 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
   }
 
   private void generateProgramRunMetaFiles() throws Exception {
-    addDatasetInstance(FileSet.class.getName(), ProgramOperationReportApp.RUN_META_FILESET,
+    addDatasetInstance(FileSet.class.getName(), ProgramRunReportApp.RUN_META_FILESET,
                        FileSetProperties.builder().setBasePath(metaBasePath).build());
-    DataSetManager<FileSet> runMeta = getDataset(ProgramOperationReportApp.RUN_META_FILESET);
+    DataSetManager<FileSet> runMeta = getDataset(ProgramRunReportApp.RUN_META_FILESET);
     DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {

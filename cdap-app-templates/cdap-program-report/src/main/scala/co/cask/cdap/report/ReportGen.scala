@@ -26,7 +26,7 @@ class ReportGen(private val spark: SparkSession) {
     this(new SQLContext(sc).sparkSession)
   }
 
-  def generateReport(request: ReportGenerationRequest, inputPaths: java.util.List[String], outputPath: String): Unit = {
+  def generateReport(request: ReportGenerationRequest, inputPaths: java.util.List[String], outputPath: String): Long = {
     //def run(): Unit = {
     import spark.implicits._
     val aggRow = new RecordAgg().toColumn.alias("record").as[Record]
@@ -43,10 +43,10 @@ class ReportGen(private val spark: SparkSession) {
     val filteredDf = aggDf.filter(aggDf("record").getField("start") < end && (aggDf("record").getField("end").isNull || (aggDf("record").getField("end").isNotNull && aggDf("record").getField("end") > start))).persist()
     val records = filteredDf.select("record").rdd.mapPartitions(rIter => new Iterator[org.apache.spark.sql.Row] {
       override def hasNext: Boolean = rIter.hasNext
-
       override def next(): org.apache.spark.sql.Row = rIter.next.getAs[org.apache.spark.sql.Row]("record")
     }, preservesPartitioning = true)
     spark.createDataFrame(records, records.first.schema).coalesce(1).write.json(outputPath)
+    filteredDf.count()
   }
 
   def writeReport(ds: Dataset[Row]): Unit = {

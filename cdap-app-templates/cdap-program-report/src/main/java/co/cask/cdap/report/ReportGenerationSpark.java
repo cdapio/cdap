@@ -33,9 +33,6 @@ import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
@@ -46,7 +43,6 @@ import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -67,7 +63,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -108,6 +103,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
     private static final String START_FILE = "_START";
+    private static final String REPORT_DIR = "report";
     private static final String SUCCESS_FILE = "_SUCCESS";
     private static final String FAILURE_FILE = "_FAILURE";
 
@@ -124,7 +120,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
       runningReportGeneration = new ConcurrentHashMap<>();
       try {
-        context.getAdmin().createDataset(ProgramOperationReportApp.RUN_META_FILESET, FileSet.class.getName(),
+        context.getAdmin().createDataset(ProgramRunReportApp.RUN_META_FILESET, FileSet.class.getName(),
                                          FileSetProperties.builder().build());
         populateMetaFiles();
       } catch (InstanceConflictException e) {
@@ -134,7 +130,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     private void populateMetaFiles() throws Exception {
       Location metaBaseLocation = Transactionals.execute(getContext(), context -> {
-          return context.<FileSet>getDataset(ProgramOperationReportApp.RUN_META_FILESET).getBaseLocation();
+          return context.<FileSet>getDataset(ProgramRunReportApp.RUN_META_FILESET).getBaseLocation();
         });
       DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
       DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
@@ -144,7 +140,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         LOG.info("nsLocation {} exists='{}', isDir='{}'", nsLocation, nsLocation.exists(), nsLocation.isDirectory());
         for (int i = 0; i < 5; i++) {
           long time = 1520808000L + 1000 * i;
-          Location reportLocation = nsLocation.append(Long.toString(time));
+          Location reportLocation = nsLocation.append(String.format("%d.avro", time));
           reportLocation.createNew();
           LOG.info("reportLocation {} exists='{}', isDir='{}'", reportLocation, reportLocation.exists(),
                    reportLocation.isDirectory());
@@ -157,7 +153,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
           dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
                                                                     time + delay, null));
           dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
-                                                                    time + delay, null));
+                                                                    time + delay,
+                                                                    ProgramRunMetaFileUtil.startingInfo("user1")));
           dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
                                                                     time + 2 * delay, null));
           dataFileWriter.close();
@@ -172,31 +169,26 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
                            @QueryParam("offset") String offsetString,
                            @QueryParam("limit") String limitString)
       throws IOException {
-      int offset = Integer.valueOf(offsetString);
-      int limit = Integer.valueOf(limitString);
-      Location reportBaseLocation = Transactionals.execute(getContext(), context -> {
-        return context.<FileSet>getDataset(ProgramOperationReportApp.REPORT_FILESET).getBaseLocation();
-      });
+      int offset = (offsetString == null || offsetString.isEmpty()) ? 0 : Integer.parseInt(offsetString);
+      int limit = (limitString == null || limitString.isEmpty()) ? Integer.MAX_VALUE : Integer.parseInt(limitString);
+      Location reportFilesetLocation = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET);
       List<ReportStatusInfo> reportStatuses = new ArrayList<>();
       int idx = offset;
-      List<Location> reportLocations = reportBaseLocation.list();
-      while (idx < reportLocations.size() && reportStatuses.size() < limit) {
-        Location reportLocation = reportLocations.get(idx++);
-        String reportId = reportLocation.getName();
-        BasicFileAttributes attr = Files.readAttributes(Paths.get(reportBaseLocation.toURI()),
-                                                        BasicFileAttributes.class);
-        Long creationTime = attr.creationTime().toMillis();
-        if (runningReportGeneration.containsKey(reportId)) {
-          reportStatuses.add(new ReportStatusInfo(reportId, creationTime, ReportStatus.RUNNING));
-          continue;
-        }
-        File successFile = new File(new File(reportLocation.toURI()), SUCCESS_FILE);
-        ReportStatus status = successFile.exists() ? ReportStatus.COMPLETED : ReportStatus.FAILED;
-        reportStatuses.add(new ReportStatusInfo(reportId, creationTime, status));
+      List<Location> reportBaseDirs = reportFilesetLocation.list();
+      while (idx < reportBaseDirs.size() && reportStatuses.size() < limit) {
+        Location reportBaseDir = reportBaseDirs.get(idx);
+        String reportId = reportBaseDir.getName();
+        long creationTime = ReportIds.getTime(ReportIds.fromString(reportId), TimeUnit.SECONDS);
+        reportStatuses.add(new ReportStatusInfo(reportId, creationTime, getReportStatus(reportBaseDir)));
       }
-      responder.sendJson(200, GSON.toJson(new ReportList(offset, limit, reportLocations.size(), reportStatuses)));
+      responder.sendJson(200, GSON.toJson(new ReportList(offset, limit, reportBaseDirs.size(), reportStatuses)));
     }
 
+    private Location getDatasetBaseLocation(String datasetName) {
+      return Transactionals.execute(getContext(), context -> {
+        return context.<FileSet>getDataset(datasetName).getBaseLocation();
+      });
+    }
 
     @GET
     @Path("/reports/{report-id}")
@@ -204,9 +196,84 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
                                 @PathParam("report-id") String reportId,
                                 @QueryParam("share-id") String shareId)
       throws IOException {
-      if (runningReportGeneration.containsKey(reportId)) {
-
+      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
+      if (!reportBaseDir.exists()) {
+        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+        return;
       }
+      long creationTime = ReportIds.getTime(ReportIds.fromString(reportId), TimeUnit.SECONDS);
+      String reportRequest =
+        new String(Files.readAllBytes(Paths.get(reportBaseDir.append(START_FILE).toURI().toString())), Charsets.UTF_8);
+      responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportBaseDir), reportRequest));
+    }
+
+    private ReportStatus getReportStatus(Location reportBaseDir) throws IOException {
+      if (runningReportGeneration.containsKey(reportBaseDir.getName())) {
+        return ReportStatus.RUNNING;
+      }
+      if (reportBaseDir.append(REPORT_DIR).append(SUCCESS_FILE).exists()) {
+        return ReportStatus.COMPLETED;
+      }
+      return ReportStatus.FAILED;
+    }
+
+    @GET
+    @Path("reports/{report-id}/runs")
+    public void getReportRuns(HttpServiceRequest request, HttpServiceResponder responder,
+                              @PathParam("report-id") String reportId,
+                              @QueryParam("offset") String offsetString,
+                              @QueryParam("limit") String limitString,
+                              @QueryParam("share-id") String shareId) throws IOException {
+      long offset = (offsetString == null || offsetString.isEmpty()) ? 0 : Long.parseLong(offsetString);
+      int limit = (limitString == null || limitString.isEmpty()) ? Integer.MAX_VALUE : Integer.parseInt(limitString);
+      if (offset < 0) {
+        responder.sendError(400, "offset cannot be negative");
+      }
+      if (limit <= 0) {
+        responder.sendError(400, "limit must be a positive integer");
+      }
+
+      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
+      if (!reportBaseDir.exists()) {
+        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+        return;
+      }
+      ReportStatus status = getReportStatus(reportBaseDir);
+      if (!ReportStatus.COMPLETED.equals(status)) {
+        responder.sendError(400, String.format("Report with id %s with status %s cannot be read.", reportId, status));
+        return;
+      }
+      List<String> reportRecords = new ArrayList<>();
+      long lineCount = 0;
+      Location reportDir = reportBaseDir.append(REPORT_DIR);
+      Location reportFile = null;
+      // TODO: assume only one report file for now
+      for (Location file : reportDir.list()) {
+        if (file.getName().endsWith(".json")) {
+          reportFile = file;
+          break;
+        }
+      }
+      if (reportFile == null) {
+        responder.sendError(500, "No files found for report " + reportId);
+      }
+
+      try (BufferedReader br = new BufferedReader(new FileReader(reportFile.toURI().toString()))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+          // skip lines before the offset
+          if (lineCount++ < offset) {
+            continue;
+          }
+          if (reportRecords.size() == limit) {
+            break;
+          }
+          reportRecords.add(line);
+        }
+      }
+      String total =
+        new String(Files.readAllBytes(Paths.get(reportDir.append(SUCCESS_FILE).toURI().toString())), Charsets.UTF_8);
+      responder.sendJson(200, GSON.toJson(new ReportContent(offset, limit, Integer.parseInt(total), reportRecords)));
     }
 
     @POST
@@ -218,7 +285,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       ReportGenerationRequest reportGenerationRequest = decodeRequestBody(requestJson, REPORT_GENERATION_REQUEST_TYPE);
       String reportId = UUID.randomUUID().toString();
 //      Executors.newSingleThreadExecutor().submit(() -> reportGen.getAggregatedDataset(reportGenerationRequest));
-      responder.sendJson(200, GSON.toJson(ImmutableMap.of("id", reportId)));
+      responder.sendJson(200, ImmutableMap.of("id", reportId));
     }
 
     @POST
@@ -236,20 +303,27 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         return;
       }
 
-      String reportId = UUID.randomUUID().toString();
-      URI reportDirURI = Transactionals.execute(getContext(), context -> {
-        return context.<FileSet>getDataset(ProgramOperationReportApp.REPORT_FILESET)
-          .getLocation(reportId).toURI();
-      });
-      File reportDir = new File(reportDirURI);
-      reportDir.mkdir();
-      File startFile = new File(reportDir, START_FILE);
-      startFile.createNewFile();
-      try (BufferedWriter bw = new BufferedWriter(new FileWriter(startFile))) {
-        bw.write(requestJson);
+      String reportId = ReportIds.generate().toString();
+      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
+      reportBaseDir.mkdirs();
+      LOG.info("reportBaseDir {} exists='{}', isDir='{}'", reportBaseDir, reportBaseDir.exists(),
+               reportBaseDir.isDirectory());
+      Location startFile = reportBaseDir.append(START_FILE);
+      try {
+        startFile.createNew();
+      } catch (IOException e) {
+        LOG.error("Failed to create startFile {}", startFile.toURI(), e);
+        throw e;
       }
+      try (BufferedWriter bw = new BufferedWriter(new FileWriter(startFile.toURI().toString()))) {
+        bw.write(requestJson);
+      } catch (IOException e) {
+        LOG.error("Failed to write to startFile {}", startFile.toURI(), e);
+        throw e;
+      }
+      LOG.info("Wrote to startFile {}", startFile.toURI());
       runningReportGeneration.put(reportId, System.currentTimeMillis());
-      generateReport(reportRequest, reportDirURI.toString());
+      generateReport(reportRequest, reportBaseDir.append(REPORT_DIR));
 //      ListenableFuture<String> futureTask = executorService.submit(() -> {
 //        generateReport(reportRequest, reportDirURI.toString());
 //        return reportId;
@@ -284,15 +358,19 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       responder.sendJson(200, GSON.toJson(ImmutableMap.of("id", reportId)));
     }
 
-    private void generateReport(ReportGenerationRequest reportRequest, String reportOutputPath) {
+    private void generateReport(ReportGenerationRequest reportRequest, Location reportDir) {
+      Location baseLocation = Transactionals.execute(getContext(), context -> {
+        return context.<FileSet>getDataset(ProgramRunReportApp.RUN_META_FILESET).getBaseLocation();
+      });
       List<Location> nsLocations;
       try {
-        nsLocations = Transactionals.execute(getContext(), context -> {
-          return context.<FileSet>getDataset(ProgramOperationReportApp.RUN_META_FILESET).getBaseLocation();
-        }).list();
+        nsLocations = baseLocation.list();
       } catch (IOException e) {
+        LOG.error("Failed to get namespace locations from {}", baseLocation.toURI().toString());
         throw new RuntimeException(e);
       }
+      LOG.info("Existing namespaces: {}",
+               nsLocations.stream().map(location -> location.getName()).collect(Collectors.toList()));
       Stream<Location> filteredNsLocations = nsLocations.stream();
       ReportGenerationRequest.ValueFilter<String> namespaceFilter = null;
       if (reportRequest.getFilters() != null) {
@@ -310,13 +388,25 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }
       List<String> metaFiles = filteredNsLocations.flatMap(nsLocation -> {
         try {
+          LOG.info("Files under ns={}: {}", nsLocation.getName(), nsLocation.list());
           return nsLocation.list().stream();
         } catch (IOException e) {
+          LOG.error("Failed to list files under namespace {}", nsLocation.toURI().toString(), e);
           throw new RuntimeException(e);
         }
-      }).filter(metaFile -> Long.parseLong(FilenameUtils.removeExtension(metaFile.getName())) < reportRequest.getEnd())
-        .map(location -> location.toURI().toString()).collect(Collectors.toList());
-      reportGen.generateReport(reportRequest, metaFiles, reportOutputPath);
+      }).filter(metaFile -> {
+        String fileName = metaFile.getName();
+        return fileName.endsWith(".avro")
+          && Long.parseLong(fileName.substring(0, fileName.indexOf(".avro"))) < reportRequest.getEnd();
+      }).map(location -> location.toURI().toString()).collect(Collectors.toList());
+      LOG.info("Filtered meta files {}", metaFiles);
+      long total = reportGen.generateReport(reportRequest, metaFiles, reportDir.toURI().toString());
+      try (BufferedWriter bw = new BufferedWriter(new FileWriter(reportDir.append(SUCCESS_FILE).toURI().toString()))) {
+        bw.write(Long.toString(total));
+      } catch (IOException e) {
+        LOG.error("Failed to write to {} in {}", SUCCESS_FILE, reportDir.toURI().toString(), e);
+        throw new RuntimeException(e);
+      }
     }
 
 
@@ -368,7 +458,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     }
   }
 
-  static <T> T decodeRequestBody(String request, Type type) throws IOException {
+  static <T> T decodeRequestBody(String request, Type type) {
     T decodedRequestBody;
     try {
       decodedRequestBody = GSON.fromJson(request, type);
