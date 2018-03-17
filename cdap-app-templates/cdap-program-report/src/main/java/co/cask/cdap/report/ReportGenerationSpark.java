@@ -33,6 +33,7 @@ import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
@@ -49,17 +50,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.lang.reflect.Type;
-import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -203,7 +198,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }
       long creationTime = ReportIds.getTime(ReportIds.fromString(reportId), TimeUnit.SECONDS);
       String reportRequest =
-        new String(Files.readAllBytes(Paths.get(reportBaseDir.append(START_FILE).toURI().toString())), Charsets.UTF_8);
+        new String(ByteStreams.toByteArray(reportBaseDir.append(START_FILE).getInputStream()), Charsets.UTF_8);
       responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportBaseDir), reportRequest));
     }
 
@@ -258,7 +253,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         responder.sendError(500, "No files found for report " + reportId);
       }
 
-      try (BufferedReader br = new BufferedReader(new FileReader(reportFile.toURI().toString()))) {
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(reportFile.getInputStream()))) {
         String line;
         while ((line = br.readLine()) != null) {
           // skip lines before the offset
@@ -272,7 +267,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         }
       }
       String total =
-        new String(Files.readAllBytes(Paths.get(reportDir.append(SUCCESS_FILE).toURI().toString())), Charsets.UTF_8);
+        new String(ByteStreams.toByteArray(reportDir.append(SUCCESS_FILE).getInputStream()), Charsets.UTF_8);
       responder.sendJson(200, GSON.toJson(new ReportContent(offset, limit, Integer.parseInt(total), reportRecords)));
     }
 
@@ -311,13 +306,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       Location startFile = reportBaseDir.append(START_FILE);
       try {
         startFile.createNew();
+
         LOG.info("startFile {} exists='{}', isDir='{}'", startFile, startFile.exists(), startFile.isDirectory());
       } catch (IOException e) {
         LOG.error("Failed to create startFile {}", startFile.toURI(), e);
         throw e;
       }
-      try (BufferedWriter bw = new BufferedWriter(new FileWriter(startFile.toURI().toString()))) {
-        bw.write(requestJson);
+      try (PrintWriter writer = new PrintWriter(startFile.getOutputStream())) {
+        writer.write(requestJson);
       } catch (IOException e) {
         LOG.error("Failed to write to startFile {}", startFile.toURI(), e);
         throw e;
@@ -402,8 +398,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.info("Filtered meta files {}", metaFiles);
       long total = reportGen.generateReport(reportRequest, metaFiles, reportDir.toURI().toString());
-      try (BufferedWriter bw = new BufferedWriter(new FileWriter(reportDir.append(SUCCESS_FILE).toURI().toString()))) {
-        bw.write(Long.toString(total));
+      try (PrintWriter writer = new PrintWriter(reportDir.append(SUCCESS_FILE).getOutputStream())) {
+        writer.write(Long.toString(total));
       } catch (IOException e) {
         LOG.error("Failed to write to {} in {}", SUCCESS_FILE, reportDir.toURI().toString(), e);
         throw new RuntimeException(e);
