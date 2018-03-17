@@ -18,12 +18,23 @@ import React, { Component } from 'react';
 import RunsGraph from 'components/OpsDashboard/RunsGraph';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Provider} from 'react-redux';
-import DashboardStore from 'components/OpsDashboard/store/DashboardStore';
+import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import RunsList from 'components/OpsDashboard/RunsList';
+import {getData} from 'components/OpsDashboard/store/ActionCreator';
 
 require('./OpsDashboard.scss');
 
 export default class OpsDashboard extends Component {
+  componentWillMount() {
+    getData();
+  }
+
+  componentWillUnmount() {
+    DashboardStore.dispatch({
+      type: DashboardActions.reset
+    });
+  }
+
   render() {
     return (
       <Provider store={DashboardStore}>

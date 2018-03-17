@@ -50,6 +50,8 @@ $delay: $grey-04;
     }
 
     .type-selector {
+      user-select: none;
+
       .icon-svg {
         font-size: 18px;
         margin-right: 5px;
@@ -115,6 +117,7 @@ $delay: $grey-04;
     .select-item {
       display: inline-block;
       cursor: pointer;
+      user-select: none;
 
       span { vertical-align: middle; }
 

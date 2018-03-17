@@ -18,7 +18,7 @@ import moment from 'moment';
 import uniqWith from 'lodash/uniqWith';
 import isEqual from 'lodash/isEqual';
 
-export function parseDashboardData(data, startTime, duration) {
+export function parseDashboardData(rawData, startTime, duration, pipeline, customApp) {
   let {
     buckets,
     timeArray
@@ -27,11 +27,15 @@ export function parseDashboardData(data, startTime, duration) {
   let pipelineCount = 0,
       customAppCount = 0;
 
-  data.forEach((runInfo) => {
+  rawData.forEach((runInfo) => {
     if (['cdap-data-pipeline', 'cdap-data-streams'].indexOf(runInfo.artifact.name) !== -1) {
       pipelineCount++;
+
+      if (!pipeline) { return; }
     } else {
       customAppCount++;
+
+      if (!customApp) { return; }
     }
 
     let startTime = getBucket(runInfo.start);
@@ -80,10 +84,18 @@ export function parseDashboardData(data, startTime, duration) {
     buckets[time].runsList = uniqWith(buckets[time].runsList, isEqual);
   });
 
+
+  let data = Object.keys(buckets).map((time) => {
+    return {
+      ...buckets[time],
+      time
+    };
+  });
+
   return {
     pipelineCount,
     customAppCount,
-    buckets
+    data
   };
 }
 

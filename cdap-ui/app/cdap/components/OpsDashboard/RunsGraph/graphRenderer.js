@@ -19,7 +19,16 @@ import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/Da
 
 const AXIS_BUFFER = 1.1;
 
-export function renderGraph(selector, containerWidth, containerHeight, data) {
+export function renderGraph(selector, containerWidth, containerHeight, data, legends) {
+  let {
+    manual,
+    schedule,
+    running,
+    success,
+    failed,
+    delay
+  } = legends;
+
   let margin = {
     top: 20,
     right: 50,
@@ -33,8 +42,14 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     .attr('height', containerHeight)
     .attr('width', containerWidth);
 
+  // Clear out existing graph
+  let groupElem = d3.select(`${selector} > .graph-group-container`);
+  groupElem.remove();
+
+  // Start graph render
   let chart = svg.append('g')
-    .attr('transform', `translate(${margin.left}, ${margin.top})`);
+      .attr('class', 'graph-group-container')
+      .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
   let x = d3.scaleBand()
     .rangeRound([0, width])
@@ -96,10 +111,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     .call(d3.axisRight(yRight).tickSizeOuter(-width));
 
 
-  // Render bar graph
-  function getXLocation(d) {
-    return x(d.time) + barPadding * 2;
-  }
+  // RENDER BAR GRAPH
 
   // Start method
   let barStartMethod = chart.append('g')
@@ -110,21 +122,24 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     .enter();
 
   // Schedule
-  startMethod.append('rect')
-    .attr('class', 'bar schedule')
-    .attr('width', barWidth)
-    .attr('x', getXLocation)
-    .attr('y', (d) => yLeft(d.schedule))
-    .attr('height', (d) => height - yLeft(d.schedule));
+  if (schedule) {
+    startMethod.append('rect')
+      .attr('class', 'bar schedule')
+      .attr('width', barWidth)
+      .attr('x', getXLocation)
+      .attr('y', (d) => yLeft(d.schedule))
+      .attr('height', (d) => height - yLeft(d.schedule));
+  }
 
   // Manual
-  startMethod.append('rect')
-    .attr('class', 'bar manual')
-    .attr('width', barWidth)
-    .attr('x', getXLocation)
-    .attr('y', (d) => yLeft(d.manual) - (height - yLeft(d.schedule)) )
-    .attr('height', (d) => height - yLeft(d.manual));
-
+  if (manual) {
+    startMethod.append('rect')
+      .attr('class', 'bar manual')
+      .attr('width', barWidth)
+      .attr('x', getXLocation)
+      .attr('y', getManualY)
+      .attr('height', (d) => height - yLeft(d.manual));
+  }
 
 
   // Statistics
@@ -139,59 +154,66 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
     .enter();
 
   // Running
-  statistics.append('rect')
-    .attr('class', 'bar running')
-    .attr('width', barWidth)
-    .attr('x', getXLocation)
-    .attr('y', (d) => yLeft(d.running))
-    .attr('height', (d) => height - yLeft(d.running));
+  if (running) {
+    statistics.append('rect')
+      .attr('class', 'bar running')
+      .attr('width', barWidth)
+      .attr('x', getXLocation)
+      .attr('y', (d) => yLeft(d.running))
+      .attr('height', (d) => height - yLeft(d.running));
+  }
 
   // Successful
-  statistics.append('rect')
-    .attr('class', 'bar successful')
-    .attr('width', barWidth)
-    .attr('x', getXLocation)
-    .attr('y', (d) => yLeft(d.successful) - (height - yLeft(d.running)))
-    .attr('height', (d) => height - yLeft(d.successful));
+  if (success) {
+    statistics.append('rect')
+      .attr('class', 'bar successful')
+      .attr('width', barWidth)
+      .attr('x', getXLocation)
+      .attr('y', getSuccessY)
+      .attr('height', (d) => height - yLeft(d.successful));
+  }
 
   // Failed
-  statistics.append('rect')
-    .attr('class', 'bar failed')
-    .attr('width', barWidth)
-    .attr('x', getXLocation)
-    .attr('y', (d) => yLeft(d.failed) - (height - yLeft(d.running)) - (height - yLeft(d.successful)))
-    .attr('height', (d) => height - yLeft(d.failed));
+  if (failed) {
+    statistics.append('rect')
+      .attr('class', 'bar failed')
+      .attr('width', barWidth)
+      .attr('x', getXLocation)
+      .attr('y', getFailedY)
+      .attr('height', (d) => height - yLeft(d.failed));
+  }
 
 
+  // RENDER LINE GRAPH
+  if (delay) {
+    let line = d3.line()
+      .x((d) => x(d.time))
+      .y((d) => yRight(d.delay));
 
-  // Render line graph
-  let line = d3.line()
-    .x((d) => x(d.time))
-    .y((d) => yRight(d.delay));
+    let offsetX = barWidth + barPadding * 2;
 
-  let offsetX = barWidth + barPadding * 2;
+    let pathGroup = chart.append('g')
+      .attr('class', 'line-graph')
+      .attr('transform', `translate(${offsetX}, 0)`);
 
-  let pathGroup = chart.append('g')
-    .attr('class', 'line-graph')
-    .attr('transform', `translate(${offsetX}, 0)`);
+    pathGroup.append('path')
+      .datum(data)
+      .attr('class', 'delay-path')
+      .attr('d', line);
 
-  pathGroup.append('path')
-    .datum(data)
-    .attr('class', 'delay-path')
-    .attr('d', line);
-
-  pathGroup.append('g')
-      .attr('class', 'dots')
-    .selectAll('circle')
-      .data(data)
-    .enter().append('circle')
-      .attr('class', 'dot delay-dot')
-      .attr('r', 5)
-      .attr('cx', (d) => x(d.time))
-      .attr('cy', (d) => yRight(d.delay));
+    pathGroup.append('g')
+        .attr('class', 'dots')
+      .selectAll('circle')
+        .data(data)
+      .enter().append('circle')
+        .attr('class', 'dot delay-dot')
+        .attr('r', 5)
+        .attr('cx', (d) => x(d.time))
+        .attr('cy', (d) => yRight(d.delay));
+  }
 
 
-  // Hover and Click Events Handler
+  // HOVER AND CLICK HANDLER
   let stepWidth = x.bandwidth();
   let handlerGroup = chart.append('g')
     .attr('class', 'handler');
@@ -217,4 +239,37 @@ export function renderGraph(selector, containerWidth, containerHeight, data) {
         }
       });
     });
+
+
+  // Helper functions
+  function getXLocation(d) {
+    return x(d.time) + barPadding * 2;
+  }
+
+  function getManualY(d) {
+    let y = yLeft(d.manual);
+    if (schedule) {
+      y = y - (height - yLeft(d.schedule));
+    }
+    return y;
+  }
+
+  function getSuccessY(d) {
+    let y = yLeft(d.successful);
+    if (running) {
+      y = y - (height - yLeft(d.running));
+    }
+    return y;
+  }
+
+  function getFailedY(d) {
+    let y = yLeft(d.failed);
+    if (running) {
+      y = y - (height - yLeft(d.running));
+    }
+    if (success) {
+      y = y - (height - yLeft(d.successful));
+    }
+    return y;
+  }
 }
