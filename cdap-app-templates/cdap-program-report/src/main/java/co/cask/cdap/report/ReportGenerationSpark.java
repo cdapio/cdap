@@ -173,10 +173,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       while (idx < reportBaseDirs.size() && reportStatuses.size() < limit) {
         Location reportBaseDir = reportBaseDirs.get(idx);
         String reportId = reportBaseDir.getName();
-        long creationTime = ReportIds.getTime(ReportIds.fromString(reportId), TimeUnit.SECONDS);
+        long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
         reportStatuses.add(new ReportStatusInfo(reportId, creationTime, getReportStatus(reportBaseDir)));
       }
-      responder.sendJson(200, GSON.toJson(new ReportList(offset, limit, reportBaseDirs.size(), reportStatuses)));
+      responder.sendJson(200, new ReportList(offset, limit, reportBaseDirs.size(), reportStatuses));
     }
 
     private Location getDatasetBaseLocation(String datasetName) {
@@ -196,7 +196,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
         return;
       }
-      long creationTime = ReportIds.getTime(ReportIds.fromString(reportId), TimeUnit.SECONDS);
+      long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
       String reportRequest =
         new String(ByteStreams.toByteArray(reportBaseDir.append(START_FILE).getInputStream()), Charsets.UTF_8);
       responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportBaseDir), reportRequest));
@@ -268,7 +268,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }
       String total =
         new String(ByteStreams.toByteArray(reportDir.append(SUCCESS_FILE).getInputStream()), Charsets.UTF_8);
-      responder.sendJson(200, GSON.toJson(new ReportContent(offset, limit, Integer.parseInt(total), reportRecords)));
+      responder.sendJson(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords));
     }
 
     @POST

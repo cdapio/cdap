@@ -68,13 +68,6 @@ public final class ReportIds {
   /**
    * @return time from the UUID if it is a time-based UUID, -1 otherwise.
    */
-  public static long getTime(UUID reportId, TimeUnit timeUnit) {
-    return getTime(reportId, timeUnit);
-  }
-
-  /**
-   * @return time from the UUID if it is a time-based UUID, -1 otherwise.
-   */
   public static long getTime(String reportId, TimeUnit timeUnit) {
     UUID uuid = UUID.fromString(reportId);
     if (uuid.version() == 1 && uuid.variant() == 2) {
