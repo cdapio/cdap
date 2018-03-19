@@ -16,9 +16,13 @@
 package co.cask.cdap.report
 
 import java.io.{BufferedWriter, File, FileWriter}
+
+import com.google.common.collect.ImmutableList
+
 import scala.collection.JavaConversions._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Dataset, Row, SQLContext, SparkSession}
+import org.slf4j.LoggerFactory
 
 class ReportGen(private val spark: SparkSession) {
 
@@ -29,6 +33,7 @@ class ReportGen(private val spark: SparkSession) {
   def generateReport(request: ReportGenerationRequest, inputPaths: java.util.List[String], outputPath: String): Long = {
     //def run(): Unit = {
     import spark.implicits._
+    import ReportGen._
     val aggRow = new RecordAgg().toColumn.alias("record").as[Record]
     val df = spark.read.format("com.databricks.spark.avro").load(asScalaBuffer(inputPaths): _*)
     //    val cols = Set(request.getFields)
@@ -40,13 +45,50 @@ class ReportGen(private val spark: SparkSession) {
     //    val request = ReportGen.GSON.fromJson("{\"start\":1520808000,\"end\":1520808005}", classOf[Request])
     val start: Long = request.getStart
     val end: Long = request.getEnd
-    val filteredDf = aggDf.filter(aggDf("record").getField("start") < end && (aggDf("record").getField("end").isNull || (aggDf("record").getField("end").isNotNull && aggDf("record").getField("end") > start))).persist()
+    val recordCol = aggDf("record")
+    var filterCol = recordCol.getField("start").isNotNull
+    filterCol &&= recordCol.getField("start") < end
+    filterCol &&= (recordCol.getField("end").isNull
+      || recordCol.getField("end") > start)
+    var whitelistOpt: Option[Array[String]] = None
+    if (Option(request.getFilters).isDefined) {
+      asScalaBuffer(request.getFilters).foreach(f => {
+        val fieldCol = recordCol.getField(f.getFieldName)
+//        filterCol &&= fieldCol.isNotNull
+        f match {
+          case rangeFilter: ReportGenerationRequest.RangeFilter[_] => {
+            LOG.info("rangeFilter for field {}", f.getFieldName)
+            val min = rangeFilter.getRange.getMin
+//            if (Option(min).isDefined) filterCol &&= fieldCol >= min
+            val max = rangeFilter.getRange.getMax
+//            if (Option(max).isDefined) filterCol &&= fieldCol < max
+          }
+          case valueFilter: ReportGenerationRequest.ValueFilter[String] => {
+            LOG.info("valueFilter for field {}", f.getFieldName)
+            val whitelist: java.util.List[String] = valueFilter.getWhitelist
+            if (Option(whitelist).isDefined) {
+              LOG.info("whitelist = {}", whitelist)
+//              filterCol &&= fieldCol.isin(asScalaBuffer(whitelist):_*)
+              whitelistOpt = Option(asScalaBuffer(whitelist).toArray)
+            }
+            val blacklist = valueFilter.getWhitelist
+            if (Option(blacklist).isDefined) filterCol &&= !fieldCol.isin(asScalaBuffer(blacklist):_*)
+          }
+        }
+      })
+    }g
+//    filterCol &&= (recordCol.getField("program").isNotNull && recordCol.getField("program").isin(Seq("ns1.SmartWorkflow", "ns1.SmartWorkflow_1"):_*))
+    LOG.info("whitelistOpt = {}", whitelistOpt.get)
+    filterCol &&= (recordCol.getField("program").isNotNull && recordCol.getField("program").isin(asScalaBuffer(ImmutableList.of("ns1.SmartWorkflow")):_*))
+    val filteredDf = aggDf.filter(filterCol).persist()
     val records = filteredDf.select("record").rdd.mapPartitions(rIter => new Iterator[org.apache.spark.sql.Row] {
       override def hasNext: Boolean = rIter.hasNext
       override def next(): org.apache.spark.sql.Row = rIter.next.getAs[org.apache.spark.sql.Row]("record")
-    }, preservesPartitioning = true)
-    spark.createDataFrame(records, records.first.schema).coalesce(1).write.json(outputPath)
-    filteredDf.count()
+    }, preservesPartitioning = true).persist()
+//    if (!records.isEmpty()) {
+      spark.createDataFrame(records, records.first.schema).coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
+//    }
+    records.count
   }
 
   def writeReport(ds: Dataset[Row]): Unit = {
@@ -78,4 +120,5 @@ object ReportGen {
   import com.google.gson._
 
   val GSON = new Gson()
+  val LOG = LoggerFactory.getLogger(ReportGen.getClass)
 }

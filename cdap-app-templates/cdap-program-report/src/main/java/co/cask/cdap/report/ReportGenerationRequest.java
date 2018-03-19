@@ -198,7 +198,7 @@ public class ReportGenerationRequest {
    *
    * @param <T> type of the values
    */
-  public static class RangeFilter<T extends Comparable<? super T>> extends Filter<T> {
+  public static class RangeFilter<T extends Comparable<T>> extends Filter<T> {
     private final Range<T> range;
 
     public RangeFilter(String fieldName, Range<T> range) {
