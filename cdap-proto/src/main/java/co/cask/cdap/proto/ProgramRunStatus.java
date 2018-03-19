@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,13 @@ public enum ProgramRunStatus {
   COMPLETED,
   FAILED,
   KILLED;
+
+  /**
+   * @return whether the status is an end status for a program run.
+   */
+  public boolean isEndState() {
+    return this == COMPLETED || this == FAILED || this == KILLED;
+  }
 
   /**
    * Conversion from program run status to Workflow node status.

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,8 +79,10 @@ public class WorkflowTest {
   private int sourceId;
 
   private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime) {
-    store.setStart(id.run(pid), startTime, null, ImmutableMap.of(),
-                   ImmutableMap.of(), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioning(id.run(pid), startTime, ImmutableMap.of(), ImmutableMap.of(),
+                          AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id.run(pid), null, ImmutableMap.of(), AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id.run(pid), startTime + startDelaySecs, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 

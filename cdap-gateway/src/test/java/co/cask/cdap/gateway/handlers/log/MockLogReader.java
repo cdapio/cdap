@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,8 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
+import co.cask.cdap.proto.ProgramRunCluster;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -93,8 +95,9 @@ public class MockLogReader implements LogReader {
   private void setStartAndRunning(final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setStart(id, startTime, null, runtimeArgs, systemArgs,
-                   AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
@@ -416,7 +419,14 @@ public class MockLogReader implements LogReader {
     long startTs = RunIds.getTime(runId, TimeUnit.SECONDS);
     if (programId != null) {
       //noinspection ConstantConditions
-      runRecordMap.put(programId, new RunRecord(runId.getId(), startTs, startTs + 1, stopTs, runStatus, null));
+      runRecordMap.put(programId, RunRecord.builder()
+        .setRunId(runId.getId())
+        .setStartTime(startTs)
+        .setRunTime(startTs + 1)
+        .setStopTime(stopTs)
+        .setStatus(runStatus)
+        .setCluster(new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, null))
+        .build());
       setStartAndRunning(programId.run(runId.getId()), startTs);
       if (stopTs != null) {
         store.setStop(programId.run(runId.getId()), stopTs, runStatus,
