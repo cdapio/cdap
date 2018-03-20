@@ -15,4 +15,4 @@
  */
 package co.cask.cdap.report
 
-case class Record(program: String, run: String, start: Option[Long], running: Option[Long], end: Option[Long], user: Option[String], runtimeArgs: Option[scala.collection.Map[String, String]])
+case class Record(namespace: String, program: String, run: String, start: Option[Long], running: Option[Long], end: Option[Long], duration: Option[Long], user: Option[String], runtimeArgs: Option[scala.collection.Map[String, String]])

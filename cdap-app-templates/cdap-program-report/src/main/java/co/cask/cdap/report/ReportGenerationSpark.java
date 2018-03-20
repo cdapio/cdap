@@ -140,18 +140,20 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
           LOG.info("reportLocation {} exists='{}', isDir='{}'", reportLocation, reportLocation.exists(),
                    reportLocation.isDirectory());
           dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
-          String program = namespace + ".SmartWorkflow";
-          String run = "randomRunId";
+          String program = "SmartWorkflow";
+          String run1 = ReportIds.generate().toString();
+          String run2 = ReportIds.generate().toString();
           long delay = TimeUnit.MINUTES.toSeconds(5);
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
-                                                                    ProgramRunMetaFileUtil.startingInfo("user")));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
-                                                                    time + delay, null));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
-                                                                    time + delay,
-                                                                    ProgramRunMetaFileUtil.startingInfo("user1")));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
-                                                                    time + 2 * delay, null));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
+                                                                    time, ProgramRunMetaFileUtil.startingInfo("user")));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
+                                                                    "FAILED", time + delay, null));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                    "STARTING", time + delay, null));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                    "RUNNING", time + 2 * delay, null));
+          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                    "COMPLETED", time + 4 * delay, null));
           dataFileWriter.close();
         }
         LOG.info("nsLocation.list() = {}", nsLocation.list());
@@ -372,7 +374,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       ReportGenerationRequest.ValueFilter<String> namespaceFilter = null;
       if (reportRequest.getFilters() != null) {
         for (ReportGenerationRequest.Filter filter : reportRequest.getFilters()) {
-          if (ReportFieldType.NAMESPACE.getFieldName().equals(filter.getFieldName())) {
+          if (ReportField.NAMESPACE.getName().equals(filter.getFieldName())) {
             // ReportGenerationRequest is validated to contain only one filter for namespace field
             namespaceFilter = (ReportGenerationRequest.ValueFilter<String>) filter;
             break;

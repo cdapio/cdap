@@ -15,32 +15,44 @@
  */
 package co.cask.cdap.report
 
-case class RecordBuilder(program: String, run: String, statuses: scala.collection.Seq[(String, Long)], startInfo: Option[StartInfo]) {
+case class RecordBuilder(namespace: String, program: String, run: String, statuses: scala.collection.Seq[(String, Long)], startInfo: Option[StartInfo]) {
 
 //  def this() {
 //    this("", "", Vector.empty)
 //  }
 
   def merge(other: RecordBuilder): RecordBuilder = {
+    val namespace = if (this.namespace.isEmpty) other.namespace else this.namespace
     val program = if (this.program.isEmpty) other.program else this.program
     val run = if (this.run.isEmpty) other.run else this.run
     val statuses = this.statuses ++ other.statuses
     val startInfo = if (this.startInfo.isEmpty) other.startInfo else this.startInfo
 //    println("Other = %s".format(other))
 //    println("This = %s".format(this))
-    val r = RecordBuilder(program, run, statuses, startInfo)
+    val r = RecordBuilder(namespace, program, run, statuses, startInfo)
 //    println("===> Merged = %s".format(r))
     r
   }
 
   def build(): Record = {
+    import ReportGen._
     val statusTimeMap = statuses.groupBy(_._1).map(v => (v._1, v._2.map(_._2).min))
     val user = if (startInfo.isDefined) Some(startInfo.get.user) else None
     val runtimeArgs = if (startInfo.isDefined) Some(startInfo.get.runtimeArgs) else None
 //    println("this = %s".format(this))
-    val r = Record(program, run, statusTimeMap.get("STARTING"), statusTimeMap.get("RUNNING"),
-       statusTimeMap.get("COMPLETED"), user, runtimeArgs)
-//    println("===> build %s".format(r))
+    val start = statusTimeMap.get("STARTING")
+    val completed = statusTimeMap.get("COMPLETED")
+    val killed = statusTimeMap.get("KILLED")
+    val failed = statusTimeMap.get("FAILED")
+    LOG.info("completed={}", completed)
+    LOG.info("killed={}", killed)
+    LOG.info("failed={}", failed)
+    val end = if (completed.isDefined) completed else if (killed.isDefined) killed else if (failed.isDefined)
+      failed else None
+    val duration = if (start.isDefined && end.isDefined) Some(end.get - start.get) else None
+    val r = Record(namespace, program, run, start, statusTimeMap.get("RUNNING"), end, duration, user, runtimeArgs)
+    LOG.info("RecordBuilder={}", this)
+    LOG.info("record = {}", r)
     r
   }
 }

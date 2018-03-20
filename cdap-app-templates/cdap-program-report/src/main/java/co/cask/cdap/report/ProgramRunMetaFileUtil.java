@@ -44,6 +44,7 @@ public class ProgramRunMetaFileUtil {
 
   private static final String SCHEMA_STRING = Schema.recordOf(
     "ReportRecord",
+    Schema.Field.of("namespace", Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("application", Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("version", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("program", Schema.of(Schema.Type.STRING)),
@@ -87,7 +88,7 @@ public class ProgramRunMetaFileUtil {
 //    return records;
 //  }
 
-  public static GenericData.Record createRecord(String program, String run, String status, long time,
+  public static GenericData.Record createRecord(String namespace, String program, String run, String status, long time,
                                                 @Nullable ProgramStartInfo startInfo) {
     GenericData.Record startInfoRecord = null;
     if (startInfo != null) {
@@ -96,48 +97,12 @@ public class ProgramRunMetaFileUtil {
       startInfoRecord.put("runtimeArguments", ImmutableMap.of("k1", "v1", "k2", "v2"));
     }
     GenericData.Record record = new GenericData.Record(SCHEMA);
+    record.put("namespace", namespace);
     record.put("program", program);
     record.put("run", run);
     record.put("status", status);
     record.put("time", time);
     record.put("startInfo", startInfoRecord);
     return record;
-  }
-
-  public static void main(String[] args) throws IOException {
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
-    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
-    File tmpFile = new File("/Users/Chengfeng/tmp/run_meta.avro");
-    dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, tmpFile);
-    String program = "SmartWorkflow";
-    String run = "randomRunId";
-    long time = 1520808000L;
-    long delay = TimeUnit.MINUTES.toSeconds(5);
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
-                                                              ProgramRunMetaFileUtil.startingInfo("user")));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
-                                                              time + delay, null));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
-                                                              time + delay,
-                                                              ProgramRunMetaFileUtil.startingInfo("user2")));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
-                                                              time + 2 * delay, null));
-    dataFileWriter.close();
-
-    tmpFile = new File("/Users/Chengfeng/tmp/run_meta1.avro");
-    dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, tmpFile);
-    program = "SmartWorkflow";
-    run = "randomRunId" + 1;
-    time += 10000;
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "STARTING", time,
-                                                              ProgramRunMetaFileUtil.startingInfo("user")));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program, run, "RUNNING",
-                                                              time + delay, null));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "STARTING",
-                                                              time + delay,
-                                                              ProgramRunMetaFileUtil.startingInfo("user2")));
-    dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(program + "_1", run, "RUNNING",
-                                                              time + 2 * delay, null));
-    dataFileWriter.close();
   }
 }

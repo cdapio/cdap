@@ -50,12 +50,12 @@ public class FilterDeserializer implements JsonDeserializer<ReportGenerationRequ
     if (fieldName == null) {
       throw new JsonParseException("Field name must be specified for filters");
     }
-    ReportFieldType fieldType = ReportFieldType.valueOfFieldName(fieldName.getAsString());
+    ReportField fieldType = ReportField.valueOfFieldName(fieldName.getAsString());
     if (fieldType == null) {
       throw new JsonParseException("Invalid field name " + fieldName);
     }
     if (object.get("range") != null) {
-      if (!fieldType.getApplicableFilters().contains(ReportFieldType.FilterType.RANGE)) {
+      if (!fieldType.getApplicableFilters().contains(ReportField.FilterType.RANGE)) {
         throw new JsonParseException("Field " + fieldName + " cannot be filtered by range");
       }
       if (fieldType.getValueClass().equals(Integer.class)) {
@@ -67,7 +67,7 @@ public class FilterDeserializer implements JsonDeserializer<ReportGenerationRequ
       throw new JsonParseException(String.format("Field %s with value type %s cannot be filtered by range", fieldName,
                                                  fieldType.getValueClass().getName()));
     }
-    if (!fieldType.getApplicableFilters().contains(ReportFieldType.FilterType.VALUE)) {
+    if (!fieldType.getApplicableFilters().contains(ReportField.FilterType.VALUE)) {
       throw new JsonParseException("Field " + fieldName + " cannot be filtered by values");
     }
     if (fieldType.getValueClass().equals(String.class)) {

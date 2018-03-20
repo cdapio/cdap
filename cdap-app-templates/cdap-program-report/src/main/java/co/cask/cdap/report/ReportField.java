@@ -22,13 +22,13 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import static co.cask.cdap.report.ReportFieldType.FilterType.RANGE;
-import static co.cask.cdap.report.ReportFieldType.FilterType.VALUE;
+import static co.cask.cdap.report.ReportField.FilterType.RANGE;
+import static co.cask.cdap.report.ReportField.FilterType.VALUE;
 
 /**
  * Represents the types of fields in a report.
  */
-public enum ReportFieldType {
+public enum ReportField {
   NAMESPACE("namespace", String.class, Collections.singletonList(VALUE), false),
   ARTIFACT_SCOPE("artifact.scope", String.class, Collections.singletonList(VALUE), false),
   ARTIFACT_NAME("artifact.name", String.class, Collections.singletonList(VALUE), false),
@@ -48,29 +48,29 @@ public enum ReportFieldType {
   NUM_LOG_ERRORS("numLogErrors", Integer.class, Collections.singletonList(RANGE), true),
   NUM_RECORDS_OUT("numRecordsOut", Integer.class, Collections.singletonList(RANGE), true);
 
-  private final String fieldName;
+  public final String name;
   private final Class valueClass;
   private final List<FilterType> applicableFilters;
   private final boolean sortable;
 
-  private static final Map<String, ReportFieldType> FIELD_NAME_MAP;
+  private static final Map<String, ReportField> FIELD_NAME_MAP;
 
   static {
     FIELD_NAME_MAP = new HashMap<>();
-    for (ReportFieldType type : ReportFieldType.values()) {
-      FIELD_NAME_MAP.put(type.getFieldName(), type);
+    for (ReportField type : ReportField.values()) {
+      FIELD_NAME_MAP.put(type.getName(), type);
     }
   }
 
-  ReportFieldType(String fieldName, Class valueClass, List<FilterType> applicableFilters, boolean sortable) {
-    this.fieldName = fieldName;
+  ReportField(String name, Class valueClass, List<FilterType> applicableFilters, boolean sortable) {
+    this.name = name;
     this.valueClass = valueClass;
     this.applicableFilters = applicableFilters;
     this.sortable = sortable;
   }
 
-  public String getFieldName() {
-    return fieldName;
+  public String getName() {
+    return name;
   }
 
   public Class getValueClass() {
@@ -86,11 +86,11 @@ public enum ReportFieldType {
   }
 
   @Nullable
-  public static ReportFieldType valueOfFieldName(String fieldName) {
+  public static ReportField valueOfFieldName(String fieldName) {
     return FIELD_NAME_MAP.get(fieldName);
   }
 
-  public static boolean isValidFiled(String fieldName) {
+  public static boolean isValidField(String fieldName) {
     return FIELD_NAME_MAP.containsKey(fieldName);
   }
 

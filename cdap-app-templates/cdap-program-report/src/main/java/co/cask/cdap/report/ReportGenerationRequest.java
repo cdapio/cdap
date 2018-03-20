@@ -65,11 +65,6 @@ public class ReportGenerationRequest {
   }
 
   public void validate() {
-    for (String field : fields) {
-      if (ReportFieldType.valueOfFieldName(field) == null) {
-        throw new IllegalArgumentException(String.format("Invalid field name '%s' in fields.", field));
-      }
-    }
     if (start == null) {
       throw new IllegalArgumentException("'start' must be specified.");
     }
@@ -78,6 +73,11 @@ public class ReportGenerationRequest {
     }
     if (fields == null || fields.isEmpty()) {
       throw new IllegalArgumentException("'fields' must be specified.");
+    }
+    for (String field : fields) {
+      if (!ReportField.isValidField(field)) {
+        throw new IllegalArgumentException(String.format("Invalid field name '%s' in fields.", field));
+      }
     }
     // No need to check whether filter field name and type are valid since this is done during JSON deserialization
     if (filters != null) {
@@ -95,7 +95,7 @@ public class ReportGenerationRequest {
         throw new IllegalArgumentException("Currently only one field is supported in sort.");
       }
       for (Sort sortField : sort) {
-        ReportFieldType sortFieldType = ReportFieldType.valueOfFieldName(sortField.getFieldName());
+        ReportField sortFieldType = ReportField.valueOfFieldName(sortField.getFieldName());
         if (sortFieldType == null) {
           throw new IllegalArgumentException(String.format("Invalid field name '%s' in sort.",
                                                            sortField.getFieldName()));
