@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -86,7 +87,7 @@ public final class Schema implements Serializable {
   public static final class Field implements Serializable {
     private static final long serialVersionUID = 5423721270457378454L;
     private final String name;
-    private final Schema schema;
+    private Schema schema;
 
     /**
      * Creates a {@link Field} instance with the given name and {@link Schema}.
@@ -116,6 +117,10 @@ public final class Schema implements Serializable {
      */
     public Schema getSchema() {
       return schema;
+    }
+
+    private void setSchema(Schema schema) {
+      this.schema = schema;
     }
 
     @Override
@@ -387,8 +392,12 @@ public final class Schema implements Serializable {
   // This is a on demand cache for case insensitive field lookup. No need to serialize.
   private transient Map<String, Field> ignoreCaseFieldMap;
 
-  private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
-                 String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
+  private Schema(Type type,
+                 @Nullable Set<String> enumValues,                                    // Not null for enum type
+                 @Nullable Schema componentSchema,                                    // Not null for array type
+                 @Nullable Schema keySchema, @Nullable Schema valueSchema,            // Not null for map type
+                 @Nullable String recordName, @Nullable Map<String, Field> fieldMap,  // Not null for record type
+                 @Nullable List<Schema> unionSchemas) {                               // Not null for union type
     this.type = type;
     Map.Entry<Map<String, Integer>, Map<Integer, String>> enumValuesIndexes = createIndex(enumValues);
     this.enumValues = enumValuesIndexes.getKey();
@@ -398,10 +407,15 @@ public final class Schema implements Serializable {
     this.valueSchema = valueSchema;
     this.mapSchema = (keySchema == null || valueSchema == null) ? null : new ImmutableEntry<>(keySchema, valueSchema);
     this.recordName = recordName;
-    this.fieldMap = populateRecordFields(fieldMap);
+    this.fieldMap = fieldMap == null ? null : copyFields(fieldMap);
     this.fields = this.fieldMap == null ? null : Collections.unmodifiableList(new ArrayList<>(this.fieldMap.values()));
-    this.unionSchemas = Collections.unmodifiableList(unionSchemas == null ? new ArrayList<Schema>()
-                                                                          : new ArrayList<>(unionSchemas));
+    this.unionSchemas = unionSchemas == null ? null : new ArrayList<>(unionSchemas);
+
+    // Resolve name only records. Only need this step for RECORD or UNION type schemas
+    // For array and map schema types, they should already get resolved when the component type is being constructed.
+    if (type == Type.RECORD || type == Type.UNION) {
+      resolveSchema(this, new HashMap<String, Schema>());
+    }
   }
 
   /**
@@ -415,7 +429,11 @@ public final class Schema implements Serializable {
    * @return An immutable {@link Set} of enum values or {@code null} if this is not a {@link Type#ENUM ENUM} schema.
    *         The {@link Set#iterator()} order would be the enum values orders.
    */
+  @Nullable
   public Set<String> getEnumValues() {
+    if (enumValues == null) {
+      return null;
+    }
     return enumValues.keySet();
   }
 
@@ -437,6 +455,7 @@ public final class Schema implements Serializable {
    * @return The string represents the enum value, or {@code null} if this is not a {@link Type#ENUM ENUM} schema or
    *         the given index is invalid.
    */
+  @Nullable
   public String getEnumValue(int idx) {
     if (enumIndexes == null) {
       return null;
@@ -447,6 +466,7 @@ public final class Schema implements Serializable {
   /**
    * @return The schema of the array component or {@code null} if this is not a {@link Type#ARRAY ARRAY} schema.
    */
+  @Nullable
   public Schema getComponentSchema() {
     return componentSchema;
   }
@@ -456,6 +476,7 @@ public final class Schema implements Serializable {
    *         The {@code Map.Entry#getKey()} would returns the key schema, while {@code Map.Entry#getValue()}
    *         would returns the value schema.
    */
+  @Nullable
   public Map.Entry<Schema, Schema> getMapSchema() {
     return mapSchema;
   }
@@ -463,6 +484,7 @@ public final class Schema implements Serializable {
   /**
    * @return Name of the record if this is a {@link Type#RECORD RECORD} schema or {@code null} otherwise.
    */
+  @Nullable
   public String getRecordName() {
     return recordName;
   }
@@ -471,6 +493,7 @@ public final class Schema implements Serializable {
    * @return An immutable {@link List} of record {@link Field Fields} if this is a {@link Type#RECORD RECORD} schema
    *         or {@code null} otherwise.
    */
+  @Nullable
   public List<Field> getFields() {
     return fields;
   }
@@ -521,8 +544,9 @@ public final class Schema implements Serializable {
    * @return An immutable {@link List} of schemas inside this union
    *         or {@code null} if this is not a {@link Type#UNION UNION} schema.
    */
+  @Nullable
   public List<Schema> getUnionSchemas() {
-    return unionSchemas;
+    return Collections.unmodifiableList(unionSchemas);
   }
 
   /**
@@ -530,6 +554,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of the given union index or {@code null} if this is not a {@link Type#UNION UNION}
    *         schema or the given index is invalid.
    */
+  @Nullable
   public Schema getUnionSchema(int idx) {
     return (unionSchemas == null || idx < 0 || unionSchemas.size() <= idx) ? null : unionSchemas.get(idx);
   }
@@ -749,86 +774,6 @@ public final class Schema implements Serializable {
   }
 
   /**
-   * Resolves all field schemas.
-   *
-   * @param fields All the fields that need to be resolved.
-   * @return A {@link Map} which has all the field schemas resolved.
-   * @see #resolveSchema(Schema, java.util.Map)
-   */
-  private Map<String, Field> populateRecordFields(Map<String, Field> fields) {
-    if (fields == null) {
-      return null;
-    }
-
-    Map<String, Schema> knownRecordSchemas = new HashMap<>();
-    knownRecordSchemas.put(recordName, this);
-    Map<String, Field> resolvedFields = new LinkedHashMap<>();
-
-    for (Map.Entry<String, Field> fieldEntry : fields.entrySet()) {
-      String fieldName = fieldEntry.getKey();
-      Field field = fieldEntry.getValue();
-      Schema fieldSchema = resolveSchema(field.getSchema(), knownRecordSchemas);
-
-      if (fieldSchema == field.getSchema()) {
-        resolvedFields.put(fieldName, field);
-      } else {
-        resolvedFields.put(fieldName, Field.of(fieldName, fieldSchema));
-      }
-    }
-
-    return Collections.unmodifiableMap(resolvedFields);
-  }
-
-  /**
-   * This method is to recursively resolves all name only record schema in the given schema.
-   *
-   * @param schema The schema needs to be resolved.
-   * @param knownRecordSchemas The mapping of the already resolved record schemas.
-   * @return A {@link Schema} that is structurally the same as the input schema, but with all
-   *         name only record schemas resolved to full schemas (i.e. with fields sets).
-   *         If nothing in the given schema needs to be resolved, the same schema instance would be returned,
-   *         otherwise, a new instance would be returned.
-   */
-  private Schema resolveSchema(final Schema schema, final Map<String, Schema> knownRecordSchemas) {
-    switch (schema.getType()) {
-      case ARRAY:
-        Schema componentSchema = resolveSchema(schema.getComponentSchema(), knownRecordSchemas);
-        return (componentSchema == schema.getComponentSchema()) ? schema : Schema.arrayOf(componentSchema);
-      case MAP:
-        Map.Entry<Schema, Schema> entry = schema.getMapSchema();
-        Schema keySchema = resolveSchema(entry.getKey(), knownRecordSchemas);
-        Schema valueSchema = resolveSchema(entry.getValue(), knownRecordSchemas);
-        return (keySchema == entry.getKey() && valueSchema == entry.getValue()) ?
-                schema : Schema.mapOf(keySchema, valueSchema);
-      case UNION:
-        List<Schema> schemas = new ArrayList<>();
-        boolean changed = false;
-        for (Schema input : schema.getUnionSchemas()) {
-          Schema output = resolveSchema(input, knownRecordSchemas);
-          if (output != input) {
-            changed = true;
-          }
-          schemas.add(output);
-        }
-        return changed ? Schema.unionOf(schemas) : schema;
-      case RECORD:
-        if (schema.fields == null) {
-          // It is a named record that refers to previously defined record
-          Schema knownSchema = knownRecordSchemas.get(schema.recordName);
-          if (knownSchema == null) {
-            throw new IllegalArgumentException("Undefined schema " + schema.recordName);
-          }
-          return knownSchema;
-        } else {
-          // It is a concrete schema
-          knownRecordSchemas.put(schema.recordName, schema);
-          return schema;
-        }
-    }
-    return schema;
-  }
-
-  /**
    * Helper method to encode this schema into json string.
    *
    * @return A json string representing this schema.
@@ -846,6 +791,61 @@ public final class Schema implements Serializable {
       throw new RuntimeException(e);
     }
     return writer.toString();
+  }
+
+  /**
+   * Copies the given set of fields.
+   */
+  private static Map<String, Field> copyFields(Map<String, Field> fields) {
+    Map<String, Field> result = new LinkedHashMap<>();
+    for (Map.Entry<String, Field> field : fields.entrySet()) {
+      result.put(field.getKey(), Field.of(field.getKey(), field.getValue().getSchema()));
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * This method is to recursively resolves all name only record schema in the given schema.
+   * This method should only be constructor as this will mutate the Schema while resolving for name only records.
+   *
+   * @param schema The schema needs to be resolved.
+   * @param knownRecordSchemas The mapping of the already resolved record schemas.
+   * @return A {@link Schema} that is structurally the same as the input schema, but with all
+   *         name only record schemas resolved to full schemas (i.e. with fields sets).
+   *         If nothing in the given schema needs to be resolved, the same schema instance would be returned,
+   *         otherwise, a new instance would be returned.
+   */
+  private static Schema resolveSchema(final Schema schema, final Map<String, Schema> knownRecordSchemas) {
+    switch (schema.getType()) {
+      case ARRAY:
+        Schema componentSchema = resolveSchema(schema.getComponentSchema(), knownRecordSchemas);
+        return (componentSchema == schema.getComponentSchema()) ? schema : Schema.arrayOf(componentSchema);
+      case MAP:
+        Map.Entry<Schema, Schema> entry = schema.getMapSchema();
+        Schema keySchema = resolveSchema(entry.getKey(), knownRecordSchemas);
+        Schema valueSchema = resolveSchema(entry.getValue(), knownRecordSchemas);
+        return (keySchema == entry.getKey() && valueSchema == entry.getValue()) ?
+          schema : Schema.mapOf(keySchema, valueSchema);
+      case UNION:
+        ListIterator<Schema> iterator = schema.unionSchemas.listIterator();
+        while (iterator.hasNext()) {
+          iterator.set(resolveSchema(iterator.next(), knownRecordSchemas));
+        }
+        return schema;
+      case RECORD:
+        Schema knownSchema = knownRecordSchemas.get(schema.getRecordName());
+        if (knownSchema != null) {
+          return knownSchema;
+        }
+        if (schema.fields != null) {
+          knownRecordSchemas.put(schema.getRecordName(), schema);
+          for (Field field : schema.fields) {
+            field.setSchema(resolveSchema(field.getSchema(), knownRecordSchemas));
+          }
+        }
+        return schema;
+    }
+    return schema;
   }
 
   private static final class ImmutableEntry<K, V> implements Map.Entry<K, V>, Serializable {
