@@ -24,7 +24,7 @@ import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import uuidV4 from 'uuid/v4';
 import { Modal, ModalHeader, ModalBody, Tooltip } from 'reactstrap';
-import myPreferenceApi from 'api/preference';
+import {MyPreferenceApi} from 'api/preference';
 import {convertProgramToApi} from 'services/program-api-converter';
 import KeyValuePairs from 'components/KeyValuePairs';
 import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
@@ -50,27 +50,27 @@ export default class SetPreferenceModal extends Component {
     this.setAtSystemLevel = this.props.setAtSystemLevel;
 
     if (this.setAtSystemLevel) {
-      this.getSpecifiedPreferencesApi = myPreferenceApi.getSystemPreferences;
-      this.setPreferencesApi = myPreferenceApi.setSystemPreferences;
+      this.getSpecifiedPreferencesApi = MyPreferenceApi.getSystemPreferences;
+      this.setPreferencesApi = MyPreferenceApi.setSystemPreferences;
     } else {
       this.params.namespace = namespace;
-      this.getSpecifiedPreferencesApi = myPreferenceApi.getNamespacePreferences;
-      this.getInheritedPreferencesApi = myPreferenceApi.getSystemPreferences;
-      this.setPreferencesApi = myPreferenceApi.setNamespacePreferences;
+      this.getSpecifiedPreferencesApi = MyPreferenceApi.getNamespacePreferences;
+      this.getInheritedPreferencesApi = MyPreferenceApi.getSystemPreferences;
+      this.setPreferencesApi = MyPreferenceApi.setNamespacePreferences;
 
       if (this.props.entity) {
         if (this.props.entity.type === 'application') {
           this.params.appId = this.props.entity.id;
-          this.getSpecifiedPreferencesApi = myPreferenceApi.getAppPreferences;
-          this.getInheritedPreferencesApi = myPreferenceApi.getNamespacePreferencesResolved;
-          this.setPreferencesApi = myPreferenceApi.setAppPreferences;
+          this.getSpecifiedPreferencesApi = MyPreferenceApi.getAppPreferences;
+          this.getInheritedPreferencesApi = MyPreferenceApi.getNamespacePreferencesResolved;
+          this.setPreferencesApi = MyPreferenceApi.setAppPreferences;
         } else {
           this.params.appId = this.props.entity.applicationId;
           this.params.programId = this.props.entity.id;
           this.params.programType = convertProgramToApi(this.props.entity.programType);
-          this.getSpecifiedPreferencesApi = myPreferenceApi.getProgramPreferences;
-          this.getInheritedPreferencesApi = myPreferenceApi.getAppPreferencesResolved;
-          this.setPreferencesApi = myPreferenceApi.setProgramPreferences;
+          this.getSpecifiedPreferencesApi = MyPreferenceApi.getProgramPreferences;
+          this.getInheritedPreferencesApi = MyPreferenceApi.getAppPreferencesResolved;
+          this.setPreferencesApi = MyPreferenceApi.setProgramPreferences;
         }
       }
 

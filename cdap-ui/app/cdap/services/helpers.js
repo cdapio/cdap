@@ -94,6 +94,7 @@ function humanReadableDate(date, isMilliseconds) {
   return (moment(date * 1000)).format(format);
 }
 
+const ONE_SECOND_MS = 1000;
 const ONE_MIN_SECONDS = 60;
 const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
 const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
@@ -233,6 +234,16 @@ function isNilOrEmptyString(value) {
   return isNil(value) || value === '';
 }
 
+function isNumeric(value) {
+  return !isNaN(parseFloat(value)) && isFinite(value);
+}
+
+function wholeArrayIsNumeric(values) {
+  return values.reduce((prev, curr) => {
+    return prev && isNumeric(curr);
+  }, isNumeric(values[0]));
+}
+
 function requiredFieldsCompleted(state, requiredFields) {
   for (let i = 0; i < requiredFields.length; i++) {
     let requiredField = requiredFields[i];
@@ -272,6 +283,18 @@ const composeEnhancers = (storeTitle) =>
       name: storeTitle
     }) : compose;
 
+const reverseArrayWithoutMutating = (array) => {
+  if (isNil(array)) {
+    return [];
+  }
+
+  let newArray = [];
+  for (let i = array.length - 1; i >= 0; i--) {
+    newArray.push(array[i]);
+  }
+  return newArray;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -292,10 +315,14 @@ export {
   isPluginSink,
   isBatchPipeline,
   composeEnhancers,
+  ONE_SECOND_MS,
   ONE_MIN_SECONDS,
   ONE_HOUR_SECONDS,
   ONE_DAY_SECONDS,
   ONE_WEEK_SECONDS,
   ONE_MONTH_SECONDS,
-  ONE_YEAR_SECONDS
+  ONE_YEAR_SECONDS,
+  isNumeric,
+  wholeArrayIsNumeric,
+  reverseArrayWithoutMutating
 };

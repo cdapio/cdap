@@ -30,7 +30,7 @@ import {
   getTimeResolution,
   getYAxisProps
 } from 'components/PipelineSummary/RunsGraphHelpers';
-import {humanReadableDuration} from 'services/helpers';
+import {humanReadableDuration, preventPropagation} from 'services/helpers';
 import CopyableID from 'components/CopyableID';
 import SortableStickyTable from 'components/SortableStickyTable';
 import ee from 'event-emitter';
@@ -241,10 +241,11 @@ export default class RunsHistoryGraph extends Component {
                     <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
                     <IconSVG
                       name="icon-close"
-                      onClick={() => {
+                      onClick={(e) => {
                         this.setState({
                           currentHoveredElement: null
                         });
+                        preventPropagation(e);
                       }}
                     />
                   </div>

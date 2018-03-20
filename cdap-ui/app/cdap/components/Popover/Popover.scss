@@ -18,6 +18,7 @@
 
 $arrow_size: 7px;
 $margin_adjustment: $arrow_size + 1;
+$tooltip-bg-color: $grey-01;
 
 .popper {
   min-width: 170px;
@@ -108,5 +109,22 @@ $margin_adjustment: $arrow_size + 1;
     border-bottom: 1px solid $grey-02;
     right: -6px;
     transform: rotate(-45deg);
+  }
+}
+
+.popper.tooltip {
+  font-size: 11px;
+  opacity: 0.9;
+  background-color: $tooltip-bg-color;
+  border: 1px solid $tooltip-bg-color;
+  color: white;
+  padding: 7px;
+  word-wrap: break-word;
+  text-align: left;
+  border-radius: 3px;
+  background-clip: padding-box;
+
+  .popper__arrow {
+    background-color: $tooltip-bg-color;
   }
 }

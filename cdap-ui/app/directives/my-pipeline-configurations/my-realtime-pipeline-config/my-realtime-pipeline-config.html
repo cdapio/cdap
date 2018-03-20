@@ -14,36 +14,36 @@
   the License.
 -->
 
-<div class="pipeline-configurations-content"">
-  <div class="pipeline-configurations-header">
-    <h3 class="modeless-title">
+<div class="pipeline-configurations-content modeless-container">
+  <div class="pipeline-configurations-header modeless-header">
+    <div class="modeless-title">
       Configure
       <span ng-if="RealtimePipelineConfigCtrl.pipelineName.length > 0">
         "{{RealtimePipelineConfigCtrl.pipelineName}}"
       </span>
-    </h3>
+    </div>
     <div class="btn-group">
       <a class="btn" ng-click="RealtimePipelineConfigCtrl.onClose()">
         <span class="fa fa-remove"></span>
       </a>
     </div>
   </div>
-  <div class="pipeline-configurations-body">
+  <div class="pipeline-configurations-body modeless-content">
     <div class="configurations-side-panel">
-      <div class="configurations-headers">
-        <div class="configuration-header"
+      <div class="configurations-tabs">
+        <div class="configuration-tab"
               ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'}"
               ng-click="RealtimePipelineConfigCtrl.activeTab = 'runtimeArgs'"
               ng-if="RealtimePipelineConfigCtrl.isDeployed || RealtimePipelineConfigCtrl.showPreviewConfig">
           Runtime Arguments
         </div>
-        <div class="configuration-header"
+        <div class="configuration-tab"
               ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'previewConfig'}"
               ng-click="RealtimePipelineConfigCtrl.activeTab = 'previewConfig'"
               ng-if="!RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.showPreviewConfig">
           Preview Config
         </div>
-        <div class="configuration-header toggle-advanced-options"
+        <div class="configuration-tab toggle-advanced-options"
               ng-click="RealtimePipelineConfigCtrl.showAdvanced = !RealtimePipelineConfigCtrl.showAdvanced"
               ng-if="RealtimePipelineConfigCtrl.isDeployed || RealtimePipelineConfigCtrl.showPreviewConfig">
           <span class="fa"
@@ -53,17 +53,17 @@
         </div>
         <div class="advanced-options"
               ng-show="RealtimePipelineConfigCtrl.showAdvanced || !RealtimePipelineConfigCtrl.isDeployed && !RealtimePipelineConfigCtrl.showPreviewConfig">
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'}"
                 ng-click="RealtimePipelineConfigCtrl.activeTab = 'pipelineConfig'">
             Pipeline Config
           </div>
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'engineConfig'}"
                 ng-click="RealtimePipelineConfigCtrl.activeTab = 'engineConfig'">
             Engine Config
           </div>
-          <div class="configuration-header"
+          <div class="configuration-tab"
                 ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'resources', 'disabled': RealtimePipelineConfigCtrl.showPreviewConfig}"
                 ng-click="RealtimePipelineConfigCtrl.activeTab = 'resources'">
             Resources
@@ -72,8 +72,9 @@
       </div>
     </div>
 
-    <div class="configuration-content">
-      <div class="configuration-step-content configuration-content-container runtime-arguments"
+    <div class="configuration-content configuration-content-realtime">
+      <div class="configuration-step-content configuration-content-container"
+            id="runtime-arguments-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <my-pipeline-runtime-args
           runtime-arguments="RealtimePipelineConfigCtrl.runtimeArguments"
@@ -82,7 +83,8 @@
         </my-pipeline-runtime-args>
       </div>
 
-      <div class="configuration-step-content configuration-content-container preview-config"
+      <div class="configuration-step-content configuration-content-container"
+            id="preview-config-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'previewConfig'">
         <div class="step-content-heading">
           Set how long you want to run your preview
@@ -100,7 +102,8 @@
         </div>
       </div>
 
-      <div class="configuration-step-content pipeline-config"
+      <div class="configuration-step-content"
+            id="pipeline-config-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'">
         <div class="step-content-heading">
           Set configurations for this pipeline
@@ -160,7 +163,8 @@
           </div>
         </div>
       </div>
-      <div class="configuration-step-content resources"
+      <div class="configuration-step-content"
+            id="resources-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'resources'">
         <div class="step-content-heading">
           Specify the resources for the following processes of the Spark program
@@ -230,7 +234,8 @@
         </div>
       </div>
 
-      <div class="configuration-step-content configuration-content-container engine-config"
+      <div class="configuration-step-content configuration-content-container"
+            id="engine-config-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'">
         <fieldset ng-disabled="RealtimePipelineConfigCtrl.isDeployed">
           <div class="step-content-heading">
@@ -319,10 +324,10 @@
       </div>
 
       <div class="configuration-step-navigation">
-        <div class="apply-run-container"
+        <div class="apply-action-container"
               ng-if="RealtimePipelineConfigCtrl.isDeployed || RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
-            class="btn btn-primary apply-run"
+            class="btn btn-primary apply-action"
             ng-if="RealtimePipelineConfigCtrl.isDeployed"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled() || RealtimePipelineConfigCtrl.startingPipeline || RealtimePipelineConfigCtrl.updatingPipeline"
             ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">
@@ -330,7 +335,7 @@
             <span ng-if="RealtimePipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
           </button>
           <button
-            class="btn btn-primary apply-run"
+            class="btn btn-primary apply-action"
             ng-if="RealtimePipelineConfigCtrl.showPreviewConfig"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">

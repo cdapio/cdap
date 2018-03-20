@@ -80,3 +80,15 @@
     }
   }
 }
+
+@mixin border-element($right: -17px, $top: 28px) {
+  content: "";
+  position: absolute;
+  height: 1px;
+  border-bottom: 1px solid $grey-05;
+  width: 33px;
+  right: $right;
+  top: $top;
+  transform: rotate(90deg);
+  z-index: 1;
+}

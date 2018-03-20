@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,70 @@
  * the License.
 */
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
 require('./KeyValuePairs.scss');
 import T from 'i18n-react';
 import classnames from 'classnames';
+import {preventPropagation} from 'services/helpers';
 
 class KeyValuePair extends Component {
-  constructor(props) {
-    super(props);
+  static propTypes = {
+    className: PropTypes.string,
+    name: PropTypes.string,
+    value: PropTypes.string,
+    index: PropTypes.number,
+    notDeletable: PropTypes.bool,
+    provided: PropTypes.bool,
+    showReset: PropTypes.bool,
+    onChange: PropTypes.func,
+    addRow: PropTypes.func,
+    removeRow: PropTypes.func,
+    onProvided: PropTypes.func,
+    getResettedKeyValue: PropTypes.func,
+    keyPlaceholder: PropTypes.string,
+    valuePlaceholder: PropTypes.string,
+    disabled: PropTypes.bool,
+    onPaste: PropTypes.func
+  };
 
-    this.keyDown = this.keyDown.bind(this);
+  handlePaste = (e) => {
+    let data = e.clipboardData.getData('text');
+    try {
+      let dataObj = JSON.parse(data);
+      e.preventDefault();
+      if (typeof this.props.onPaste === 'function') {
+        this.props.onPaste(dataObj, this.props.index);
+      }
+    } catch (e) {
+      return;
+    }
   }
 
-  keyDown(e) {
+  keyDown = (e) => {
     if (e.keyCode === 13) {
       this.props.addRow();
     }
+  }
+
+  renderKeyField() {
+    let keyPlaceholder = '';
+    if (!this.props.disabled) {
+      keyPlaceholder = this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
+    }
+
+    return (
+      <input
+        type="text"
+        value={this.props.name}
+        autoFocus
+        onKeyDown={this.keyDown}
+        onChange={this.props.onChange.bind(null, 'key')}
+        placeholder={keyPlaceholder}
+        className={classnames("form-control key-input", {"wider": this.props.disabled})}
+        disabled={this.props.notDeletable || this.props.disabled}
+        onPaste={this.handlePaste}
+      />
+    );
   }
 
   renderValueField() {
@@ -39,13 +86,16 @@ class KeyValuePair extends Component {
         <input
           type="text"
           value=""
-          className="form-control value-input"
+          className={classnames("form-control value-input", {"wider": this.props.disabled})}
           disabled
         />
       );
     }
 
-    let valuePlaceholder = this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
+    let valuePlaceholder = '';
+    if (!this.props.disabled) {
+      valuePlaceholder = this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
+    }
 
     return (
       <input
@@ -54,12 +104,37 @@ class KeyValuePair extends Component {
         onKeyDown={this.keyDown}
         onChange={this.props.onChange.bind(null, 'value')}
         placeholder={valuePlaceholder}
-        className="form-control value-input"
+        className={classnames("form-control value-input", {"wider": this.props.disabled})}
+        disabled={this.props.disabled}
+        onPaste={this.handlePaste}
       />
     );
   }
 
-  renderNotDeletableElements() {
+  renderActionButtons() {
+    if (this.props.disabled) { return null; }
+
+    return (
+      <span>
+        <button
+          type="submit"
+          className="btn add-row-btn btn-link"
+          onClick={(e) => {this.props.addRow(); preventPropagation(e);}}
+        >
+          <i className="fa fa-plus" />
+        </button>
+        <button
+          type="submit"
+          className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
+          onClick={(e) => {this.props.removeRow(); preventPropagation(e);}}
+        >
+          <i className="fa fa-trash" />
+        </button>
+      </span>
+    );
+  }
+
+  renderProvidedCheckboxAndResetBtn() {
     if (!this.props.notDeletable) { return null; }
 
     return (
@@ -81,56 +156,15 @@ class KeyValuePair extends Component {
   }
 
   render() {
-    let keyPlaceholder = this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
-
     return (
       <div className="key-value-pair-preference">
-        <input
-          type="text"
-          value={this.props.name}
-          autoFocus
-          onKeyDown={this.keyDown}
-          onChange={this.props.onChange.bind(null, 'key')}
-          placeholder={keyPlaceholder}
-          className="form-control key-input"
-          disabled={this.props.notDeletable}
-        />
+        {this.renderKeyField()}
         {this.renderValueField()}
-        <button
-          type="submit"
-          className="btn add-row-btn btn-link"
-          onClick={this.props.addRow}
-        >
-          <i className="fa fa-plus" />
-        </button>
-        <button
-          type="submit"
-          className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
-          onClick={this.props.removeRow}
-        >
-          <i className="fa fa-trash" />
-        </button>
-        {this.renderNotDeletableElements()}
+        {this.renderActionButtons()}
+        {this.renderProvidedCheckboxAndResetBtn()}
       </div>
     );
   }
 }
-
-KeyValuePair.propTypes = {
-  className: PropTypes.string,
-  name: PropTypes.string,
-  value: PropTypes.string,
-  index: PropTypes.number,
-  notDeletable: PropTypes.bool,
-  provided: PropTypes.bool,
-  showReset: PropTypes.bool,
-  onChange: PropTypes.func,
-  addRow: PropTypes.func,
-  removeRow: PropTypes.func,
-  onProvided: PropTypes.func,
-  getResettedKeyValue: PropTypes.func,
-  keyPlaceholder: PropTypes.string,
-  valuePlaceholder: PropTypes.string
-};
 
 export default KeyValuePair;
