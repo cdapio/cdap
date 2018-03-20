@@ -39,6 +39,7 @@ public enum ReportField {
   RUN("run", String.class, Collections.singletonList(VALUE), false),
   STATUS("status", String.class, Collections.singletonList(VALUE), false),
   START("start", Long.class, Collections.singletonList(RANGE), true),
+  RUNNING("running", Long.class, Collections.singletonList(RANGE), true),
   END("end", Long.class, Collections.singletonList(RANGE), true),
   DURATION("duration", Long.class, Collections.singletonList(RANGE), true),
   USER("user", String.class, Collections.singletonList(VALUE), false),
@@ -48,7 +49,7 @@ public enum ReportField {
   NUM_LOG_ERRORS("numLogErrors", Integer.class, Collections.singletonList(RANGE), true),
   NUM_RECORDS_OUT("numRecordsOut", Integer.class, Collections.singletonList(RANGE), true);
 
-  public final String name;
+  public final String fieldName;
   private final Class valueClass;
   private final List<FilterType> applicableFilters;
   private final boolean sortable;
@@ -58,19 +59,19 @@ public enum ReportField {
   static {
     FIELD_NAME_MAP = new HashMap<>();
     for (ReportField type : ReportField.values()) {
-      FIELD_NAME_MAP.put(type.getName(), type);
+      FIELD_NAME_MAP.put(type.getFieldName(), type);
     }
   }
 
-  ReportField(String name, Class valueClass, List<FilterType> applicableFilters, boolean sortable) {
-    this.name = name;
+  ReportField(String fieldName, Class valueClass, List<FilterType> applicableFilters, boolean sortable) {
+    this.fieldName = fieldName;
     this.valueClass = valueClass;
     this.applicableFilters = applicableFilters;
     this.sortable = sortable;
   }
 
-  public String getName() {
-    return name;
+  public String getFieldName() {
+    return fieldName;
   }
 
   public Class getValueClass() {

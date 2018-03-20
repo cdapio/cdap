@@ -34,7 +34,7 @@ class RecordAgg extends org.apache.spark.sql.expressions.Aggregator[org.apache.s
       }
     }
     //    println("startInfo = %s".format(startInfo))
-    RecordBuilder(a.getAs("namespace"), a.getAs("program"), a.getAs("run"), b.statuses :+ (a.getAs[String]("status"), a.getAs[Long]("time")), startInfo)
+    RecordBuilder(a.getAs(ReportField.NAMESPACE.fieldName), a.getAs(ReportField.PROGRAM.fieldName), a.getAs(ReportField.RUN.fieldName), b.statuses :+ (a.getAs[String]("status"), a.getAs[Long]("time")), startInfo)
   }
   def merge(b1: RecordBuilder, b2: RecordBuilder) = {
     b1.merge(b2)

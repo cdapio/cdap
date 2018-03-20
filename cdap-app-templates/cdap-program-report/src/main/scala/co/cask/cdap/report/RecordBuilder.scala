@@ -36,21 +36,25 @@ case class RecordBuilder(namespace: String, program: String, run: String, status
 
   def build(): Record = {
     import ReportGen._
-    val statusTimeMap = statuses.groupBy(_._1).map(v => (v._1, v._2.map(_._2).min))
-    val user = if (startInfo.isDefined) Some(startInfo.get.user) else None
-    val runtimeArgs = if (startInfo.isDefined) Some(startInfo.get.runtimeArgs) else None
 //    println("this = %s".format(this))
+    val statusTimeMap = statuses.groupBy(_._1).map(v => (v._1, v._2.map(_._2).min))
     val start = statusTimeMap.get("STARTING")
+    val running = statusTimeMap.get("RUNNING")
     val completed = statusTimeMap.get("COMPLETED")
     val killed = statusTimeMap.get("KILLED")
     val failed = statusTimeMap.get("FAILED")
     LOG.info("completed={}", completed)
     LOG.info("killed={}", killed)
     LOG.info("failed={}", failed)
-    val end = if (completed.isDefined) completed else if (killed.isDefined) killed else if (failed.isDefined)
-      failed else None
+    val end =
+      if (completed.isDefined) completed
+      else if (killed.isDefined) killed
+      else if (failed.isDefined) failed
+      else None
     val duration = if (start.isDefined && end.isDefined) Some(end.get - start.get) else None
-    val r = Record(namespace, program, run, start, statusTimeMap.get("RUNNING"), end, duration, user, runtimeArgs)
+    val user = if (startInfo.isDefined) Some(startInfo.get.user) else None
+    val runtimeArgs = if (startInfo.isDefined) Some(startInfo.get.runtimeArgs) else None
+    val r = Record(namespace, program, run, start, running, end, duration, user, runtimeArgs)
     LOG.info("RecordBuilder={}", this)
     LOG.info("record = {}", r)
     r

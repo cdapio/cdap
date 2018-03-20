@@ -41,19 +41,31 @@ class ReportGen(private val spark: SparkSession) {
     //    val sort = request.getSort
 
     // TODO: configure partitions. The default number of partitions is 200
-    val aggDf = df.groupBy(ReportField.RUN.getName).agg(aggRow).drop("program").drop("run")
+    var aggDf = df.groupBy(ReportField.RUN.getFieldName).agg(aggRow)
     //    val request = ReportGen.GSON.fromJson("{\"start\":1520808000,\"end\":1520808005}", classOf[Request])
     val start: Long = request.getStart
     val end: Long = request.getEnd
     val recordCol = aggDf(RECORD)
-    var filterCol = recordCol.getField("start").isNotNull
-    filterCol &&= recordCol.getField("start") < end
-    filterCol &&= (recordCol.getField("end").isNull
-      || recordCol.getField("end") > start)
+    val requiredFields = collection.mutable.LinkedHashSet(ReportField.NAMESPACE.fieldName, ReportField.PROGRAM.fieldName, ReportField.RUN.fieldName)
+    if (Option(request.getFields).isDefined) requiredFields ++= request.getFields
+    LOG.info("requiredFields= {}", requiredFields)
+    val additionalFields = collection.mutable.LinkedHashSet(ReportField.START.fieldName, ReportField.END.fieldName)
+    LOG.info("additionalFields= {}", additionalFields)
+    if (Option(request.getFilters).isDefined) asScalaBuffer(request.getFilters).foreach(f => additionalFields.add(f.getFieldName))
+    if (Option(request.getSort).isDefined) asScalaBuffer(request.getSort).foreach(s => additionalFields.add(s.getFieldName))
+    (requiredFields ++ additionalFields).foreach(fieldName => {
+      LOG.info("adding column {}", fieldName)
+      aggDf = aggDf.withColumn(fieldName, recordCol.getField(fieldName))
+      LOG.info("aggDf.columns={}", aggDf.columns)
+    })
+    var filterCol = aggDf(ReportField.START.fieldName).isNotNull
+    filterCol &&= aggDf(ReportField.START.fieldName) < end
+    filterCol &&= (aggDf(ReportField.END.fieldName).isNull
+      || aggDf(ReportField.END.fieldName) > start)
     LOG.info("filterCol={}", filterCol)
     if (Option(request.getFilters).isDefined) {
       asScalaBuffer(request.getFilters).foreach(f => {
-        val fieldCol = recordCol.getField(f.getFieldName)
+        val fieldCol = aggDf(f.getFieldName)
         filterCol &&= fieldCol.isNotNull
         f match {
           case rangeFilter: ReportGenerationRequest.RangeFilter[_] => {
@@ -63,9 +75,9 @@ class ReportGen(private val spark: SparkSession) {
             val max = rangeFilter.getRange.getMax
             if (Option(max).isDefined) filterCol &&= fieldCol < max
           }
-          case valueFilter: ReportGenerationRequest.ValueFilter[String] => {
+          case valueFilter: ReportGenerationRequest.ValueFilter[_] => {
             LOG.info("valueFilter for field {}", f.getFieldName)
-            val whitelist: java.util.List[String] = valueFilter.getWhitelist
+            val whitelist: java.util.List[_] = valueFilter.getWhitelist
             if (Option(whitelist).isDefined) {
               LOG.info("whitelist = {}", whitelist)
               filterCol &&= fieldCol.isin(asScalaBuffer(whitelist):_*)
@@ -77,24 +89,28 @@ class ReportGen(private val spark: SparkSession) {
       })
     }
    LOG.info("filterCol={}", filterCol)
-    var resultDf = aggDf.filter(filterCol).persist()
+    var resultDf = aggDf.filter(filterCol)
     if (Option(request.getSort).isDefined) {
       asScalaBuffer(request.getSort).foreach(sort => {
-        val sortField = recordCol.getField(sort.getFieldName)
+        val sortField = aggDf(sort.getFieldName)
         sort.getOrder match {
           case ReportGenerationRequest.Order.ASCENDING => {resultDf = resultDf.sort(sortField.asc)}
           case ReportGenerationRequest.Order.DESCENDING => {resultDf = resultDf.sort(sortField.desc)}
         }
       })
     }
-    val records = resultDf.select(RECORD).rdd.mapPartitions(rIter => new Iterator[org.apache.spark.sql.Row] {
-      override def hasNext: Boolean = rIter.hasNext
-      override def next(): org.apache.spark.sql.Row = rIter.next.getAs[org.apache.spark.sql.Row](RECORD)
-    }, preservesPartitioning = true).persist()
+    resultDf.columns.foreach(col => if (!requiredFields.contains(col)) resultDf = resultDf.drop(col))
+    resultDf.persist()
+//    val records = resultDf.select(RECORD).rdd.mapPartitions(rIter => new Iterator[org.apache.spark.sql.Row] {
+//      override def hasNext: Boolean = rIter.hasNext
+//      override def next(): org.apache.spark.sql.Row = rIter.next.getAs[org.apache.spark.sql.Row](RECORD)
+//    }, preservesPartitioning = true).persist()
 //    if (!records.isEmpty()) {
-      spark.createDataFrame(records, records.first.schema).coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
+
+//    var recordsDf = spark.createDataFrame(records, records.first.schema).coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
 //    }
-    records.count
+    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
+    resultDf.count
   }
     //    val count = filteredDf.count()
     //    // FileWriter

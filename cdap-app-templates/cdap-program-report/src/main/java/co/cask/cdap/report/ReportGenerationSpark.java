@@ -374,7 +374,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       ReportGenerationRequest.ValueFilter<String> namespaceFilter = null;
       if (reportRequest.getFilters() != null) {
         for (ReportGenerationRequest.Filter filter : reportRequest.getFilters()) {
-          if (ReportField.NAMESPACE.getName().equals(filter.getFieldName())) {
+          if (ReportField.NAMESPACE.getFieldName().equals(filter.getFieldName())) {
             // ReportGenerationRequest is validated to contain only one filter for namespace field
             namespaceFilter = (ReportGenerationRequest.ValueFilter<String>) filter;
             break;
