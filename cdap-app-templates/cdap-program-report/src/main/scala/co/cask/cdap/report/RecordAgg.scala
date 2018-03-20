@@ -25,8 +25,7 @@ class RecordAgg extends org.apache.spark.sql.expressions.Aggregator[org.apache.s
       val startInfoRow = Option(a.getAs[org.apache.spark.sql.Row](Constants.START_INFO))
       startInfoRow match {
         case None => None
-        case Some(v) => Some(StartInfo(v.getAs(Constants.USER),
-          v.getAs(Constants.RUNTIME_ARGUMENTS)))
+        case Some(v) => Some(StartInfo(v.getAs(Constants.USER), v.getAs(Constants.RUNTIME_ARGUMENTS)))
       }
     }
     RecordBuilder(a.getAs(Constants.NAMESPACE), a.getAs(Constants.PROGRAM),
