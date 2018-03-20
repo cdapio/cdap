@@ -19,10 +19,22 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.EntityScope;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.proto.profile.ProvisionerInfo;
+import co.cask.cdap.proto.profile.ProvisionerPropertyValue;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -35,39 +47,67 @@ import javax.ws.rs.QueryParam;
 /**
  * {@link co.cask.http.HttpHandler} for managing profiles.
  */
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ProfileHttpHandler extends AbstractHttpHandler {
+  private static final Gson GSON = new GsonBuilder().create();
+  // TODO: remove these variables
+  private static final List<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
+    ImmutableList.<ProvisionerPropertyValue>builder()
+      .add(new ProvisionerPropertyValue("1st property", "1st value", false))
+      .add(new ProvisionerPropertyValue("2nd property", "2nd value", true))
+      .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
+      .build();
+  private static final Profile SYSTEM_PROFILE = new Profile("system mock", "system mock profile for UI",
+                                                            EntityScope.SYSTEM,
+                                                            new ProvisionerInfo("mock provisioner",
+                                                                                PROPERTY_SUMMARIES));
+  private static final Profile USER_PROFILE = new Profile("user mock", "user mock profile for UI",
+                                                            EntityScope.USER,
+                                                            new ProvisionerInfo("mock provisioner",
+                                                                                PROPERTY_SUMMARIES));
+
 
   /**
    * List the profiles in the given namespace. By default the results will not contain profiles in system scope.
    */
   @GET
-  @Path("/namespaces/{namespace-id}/profiles")
+  @Path("/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @Nullable @QueryParam("includeSystem") String includeSystem) {
-    // TODO: implement the method
+    // TODO: implement the method and remove the mock data
+    List<Profile> profiles = new ArrayList<>();
+    profiles.add(SYSTEM_PROFILE);
+    profiles.add(USER_PROFILE);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
   }
 
   /**
    * Get the information about a specific profile.
    */
   @GET
-  @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
+  @Path("/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("name") String profileName) throws NotFoundException {
-    // TODO: implement the method
+                         @PathParam("profile-name") String profileName) throws NotFoundException {
+    // TODO: implement the method and remove the mock data
+    if (new NamespaceId(namespaceId).equals(NamespaceId.SYSTEM)) {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(SYSTEM_PROFILE));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(USER_PROFILE));
+    }
   }
 
   /**
    * Write a profile in a namespace.
    */
   @PUT
-  @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
+  @Path("/profiles/{profile-name}")
   public void writeProfile(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @PathParam("name") String profileName) throws BadRequestException {
+                           @PathParam("profile-name") String profileName) throws BadRequestException {
     // TODO: implement the method
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
@@ -76,11 +116,12 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * and it cannot be in use by any running program.
    */
   @DELETE
-  @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
+  @Path("/profiles/{profile-name}")
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("name") String profileName) throws NotFoundException, ConflictException {
+                            @PathParam("profile-name") String profileName) throws NotFoundException, ConflictException {
     // TODO: implement the method
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
@@ -88,21 +129,23 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * and no new schedules/programs can be assigned to it.
    */
   @POST
-  @Path("/namespaces/{namespace-id}/profiles/{profile-name}/disable")
+  @Path("/profiles/{profile-name}/disable")
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("name") String profileName) throws NotFoundException {
+                             @PathParam("profile-name") String profileName) throws NotFoundException {
     // TODO: implement the method
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
    * Enable the profile, so that programs/schedules can be assigned to it.
    */
   @POST
-  @Path("/namespaces/{namespace-id}/profiles/{profile-name}/disable")
+  @Path("/profiles/{profile-name}/enable")
   public void enableProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("name") String profileName) throws NotFoundException {
+                            @PathParam("profile-name") String profileName) throws NotFoundException {
     // TODO: implement the method
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 }

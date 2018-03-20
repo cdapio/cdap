@@ -16,27 +16,33 @@
 
 package co.cask.cdap.proto.profile;
 
-import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Information about a provisioner name and properties.
+ * A brief summary of provisioner property.
  */
-public class ProvisionerInfo {
+public class ProvisionerPropertyValue {
   private final String name;
-  private final Collection<ProvisionerPropertyValue> properties;
+  private final String value;
+  // this variable indicates whether this property is editable or not.
+  private final boolean isEditable;
 
-  public ProvisionerInfo(String name, Collection<ProvisionerPropertyValue> properties) {
+  public ProvisionerPropertyValue(String name, String value, boolean isEditable) {
     this.name = name;
-    this.properties = properties;
+    this.value = value;
+    this.isEditable = isEditable;
   }
 
   public String getName() {
     return name;
   }
 
-  public Collection<ProvisionerPropertyValue> getProperties() {
-    return properties;
+  public String getValue() {
+    return value;
+  }
+
+  public boolean isEditable() {
+    return isEditable;
   }
 
   @Override
@@ -48,14 +54,15 @@ public class ProvisionerInfo {
       return false;
     }
 
-    ProvisionerInfo that = (ProvisionerInfo) o;
+    ProvisionerPropertyValue that = (ProvisionerPropertyValue) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(properties, that.properties);
+    return Objects.equals(isEditable, that.isEditable) &&
+      Objects.equals(name, that.name) &&
+      Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, properties);
+    return Objects.hash(name, value, isEditable);
   }
 }
