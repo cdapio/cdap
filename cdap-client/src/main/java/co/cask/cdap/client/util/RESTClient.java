@@ -94,7 +94,7 @@ public class RESTClient {
                      .withBody(body).build(), allowedErrorCodes);
   }
 
-  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
+  public HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
     throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
 
     int currentTry = 0;

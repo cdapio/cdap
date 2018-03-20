@@ -2309,6 +2309,33 @@
   </property>
 
 
+  <!-- Runtime Monitor Configuration -->
+
+  <property>
+    <name>app.program.runtime.monitor.polltime.ms</name>
+    <value>2000</value>
+    <description>
+      Polling time in millis to poll updates from a runtime
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.batch.limit</name>
+    <value>1000</value>
+    <description>
+      Number of events to fetch from a runtime in each poll call.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.topics</name>
+    <value>${program.status.record.event.topic}</value>
+    <description>
+      A comma-separated list of topic configs to be monitored by runtime monitor.
+    </description>
+    <final>true</final>
+  </property>
+
   <!-- Notification System Configuration -->
 
   <property>
