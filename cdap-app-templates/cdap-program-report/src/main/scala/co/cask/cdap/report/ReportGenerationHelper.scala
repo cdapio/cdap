@@ -60,8 +60,8 @@ class ReportGenerationHelper(private val spark: SparkSession) {
     // Construct the filter column starting with condition:
     // aggDf("start") not null AND aggDf("start") < request.getEnd
     //   AND (aggDf("end") is null OR aggDf("end") > request.getStart)
-    var filterCol = aggDf(Constants.START).isNotNull && aggDf(Constants.START) < request.getEnd
-    && (aggDf(Constants.END).isNull || aggDf(Constants.END) > request.getStart)
+    var filterCol = aggDf(Constants.START).isNotNull && aggDf(Constants.START) < request.getEnd &&
+      (aggDf(Constants.END).isNull || aggDf(Constants.END) > request.getStart)
     LOG.info("initial filterCol={}", filterCol)
     // Combine additional filters from the request to the filter column
     if (Option(request.getFilters).isDefined) {

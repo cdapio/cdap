@@ -43,7 +43,8 @@ public class ProgramRunMetaFileUtil {
 //    Schema.Field.of("artifactVersion", Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("artifactScope", Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.USER, Schema.of(Schema.Type.STRING)),
-    Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))
+    Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                              Schema.of(Schema.Type.STRING)))
     );
 
   private static final String SCHEMA_STRING = Schema.recordOf(
