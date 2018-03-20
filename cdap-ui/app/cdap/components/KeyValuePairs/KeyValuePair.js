@@ -21,16 +21,63 @@ import classnames from 'classnames';
 import {preventPropagation} from 'services/helpers';
 
 class KeyValuePair extends Component {
-  constructor(props) {
-    super(props);
+  static propTypes = {
+    className: PropTypes.string,
+    name: PropTypes.string,
+    value: PropTypes.string,
+    index: PropTypes.number,
+    notDeletable: PropTypes.bool,
+    provided: PropTypes.bool,
+    showReset: PropTypes.bool,
+    onChange: PropTypes.func,
+    addRow: PropTypes.func,
+    removeRow: PropTypes.func,
+    onProvided: PropTypes.func,
+    getResettedKeyValue: PropTypes.func,
+    keyPlaceholder: PropTypes.string,
+    valuePlaceholder: PropTypes.string,
+    disabled: PropTypes.bool,
+    onPaste: PropTypes.func
+  };
 
-    this.keyDown = this.keyDown.bind(this);
+  handlePaste = (e) => {
+    let data = e.clipboardData.getData('text');
+    try {
+      let dataObj = JSON.parse(data);
+      e.preventDefault();
+      if (typeof this.props.onPaste === 'function') {
+        this.props.onPaste(dataObj, this.props.index);
+      }
+    } catch (e) {
+      return;
+    }
   }
 
-  keyDown(e) {
+  keyDown = (e) => {
     if (e.keyCode === 13) {
       this.props.addRow();
     }
+  }
+
+  renderKeyField() {
+    let keyPlaceholder = '';
+    if (!this.props.disabled) {
+      keyPlaceholder = this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
+    }
+
+    return (
+      <input
+        type="text"
+        value={this.props.name}
+        autoFocus
+        onKeyDown={this.keyDown}
+        onChange={this.props.onChange.bind(null, 'key')}
+        placeholder={keyPlaceholder}
+        className={classnames("form-control key-input", {"wider": this.props.disabled})}
+        disabled={this.props.notDeletable || this.props.disabled}
+        onPaste={this.handlePaste}
+      />
+    );
   }
 
   renderValueField() {
@@ -45,7 +92,10 @@ class KeyValuePair extends Component {
       );
     }
 
-    let valuePlaceholder = this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
+    let valuePlaceholder = '';
+    if (!this.props.disabled) {
+      valuePlaceholder = this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
+    }
 
     return (
       <input
@@ -55,6 +105,8 @@ class KeyValuePair extends Component {
         onChange={this.props.onChange.bind(null, 'value')}
         placeholder={valuePlaceholder}
         className={classnames("form-control value-input", {"wider": this.props.disabled})}
+        disabled={this.props.disabled}
+        onPaste={this.handlePaste}
       />
     );
   }
@@ -82,7 +134,7 @@ class KeyValuePair extends Component {
     );
   }
 
-  renderNotDeletableElements() {
+  renderProvidedCheckboxAndResetBtn() {
     if (!this.props.notDeletable) { return null; }
 
     return (
@@ -104,44 +156,15 @@ class KeyValuePair extends Component {
   }
 
   render() {
-    let keyPlaceholder = this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
-
     return (
       <div className="key-value-pair-preference">
-        <input
-          type="text"
-          value={this.props.name}
-          autoFocus
-          onKeyDown={this.keyDown}
-          onChange={this.props.onChange.bind(null, 'key')}
-          placeholder={keyPlaceholder}
-          className={classnames("form-control key-input", {"wider": this.props.disabled})}
-          disabled={this.props.notDeletable}
-        />
+        {this.renderKeyField()}
         {this.renderValueField()}
         {this.renderActionButtons()}
-        {this.renderNotDeletableElements()}
+        {this.renderProvidedCheckboxAndResetBtn()}
       </div>
     );
   }
 }
-
-KeyValuePair.propTypes = {
-  className: PropTypes.string,
-  name: PropTypes.string,
-  value: PropTypes.string,
-  index: PropTypes.number,
-  notDeletable: PropTypes.bool,
-  provided: PropTypes.bool,
-  showReset: PropTypes.bool,
-  onChange: PropTypes.func,
-  addRow: PropTypes.func,
-  removeRow: PropTypes.func,
-  onProvided: PropTypes.func,
-  getResettedKeyValue: PropTypes.func,
-  keyPlaceholder: PropTypes.string,
-  valuePlaceholder: PropTypes.string,
-  disabled: PropTypes.bool
-};
 
 export default KeyValuePair;

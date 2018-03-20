@@ -291,10 +291,10 @@
       </div>
 
       <div class="configuration-step-navigation">
-        <div class="apply-run-container"
+        <div class="apply-action-container"
           ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
           <button
-            class="btn btn-primary apply-run"
+            class="btn btn-primary apply-action"
             ng-if="BatchPipelineConfigCtrl.isDeployed"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline || BatchPipelineConfigCtrl.updatingPipeline"
             ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
@@ -302,7 +302,7 @@
             <span ng-if="BatchPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
           </button>
           <button
-            class="btn btn-primary apply-run"
+            class="btn btn-primary apply-action"
             ng-if="BatchPipelineConfigCtrl.showPreviewConfig"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">

@@ -22,6 +22,7 @@ import {runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator
 import {setRunError} from 'components/PipelineDetails/store/ActionCreator';
 import {keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurations from 'components/PipelineConfigurations';
+import {revertConfigsToSavedValues} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 export default class PipelineRunButton extends Component {
   static propTypes = {
@@ -47,10 +48,17 @@ export default class PipelineRunButton extends Component {
       return;
     }
 
-    if (keyValuePairsHaveMissingValues(this.props.runtimeArgs)) {
-      this.toggleConfigModeless();
-    } else {
-      runPipeline();
+    if (!this.state.showConfigModeless) {
+      revertConfigsToSavedValues();
+      // Have to set timeout here to make sure temporary changes in other config
+      // modeless don't get passed on as this.props.runtimeArgs here
+      setTimeout(() => {
+        if (keyValuePairsHaveMissingValues(this.props.runtimeArgs)) {
+          this.toggleConfigModeless();
+        } else {
+          runPipeline();
+        }
+      });
     }
   };
 

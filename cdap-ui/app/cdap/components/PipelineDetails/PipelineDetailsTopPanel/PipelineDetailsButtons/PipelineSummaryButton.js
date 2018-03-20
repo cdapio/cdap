@@ -73,6 +73,7 @@ export default class PipelineSummaryButton extends Component {
               programType={programType}
               programId={programId}
               pipelineConfig={PipelineDetailStore.getState()}
+              totalRunsCount={PipelineDetailStore.getState().runs.length}
               onClose={this.toggleSummary}
             />
           :

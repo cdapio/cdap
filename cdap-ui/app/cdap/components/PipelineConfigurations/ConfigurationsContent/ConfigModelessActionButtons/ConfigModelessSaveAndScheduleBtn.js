@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
-require('./ConfigurationsActionButtons.scss');
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -32,7 +31,7 @@ const mapStateToProps = (state, ownProps) => {
 const ConfigModelessSaveAndScheduleBtn = ({isMissingKeyValues, pipelineEdited, saveAndScheduleLoading, saveAndSchedule}) => {
   return (
     <button
-      className="btn btn-primary apply-run"
+      className="btn btn-primary apply-action"
       disabled={saveAndScheduleLoading || isMissingKeyValues}
       onClick={saveAndSchedule.bind(this, pipelineEdited)}
     >

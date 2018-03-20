@@ -83,6 +83,9 @@ $input-label-color: $grey-03;
       }
 
       .numExecutors {
+        .num-executors-tooltip {
+          display: inline-block;
+        }
         .fa.fa-info-circle {
           margin-left: 5px;
         }

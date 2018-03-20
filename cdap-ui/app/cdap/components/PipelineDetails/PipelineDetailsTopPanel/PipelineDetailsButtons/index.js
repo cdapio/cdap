@@ -60,8 +60,7 @@ const ConnectedConfigureButton = connect(mapStateToConfigureButton)(PipelineConf
 const ConnectedRunButton = connect(mapStateToRunButton)(PipelineRunButton);
 const ConnectedScheduleButton = connect(mapStateToScheduleButton)(PipelineScheduleButton);
 
-// export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, scheduleButtonLoading, scheduleError}) {
-export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, runButtonLoading, runError, scheduleButtonLoading, scheduleError, stopButtonLoading, stopError}) {
+export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, currentRun, runButtonLoading, runError, scheduleButtonLoading, scheduleError, stopButtonLoading, stopError}) {
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
@@ -82,6 +81,7 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           isBatch={isBatch}
           pipelineName={pipelineName}
           runs={runs}
+          currentRun={currentRun}
           stopButtonLoading={stopButtonLoading}
           stopError={stopError}
         />

@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, preventPropagation} from 'services/helpers';
 import {XYPlot, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, Hint, DiscreteColorLegend, VerticalBarSeries as BarSeries} from 'react-vis';
 import moment from 'moment';
 import {convertProgramToApi} from 'services/program-api-converter';
@@ -239,10 +239,11 @@ export default class LogsMetricsGraph extends Component {
                     <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
                     <IconSVG
                       name="icon-close"
-                      onClick={() => {
+                      onClick={(e) => {
                         this.setState({
                           currentHoveredElement: null
                         });
+                        preventPropagation(e);
                       }}
                     />
                   </div>

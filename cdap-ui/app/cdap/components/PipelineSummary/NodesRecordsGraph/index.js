@@ -29,6 +29,7 @@ import T from 'i18n-react';
 import moment from 'moment';
 import ee from 'event-emitter';
 import isEqual from 'lodash/isEqual';
+import {preventPropagation} from 'services/helpers';
 
 const PREFIX = `features.PipelineSummary.nodesMetricsGraph`;
 const RECORDS_IN_COLOR = '#58B7F6';
@@ -160,10 +161,11 @@ export default class NodesRecordsGraph extends Component {
                     <span>{this.props.activeNode}</span>
                     <IconSVG
                       name="icon-close"
-                      onClick={() => {
+                      onClick={(e) => {
                         this.setState({
                           currentHoveredElement: null
                         });
+                        preventPropagation(e);
                       }}
                     />
                   </div>

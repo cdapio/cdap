@@ -54,6 +54,7 @@ const NumExecutors = ({numExecutors, onChange}) => {
           target={() => <IconSVG name="icon-info-circle" />}
           showOn='Hover'
           placement='right'
+          className="num-executors-tooltip"
         >
           The number of executors to allocate for this pipeline on Apache Yarn.
         </Popover>

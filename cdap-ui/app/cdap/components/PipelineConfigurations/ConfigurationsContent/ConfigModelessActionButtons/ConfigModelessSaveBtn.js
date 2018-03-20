@@ -18,45 +18,47 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
-require('./ConfigurationsActionButtons.scss');
 
 const mapStateToProps = (state, ownProps) => {
   return {
     isMissingKeyValues: state.isMissingKeyValues,
     pipelineEdited: state.pipelineEdited,
-    saveAndRunLoading: ownProps.saveAndRunLoading,
-    saveAndRun: ownProps.saveAndRun
+    saveLoading: ownProps.saveLoading,
+    saveConfig: ownProps.saveConfig
   };
 };
 
-const ConfigModelessSaveAndRunBtn = ({isMissingKeyValues, pipelineEdited, saveAndRunLoading, saveAndRun}) => {
+const ConfigModelessSaveBtn = ({isMissingKeyValues, pipelineEdited, saveLoading, saveConfig}) => {
   return (
     <button
-      className="btn btn-primary apply-run"
-      disabled={saveAndRunLoading || isMissingKeyValues}
-      onClick={saveAndRun.bind(this, pipelineEdited)}
+      className="btn btn-secondary"
+      disabled={saveLoading || isMissingKeyValues}
+      onClick={saveConfig.bind(this, pipelineEdited)}
     >
-      <span>Save and Run</span>
       {
-        saveAndRunLoading ?
-          <IconSVG
-            name="icon-spinner"
-            className="fa-spin"
-          />
+        saveLoading ?
+          (
+            <span>
+              Saving
+              <IconSVG
+                name="icon-spinner"
+                className="fa-spin"
+              />
+             </span>
+          )
         :
-          null
+          <span>Save</span>
       }
     </button>
   );
 };
 
-ConfigModelessSaveAndRunBtn.propTypes = {
+ConfigModelessSaveBtn.propTypes = {
   isMissingKeyValues: PropTypes.bool,
   pipelineEdited: PropTypes.bool,
-  saveAndRunLoading: PropTypes.bool,
-  saveAndRun: PropTypes.func,
-  actionLabel: PropTypes.string
+  saveLoading: PropTypes.bool,
+  saveConfig: PropTypes.func
 };
 
-const ConnectedConfigModelessSaveAndRunBtn = connect(mapStateToProps)(ConfigModelessSaveAndRunBtn);
-export default ConnectedConfigModelessSaveAndRunBtn;
+const ConnectedConfigModelessSaveBtn = connect(mapStateToProps)(ConfigModelessSaveBtn);
+export default ConnectedConfigModelessSaveBtn;

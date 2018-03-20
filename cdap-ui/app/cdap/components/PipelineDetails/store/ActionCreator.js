@@ -173,22 +173,32 @@ const setCurrentRunId = (runId) => {
 };
 
 const getRuns = (params) => {
-  MyPipelineApi
-    .getRuns(params)
-    .subscribe(runs => {
-      PipelineDetailStore.dispatch({
-        type: ACTIONS.SET_RUNS,
-        payload: { runs }
-      });
-    }, (err) => {
-      console.log(err);
+  let runsFetch = MyPipelineApi.getRuns(params);
+  runsFetch.subscribe(runs => {
+    PipelineDetailStore.dispatch({
+      type: ACTIONS.SET_RUNS,
+      payload: { runs }
     });
+  }, (err) => {
+    console.log(err);
+  });
+  return runsFetch;
 };
 
 const pollRuns = (params) => {
   return MyPipelineApi
     .pollRuns(params)
     .subscribe(runs => {
+      // When there are new runs, always set current run to most recent run
+      let currentRuns = PipelineDetailStore.getState().runs;
+
+      if (runs.length && (runs.length > currentRuns.length || runs[0].runid !== currentRuns[0].runid || runs[0].status !== currentRuns[0].status)) {
+        PipelineDetailStore.dispatch({
+          type: ACTIONS.SET_CURRENT_RUN_ID,
+          payload: { runId: runs[0].runid }
+        });
+      }
+
       PipelineDetailStore.dispatch({
         type: ACTIONS.SET_RUNS,
         payload: { runs }

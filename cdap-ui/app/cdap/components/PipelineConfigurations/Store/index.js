@@ -57,6 +57,8 @@ const ACTIONS = {
   SET_CHECKPOINTING: 'SET_CHECKPOINTING',
   SET_NUM_RECORDS_PREVIEW: 'SET_NUM_RECORDS_PREVIEW',
   SET_PIPELINE_EDIT_STATUS: 'SET_PIPELINE_EDIT_STATUS',
+  SET_MODELESS_OPEN_STATUS: 'SET_MODELESS_OPEN_STATUS',
+  RESET: 'RESET'
 };
 
 const TAB_OPTIONS = {
@@ -99,7 +101,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   // savedRuntimeArgs represent the runtime args the user has Saved for the current session
   // runtimeArgs represent the current values in the modeless
   // If the user changes runtime args values in the modeless but doesn't click Save, then we'll
-  // runtimeArgs to savedRuntimeArgs
+  // revert runtimeArgs to savedRuntimeArgs
   runtimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   savedRuntimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   resolvedMacros: {},
@@ -123,7 +125,8 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   schedule: HYDRATOR_DEFAULT_VALUES.cron,
   maxConcurrentRuns: 1,
   isMissingKeyValues: false,
-  pipelineEdited: false
+  pipelineEdited: false,
+  modelessOpen: false
 };
 
 const getCustomConfigFromProperties = (properties) => {
@@ -242,7 +245,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
-      let runtimeArgs = getRuntimeArgsForDisplay(state.runtimeArgs, resolvedMacros);
+      let runtimeArgs = getRuntimeArgsForDisplay(cloneDeep(state.runtimeArgs), resolvedMacros);
       let savedRuntimeArgs = cloneDeep(runtimeArgs);
       let isMissingKeyValues = checkIfMissingKeyValues(runtimeArgs, state.customConfigKeyValuePairs);
 
@@ -402,7 +405,15 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         pipelineEdited: action.payload.pipelineEdited
       };
-
+    case ACTIONS.SET_MODELESS_OPEN_STATUS:
+      return {
+        ...state,
+        modelessOpen: action.payload.open
+      };
+    case ACTIONS.RESET:
+      return DEFAULT_CONFIGURE_OPTIONS;
+    default:
+      return state;
   }
 };
 

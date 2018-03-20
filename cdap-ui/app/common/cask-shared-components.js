@@ -50,6 +50,11 @@ var PipelineDetailsTopPanel = require('../cdap/components/PipelineDetails/Pipeli
 var PipelineScheduler = require('../cdap/components/PipelineScheduler').default;
 var AvailablePluginsStore = require('../cdap/services/AvailablePluginsStore').default;
 var AVAILABLE_PLUGINS_ACTIONS = require('../cdap/services/AvailablePluginsStore').AVAILABLE_PLUGINS_ACTIONS;
+var PipelineDetailsRunLevelInfo = require('../cdap/components/PipelineDetails/RunLevelInfo').default;
+var MetricsQueryHelper = require('../cdap/services/MetricsQueryHelper').default;
+var PipelineMetricsStore = require('../cdap/services/PipelineMetricsStore').default;
+var PipelineMetricsActionCreator = require('../cdap/services/PipelineMetricsStore/ActionCreator');
+var PipelineConfigurationsActionCreator = require('../cdap/components/PipelineConfigurations/Store/ActionCreator');
 
 export {
   Store,
@@ -85,5 +90,10 @@ export {
   PipelineDetailsTopPanel,
   PipelineScheduler,
   AvailablePluginsStore,
-  AVAILABLE_PLUGINS_ACTIONS
+  AVAILABLE_PLUGINS_ACTIONS,
+  PipelineDetailsRunLevelInfo,
+  MetricsQueryHelper,
+  PipelineMetricsStore,
+  PipelineMetricsActionCreator,
+  PipelineConfigurationsActionCreator
 };
