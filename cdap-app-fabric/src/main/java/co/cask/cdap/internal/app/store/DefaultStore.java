@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -114,11 +114,11 @@ public class DefaultStore implements Store {
   private static final Map<String, String> EMPTY_STRING_MAP = ImmutableMap.of();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private final CConfiguration configuration;
-  private final DatasetFramework dsFramework;
-  private final Transactional transactional;
-  private final AtomicBoolean upgradeComplete;
-  private final LoadingCache<byte[], Boolean> upgradeCacheLoader;
+  private CConfiguration configuration;
+  private DatasetFramework dsFramework;
+  private Transactional transactional;
+  private AtomicBoolean upgradeComplete;
+  private LoadingCache<byte[], Boolean> upgradeCacheLoader;
 
   @Inject
   public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
@@ -168,7 +168,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ProgramDescriptor loadProgram(final ProgramId id) throws IOException, ApplicationNotFoundException,
+  public ProgramDescriptor loadProgram(ProgramId id) throws IOException, ApplicationNotFoundException,
                                                                    ProgramNotFoundException {
     ApplicationMeta appMeta = Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
@@ -186,30 +186,58 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final ProgramRunId id, final long startTime,
-                       final String twillRunId, final Map<String, String> runtimeArgs,
-                       final Map<String, String> systemArgs, final byte[] sourceId) {
+  public void setProvisioning(ProgramRunId id, long startTime, Map<String, String> runtimeArgs,
+                              Map<String, String> systemArgs, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramStart(id, startTime, twillRunId, runtimeArgs, systemArgs,
-                                                      sourceId);
+      getAppMetadataStore(context).recordProgramProvisioning(id, startTime, runtimeArgs, systemArgs, sourceId);
     });
   }
 
   @Override
-  public void setRunning(final ProgramRunId id, final long runTime, final String twillRunId, final byte[] sourceId) {
+  public void setProvisioned(ProgramRunId id, int numNodes, byte[] sourceId) {
+    Transactionals.execute(transactional, context -> {
+      getAppMetadataStore(context).recordProgramProvisioned(id, numNodes, sourceId);
+    });
+  }
+
+  @Override
+  public void setDeprovisioning(ProgramRunId id, byte[] sourceId) {
+    Transactionals.execute(transactional, context -> {
+      getAppMetadataStore(context).recordProgramDeprovisioning(id, sourceId);
+    });
+
+  }
+
+  @Override
+  public void setDeprovisioned(ProgramRunId id, byte[] sourceId) {
+    Transactionals.execute(transactional, context -> {
+      getAppMetadataStore(context).recordProgramDeprovisioned(id, sourceId);
+    });
+
+  }
+
+  @Override
+  public void setStart(ProgramRunId id, String twillRunId, Map<String, String> systemArgs, byte[] sourceId) {
+    Transactionals.execute(transactional, context -> {
+      getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId);
+    });
+  }
+
+  @Override
+  public void setRunning(ProgramRunId id, long runTime, String twillRunId, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).recordProgramRunning(id, runTime, twillRunId, sourceId);
     });
   }
 
   @Override
-  public void setStop(final ProgramRunId id, final long endTime, final ProgramRunStatus runStatus, byte[] sourceId) {
+  public void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus, byte[] sourceId) {
     setStop(id, endTime, runStatus, null, sourceId);
   }
 
   @Override
-  public void setStop(final ProgramRunId id, final long endTime, final ProgramRunStatus runStatus,
-                      final BasicThrowable failureCause, final byte[] sourceId) {
+  public void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus,
+                      BasicThrowable failureCause, byte[] sourceId) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     Transactionals.execute(transactional, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -242,7 +270,7 @@ public class DefaultStore implements Store {
     boolean workFlowNodeFailed = false;
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId.getProgram());
     Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
-    final List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
+    List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : runRecord.getProperties().entrySet()) {
       if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey())
         || "workflowNodeState".equals(entry.getKey()))) {
@@ -277,21 +305,21 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void deleteWorkflowStats(final ApplicationId id) {
+  public void deleteWorkflowStats(ApplicationId id) {
     Transactionals.execute(transactional, context -> {
       getWorkflowDataset(context).delete(id);
     });
   }
 
   @Override
-  public void setSuspend(final ProgramRunId id, final byte[] sourceId) {
+  public void setSuspend(ProgramRunId id, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).recordProgramSuspend(id, sourceId);
     });
   }
 
   @Override
-  public void setResume(final ProgramRunId id, final byte[] sourceId) {
+  public void setResume(ProgramRunId id, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).recordProgramResumed(id, sourceId);
     });
@@ -299,55 +327,55 @@ public class DefaultStore implements Store {
 
   @Override
   @Nullable
-  public WorkflowStatistics getWorkflowStatistics(final WorkflowId id, final long startTime,
-                                                  final long endTime, final List<Double> percentiles) {
+  public WorkflowStatistics getWorkflowStatistics(WorkflowId id, long startTime,
+                                                  long endTime, List<Double> percentiles) {
     return Transactionals.execute(transactional, context -> {
       return getWorkflowDataset(context).getStatistics(id, startTime, endTime, percentiles);
     });
   }
 
   @Override
-  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(final WorkflowId workflowId, final String runId) {
+  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId) {
     return Transactionals.execute(transactional, context -> {
       return getWorkflowDataset(context).getRecord(workflowId, runId);
     });
   }
 
   @Override
-  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(final WorkflowId workflow,
-                                                                             final String runId,
-                                                                             final int limit,
-                                                                             final long timeInterval) {
+  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflow,
+                                                                             String runId,
+                                                                             int limit,
+                                                                             long timeInterval) {
     return Transactionals.execute(transactional, context -> {
       return getWorkflowDataset(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
-                                                  final long startTime, final long endTime, final int limit) {
+  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
+                                                  long startTime, long endTime, int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
-                                                  final long startTime, final long endTime, final int limit,
-                                                  @Nullable final Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
+                                                  long startTime, long endTime, int limit,
+                                                  @Nullable Predicate<RunRecordMeta> filter) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, filter);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramRunStatus status,
-                                                  final Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status,
+                                                  Predicate<RunRecordMeta> filter) {
     return getRuns(status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramRunStatus status, final long startTime,
-                                                  final long endTime, final int limit,
-                                                  final Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, long startTime,
+                                                  long endTime, int limit,
+                                                  Predicate<RunRecordMeta> filter) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRuns(null, status, startTime, endTime, limit, filter);
     });
@@ -388,14 +416,14 @@ public class DefaultStore implements Store {
    * @return run record for runid
    */
   @Override
-  public RunRecordMeta getRun(final ProgramRunId id) {
+  public RunRecordMeta getRun(ProgramRunId id) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRun(id);
     });
   }
 
   @Override
-  public void addApplication(final ApplicationId id, final ApplicationSpecification spec) {
+  public void addApplication(ApplicationId id, ApplicationSpecification spec) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec);
     });
@@ -403,7 +431,7 @@ public class DefaultStore implements Store {
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
   @Override
-  public List<ProgramSpecification> getDeletedProgramSpecifications(final ApplicationId id,
+  public List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationId id,
                                                                     ApplicationSpecification appSpec) {
 
     ApplicationMeta existing = Transactionals.execute(transactional, context -> {
@@ -441,28 +469,28 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addStream(final NamespaceId id, final StreamSpecification streamSpec) {
+  public void addStream(NamespaceId id, StreamSpecification streamSpec) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).writeStream(id.getNamespace(), streamSpec);
     });
   }
 
   @Override
-  public StreamSpecification getStream(final NamespaceId id, final String name) {
+  public StreamSpecification getStream(NamespaceId id, String name) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getStream(id.getNamespace(), name);
     });
   }
 
   @Override
-  public Collection<StreamSpecification> getAllStreams(final NamespaceId id) {
+  public Collection<StreamSpecification> getAllStreams(NamespaceId id) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getAllStreams(id.getNamespace());
     });
   }
 
   @Override
-  public FlowSpecification setFlowletInstances(final ProgramId id, final String flowletId, final int count) {
+  public FlowSpecification setFlowletInstances(ProgramId id, String flowletId, int count) {
     Preconditions.checkArgument(count > 0, "Cannot change number of flowlet instances to %s", count);
 
     LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
@@ -482,7 +510,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getFlowletInstances(final ProgramId id, final String flowletId) {
+  public int getFlowletInstances(ProgramId id, String flowletId) {
     return Transactionals.execute(transactional, context -> {
       ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
       FlowSpecification flowSpec = getFlowSpecOrFail(id, appSpec);
@@ -492,7 +520,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setWorkerInstances(final ProgramId id, final int instances) {
+  public void setWorkerInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
     Transactionals.execute(transactional, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -515,7 +543,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setServiceInstances(final ProgramId id, final int instances) {
+  public void setServiceInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s", instances);
     Transactionals.execute(transactional, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -536,7 +564,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getServiceInstances(final ProgramId id) {
+  public int getServiceInstances(ProgramId id) {
     return Transactionals.execute(transactional, context -> {
       ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
       ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
@@ -545,7 +573,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getWorkerInstances(final ProgramId id) {
+  public int getWorkerInstances(ProgramId id) {
     return Transactionals.execute(transactional, context -> {
       ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
       WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
@@ -554,7 +582,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeApplication(final ApplicationId id) {
+  public void removeApplication(ApplicationId id) {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(), id.getApplication());
 
     Transactionals.execute(transactional, context -> {
@@ -565,7 +593,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAllApplications(final NamespaceId id) {
+  public void removeAllApplications(NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
     Transactionals.execute(transactional, context -> {
@@ -576,7 +604,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAll(final NamespaceId id) {
+  public void removeAll(NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
     Transactionals.execute(transactional, context -> {
@@ -588,7 +616,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<String, String> getRuntimeArguments(final ProgramRunId programRunId) {
+  public Map<String, String> getRuntimeArguments(ProgramRunId programRunId) {
     return Transactionals.execute(transactional, context -> {
       RunRecordMeta runRecord = getAppMetadataStore(context).getRun(programRunId);
       if (runRecord != null) {
@@ -606,14 +634,14 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public ApplicationSpecification getApplication(final ApplicationId id) {
+  public ApplicationSpecification getApplication(ApplicationId id) {
     return Transactionals.execute(transactional, context -> {
       return getApplicationSpec(getAppMetadataStore(context), id);
     });
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllApplications(final NamespaceId id) {
+  public Collection<ApplicationSpecification> getAllApplications(NamespaceId id) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getAllApplications(id.getNamespace()).stream()
         .map(ApplicationMeta::getSpec).collect(Collectors.toList());
@@ -621,7 +649,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllAppVersions(final ApplicationId id) {
+  public Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getAllAppVersions(id.getNamespace(), id.getApplication()).stream()
         .map(ApplicationMeta::getSpec).collect(Collectors.toList());
@@ -629,19 +657,19 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<ApplicationId> getAllAppVersionsAppIds(final ApplicationId id) {
+  public Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
     });
   }
 
   @Override
-  public boolean applicationExists(final ApplicationId id) {
+  public boolean applicationExists(ApplicationId id) {
     return getApplication(id) != null;
   }
 
   @Override
-  public boolean programExists(final ProgramId id) {
+  public boolean programExists(ProgramId id) {
     ApplicationSpecification appSpec = getApplication(id.getParent());
     return appSpec != null && programExists(id, appSpec);
   }
@@ -660,28 +688,28 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void updateWorkflowToken(final ProgramRunId workflowRunId, final WorkflowToken token) {
+  public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).updateWorkflowToken(workflowRunId, token);
     });
   }
 
   @Override
-  public WorkflowToken getWorkflowToken(final WorkflowId workflowId, final String workflowRunId) {
+  public WorkflowToken getWorkflowToken(WorkflowId workflowId, String workflowRunId) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getWorkflowToken(workflowId, workflowRunId);
     });
   }
 
   @Override
-  public void addWorkflowNodeState(final ProgramRunId workflowRunId, final WorkflowNodeStateDetail nodeStateDetail) {
+  public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
     });
   }
 
   @Override
-  public List<WorkflowNodeStateDetail> getWorkflowNodeStates(final ProgramRunId workflowRunId) {
+  public List<WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getWorkflowNodeStates(workflowRunId);
     });
@@ -707,8 +735,8 @@ public class DefaultStore implements Store {
       return;
     }
 
-    final AtomicInteger maxRows = new AtomicInteger(1000);
-    final AtomicInteger sleepTimeInSecs = new AtomicInteger(60);
+    AtomicInteger maxRows = new AtomicInteger(1000);
+    AtomicInteger sleepTimeInSecs = new AtomicInteger(60);
 
     LOG.info("Starting upgrade of {}.", NAME);
     // Repeated calls to upgradeComplete are necessary since it will trigger the cache to load the value from the table
@@ -766,9 +794,9 @@ public class DefaultStore implements Store {
     return new ApplicationSpecificationWithChangedServices(appSpec, serviceName, serviceSpecification);
   }
 
-  private static final class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {
-    private final String serviceName;
-    private final ServiceSpecification serviceSpecification;
+  private static class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {
+    private String serviceName;
+    private ServiceSpecification serviceSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
                                                         String serviceName, ServiceSpecification serviceSpecification) {
@@ -833,7 +861,7 @@ public class DefaultStore implements Store {
     FlowSpecification flowSpec = getFlowSpecOrFail(id, appSpec);
     FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, id);
 
-    final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
+    FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
     return replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
   }
 
@@ -851,7 +879,7 @@ public class DefaultStore implements Store {
   }
 
   private static class FlowSpecificationWithChangedFlowlets extends ForwardingFlowSpecification {
-    private final FlowletDefinition adjustedFlowletDef;
+    private FlowletDefinition adjustedFlowletDef;
 
     private FlowSpecificationWithChangedFlowlets(FlowSpecification delegate,
                                                  FlowletDefinition adjustedFlowletDef) {
@@ -867,24 +895,24 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static ApplicationSpecification replaceFlowletInAppSpec(final ApplicationSpecification appSpec,
-                                                                  final ProgramId id,
-                                                                  final FlowSpecification flowSpec,
-                                                                  final FlowletDefinition adjustedFlowletDef) {
+  private static ApplicationSpecification replaceFlowletInAppSpec(ApplicationSpecification appSpec,
+                                                                  ProgramId id,
+                                                                  FlowSpecification flowSpec,
+                                                                  FlowletDefinition adjustedFlowletDef) {
     // as app spec is immutable we have to do this trick
     return replaceFlowInAppSpec(appSpec, id, new FlowSpecificationWithChangedFlowlets(flowSpec, adjustedFlowletDef));
   }
 
-  private static ApplicationSpecification replaceFlowInAppSpec(final ApplicationSpecification appSpec,
-                                                               final ProgramId id,
-                                                               final FlowSpecification newFlowSpec) {
+  private static ApplicationSpecification replaceFlowInAppSpec(ApplicationSpecification appSpec,
+                                                               ProgramId id,
+                                                               FlowSpecification newFlowSpec) {
     // as app spec is immutable we have to do this trick
     return new ApplicationSpecificationWithChangedFlows(appSpec, id.getProgram(), newFlowSpec);
   }
 
-  private static final class ApplicationSpecificationWithChangedFlows extends ForwardingApplicationSpecification {
-    private final FlowSpecification newFlowSpec;
-    private final String flowId;
+  private static class ApplicationSpecificationWithChangedFlows extends ForwardingApplicationSpecification {
+    private FlowSpecification newFlowSpec;
+    private String flowId;
 
     private ApplicationSpecificationWithChangedFlows(ApplicationSpecification delegate,
                                                      String flowId, FlowSpecification newFlowSpec) {
@@ -901,15 +929,15 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static ApplicationSpecification replaceWorkerInAppSpec(final ApplicationSpecification appSpec,
-                                                                 final ProgramId id,
-                                                                 final WorkerSpecification workerSpecification) {
+  private static ApplicationSpecification replaceWorkerInAppSpec(ApplicationSpecification appSpec,
+                                                                 ProgramId id,
+                                                                 WorkerSpecification workerSpecification) {
     return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getProgram(), workerSpecification);
   }
 
-  private static final class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
-    private final String workerId;
-    private final WorkerSpecification workerSpecification;
+  private static class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
+    private String workerId;
+    private WorkerSpecification workerSpecification;
 
     private ApplicationSpecificationWithChangedWorkers(ApplicationSpecification delegate, String workerId,
                                                        WorkerSpecification workerSpec) {
@@ -927,20 +955,20 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs) {
+  public Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
     });
   }
 
-  private static final class DefaultStoreUpgradeCacheLoader extends CacheLoader<byte[], Boolean> {
+  private static class DefaultStoreUpgradeCacheLoader extends CacheLoader<byte[], Boolean> {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultStoreUpgradeCacheLoader.class);
     private static final Logger LIMITED_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
 
-    private final Transactional transactional;
-    private final DatasetFramework dsFramework;
-    private final CConfiguration cConf;
-    private final AtomicBoolean upgradeComplete;
+    private Transactional transactional;
+    private DatasetFramework dsFramework;
+    private CConfiguration cConf;
+    private AtomicBoolean upgradeComplete;
 
     DefaultStoreUpgradeCacheLoader(Transactional transactional, DatasetFramework dsFramework, CConfiguration cConf,
                                    AtomicBoolean upgradeComplete) {

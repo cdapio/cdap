@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,6 @@ import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -53,6 +52,8 @@ import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunCluster;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -120,9 +121,16 @@ public class DefaultStoreTest {
   private void setStartAndRunning(final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setStart(id, startTime, null, runtimeArgs, systemArgs,
-                   AppFabricTestHelper.createSourceId(++sourceId));
+    setStart(id, startTime, runtimeArgs, systemArgs);
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+  }
+
+  private void setStart(final ProgramRunId id, final long startTime,
+                        final Map<String, String> runtimeArgs,
+                        final Map<String, String> systemArgs) {
+    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   @Test
@@ -391,18 +399,28 @@ public class DefaultStoreTest {
     setStartAndRunning(programId.run(run5.getId()), startTimeSecs - 8);
     store.setStop(programId.run(run5.getId()), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRecord5 = new RunRecordMeta(programId.run(run5), startTimeSecs - 8,
-                                                      startTimeSecs - 8 + startTimeDelaySecs, startTimeSecs - 4,
-                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null, null,
-                                                      AppFabricTestHelper.createSourceId(sourceId));
+    ProgramRunCluster emptyCluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, 0);
+    RunRecordMeta expectedRecord5 = RunRecordMeta.builder()
+      .setProgramRunId(programId.run(run5))
+      .setStartTime(startTimeSecs - 8)
+      .setRunTime(startTimeSecs - 8 + startTimeDelaySecs)
+      .setStopTime(startTimeSecs - 4)
+      .setStatus(ProgramRunStatus.COMPLETED)
+      .setProperties(noRuntimeArgsProps)
+      .setCluster(emptyCluster)
+      .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
 
     // record not finished flow
     RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
     setStartAndRunning(programId.run(run6.getId()), startTimeSecs - 2);
-    RunRecordMeta expectedRecord6 = new RunRecordMeta(programId.run(run6), startTimeSecs - 2,
-                                                      startTimeSecs - 2 + startTimeDelaySecs, null,
-                                                      ProgramRunStatus.RUNNING, noRuntimeArgsProps, null, null,
-                                                      AppFabricTestHelper.createSourceId(sourceId));
+    RunRecordMeta expectedRecord6 = RunRecordMeta.builder()
+      .setProgramRunId(programId.run(run6))
+      .setStartTime(startTimeSecs - 2)
+      .setRunTime(startTimeSecs - 2 + startTimeDelaySecs)
+      .setStatus(ProgramRunStatus.RUNNING)
+      .setProperties(noRuntimeArgsProps)
+      .setCluster(emptyCluster)
+      .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
 
     // Get run record for run5
     RunRecordMeta actualRecord5 = store.getRun(programId.run(run5.getId()));
@@ -416,24 +434,31 @@ public class DefaultStoreTest {
     // Record flow that starts but encounters error before it runs
     RunId run7 = RunIds.fromString(UUID.randomUUID().toString());
     Map<String, String> emptyArgs = ImmutableMap.of();
-    store.setStart(programId.run(run7.getId()), startTimeSecs, null, emptyArgs, null,
-                   AppFabricTestHelper.createSourceId(++sourceId));
+    setStart(programId.run(run7.getId()), startTimeSecs, emptyArgs, emptyArgs);
     store.setStop(programId.run(run7.getId()), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRunRecord7 = new RunRecordMeta(programId.run(run7), startTimeSecs, null, startTimeSecs + 1,
-                                                         ProgramRunStatus.FAILED, noRuntimeArgsProps, null, null,
-                                                         AppFabricTestHelper.createSourceId(sourceId));
+    RunRecordMeta expectedRunRecord7 = RunRecordMeta.builder()
+      .setProgramRunId(programId.run(run7))
+      .setStartTime(startTimeSecs)
+      .setStopTime(startTimeSecs + 1)
+      .setStatus(ProgramRunStatus.FAILED)
+      .setProperties(noRuntimeArgsProps)
+      .setCluster(emptyCluster)
+      .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
     RunRecordMeta actualRecord7 = store.getRun(programId.run(run7.getId()));
     Assert.assertEquals(expectedRunRecord7, actualRecord7);
 
     // Record flow that starts and suspends before it runs
     RunId run8 = RunIds.fromString(UUID.randomUUID().toString());
-    store.setStart(programId.run(run8.getId()), startTimeSecs, null, emptyArgs, null,
-                   AppFabricTestHelper.createSourceId(++sourceId));
+    setStart(programId.run(run8.getId()), startTimeSecs, emptyArgs, emptyArgs);
     store.setSuspend(programId.run(run8.getId()), AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRunRecord8 = new RunRecordMeta(programId.run(run8), startTimeSecs, null, null,
-                                                         ProgramRunStatus.SUSPENDED, noRuntimeArgsProps, null, null,
-                                                         AppFabricTestHelper.createSourceId(sourceId));
+    RunRecordMeta expectedRunRecord8 = RunRecordMeta.builder()
+      .setProgramRunId(programId.run(run8))
+      .setStartTime(startTimeSecs)
+      .setStatus(ProgramRunStatus.SUSPENDED)
+      .setProperties(noRuntimeArgsProps)
+      .setCluster(emptyCluster)
+      .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
     RunRecordMeta actualRecord8 = store.getRun(programId.run(run8.getId()));
     Assert.assertEquals(expectedRunRecord8, actualRecord8);
 
@@ -444,10 +469,15 @@ public class DefaultStoreTest {
     store.setStop(programId.run(run9.getId()), startTimeSecs + 5, ProgramRunStatus.KILLED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    RunRecordMeta expectedRunRecord9 = new RunRecordMeta(programId.run(run9), startTimeSecs, startTimeSecs + 1,
-                                                         startTimeSecs + 5, ProgramRunStatus.KILLED,
-                                                         noRuntimeArgsProps, null, null,
-                                                         AppFabricTestHelper.createSourceId(sourceId));
+    RunRecordMeta expectedRunRecord9 = RunRecordMeta.builder()
+      .setProgramRunId(programId.run(run9))
+      .setStartTime(startTimeSecs)
+      .setRunTime(startTimeSecs + 1)
+      .setStopTime(startTimeSecs + 5)
+      .setStatus(ProgramRunStatus.KILLED)
+      .setProperties(noRuntimeArgsProps)
+      .setCluster(emptyCluster)
+      .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
     RunRecordMeta actualRecord9 = store.getRun(programId.run(run9.getId()));
     Assert.assertEquals(expectedRunRecord9, actualRecord9);
 
@@ -809,12 +839,14 @@ public class DefaultStoreTest {
 
     long now = System.currentTimeMillis();
 
-    setStartAndRunning(flowProgramId1.run("flowRun1"), now - 1000);
-    store.setStop(flowProgramId1.run("flowRun1"), now, ProgramController.State.COMPLETED.getRunStatus(),
+    ProgramRunId flowProgramRunId1 = flowProgramId1.run(RunIds.generate());
+    setStartAndRunning(flowProgramRunId1, now - 1000);
+    store.setStop(flowProgramRunId1, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(mapreduceProgramId1.run("mrRun1"), now - 1000);
-    store.setStop(mapreduceProgramId1.run("mrRun1"), now, ProgramController.State.COMPLETED.getRunStatus(),
+    ProgramRunId mapreduceProgramRunId1 = mapreduceProgramId1.run(RunIds.generate());
+    setStartAndRunning(mapreduceProgramRunId1, now - 1000);
+    store.setStop(mapreduceProgramRunId1, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
@@ -822,8 +854,9 @@ public class DefaultStoreTest {
     store.setStop(workflowProgramId1.run(runId.getId()), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId2.run("flowRun2"), now - 1000);
-    store.setStop(flowProgramId2.run("flowRun2"), now, ProgramController.State.COMPLETED.getRunStatus(),
+    ProgramRunId flowProgramRunId2 = flowProgramId2.run(RunIds.generate());
+    setStartAndRunning(flowProgramRunId2, now - 1000);
+    store.setStop(flowProgramRunId2, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     verifyRunHistory(flowProgramId1, 1);
@@ -868,11 +901,12 @@ public class DefaultStoreTest {
     Assert.assertNotNull(store.getApplication(appId));
 
     long now = System.currentTimeMillis();
-    setStartAndRunning(flowProgramId.run("flowRun1"), now - 3000);
-    store.setStop(flowProgramId.run("flowRun1"), now - 100, ProgramController.State.COMPLETED.getRunStatus(),
+    ProgramRunId flowProgramRunId = flowProgramId.run(RunIds.generate());
+    setStartAndRunning(flowProgramRunId, now - 3000);
+    store.setStop(flowProgramRunId, now - 100, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId.run("flowRun2"), now - 2000);
+    setStartAndRunning(flowProgramId.run(RunIds.generate()), now - 2000);
 
     // even though there's two separate run records (one that's complete and one that's active), only one should be
     // returned by the query, because the limit parameter of 1 is being passed in.

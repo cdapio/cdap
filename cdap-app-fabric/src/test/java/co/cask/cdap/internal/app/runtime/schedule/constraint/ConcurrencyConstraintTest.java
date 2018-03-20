@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,8 +59,9 @@ public class ConcurrencyConstraintTest {
   private void setStartAndRunning(Store store, final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setStart(id, startTime, null, runtimeArgs, systemArgs,
-                   AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 

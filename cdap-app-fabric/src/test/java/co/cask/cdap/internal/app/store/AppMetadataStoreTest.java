@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -77,6 +77,16 @@ public class AppMetadataStoreTest {
     cConf = injector.getInstance(CConfiguration.class);
   }
 
+  private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
+    metadataStoreDataset.recordProgramProvisioning(programRunId,
+                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null, null,
+                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+    metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
+                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+    metadataStoreDataset.recordProgramStart(programRunId, null, null,
+                                            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+  }
+
   // TODO: [CDAP-12458] since recordProgramStart doesn't use version-less key builder, this test fails.
   @Ignore
   @Test
@@ -96,9 +106,7 @@ public class AppMetadataStoreTest {
     final RunId runId = RunIds.generate();
     final ProgramRunId programRunId = program.run(runId);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStart(programRunId,
-                                              RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null,
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      recordProvisionAndStart(programRunId, metadataStoreDataset);
       metadataStoreDataset.recordProgramRunningOldFormat(
         programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null,
         AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
@@ -202,9 +210,7 @@ public class AppMetadataStoreTest {
     final ProgramRunId programRunId4 = program.run(runId4);
     // Once a stop status is reached, any incoming status will be ignored
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStart(programRunId4, RunIds.getTime(runId4, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      recordProvisionAndStart(programRunId4, metadataStoreDataset);
       metadataStoreDataset.recordProgramStop(programRunId4, RunIds.getTime(runId4, TimeUnit.SECONDS),
                                              ProgramRunStatus.COMPLETED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
@@ -218,9 +224,7 @@ public class AppMetadataStoreTest {
     final RunId runId5 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId5 = program.run(runId5);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStart(programRunId5, RunIds.getTime(runId5, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      recordProvisionAndStart(programRunId5, metadataStoreDataset);
       metadataStoreDataset.recordProgramStop(programRunId5, RunIds.getTime(runId5, TimeUnit.SECONDS),
                                              ProgramRunStatus.FAILED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
@@ -235,13 +239,10 @@ public class AppMetadataStoreTest {
     final ProgramRunId programRunId6 = program.run(runId6);
     // STARTING status will be ignored if there's any existing record
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStart(programRunId6, RunIds.getTime(runId6, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      recordProvisionAndStart(programRunId6, metadataStoreDataset);
       metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      metadataStoreDataset.recordProgramStart(programRunId6, RunIds.getTime(runId6, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
+      metadataStoreDataset.recordProgramStart(programRunId6, null, ImmutableMap.of(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
@@ -250,14 +251,11 @@ public class AppMetadataStoreTest {
     final RunId runId7 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId7 = program.run(runId7);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStart(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      recordProvisionAndStart(programRunId7, metadataStoreDataset);
       metadataStoreDataset.recordProgramRunning(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
                                                 null,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      metadataStoreDataset.recordProgramStart(programRunId7, RunIds.getTime(runId7, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
+      metadataStoreDataset.recordProgramStart(programRunId7, null, ImmutableMap.of(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
       // STARTING status is ignored since there's an existing RUNNING record
@@ -276,9 +274,14 @@ public class AppMetadataStoreTest {
     final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId = program.run(runId);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStart(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
-                                              null, ImmutableMap.of(), ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(startSourceId));
+      metadataStoreDataset.recordProgramProvisioning(programRunId,
+                                                     RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
+                                                     null, null,
+                                                     AppFabricTestHelper.createSourceId(startSourceId));
+      metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
+                                                    AppFabricTestHelper.createSourceId(startSourceId + 1));
+      metadataStoreDataset.recordProgramStart(programRunId, null, null,
+                                              AppFabricTestHelper.createSourceId(startSourceId + 2));
       metadataStoreDataset.recordProgramRunning(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
                                                 null, AppFabricTestHelper.createSourceId(runningSourceId));
       metadataStoreDataset.recordProgramStop(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
@@ -307,9 +310,7 @@ public class AppMetadataStoreTest {
       final int j = i;
       // A sourceId to keep incrementing for each call of app meta data store persisting
       txnl.execute(() -> {
-        metadataStoreDataset.recordProgramStart(
-          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null, ImmutableMap.of(),
-          ImmutableMap.of(), AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        recordProvisionAndStart(programRunId, metadataStoreDataset);
         metadataStoreDataset.recordProgramRunning(
           programRunId, RunIds.getTime(runId, TimeUnit.SECONDS) + 1, null,
           AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
@@ -407,9 +408,7 @@ public class AppMetadataStoreTest {
       // A sourceId to keep incrementing for each call of app meta data store persisting
       txnl.execute(() -> {
         // Start the program and stop it
-        metadataStoreDataset.recordProgramStart(
-          programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null,
-          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        recordProvisionAndStart(programRunId, metadataStoreDataset);
         metadataStoreDataset.recordProgramRunning(
           programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null,
           AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));

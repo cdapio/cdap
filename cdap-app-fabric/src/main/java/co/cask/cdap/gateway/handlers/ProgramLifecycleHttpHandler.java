@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -482,7 +482,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     RunRecordMeta runRecordMeta = store.getRun(progId.run(runid));
     if (runRecordMeta != null) {
-      RunRecord runRecord = new RunRecord(runRecordMeta);
+      RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
       return;
     }
@@ -1784,7 +1784,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramRunStatus.valueOf(status.toUpperCase());
 
       List<RunRecord> records = store.getRuns(programId, runStatus, start, end, limit).values().stream()
-        .map(RunRecord::new).collect(Collectors.toList());
+        .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
 
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
     } catch (IllegalArgumentException e) {

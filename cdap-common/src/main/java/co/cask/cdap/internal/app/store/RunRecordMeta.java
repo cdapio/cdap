@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.proto.ProgramRunCluster;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -23,6 +24,8 @@ import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -47,24 +50,15 @@ public final class RunRecordMeta extends RunRecord {
   @Nullable
   private final byte[] sourceId;
 
-  public RunRecordMeta(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
-                       ProgramRunStatus status, @Nullable Map<String, String> properties,
-                       @Nullable Map<String, String> systemArgs, @Nullable String twillRunId, byte[] sourceId) {
-    super(programRunId.getRun(), startTs, runTs, stopTs, status, properties);
+  private RunRecordMeta(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
+                        ProgramRunStatus status, @Nullable Map<String, String> properties,
+                        @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
+                        ProgramRunCluster cluster, byte[] sourceId) {
+    super(programRunId.getRun(), startTs, runTs, stopTs, status, properties, cluster);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
     this.sourceId = sourceId;
-  }
-
-  public RunRecordMeta(RunRecordMeta started, @Nullable Long stopTs, ProgramRunStatus status, byte[] sourceId) {
-    this(started.getProgramRunId(), started.getStartTs(), started.getRunTs(), stopTs, status, started.getProperties(),
-         started.getSystemArgs(), started.getTwillRunId(), sourceId);
-  }
-
-  public RunRecordMeta(RunRecordMeta existing, Map<String, String> updatedProperties, byte[] sourceId) {
-    this(existing.getProgramRunId(), existing.getStartTs(), existing.getRunTs(), existing.getStopTs(),
-         existing.getStatus(), updatedProperties, existing.getSystemArgs(), existing.getTwillRunId(), sourceId);
   }
 
   @Nullable
@@ -72,9 +66,8 @@ public final class RunRecordMeta extends RunRecord {
     return twillRunId;
   }
 
-  @Nullable
   public Map<String, String> getSystemArgs() {
-    return systemArgs;
+    return systemArgs == null ? Collections.emptyMap() : systemArgs;
   }
 
   @Nullable
@@ -124,5 +117,76 @@ public final class RunRecordMeta extends RunRecord {
       .add("properties", getProperties())
       .add("sourceId", getSourceId() == null ? null : Bytes.toHexString(getSourceId()))
       .toString();
+  }
+
+  /**
+   * @return Builder to create a RunRecordMeta
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * @param record existing record to copy fields from
+   * @return Builder to create a RunRecordMeta, initialized with values from the specified existing record
+   */
+  public static Builder builder(RunRecordMeta record) {
+    return new Builder(record);
+  }
+
+  /**
+   * Builds RunRecordMetas.
+   */
+  public static class Builder extends RunRecord.Builder<Builder> {
+    private ProgramRunId programRunId;
+    private String twillRunId;
+    private Map<String, String> systemArgs;
+    private byte[] sourceId;
+
+    private Builder() {
+      systemArgs = new HashMap<>();
+    }
+
+    private Builder(RunRecordMeta record) {
+      super(record);
+      programRunId = record.getProgramRunId();
+      twillRunId = record.getTwillRunId();
+      systemArgs = new HashMap<>(record.getSystemArgs());
+      sourceId = record.getSourceId();
+    }
+
+    public Builder setProgramRunId(ProgramRunId programRunId) {
+      this.programRunId = programRunId;
+      return this;
+    }
+
+    public Builder setTwillRunId(String twillRunId) {
+      this.twillRunId = twillRunId;
+      return this;
+    }
+
+    public Builder setSystemArgs(@Nullable Map<String, String> systemArgs) {
+      this.systemArgs.clear();
+      if (systemArgs != null) {
+        this.systemArgs.putAll(systemArgs);
+      }
+      return this;
+    }
+
+    public Builder setSourceId(byte[] sourceId) {
+      this.sourceId = sourceId;
+      return this;
+    }
+
+    public RunRecordMeta build() {
+      if (programRunId == null) {
+        throw new IllegalArgumentException("Run record run id must be specified.");
+      }
+      if (sourceId == null) {
+        throw new IllegalArgumentException("Run record source id must be specified.");
+      }
+      return new RunRecordMeta(programRunId, startTs, runTs, stopTs, status, properties, systemArgs, twillRunId,
+                               cluster, sourceId);
+    }
   }
 }

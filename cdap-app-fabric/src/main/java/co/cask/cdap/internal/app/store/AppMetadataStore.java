@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,8 @@ import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunCluster;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -45,7 +47,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -115,39 +116,6 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
     .build();
 
-  private static final Set<ProgramRunStatus> ALLOWED_STATUSES_FOR_STOP =
-    ImmutableSet.of(ProgramRunStatus.STARTING, ProgramRunStatus.RUNNING, ProgramRunStatus.SUSPENDED);
-
-  /**
-   * Map with a run status to be recorded and the set of allowed run statuses of the existing run record meta
-   * as defined in https://wiki.cask.co/display/CE/Program+State+Transition+for+4.3
-   */
-  private static final Map<ProgramRunStatus, Set<ProgramRunStatus>> ALLOWED_STATUSES =
-    ImmutableMap.<ProgramRunStatus, Set<ProgramRunStatus>>builder()
-      .put(ProgramRunStatus.STARTING, ImmutableSet.of())
-      .put(ProgramRunStatus.RUNNING, ImmutableSet.of(ProgramRunStatus.STARTING))
-      .put(ProgramRunStatus.SUSPENDED, ImmutableSet.of(ProgramRunStatus.STARTING, ProgramRunStatus.RUNNING))
-      .put(ProgramRunStatus.RESUMING, ImmutableSet.of(ProgramRunStatus.SUSPENDED))
-      .put(ProgramRunStatus.COMPLETED, ALLOWED_STATUSES_FOR_STOP)
-      .put(ProgramRunStatus.KILLED, ALLOWED_STATUSES_FOR_STOP)
-      .put(ProgramRunStatus.FAILED, ALLOWED_STATUSES_FOR_STOP)
-      .build();
-
-  /**
-   * Map with a run status to be recorded and the set of allowed but logging required run statuses of the
-   * existing run record meta as defined in https://wiki.cask.co/display/CE/Program+State+Transition+for+4.3
-   */
-  private static final Map<ProgramRunStatus, Set<ProgramRunStatus>> ALLOWED_WITH_LOG_STATUSES =
-    ImmutableMap.<ProgramRunStatus, Set<ProgramRunStatus>>builder()
-      .put(ProgramRunStatus.STARTING, ImmutableSet.of())
-      .put(ProgramRunStatus.RUNNING, ImmutableSet.of(ProgramRunStatus.SUSPENDED, ProgramRunStatus.RUNNING))
-      .put(ProgramRunStatus.SUSPENDED, ImmutableSet.of(ProgramRunStatus.SUSPENDED))
-      .put(ProgramRunStatus.RESUMING, ImmutableSet.of(ProgramRunStatus.STARTING, ProgramRunStatus.RUNNING))
-      .put(ProgramRunStatus.COMPLETED, ImmutableSet.of())
-      .put(ProgramRunStatus.KILLED, ImmutableSet.of())
-      .put(ProgramRunStatus.FAILED, ImmutableSet.of())
-      .build();
-
   private final CConfiguration cConf;
   private final AtomicBoolean upgradeComplete;
 
@@ -166,9 +134,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   protected <T> T deserialize(MDSKey key, byte[] serialized, Type typeOfT) {
     if (RunRecordMeta.class.equals(typeOfT)) {
       RunRecordMeta meta = GSON.fromJson(Bytes.toString(serialized), RunRecordMeta.class);
-      meta = new RunRecordMeta(getProgramID(key).run(meta.getPid()), meta.getStartTs(), meta.getRunTs(),
-                               meta.getStopTs(), meta.getStatus(), meta.getProperties(), meta.getSystemArgs(),
-                               meta.getTwillRunId(), meta.getSourceId());
+      meta = RunRecordMeta.builder(meta)
+        .setProgramRunId(getProgramID(key).run(meta.getPid()))
+        .build();
       //noinspection unchecked
       return (T) meta;
     } else {
@@ -332,37 +300,44 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       // Update the parent Workflow run record by adding node id and program run id in the properties
       Map<String, String> properties = new HashMap<>(record.getProperties());
       properties.put(workflowNodeId, programRunId.getRun());
-      write(key, new RunRecordMeta(record, properties, sourceId));
+      write(key, RunRecordMeta.builder(record).setProperties(properties).setSourceId(sourceId).build());
     }
   }
 
   /**
-   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
-   * @param programRunId run id of the program
-   * @param startTs initialization timestamp in seconds
-   * @param twillRunId Twill run id
-   * @param runtimeArgs the runtime arguments for this program run
-   * @param systemArgs the system arguments for this program run
+   * Record that the program run is provisioning compute resources for the run. If the current status has
+   * a higher source id, this call will be ignored.
+   *
+   * @param programRunId program run
+   * @param startTs start time of the run
+   * @param runtimeArgs runtime arguments
+   * @param systemArgs system arguments
    * @param sourceId unique id representing the source of program run status, such as the message id of the program
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link ProgramRunStatus#STARTING} if it is successfully persisted, {@code null} otherwise.
+   * @return {@link ProgramRunClusterStatus#PROVISIONING} if it is successfully persisted, {@code null} otherwise.
    */
-  public ProgramRunStatus recordProgramStart(ProgramRunId programRunId, long startTs, String twillRunId,
-                                             Map<String, String> runtimeArgs, Map<String, String> systemArgs,
-                                             byte[] sourceId) {
-    MDSKey.Builder keyBuilder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId.getParent());
-    boolean isValid = validateExistingRecords(getRunRecord(programRunId), programRunId, sourceId,
-                                              "start", ProgramRunStatus.STARTING);
-    if (!isValid) {
-      // Skip recording start if the existing records are not valid
+  @Nullable
+  public ProgramRunClusterStatus recordProgramProvisioning(ProgramRunId programRunId, long startTs,
+                                                           Map<String, String> runtimeArgs,
+                                                           Map<String, String> systemArgs,
+                                                           byte[] sourceId) {
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
+
+    RunRecordMeta existing = getRun(programRunId);
+    // for some reason, there is an existing run record.
+    if (existing != null) {
+      // TODO:  Don't expect this to happen, but update the start time,
+      // runtime args, and system args of the existing run record.
+      if (!isValid(existing, sourceId, "provisioning")) {
+        return null;
+      }
       return null;
     }
+
     String workflowRunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
-      // Program is started by Workflow. Add row corresponding to its node state.
-      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STARTING, null, sourceId);
       workflowRunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     }
 
@@ -372,9 +347,203 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       builder.put("workflowrunid", workflowRunId);
     }
 
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONING, null, null);
+    RunRecordMeta meta = RunRecordMeta.builder()
+      .setProgramRunId(programRunId)
+      .setStartTime(startTs)
+      .setStatus(ProgramRunStatus.STARTING)
+      .setProperties(builder.build())
+      .setSystemArgs(systemArgs)
+      .setCluster(cluster)
+      .setSourceId(sourceId)
+      .build();
+    write(key, meta);
+    return ProgramRunClusterStatus.PROVISIONING;
+  }
+
+  /**
+   * Record that the program run has completed provisioning compute resources for the run. If the current status has
+   * a higher source id, this call will be ignored.
+   *
+   * @param programRunId program run
+   * @param numNodes number of cluster nodes provisioned
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @return {@link ProgramRunClusterStatus#PROVISIONED} if it is successfully persisted, {@code null} otherwise.
+   */
+  @Nullable
+  public ProgramRunClusterStatus recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId) {
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
+
+    RunRecordMeta existing = getRun(programRunId);
+
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected request to transition program run {} from non-existent state to cluster state {}.",
+                programRunId, ProgramRunClusterStatus.PROVISIONED);
+      return null;
+    } else if (!isValid(existing, sourceId, "provisioned")) {
+      return null;
+    }
+
+    ProgramRunClusterStatus clusterState = existing.getCluster().getStatus();
+    if (clusterState != ProgramRunClusterStatus.PROVISIONING) {
+      LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
+               programRunId, existing.getCluster().getStatus(),
+               ProgramRunClusterStatus.PROVISIONED);
+      return null;
+    }
+
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, numNodes);
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setStatus(ProgramRunStatus.STARTING)
+      .setCluster(cluster)
+      .setSourceId(sourceId)
+      .build();
+    write(key, meta);
+    return ProgramRunClusterStatus.PROVISIONED;
+  }
+
+  /**
+   * Record that the program run has started de-provisioning compute resources for the run. If the current status has
+   * a higher source id, this call will be ignored.
+   *
+   * @param programRunId program run
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @return {@link ProgramRunClusterStatus#DEPROVISIONING} if it is successfully persisted, {@code null} otherwise.
+   */
+  @Nullable
+  public ProgramRunClusterStatus recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId) {
+    MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
+
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
+                programRunId, ProgramRunClusterStatus.DEPROVISIONING);
+      return null;
+    } else if (!isValid(existing, sourceId, "deprovisioning")) {
+      return null;
+    }
+
+    ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
+    if (clusterStatus != ProgramRunClusterStatus.PROVISIONED) {
+      LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
+               programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONING);
+      return null;
+    }
+    if (!existing.getStatus().isEndState()) {
+      LOG.warn("Ignoring unexpected request to transition program run {} from program state {} to cluster state {}.",
+               programRunId, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONING);
+      return null;
+    }
+
+    key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING,
+                                                      null, existing.getCluster().getNumNodes());
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setCluster(cluster)
+      .setSourceId(sourceId)
+      .build();
+    write(key.build(), meta);
+    return ProgramRunClusterStatus.DEPROVISIONING;
+  }
+
+  /**
+   * Record that the program run has deprovisioned compute resources for the run. If the current status has
+   * a higher source id, this call will be ignored.
+   *
+   * @param programRunId program run
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @return {@link ProgramRunClusterStatus#DEPROVISIONED} if it is successfully persisted, {@code null} otherwise.
+   */
+  @Nullable
+  public ProgramRunClusterStatus recordProgramDeprovisioned(ProgramRunId programRunId, byte[] sourceId) {
+    MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
+
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
+                programRunId, ProgramRunClusterStatus.DEPROVISIONED);
+      return null;
+    } else if (!isValid(existing, sourceId, "deprovisioned")) {
+      return null;
+    }
+
+    ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
+    if (clusterStatus != ProgramRunClusterStatus.DEPROVISIONING) {
+      LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
+               programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONED);
+      return null;
+    }
+    if (!existing.getStatus().isEndState()) {
+      LOG.warn("Ignoring unexpected request to transition program run {} from program state {} to cluster state {}.",
+               programRunId, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONED);
+      return null;
+    }
+
+    key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED,
+                                                      null, existing.getCluster().getNumNodes());
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setCluster(cluster)
+      .setSourceId(sourceId)
+      .build();
+    write(key.build(), meta);
+    return ProgramRunClusterStatus.DEPROVISIONED;
+  }
+
+  /**
+   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
+   * @param programRunId run id of the program
+   * @param twillRunId Twill run id
+   * @param systemArgs the system arguments for this program run
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @return {@link ProgramRunStatus#STARTING} if it is successfully persisted, {@code null} otherwise.
+   */
+  public ProgramRunStatus recordProgramStart(ProgramRunId programRunId, String twillRunId,
+                                             Map<String, String> systemArgs, byte[] sourceId) {
+    MDSKey.Builder keyBuilder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId.getParent());
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
+               programRunId, ProgramRunStatus.STARTING);
+      return null;
+    }
+    if (!isValid(existing, sourceId, "start")) {
+      return null;
+    }
+    if (existing.getStatus() != null && existing.getStatus() != ProgramRunStatus.STARTING) {
+      LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
+               programRunId, existing.getStatus(), ProgramRunStatus.STARTING);
+      return null;
+    }
+
+    if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+      // Program is started by Workflow. Add row corresponding to its node state.
+      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STARTING, null, sourceId);
+    }
+
+    // Delete the old run record
+    delete(existing);
+
     MDSKey key = keyBuilder.add(programRunId.getRun()).build();
-    RunRecordMeta meta = new RunRecordMeta(programRunId, startTs, null, null, ProgramRunStatus.STARTING,
-                                           builder.build(), systemArgs, twillRunId, sourceId);
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setStatus(ProgramRunStatus.STARTING)
+      .setTwillRunId(twillRunId)
+      .setSourceId(sourceId)
+      .build();
     write(key, meta);
     return ProgramRunStatus.STARTING;
   }
@@ -409,11 +578,20 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
   private ProgramRunStatus recordProgramRunning(ProgramRunId programRunId, long runTs, String twillRunId,
                                                 MDSKey key, byte[] sourceId) {
-    RunRecordMeta existing = getRunRecord(programRunId);
-    boolean isValid = validateExistingRecords(existing, programRunId, sourceId,
-                                              "running", ProgramRunStatus.RUNNING);
-    if (!isValid) {
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
+               programRunId, ProgramRunStatus.RUNNING);
+      return null;
+    }
+    if (!isValid(existing, sourceId, "running")) {
       // Skip recording running if the existing records are not valid
+      return null;
+    }
+    ProgramRunStatus status = existing.getStatus();
+    if (status == null || status.isEndState()) {
+      LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
+               programRunId, status, ProgramRunStatus.RUNNING);
       return null;
     }
     Map<String, String> systemArgs = existing.getSystemArgs();
@@ -423,13 +601,15 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     // Delete the old run record
-    MDSKey oldKey = getProgramKeyBuilder(STATUS_TYPE_MAP.get(existing.getStatus()), programRunId).build();
-    deleteAll(oldKey);
+    delete(existing);
 
     // The existing record's properties already contains the workflowRunId
-    RunRecordMeta meta = new RunRecordMeta(programRunId, existing.getStartTs(), runTs, null,
-                                           ProgramRunStatus.RUNNING, existing.getProperties(),
-                                           systemArgs, twillRunId, sourceId);
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setRunTime(runTs)
+      .setStatus(ProgramRunStatus.RUNNING)
+      .setTwillRunId(twillRunId)
+      .setSourceId(sourceId)
+      .build();
     write(key, meta);
     return ProgramRunStatus.RUNNING;
   }
@@ -445,10 +625,13 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   @Nullable
   public ProgramRunStatus recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId) {
-    RunRecordMeta existing = getRunRecord(programRunId);
-    boolean isValid = validateExistingRecords(existing, programRunId, sourceId,
-                                              "suspend", ProgramRunStatus.SUSPENDED);
-    if (!isValid) {
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
+               programRunId, ProgramRunStatus.SUSPENDED);
+      return null;
+    }
+    if (!isValid(existing, sourceId, "suspend")) {
       // Skip recording suspend if the existing record is not valid
       return null;
     }
@@ -467,13 +650,13 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   @Nullable
   public ProgramRunStatus recordProgramResumed(ProgramRunId programRunId, byte[] sourceId) {
-    RunRecordMeta existing = getRunRecord(programRunId);
-    // ProgramRunStatus.RUNNING will actually be persisted but ProgramRunStatus.RESUMING is used here to distinguish
-    // recordProgramResumed from recordProgramRunning, since the two methods have different sets of allowed statuses
-    // of the existing records
-    boolean isValid = validateExistingRecords(existing, programRunId, sourceId,
-                                              "resume", ProgramRunStatus.RESUMING);
-    if (!isValid && existing != null) {
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
+               programRunId, ProgramRunStatus.RUNNING);
+      return null;
+    }
+    if (!isValid(existing, sourceId, "resume")) {
       // Skip recording resumed if the existing records are not valid
       return null;
     }
@@ -506,10 +689,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       toStatus = ProgramRunStatus.RUNNING;
     }
     // Delete the old run record
-    MDSKey key = getProgramKeyBuilder(STATUS_TYPE_MAP.get(existing.getStatus()), programRunId).build();
-    deleteAll(key);
-    key = getProgramKeyBuilder(toType, programRunId).build();
-    write(key, new RunRecordMeta(existing, null, toStatus, sourceId));
+    delete(existing);
+    MDSKey key = getProgramKeyBuilder(toType, programRunId).build();
+    write(key, RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId).build());
   }
 
   /**
@@ -540,17 +722,23 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   private ProgramRunStatus recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
                                              @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
                                              byte[] sourceId) {
-    RunRecordMeta existing = getRunRecord(programRunId);
-    boolean isValid = validateExistingRecords(existing, programRunId, sourceId,
-                                              runStatus.name().toLowerCase(), runStatus);
-    if (!isValid || existing == null) {
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
+               programRunId, runStatus);
+      return null;
+    }
+    if (!isValid(existing, sourceId, runStatus.name().toLowerCase())) {
       // Skip recording stop if the existing records are not valid
       return null;
     }
+    if (existing.getStatus().isEndState()) {
+      LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
+               programRunId, existing.getStatus(), runStatus);
+      return null;
+    }
     // Delete the old run record
-    MDSKey key = getProgramKeyBuilder(STATUS_TYPE_MAP.get(existing.getStatus()), programRunId.getParent())
-      .add(programRunId.getRun()).build();
-    deleteAll(key);
+    delete(existing);
 
     // Record in the workflow
     Map<String, String> systemArgs = existing.getSystemArgs();
@@ -558,40 +746,9 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       addWorkflowNodeState(programRunId, systemArgs, runStatus, failureCause, sourceId);
     }
 
-    key = builder.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
-    write(key, new RunRecordMeta(existing, stopTs, runStatus, sourceId));
+    MDSKey key = builder.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+    write(key, RunRecordMeta.builder(existing).setStopTime(stopTs).setStatus(runStatus).setSourceId(sourceId).build());
     return runStatus;
-  }
-
-  /**
-   * Returns all run records for the given program run. It should only ever return a single run record, but
-   * this is not enforced in the underlying table due to how the row keys are built.
-   *
-   * @param programRunId the run id to fetch metadata for
-   * @return metadata for the given run id
-   */
-  @Nullable
-  private RunRecordMeta getRunRecord(ProgramRunId programRunId) {
-    ImmutableSet.Builder<MDSKey> keySet = ImmutableSet.<MDSKey>builder().add(
-      getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build(),
-      getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programRunId).build(),
-      getProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programRunId).build(),
-      getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId).build());
-    // Get version-less record of type TYPE_RUN_RECORD_COMPLETED only if upgrade is not complete and
-    // programId has default version. Because upgrade is only done for record type TYPE_RUN_RECORD_COMPLETED in
-    // one transaction, there won't be duplicated records for the same program run
-    if (!upgradeComplete.get() && ApplicationId.DEFAULT_VERSION.equals(programRunId.getVersion())) {
-      keySet.add(getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId).build());
-    }
-    List<RunRecordMeta> existingRecords = get(keySet.build(), RunRecordMeta.class);
-    if (existingRecords.size() > 1) {
-      // This should never happen because existing run records are deleted before a new one is written.
-      // Ideally it shouldn't even be possible in the underlying storage, but that cannot be done
-      // unless the rowkeys are modified
-      throw new IllegalStateException(String.format(
-        "Found more than 1 existing run record for program run '%s'. ", programRunId));
-    }
-    return existingRecords.isEmpty() ? null : existingRecords.iterator().next();
   }
 
   /**
@@ -603,63 +760,22 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * once it is already running.
    *
    * @param existing the existing run record meta of the given program run
-   * @param programRunId run id of the program
    * @param sourceId unique id representing the source of program run status, such as the message id of the program
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
    * @param recordType the type of record corresponding to the current status
-   * @param status the status that the program run is transitioning into
    * @return {@code true} if the program run is allowed to persist the given status, {@code false} otherwise
    */
-  private boolean validateExistingRecords(@Nullable RunRecordMeta existing, ProgramRunId programRunId,
-                                          byte[] sourceId, String recordType, ProgramRunStatus status) {
-    ProgramId programId = programRunId.getParent();
-    String pid = programRunId.getRun();
-    Set<ProgramRunStatus> allowedStatuses = ALLOWED_STATUSES.get(status);
-    Set<ProgramRunStatus> allowedWithLogStatuses = ALLOWED_WITH_LOG_STATUSES.get(status);
-    if (allowedStatuses == null || allowedWithLogStatuses == null) {
-      LOG.error("Run status '{}' is not allowed to be persisted for program '{}' run id '{}'.",
-                status, programId, pid);
-      return false;
-    }
-    // If existing record is not allowed, only empty existing records is valid
-    if (allowedStatuses.isEmpty() && allowedWithLogStatuses.isEmpty()) {
-      if (existing == null) {
-        return true;
-      }
-      LOG.error("No existing run record meta should exist for program '{}' run id '{}' but found '{}'.",
-                programId, pid, existing);
-      return false;
-    }
-    if (existing == null) {
-      LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program {}.",
-                programId, pid, recordType);
-      return false;
-    }
-
+  private boolean isValid(RunRecordMeta existing, byte[] sourceId, String recordType) {
     byte[] existingSourceId = existing.getSourceId();
     if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) <= 0) {
       LOG.debug("Current source id '{}' is not larger than the existing source id '{}' in the existing " +
-                  "run record meta '{}'. Skip recording program {} for program '{}' with run id '{}'.",
-                Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing,
-                recordType, programId, pid);
+                  "run record meta '{}'. Skip recording program {}.",
+                Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing, recordType);
       return false;
     }
-    ProgramRunStatus existingStatus = existing.getStatus();
-    if (allowedStatuses.contains(existingStatus)) {
-      return true;
-    }
-    if (allowedWithLogStatuses.contains(existingStatus)) {
-      LOG.debug("Found run record meta '{}' for program '{}' pid '{}'. Continue record program {} for it.",
-                existing, programId, pid, recordType);
-      return true;
-    }
-
-    LOG.warn("Found run record meta '{}' for program '{}' pid '{}' with unexpected status '{}'. " +
-               "Skip recording program {} for it.",
-             existing, programId, pid, existingStatus, recordType);
-    return false;
+    return true;
   }
 
   public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) {
@@ -763,6 +879,16 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
     // Else query suspended run records
     return getUnfinishedRun(programRun, TYPE_RUN_RECORD_SUSPENDED);
+  }
+
+  private void delete(RunRecordMeta record) {
+    ProgramRunId programRunId = record.getProgramRunId();
+    MDSKey.Builder key = getProgramKeyBuilder(STATUS_TYPE_MAP.get(record.getStatus()), programRunId.getParent());
+    if (record.getStatus().isEndState()) {
+      key.add(getInvertedTsKeyPart(record.getStartTs()));
+    }
+    key.add(programRunId.getRun());
+    deleteAll(key.build());
   }
 
   /**
@@ -947,8 +1073,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     return first;
   }
 
-  private long getInvertedTsKeyPart(long endTime) {
-    return Long.MAX_VALUE - endTime;
+  private long getInvertedTsKeyPart(long time) {
+    return Long.MAX_VALUE - time;
   }
 
   /**

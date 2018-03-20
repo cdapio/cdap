@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -176,7 +176,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
 
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
-      ProgramId programId = programRunId.getParent();
 
       ApplicationMeta meta = appMetadataStore.getApplication(programRunId.getNamespace(),
                                                              programRunId.getApplication(),
@@ -193,7 +192,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
 
       LOG.trace("Processing program status notification: {}", notification);
-      String runId = programRunId.getRun();
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
@@ -215,8 +213,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           }
           Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
           Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-          recordedStatus = appMetadataStore.recordProgramStart(programRunId, startTimeSecs, twillRunId,
-                                                               userArguments, systemArguments, messageIdBytes);
+          // TODO: CDAP-13096 move to provisioner status subscriber
+          // for now, save these states here to follow correct lifecycle
+          appMetadataStore.recordProgramProvisioning(programRunId, startTimeSecs, userArguments, systemArguments,
+                                                     messageIdBytes);
+          appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
+          recordedStatus = appMetadataStore.recordProgramStart(programRunId, twillRunId,
+                                                               systemArguments, messageIdBytes);
           break;
         case RUNNING:
           long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),

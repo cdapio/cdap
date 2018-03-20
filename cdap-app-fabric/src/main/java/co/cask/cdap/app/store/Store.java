@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,7 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
@@ -51,22 +52,63 @@ import javax.annotation.Nullable;
 
 /**
  * Responsible for managing {@link Program} and {@link Application} metadata.
+ *
+ * TODO: set state methods are only called from unit tests. They should be removed in favor of using AppMetadataStore.
  */
 public interface Store extends RuntimeStore {
 
   /**
-   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
+   * Logs initialization of program run and persists program cluster status to
+   * {@link ProgramRunClusterStatus#PROVISIONING}.
    *
    * @param id run id of the program
    * @param startTime start timestamp in seconds
-   * @param twillRunId Twill run id
    * @param runtimeArgs the runtime arguments for this program run
    * @param systemArgs the system arguments for this program run
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setStart(ProgramRunId id, long startTime, @Nullable String twillRunId,
-                Map<String, String> runtimeArgs, Map<String, String> systemArgs, byte[] sourceId);
+  void setProvisioning(ProgramRunId id, long startTime, Map<String, String> runtimeArgs,
+                       Map<String, String> systemArgs, byte[] sourceId);
+
+  /**
+   * Persists program run cluster status to {@link ProgramRunClusterStatus#PROVISIONED}.
+   *
+   * @param id run id of the program
+   * @param numNodes number of nodes for the cluster
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   */
+  void setProvisioned(ProgramRunId id, int numNodes, byte[] sourceId);
+
+  /**
+   * Persists program run cluster status to {@link ProgramRunClusterStatus#DEPROVISIONING}.
+   *
+   * @param id run id of the program
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   */
+  void setDeprovisioning(ProgramRunId id, byte[] sourceId);
+
+  /**
+   * Persists program run cluster status to {@link ProgramRunClusterStatus#DEPROVISIONED}.
+   *
+   * @param id run id of the program
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   */
+  void setDeprovisioned(ProgramRunId id, byte[] sourceId);
+
+  /**
+   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
+   *
+   * @param id run id of the program
+   * @param twillRunId Twill run id
+   * @param systemArgs the system arguments for this program run
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   */
+  void setStart(ProgramRunId id, @Nullable String twillRunId, Map<String, String> systemArgs, byte[] sourceId);
 
   /**
    * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
