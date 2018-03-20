@@ -21,12 +21,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 
 /**
- * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one service.
- * <uL>
- *   <li>A stream to send names to.</li>
- *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
- *   <li>A service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
- * </uL>
+ * An application that generates reports from program runs meta files.
  */
 public class ReportGenerationApp extends AbstractApplication {
   public static final String NAME = "ReportGenerationApp";

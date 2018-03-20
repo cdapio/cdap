@@ -46,7 +46,6 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
   // TODO: Temporarily disable this test because of problems with running the test
   //  @Test
   public void testGenerateReport() throws Exception {
-    LOG.info("Generated run meta files");
     ApplicationManager app = deployApplication(ReportGenerationApp.class);
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
     URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
@@ -69,6 +68,5 @@ public class ProgramRunReportTest extends TestBaseWithSpark2 {
     int responseCode = urlConn.getResponseCode();
     Assert.assertEquals(200, responseCode);
     String msg = urlConn.getResponseMessage();
-    Map<String, String> responseMap = GSON.fromJson(msg, new TypeToken<Map<String, String>>() { }.getType());
   }
 }
