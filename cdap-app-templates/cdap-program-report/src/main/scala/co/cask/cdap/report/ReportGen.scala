@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList
 import scala.collection.JavaConversions._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Dataset, Row, SQLContext, SparkSession}
+import org.apache.twill.filesystem.Location
 import org.slf4j.LoggerFactory
 
 class ReportGen(private val spark: SparkSession) {
@@ -34,7 +35,7 @@ class ReportGen(private val spark: SparkSession) {
     //def run(): Unit = {
     import spark.implicits._
     import ReportGen._
-    val aggRow = new RecordAgg().toColumn.alias(RECORD).as[Record]
+    val aggRow = new RecordAgg().toColumn.alias(RECORD_COL).as[Record]
     val df = spark.read.format("com.databricks.spark.avro").load(asScalaBuffer(inputPaths): _*)
     //    val cols = Set(request.getFields)
     //    val filters = request.getFilters
@@ -45,7 +46,7 @@ class ReportGen(private val spark: SparkSession) {
     //    val request = ReportGen.GSON.fromJson("{\"start\":1520808000,\"end\":1520808005}", classOf[Request])
     val start: Long = request.getStart
     val end: Long = request.getEnd
-    val recordCol = aggDf(RECORD)
+    val recordCol = aggDf(RECORD_COL)
     val requiredFields = collection.mutable.LinkedHashSet(ReportField.NAMESPACE.fieldName, ReportField.PROGRAM.fieldName, ReportField.RUN.fieldName)
     if (Option(request.getFields).isDefined) requiredFields ++= request.getFields
     LOG.info("requiredFields= {}", requiredFields)
@@ -77,7 +78,7 @@ class ReportGen(private val spark: SparkSession) {
           }
           case valueFilter: ReportGenerationRequest.ValueFilter[_] => {
             LOG.info("valueFilter for field {}", f.getFieldName)
-            val whitelist: java.util.List[_] = valueFilter.getWhitelist
+            val whitelist = valueFilter.getWhitelist
             if (Option(whitelist).isDefined) {
               LOG.info("whitelist = {}", whitelist)
               filterCol &&= fieldCol.isin(asScalaBuffer(whitelist):_*)
@@ -101,27 +102,9 @@ class ReportGen(private val spark: SparkSession) {
     }
     resultDf.columns.foreach(col => if (!requiredFields.contains(col)) resultDf = resultDf.drop(col))
     resultDf.persist()
-//    val records = resultDf.select(RECORD).rdd.mapPartitions(rIter => new Iterator[org.apache.spark.sql.Row] {
-//      override def hasNext: Boolean = rIter.hasNext
-//      override def next(): org.apache.spark.sql.Row = rIter.next.getAs[org.apache.spark.sql.Row](RECORD)
-//    }, preservesPartitioning = true).persist()
-//    if (!records.isEmpty()) {
-
-//    var recordsDf = spark.createDataFrame(records, records.first.schema).coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
-//    }
     resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
     resultDf.count
   }
-    //    val count = filteredDf.count()
-    //    // FileWriter
-    //    val file = new File("/Users/Chengfeng/tmp/report-id/COUNT")
-    //    var bw: Option[BufferedWriter] = None
-    //    try {
-    //      bw = Some(new BufferedWriter(new FileWriter(file)))
-    //      bw.get.write("%d\n".format(count))
-    //    } finally {
-    //      bw.foreach(w => w.close())
-    //    }
 }
 
 object ReportGen {
@@ -130,5 +113,5 @@ object ReportGen {
 
   val GSON = new Gson()
   val LOG = LoggerFactory.getLogger(ReportGen.getClass)
-  val RECORD = "record"
+  val RECORD_COL = "record"
 }
