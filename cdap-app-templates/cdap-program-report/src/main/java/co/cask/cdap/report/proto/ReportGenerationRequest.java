@@ -14,7 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.report;
+package co.cask.cdap.report.proto;
+
+import co.cask.cdap.report.util.ReportField;
 
 import java.util.HashSet;
 import java.util.List;

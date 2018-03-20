@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.proto.ops;
+package co.cask.cdap.report.proto;
 
 /**
  * Represents the information of the generation of a program operation status report in an HTTP response.
  */
 public class ReportGenerationInfo {
   private final long created;
-  private final ReportGenerationStatus status;
-  private final ReportGenerationRequest request;
+  private final ReportStatus status;
+  private final String request;
 
-  public ReportGenerationInfo(long created, ReportGenerationStatus status, ReportGenerationRequest request) {
+  public ReportGenerationInfo(long created, ReportStatus status, String request) {
     this.created = created;
     this.status = status;
     this.request = request;
@@ -34,11 +34,11 @@ public class ReportGenerationInfo {
     return created;
   }
 
-  public ReportGenerationStatus getStatus() {
+  public ReportStatus getStatus() {
     return status;
   }
 
-  public ReportGenerationRequest getRequest() {
+  public String getRequest() {
     return request;
   }
 }

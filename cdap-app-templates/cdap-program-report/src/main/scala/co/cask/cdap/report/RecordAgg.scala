@@ -17,6 +17,7 @@ package co.cask.cdap.report
 
 import java.lang.reflect.Type
 
+import co.cask.cdap.report.util.ReportField
 import com.google.gson._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Aggregator

@@ -14,18 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.report;
+package co.cask.cdap.report.util;
 
 import co.cask.cdap.api.data.schema.Schema;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -33,6 +35,8 @@ import javax.annotation.Nullable;
  * Utility class for reading and writing program run meta files.
  */
 public class ProgramRunMetaFileUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunMetaFileUtil.class);
+
   private static final Schema STARTING_INFO = Schema.recordOf(
     "ProgramStartingInfo",
 //    Schema.Field.of("artifactName", Schema.of(Schema.Type.STRING)),
@@ -75,18 +79,36 @@ public class ProgramRunMetaFileUtil {
     return new ProgramStartInfo(user);
   }
 
-//  public static Set<GenericRecord> readOutput(Location location) throws IOException {
-//    DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(SCHEMA);
-//    Set<GenericRecord> records = new HashSet<>();
-//    for (Location file : location.list()) {
-//      if (file.getName().endsWith(".avro")) {
-//        DataFileStream<GenericRecord> fileStream = new DataFileStream<>(file.getInputStream(), datumReader);
-//        Iterables.addAll(records, fileStream);
-//        fileStream.close();
-//      }
-//    }
-//    return records;
-//  }
+  public static void populateMetaFiles(Location metaBaseLocation) throws Exception {
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
+    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
+    for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
+      Location nsLocation = metaBaseLocation.append(namespace);
+      nsLocation.mkdirs();
+      for (int i = 0; i < 5; i++) {
+        long time = 1520808000L + 1000 * i;
+        Location reportLocation = nsLocation.append(String.format("%d.avro", time));
+        reportLocation.createNew();
+        dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
+        String program = "SmartWorkflow";
+        String run1 = ReportIds.generate().toString();
+        String run2 = ReportIds.generate().toString();
+        long delay = TimeUnit.MINUTES.toSeconds(5);
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
+                                                                  time, ProgramRunMetaFileUtil.startingInfo("user")));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
+                                                                  "FAILED", time + delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                  "STARTING", time + delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                  "RUNNING", time + 2 * delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                  "COMPLETED", time + 4 * delay, null));
+        dataFileWriter.close();
+      }
+      LOG.debug("nsLocation.list() = {}", nsLocation.list());
+    }
+  }
 
   public static GenericData.Record createRecord(String namespace, String program, String run, String status, long time,
                                                 @Nullable ProgramStartInfo startInfo) {

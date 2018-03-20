@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.proto.ops;
+package co.cask.cdap.report.proto;
 
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.report.util.ReportField;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -26,7 +26,7 @@ import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
 /**
- * Deserializer for {@link co.cask.cdap.proto.ops.ReportGenerationRequest.Filter}
+ * Deserializer for {@link ReportGenerationRequest.Filter}
  */
 public class FilterDeserializer implements JsonDeserializer<ReportGenerationRequest.Filter> {
   private static final Type INT_RANGE_FILTER_TYPE =
@@ -51,12 +51,12 @@ public class FilterDeserializer implements JsonDeserializer<ReportGenerationRequ
     if (fieldName == null) {
       throw new JsonParseException("Field name must be specified for filters");
     }
-    ReportFieldType fieldType = ReportFieldType.valueOfFieldName(fieldName.getAsString());
+    ReportField fieldType = ReportField.valueOfFieldName(fieldName.getAsString());
     if (fieldType == null) {
       throw new JsonParseException("Invalid field name " + fieldName);
     }
     if (object.get("range") != null) {
-      if (!fieldType.getApplicableFilters().contains(ReportFieldType.FilterType.RANGE)) {
+      if (!fieldType.getApplicableFilters().contains(ReportField.FilterType.RANGE)) {
         throw new JsonParseException("Field " + fieldName + " cannot be filtered by range");
       }
       if (fieldType.getValueClass().equals(Integer.class)) {
@@ -68,7 +68,7 @@ public class FilterDeserializer implements JsonDeserializer<ReportGenerationRequ
       throw new JsonParseException(String.format("Field %s with value type %s cannot be filtered by range", fieldName,
                                                  fieldType.getValueClass().getName()));
     }
-    if (!fieldType.getApplicableFilters().contains(ReportFieldType.FilterType.VALUE)) {
+    if (!fieldType.getApplicableFilters().contains(ReportField.FilterType.VALUE)) {
       throw new JsonParseException("Field " + fieldName + " cannot be filtered by values");
     }
     if (fieldType.getValueClass().equals(String.class)) {

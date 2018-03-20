@@ -16,7 +16,6 @@
 
 package co.cask.cdap.report;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -27,21 +26,25 @@ import co.cask.cdap.api.spark.AbstractExtendedSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
-import co.cask.cdap.api.spark.service.SparkHttpContentConsumer;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.ReportContent;
+import co.cask.cdap.report.proto.ReportGenerationInfo;
+import co.cask.cdap.report.proto.ReportGenerationRequest;
+import co.cask.cdap.report.proto.ReportList;
+import co.cask.cdap.report.proto.ReportStatus;
+import co.cask.cdap.report.proto.ReportStatusInfo;
+import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
+import co.cask.cdap.report.util.ReportField;
+import co.cask.cdap.report.util.ReportIds;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.DatumWriter;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -52,11 +55,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -92,7 +93,6 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
-    LOG.info("ReportGenerationSpark running");
   }
 
   /**
@@ -101,56 +101,23 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   public static final class ReportSparkHandler extends AbstractSparkHttpServiceHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
-    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
+    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
+    }.getType();
 
     private ReportGen reportGen;
 
     @Override
     public void initialize(SparkHttpServiceContext context) throws Exception {
       super.initialize(context);
-      LOG.info("ReportSparkHandler initializing");
       reportGen = new ReportGen(getContext().getSparkContext());
       try {
-        context.getAdmin().createDataset(ProgramRunReportApp.RUN_META_FILESET, FileSet.class.getName(),
+        // TODO: temporarily create the run meta fileset and generate mock program run meta files here.
+        // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
+        context.getAdmin().createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
                                          FileSetProperties.builder().build());
-        populateMetaFiles();
+        ProgramRunMetaFileUtil.populateMetaFiles(getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET));
       } catch (InstanceConflictException e) {
         // It's ok if the dataset already exists
-      }
-    }
-
-    private void populateMetaFiles() throws Exception {
-      Location metaBaseLocation = getDatasetBaseLocation(ProgramRunReportApp.RUN_META_FILESET);
-      DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
-      DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
-      for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
-        Location nsLocation = metaBaseLocation.append(namespace);
-        nsLocation.mkdirs();
-        LOG.info("nsLocation {} exists='{}', isDir='{}'", nsLocation, nsLocation.exists(), nsLocation.isDirectory());
-        for (int i = 0; i < 5; i++) {
-          long time = 1520808000L + 1000 * i;
-          Location reportLocation = nsLocation.append(String.format("%d.avro", time));
-          reportLocation.createNew();
-          LOG.info("reportLocation {} exists='{}', isDir='{}'", reportLocation, reportLocation.exists(),
-                   reportLocation.isDirectory());
-          dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
-          String program = "SmartWorkflow";
-          String run1 = ReportIds.generate().toString();
-          String run2 = ReportIds.generate().toString();
-          long delay = TimeUnit.MINUTES.toSeconds(5);
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
-                                                                    time, ProgramRunMetaFileUtil.startingInfo("user")));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
-                                                                    "FAILED", time + delay, null));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                    "STARTING", time + delay, null));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                    "RUNNING", time + 2 * delay, null));
-          dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                    "COMPLETED", time + 4 * delay, null));
-          dataFileWriter.close();
-        }
-        LOG.info("nsLocation.list() = {}", nsLocation.list());
       }
     }
 
@@ -162,7 +129,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       throws IOException {
       int offset = (offsetString == null || offsetString.isEmpty()) ? 0 : Integer.parseInt(offsetString);
       int limit = (limitString == null || limitString.isEmpty()) ? Integer.MAX_VALUE : Integer.parseInt(limitString);
-      Location reportFilesetLocation = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET);
+      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       List<ReportStatusInfo> reportStatuses = new ArrayList<>();
       int idx = offset;
       List<Location> reportBaseDirs = reportFilesetLocation.list();
@@ -175,19 +142,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       responder.sendJson(200, new ReportList(offset, limit, reportBaseDirs.size(), reportStatuses));
     }
 
-    private Location getDatasetBaseLocation(String datasetName) {
-      return Transactionals.execute(getContext(), context -> {
-        return context.<FileSet>getDataset(datasetName).getBaseLocation();
-      });
-    }
-
     @GET
     @Path("/reports/{report-id}")
     public void getReportStatus(HttpServiceRequest request, HttpServiceResponder responder,
                                 @PathParam("report-id") String reportId,
                                 @QueryParam("share-id") String shareId)
       throws IOException {
-      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
+      Location reportBaseDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
       if (!reportBaseDir.exists()) {
         responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
         return;
@@ -196,16 +157,6 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       String reportRequest =
         new String(ByteStreams.toByteArray(reportBaseDir.append(START_FILE).getInputStream()), Charsets.UTF_8);
       responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportBaseDir), reportRequest));
-    }
-
-    private ReportStatus getReportStatus(Location reportBaseDir) throws IOException {
-      if (reportBaseDir.append(REPORT_DIR).append(SUCCESS_FILE).exists()) {
-        return ReportStatus.COMPLETED;
-      }
-      if (reportBaseDir.append(FAILURE_FILE).exists()) {
-        return ReportStatus.FAILED;
-      }
-      return ReportStatus.RUNNING;
     }
 
     @GET
@@ -226,7 +177,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         return;
       }
 
-      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
+      Location reportBaseDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
       if (!reportBaseDir.exists()) {
         responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
         return;
@@ -271,7 +222,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     }
 
     @POST
-    @Path("/reportsExecutor")
+    @Path("/reports")
     public void executeReportGeneration(HttpServiceRequest request, HttpServiceResponder responder)
       throws IOException {
       String requestJson = Charsets.UTF_8.decode(request.getContent()).toString();
@@ -286,7 +237,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }
 
       String reportId = ReportIds.generate().toString();
-      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
+      Location reportBaseDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
       reportBaseDir.mkdirs();
       LOG.info("reportBaseDir {} exists='{}', isDir='{}'", reportBaseDir, reportBaseDir.exists(),
                reportBaseDir.isDirectory());
@@ -307,94 +258,30 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }
       Location reportDir = reportBaseDir.append(REPORT_DIR);
       LOG.info("Wrote to startFile {}", startFile.toURI());
-            Executors.newSingleThreadExecutor().submit(() -> {
-              try {
-                generateReport(reportRequest, reportDir);
-              } catch (Throwable t) {
-                LOG.error("Failed to generate report {}", reportId, t);
-                try {
-                  Location failureFile = reportBaseDir.append(FAILURE_FILE);
-                  failureFile.createNew();
-                  try (PrintWriter writer = new PrintWriter(failureFile.getOutputStream())) {
-                    writer.println(t.toString());
-                    t.printStackTrace(writer);
-                  }
-                } catch (Throwable t2) {
-                  LOG.error("Failed to write cause of failure to file for report {}", reportId, t2);
-                  throw new RuntimeException("Failed to write cause of failure to file for report " + reportId, t2);
-                }
-              }
-            });
-      responder.sendJson(200, GSON.toJson(ImmutableMap.of("id", reportId)));
-    }
-
-    @POST
-    @Path("/reports")
-    public void executeReportGenerationDirect(HttpServiceRequest request, HttpServiceResponder responder)
-      throws IOException {
-      String requestJson = Charsets.UTF_8.decode(request.getContent()).toString();
-      ReportGenerationRequest reportRequest;
-      try {
-        LOG.info("Received report generation request {}", requestJson);
-        reportRequest = decodeRequestBody(requestJson, REPORT_GENERATION_REQUEST_TYPE);
-        reportRequest.validate();
-      } catch (IllegalArgumentException e) {
-        responder.sendError(400, "Invalid report generation request: " + e.getMessage());
-        return;
-      }
-
-      String reportId = ReportIds.generate().toString();
-      Location reportBaseDir = getDatasetBaseLocation(ProgramRunReportApp.REPORT_FILESET).append(reportId);
-      reportBaseDir.mkdirs();
-      LOG.info("reportBaseDir {} exists='{}', isDir='{}'", reportBaseDir, reportBaseDir.exists(),
-               reportBaseDir.isDirectory());
-      Location startFile = reportBaseDir.append(START_FILE);
-      try {
-        startFile.createNew();
-
-        LOG.info("startFile {} exists='{}', isDir='{}'", startFile, startFile.exists(), startFile.isDirectory());
-      } catch (IOException e) {
-        LOG.error("Failed to create startFile {}", startFile.toURI(), e);
-        throw e;
-      }
-      try (PrintWriter writer = new PrintWriter(startFile.getOutputStream())) {
-        writer.write(requestJson);
-      } catch (IOException e) {
-        LOG.error("Failed to write to startFile {}", startFile.toURI(), e);
-        throw e;
-      }
-      LOG.info("Wrote to startFile {}", startFile.toURI());
-      generateReport(reportRequest, reportBaseDir.append(REPORT_DIR));
-//      ListenableFuture<String> futureTask = executorService.submit(() -> {
-//        generateReport(reportRequest, reportDirURI.toString());
-//        return reportId;
-//      });
-//      Futures.addCallback(futureTask, new FutureCallback<String>() {
-//        @Override
-//        public void onSuccess(String reportId) {
-//          runningReportGeneration.remove(reportId);
-//        }
-//
-//        @Override
-//        public void onFailure(Throwable t) {
-//          runningReportGeneration.remove(reportId);
-//          File failureFile = new File(reportDir, FAILURE_FILE);
-//          try {
-//            failureFile.createNewFile();
-//            try (BufferedWriter bw = new BufferedWriter(new FileWriter(failureFile))) {
-//              bw.write(t.toString());
-//            }
-//          } catch (IOException e) {
-//            throw new RuntimeException(e);
-//          }
-//        }
-//      });
+      Executors.newSingleThreadExecutor().submit(() -> {
+        try {
+          generateReport(reportRequest, reportDir);
+        } catch (Throwable t) {
+          LOG.error("Failed to generate report {}", reportId, t);
+          try {
+            Location failureFile = reportBaseDir.append(FAILURE_FILE);
+            failureFile.createNew();
+            try (PrintWriter writer = new PrintWriter(failureFile.getOutputStream())) {
+              writer.println(t.toString());
+              t.printStackTrace(writer);
+            }
+          } catch (Throwable t2) {
+            LOG.error("Failed to write cause of failure to file for report {}", reportId, t2);
+            throw new RuntimeException("Failed to write cause of failure to file for report " + reportId, t2);
+          }
+        }
+      });
       responder.sendJson(200, GSON.toJson(ImmutableMap.of("id", reportId)));
     }
 
     private void generateReport(ReportGenerationRequest reportRequest, Location reportDir) {
       Location baseLocation = Transactionals.execute(getContext(), context -> {
-        return context.<FileSet>getDataset(ProgramRunReportApp.RUN_META_FILESET).getBaseLocation();
+        return context.<FileSet>getDataset(ReportGenerationApp.RUN_META_FILESET).getBaseLocation();
       });
       List<Location> nsLocations;
       try {
@@ -443,65 +330,33 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       }
     }
 
-
-    @POST
-    @Path("/reportsGen")
-    public SparkHttpContentConsumer generateReport(HttpServiceRequest request, HttpServiceResponder responder)
-      throws IOException {
-
-      String reportId = UUID.randomUUID().toString();
-
-//      Location tmpLocation = Transactionals.execute(getContext(), context -> {
-//        return context.<FileSet>getDataset("request").getLocation(UUID.randomUUID().toString());
-//      });
-//      WritableByteChannel outputChannel = Channels.newChannel(tmpLocation.getOutputStream());
-
-//      String input = getContext().getRuntimeArguments().get("input");
-//      String output = getContext().getRuntimeArguments().get("output");
-//      File startedFile = new File(output + "/_START");
-//      startedFile.createNewFile();
-//      FileChannel outputChannel = new FileOutputStream(startedFile, false).getChannel();
-      return new SparkHttpContentConsumer() {
-        String requestJson;
-
-        @Override
-        public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
-          LOG.info("Received chunk: {}", Charsets.UTF_8.decode(chunk).toString());
-          requestJson = Charsets.UTF_8.decode(chunk).toString();
-        }
-
-        @Override
-        public void onFinish(HttpServiceResponder responder) throws Exception {
-//          outputChannel.close();
-//          LOG.info("Finish writing file {} ", startedFile.getAbsolutePath());
-          ReportGenerationRequest reportGenerationRequest = decodeRequestBody(requestJson,
-                                                                              REPORT_GENERATION_REQUEST_TYPE);
-//          Executors.newSingleThreadExecutor().submit(() -> reportGen.getAggregatedDataset(reportGenerationRequest));
-          responder.sendJson(200, GSON.toJson(ImmutableMap.of("id", reportId)));
-        }
-
-        @Override
-        public void onError(HttpServiceResponder responder, Throwable failureCause) {
-//          try {
-//            outputChannel.close();
-//          } catch (IOException e) {
-//            LOG.warn("Failed to close file channel for file {}", startedFile.getAbsolutePath(), e);
-//          }
-        }
-      };
+    private Location getDatasetBaseLocation(String datasetName) {
+      return Transactionals.execute(getContext(), context -> {
+        return context.<FileSet>getDataset(datasetName).getBaseLocation();
+      });
     }
-  }
 
-  static <T> T decodeRequestBody(String request, Type type) {
-    T decodedRequestBody;
-    try {
-      decodedRequestBody = GSON.fromJson(request, type);
-      if (decodedRequestBody == null) {
-        throw new IllegalArgumentException("Request body cannot be empty.");
+    private ReportStatus getReportStatus(Location reportBaseDir) throws IOException {
+      if (reportBaseDir.append(REPORT_DIR).append(SUCCESS_FILE).exists()) {
+        return ReportStatus.COMPLETED;
       }
-    } catch (JsonSyntaxException e) {
-      throw new IllegalArgumentException("Request body is invalid json: " + e.getMessage());
+      if (reportBaseDir.append(FAILURE_FILE).exists()) {
+        return ReportStatus.FAILED;
+      }
+      return ReportStatus.RUNNING;
     }
-    return decodedRequestBody;
+
+    private  <T> T decodeRequestBody(String request, Type type) {
+      T decodedRequestBody;
+      try {
+        decodedRequestBody = GSON.fromJson(request, type);
+        if (decodedRequestBody == null) {
+          throw new IllegalArgumentException("Request body cannot be empty.");
+        }
+      } catch (JsonSyntaxException e) {
+        throw new IllegalArgumentException("Request body is invalid json: " + e.getMessage());
+      }
+      return decodedRequestBody;
+    }
   }
 }

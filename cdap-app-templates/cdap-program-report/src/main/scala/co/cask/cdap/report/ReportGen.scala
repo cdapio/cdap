@@ -17,6 +17,8 @@ package co.cask.cdap.report
 
 import java.io.{BufferedWriter, File, FileWriter}
 
+import co.cask.cdap.report.proto.ReportGenerationRequest
+import co.cask.cdap.report.util.ReportField
 import com.google.common.collect.ImmutableList
 
 import scala.collection.JavaConversions._
@@ -37,13 +39,8 @@ class ReportGen(private val spark: SparkSession) {
     import ReportGen._
     val aggRow = new RecordAgg().toColumn.alias(RECORD_COL).as[Record]
     val df = spark.read.format("com.databricks.spark.avro").load(asScalaBuffer(inputPaths): _*)
-    //    val cols = Set(request.getFields)
-    //    val filters = request.getFilters
-    //    val sort = request.getSort
-
     // TODO: configure partitions. The default number of partitions is 200
     var aggDf = df.groupBy(ReportField.RUN.getFieldName).agg(aggRow)
-    //    val request = ReportGen.GSON.fromJson("{\"start\":1520808000,\"end\":1520808005}", classOf[Request])
     val start: Long = request.getStart
     val end: Long = request.getEnd
     val recordCol = aggDf(RECORD_COL)

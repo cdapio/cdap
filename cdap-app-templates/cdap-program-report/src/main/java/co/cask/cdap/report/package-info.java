@@ -14,13 +14,6 @@
  * the License.
  */
 /**
- * Package for HelloWorld example Application.
- * 
- * This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one Service.
- * <uL>
- *   <li>A Stream to send names to.</li>
- *   <li>A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable</li>
- *   <li>A Service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
- * </uL>
+ * Package for Report Generation Application.
  */
 package co.cask.cdap.report;

@@ -14,39 +14,39 @@
  * the License.
  */
 
-package co.cask.cdap.proto.ops;
+package co.cask.cdap.report.proto;
 
 import java.util.List;
 
 /**
- * Represents the program run report in an HTTP response.
+ * Represents a list of reports owned by a user in an HTTP response.
  */
-public class ProgramRunReport {
-  private final long offset;
-  private final long limit;
-  private final long total;
-  private final List<ProgramRunReportRecord> runs;
+public class ReportList {
+  private final int offset;
+  private final int limit;
+  private final int total;
+  private final List<ReportStatusInfo> reports;
 
-  public ProgramRunReport(long offset, long limit, long total, List<ProgramRunReportRecord> runs) {
+  public ReportList(int offset, int limit, int total, List<ReportStatusInfo> reports) {
     this.offset = offset;
     this.limit = limit;
     this.total = total;
-    this.runs = runs;
+    this.reports = reports;
   }
 
-  public long getOffset() {
+  public int getOffset() {
     return offset;
   }
 
-  public long getLimit() {
+  public int getLimit() {
     return limit;
   }
 
-  public long getTotal() {
+  public int getTotal() {
     return total;
   }
 
-  public List<ProgramRunReportRecord> getRuns() {
-    return runs;
+  public List<ReportStatusInfo> getReports() {
+    return reports;
   }
 }

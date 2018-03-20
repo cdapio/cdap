@@ -14,10 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.ops;
+package co.cask.cdap.report.proto;
 
 /**
- *
+ * Represents the status of a report generation job.
  */
-public class ReportGenerationRequestDeserializer {
+public enum ReportStatus {
+  RUNNING,
+  COMPLETED,
+  FAILED
 }

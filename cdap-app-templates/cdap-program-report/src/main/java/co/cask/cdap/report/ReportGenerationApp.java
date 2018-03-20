@@ -28,8 +28,8 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
  *   <li>A service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
  * </uL>
  */
-public class ProgramRunReportApp extends AbstractApplication {
-  public static final String NAME = "ProgramOperationReportApp";
+public class ReportGenerationApp extends AbstractApplication {
+  public static final String NAME = "ReportGenerationApp";
   public static final String RUN_META_FILESET = "RunMetaFileset";
   public static final String REPORT_FILESET = "ReportFileset";
 
@@ -37,10 +37,6 @@ public class ProgramRunReportApp extends AbstractApplication {
   public void configure() {
     setName(NAME);
     addSpark(new ReportGenerationSpark());
-//    createDataset(RUN_META_FILESET, FileSet.class, FileSetProperties.builder()
-//      .setEnableExploreOnCreate(false)
-//      .setDescription("Fileset for storing ")
-//      .build());
     createDataset(REPORT_FILESET, FileSet.class, FileSetProperties.builder()
       .setEnableExploreOnCreate(false)
       .setDescription("fileSet")
