@@ -16,35 +16,35 @@
 package co.cask.cdap.report
 
 import co.cask.cdap.report.proto.ReportGenerationRequest
-import co.cask.cdap.report.util.ReportField
+import co.cask.cdap.report.util.Constants
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 
-class ReportGen(private val spark: SparkSession) {
+class ReportGenerationHelper(private val spark: SparkSession) {
 
   def this(sc: SparkContext) {
     this(new SQLContext(sc).sparkSession)
   }
 
   def generateReport(request: ReportGenerationRequest, inputPaths: java.util.List[String], outputPath: String): Long = {
-    import ReportGen._
+    import ReportGenerationHelper._
     import spark.implicits._
     val df = spark.read.format("com.databricks.spark.avro").load(asScalaBuffer(inputPaths): _*)
     // Group the program run meta records by program run Id's and aggregate grouped records into a column
     // with data type Record. The aggregated DataFrame aggDf will have two columns: "run" and "record"
     val aggCol = new RecordAgg().toColumn.alias(RECORD_COL).as[Record]
     // TODO: configure partitions. The default number of partitions is 200
-    var aggDf = df.groupBy(ReportField.RUN.getFieldName).agg(aggCol)
+    var aggDf = df.groupBy(Constants.RUN).agg(aggCol)
     // Construct a set of fields to be included in the final report with required fields and fields from the request
     val reportFields = collection.mutable.LinkedHashSet(REQUIRED_FIELDS: _*)
     if (Option(request.getFields).isDefined) reportFields ++= request.getFields
     LOG.debug("reportFields={}", reportFields)
     // Construct a set of additional fields to be included as columns in the aggregated DataFrame
     // with fields used for filtering and sorting
-    val additionalFields = collection.mutable.LinkedHashSet(ReportField.START.fieldName, ReportField.END.fieldName)
+    val additionalFields = collection.mutable.LinkedHashSet(Constants.START, Constants.END)
     if (Option(request.getFilters).isDefined) {
       asScalaBuffer(request.getFilters).foreach(f => additionalFields.add(f.getFieldName))
     }
@@ -60,8 +60,8 @@ class ReportGen(private val spark: SparkSession) {
     // Construct the filter column starting with condition:
     // aggDf("start") not null AND aggDf("start") < request.getEnd
     //   AND (aggDf("end") is null OR aggDf("end") > request.getStart)
-    var filterCol = aggDf(ReportField.START.fieldName).isNotNull && aggDf(ReportField.START.fieldName) < request.getEnd
-    && (aggDf(ReportField.END.fieldName).isNull || aggDf(ReportField.END.fieldName) > request.getStart)
+    var filterCol = aggDf(Constants.START).isNotNull && aggDf(Constants.START) < request.getEnd
+    && (aggDf(Constants.END).isNull || aggDf(Constants.END) > request.getStart)
     LOG.info("initial filterCol={}", filterCol)
     // Combine additional filters from the request to the filter column
     if (Option(request.getFilters).isDefined) {
@@ -120,12 +120,12 @@ class ReportGen(private val spark: SparkSession) {
   }
 }
 
-object ReportGen {
+object ReportGenerationHelper {
 
   import com.google.gson._
 
   val GSON = new Gson()
-  val LOG = LoggerFactory.getLogger(ReportGen.getClass)
+  val LOG = LoggerFactory.getLogger(ReportGenerationHelper.getClass)
   val RECORD_COL = "record"
-  val REQUIRED_FIELDS = Seq(ReportField.NAMESPACE.fieldName, ReportField.PROGRAM.fieldName, ReportField.RUN.fieldName)
+  val REQUIRED_FIELDS = Seq(Constants.NAMESPACE, Constants.PROGRAM, Constants.RUN)
 }

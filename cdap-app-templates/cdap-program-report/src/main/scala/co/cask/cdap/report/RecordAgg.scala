@@ -15,26 +15,23 @@
  */
 package co.cask.cdap.report
 
-import java.lang.reflect.Type
-
-import co.cask.cdap.report.util.ReportField
-import com.google.gson._
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.expressions.Aggregator
+import co.cask.cdap.report.util.Constants
 
 class RecordAgg extends org.apache.spark.sql.expressions.Aggregator[org.apache.spark.sql.Row, RecordBuilder, Record] {
 
   def zero: RecordBuilder = RecordBuilder("", "", "", Vector.empty, None)
   def reduce(b: RecordBuilder, a: org.apache.spark.sql.Row): RecordBuilder = {
     val startInfo = if (b.startInfo.isDefined) b.startInfo else {
-      val startInfoRow = Option(a.getAs[org.apache.spark.sql.Row]("startInfo"))
+      val startInfoRow = Option(a.getAs[org.apache.spark.sql.Row](Constants.START_INFO))
       startInfoRow match {
         case None => None
-        case Some(v) => Some(StartInfo(v.getAs("user"), v.getAs("runtimeArguments")))
+        case Some(v) => Some(StartInfo(v.getAs(Constants.USER),
+          v.getAs(Constants.RUNTIME_ARGUMENTS)))
       }
     }
-    RecordBuilder(a.getAs(ReportField.NAMESPACE.fieldName), a.getAs(ReportField.PROGRAM.fieldName),
-      a.getAs(ReportField.RUN.fieldName), b.statuses :+ (a.getAs[String]("status"), a.getAs[Long]("time")), startInfo)
+    RecordBuilder(a.getAs(Constants.NAMESPACE), a.getAs(Constants.PROGRAM),
+      a.getAs(Constants.RUN), b.statuses :+ (a.getAs[String](Constants.STATUS), a.getAs[Long](Constants.TIME)),
+      startInfo)
   }
   def merge(b1: RecordBuilder, b2: RecordBuilder) = {
     b1.merge(b2)

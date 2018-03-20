@@ -42,20 +42,20 @@ public class ProgramRunMetaFileUtil {
 //    Schema.Field.of("artifactName", Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("artifactVersion", Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("artifactScope", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("runtimeArguments", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))
+    Schema.Field.of(Constants.USER, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))
     );
 
   private static final String SCHEMA_STRING = Schema.recordOf(
     "ReportRecord",
-    Schema.Field.of("namespace", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.NAMESPACE, Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("application", Schema.of(Schema.Type.STRING)),
 //    Schema.Field.of("version", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("program", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("run", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("status", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("time", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("startInfo",  Schema.nullableOf(STARTING_INFO))
+    Schema.Field.of(Constants.PROGRAM, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.RUN, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.STATUS, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.TIME, Schema.of(Schema.Type.LONG)),
+    Schema.Field.of(Constants.START_INFO,  Schema.nullableOf(STARTING_INFO))
   ).toString();
 
   public static final String RUN_META_FILE = "/Users/Chengfeng/tmp/run_meta.avro";

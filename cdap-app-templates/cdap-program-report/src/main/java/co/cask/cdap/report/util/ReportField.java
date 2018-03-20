@@ -29,27 +29,27 @@ import static co.cask.cdap.report.util.ReportField.FilterType.VALUE;
  * Represents the types of fields in a report.
  */
 public enum ReportField {
-  NAMESPACE("namespace", String.class, Collections.singletonList(VALUE), false),
-  ARTIFACT_SCOPE("artifact.scope", String.class, Collections.singletonList(VALUE), false),
-  ARTIFACT_NAME("artifact.name", String.class, Collections.singletonList(VALUE), false),
-  ARTIFACT_VERSION("artifact.version", String.class, Collections.singletonList(VALUE), false),
-  APPLICATION_NAME("application.name", String.class, Collections.singletonList(VALUE), false),
-  APPLICATION_VERSION("application.version", String.class, Collections.singletonList(VALUE), false),
-  PROGRAM("program", String.class, Collections.singletonList(VALUE), false),
-  RUN("run", String.class, Collections.singletonList(VALUE), false),
-  STATUS("status", String.class, Collections.singletonList(VALUE), false),
-  START("start", Long.class, Collections.singletonList(RANGE), true),
-  RUNNING("running", Long.class, Collections.singletonList(RANGE), true),
-  END("end", Long.class, Collections.singletonList(RANGE), true),
-  DURATION("duration", Long.class, Collections.singletonList(RANGE), true),
-  USER("user", String.class, Collections.singletonList(VALUE), false),
-  START_METHOD("startMethod", String.class, Collections.singletonList(VALUE), false),
-  RUNTIME_ARGUMENTS("runtimeArguments", String.class, Collections.emptyList(), false),
-  NUM_LOG_WARNINGS("numLogWarnings", Integer.class, Collections.singletonList(RANGE), true),
-  NUM_LOG_ERRORS("numLogErrors", Integer.class, Collections.singletonList(RANGE), true),
-  NUM_RECORDS_OUT("numRecordsOut", Integer.class, Collections.singletonList(RANGE), true);
+  NAMESPACE(Constants.NAMESPACE, String.class, Collections.singletonList(VALUE), false),
+  ARTIFACT_SCOPE(Constants.ARTIFACT_SCOPE, String.class, Collections.singletonList(VALUE), false),
+  ARTIFACT_NAME(Constants.ARTIFACT_NAME, String.class, Collections.singletonList(VALUE), false),
+  ARTIFACT_VERSION(Constants.ARTIFACT_VERSION, String.class, Collections.singletonList(VALUE), false),
+  APPLICATION_NAME(Constants.APPLICATION_NAME, String.class, Collections.singletonList(VALUE), false),
+  APPLICATION_VERSION(Constants.ARTIFACT_VERSION, String.class, Collections.singletonList(VALUE), false),
+  PROGRAM(Constants.PROGRAM, String.class, Collections.singletonList(VALUE), false),
+  RUN(Constants.RUN, String.class, Collections.singletonList(VALUE), false),
+  STATUS(Constants.STATUS, String.class, Collections.singletonList(VALUE), false),
+  START(Constants.START, Long.class, Collections.singletonList(RANGE), true),
+  RUNNING(Constants.RUNNING, Long.class, Collections.singletonList(RANGE), true),
+  END(Constants.END, Long.class, Collections.singletonList(RANGE), true),
+  DURATION(Constants.DURATION, Long.class, Collections.singletonList(RANGE), true),
+  USER(Constants.USER, String.class, Collections.singletonList(VALUE), false),
+  START_METHOD(Constants.START_METHOD, String.class, Collections.singletonList(VALUE), false),
+  RUNTIME_ARGUMENTS(Constants.RUNTIME_ARGUMENTS, String.class, Collections.emptyList(), false),
+  NUM_LOG_WARNINGS(Constants.NUM_LOG_WARNINGS, Integer.class, Collections.singletonList(RANGE), true),
+  NUM_LOG_ERRORS(Constants.NUM_LOG_ERRORS, Integer.class, Collections.singletonList(RANGE), true),
+  NUM_RECORDS_OUT(Constants.NUM_RECORDS_OUT, Integer.class, Collections.singletonList(RANGE), true);
 
-  public final String fieldName;
+  private final String fieldName;
   private final Class valueClass;
   private final List<FilterType> applicableFilters;
   private final boolean sortable;

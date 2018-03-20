@@ -104,12 +104,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
     }.getType();
 
-    private ReportGen reportGen;
+    private ReportGenerationHelper reportGenerationHelper;
 
     @Override
     public void initialize(SparkHttpServiceContext context) throws Exception {
       super.initialize(context);
-      reportGen = new ReportGen(getContext().getSparkContext());
+      reportGenerationHelper = new ReportGenerationHelper(getContext().getSparkContext());
       try {
         // TODO: temporarily create the run meta fileset and generate mock program run meta files here.
         // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
@@ -321,7 +321,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
           && Long.parseLong(fileName.substring(0, fileName.indexOf(".avro"))) < reportRequest.getEnd();
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.info("Filtered meta files {}", metaFiles);
-      long total = reportGen.generateReport(reportRequest, metaFiles, reportDir.toURI().toString());
+      long total = reportGenerationHelper.generateReport(reportRequest, metaFiles, reportDir.toURI().toString());
       try (PrintWriter writer = new PrintWriter(reportDir.append(SUCCESS_FILE).getOutputStream())) {
         writer.write(Long.toString(total));
       } catch (IOException e) {

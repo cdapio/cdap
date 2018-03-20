@@ -32,7 +32,7 @@ case class RecordBuilder(namespace: String, program: String, run: String,
   }
 
   def build(): Record = {
-    import ReportGen._
+    import ReportGenerationHelper._
 //    println("this = %s".format(this))
     val statusTimeMap = statuses.groupBy(_._1).map(v => (v._1, v._2.map(_._2).min))
     val start = statusTimeMap.get("STARTING")
