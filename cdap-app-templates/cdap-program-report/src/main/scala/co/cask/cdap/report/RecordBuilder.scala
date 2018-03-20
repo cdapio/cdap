@@ -15,11 +15,8 @@
  */
 package co.cask.cdap.report
 
-case class RecordBuilder(namespace: String, program: String, run: String, statuses: scala.collection.Seq[(String, Long)], startInfo: Option[StartInfo]) {
-
-//  def this() {
-//    this("", "", Vector.empty)
-//  }
+case class RecordBuilder(namespace: String, program: String, run: String,
+                         statuses: scala.collection.Seq[(String, Long)], startInfo: Option[StartInfo]) {
 
   def merge(other: RecordBuilder): RecordBuilder = {
     val namespace = if (this.namespace.isEmpty) other.namespace else this.namespace

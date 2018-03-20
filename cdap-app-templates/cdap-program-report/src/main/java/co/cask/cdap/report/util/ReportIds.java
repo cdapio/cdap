@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *   multiple times at the same millisecond (up to 10000 times).</li>
  * </ul>
  */
+// TODO: Most of this class is copied from {@link co.cask.cdap.common.app.RunIds}. Need to reduce code duplication.
 public final class ReportIds {
   private static final Random RANDOM = new Random();
 

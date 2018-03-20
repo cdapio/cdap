@@ -28,14 +28,13 @@ class RecordAgg extends org.apache.spark.sql.expressions.Aggregator[org.apache.s
   def reduce(b: RecordBuilder, a: org.apache.spark.sql.Row): RecordBuilder = {
     val startInfo = if (b.startInfo.isDefined) b.startInfo else {
       val startInfoRow = Option(a.getAs[org.apache.spark.sql.Row]("startInfo"))
-      //      println("startInfoRow = %s".format(startInfoRow))
       startInfoRow match {
         case None => None
         case Some(v) => Some(StartInfo(v.getAs("user"), v.getAs("runtimeArguments")))
       }
     }
-    //    println("startInfo = %s".format(startInfo))
-    RecordBuilder(a.getAs(ReportField.NAMESPACE.fieldName), a.getAs(ReportField.PROGRAM.fieldName), a.getAs(ReportField.RUN.fieldName), b.statuses :+ (a.getAs[String]("status"), a.getAs[Long]("time")), startInfo)
+    RecordBuilder(a.getAs(ReportField.NAMESPACE.fieldName), a.getAs(ReportField.PROGRAM.fieldName),
+      a.getAs(ReportField.RUN.fieldName), b.statuses :+ (a.getAs[String]("status"), a.getAs[Long]("time")), startInfo)
   }
   def merge(b1: RecordBuilder, b2: RecordBuilder) = {
     b1.merge(b2)
