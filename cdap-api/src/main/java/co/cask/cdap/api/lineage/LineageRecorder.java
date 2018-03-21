@@ -16,16 +16,14 @@
 
 package co.cask.cdap.api.lineage;
 
-import java.util.Collection;
-
 /**
  * Record the lineage.
  */
 public interface LineageRecorder {
   /**
-   * Record the field level operations against the given {@link Destination}.
+   * Record the field level operations as represented by the {@link LineageGraph}.
    *
-   * @param operations The {@link Collection} of operations.
+   * @param graph graph representing lineage
    */
-  void record(Collection<? extends Operation> operations);
+  void record(LineageGraph graph);
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.api.lineage;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -62,6 +63,28 @@ public class Operation {
    */
   public Set<Output> getOutputs() {
     return outputs;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Operation that = (Operation) o;
+
+    return Objects.equals(name, that.name)
+      && Objects.equals(description, that.description)
+      && Objects.equals(inputs, that.inputs)
+      && Objects.equals(outputs, that.outputs);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, description, inputs, outputs);
   }
 
   /**

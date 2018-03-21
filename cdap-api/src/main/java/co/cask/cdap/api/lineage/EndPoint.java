@@ -22,28 +22,35 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents the information about the destination dataset.
+ * Represents the information about the source dataset.
  */
-public class Destination {
+public class EndPoint {
   private final String name;
   private final String namespace;
   private final Map<String, String> properties;
 
-  private Destination(String name, @Nullable String namespace, Map<String, String> properties) {
+  private EndPoint(String name, @Nullable String namespace, Map<String, String> properties) {
     this.name = name;
     this.namespace = namespace;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**
-   * @return the name of the destination
+   * @return the name of the source dataset
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return the namespace name if the destination exist in different namespace,
+   * @return the properties associated with the source for the lineage purpose
+   */
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  /**
+   * @return the namespace name if the source exist in different namespace,
    * otherwise {@code null} is returned
    */
   @Nullable
@@ -52,53 +59,46 @@ public class Destination {
   }
 
   /**
-   * @return the properties associated with the destination for lineage purpose
-   */
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  /**
-   * Return the destination as defined by the provided dataset name.
+   * Return the source as defined by the provided dataset name.
    * @param datasetName the name of the dataset
-   * @return the destination
+   * @return the Source
    */
-  public static Destination ofDataset(String datasetName) {
+  public static EndPoint ofDataset(String datasetName) {
     return ofDataset(datasetName, null, Collections.emptyMap());
   }
 
   /**
-   * Return the destination as defined by the provided dataset name.
+   * Return the source as defined by the provided dataset name.
    * @param datasetName the name of the dataset
    * @param namespace the name of the namespace, when {@code null} is provided
    *                  the namespace in which program runs is considered as the
-   *                  namespace for the Destination
+   *                  namespace for the Source
    * @return the Source
    */
-  public static Destination ofDataset(String datasetName, @Nullable String namespace) {
+  public static EndPoint ofDataset(String datasetName, @Nullable String namespace) {
     return ofDataset(datasetName, namespace, Collections.emptyMap());
   }
 
   /**
-   * Return the destination as defined by the provided dataset.
+   * Return the source as defined by the provided dataset.
    * @param datasetName the name of the dataset
-   * @param properties the properties to be associated with the destination for lineage purpose
+   * @param properties the properties to be associated with the source for lineage purpose
    */
-  public static Destination ofDataset(String datasetName, Map<String, String> properties) {
-    return new Destination(datasetName, null, properties);
+  public static EndPoint ofDataset(String datasetName, Map<String, String> properties) {
+    return ofDataset(datasetName, null, properties);
   }
 
   /**
-   * Return the destination as defined by the provided dataset name.
+   * Return the source as defined by the provided dataset name.
    * @param datasetName the name of the dataset
    * @param namespace the name of the namespace, when {@code null} is provided
    *                  the namespace in which program runs is considered as the
-   *                  namespace for the Destination
-   * @param properties the properties to be associated with the destination for lineage purpose
-   * @return the Destination
+   *                  namespace for the Source
+   * @param properties the properties to be associated with the source for lineage purpose
+   * @return the Source
    */
-  public static Destination ofDataset(String datasetName, @Nullable String namespace, Map<String, String> properties) {
-    return new Destination(datasetName, namespace, properties);
+  public static EndPoint ofDataset(String datasetName, @Nullable String namespace, Map<String, String> properties) {
+    return new EndPoint(datasetName, namespace, properties);
   }
 
   @Override
@@ -110,7 +110,7 @@ public class Destination {
       return false;
     }
 
-    Destination that = (Destination) o;
+    EndPoint that = (EndPoint) o;
 
     return Objects.equals(name, that.name)
       && Objects.equals(namespace, that.namespace)

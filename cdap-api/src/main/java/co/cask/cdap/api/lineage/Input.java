@@ -25,11 +25,11 @@ import javax.annotation.Nullable;
  */
 public class Input {
   private final String name;
-  private final Source source;
+  private final EndPoint endPoint;
 
-  private Input(String name, @Nullable Source source) {
+  private Input(String name, @Nullable EndPoint endPoint) {
     this.name = name;
-    this.source = source;
+    this.endPoint = endPoint;
   }
 
   /**
@@ -42,12 +42,12 @@ public class Input {
   }
 
   /**
-   * Get the Source information if the field is directly read from the dataset, {@code null} otherwise.
-   * @return the source
+   * Get the source information if the field is directly read from the dataset, {@code null} otherwise.
+   * @return the {@link EndPoint} representing source
    */
   @Nullable
-  public Source getSource() {
-    return source;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   /**
@@ -62,12 +62,12 @@ public class Input {
   /**
    * Create an Input from the specified field belonging to the given source.
    * @param field the field representing the input
-   * @param source the {@link Source} is optional. If it is provided,
+   * @param source the {@link EndPoint} is optional. If it is provided,
    *               this Input from the field will be associated with
    *               the provided source in the lineage.
    * @return the Input
    */
-  public static Input ofField(Schema.Field field, @Nullable Source source) {
+  public static Input ofField(Schema.Field field, @Nullable EndPoint source) {
     // ToDo: Currently we use the name of the field. However we want to generate
     // the complete field path from the field once we add capability to refer to the parent.
     return new Input(field.getName(), source);
@@ -85,11 +85,11 @@ public class Input {
   /**
    * Create an Input with specified name and source.
    * @param name the input name
-   * @param source the {@link Source} is optional. If it is provided, this Input will
+   * @param source the {@link EndPoint} is optional. If it is provided, this Input will
    *               be associated with the provided source in the lineage.
    * @return the Input
    */
-  public static Input of(String name, @Nullable Source source) {
+  public static Input of(String name, @Nullable EndPoint source) {
     return new Input(name, source);
   }
 
@@ -104,11 +104,11 @@ public class Input {
 
     Input that = (Input) o;
 
-    return Objects.equals(name, that.name) && Objects.equals(source, that.source);
+    return Objects.equals(name, that.name) && Objects.equals(endPoint, that.endPoint);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, source);
+    return Objects.hash(name, endPoint);
   }
 }

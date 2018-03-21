@@ -25,11 +25,11 @@ import javax.annotation.Nullable;
  */
 public class Output {
   private final String name;
-  private final Destination destination;
+  private final EndPoint target;
 
-  private Output(String name, @Nullable Destination destination) {
+  private Output(String name, @Nullable EndPoint target) {
     this.name = name;
-    this.destination = destination;
+    this.target = target;
   }
 
   /**
@@ -42,12 +42,12 @@ public class Output {
   }
 
   /**
-   * Get the Destination information if the field is directly written to the dataset, {@code null} otherwise.
-   * @return the Destination
+   * Get the target information if the field is directly written to the dataset, {@code null} otherwise.
+   * @return the {@link EndPoint} representing target
    */
   @Nullable
-  public Destination getDestination() {
-    return destination;
+  public EndPoint getEndPoint() {
+    return target;
   }
 
   /**
@@ -61,17 +61,17 @@ public class Output {
   }
 
   /**
-   * Create an Output from the specified field belonging to the given destination.
+   * Create an Output from the specified field belonging to the given target.
    * @param field the field representing the output
-   * @param destination the {@link Destination} is optional. If it is provided,
-   *                    this Output from the field will be associated with
-   *                    the provided destination in the lineage.
+   * @param target the {@link EndPoint} is optional. If it is provided,
+   *               this Output from the field will be associated with
+   *               the provided target in the lineage.
    * @return the Output
    */
-  public static Output ofField(Schema.Field field, @Nullable Destination destination) {
+  public static Output ofField(Schema.Field field, @Nullable EndPoint target) {
     // ToDo: Currently we use the name of the field. However we want to generate
     // the complete field path from the field once we add capability to refer to the parent.
-    return new Output(field.getName(), destination);
+    return new Output(field.getName(), target);
   }
 
   /**
@@ -84,14 +84,14 @@ public class Output {
   }
 
   /**
-   * Create an Output with specified name and destination.
+   * Create an Output with specified name and target.
    * @param name the output name
-   * @param destination the {@link Destination} is optional. If it is provided, this Output will
-   *                    be associated with the provided destination in the lineage.
+   * @param target the {@link EndPoint} is optional. If it is provided, this Output will
+   *               be associated with the provided target in the lineage.
    * @return the Output
    */
-  public static Output of(String name, @Nullable Destination destination) {
-    return new Output(name, destination);
+  public static Output of(String name, @Nullable EndPoint target) {
+    return new Output(name, target);
   }
 
   @Override
@@ -105,11 +105,11 @@ public class Output {
 
     Output that = (Output) o;
 
-    return Objects.equals(name, that.name) && Objects.equals(destination, that.destination);
+    return Objects.equals(name, that.name) && Objects.equals(target, that.target);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, destination);
+    return Objects.hash(name, target);
   }
 }
