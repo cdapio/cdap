@@ -34,18 +34,30 @@ public class ReportContent {
     this.reports = reports;
   }
 
+  /**
+   * @return the offset in the whole report from which the report records are added to this {@link ReportContent}
+   */
   public long getOffset() {
     return offset;
   }
 
+  /**
+   * @return the max limit of number of report records
+   */
   public int getLimit() {
     return limit;
   }
 
+  /**
+   * @return the actual total number of report records contained in this {@link ReportContent}
+   */
   public long getTotal() {
     return total;
   }
 
+  /**
+   * @return the report records
+   */
   public List<String> getReports() {
     return reports;
   }

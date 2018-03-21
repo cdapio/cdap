@@ -30,14 +30,23 @@ public class ReportGenerationInfo {
     this.request = request;
   }
 
+  /**
+   * @return the time when this report is created
+   */
   public long getCreated() {
     return created;
   }
 
+  /**
+   * @return the report generation status
+   */
   public ReportStatus getStatus() {
     return status;
   }
 
+  /**
+   * @return the request for generating this report
+   */
   public String getRequest() {
     return request;
   }

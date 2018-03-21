@@ -19,7 +19,7 @@ package co.cask.cdap.report.proto;
 import java.util.List;
 
 /**
- * Represents a list of reports owned by a user in an HTTP response.
+ * Represents a list of information about the reports owned by a user in an HTTP response.
  */
 public class ReportList {
   private final int offset;
@@ -34,18 +34,31 @@ public class ReportList {
     this.reports = reports;
   }
 
+  /**
+   * @return the offset in the whole list of reports from which the report information
+   *         are added to this {@link ReportList}
+   */
   public int getOffset() {
     return offset;
   }
 
+  /**
+   * @return the max limit of number of report information
+   */
   public int getLimit() {
     return limit;
   }
 
+  /**
+   * @return the actual total number of report information contained in this {@link ReportList}
+   */
   public int getTotal() {
     return total;
   }
 
+  /**
+   * @return the list of report information
+   */
   public List<ReportStatusInfo> getReports() {
     return reports;
   }

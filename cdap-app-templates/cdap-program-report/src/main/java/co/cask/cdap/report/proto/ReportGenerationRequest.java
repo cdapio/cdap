@@ -24,7 +24,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Represents a request to process a program run report in an HTTP request.
+ * Represents a request to generate a program run report in an HTTP request.
  */
 public class ReportGenerationRequest {
   private final Long start;
@@ -45,28 +45,50 @@ public class ReportGenerationRequest {
     this.validate();
   }
 
+  /**
+   * @return the start of the time range within which the report is generated. All program runs in the report must be
+   *         still running at {@code start}, or with end time not earlier than {@code start}.
+   */
   public Long getStart() {
     return start;
   }
 
+  /**
+   * @return the end of the time range within which the report is generated. All program runs in the report must be
+   *         still start before {@code end}.
+   */
   public Long getEnd() {
     return end;
   }
 
+  /**
+   * @return names of the fields to be included in the final report. Must be valid fields from {@link ReportField}.
+   */
   public List<String> getFields() {
     return fields;
   }
 
+  /**
+   * @return the field to sort the report by. Currently only support a single field.
+   */
   @Nullable
   public List<Sort> getSort() {
     return sort;
   }
 
+  /**
+   * @return the filters that must be satisfied for every record in the report.
+   */
   @Nullable
   public List<Filter> getFilters() {
     return filters;
   }
 
+  /**
+   * Validates this {@link ReportGenerationRequest}
+   *
+   * @throws IllegalArgumentException if this request is not valid.
+   */
   public void validate() {
     if (start == null) {
       throw new IllegalArgumentException("'start' must be specified.");
@@ -137,6 +159,9 @@ public class ReportGenerationRequest {
       this.order = order;
     }
 
+    /**
+     * @return the sorting order with this field
+     */
     public Order getOrder() {
       return order;
     }
@@ -187,11 +212,17 @@ public class ReportGenerationRequest {
       this.blacklist = blacklist;
     }
 
+    /**
+     * @return the allowed values of this field, or {@code null} if there's no such limit
+     */
     @Nullable
     public List<T> getWhitelist() {
       return whitelist;
     }
 
+    /**
+     * @return the disallowed values of this field, or {@code null} if there's no such limit
+     */
     @Nullable
     public List<T> getBlacklist() {
       return blacklist;
@@ -226,6 +257,9 @@ public class ReportGenerationRequest {
       this.range = range;
     }
 
+    /**
+     * @return the allowed range of values of this field
+     */
     public Range getRange() {
       return range;
     }
@@ -261,11 +295,17 @@ public class ReportGenerationRequest {
       this.max = max;
     }
 
+    /**
+     * @return the inclusive minimum value of this range
+     */
     @Nullable
     public T getMin() {
       return min;
     }
 
+    /**
+     * @return the exclusive maximum value of this range
+     */
     @Nullable
     public T getMax() {
       return max;

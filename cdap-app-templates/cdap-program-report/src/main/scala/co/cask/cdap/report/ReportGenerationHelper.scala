@@ -114,7 +114,7 @@ object ReportGenerationHelper {
     // aggDf("start") not null AND aggDf("start") < request.getEnd
     //   AND (aggDf("end") is null OR aggDf("end") > request.getStart)
     var filterCol = aggDf(Constants.START).isNotNull && aggDf(Constants.START) < request.getEnd &&
-      (aggDf(Constants.END).isNull || aggDf(Constants.END) > request.getStart)
+      (aggDf(Constants.END).isNull || aggDf(Constants.END) >= request.getStart)
     LOG.debug("Initial filter column: {}", filterCol)
     // Combine additional filters from the request to the filter column
     Option(request.getFilters).getOrElse[java.util.List[Filter[_]]](Collections.emptyList[Filter[_]]()).foreach(f => {

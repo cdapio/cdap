@@ -30,14 +30,23 @@ public class ReportStatusInfo {
     this.status = status;
   }
 
+  /**
+   * @return report ID
+   */
   public String getId() {
     return id;
   }
 
+  /**
+   * @return the time when this report is created
+   */
   public long getCreated() {
     return created;
   }
 
+  /**
+   * @return the report generation status
+   */
   public ReportStatus getStatus() {
     return status;
   }

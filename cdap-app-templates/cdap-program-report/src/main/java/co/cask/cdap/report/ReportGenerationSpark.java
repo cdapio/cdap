@@ -63,6 +63,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -97,7 +98,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
     }.getType();
-    private static final int MAX_RECORDS_LIMIT = 10000;
+    private static final int MAX_LIMIT = 10000;
+    private static final String DEFAULT_LIMIT = "10000";
     private SparkSession sparkSession;
 
     public static final String START_FILE = "_START";
@@ -123,11 +125,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     @GET
     @Path("/reports")
     public void getReports(HttpServiceRequest request, HttpServiceResponder responder,
-                           @QueryParam("offset") String offsetString,
-                           @QueryParam("limit") String limitString)
+                           @QueryParam("offset") @DefaultValue("0") int offset,
+                           @QueryParam("limit")  @DefaultValue(DEFAULT_LIMIT) int limit)
       throws IOException {
-      int offset = (offsetString == null || offsetString.isEmpty()) ? 0 : Integer.parseInt(offsetString);
-      int limit = (limitString == null || limitString.isEmpty()) ? Integer.MAX_VALUE : Integer.parseInt(limitString);
       Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       List<ReportStatusInfo> reportStatuses = new ArrayList<>();
       // The index of the report directory to start reading from, initialized to the given offset
@@ -167,11 +167,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     @Path("reports/{report-id}/runs")
     public void getReportRuns(HttpServiceRequest request, HttpServiceResponder responder,
                               @PathParam("report-id") String reportId,
-                              @QueryParam("offset") String offsetString,
-                              @QueryParam("limit") String limitString,
+                              @QueryParam("offset") @DefaultValue("0") long offset,
+                              @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit,
                               @QueryParam("share-id") String shareId) throws IOException {
-      long offset = (offsetString == null || offsetString.isEmpty()) ? 0 : Long.parseLong(offsetString);
-      int limit = (limitString == null || limitString.isEmpty()) ? MAX_RECORDS_LIMIT : Integer.parseInt(limitString);
       if (offset < 0) {
         responder.sendError(400, "offset cannot be negative");
         return;
@@ -180,8 +178,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         responder.sendError(400, "limit must be a positive integer");
         return;
       }
-      if (limit > MAX_RECORDS_LIMIT) {
-        responder.sendError(400, "limit must cannot be larger than " + MAX_RECORDS_LIMIT);
+      if (limit > MAX_LIMIT) {
+        responder.sendError(400, "limit must cannot be larger than " + MAX_LIMIT);
         return;
       }
       Location reportBaseDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
