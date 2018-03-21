@@ -145,7 +145,7 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
                   {T.translate('commons.nameLabel')}
                 </span>
                 <span className="value-label">
-                  {T.translate('commons.valueLabel')}
+                  {T.translate('commons.keyValPairs.valueLabel')}
                 </span>
               </div>
               <div className="custom-config-values key-value-pair-values">

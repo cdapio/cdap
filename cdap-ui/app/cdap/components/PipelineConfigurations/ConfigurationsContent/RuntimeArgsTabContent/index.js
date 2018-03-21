@@ -113,7 +113,7 @@ export default function RuntimeArgsTabContent({isHistoricalRun}) {
           {T.translate('commons.nameLabel')}
         </span>
         <span className="value-label">
-          {T.translate('commons.valueLabel')}
+          {T.translate('commons.keyValPairs.valueLabel')}
         </span>
         <ProvidedPopover
           toggleAllProvided={toggleAllProvided}
