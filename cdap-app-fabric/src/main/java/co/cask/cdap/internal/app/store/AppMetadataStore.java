@@ -354,8 +354,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                              Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                                              byte[] sourceId) {
     MDSKey.Builder keyBuilder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
-    boolean isValid = validateExistingRecords(getRun(programId, pid), programId, pid, sourceId,
-                                              "start", ProgramRunStatus.STARTING);
+    boolean isValid = validateExistingRecord(getRun(programId, pid), programId, pid, sourceId,
+                                             "start", ProgramRunStatus.STARTING);
     if (!isValid) {
       // Skip recording start if the existing records are not valid
       return null;
@@ -410,8 +410,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   private ProgramRunStatus recordProgramRunning(ProgramId programId, String pid, long runTs, String twillRunId,
                                                 MDSKey.Builder keyBuilder, byte[] sourceId) {
     RunRecordMeta existing = getRun(programId, pid);
-    boolean isValid = validateExistingRecords(existing, programId, pid, sourceId,
-                                              "running", ProgramRunStatus.RUNNING);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             "running", ProgramRunStatus.RUNNING);
     if (!isValid) {
       // Skip recording running if the existing records are not valid
       return null;
@@ -447,8 +447,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   @Nullable
   public ProgramRunStatus recordProgramSuspend(ProgramId programId, String pid, byte[] sourceId) {
     RunRecordMeta existing = getRun(programId, pid);
-    boolean isValid = validateExistingRecords(existing, programId, pid, sourceId,
-                                              "suspend", ProgramRunStatus.SUSPENDED);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             "suspend", ProgramRunStatus.SUSPENDED);
     if (!isValid) {
       // Skip recording suspend if the existing records are not valid
       return null;
@@ -471,8 +471,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     // ProgramRunStatus.RUNNING will actually be persisted but ProgramRunStatus.RESUMING is used here to distinguish
     // recordProgramResumed from recordProgramRunning, since the two methods have different sets of allowed statuses
     // of the existing records
-    boolean isValid = validateExistingRecords(existing, programId, pid, sourceId,
-                                              "resume", ProgramRunStatus.RESUMING);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             "resume", ProgramRunStatus.RESUMING);
     if (!isValid && existing != null) {
       // Skip recording resumed if the existing records are not valid
       return null;
@@ -532,8 +532,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                              @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
                                              byte[] sourceId) {
     RunRecordMeta existing = getRun(programId, pid);
-    boolean isValid = validateExistingRecords(existing, programId, pid, sourceId,
-                                              runStatus.name().toLowerCase(), runStatus);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             runStatus.name().toLowerCase(), runStatus);
     if (!isValid) {
       // Skip recording stop if the existing records are not valid
       return null;
@@ -554,7 +554,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   /**
-   * Checks whether the existing run record metas of a given program run are in a state for
+   * Checks whether the existing run record meta of a given program run are in a state for
    * the program run to transition into the given run status.
    *
    * @param existing the existing run record meta of the given program run
@@ -565,8 +565,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param status the status that the program run is transitioning into
    * @return {@code true} if the program run is allowed to persist the given status, {@code false} otherwise
    */
-  private boolean validateExistingRecords(RunRecordMeta existing, ProgramId programId, String pid,
-                                          byte[] sourceId, String recordType, ProgramRunStatus status) {
+  private boolean validateExistingRecord(@Nullable RunRecordMeta existing, ProgramId programId, String pid,
+                                         byte[] sourceId, String recordType, ProgramRunStatus status) {
     Set<ProgramRunStatus> allowedStatuses = ALLOWED_STATUSES.get(status);
     Set<ProgramRunStatus> allowedWithLogStatuses = ALLOWED_WITH_LOG_STATUSES.get(status);
     if (allowedStatuses == null || allowedWithLogStatuses == null) {
