@@ -70,33 +70,57 @@ public enum ReportField {
     this.sortable = sortable;
   }
 
+  /**
+   * @return the name of this field
+   */
   public String getFieldName() {
     return fieldName;
   }
 
+  /**
+   * @return the class of this field's value
+   */
   public Class getValueClass() {
     return valueClass;
   }
 
+  /**
+   * @return the {@link FilterType}'s that are applicable to this field
+   */
   public List<FilterType> getApplicableFilters() {
     return applicableFilters;
   }
 
+  /**
+   * @return {@code true} if this field can be used to sort the report, {@code false} otherwise.
+   */
   public boolean isSortable() {
     return sortable;
   }
 
+  /**
+   * Returns the corresponding report field given a field's name.
+   *
+   * @param fieldName the name of the field
+   * @return the corresponding report field or {@code null} if no field with the given name exists
+   */
   @Nullable
   public static ReportField valueOfFieldName(String fieldName) {
     return FIELD_NAME_MAP.get(fieldName);
   }
 
+  /**
+   * Returns whether there exists a field with the given name.
+   *
+   * @param fieldName the field name to be checked
+   * @return {@code true} if there exists a field with the given name, {@code false} otherwise.
+   */
   public static boolean isValidField(String fieldName) {
     return FIELD_NAME_MAP.containsKey(fieldName);
   }
 
   /**
-   * Type of the filter.
+   * Represents the type of a filter.
    */
   public enum FilterType {
     VALUE,

@@ -59,7 +59,6 @@ public class ProgramRunMetaFileUtil {
     Schema.Field.of(Constants.START_INFO,  Schema.nullableOf(STARTING_INFO))
   ).toString();
 
-  public static final String RUN_META_FILE = "/Users/Chengfeng/tmp/run_meta.avro";
   public static final org.apache.avro.Schema STARTING_INFO_SCHEMA =
     new org.apache.avro.Schema.Parser().parse(STARTING_INFO.toString());
   public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(SCHEMA_STRING);
@@ -80,6 +79,13 @@ public class ProgramRunMetaFileUtil {
     return new ProgramStartInfo(user);
   }
 
+  /**
+   * Adds mock program run meta files to the given location.
+   * TODO: [CDAP-13216] this method should be marked as @VisibleForTesting. Temporarily calling this method
+   * when initializing report generation Spark program to add mock data
+   *
+   * @param metaBaseLocation the location to add files
+   */
   public static void populateMetaFiles(Location metaBaseLocation) throws Exception {
     DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
@@ -111,21 +117,27 @@ public class ProgramRunMetaFileUtil {
     }
   }
 
+  /**
+   * Creates a mock report record with the given information
+   *
+   * @return a report record containing the given information
+   */
   public static GenericData.Record createRecord(String namespace, String program, String run, String status, long time,
                                                 @Nullable ProgramStartInfo startInfo) {
     GenericData.Record startInfoRecord = null;
     if (startInfo != null) {
       startInfoRecord = new GenericData.Record(STARTING_INFO_SCHEMA);
-      startInfoRecord.put("user", startInfo.getUser());
-      startInfoRecord.put("runtimeArguments", ImmutableMap.of("k1", "v1", "k2", "v2"));
+      startInfoRecord.put(Constants.USER, startInfo.getUser());
+      startInfoRecord.put(Constants.RUNTIME_ARGUMENTS, ImmutableMap.of("k1", "v1", "k2", "v2"));
     }
     GenericData.Record record = new GenericData.Record(SCHEMA);
-    record.put("namespace", namespace);
-    record.put("program", program);
-    record.put("run", run);
-    record.put("status", status);
-    record.put("time", time);
-    record.put("startInfo", startInfoRecord);
+
+    record.put(Constants.NAMESPACE, namespace);
+    record.put(Constants.PROGRAM, program);
+    record.put(Constants.RUN, run);
+    record.put(Constants.STATUS, status);
+    record.put(Constants.TIME, time);
+    record.put(Constants.START_INFO, startInfoRecord);
     return record;
   }
 }

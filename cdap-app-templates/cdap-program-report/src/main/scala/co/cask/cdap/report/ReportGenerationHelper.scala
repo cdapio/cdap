@@ -15,41 +15,80 @@
  */
 package co.cask.cdap.report
 
+import java.io.{IOException, PrintWriter}
+
+import co.cask.cdap.report.ReportGenerationSpark.ReportSparkHandler
 import co.cask.cdap.report.proto.ReportGenerationRequest
+import co.cask.cdap.report.proto.ReportGenerationRequest.Filter
 import co.cask.cdap.report.util.Constants
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.{SQLContext, SparkSession}
+import com.google.gson._
+import org.apache.spark.sql.SparkSession
+import org.apache.twill.filesystem.Location
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 
-class ReportGenerationHelper(private val spark: SparkSession) {
+/**
+  * A helper class for report generation.
+  */
+object ReportGenerationHelper {
 
-  def this(sc: SparkContext) {
-    this(new SQLContext(sc).sparkSession)
-  }
+  val GSON = new Gson()
+  val LOG = LoggerFactory.getLogger(ReportGenerationHelper.getClass)
+  val RECORD_COL = "record"
+  val REQUIRED_FIELDS = Seq(Constants.NAMESPACE, Constants.PROGRAM, Constants.RUN)
 
-  def generateReport(request: ReportGenerationRequest, inputPaths: java.util.List[String], outputPath: String): Long = {
+  /**
+    * Generates a report file according to the given request from the given program run meta files.
+    * The given program run meta files are first read into a single [[org.apache.spark.sql.DataFrame]].
+    * The [[org.apache.spark.sql.DataFrame]] is then grouped by program run ID and aggregated to form
+    * a new aggregated [[org.apache.spark.sql.DataFrame]] with a column "run" containing program run ID and a column
+    * "record" containing [[Record]] objects as shown below:
+    * +---------+----------+
+    * |   run   |  record  |
+    * +---------+----------+
+    * The request is then used to obtain names of the fields in [[Record]] to be included
+    * in the final report and the fields that are used for filtering or sorting. New columns containing
+    * those fields will be added to the aggregated [[org.apache.spark.sql.DataFrame]] as shown below:
+    * +---------+----------+---------------+-----------+-----------------------------------------------------
+    * |   run   |  record  |   namespace   |  program  |  [required columns, filter columns, sort columns] ...
+    * +---------+----------+---------------+-----------+-----------------------------------------------------
+    * After filtering and sorting are done on the [[org.apache.spark.sql.DataFrame]],
+    * only the columns required in the report will be kept and the [[org.apache.spark.sql.DataFrame]] as shown below:
+    * +---------+---------------+-----------+------------------------
+    * |   run   |   namespace   |  program  |  [required columns] ...
+    * +---------+---------------+-----------+------------------------
+    * will be written to a JSON file at the given output location, with an empty _SUCCESS file indicating success.
+    *
+    * @param spark the spark session to run report generation with
+    * @param request the request containing the requirement for the report
+    * @param inputURIs URIs of the avro files containing program run meta records
+    * @param outputLocation location of the output directory where the report file and _SUCCESS file will be written
+    * @throws java.io.IOException when fails to write to the _SUCCESS file
+    */
+  @throws(classOf[IOException])
+  def generateReport(spark: SparkSession, request: ReportGenerationRequest, inputURIs: java.util.List[String],
+                     outputLocation: Location): Unit = {
     import ReportGenerationHelper._
     import spark.implicits._
-    val df = spark.read.format("com.databricks.spark.avro").load(asScalaBuffer(inputPaths): _*)
+    val df = spark.read.format("com.databricks.spark.avro").load(inputURIs: _*)
     // Group the program run meta records by program run Id's and aggregate grouped records into a column
     // with data type Record. The aggregated DataFrame aggDf will have two columns: "run" and "record"
     val aggCol = new RecordAgg().toColumn.alias(RECORD_COL).as[Record]
     // TODO: configure partitions. The default number of partitions is 200
     var aggDf = df.groupBy(Constants.RUN).agg(aggCol)
     // Construct a set of fields to be included in the final report with required fields and fields from the request
-    val reportFields = collection.mutable.LinkedHashSet(REQUIRED_FIELDS: _*)
-    if (Option(request.getFields).isDefined) reportFields ++= request.getFields
+    val reportFields = collection.mutable.LinkedHashSet(REQUIRED_FIELDS: _*) ++ Option(request.getFields).getOrElse(Nil)
     LOG.debug("reportFields={}", reportFields)
     // Construct a set of additional fields to be included as columns in the aggregated DataFrame
     // with fields used for filtering and sorting
     val additionalFields = collection.mutable.LinkedHashSet(Constants.START, Constants.END)
+    val filters = Option(request.getFilters).getOrElse(Nil[Filter[_]])
     if (Option(request.getFilters).isDefined) {
       asScalaBuffer(request.getFilters).foreach(f => additionalFields.add(f.getFieldName))
     }
     if (Option(request.getSort).isDefined) {
-      asScalaBuffer(request.getSort).foreach(s => additionalFields.add(s.getFieldName))
+      request.getSort.foreach(s => additionalFields.add(s.getFieldName))
     }
     LOG.debug("additionalFields={}", additionalFields)
     // With every unique field in reportFields and additionalFields, construct and add new columns from record column
@@ -65,7 +104,7 @@ class ReportGenerationHelper(private val spark: SparkSession) {
     LOG.info("initial filterCol={}", filterCol)
     // Combine additional filters from the request to the filter column
     if (Option(request.getFilters).isDefined) {
-      asScalaBuffer(request.getFilters).foreach(f => {
+      request.getFilters.foreach(f => {
         val fieldCol = aggDf(f.getFieldName)
         // the filed to be filtered must contain non-null value
         filterCol &&= fieldCol.isNotNull
@@ -86,11 +125,11 @@ class ReportGenerationHelper(private val spark: SparkSession) {
             LOG.debug("valueFilter for field {}", f.getFieldName)
             val whitelist = valueFilter.getWhitelist
             if (Option(whitelist).isDefined) {
-              filterCol &&= fieldCol.isin(asScalaBuffer(whitelist): _*)
+              filterCol &&= fieldCol.isin(whitelist: _*)
             }
             val blacklist = valueFilter.getBlacklist
             if (Option(blacklist).isDefined) {
-              filterCol &&= !fieldCol.isin(asScalaBuffer(blacklist): _*)
+              filterCol &&= !fieldCol.isin(blacklist: _*)
             }
           }
         }
@@ -100,7 +139,7 @@ class ReportGenerationHelper(private val spark: SparkSession) {
     var resultDf = aggDf.filter(filterCol)
     // If sort is specified in the request, apply sorting to the result DataFrame
     if (Option(request.getSort).isDefined) {
-      asScalaBuffer(request.getSort).foreach(sort => {
+      request.getSort.foreach(sort => {
         val sortField = aggDf(sort.getFieldName)
         sort.getOrder match {
           case ReportGenerationRequest.Order.ASCENDING => {
@@ -115,17 +154,17 @@ class ReportGenerationHelper(private val spark: SparkSession) {
     // drop the columns which should not be included in the report
     resultDf.columns.foreach(col => if (!reportFields.contains(col)) resultDf = resultDf.drop(col))
     resultDf.persist()
-    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputPath)
-    resultDf.count
+    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputLocation.toURI.toString)
+    val count = resultDf.count
+    // Write the total number of records in _SUCCESS file generated after successful report generation
+    try {
+      val writer = new PrintWriter(outputLocation.append(ReportSparkHandler.SUCCESS_FILE).getOutputStream)
+      writer.write(Long.toString(count))
+    } catch {
+      case e: IOException => {
+        LOG.error("Failed to write to {} in {}", ReportSparkHandler.SUCCESS_FILE, reportDir.toURI.toString, e)
+        throw e
+      }
+    } finally if (writer != null) writer.close()
   }
-}
-
-object ReportGenerationHelper {
-
-  import com.google.gson._
-
-  val GSON = new Gson()
-  val LOG = LoggerFactory.getLogger(ReportGenerationHelper.getClass)
-  val RECORD_COL = "record"
-  val REQUIRED_FIELDS = Seq(Constants.NAMESPACE, Constants.PROGRAM, Constants.RUN)
 }

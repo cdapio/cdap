@@ -35,7 +35,8 @@ public class ReportGenerationRequest {
   @Nullable
   private final List<Filter> filters;
 
-  public ReportGenerationRequest(Long start, Long end, List<String> fields, List<Sort> sort, List<Filter> filters) {
+  public ReportGenerationRequest(Long start, Long end, List<String> fields, @Nullable List<Sort> sort,
+                                 @Nullable List<Filter> filters) {
     this.start = start;
     this.end = end;
     this.fields = fields;
@@ -139,6 +140,14 @@ public class ReportGenerationRequest {
     public Order getOrder() {
       return order;
     }
+
+    @Override
+    public String toString() {
+      return "Sort{" +
+        "fieldName=" + getFieldName() +
+        ", order=" + order +
+        '}';
+    }
   }
 
   /**
@@ -193,6 +202,15 @@ public class ReportGenerationRequest {
       return (whitelist == null || whitelist.isEmpty() || whitelist.contains(value))
         && (blacklist == null || blacklist.isEmpty() || !blacklist.contains(value));
     }
+
+    @Override
+    public String toString() {
+      return "ValueFilter{" +
+        "fieldName=" + getFieldName() +
+        ", whitelist=" + whitelist +
+        ", blacklist=" + blacklist +
+        '}';
+    }
   }
 
   /**
@@ -216,6 +234,13 @@ public class ReportGenerationRequest {
     public boolean apply(T value) {
       return (range.getMin() == null || range.getMin().compareTo(value) <= 0)
         && (range.getMax() == null || range.getMax().compareTo(value) > 0);
+    }
+    @Override
+    public String toString() {
+      return "RangeFilter{" +
+        "fieldName=" + getFieldName() +
+        ", range=" + range +
+        '}';
     }
   }
 
@@ -244,6 +269,14 @@ public class ReportGenerationRequest {
     @Nullable
     public T getMax() {
       return max;
+    }
+
+    @Override
+    public String toString() {
+      return "Range{" +
+        "min=" + min +
+        ", max=" + max +
+        '}';
     }
   }
 
