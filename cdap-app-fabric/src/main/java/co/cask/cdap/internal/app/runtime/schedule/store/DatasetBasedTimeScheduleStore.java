@@ -56,6 +56,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -226,7 +227,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         .execute(new TransactionExecutor.Subroutine() {
           @Override
           public void apply() throws Exception {
-            TriggerStatusV2 storedTriggerStatus = readTrigger(triggerKey);
+            TriggerStatusV2 storedTriggerStatus = readTrigger(table, triggerKey);
             if (storedTriggerStatus != null) {
               // its okay to persist the same trigger back again since during pause/resume
               // operation the trigger does not change. We persist it here with just the new trigger state
@@ -278,7 +279,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     table.put(JOB_KEY, cols, values);
   }
 
-  private void removeJob(Table table, JobKey key) {
+  @VisibleForTesting
+  void removeJob(Table table, JobKey key) {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.toString());
     table.delete(JOB_KEY, col);
@@ -305,7 +307,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     table.delete(TRIGGER_KEY, col);
   }
 
-  private TriggerStatusV2 readTrigger(TriggerKey key) {
+  @VisibleForTesting
+  TriggerStatusV2 readTrigger(Table table, TriggerKey key) {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     Row result = table.get(TRIGGER_KEY, col);
@@ -374,11 +377,18 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         }
       });
 
+    Set<JobKey> jobKeys = new HashSet<>();
     for (JobDetail job : jobs) {
       super.storeJob(job, true);
+      jobKeys.add(job.getKey());
     }
 
+    Set<TriggerKey> triggersWithNoJob = new HashSet<>();
     for (TriggerStatusV2 trigger : triggers) {
+      if (!jobKeys.contains(trigger.trigger.getJobKey())) {
+        triggersWithNoJob.add(trigger.trigger.getKey());
+        continue;
+      }
       super.storeTrigger(trigger.trigger, true);
       // if the trigger was paused then pause it back. This is needed because the state of the trigger is not a
       // property associated with the trigger.
@@ -387,6 +397,12 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       if (trigger.state == Trigger.TriggerState.PAUSED) {
         super.pauseTrigger(trigger.trigger.getKey());
       }
+    }
+
+    for (TriggerKey key : triggersWithNoJob) {
+      LOG.error(String.format("No Job was found for the Trigger key '%s'." +
+                                " Deleting the trigger entry from the store.", key));
+      executeDelete(key);
     }
   }
 
@@ -559,7 +575,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
       if (modified) {
         // Write the new triggerStatus only if the upgraded key doesn't exist already
-        if (readTrigger(triggerStatus.trigger.getKey()) == null) {
+        if (readTrigger(table, triggerStatus.trigger.getKey()) == null) {
           persistTrigger(table, triggerStatus.trigger, triggerStatus.state);
         }
         removeTrigger(table, oldTriggerKey);
