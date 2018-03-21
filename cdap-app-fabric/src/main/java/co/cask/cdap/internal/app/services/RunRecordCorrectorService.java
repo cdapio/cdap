@@ -139,9 +139,9 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     }
 
     if (fixedPrograms.isEmpty()) {
-      LOG.trace("No RunRecord found with status in {} and the program not actually running", NOT_STOPPED_STATUSES);
+      LOG.trace("No RunRecord found with status in {}, but the program are not actually running", NOT_STOPPED_STATUSES);
     } else {
-      LOG.warn("Fixed {} RunRecords with status in {} and the program not actually running",
+      LOG.warn("Fixed {} RunRecords with status in {}, but the programs are not actually running",
                fixedPrograms.size(), NOT_STOPPED_STATUSES);
     }
     return fixedPrograms;
