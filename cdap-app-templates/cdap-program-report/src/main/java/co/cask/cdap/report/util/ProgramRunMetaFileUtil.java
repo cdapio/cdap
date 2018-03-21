@@ -17,6 +17,7 @@
 package co.cask.cdap.report.util;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.report.StartInfo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.avro.file.DataFileWriter;
@@ -37,21 +38,18 @@ import javax.annotation.Nullable;
 public class ProgramRunMetaFileUtil {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramRunMetaFileUtil.class);
 
+  // TODO: [CDAP-13215] add omitted fields when the actual program meta files are generated
   private static final Schema STARTING_INFO = Schema.recordOf(
     "ProgramStartingInfo",
-//    Schema.Field.of("artifactName", Schema.of(Schema.Type.STRING)),
-//    Schema.Field.of("artifactVersion", Schema.of(Schema.Type.STRING)),
-//    Schema.Field.of("artifactScope", Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.USER, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                               Schema.of(Schema.Type.STRING)))
     );
 
+  // TODO: [CDAP-13215] add omitted fields when the actual program meta files are generated
   private static final String SCHEMA_STRING = Schema.recordOf(
     "ReportRecord",
     Schema.Field.of(Constants.NAMESPACE, Schema.of(Schema.Type.STRING)),
-//    Schema.Field.of("application", Schema.of(Schema.Type.STRING)),
-//    Schema.Field.of("version", Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.PROGRAM, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.RUN, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.STATUS, Schema.of(Schema.Type.STRING)),
@@ -62,22 +60,6 @@ public class ProgramRunMetaFileUtil {
   public static final org.apache.avro.Schema STARTING_INFO_SCHEMA =
     new org.apache.avro.Schema.Parser().parse(STARTING_INFO.toString());
   public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(SCHEMA_STRING);
-
-  private static final class ProgramStartInfo {
-    private final String user;
-
-    ProgramStartInfo(String user) {
-      this.user = user;
-    }
-
-    public String getUser() {
-      return user;
-    }
-  }
-
-  public static ProgramStartInfo startingInfo(String user) {
-    return new ProgramStartInfo(user);
-  }
 
   /**
    * Adds mock program run meta files to the given location.
@@ -102,7 +84,9 @@ public class ProgramRunMetaFileUtil {
         String run2 = ReportIds.generate().toString();
         long delay = TimeUnit.MINUTES.toSeconds(5);
         dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
-                                                                  time, ProgramRunMetaFileUtil.startingInfo("user")));
+                                                                  time, new StartInfo("user",
+                                                                                      ImmutableMap.of("k1", "v1",
+                                                                                                      "k2", "v2"))));
         dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
                                                                   "FAILED", time + delay, null));
         dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
@@ -123,15 +107,14 @@ public class ProgramRunMetaFileUtil {
    * @return a report record containing the given information
    */
   public static GenericData.Record createRecord(String namespace, String program, String run, String status, long time,
-                                                @Nullable ProgramStartInfo startInfo) {
+                                                @Nullable StartInfo startInfo) {
     GenericData.Record startInfoRecord = null;
     if (startInfo != null) {
       startInfoRecord = new GenericData.Record(STARTING_INFO_SCHEMA);
-      startInfoRecord.put(Constants.USER, startInfo.getUser());
-      startInfoRecord.put(Constants.RUNTIME_ARGUMENTS, ImmutableMap.of("k1", "v1", "k2", "v2"));
+      startInfoRecord.put(Constants.USER, startInfo.user());
+      startInfoRecord.put(Constants.RUNTIME_ARGUMENTS, startInfo.runtimeArgs());
     }
     GenericData.Record record = new GenericData.Record(SCHEMA);
-
     record.put(Constants.NAMESPACE, namespace);
     record.put(Constants.PROGRAM, program);
     record.put(Constants.RUN, run);

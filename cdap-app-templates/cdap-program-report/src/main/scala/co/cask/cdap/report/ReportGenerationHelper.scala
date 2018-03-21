@@ -19,7 +19,7 @@ import java.io.{IOException, PrintWriter}
 
 import co.cask.cdap.report.ReportGenerationSpark.ReportSparkHandler
 import co.cask.cdap.report.proto.ReportGenerationRequest
-import co.cask.cdap.report.proto.ReportGenerationRequest.Filter
+import co.cask.cdap.report.proto.ReportGenerationRequest.{Filter, Sort}
 import co.cask.cdap.report.util.Constants
 import com.google.gson._
 import org.apache.spark.sql.SparkSession
@@ -60,37 +60,36 @@ object ReportGenerationHelper {
     * +---------+---------------+-----------+------------------------
     * will be written to a JSON file at the given output location, with an empty _SUCCESS file indicating success.
     *
-    * @param spark the spark session to run report generation with
-    * @param request the request containing the requirement for the report
-    * @param inputURIs URIs of the avro files containing program run meta records
+    * @param spark          the spark session to run report generation with
+    * @param request        the request containing the requirement for the report
+    * @param inputURIs      URIs of the avro files containing program run meta records
     * @param outputLocation location of the output directory where the report file and _SUCCESS file will be written
     * @throws java.io.IOException when fails to write to the _SUCCESS file
     */
   @throws(classOf[IOException])
   def generateReport(spark: SparkSession, request: ReportGenerationRequest, inputURIs: java.util.List[String],
                      outputLocation: Location): Unit = {
-    import ReportGenerationHelper._
     import spark.implicits._
     val df = spark.read.format("com.databricks.spark.avro").load(inputURIs: _*)
     // Group the program run meta records by program run Id's and aggregate grouped records into a column
     // with data type Record. The aggregated DataFrame aggDf will have two columns: "run" and "record"
-    val aggCol = new RecordAgg().toColumn.alias(RECORD_COL).as[Record]
+    val aggCol = new RecordAggregator().toColumn.alias(RECORD_COL).as[Record]
     // TODO: configure partitions. The default number of partitions is 200
     var aggDf = df.groupBy(Constants.RUN).agg(aggCol)
     // Construct a set of fields to be included in the final report with required fields and fields from the request
-    val reportFields = collection.mutable.LinkedHashSet(REQUIRED_FIELDS: _*) ++ Option(request.getFields).getOrElse(Nil)
-    LOG.debug("reportFields={}", reportFields)
+    val reportFields: collection.mutable.LinkedHashSet[String] =
+    collection.mutable.LinkedHashSet(REQUIRED_FIELDS: _*) ++ Option (request.getFields).getOrElse[java.util.List[String]](java.util.Collections.emptyList[String]())
+    LOG.debug("Fields to be included in the report: {}", reportFields)
     // Construct a set of additional fields to be included as columns in the aggregated DataFrame
     // with fields used for filtering and sorting
     val additionalFields = collection.mutable.LinkedHashSet(Constants.START, Constants.END)
-    val filters = Option(request.getFilters).getOrElse(Nil[Filter[_]])
     if (Option(request.getFilters).isDefined) {
-      asScalaBuffer(request.getFilters).foreach(f => additionalFields.add(f.getFieldName))
+      request.getFilters.foreach(f => additionalFields.add(f.getFieldName))
     }
     if (Option(request.getSort).isDefined) {
       request.getSort.foreach(s => additionalFields.add(s.getFieldName))
     }
-    LOG.debug("additionalFields={}", additionalFields)
+    LOG.debug("Additional fields for filtering and sorting: {}", additionalFields)
     // With every unique field in reportFields and additionalFields, construct and add new columns from record column
     // in aggregated DataFrame
     (reportFields ++ additionalFields).foreach(fieldName => {
@@ -101,17 +100,16 @@ object ReportGenerationHelper {
     //   AND (aggDf("end") is null OR aggDf("end") > request.getStart)
     var filterCol = aggDf(Constants.START).isNotNull && aggDf(Constants.START) < request.getEnd &&
       (aggDf(Constants.END).isNull || aggDf(Constants.END) > request.getStart)
-    LOG.info("initial filterCol={}", filterCol)
+    LOG.debug("Initial filter column: {}", filterCol)
     // Combine additional filters from the request to the filter column
-    if (Option(request.getFilters).isDefined) {
-      request.getFilters.foreach(f => {
+    Option(request.getFilters).getOrElse[java.util.List[Filter[_]]](java.util.Collections.emptyList[Filter[_]]())
+      .foreach(f => {
         val fieldCol = aggDf(f.getFieldName)
         // the filed to be filtered must contain non-null value
         filterCol &&= fieldCol.isNotNull
         // the filter is either a RangeFilter or ValueFilter. Construct the filter according to the filter type
         f match {
           case rangeFilter: ReportGenerationRequest.RangeFilter[_] => {
-            LOG.debug("rangeFilter for field {}", f.getFieldName)
             val min = rangeFilter.getRange.getMin
             if (Option(min).isDefined) {
               filterCol &&= fieldCol >= min
@@ -120,9 +118,10 @@ object ReportGenerationHelper {
             if (Option(max).isDefined) {
               filterCol &&= fieldCol < max
             }
+            // cast f.getFieldName to Any to avoid ambiguous method reference error
+            LOG.debug("Added RangeFilter {} for field {}", rangeFilter, f.getFieldName: Any)
           }
           case valueFilter: ReportGenerationRequest.ValueFilter[_] => {
-            LOG.debug("valueFilter for field {}", f.getFieldName)
             val whitelist = valueFilter.getWhitelist
             if (Option(whitelist).isDefined) {
               filterCol &&= fieldCol.isin(whitelist: _*)
@@ -131,40 +130,42 @@ object ReportGenerationHelper {
             if (Option(blacklist).isDefined) {
               filterCol &&= !fieldCol.isin(blacklist: _*)
             }
+            // cast f.getFieldName to Any to avoid ambiguous method reference error
+            LOG.debug("Added ValueFilter {} for field {}", valueFilter, f.getFieldName: Any)
           }
         }
       })
-    }
-    LOG.info("final filterCol={}", filterCol)
+    LOG.info("Final filter column: {}", filterCol)
     var resultDf = aggDf.filter(filterCol)
     // If sort is specified in the request, apply sorting to the result DataFrame
-    if (Option(request.getSort).isDefined) {
-      request.getSort.foreach(sort => {
-        val sortField = aggDf(sort.getFieldName)
-        sort.getOrder match {
-          case ReportGenerationRequest.Order.ASCENDING => {
-            resultDf = resultDf.sort(sortField.asc)
-          }
-          case ReportGenerationRequest.Order.DESCENDING => {
-            resultDf = resultDf.sort(sortField.desc)
-          }
+    Option(request.getSort).getOrElse[java.util.List[Sort]](java.util.Collections.emptyList[Sort]()).foreach(sort => {
+      val sortField = aggDf(sort.getFieldName)
+      sort.getOrder match {
+        case ReportGenerationRequest.Order.ASCENDING => {
+          resultDf = resultDf.sort(sortField.asc)
+          LOG.debug("Sort by {} in ascending order", sortField)
         }
-      })
-    }
+        case ReportGenerationRequest.Order.DESCENDING => {
+          resultDf = resultDf.sort(sortField.desc)
+          LOG.debug("Sort by {} in descending order", sortField)
+        }
+      }
+    })
     // drop the columns which should not be included in the report
     resultDf.columns.foreach(col => if (!reportFields.contains(col)) resultDf = resultDf.drop(col))
     resultDf.persist()
     resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(outputLocation.toURI.toString)
     val count = resultDf.count
     // Write the total number of records in _SUCCESS file generated after successful report generation
+    var writer: Option[PrintWriter] = None
     try {
-      val writer = new PrintWriter(outputLocation.append(ReportSparkHandler.SUCCESS_FILE).getOutputStream)
-      writer.write(Long.toString(count))
+      writer = Some(new PrintWriter(outputLocation.append(ReportSparkHandler.SUCCESS_FILE).getOutputStream))
+      writer.get.write(count.toString)
     } catch {
       case e: IOException => {
-        LOG.error("Failed to write to {} in {}", ReportSparkHandler.SUCCESS_FILE, reportDir.toURI.toString, e)
+        LOG.error("Failed to write to {} in {}", ReportSparkHandler.SUCCESS_FILE, outputLocation.toURI.toString, e)
         throw e
       }
-    } finally if (writer != null) writer.close()
+    } finally if (writer.isDefined) writer.get.close()
   }
 }

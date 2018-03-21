@@ -15,6 +15,9 @@
  */
 package co.cask.cdap.report
 
+/**
+  * Represents the full content of a report record.
+  */
 case class Record(namespace: String, program: String, run: String, start: Option[Long], running: Option[Long],
                   end: Option[Long], duration: Option[Long], user: Option[String],
                   runtimeArgs: Option[scala.collection.Map[String, String]])
