@@ -813,21 +813,24 @@ public class DefaultStoreTest {
 
     long now = System.currentTimeMillis();
 
-    setStartAndRunning(flowProgramId1, "flowRun1", now - 1000);
-    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED.getRunStatus(),
+    String runId = RunIds.generate().getId();
+    setStartAndRunning(flowProgramId1, runId, now - 1000);
+    store.setStop(flowProgramId1, runId, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(mapreduceProgramId1, "mrRun1", now - 1000);
-    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus(),
+    runId = RunIds.generate().getId();
+    setStartAndRunning(mapreduceProgramId1, runId, now - 1000);
+    store.setStop(mapreduceProgramId1, runId, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
-    setStartAndRunning(workflowProgramId1, runId.getId(), now - 1000);
-    store.setStop(workflowProgramId1, runId.getId(), now, ProgramController.State.COMPLETED.getRunStatus(),
+    runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000)).getId();
+    setStartAndRunning(workflowProgramId1, runId, now - 1000);
+    store.setStop(workflowProgramId1, runId, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId2, "flowRun2", now - 1000);
-    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus(),
+    runId = RunIds.generate().getId();
+    setStartAndRunning(flowProgramId2, runId, now - 1000);
+    store.setStop(flowProgramId2, runId, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     verifyRunHistory(flowProgramId1, 1);
@@ -872,11 +875,13 @@ public class DefaultStoreTest {
     Assert.assertNotNull(store.getApplication(appId));
 
     long now = System.currentTimeMillis();
-    setStartAndRunning(flowProgramId, "flowRun1", now - 3000);
-    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus(),
+    String runId = RunIds.generate().getId();
+    setStartAndRunning(flowProgramId, runId, now - 3000);
+    store.setStop(flowProgramId, runId, now - 100, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId, "flowRun2", now - 2000);
+    runId = RunIds.generate().getId();
+    setStartAndRunning(flowProgramId, runId, now - 2000);
 
     // even though there's two separate run records (one that's complete and one that's active), only one should be
     // returned by the query, because the limit parameter of 1 is being passed in.

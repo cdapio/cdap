@@ -354,8 +354,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                              Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                                              byte[] sourceId) {
     MDSKey.Builder keyBuilder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
-    boolean isValid = validateExistingRecords(getRuns(programId, pid), programId, pid, sourceId,
-                                              "start", ProgramRunStatus.STARTING);
+    boolean isValid = validateExistingRecord(getRun(programId, pid), programId, pid, sourceId,
+                                             "start", ProgramRunStatus.STARTING);
     if (!isValid) {
       // Skip recording start if the existing records are not valid
       return null;
@@ -409,15 +409,13 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
   private ProgramRunStatus recordProgramRunning(ProgramId programId, String pid, long runTs, String twillRunId,
                                                 MDSKey.Builder keyBuilder, byte[] sourceId) {
-    List<RunRecordMeta> existingRecords = getRuns(programId, pid);
-    boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
-                                              "running", ProgramRunStatus.RUNNING);
+    RunRecordMeta existing = getRun(programId, pid);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             "running", ProgramRunStatus.RUNNING);
     if (!isValid) {
       // Skip recording running if the existing records are not valid
       return null;
     }
-    // Only one record in the valid existing records
-    RunRecordMeta existing = existingRecords.get(0);
     Map<String, String> systemArgs = existing.getSystemArgs();
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program was started by Workflow. Add row corresponding to its node state.
@@ -448,15 +446,13 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   @Nullable
   public ProgramRunStatus recordProgramSuspend(ProgramId programId, String pid, byte[] sourceId) {
-    List<RunRecordMeta> existingRecords = getRuns(programId, pid);
-    boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
-                                              "suspend", ProgramRunStatus.SUSPENDED);
+    RunRecordMeta existing = getRun(programId, pid);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             "suspend", ProgramRunStatus.SUSPENDED);
     if (!isValid) {
       // Skip recording suspend if the existing records are not valid
       return null;
     }
-    // Only one record in the valid existing records
-    RunRecordMeta existing = existingRecords.get(0);
     recordProgramSuspendResume(programId, pid, sourceId, existing, "suspend");
     return ProgramRunStatus.SUSPENDED;
   }
@@ -471,34 +467,20 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   @Nullable
   public ProgramRunStatus recordProgramResumed(ProgramId programId, String pid, byte[] sourceId) {
-    List<RunRecordMeta> existingRecords = getRuns(programId, pid);
+    RunRecordMeta existing = getRun(programId, pid);
     // ProgramRunStatus.RUNNING will actually be persisted but ProgramRunStatus.RESUMING is used here to distinguish
     // recordProgramResumed from recordProgramRunning, since the two methods have different sets of allowed statuses
     // of the existing records
-    boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
-                                              "resume", ProgramRunStatus.RESUMING);
-    if (!isValid && !existingRecords.isEmpty()) {
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             "resume", ProgramRunStatus.RESUMING);
+    if (!isValid && existing != null) {
       // Skip recording resumed if the existing records are not valid
       return null;
     }
-    RunRecordMeta existing = null;
-    // Only if existingRecords is empty & upgrade is not complete & the version is default version,
-    // also try to get the record without the version string
-    if (existingRecords.isEmpty()) {
-      if (!upgradeComplete.get() && programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-        MDSKey key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programId)
-          .add(pid)
-          .build();
-        existing = get(key, RunRecordMeta.class);
-      }
-      if (existing == null) {
-        LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program suspend.",
-                  programId, pid);
-        return null;
-      }
-    } else {
-      // Only one record in the valid existing records
-      existing = existingRecords.get(0);
+    if (existing == null) {
+      LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program suspend.",
+                programId, pid);
+      return null;
     }
     recordProgramSuspendResume(programId, pid, sourceId, existing, "resume");
     return ProgramRunStatus.RUNNING;
@@ -549,15 +531,13 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   private ProgramRunStatus recordProgramStop(ProgramId programId, String pid, long stopTs, ProgramRunStatus runStatus,
                                              @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
                                              byte[] sourceId) {
-    List<RunRecordMeta> existingRecords = getRuns(programId, pid);
-    boolean isValid = validateExistingRecords(existingRecords, programId, pid, sourceId,
-                                              runStatus.name().toLowerCase(), runStatus);
+    RunRecordMeta existing = getRun(programId, pid);
+    boolean isValid = validateExistingRecord(existing, programId, pid, sourceId,
+                                             runStatus.name().toLowerCase(), runStatus);
     if (!isValid) {
       // Skip recording stop if the existing records are not valid
       return null;
     }
-    // Only one record in the valid existing records
-    RunRecordMeta existing = existingRecords.get(0);
     // Delete the old run record
     MDSKey key = getProgramKeyBuilder(STATUS_TYPE_MAP.get(existing.getStatus()), programId).add(pid).build();
     deleteAll(key);
@@ -573,26 +553,11 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     return runStatus;
   }
 
-  private List<RunRecordMeta> getRuns(ProgramId programId, String pid) {
-    ImmutableSet.Builder<MDSKey> keySet = ImmutableSet.<MDSKey>builder().add(
-      getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId).add(pid).build(),
-      getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId).add(pid).build(),
-      getProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programId).add(pid).build(),
-      getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).add(pid).build());
-    // Get version-less record of type TYPE_RUN_RECORD_COMPLETED only if upgrade is not complete and
-    // programId has default version. Because upgrade is only done for record type TYPE_RUN_RECORD_COMPLETED in
-    // one transaction, there won't be duplicated records for the same program run
-    if (!upgradeComplete.get() && ApplicationId.DEFAULT_VERSION.equals(programId.getVersion())) {
-      keySet.add(getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).add(pid).build());
-    }
-    return get(keySet.build(), RunRecordMeta.class);
-  }
-
   /**
-   * Checks whether the existing run record metas of a given program run are in a state for
+   * Checks whether the existing run record meta of a given program run are in a state for
    * the program run to transition into the given run status.
    *
-   * @param existingRecords the existing run record metas of the given program run
+   * @param existing the existing run record meta of the given program run
    * @param programId id of the program
    * @param pid run id
    * @param sourceId the source id of the current program status
@@ -600,14 +565,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param status the status that the program run is transitioning into
    * @return {@code true} if the program run is allowed to persist the given status, {@code false} otherwise
    */
-  private boolean validateExistingRecords(List<RunRecordMeta> existingRecords, ProgramId programId, String pid,
-                                          byte[] sourceId, String recordType, ProgramRunStatus status) {
-    if (existingRecords.size() > 1) {
-      // This should never happen
-      LOG.warn("Found more than 1 existing run record meta '{}' for program '{}' run id '{}'. " +
-                 "Skip recording program {}.", existingRecords, programId, pid, recordType);
-      return false;
-    }
+  private boolean validateExistingRecord(@Nullable RunRecordMeta existing, ProgramId programId, String pid,
+                                         byte[] sourceId, String recordType, ProgramRunStatus status) {
     Set<ProgramRunStatus> allowedStatuses = ALLOWED_STATUSES.get(status);
     Set<ProgramRunStatus> allowedWithLogStatuses = ALLOWED_WITH_LOG_STATUSES.get(status);
     if (allowedStatuses == null || allowedWithLogStatuses == null) {
@@ -617,25 +576,23 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
     // If existing record is not allowed, only empty existing records is valid
     if (allowedStatuses.isEmpty() && allowedWithLogStatuses.isEmpty()) {
-      if (existingRecords.isEmpty()) {
+      if (existing == null) {
         return true;
       }
       LOG.error("No existing run record meta should exist for program '{}' run id '{}' but found '{}'.",
-                programId, pid, existingRecords);
+                programId, pid, existing);
       return false;
     }
-    if (existingRecords.isEmpty()) {
+    if (existing == null) {
       LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program {}.",
                 programId, pid, recordType);
       return false;
     }
-    // There is only one existing record
-    RunRecordMeta existing = existingRecords.get(0);
     byte[] existingSourceId = existing.getSourceId();
     if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) <= 0) {
       LOG.debug("Current source id '{}' is not larger than the existing source id '{}' in the existing " +
                   "run record meta '{}'. Skip recording program {} for program '{}' with run id '{}'.",
-                Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existingRecords.get(0),
+                Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing,
                 recordType, programId, pid);
       return false;
     }
