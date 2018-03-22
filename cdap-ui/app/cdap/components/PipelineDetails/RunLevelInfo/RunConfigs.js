@@ -49,7 +49,7 @@ export default class RunConfigs extends Component {
       let runtimeArgs = objectQuery(this.props.currentRun, 'properties', 'runtimeArgs') || '';
       try {
         runtimeArgs = JSON.parse(runtimeArgs);
-        delete runtimeArgs['logical.start.time'];
+        delete runtimeArgs[''];
       } catch (e) {
         console.log('ERROR: Cannot parse runtime arguments');
         runtimeArgs = {};

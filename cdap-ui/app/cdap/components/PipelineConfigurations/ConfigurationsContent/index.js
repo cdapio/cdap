@@ -23,6 +23,7 @@ import EngineConfigTabContent from 'components/PipelineConfigurations/Configurat
 import ResourcesTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent';
 import AlertsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/AlertsTabContent';
 import ConfigModelessActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons';
+import ComputeTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent';
 import classnames from 'classnames';
 require('./ConfigurationsContent.scss');
 
@@ -43,6 +44,9 @@ export default function ConfigurationsContent({isBatch, activeTab, isDetailView,
       break;
     case TAB_OPTIONS.ALERTS:
       ContentToShow = AlertsTabContent;
+      break;
+    case TAB_OPTIONS.COMPUTECONFIG:
+      ContentToShow = ComputeTabContent;
       break;
   }
   return (

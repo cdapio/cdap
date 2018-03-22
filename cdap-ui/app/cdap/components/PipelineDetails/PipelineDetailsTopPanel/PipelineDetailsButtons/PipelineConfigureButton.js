@@ -19,12 +19,8 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import PipelineConfigurations from 'components/PipelineConfigurations';
-import {MyPreferenceApi} from 'api/preference';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {revertConfigsToSavedValues, getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
-import isEqual from 'lodash/isEqual';
 import T from 'i18n-react';
+import {fetchAndUpdateRuntimeArgs} from 'components/PipelineDetails/store/ActionCreator';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -42,35 +38,7 @@ export default class PipelineConfigureButton extends Component {
 
   getRuntimeArgumentsAndToggleModeless = () => {
     if (!this.state.showModeless) {
-      if (Object.keys(this.props.resolvedMacros).length !== 0) {
-        MyPreferenceApi
-          .getAppPreferencesResolved({
-            namespace: getCurrentNamespace(),
-            appId: this.props.pipelineName
-          })
-          .subscribe(res => {
-            let newResolvedMacros = getMacrosResolvedByPrefs(res, this.props.resolvedMacros);
-
-            // If preferences have changed, then update macro values with new preferences.
-            // Otherwise, keep the values as they are
-            if (!isEqual(newResolvedMacros, this.props.resolvedMacros)) {
-              PipelineConfigurationsStore.dispatch({
-                type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
-                payload: { resolvedMacros: newResolvedMacros }
-              });
-            }
-            revertConfigsToSavedValues();
-            this.toggleModeless();
-          }, (err) => {
-            console.log(err);
-          });
-      } else {
-        revertConfigsToSavedValues();
-        // Have to set timeout here to make sure any other config modeless will be closed
-        // before opening this one
-        setTimeout(() => this.toggleModeless());
-      }
-
+      fetchAndUpdateRuntimeArgs().subscribe(this.toggleModeless);
     } else {
       this.toggleModeless();
     }

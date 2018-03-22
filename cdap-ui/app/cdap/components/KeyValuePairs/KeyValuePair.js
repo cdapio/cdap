@@ -40,6 +40,10 @@ class KeyValuePair extends Component {
     onPaste: PropTypes.func
   };
 
+  static defaultProps = {
+    getResettedKeyValue: () => {}
+  };
+
   handlePaste = (e) => {
     let data = e.clipboardData.getData('text');
     try {
@@ -135,8 +139,9 @@ class KeyValuePair extends Component {
   }
 
   renderProvidedCheckboxAndResetBtn() {
-    if (!this.props.notDeletable) { return null; }
-
+    if (typeof this.props.provided !== 'boolean') {
+      return null;
+    }
     return (
       <span>
         <input

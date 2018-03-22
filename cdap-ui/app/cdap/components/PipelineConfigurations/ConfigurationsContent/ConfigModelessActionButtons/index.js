@@ -16,12 +16,19 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {applyRuntimeArgs, updatePipeline, runPipeline, schedulePipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {
+  applyRuntimeArgs,
+  updatePipeline,
+  runPipeline,
+  schedulePipeline,
+  updatePreferences
+} from 'components/PipelineConfigurations/Store/ActionCreator';
 import ConfigModelessSaveAndRunBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveAndRunBtn';
 import ConfigModelessSaveAndScheduleBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveAndScheduleBtn';
 import ConfigModelessSaveBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveBtn';
 import ConfigModelessRuntimeArgsCount from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessRuntimeArgsCount';
 import ConfigModelessCopyRuntimeArgsBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessCopyRuntimeArgsBtn';
+import {Observable} from 'rxjs/Observable';
 
 require('./ConfigModelessActionButtons.scss');
 
@@ -62,27 +69,30 @@ export default class ConfigModelessActionButtons extends Component {
 
   saveAndRun = (pipelineEdited) => {
     this.saveAndAction(pipelineEdited, 'saveAndRunLoading', this.closeModelessAndRun);
-  }
+  };
 
   saveAndSchedule = (pipelineEdited) => {
     this.saveAndAction(pipelineEdited, 'saveAndScheduleLoading', this.closeModelessAndSchedule);
-  }
+  };
 
   saveConfig = (pipelineEdited) => {
     this.saveAndAction(pipelineEdited, 'saveLoading', this.closeModeless);
   };
 
-  saveAndAction(pipelineEdited, loadingState, actionFn) {
-    applyRuntimeArgs();
+  saveAndAction = (pipelineEdited, loadingState, actionFn) => {
     if (!pipelineEdited) {
       actionFn();
       return;
     }
+    applyRuntimeArgs();
 
     this.setState({
       [loadingState]: true
     });
-    updatePipeline()
+    Observable.forkJoin(
+      updatePipeline(),
+      updatePreferences()
+    )
       .subscribe(() => {
         actionFn();
       }, (err) => {
@@ -92,7 +102,7 @@ export default class ConfigModelessActionButtons extends Component {
           [loadingState]: false
         });
       });
-  }
+  };
 
   setRuntimeArgsCopiedState = () => {
     this.setState({

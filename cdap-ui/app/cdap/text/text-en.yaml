@@ -1404,6 +1404,8 @@ features:
     Alerts:
       contentHeading: Set alerts for your batch pipeline
       title: Alerts
+    ComputeConfig:
+      title: Compute Config
     EngineConfig:
       backpressure: Backpressure
       backpressureTooltip: Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process.

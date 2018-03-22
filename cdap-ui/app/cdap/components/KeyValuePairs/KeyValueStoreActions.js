@@ -15,6 +15,7 @@
 */
 
 import uuid from 'uuid/v4';
+import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
 
 const KeyValueStoreActions = {
   setKey: 'SET-KEY',
@@ -36,11 +37,7 @@ const convertMapToKeyValuePairsObj = (obj) => {
     };
   });
   if (!keyValuePairsObj.pairs.length) {
-    keyValuePairsObj.pairs.push({
-      key: '',
-      value: '',
-      uniqueId: 'id-' + uuid()
-    });
+    keyValuePairsObj.pairs.push(getDefaultKeyValuePair());
   }
   return keyValuePairsObj;
 };

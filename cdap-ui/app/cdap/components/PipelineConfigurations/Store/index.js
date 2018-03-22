@@ -30,6 +30,7 @@ import {createStore} from 'redux';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
 import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
+import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
 import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -67,7 +68,8 @@ const TAB_OPTIONS = {
   PIPELINE_CONFIG: 'pipelineConfig',
   ENGINE_CONFIG: 'engineConfig',
   RESOURCES: 'resources',
-  ALERTS: 'alerts'
+  ALERTS: 'alerts',
+  COMPUTECONFIG: 'computeConfig'
 };
 
 const BATCH_INTERVAL_RANGE = range(1, 61);
@@ -89,11 +91,7 @@ const ENGINE_OPTIONS = {
 };
 
 const DEFAULT_RUNTIME_ARGS = {
-  'pairs': [{
-    key : '',
-    value : '',
-    uniqueId : uuidV4()
-  }]
+  'pairs': [getDefaultKeyValuePair()]
 };
 
 const DEFAULT_CONFIGURE_OPTIONS = {
