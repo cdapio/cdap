@@ -16,9 +16,10 @@
 
 @import "../../styles/variables.scss";
 $namespace-action-bg: #d8d8d8;
-$namespace-dropdown-color: #f3f3f3;
+$namespace-dropdown-color: $grey-08;
 $current-namespace-hover-bg: #262933;
 $namespace-hover-bg: #9b9b9b;
+$current-namespace-metadata-hover-bg: $grey-08;
 $dark-font: #666666;
 $grey-font: #bbbbbb;
 $success-color: #7ed321;
@@ -157,12 +158,22 @@ $star-color: #373a3c;
             color: $star-color;
           }
         }
+
+        &:hover {
+          background-color: $current-namespace-metadata-hover-bg;
+
+          .current-namespace-metrics {
+            table {
+              background-color: $current-namespace-metadata-hover-bg;
+            }
+          }
+        }
       }
 
       .current-namespace-metrics {
         table {
           width: 100%;
-          background-color: #ffffff;
+          background-color: white;
 
           th,
           td {

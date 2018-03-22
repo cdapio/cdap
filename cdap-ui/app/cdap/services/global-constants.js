@@ -30,6 +30,7 @@ const GLOBALS = {
   etlDataStreams: 'cdap-data-streams',
   etlDataPipeline: 'cdap-data-pipeline',
   etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
+  etlPipelineTypes: ['cdap-data-streams', 'cdap-data-pipeline'],
   // Map defines what plugin types to surface for each artifact in UI.
   pluginTypes: {
     'cdap-etl-batch': {

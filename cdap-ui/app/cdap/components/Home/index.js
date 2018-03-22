@@ -59,6 +59,10 @@ const Experiments = Loadable({
   loader: () => import(/* webpackChunkName: "Experiments" */ 'components/Experiments'),
   loading: LoadingSVGCentered
 });
+const NamespaceDetails = Loadable({
+  loader: () => import(/* webpackChunkName: "NamespaceDetails" */ 'components/NamespaceDetails'),
+  loading: LoadingSVGCentered
+});
 
 export default class Home extends Component {
   componentWillMount() {
@@ -97,6 +101,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
+          <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route component={Page404} />
         </Switch>
       </div>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,7 @@ import {Link} from 'react-router-dom';
 import uuidV4 from 'uuid/v4';
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
+import EntityType from 'services/metadata-parser/EntityType';
 require('./NamespaceDropdown.scss');
 
 export default class NamespaceDropdown extends Component {
@@ -151,10 +152,10 @@ export default class NamespaceDropdown extends Component {
         .subscribe(
           (res) => {
             res.results.forEach((entity) => {
-              let entityType = entity.entityId.type;
-              if (entityType === 'application') {
+              let entityType = entity.entityId.entity;
+              if (entityType === EntityType.application) {
                 numApplications += 1;
-              } else if (entityType === 'stream') {
+              } else if (entityType === EntityType.stream) {
                 numStreams += 1;
               } else {
                 numDatasets += 1;
@@ -252,63 +253,69 @@ export default class NamespaceDropdown extends Component {
               isValidNamespace ?
                 (
                   <div className="current-namespace-details">
-                    <div className="current-namespace-metadata">
-                      {
-                        this.state.preferencesSavedMessage === true ?
-                          preferenceSpecificCardHeader
-                        :
-                          currentNamespaceCardHeader
-                      }
+                    <LinkEl
+                      to={`/ns/${currentNamespace}/details`}
+                      href={`/cdap/ns/${currentNamespace}/details`}
+                      onClick={this.toggle}
+                    >
+                      <div className="current-namespace-metadata">
+                        {
+                          this.state.preferencesSavedMessage === true ?
+                            preferenceSpecificCardHeader
+                          :
+                            currentNamespaceCardHeader
+                        }
 
-                      <div className="current-namespace-metrics">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>{T.translate('features.Navbar.NamespaceDropdown.applications')}</th>
-                              <th>{T.translate('features.Navbar.NamespaceDropdown.datasets')}</th>
-                              <th>{T.translate('features.Navbar.NamespaceDropdown.streams')}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td>
-                                {
-                                  this.state.numMetricsLoading ?
-                                    <IconSVG
-                                      name="icon-spinner"
-                                      className="fa-spin"
-                                    />
-                                  :
-                                    this.state.numApplications
-                                }
-                              </td>
-                              <td>
-                                {
-                                  this.state.numMetricsLoading ?
-                                    <IconSVG
-                                      name="icon-spinner"
-                                      className="fa-spin"
-                                    />
-                                  :
-                                    this.state.numDatasets
-                                }
-                              </td>
-                              <td>
-                                {
-                                  this.state.numMetricsLoading ?
-                                    <IconSVG
-                                      name="icon-spinner"
-                                      className="fa-spin"
-                                    />
-                                  :
-                                    this.state.numStreams
-                                }
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                        <div className="current-namespace-metrics">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>{T.translate('features.Navbar.NamespaceDropdown.applications')}</th>
+                                <th>{T.translate('features.Navbar.NamespaceDropdown.datasets')}</th>
+                                <th>{T.translate('features.Navbar.NamespaceDropdown.streams')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>
+                                  {
+                                    this.state.numMetricsLoading ?
+                                      <IconSVG
+                                        name="icon-spinner"
+                                        className="fa-spin"
+                                      />
+                                    :
+                                      this.state.numApplications
+                                  }
+                                </td>
+                                <td>
+                                  {
+                                    this.state.numMetricsLoading ?
+                                      <IconSVG
+                                        name="icon-spinner"
+                                        className="fa-spin"
+                                      />
+                                    :
+                                      this.state.numDatasets
+                                  }
+                                </td>
+                                <td>
+                                  {
+                                    this.state.numMetricsLoading ?
+                                      <IconSVG
+                                        name="icon-spinner"
+                                        className="fa-spin"
+                                      />
+                                    :
+                                      this.state.numStreams
+                                  }
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
+                    </LinkEl>
                     <div className="current-namespace-preferences text-xs-center">
                       <h4 className="btn-group">
                         <SetPreferenceAction
