@@ -33,6 +33,7 @@
   <modules>
     <module>cdap-etl</module>
     <module>cdap-data-quality</module>
+    <module>cdap-program-report</module>
   </modules>
 
 </project>
