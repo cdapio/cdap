@@ -567,6 +567,11 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   private boolean validateExistingRecord(@Nullable RunRecordMeta existing, ProgramId programId, String pid,
                                          byte[] sourceId, String recordType, ProgramRunStatus status) {
+    // If there is no change of the state, no need to update and no need to log
+    if (existing != null && existing.getStatus() == status) {
+      return false;
+    }
+
     Set<ProgramRunStatus> allowedStatuses = ALLOWED_STATUSES.get(status);
     Set<ProgramRunStatus> allowedWithLogStatuses = ALLOWED_WITH_LOG_STATUSES.get(status);
     if (allowedStatuses == null || allowedWithLogStatuses == null) {
