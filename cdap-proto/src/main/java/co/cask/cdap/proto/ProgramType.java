@@ -149,7 +149,8 @@ public enum ProgramType {
   public static ProgramType valueOfCategoryName(String categoryName) {
     ProgramType type = CATEGORY_MAP.get(categoryName);
     if (type == null) {
-      throw new IllegalArgumentException("Unknown category name " + categoryName);
+      throw new IllegalArgumentException(String.format("Unknown category name '%s'. Must be one of %s",
+                                                       categoryName, String.join(",", CATEGORY_MAP.keySet())));
     }
     return type;
   }

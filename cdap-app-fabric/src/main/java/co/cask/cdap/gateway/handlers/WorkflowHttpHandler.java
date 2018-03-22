@@ -31,7 +31,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
@@ -59,12 +58,11 @@ import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.scheduler.Scheduler;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.scheduler.ProgramScheduleService;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
@@ -117,12 +115,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
                       QueueAdmin queueAdmin, TimeSchedulerService timeScheduler,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
-                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler,
+                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin,
                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                      AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer) {
+                      ProgramScheduleService programScheduleService) {
     super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin,
-          mrJobInfoFetcher, metricStore, namespaceQueryAdmin, programScheduler,
-          authenticationContext, authorizationEnforcer);
+          mrJobInfoFetcher, metricStore, namespaceQueryAdmin, programScheduleService);
     this.datasetFramework = datasetFramework;
     this.timeScheduler = timeScheduler;
   }
@@ -226,10 +223,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("app-id") String application,
                                    @PathParam("workflow-id") String workflow,
                                    @QueryParam("trigger-type") String triggerType,
-                                   @QueryParam("schedule-status") String scheduleStatus)
-    throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, triggerType,
-                   scheduleStatus);
+                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
+    doGetSchedules(responder, new NamespaceId(namespace).app(application, ApplicationId.DEFAULT_VERSION),
+                   workflow, triggerType, scheduleStatus);
   }
 
   /**
@@ -243,9 +239,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("app-version") String version,
                                    @PathParam("workflow-id") String workflow,
                                    @QueryParam("trigger-type") String triggerType,
-                                   @QueryParam("schedule-status") String scheduleStatus)
-    throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, version, workflow, triggerType, scheduleStatus);
+                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
+    doGetSchedules(responder, new NamespaceId(namespace).app(application, version), workflow,
+                   triggerType, scheduleStatus);
   }
 
   @GET

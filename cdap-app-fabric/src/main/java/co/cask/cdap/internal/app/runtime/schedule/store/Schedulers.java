@@ -97,20 +97,6 @@ public class Schedulers {
     }
   }
 
-  /**
-   * Convert a list of program schedules into a list of schedule details.
-   */
-  public static List<ScheduleDetail> toScheduleDetails(Collection<ProgramScheduleRecord> schedules) {
-    List<ProgramScheduleRecord> scheduleList = new ArrayList<>(schedules);
-    return Lists.transform(scheduleList, new Function<ProgramScheduleRecord, ScheduleDetail>() {
-      @Nullable
-      @Override
-      public ScheduleDetail apply(@Nullable ProgramScheduleRecord input) {
-        return input == null ? null : input.toScheduleDetail();
-      }
-    });
-  }
-
   public static void validateCronExpression(String cronExpression) {
     String quartzCron = getQuartzCronExpression(cronExpression);
     try {

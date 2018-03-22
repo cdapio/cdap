@@ -64,7 +64,8 @@ public interface Trigger {
     public static Type valueOfCategoryName(String categoryName) {
       Type type = CATEGORY_MAP.get(categoryName);
       if (type == null) {
-        throw new IllegalArgumentException("Unknown category name " + categoryName);
+        throw new IllegalArgumentException(String.format("Unknown category name '%s'. Must be one of %s",
+                                                         categoryName, String.join(",", CATEGORY_MAP.keySet())));
       }
       return type;
     }

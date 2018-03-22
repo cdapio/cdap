@@ -38,8 +38,6 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
@@ -50,10 +48,8 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -104,20 +100,18 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PreferencesStore preferencesStore;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final Scheduler scheduler;
 
   @Inject
   ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
-                          AuthenticationContext authenticationContext, Scheduler scheduler) {
+                          AuthenticationContext authenticationContext) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
     this.preferencesStore = preferencesStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-    this.scheduler = scheduler;
   }
 
   @Override
@@ -628,51 +622,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
       default:
         throw new BadRequestException(String.format("Setting instances for program type %s is not supported",
                                                     programId.getType().getPrettyName()));
-    }
-  }
-
-  /**
-   * Gets the state of the given schedule
-   *
-   * @return the status of the given schedule
-   * @throws Exception if failed to get the state of the schedule
-   */
-  public ProgramScheduleStatus getScheduleStatus(ScheduleId scheduleId)
-    throws Exception {
-    ApplicationId applicationId = scheduleId.getParent();
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new NotFoundException(applicationId);
-    }
-    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
-                                   authenticationContext.getPrincipal());
-    return scheduler.getScheduleStatus(scheduleId);
-  }
-
-  /**
-   * Performs an action (suspend/resume) on the given schedule
-   *
-   * @param scheduleId Id of the schedule
-   * @param action the action to perform
-   * @throws Exception if the given action is invalid or failed to perform a valid action on the schedule
-   */
-  public void suspendResumeSchedule(ScheduleId scheduleId, String action) throws Exception {
-    boolean doEnable;
-    if (action.equals("disable") || action.equals("suspend")) {
-      doEnable = false;
-    } else if (action.equals("enable") || action.equals("resume")) {
-      doEnable = true;
-    } else {
-      throw new BadRequestException(
-        "Action for schedules may only be 'enable', 'disable', 'suspend', or 'resume' but is'" + action + "'");
-    }
-    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    authorizationEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(), Action.EXECUTE);
-    if (doEnable) {
-      scheduler.enableSchedule(scheduleId);
-    } else {
-      scheduler.disableSchedule(scheduleId);
     }
   }
 
