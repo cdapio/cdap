@@ -279,12 +279,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
                                                          final Map<String, String> systemArgs,
                                                          final Map<String, String> userArgs,
                                                          boolean debug) throws Exception {
+    LOG.info("{} tries to start {} Program {}", authenticationContext.getPrincipal().getName(), programId.getType(),
+             programId.getProgram());
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId, systemArguments, userArguments, debug));
-
+    
     return runtimeInfo;
   }
 

@@ -80,7 +80,7 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
                                TransactionExecutorFactory txExecutorFactory,
                                TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                Impersonator impersonator) {
-    super(twillRunner,  hConf, cConfig, tokenSecureStoreRenewer, impersonator);
+    super(twillRunner, hConf, cConfig, tokenSecureStoreRenewer, impersonator);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
