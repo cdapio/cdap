@@ -1,0 +1,242 @@
+{
+  "configuration-groups": [
+    {
+      "name": "Google Dataproc Settings",
+      "description": "Something related to Google Dataproc settings",
+      "properties": [
+        {
+          "name": "region",
+          "widget-type": "select",
+          "label": "Region",
+          "widget-attributes": {
+            "default": "northamerica-northeast1",
+            "size": "medium",
+            "options": [
+              {
+                "id": "northamerica-northeast1",
+                "value": "northamerica-northeast1"
+              },
+              {
+                "id": "us-central1",
+                "value": "us-central1"
+              },
+              {
+                "id": "us-west1",
+                "value": "us-west1"
+              },
+              {
+                "id": "us-east4",
+                "value": "us-east4"
+              },
+              {
+                "id": "europe-west1",
+                "value": "europe-west1"
+              },
+              {
+                "id": "asia-southeast1",
+                "value": "asia-southeast1"
+              }
+            ]
+          }
+        },
+        {
+          "name": "zones",
+          "widget-type": "select",
+          "label": "Zone",
+          "widget-attributes": {
+            "default": "northamerica-northeast1-a",
+            "size": "medium",
+            "options": [
+              {
+                "id": "northamerica-northeast1-a",
+                "value": "northamerica-northeast1-a"
+              },
+              {
+                "id": "northamerica-northeast1-b",
+                "value": "northamerica-northeast1-b"
+              },
+              {
+                "id": "us-central1-a",
+                "value": "us-central1-a"
+              },
+              {
+                "id": "us-central1-b",
+                "value": "us-central1-b"
+              },
+              {
+                "id": "us-west1-a",
+                "value": "us-west1-a"
+              },
+              {
+                "id": "us-east4-a",
+                "value": "us-east4-a"
+              },
+              {
+                "id": "europe-west1-b",
+                "value": "europe-west1-b"
+              },
+              {
+                "id": "europe-west1-c",
+                "value": "europe-west1-c"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Master Nodes",
+      "description": "Contains the YARN Resource Manager, HDFS NameNode, and all job drivers",
+      "properties": [
+        {
+          "name": "masternodes",
+          "label": "Number of Masters",
+          "widget-type": "number",
+          "widget-attributes": {
+            "default": 1,
+            "min": 1
+          }
+        },
+        {
+          "name": "virtualcores",
+          "label": "Virtual Cores",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": 8,
+            "size": "small",
+            "options": [
+              {
+                "id": 8,
+                "value": 8
+              },
+              {
+                "id": 16,
+                "value": 16
+              },
+              {
+                "id": 32,
+                "value": 32
+              },
+              {
+                "id": 64,
+                "value": 64
+              }
+            ]
+          }
+        },
+        {
+          "name": "memory",
+          "label": "Memory",
+          "widget-type": "memory-dropdown",
+          "widget-attributes": {
+            "default": 8,
+            "options": [
+              {
+                "id": 8,
+                "value": 8
+              },
+              {
+                "id": 16,
+                "value": 16
+              },
+              {
+                "id": 32,
+                "value": 32
+              },
+              {
+                "id": 64,
+                "value": 64
+              }
+            ]
+          }
+        },
+        {
+          "name": "disksize",
+          "label": "Primary Disk Size (10 GB min)",
+          "widget-type": "memory-textbox",
+          "widget-attributes": {
+            "default": 500,
+            "min": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "Worker Nodes",
+      "description": "Each contains the YARn NodeManager, and a HDFS NameNode. The HDFS replication factor is 2",
+      "properties": [
+        {
+          "name": "worker.masternodes",
+          "label": "Number of Masters",
+          "widget-type": "number",
+          "widget-attributes": {
+            "default": 1,
+            "min": 1
+          }
+        },
+        {
+          "name": "worker.virtualcores",
+          "label": "Virtual Cores",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": 8,
+            "size": "small",
+            "options": [
+              {
+                "id": 8,
+                "value": 8
+              },
+              {
+                "id": 16,
+                "value": 16
+              },
+              {
+                "id": 32,
+                "value": 32
+              },
+              {
+                "id": 64,
+                "value": 64
+              }
+            ]
+          }
+        },
+        {
+          "name": "worker.memory",
+          "label": "Memory",
+          "widget-type": "memory-dropdown",
+          "widget-attributes": {
+            "default": 8,
+            "options": [
+              {
+                "id": 8,
+                "value": 8
+              },
+              {
+                "id": 16,
+                "value": 16
+              },
+              {
+                "id": 32,
+                "value": 32
+              },
+              {
+                "id": 64,
+                "value": 64
+              }
+            ]
+          }
+        },
+        {
+          "name": "worker.disksize",
+          "label": "Primary Disk Size (10 GB min)",
+          "widget-type": "memory-textbox",
+          "widget-attributes": {
+            "default": 500,
+            "min": 1
+          }
+        }
+      ]
+    }
+  ]
+}

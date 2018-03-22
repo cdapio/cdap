@@ -76,8 +76,10 @@ commons:
   formatLabel: Format
   hydrator: Cask Hydrator
   keyValPairs:
+    keyLabel: Key
     keyPlaceholder: key
     reset: Reset
+    valueLabel: Value
     valuePlaceholder: value
   market: Cask Market
   milliSecondsShortLabel: ms
@@ -93,7 +95,6 @@ commons:
   then: Then
   tracker: Cask Tracker
   typeLabel: Type
-  valueLabel: Value
   when: When
   wrangler: Cask Wrangler
   yesLabel: Yes
@@ -1295,6 +1296,30 @@ features:
       version: Version
   MarketEntityModal:
     version: "Version :"
+  NamespaceDetails:
+    edit: Edit
+    entityCounts:
+      customApps: Custom Apps
+      datasets: Datasets
+      pipelines: Pipelines
+      streams: Streams
+    mapping:
+      hbaseNamespaceName: 'HBase Namespace Name: '
+      hdfsRootDirectory: 'HDFS Root Directory: '
+      hiveDatabaseName: 'Hive Database Name: '
+      label: Mapping
+      schedulerQueueName: 'Scheduler Queue Name: '
+    namespace: Namespace
+    namespaceName: Namespace '{namespace}'
+    preferences:
+      label: Preferences
+      labelWithCount: Preferences ({count})
+      noPreferences: No Preferences set for this namespace
+      scope: Scope
+    security:
+      keytabURI: 'Keytab URI: '
+      label: Security
+      principal: 'Principal: '
   Navbar:
     dataprepLabel: Data Preparation
     Dataprep: Preparation
