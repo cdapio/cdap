@@ -16,11 +16,11 @@
 
 import React, { Component } from 'react';
 import RunsGraph from 'components/OpsDashboard/RunsGraph';
-import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Provider} from 'react-redux';
 import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import RunsList from 'components/OpsDashboard/RunsList';
 import {getData} from 'components/OpsDashboard/store/ActionCreator';
+import NamespacesPicker from 'components/NamespacesPicker';
 
 require('./OpsDashboard.scss');
 
@@ -46,14 +46,7 @@ export default class OpsDashboard extends Component {
               <span>Reports</span>
             </div>
 
-            <div className="namespace-picker float-xs-right">
-              <div className="namespace-list">
-                Monitor Namespace <strong>{getCurrentNamespace()}</strong>
-              </div>
-              <div className="monitor-more">
-                Monitor More
-              </div>
-            </div>
+            <NamespacesPicker />
           </div>
 
           <RunsGraph />

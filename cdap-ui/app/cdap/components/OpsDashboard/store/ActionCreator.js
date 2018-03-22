@@ -26,20 +26,22 @@ export function enableLoading() {
   });
 }
 
-export function getData() {
+export function getData(start, duration = 1440, namespaces = DashboardStore.getState().namespaces.namespacesPick) {
   enableLoading();
 
   let state = DashboardStore.getState().dashboard;
 
-  let start = moment().subtract(24, 'h').format('x'),
-      duration = 1440;
+  if (!start) {
+    start = moment().subtract(24, 'h').format('x');
+    start = parseInt(start, 10);
+  }
 
-  start = parseInt(start, 10);
+  let namespacesList = [...namespaces, getCurrentNamespace()];
 
   let params = {
     start,
     duration, // 24 hours in minutes
-    namespace: getCurrentNamespace()
+    namespace: namespacesList
   };
 
   MyOperationsApi.getDashboard(params)
@@ -58,8 +60,47 @@ export function getData() {
           pipelineCount,
           customAppCount,
           startTime: start,
-          duration
+          duration,
+          namespacesPick: namespaces
         }
       });
     });
+}
+
+export function next() {
+  let state = DashboardStore.getState().dashboard;
+
+  let start = moment(state.startTime);
+
+  if (state.duration === 1440) {
+    start = start.add(12, 'h').format('x');
+  } else {
+    start = start.add(30, 'm').format('x');
+  }
+
+  start = parseInt(start, 10);
+
+  getData(start, state.duration);
+}
+
+export function prev() {
+  let state = DashboardStore.getState().dashboard;
+
+  let start = moment(state.startTime);
+
+  if (state.duration === 1440) {
+    start = start.subtract(12, 'h').format('x');
+  } else {
+    start = start.subtract(30, 'm').format('x');
+  }
+
+  start = parseInt(start, 10);
+
+  getData(start, state.duration);
+}
+
+export function setNamespacesPick(namespacesPick) {
+  let state = DashboardStore.getState().dashboard;
+
+  getData(state.startTime, state.duration, namespacesPick);
 }

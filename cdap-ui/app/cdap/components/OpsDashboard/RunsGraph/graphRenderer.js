@@ -16,6 +16,7 @@
 
 import * as d3 from 'd3';
 import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import moment from 'moment';
 
 const AXIS_BUFFER = 1.1;
 
@@ -56,6 +57,11 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
     .paddingInner(0)
     .paddingOuter(0);
 
+  let dateX = d3.scaleBand()
+    .rangeRound([0, width])
+    .paddingInner(0)
+    .paddingOuter(0);
+
   let yLeft = d3.scaleLinear()
     .rangeRound([height, 0]);
 
@@ -64,6 +70,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
 
   // SETTING DOMAINS
   x.domain(data.map((d) => d.time));
+
+  dateX.domain(data.map((d) => d.time));
 
   let yLeftMax = d3.max(data, (d) => Math.max(d.manual + d.schedule, d.running + d.successful + d.failed));
   let yRightMax = d3.max(data, (d) => d.delay);
@@ -98,6 +106,37 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
     .select('line')
     .remove();
 
+  let dateMap = {};
+  data.forEach((d) => {
+    let time = parseInt(d.time, 10);
+    let key = moment(time).format('ddd. MMM D, YYYY');
+    if (!dateMap[key]) {
+      dateMap[key] = 0;
+    }
+    dateMap[key]++;
+  });
+
+  let dates = Object.keys(dateMap);
+  let firstDateIndex = Math.floor(dateMap[dates[0]] / 2) || 1;
+  let secondDateIndex = Math.floor(dateMap[dates[0]] + (dateMap[dates[1]] / 2));
+
+  let dateAxis = d3.axisTop(dateX)
+    .tickFormat(d3.timeFormat('%a. %b %e, %Y'))
+    .tickSizeInner(0)
+    .tickSizeOuter(0);
+
+  let dateAxisGroup = chart.append('g')
+    .attr('class', 'axis axis-date')
+    .call(dateAxis)
+      .selectAll('.tick text')
+      .attr('class', 'date-axis-tick')
+      .filter((d, i) => {
+        return i !== firstDateIndex && i !== secondDateIndex;
+      })
+      .text(null);
+
+  dateAxisGroup.select('.domain')
+    .remove();
 
   // Y Axis Left
   chart.append('g')

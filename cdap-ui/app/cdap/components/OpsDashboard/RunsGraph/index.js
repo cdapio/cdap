@@ -22,6 +22,8 @@ import ToggleRunsList from 'components/OpsDashboard/RunsGraph/ToggleRunsList';
 import Legends from 'components/OpsDashboard/RunsGraph/Legends';
 import TypeSelector from 'components/OpsDashboard/RunsGraph/TypeSelector';
 import {Observable} from 'rxjs/Observable';
+import IconSVG from 'components/IconSVG';
+import {next, prev} from 'components/OpsDashboard/store/ActionCreator';
 
 require('./RunsGraph.scss');
 
@@ -84,9 +86,22 @@ class RunsGraphView extends Component {
           </div>
         </div>
 
-        <div className="runs-graph-container">
+        <div className="graph-container">
           <div id={RUNS_GRAPH_CONTAINER}>
             <svg id="runs-graph" />
+          </div>
+
+          <div
+            className="navigation arrow-left"
+            onClick={prev}
+          >
+            <IconSVG name="icon-chevron-left" />
+          </div>
+          <div
+            className="navigation arrow-right"
+            onClick={next}
+          >
+            <IconSVG name="icon-chevron-right" />
           </div>
         </div>
 

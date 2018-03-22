@@ -20,6 +20,7 @@ $axis-color: $grey-04;
 $bg-color: $grey-08;
 $top-panel-height: 50px;
 $border-color: $grey-05;
+$date-color: $grey-01;
 
 // Graph colors
 $manual: $blue-grey04;
@@ -99,8 +100,20 @@ $delay: $grey-04;
     }
   }
 
-  .runs-graph-container {
+  .graph-container {
     padding: 0 50px;
+    position: relative;
+
+    .navigation {
+      position: absolute;
+      font-size: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+
+    .arrow-left { left: 5px; }
+    .arrow-right { right: 5px; }
   }
 
   .legends {
@@ -143,6 +156,11 @@ $delay: $grey-04;
 
     text {
       fill: $axis-color;
+    }
+
+    .date-axis-tick {
+      fill: $date-color;
+      font-weight: bold;
     }
   }
 

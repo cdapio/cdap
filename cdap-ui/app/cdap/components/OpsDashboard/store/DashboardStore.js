@@ -57,6 +57,10 @@ const legendsInitialState = {
   delay: true
 };
 
+const namespacesInitialState = {
+  namespacesPick: []
+};
+
 const dashboard = (state = defaultInitialState, action = defaultAction) => {
   switch (action.type) {
     case DashboardActions.setData:
@@ -119,14 +123,30 @@ const legends = (state = legendsInitialState, action = defaultAction) => {
   }
 };
 
+const namespaces = (state = namespacesInitialState, action = defaultAction) => {
+  switch (action.type) {
+    case DashboardActions.setData:
+      return {
+        ...state,
+        namespacesPick: action.payload.namespacesPick
+      };
+    case DashboardActions.reset:
+      return legendsInitialState;
+    default:
+      return state;
+  }
+};
+
 const DashboardStore = createStore(
   combineReducers({
     dashboard,
-    legends
+    legends,
+    namespaces
   }),
   {
     dashboard: defaultInitialState,
-    legends: legendsInitialState
+    legends: legendsInitialState,
+    namespaces: namespacesInitialState
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
