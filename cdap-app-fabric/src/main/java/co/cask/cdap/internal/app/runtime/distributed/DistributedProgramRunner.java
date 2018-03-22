@@ -198,7 +198,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      final LaunchConfig launchConfig = new LaunchConfig(cConf);
+      final LaunchConfig launchConfig = new LaunchConfig();
       setupLaunchConfig(launchConfig, program, oldOptions, cConf, hConf, tempDir);
 
       // Add extra localize resources needed by the program runner
@@ -249,9 +249,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           // Add the configuration to container classpath
           twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());
 
+          Map<String, String> userArgs = options.getUserArguments().asMap();
+
           // Setup log level
-          twillPreparer.setLogLevels(
-            transformLogLevels(SystemArguments.getLogLevels(options.getUserArguments().asMap())));
+          twillPreparer.setLogLevels(transformLogLevels(SystemArguments.getLogLevels(userArgs)));
+
+          // Set the configuration for the twill application
+          Map<String, String> twillConfigs = new HashMap<>();
+          if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
+            twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
+                             cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
+          }
+          // Add the one from the runtime arguments
+          twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(userArgs));
+          twillPreparer.withConfiguration(twillConfigs);
 
           // Setup per runnable configurations
           for (Map.Entry<String, RunnableDefinition> entry : launchConfig.getRunnables().entrySet()) {
@@ -578,7 +589,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
    */
   protected static final class LaunchConfig {
 
-    private final CConfiguration cConf;
     private final Map<String, LocalizeResource> extraResources = new HashMap<>();
     private final List<String> extraClasspath = new ArrayList<>();
     private final Map<String, String> extraEnv = new HashMap<>();
@@ -586,10 +596,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     private final List<Set<String>> launchOrder = new ArrayList<>();
     private final Set<Class<?>> extraDependencies = new HashSet<>();
     private ClassAcceptor classAcceptor = new HadoopClassExcluder();
-
-    LaunchConfig(CConfiguration cConf) {
-      this.cConf = cConf;
-    }
 
     public LaunchConfig addExtraResources(Map<String, LocalizeResource> resources) {
       extraResources.putAll(resources);

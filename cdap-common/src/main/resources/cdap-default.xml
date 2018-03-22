@@ -464,6 +464,16 @@
   </property>
 
   <property>
+    <name>app.program.yarn.attempt.failures.validity.interval</name>
+    <value>60000</value>
+    <description>
+      The interval in milliseconds for the time window used by YARN Resource Manager to check for
+      application max failure attempts. By default, this is only used for long running program, but
+      can be override through runtime argument `system.yarn.attempt.failures.validity.interval`
+    </description>
+  </property>
+
+  <property>
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>
