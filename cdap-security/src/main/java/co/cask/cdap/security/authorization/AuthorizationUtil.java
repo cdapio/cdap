@@ -31,10 +31,11 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,14 +51,17 @@ import javax.annotation.Nullable;
 /**
  * Utility functions for Authorization
  */
-public class AuthorizationUtil {
+public final class AuthorizationUtil {
 
-  private AuthorizationUtil() { }
+  private static final Logger LOG = LoggerFactory.getLogger(AuthorizationUtil.class);
+
+  private AuthorizationUtil() {
+  }
 
   /**
    * Ensures that the principal has at least one {@link Action privilege} in the expected action set
    * on the specified entity id.
-   *
+   * <p>
    * TODO: remove this once we have api support for OR privilege enforce
    *
    * @param entityId the entity to be checked
@@ -160,7 +164,17 @@ public class AuthorizationUtil {
     KerberosPrincipalId effectiveOwner =
       SecurityUtil.getEffectiveOwner(ownerAdmin, applicationId.getNamespaceId(),
                                      appOwner == null ? null : appOwner.getPrincipal());
-    return effectiveOwner != null ? effectiveOwner.getPrincipal() : authenticationContext.getPrincipal().getName();
+
+    // CDAP-13154 If impersonation is configured for either the application or namespace the effective owner will be
+    // a kerberos principal which can have different form
+    // (refer: https://docs.oracle.com/cd/E21455_01/common/tutorials/kerberos_principal.html). For example it can be
+    // a complete principal name (alice/somehost.net@someREALM). For authorization we need the enforcement to happen
+    // on the username and not the complete principal. The user name is the shortname of the principal so return the
+    // shortname as authorizing user.
+    String appAuthorizingUser = effectiveOwner != null ?
+      new KerberosName(effectiveOwner.getPrincipal()).getShortName() : authenticationContext.getPrincipal().getName();
+    LOG.trace("Returning {} as authorizing app user for {}", appAuthorizingUser, applicationId);
+    return appAuthorizingUser;
   }
 
   /**

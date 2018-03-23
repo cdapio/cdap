@@ -51,7 +51,7 @@ public class SparkRuntimeUtilsTest {
 
     File archiveFile = SparkRuntimeUtils.createConfArchive(conf, "test.properties",
                                                            confDir.getAbsolutePath(),
-                                                           TEMP_FOLDER.newFile().getAbsolutePath());
+                                                           TEMP_FOLDER.newFile());
 
     try (ZipFile zipFile = new ZipFile(archiveFile)) {
       Properties properties = new Properties();

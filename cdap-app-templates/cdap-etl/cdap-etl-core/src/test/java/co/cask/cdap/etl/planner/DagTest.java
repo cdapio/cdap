@@ -188,6 +188,48 @@ public class DagTest {
   }
 
   @Test
+  public void testBranches() {
+    /*
+                              |--> n4
+             |--> n2 --> n3 --|
+        n1 --|                |--|
+             |--|                |--> n5 --> n6 --> n9
+                |--> n8 ---------|
+        n7 -----|
+     */
+    Dag dag = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n1", "n8"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n3", "n5"),
+      new Connection("n5", "n6"),
+      new Connection("n7", "n8"),
+      new Connection("n8", "n5"),
+      new Connection("n6", "n9")));
+    Set<String> stopNodes = new HashSet<>();
+    Assert.assertEquals(ImmutableList.of("n1"), dag.getBranch("n1", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n2"), dag.getBranch("n2", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n2", "n3"), dag.getBranch("n3", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n4"), dag.getBranch("n4", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n5"), dag.getBranch("n5", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n5", "n6"), dag.getBranch("n6", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n7"), dag.getBranch("n7", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n8"), dag.getBranch("n8", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n5", "n6", "n9"), dag.getBranch("n9", stopNodes));
+    stopNodes = ImmutableSet.of("n6", "n3", "n8");
+    Assert.assertEquals(ImmutableList.of("n1"), dag.getBranch("n1", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n2"), dag.getBranch("n2", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n2", "n3"), dag.getBranch("n3", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n4"), dag.getBranch("n4", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n5"), dag.getBranch("n5", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n5", "n6"), dag.getBranch("n6", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n7"), dag.getBranch("n7", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n8"), dag.getBranch("n8", stopNodes));
+    Assert.assertEquals(ImmutableList.of("n6", "n9"), dag.getBranch("n9", stopNodes));
+  }
+
+  @Test
   public void testAccessibleFrom() {
     /*
         n1 -- n2

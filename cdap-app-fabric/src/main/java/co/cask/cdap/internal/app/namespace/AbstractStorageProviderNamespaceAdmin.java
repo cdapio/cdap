@@ -176,17 +176,14 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       createdStreams = createNamespaceDir(streamsLoc, "streams", namespaceId);
       createNamespaceDir(deletedLoc, "deleted streams", namespaceId);
 
-      // then set all these directories to be owned and group writable by the namespace group as follows:
-      // if a group name is configured, then that group; otherwise the same group as the namespace home dir
-      if (SecurityUtil.isKerberosEnabled(cConf)) {
-        String groupToSet = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
+      // in secure mode, if a group name was configured, then that group must be able to write inside subdirs:
+      // set all these directories to be owned and group writable by the configured group.
+      if (SecurityUtil.isKerberosEnabled(cConf) && configuredGroupName != null) {
         for (Location loc : new Location[] { dataLoc, tempLoc, streamsLoc, deletedLoc }) {
-          loc.setGroup(groupToSet);
-          // set the permissions to rwx for group, if a group name was configured for the namespace
-          if (configuredGroupName != null) {
-            String permissions = loc.getPermissions();
-            loc.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
-          }
+          loc.setGroup(configuredGroupName);
+          // set the permissions to rwx for group
+          String permissions = loc.getPermissions();
+          loc.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
         }
       }
     } catch (Throwable t) {

@@ -894,9 +894,13 @@ public class MasterServiceMain extends DaemonMain {
           List<String> extraClassPath = masterTwillApp.prepareLocalizeResource(runDir, hConf);
           TwillPreparer preparer = twillRunner.prepare(masterTwillApp);
 
+          Map<String, String> twillConfigs = new HashMap<>();
           if (!cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
-            preparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
+            twillConfigs.put(Configs.Keys.LOG_COLLECTION_ENABLED, Boolean.toString(false));
           }
+          twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
+                           cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
+          preparer.withConfiguration(twillConfigs);
 
           // Add logback xml
           if (Files.exists(logbackFile)) {

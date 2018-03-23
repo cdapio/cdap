@@ -72,7 +72,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     }
 
     PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of(),
-                                                  ImmutableSet.<String>of(), ImmutableSet.<String>of());
+                                                  ImmutableSet.<String>of(), ImmutableSet.<String>of(),
+                                                  ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
 
     if (plan.getPhases().size() != 1) {

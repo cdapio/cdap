@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -31,12 +29,10 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -177,20 +173,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
 
-      ApplicationMeta meta = appMetadataStore.getApplication(programRunId.getNamespace(),
-                                                             programRunId.getApplication(),
-                                                             programRunId.getVersion());
-      // Check if the application exists
-      if (meta == null) {
-        LOG.warn("Ignore notification for application {} that doesn't exist, {}", programRunId, notification);
-        return;
-      }
-      // Check if the program exists
-      if (getProgramSpecFromApp(meta.getSpec(), programRunId) == null) {
-        LOG.warn("Ignore notification for program {} that doesn't exist, {}", programRunId, notification);
-        return;
-      }
-
       LOG.trace("Processing program status notification: {}", notification);
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
@@ -277,31 +259,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       getMessagingContext().getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(),
                                                           recordedProgramStatusPublishTopic,
                                                           GSON.toJson(programStatusNotification));
-    }
-
-    @Nullable
-    private ProgramSpecification getProgramSpecFromApp(ApplicationSpecification appSpec, ProgramRunId programRunId) {
-      String programName = programRunId.getProgram();
-      ProgramType type = programRunId.getType();
-      if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
-        return appSpec.getFlows().get(programName);
-      }
-      if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
-        return appSpec.getMapReduce().get(programName);
-      }
-      if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
-        return appSpec.getSpark().get(programName);
-      }
-      if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
-        return appSpec.getWorkflows().get(programName);
-      }
-      if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
-        return appSpec.getServices().get(programName);
-      }
-      if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
-        return appSpec.getWorkers().get(programName);
-      }
-      return null;
     }
 
     /**

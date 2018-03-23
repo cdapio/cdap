@@ -391,7 +391,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private void doPartitionOperation(FullHttpRequest request, HttpResponder responder, DatasetId datasetId,
                                     PartitionOperation partitionOperation) {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      Dataset dataset = null;
+      Dataset dataset;
       try {
         dataset = datasetInstantiator.getDataset(datasetId);
       } catch (Exception e) {
@@ -405,6 +405,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
           return;
         }
         Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
+
         Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()));
         Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
         PartitionKey partitionKey;
@@ -483,18 +484,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return null;
       }
     });
-  }
-
-  // returns the cause of the class not found exception if it is one. Otherwise returns null.
-  @Nullable
-  private static String isClassNotFoundException(Throwable e) {
-    if (e instanceof ClassNotFoundException) {
-      return e.getMessage();
-    }
-    if (e.getCause() != null) {
-      return isClassNotFoundException(e.getCause());
-    }
-    return null;
   }
 
   private NamespacedEntityId getEntityToImpersonate(NamespacedEntityId entityId, String programId) {

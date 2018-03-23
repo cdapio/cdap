@@ -36,6 +36,7 @@ import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.Engine;
+import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
@@ -171,16 +172,17 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     PipelinePlanner planner;
     Set<String> actionTypes = ImmutableSet.of(Action.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE);
+    Set<String> multiPortTypes = ImmutableSet.of(SplitterTransform.PLUGIN_TYPE);
     if (useSpark) {
       // if the pipeline uses spark, we don't need to break the pipeline up into phases, we can just have
       // a single phase.
       planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of(),
-                                    actionTypes);
+                                    actionTypes, multiPortTypes);
     } else {
       planner = new PipelinePlanner(supportedPluginTypes,
                                     ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
                                     ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
-                                    actionTypes);
+                                    actionTypes, multiPortTypes);
     }
     plan = planner.plan(spec);
 

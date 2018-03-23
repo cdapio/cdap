@@ -125,7 +125,6 @@ public class SparkClassRewriter implements ClassRewriter {
   // File name of the Spark conf directory as defined by the Spark framework
   // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
   private static final String LOCALIZED_CONF_DIR = SparkPackageUtils.LOCALIZED_CONF_DIR;
-  private static final String LOCALIZED_CONF_DIR_ZIP = LOCALIZED_CONF_DIR + ".zip";
   // File entry name of the SparkConf properties file inside the Spark conf zip
   private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
 
@@ -1010,9 +1009,12 @@ public class SparkClassRewriter implements ClassRewriter {
           return mv;
         }
 
+        Type fileType = Type.getType(File.class);
+        Type stringType = Type.getType(String.class);
+
         // Check if it's a recognizable return type.
         // Spark 1.5+ return type is File
-        boolean isReturnFile = Type.getReturnType(desc).equals(Type.getType(File.class));
+        boolean isReturnFile = Type.getReturnType(desc).equals(fileType);
         Type optionType = Type.getObjectType("scala/Option");
         if (!isReturnFile) {
           // Spark 1.4 return type is Option<File>
@@ -1023,27 +1025,29 @@ public class SparkClassRewriter implements ClassRewriter {
         }
 
         // Generate this for Spark 1.5+
-        // return SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE,
-        //                                            LOCALIZED_CONF_DIR, LOCALIZED_CONF_DIR_ZIP);
+        // return SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE, LOCALIZED_CONF_DIR,
+        //                                            File.createTempFile(LOCALIZED_CONF_DIR, ".zip"));
         // Generate this for Spark 1.4
-        // return Option.apply(SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE,
-        //                                                         LOCALIZED_CONF_DIR, LOCALIZED_CONF_DIR_ZIP));
+        // return Option.apply(SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE, LOCALIZED_CONF_DIR,
+        //                                                         File.createTempFile(LOCALIZED_CONF_DIR, ".zip")));
         GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
 
+        // Push the four parameters for the SparkRuntimeUtils.createConfArchive method
         // load this.sparkConf to the stack
         mg.loadThis();
         mg.getField(Type.getObjectType("org/apache/spark/deploy/yarn/Client"), "sparkConf", SPARK_CONF_TYPE);
-
-        // push three constants to the stack
         mg.visitLdcInsn(SPARK_CONF_FILE);
         mg.visitLdcInsn(LOCALIZED_CONF_DIR);
-        mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
+
+        // Call the File.createTempFile(LOCALIZED_CONF_DIR, ".zip") to generate the forth parameter
+        mg.visitLdcInsn(LOCALIZED_CONF_DIR);
+        mg.visitLdcInsn(".zip");
+        mg.invokeStatic(fileType, new Method("createTempFile", fileType, new Type[] { stringType, stringType }));
 
         // call SparkRuntimeUtils.createConfArchive, return a File and leave it in stack
-        Type stringType = Type.getType(String.class);
         mg.invokeStatic(SPARK_RUNTIME_UTILS_TYPE,
-                        new Method("createConfArchive", Type.getType(File.class),
-                                   new Type[] { SPARK_CONF_TYPE, stringType, stringType, stringType}));
+                        new Method("createConfArchive", fileType,
+                                   new Type[] { SPARK_CONF_TYPE, stringType, stringType, fileType}));
         if (isReturnFile) {
           // Spark 1.5+ return type is File, hence just return the File from the stack
           mg.returnValue();

@@ -188,6 +188,8 @@ public final class Constants {
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
     public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
     public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
+    public static final String YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL =
+      "app.program.yarn.attempt.failures.validity.interval";
 
     /**
      * Guice named bindings.

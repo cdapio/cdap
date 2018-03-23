@@ -27,18 +27,18 @@
       <div class="metrics-records-out">
         <span ng-if="data.node.type.indexOf('sink') === -1">
           <h5>Records Out</h5>
-          <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | myLeadingEllipsis: 13:8 | myNumberWithEllipsis }}</p>
+          <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | commaSeparatedNumber }}</p>
           <p ng-if="!data.metrics.recordsOut">0</p>
         </span>
         <span ng-if="data.node.type.indexOf('sink') !== -1">
           <h5>Records In</h5>
-          <p ng-if="data.metrics.recordsIn">{{ data.metrics.recordsIn | myLeadingEllipsis: 13:8 | myNumberWithEllipsis }}</p>
+          <p ng-if="data.metrics.recordsIn">{{ data.metrics.recordsIn | commaSeparatedNumber }}</p>
           <p ng-if="!data.metrics.recordsIn">0</p>
         </span>
       </div>
       <div class="metrics-errors">
         <h5>Errors</h5>
-        <p ng-if="data.metrics.recordsError">{{ data.metrics.recordsError | myLeadingEllipsis: 13:8 | myNumberWithEllipsis }}</p>
+        <p ng-if="data.metrics.recordsError">{{ data.metrics.recordsError | commaSeparatedNumber }}</p>
         <p ng-if="!data.metrics.recordsError">0</p>
       </div>
     </div>

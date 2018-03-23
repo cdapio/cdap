@@ -30,13 +30,14 @@ const OPTIONS_MAP = {
   'OPTION4': 'MM-dd-yy',
   'OPTION5': 'yyyy-MM-dd',
   'OPTION6': "yyyy-MM-dd HH:mm:ss",
-  'OPTION7': 'MM-dd-yyyy G \'at\' HH:mm:ss z',
+  'OPTION7': "MM-dd-yyyy 'at' HH:mm:ss z",
   'OPTION8': 'dd/MM/yy HH:mm:ss',
-  'OPTION9': 'yyyy,MM.dd\'T\'HH:mm:ss.SSSZ',
-  'OPTION10': 'EEE, d MMM yyyy HH:mm:ss Z',
-  'OPTION11': 'EEE, MMM d, \'\'yy',
-  'OPTION12': 'h:mm a',
-  'OPTION13': 'H:mm a, z',
+  'OPTION9': "yyyy,MM.dd'T'HH:mm:ss.SSSZ",
+  'OPTION10': 'MM.dd.yyyy HH:mm:ss.SSS',
+  'OPTION11': 'EEE, d MMM yyyy HH:mm:ss',
+  'OPTION12': "EEE, MMM d, ''yy",
+  'OPTION13': 'h:mm a',
+  'OPTION14': 'H:mm a, z',
   'CUSTOM': 'CUSTOM'
 };
 
@@ -68,7 +69,7 @@ export default class SimpleDateModal extends Component {
       format = this.state.customFormat;
     }
 
-    this.props.onApply('SIMPLEDATE', `'${format}'`);
+    this.props.onApply('SIMPLEDATE', `${format}`);
     this.props.toggle();
   }
 

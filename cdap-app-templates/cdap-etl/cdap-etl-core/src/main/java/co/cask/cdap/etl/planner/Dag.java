@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.planner;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.annotation.Nullable;
 
 /**
  * A DAG (directed acyclic graph).
@@ -293,6 +295,7 @@ public class Dag {
 
   /**
    * Return all stages accessible from the starting stages, without going past any node in stopNodes.
+   * Starting stages are not treated as stop nodes, even if they are in the stop nodes set.
    *
    * @param stages the stages to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -300,8 +303,9 @@ public class Dag {
    */
   public Set<String> accessibleFrom(Set<String> stages, Set<String> stopNodes) {
     Set<String> accessible = new HashSet<>();
+    final Set<String> nonStartingStopNodes = Sets.difference(stopNodes, stages);
     for (String stage : stages) {
-      accessible.addAll(traverseForwards(stage, accessible, stopNodes));
+      traverseForwards(stage, accessible, new StopNodeCondition(nonStartingStopNodes));
     }
     return accessible;
   }
@@ -319,15 +323,18 @@ public class Dag {
 
   /**
    * Return all stages that are parents of an ending stage, without going past any node in stopNodes.
-   * A stage counts as a parent of itself.
+   * A stage counts as a parent of itself. The starting stage is not counted as a stop node, even if it is
+   * in the set of stop nodes.
    *
    * @param stage the stage to start at
    * @param stopNodes set of nodes to stop traversal on
    * @return all parents of that stage
    */
-  public Set<String> parentsOf(String stage, Set<String> stopNodes) {
+  public Set<String> parentsOf(String stage, final Set<String> stopNodes) {
     Set<String> accessible = new HashSet<>();
-    accessible.addAll(traverseBackwards(stage, accessible, stopNodes));
+    final Set<String> nonStartingStopNodes = new HashSet<>(stopNodes);
+    nonStartingStopNodes.remove(stage);
+    traverseBackwards(stage, accessible, new StopNodeCondition(nonStartingStopNodes));
     return accessible;
   }
 
@@ -460,6 +467,59 @@ public class Dag {
   }
 
   /**
+   * Get the branch the given node is on, in the order the nodes appear on the branch, ending with the given node.
+   * Every node returned has exactly one input except for the first node, which can have any number of inputs.
+   * Every node returned has exactly one output except for the last node, which can have any number of outputs.
+   *
+   * @param node the branch node
+   * @param stopNodes any nodes to stop on
+   * @return the branch the node is on
+   */
+  public List<String> getBranch(final String node, final Set<String> stopNodes) {
+    List<String> branchNodes = new ArrayList<>();
+    traverse(node, branchNodes, incomingConnections, new Predicate<String>() {
+      @Override
+      public boolean apply(String input) {
+        // stop if we hit a stop node
+        if (stopNodes.contains(input) && !node.equals(input)) {
+          return true;
+        }
+        // stop if there are multiple inputs or no inputs
+        Set<String> inputs = incomingConnections.get(input);
+        if (inputs.size() != 1) {
+          return true;
+        }
+        // stop if the input has multiple outputs.
+        String inputNode = inputs.iterator().next();
+        return outgoingConnections.get(inputNode).size() > 1;
+      }
+    });
+    Collections.reverse(branchNodes);
+    return branchNodes;
+  }
+
+  /**
+   * Traverse the dag starting at the specified node and stopping when a node has no outputs, when it has already
+   * been visited, or when it meets the specified stop condition. All nodes that were visited will be added to
+   * the specified visitedNodes collection in the order that they are traversed. The stop condition will be applied
+   * to the starting node as well.
+   *
+   * @param node the node to start at
+   * @param visitedNodes collection to add all visited nodes to
+   * @param connections map from a node to all its outputs
+   * @param stopCondition condition to stop traversing
+   */
+  protected void traverse(String node, Collection<String> visitedNodes,
+                          SetMultimap<String, String> connections, Predicate<String> stopCondition) {
+    if (!visitedNodes.add(node) || stopCondition.apply(node)) {
+      return;
+    }
+    for (String output : connections.get(node)) {
+      traverse(output, visitedNodes, connections, stopCondition);
+    }
+  }
+
+  /**
    * Remove a source from the dag. New sources will be re-calculated after the source is removed.
    *
    * @return the removed source, or null if there were no sources to remove.
@@ -496,7 +556,7 @@ public class Dag {
    *
    * @param node the node to remove
    */
-  private void removeNode(String node) {
+  protected void removeNode(String node) {
     // for each node this output to: node -> outputNode
     for (String outputNode : outgoingConnections.removeAll(node)) {
       // remove the connection from this node to its output
@@ -521,31 +581,12 @@ public class Dag {
     nodes.remove(node);
   }
 
-  private Set<String> traverseForwards(String stage, Set<String> alreadySeen, Set<String> stopNodes) {
-    return traverse(stage, alreadySeen, stopNodes, outgoingConnections);
+  private void traverseForwards(String node, Collection<String> visitedNodes, Predicate<String> stopCondition) {
+    traverse(node, visitedNodes, outgoingConnections, stopCondition);
   }
 
-  private Set<String> traverseBackwards(String stage, Set<String> alreadySeen, Set<String> stopNodes) {
-    return traverse(stage, alreadySeen, stopNodes, incomingConnections);
-  }
-
-  private Set<String> traverse(String stage, Set<String> alreadySeen, Set<String> stopNodes,
-                               SetMultimap<String, String> connections) {
-    if (!alreadySeen.add(stage)) {
-      return alreadySeen;
-    }
-    Collection<String> outputs = connections.get(stage);
-    if (outputs.isEmpty()) {
-      return alreadySeen;
-    }
-    for (String output : outputs) {
-      if (stopNodes.contains(output)) {
-        alreadySeen.add(output);
-        continue;
-      }
-      alreadySeen.addAll(traverse(output, alreadySeen, stopNodes, connections));
-    }
-    return alreadySeen;
+  private void traverseBackwards(String node, Collection<String> visitedNodes, Predicate<String> stopCondition) {
+    traverse(node, visitedNodes, incomingConnections, stopCondition);
   }
 
   private String removeSink() {
@@ -570,6 +611,22 @@ public class Dag {
       if (incomingConnections.get(node).isEmpty()) {
         sources.add(node);
       }
+    }
+  }
+
+  /**
+   * Returns true if an input is in a set of stop nodes.
+   */
+  private static class StopNodeCondition implements Predicate<String> {
+    private final Set<String> stopNodes;
+
+    private StopNodeCondition(Set<String> stopNodes) {
+      this.stopNodes = stopNodes;
+    }
+
+    @Override
+    public boolean apply(@Nullable String input) {
+      return stopNodes.contains(input);
     }
   }
 

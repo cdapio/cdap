@@ -250,8 +250,9 @@ the exception of the property ``scheduler.queue.name``.
    * - ``principal``
      - The Kerberos principal for the namespace
    * - ``groupName``
-     - The group name for the namespace. If present, the namespace's data directory is created with this group name,
-       and read, write, and execute permissions are given to the group.
+     - The group name for the namespace. If present, the namespace's data directory is created
+       with this group name, and read, write, and execute permissions are given to the group.
+       The namespace principal must be a member of this group.
    * - ``root.directory``
      - The pre-existing file-system directory to be used for the namespace
    * - ``scheduler.queue.name``
