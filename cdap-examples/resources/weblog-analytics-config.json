@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
-        "version": "4.3.4-SNAPSHOT"
+        "version": "4.3.4"
     },
     "config": {
         "source": {
