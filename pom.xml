@@ -110,7 +110,7 @@
     <grok.version>0.1.0</grok.version>
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
-    <guice.version>3.0</guice.version>
+    <guice.version>4.2.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase10.version>1.0.1.1</hbase10.version>
     <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
