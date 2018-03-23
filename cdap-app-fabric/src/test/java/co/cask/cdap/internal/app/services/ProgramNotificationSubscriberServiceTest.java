@@ -24,6 +24,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -36,7 +37,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -64,8 +64,8 @@ public class ProgramNotificationSubscriberServiceTest {
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
     DatasetId storeTable = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-    datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
-    Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
+    Table table = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
+                                                  DatasetProperties.EMPTY, Collections.<String, String>emptyMap());
     final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf, new AtomicBoolean(false));
     final TransactionExecutor txnl = txExecutorFactory.createExecutor(
       Collections.singleton((TransactionAware) metadataStoreDataset));

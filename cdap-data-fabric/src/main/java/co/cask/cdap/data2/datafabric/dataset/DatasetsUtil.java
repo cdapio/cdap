@@ -60,7 +60,6 @@ public final class DatasetsUtil {
    * Gets instance of {@link Dataset}, while add instance to
    * {@link co.cask.cdap.data2.dataset2.DatasetFramework} and creating the physical data set
    * if that one doesn't exist.
-   * NOTE: does poor job guarding against races, i.e. only one client for this dataset instance is supported at a time
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
                                                          DatasetId datasetInstanceId, String typeName,
