@@ -45,16 +45,17 @@ export default function SelectWithOptions({className, value, onChange, options})
 SelectWithOptions.defaultProps = {
   value: ''
 };
+
 SelectWithOptions.propTypes = {
   className: PropTypes.string,
-  value: PropTypes.string,
+  value: PropTypes.any,
   onChange: PropTypes.func,
   options: PropTypes.arrayOf(
     PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.shape({
-        id: PropTypes.string,
-        value: PropTypes.string
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
       })
     ])
   )
