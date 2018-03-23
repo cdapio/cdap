@@ -773,6 +773,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       LOG.debug("Current source id '{}' is not larger than the existing source id '{}' in the existing " +
                   "run record meta '{}'. Skip recording program {}.",
                 Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing, recordType);
+      return false;
     }
     return true;
   }

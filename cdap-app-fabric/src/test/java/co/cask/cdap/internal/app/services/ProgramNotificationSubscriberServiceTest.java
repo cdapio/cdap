@@ -44,7 +44,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -78,48 +77,24 @@ public class ProgramNotificationSubscriberServiceTest {
     final ProgramRunId runId = programId.run(RunIds.generate());
     programStateWriter.start(runId, programOptions, null);
 
-    Tasks.waitFor(ProgramRunStatus.STARTING, new Callable<ProgramRunStatus>() {
-                    @Override
-                    public ProgramRunStatus call() throws Exception {
-                      return txnl.execute(new Callable<ProgramRunStatus>() {
-                        @Override
-                        public ProgramRunStatus call() throws Exception {
-                          RunRecordMeta meta = metadataStoreDataset.getRun(runId.getParent(), runId.getRun());
-                          return meta == null ? null : meta.getStatus();
-                        }
-                      });
-                    }
-                  },
+    Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {
+      RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+      return meta == null ? null : meta.getStatus();
+    }),
                   10, TimeUnit.SECONDS);
 
     programStateWriter.running(runId, UUID.randomUUID().toString());
-    Tasks.waitFor(ProgramRunStatus.RUNNING, new Callable<ProgramRunStatus>() {
-                    @Override
-                    public ProgramRunStatus call() throws Exception {
-                      return txnl.execute(new Callable<ProgramRunStatus>() {
-                        @Override
-                        public ProgramRunStatus call() throws Exception {
-                          RunRecordMeta meta = metadataStoreDataset.getRun(runId.getParent(), runId.getRun());
-                          return meta == null ? null : meta.getStatus();
-                        }
-                      });
-                    }
-                  },
+    Tasks.waitFor(ProgramRunStatus.RUNNING, () -> txnl.execute(() -> {
+      RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+      return meta == null ? null : meta.getStatus();
+    }),
                   10, TimeUnit.SECONDS);
 
     programStateWriter.killed(runId);
-    Tasks.waitFor(ProgramRunStatus.KILLED, new Callable<ProgramRunStatus>() {
-                    @Override
-                    public ProgramRunStatus call() throws Exception {
-                      return txnl.execute(new Callable<ProgramRunStatus>() {
-                        @Override
-                        public ProgramRunStatus call() throws Exception {
-                          RunRecordMeta meta = metadataStoreDataset.getRun(runId.getParent(), runId.getRun());
-                          return meta == null ? null : meta.getStatus();
-                        }
-                      });
-                    }
-                  },
+    Tasks.waitFor(ProgramRunStatus.KILLED, () -> txnl.execute(() -> {
+      RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+      return meta == null ? null : meta.getStatus();
+    }),
                   10, TimeUnit.SECONDS);
   }
 }
