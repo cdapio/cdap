@@ -279,7 +279,6 @@ class Administration extends Component {
           isOpen={this.state.preferenceModal}
           toggleModal={this.togglePreferenceModal}
           onSuccess={this.onSystemPreferencesSaved}
-          setAtSystemLevel={true}
         />
       </div>
     );

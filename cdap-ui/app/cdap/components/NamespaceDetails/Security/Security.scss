@@ -14,11 +14,24 @@
  * the License.
 */
 
+$label-width: 90px;
+
 .namespace-details-security {
   .security-values {
+    display: flex;
+    align-items: center;
+
     strong {
       display: inline-block;
-      width: 90px;
+      width: $label-width;
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      max-width: calc(100% - #{$label-width});
     }
   }
 }

@@ -37,11 +37,15 @@ const NamespaceDetailsSecurity = ({principal, keytabURI}) => {
       </div>
       <div className="security-values">
         <strong>{T.translate(`${PREFIX}.principal`)}</strong>
-        <span>{principal || '- -'}</span>
+        <span title={principal}>
+          {principal || '- -'}
+        </span>
       </div>
       <div className="security-values">
         <strong>{T.translate(`${PREFIX}.keytabURI`)}</strong>
-        <span>{keytabURI || '- -'}</span>
+        <span title={keytabURI}>
+          {keytabURI || '- -'}
+        </span>
       </div>
     </div>
   );

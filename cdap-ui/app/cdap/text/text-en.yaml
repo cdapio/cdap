@@ -1317,6 +1317,8 @@ features:
       labelWithCount: Preferences ({count})
       noPreferences: No Preferences set for this namespace
       scope: Scope
+      viewAll: View All
+      viewLess: View Less
     security:
       keytabURI: 'Keytab URI: '
       label: Security

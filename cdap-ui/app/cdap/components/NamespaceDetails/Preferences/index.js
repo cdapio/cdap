@@ -18,10 +18,12 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
-import isEmpty from 'lodash/isEmpty';
 import SortableTable from 'components/SortableTable';
-import SetPreferenceModal from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
+import SetPreferenceModal, {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import {getNamespacePrefs} from 'components/NamespaceDetails/store/ActionCreator';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
+import classnames from 'classnames';
 require('./Preferences.scss');
 
 const PREFIX = 'features.NamespaceDetails.preferences';
@@ -29,7 +31,8 @@ const PREFIX = 'features.NamespaceDetails.preferences';
 const PREFERENCES_TABLE_HEADERS = [
   {
     property: 'key',
-    label: T.translate('commons.keyValPairs.keyLabel')
+    label: T.translate('commons.keyValPairs.keyLabel'),
+    defaultSortBy: true
   },
   {
     property: 'scope',
@@ -41,110 +44,85 @@ const PREFERENCES_TABLE_HEADERS = [
   }
 ];
 
-const renderPreferencesTableBody = (prefs) => {
-  return (
-    <tbody>
-      {
-        prefs
-          .map((pref, index) => {
-            return (
-              <tr key={index}>
-                <td title={pref.key}>
-                  {pref.key}
-                </td>
-                <td>{pref.scope}</td>
-                <td title={pref.value}>
-                  {pref.value}
-                </td>
-              </tr>
-            );
-          })
-      }
-    </tbody>
-  );
-};
-
-const convertPrefsArray = (prefs, scope) => {
-  return Object.keys(prefs).map(prefKey => {
-    return {
-      key: prefKey,
-      scope,
-      value: prefs[prefKey]
-    };
-  });
-};
-
-const mapStateToProps = (state) => {
-  return {
-    namespacePrefs: state.namespacePrefs,
-    systemPrefs: state.systemPrefs
-  };
-};
-
-const PreferencesTable = ({namespacePrefs, systemPrefs}) => {
-  if (isEmpty(namespacePrefs) && isEmpty(systemPrefs)) {
-    return (
-      <div className="text-xs-center">
-        {T.translate(`${PREFIX}.noPreferences`)}
-      </div>
-    );
-  }
-
-  namespacePrefs = convertPrefsArray(namespacePrefs, T.translate('features.NamespaceDetails.namespace'));
-  systemPrefs = convertPrefsArray(systemPrefs, T.translate('commons.cdap'));
-  let prefs = namespacePrefs.concat(systemPrefs);
-
-  return (
-    <SortableTable
-      entities={prefs}
-      tableHeaders={PREFERENCES_TABLE_HEADERS}
-      renderTableBody={renderPreferencesTableBody}
-      className="preferences-table"
-      sortOnInitialLoad={false}
-    />
-  );
-};
-
-PreferencesTable.propTypes = {
-  namespacePrefs: PropTypes.object,
-  systemPrefs: PropTypes.object
-};
-
-const PreferencesLabel = ({namespacePrefs, systemPrefs, toggleModal}) => {
-  let label;
-  if (isEmpty(namespacePrefs) && isEmpty(systemPrefs)) {
-    label = <strong>{T.translate(`${PREFIX}.label`)}</strong>;
-  } else {
-    let prefsCount = Object.keys(namespacePrefs).length + Object.keys(systemPrefs).length;
-    label = <strong>{T.translate(`${PREFIX}.labelWithCount`, {count: prefsCount})}</strong>;
-  }
-
-  return (
-    <div className="namespace-details-section-label">
-      {label}
-      <span
-        className="edit-label"
-        onClick={toggleModal}
-      >
-        {T.translate('features.NamespaceDetails.edit')}
-      </span>
-    </div>
-  );
-};
-
-PreferencesLabel.propTypes = {
-  namespacePrefs: PropTypes.object,
-  systemPrefs: PropTypes.object,
-  toggleModal: PropTypes.func
-};
-
-const ConnectedPreferencesTable = connect(mapStateToProps)(PreferencesTable);
-const ConnectedPreferencesLabel = connect(mapStateToProps)(PreferencesLabel);
-
-export default class NamespaceDetailsPreferences extends Component {
+class NamespaceDetailsPreferences extends Component {
   state = {
-    modalOpen: false
+    modalOpen: false,
+    namespacePrefs: this.props.namespacePrefs,
+    systemPrefs: this.props.systemPrefs,
+    prefs: this.getPrefsForDisplay(this.props.namespacePrefs, this.props.systemPrefs),
+    newNamespacePrefsKeys: [],
+    viewAll: false
   };
+
+  static propTypes = {
+    namespacePrefs: PropTypes.object,
+    systemPrefs: PropTypes.object,
+  };
+
+  eventEmitter = ee(ee);
+
+  componentDidMount() {
+    this.eventEmitter.on(globalEvents.NSPREFERENCESSAVED, getNamespacePrefs);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let newNamespacePrefsKeys = [];
+    let currentPrefsKeys = this.state.prefs.map(pref => pref.key);
+
+    Object.keys(nextProps.namespacePrefs).forEach(nextNSPrefKey => {
+      let nextNSPrefKeyIndex = currentPrefsKeys.indexOf(nextNSPrefKey);
+      if (nextNSPrefKeyIndex === -1 || (nextNSPrefKeyIndex !== -1 && this.state.prefs[nextNSPrefKeyIndex].value !== nextProps.namespacePrefs[nextNSPrefKey])) {
+        newNamespacePrefsKeys.push(nextNSPrefKey);
+      }
+    });
+
+    let prefs = this.getPrefsForDisplay(nextProps.namespacePrefs, nextProps.systemPrefs);
+    let viewAll = this.state.viewAll;
+
+    if (!viewAll && newNamespacePrefsKeys.length && prefs.length >= 5) {
+      for (let i = 5; i < prefs.length; i++) {
+        if (newNamespacePrefsKeys.indexOf(prefs[i].key) !== -1) {
+          viewAll = true;
+          break;
+        }
+      }
+    }
+
+    this.setState({
+      prefs,
+      newNamespacePrefsKeys,
+      viewAll
+    }, () => {
+      setTimeout(() => {
+        this.setState({
+          newNamespacePrefsKeys: []
+        });
+      }, 3000);
+    });
+  }
+
+  componentDidUpdate() {
+    let highlightedElems = document.getElementsByClassName('highlighted');
+    if (highlightedElems.length) {
+      highlightedElems[0].scrollIntoView();
+    }
+  }
+
+  componentWillUnmount() {
+    this.eventEmitter.off(globalEvents.NSPREFERENCESSAVED, getNamespacePrefs);
+  }
+
+  getPrefsForDisplay(namespacePrefs, systemPrefs) {
+    let prefs = {...systemPrefs, ...namespacePrefs};
+    let sortedPrefObjectKeys = [...Object.keys(prefs)].sort();
+    return sortedPrefObjectKeys.map(prefKey => {
+      return {
+        key: prefKey,
+        scope: prefKey in namespacePrefs ? T.translate('features.NamespaceDetails.namespace') : T.translate('commons.cdap'),
+        value: prefs[prefKey],
+      };
+    });
+  }
 
   toggleModal = () => {
     this.setState({
@@ -152,19 +130,125 @@ export default class NamespaceDetailsPreferences extends Component {
     });
   };
 
+  toggleViewAll = () => {
+    this.setState({
+      viewAll: !this.state.viewAll
+    });
+  }
+
+  renderPreferencesLabel() {
+    let label;
+    if (!this.state.prefs.length) {
+      label = <strong>{T.translate(`${PREFIX}.label`)}</strong>;
+    } else {
+      label = <strong>{T.translate(`${PREFIX}.labelWithCount`, {count: this.state.prefs.length})}</strong>;
+    }
+
+    return (
+      <div className="namespace-details-section-label">
+        {label}
+        <span
+          className="edit-label"
+          onClick={this.toggleModal}
+        >
+          {T.translate('features.NamespaceDetails.edit')}
+        </span>
+      </div>
+    );
+  }
+
+  renderPreferencesTable() {
+    if (!this.state.prefs.length) {
+      return (
+        <div className="text-xs-center">
+          {T.translate(`${PREFIX}.noPreferences`)}
+        </div>
+      );
+    }
+
+    let prefs = [...this.state.prefs];
+
+    if (!this.state.viewAll && prefs.length > 5) {
+      prefs = prefs.slice(0, 5);
+    }
+
+    // have to do this in a render function since this.state.newNamespacePrefsKeys is emptied after 3 secs
+    prefs = prefs.map(pref => {
+      return {
+        ...pref,
+        highlighted: this.state.newNamespacePrefsKeys.indexOf(pref.key) !== -1
+      };
+    });
+
+    return (
+      <SortableTable
+        entities={prefs}
+        tableHeaders={PREFERENCES_TABLE_HEADERS}
+        renderTableBody={this.renderPreferencesTableBody}
+        className="preferences-table"
+        sortOnInitialLoad={true}
+      />
+    );
+  }
+
+  renderViewMore() {
+    if (this.state.prefs.length <= 5) {
+      return null;
+    }
+
+    return (
+      <span
+        className="view-more-label"
+        onClick={this.toggleViewAll}
+      >
+        {
+          this.state.viewAll ?
+            T.translate(`${PREFIX}.viewLess`)
+          :
+            T.translate(`${PREFIX}.viewAll`)
+        }
+      </span>
+    );
+  }
+
+  renderPreferencesTableBody = (prefs) => {
+    return (
+      <tbody>
+        {
+          prefs
+            .map((pref, index) => {
+              return (
+                <tr
+                  className={classnames({highlighted: pref.highlighted})}
+                  key={index}
+                >
+                  <td title={pref.key}>
+                    {pref.key}
+                  </td>
+                  <td>{pref.scope}</td>
+                  <td title={pref.value}>
+                    {pref.value}
+                  </td>
+                </tr>
+              );
+            })
+        }
+      </tbody>
+    );
+  };
+
   render() {
     return (
       <div className="namespace-details-preferences">
-        <ConnectedPreferencesLabel
-          toggleModal={this.toggleModal}
-        />
-        <ConnectedPreferencesTable />
+        {this.renderPreferencesLabel()}
+        {this.renderPreferencesTable()}
+        {this.renderViewMore()}
         {
           this.state.modalOpen ?
             <SetPreferenceModal
               isOpen={this.state.modalOpen}
               toggleModal={this.toggleModal}
-              onSuccess={getNamespacePrefs}
+              setAtLevel={PREFERENCES_LEVEL.NAMESPACE}
             />
           :
             null
@@ -173,3 +257,13 @@ export default class NamespaceDetailsPreferences extends Component {
     );
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    namespacePrefs: state.namespacePrefs,
+    systemPrefs: state.systemPrefs
+  };
+};
+
+const ConnectedNamespaceDetailsPreferences = connect(mapStateToProps)(NamespaceDetailsPreferences);
+export default ConnectedNamespaceDetailsPreferences;

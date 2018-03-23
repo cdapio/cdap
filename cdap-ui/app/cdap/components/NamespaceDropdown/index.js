@@ -22,6 +22,7 @@ import AbstractWizard from 'components/AbstractWizard';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
+import {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import IconSVG from 'components/IconSVG';
 import {MySearchApi} from 'api/search';
 import isObject from 'lodash/isObject';
@@ -319,7 +320,7 @@ export default class NamespaceDropdown extends Component {
                     <div className="current-namespace-preferences text-xs-center">
                       <h4 className="btn-group">
                         <SetPreferenceAction
-                          setAtNamespaceLevel={true}
+                          setAtLevel={PREFERENCES_LEVEL.NAMESPACE}
                           modalIsOpen={this.preferenceWizardIsOpen.bind(this)}
                           onSuccess={this.preferencesAreSaved.bind(this)}
                           savedMessageState={this.state.preferencesSavedMessage}

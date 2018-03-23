@@ -40,21 +40,29 @@ const NamespaceDetailsMapping = ({hdfsRootDirectory, hbaseNamespaceName, hiveDat
       <div className="mapping-values-group">
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.hdfsRootDirectory`)}</strong>
-          <span>{hdfsRootDirectory || '- -'}</span>
+          <span title={hdfsRootDirectory}>
+            {hdfsRootDirectory || '- -'}
+          </span>
         </span>
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.hbaseNamespaceName`)}</strong>
-          <span>{hbaseNamespaceName || '- -'}</span>
+          <span title={hbaseNamespaceName}>
+            {hbaseNamespaceName || '- -'}
+          </span>
         </span>
       </div>
       <div className="mapping-values-group">
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.hiveDatabaseName`)}</strong>
-          <span>{hiveDatabaseName || '- -'}</span>
+          <span title={hiveDatabaseName}>
+            {hiveDatabaseName || '- -'}
+          </span>
         </span>
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.schedulerQueueName`)}</strong>
-          <span>{schedulerQueueName || '- -'}</span>
+          <span title={schedulerQueueName}>
+            {schedulerQueueName || '- -'}
+          </span>
         </span>
       </div>
     </div>

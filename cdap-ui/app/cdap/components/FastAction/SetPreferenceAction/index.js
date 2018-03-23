@@ -21,7 +21,7 @@ import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
 import {Tooltip} from 'reactstrap';
 import classnames from 'classnames';
-import SetPreferenceModal from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
+import SetPreferenceModal, {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import NamespaceStore from 'services/NamespaceStore';
 require('./SetPreferenceAction.scss');
 
@@ -76,7 +76,10 @@ export default class SetPreferenceAction extends Component {
 
   render() {
     const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
-    let iconClasses = classnames({'fa-lg': this.props.setAtNamespaceLevel}, {'text-success': this.state.preferencesSaved});
+    let iconClasses = classnames(
+      {'fa-lg': this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE},
+      {'text-success': this.state.preferencesSaved}
+    );
     let tooltipID = `${this.namespace}-setpreferences`;
     if (this.props.entity) {
       tooltipID = `setpreferences-${this.props.entity.uniqueId}`;
@@ -107,6 +110,7 @@ export default class SetPreferenceAction extends Component {
               toggleModal={this.toggleModal}
               entity={this.props.entity}
               onSuccess={this.onSuccess}
+              setAtLevel={this.props.setAtLevel}
             />
           :
             null
@@ -124,14 +128,13 @@ SetPreferenceAction.propTypes = {
     type: PropTypes.oneOf(['application', 'program']).isRequired,
     programType: PropTypes.string
   }),
-  setAtNamespaceLevel: PropTypes.bool,
+  setAtLevel: PropTypes.string,
   modalIsOpen: PropTypes.func,
   onSuccess: PropTypes.func,
   savedMessageState: PropTypes.bool
 };
 
 SetPreferenceAction.defaultProps = {
-  setAtNamespaceLevel: false,
   modalIsOpen: () => {},
   onSuccess: () => {},
   savedMessageState: false
