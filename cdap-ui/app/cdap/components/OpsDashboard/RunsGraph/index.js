@@ -24,6 +24,9 @@ import TypeSelector from 'components/OpsDashboard/RunsGraph/TypeSelector';
 import {Observable} from 'rxjs/Observable';
 import IconSVG from 'components/IconSVG';
 import {next, prev} from 'components/OpsDashboard/store/ActionCreator';
+import RunsTable from 'components/OpsDashboard/RunsGraph/RunsTable';
+import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import classnames from 'classnames';
 
 require('./RunsGraph.scss');
 
@@ -34,10 +37,29 @@ class RunsGraphView extends Component {
   static propTypes = {
     loading: PropTypes.bool,
     data: PropTypes.array,
-    legends: PropTypes.object
+    legends: PropTypes.object,
+    displayType: PropTypes.oneOf(['chart', 'table']),
+    changeDisplay: PropTypes.func
   };
 
   componentDidMount() {
+    this.windowResizeSubscribe();
+  }
+
+  componentDidUpdate() {
+    if (this.props.displayType === 'table') {
+      this.windowResizeUnsubscribe();
+    } else {
+      this.windowResizeSubscribe();
+      this.renderGraph();
+    }
+  }
+
+  componentWillUnmount() {
+    this.windowResizeUnsubscribe();
+  }
+
+  windowResizeSubscribe() {
     // update graph on window resize
     this.windowResize$ = Observable.fromEvent(window, 'resize')
       .debounceTime(500)
@@ -46,11 +68,7 @@ class RunsGraphView extends Component {
       });
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.renderGraph(nextProps);
-  }
-
-  componentWillUnmount() {
+  windowResizeUnsubscribe() {
     if (this.windowResize$ && this.windowResize$.unsubscribe) {
       this.windowResize$.unsubscribe();
     }
@@ -64,6 +82,14 @@ class RunsGraphView extends Component {
   }
 
   render() {
+    const chart = (
+      <div id={RUNS_GRAPH_CONTAINER}>
+        <svg id="runs-graph" />
+      </div>
+    );
+
+    const table = <RunsTable />;
+
     return (
       <div className="runs-graph-container">
         <div className="top-panel">
@@ -79,17 +105,29 @@ class RunsGraphView extends Component {
             </div>
 
             <div className="display-type">
-              <span className="active">Chart</span>
+              <span
+                className={classnames('option', {
+                  'active': this.props.displayType === 'chart'
+                })}
+                onClick={this.props.changeDisplay.bind(this, 'chart')}
+              >
+                Chart
+              </span>
               <span className="separator">|</span>
-              <span>Table</span>
+              <span
+                className={classnames('option', {
+                  'active': this.props.displayType === 'table'
+                })}
+                onClick={this.props.changeDisplay.bind(this, 'table')}
+              >
+                Table
+              </span>
             </div>
           </div>
         </div>
 
         <div className="graph-container">
-          <div id={RUNS_GRAPH_CONTAINER}>
-            <svg id="runs-graph" />
-          </div>
+          {this.props.displayType === 'chart' ? chart : table}
 
           <div
             className="navigation arrow-left"
@@ -105,7 +143,7 @@ class RunsGraphView extends Component {
           </div>
         </div>
 
-        <Legends />
+        {this.props.displayType === 'chart' ? <Legends /> : null}
 
         <ToggleRunsList />
       </div>
@@ -117,12 +155,27 @@ const mapStateToProps = (state) => {
   return {
     loading: state.dashboard.loading,
     data: state.dashboard.data,
-    legends: state.legends
+    legends: state.legends,
+    displayType: state.dashboard.displayType
+  };
+};
+
+const mapDispatch = (dispatch) => {
+  return {
+    changeDisplay: (displayType) => {
+      dispatch({
+        type: DashboardActions.changeDisplayType,
+        payload: {
+          displayType
+        }
+      });
+    }
   };
 };
 
 const RunsGraph = connect(
-  mapStateToProps
+  mapStateToProps,
+  mapDispatch
 )(RunsGraphView);
 
 export default RunsGraph;
