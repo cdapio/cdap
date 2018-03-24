@@ -22,7 +22,7 @@ the License.
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>4.3.4-SNAPSHOT</version>
+    <version>4.3.4</version>
   </parent>
 
   <artifactId>cdap-app-fabric-tests</artifactId>
