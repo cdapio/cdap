@@ -17,6 +17,8 @@
 package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
@@ -36,6 +38,8 @@ import java.util.concurrent.Callable;
 public class DefaultImpersonator implements Impersonator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultImpersonator.class);
+  // Log once every 100 calls
+  private static final Logger IMPERSONATION_FAILTURE_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
   private final UGIProvider ugiProvider;
   private final boolean kerberosEnabled;
   private String masterShortUsername;
@@ -77,20 +81,23 @@ public class DefaultImpersonator implements Impersonator {
 
   private UserGroupInformation getUGI(NamespacedEntityId entityId,
                                       ImpersonatedOpType impersonatedOpType) throws IOException {
+    UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
-      return UserGroupInformation.getCurrentUser();
+      return currentUser;
     }
 
     ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId, impersonatedOpType);
-    UserGroupInformation configuredUGI = ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
-    // Only cdap master user is allowed to impersonate another user besides itself. See CDAP-8641
-    String currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
-    if (currUserShortName.equals(masterShortUsername) || currUserShortName.equals(configuredUGI.getShortUserName())) {
-      return configuredUGI;
+    // if the current user is not same as cdap master user then it means we are already impersonating some user
+    // and hence we should not allow another impersonation. See CDAP-8641 and CDAP-13123
+    // Note that this is just a temporary fix and we will need to revisit the impersonation model in the future.
+    if (!currentUser.getShortUserName().equals(masterShortUsername)) {
+      LOG.debug("Not impersonating for {} as the call is already impersonated as {}",
+                impersonationRequest, currentUser);
+      IMPERSONATION_FAILTURE_LOG.warn("Not impersonating for {} as the call is already impersonated as {}",
+                                      impersonationRequest, currentUser);
+      return currentUser;
     }
-    throw new IllegalStateException(String.format("Invalid impersonation request made by the system. " +
-                                                    "User %s is not allowed to impersonate user %s.",
-                                                  UserGroupInformation.getCurrentUser(), configuredUGI));
+    return ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
   }
 }

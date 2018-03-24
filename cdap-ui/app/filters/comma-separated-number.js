@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,20 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@tracker-blue: #0077dc;
 
-my-jump-button {
-  .btn-jump {
-    padding: 5px 10px;
-    transition: background-color 0.1s ease-in-out;
-    &:hover,
-    &:focus {
-      background-color: @tracker-blue;
-      color: white;
-    }
-  }
-
-  .jump-button-group > div {
-    display: inline-block;
-  }
-}
+/**
+ * Adds comma separator to numeric strings with ellipsis. e.g. '...11111' -> '...11,111'.
+ * If the string doesn't contain ellipses, then just returns the comma separated number as string.
+ **/
+angular.module(PKG.name+'.filters').filter('commaSeparatedNumber', function() {
+  return function (input) {
+    return parseInt(input, 10).toLocaleString('en');
+  };
+});

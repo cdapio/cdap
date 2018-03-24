@@ -42,7 +42,8 @@ import java.io.File;
 /**
  * Distributed ProgramRunner for Service.
  */
-public class DistributedServiceProgramRunner extends DistributedProgramRunner {
+public class DistributedServiceProgramRunner extends DistributedProgramRunner
+                                             implements LongRunningDistributedProgramRunner {
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,

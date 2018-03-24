@@ -19,7 +19,9 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -31,6 +33,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
@@ -209,6 +212,30 @@ public class PartitionedFileSetTest {
     Assert.assertEquals(group, loc.getGroup());
     Map<String, String> props = dsFrameworkUtil.getSpec(pfsInstance).getSpecification("partitions").getProperties();
     Assert.assertEquals(tablePermissions, TableProperties.getTablePermissions(props));
+  }
+
+  @Test
+  public void testDefaultBasePath() throws Exception {
+    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testDefaultPath");
+    dsFrameworkUtil.createInstance("partitionedFileSet", id, PartitionedFileSetProperties.builder()
+      .setPartitioning(PARTITIONING_1)
+      .build());
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(id);
+    Location baseLocation = pfs.getEmbeddedFileSet().getBaseLocation();
+    Assert.assertEquals(baseLocation.getName(), id.getDataset());
+    Assert.assertTrue(baseLocation.exists());
+    Assert.assertTrue(baseLocation.isDirectory());
+
+    DatasetId fid = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testDefaultPathFileSet");
+    dsFrameworkUtil.createInstance("fileSet", fid, FileSetProperties.builder().build());
+    FileSet fs = dsFrameworkUtil.getInstance(fid);
+    Location fsBaseLocation = fs.getBaseLocation();
+
+    Assert.assertEquals(Locations.getParent(baseLocation), Locations.getParent(fsBaseLocation));
+
+    dsFrameworkUtil.deleteInstance(fid);
+    dsFrameworkUtil.deleteInstance(id);
+    Assert.assertFalse(baseLocation.exists());
   }
 
   @Test

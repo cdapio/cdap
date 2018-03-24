@@ -26,33 +26,26 @@ angular.module(PKG.name+'.commons')
       disabled: '=',
       portName: '='
     },
-    link: function(scope) {
-      let metricsTimeout = null;
-
-      scope.onClick = scope.onClick();
-
-      scope.$watch('metricsData', function () {
-        angular.forEach(scope.metricsData, function (value, key) {
-          metricsTimeout = $timeout(function () {
-            let nodeElem = document.getElementById(key);
-            let nodeMetricsElem = nodeElem.querySelector(`.metrics-content`);
-            if (nodeMetricsElem && nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
-              let recordsOutLabelElem = nodeMetricsElem.querySelector('.metric-records-out-label');
-              if (recordsOutLabelElem) {
-                recordsOutLabelElem.parentNode.removeChild(recordsOutLabelElem);
-              }
-              let errorsLabelElem = nodeMetricsElem.querySelector('.metric-errors-label');
-              if (errorsLabelElem) {
-                errorsLabelElem.parentNode.removeChild(errorsLabelElem);
-              }
-            }
-          });
+    controller: function($scope) {
+      $scope.showLabels = true;
+      $scope.timeout = null;
+      $scope.$watch('metricsData', function () {
+        $scope.timeout = $timeout(() => {
+          let nodeElem = document.getElementById($scope.node.name);
+          let nodeMetricsElem = nodeElem.querySelector(`.metrics-content`);
+          if (nodeMetricsElem && nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
+            $scope.showLabels = false;
+          }
         });
       }, true);
-
-      scope.$on('$destroy', function () {
-        $timeout.cancel(metricsTimeout);
+      $scope.$on('$destroy', () => {
+        if ($scope.timeout) {
+          $timeout.cancel($scope.timeout);
+        }
       });
+    },
+    link: function(scope) {
+      scope.onClick = scope.onClick();
     }
   };
 });

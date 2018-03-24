@@ -1,6 +1,6 @@
 {
     "artifact": {
-        "name": "cdap-etl-batch",
+        "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
         "version": "5.0.0-SNAPSHOT"
     },

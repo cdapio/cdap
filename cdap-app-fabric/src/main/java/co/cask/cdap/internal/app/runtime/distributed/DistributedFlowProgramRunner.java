@@ -65,7 +65,8 @@ import java.util.Set;
 /**
  * A {@link ProgramRunner} to start a {@link Flow} program in distributed mode.
  */
-public final class DistributedFlowProgramRunner extends DistributedProgramRunner {
+public final class DistributedFlowProgramRunner extends DistributedProgramRunner
+                                                implements LongRunningDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedFlowProgramRunner.class);
 
@@ -80,7 +81,7 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
                                TransactionExecutorFactory txExecutorFactory,
                                TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                Impersonator impersonator) {
-    super(twillRunner,  hConf, cConfig, tokenSecureStoreRenewer, impersonator);
+    super(twillRunner, hConf, cConfig, tokenSecureStoreRenewer, impersonator);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;

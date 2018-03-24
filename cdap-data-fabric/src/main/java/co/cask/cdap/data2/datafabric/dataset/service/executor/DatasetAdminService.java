@@ -102,40 +102,34 @@ public class DatasetAdminService {
       final DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespace());
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
-      final DatasetType type = ImpersonationUtils.doAs(ugi, new Callable<DatasetType>() {
-        @Override
-        public DatasetType call() throws Exception {
-          DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
-          if (type == null) {
-            throw new BadRequestException(
-              String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
-          }
-          return type;
+      final DatasetType type = ImpersonationUtils.doAs(ugi, () -> {
+        DatasetType type1 = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
+        if (type1 == null) {
+          throw new BadRequestException(
+            String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
         }
+        return type1;
       });
 
-      DatasetSpecification spec = ImpersonationUtils.doAs(ugi, new Callable<DatasetSpecification>() {
-        @Override
-        public DatasetSpecification call() throws Exception {
-          DatasetSpecification spec = existing == null ? type.configure(datasetInstanceId.getEntityName(), props)
-            : type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
+      DatasetSpecification spec = ImpersonationUtils.doAs(ugi, () -> {
+        DatasetSpecification spec1 = existing == null ? type.configure(datasetInstanceId.getEntityName(), props)
+          : type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
 
-          DatasetAdmin admin = type.getAdmin(context, spec);
-          try {
-            if (existing != null) {
-              if (admin instanceof Updatable) {
-                ((Updatable) admin).update(existing);
-              } else {
-                admin.upgrade();
-              }
+        DatasetAdmin admin = type.getAdmin(context, spec1);
+        try {
+          if (existing != null) {
+            if (admin instanceof Updatable) {
+              ((Updatable) admin).update(existing);
             } else {
-              admin.create();
+              admin.upgrade();
             }
-          } finally {
-            Closeables.closeQuietly(admin);
+          } else {
+            admin.create();
           }
-          return spec;
+        } finally {
+          Closeables.closeQuietly(admin);
         }
+        return spec1;
       });
 
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
@@ -162,12 +156,7 @@ public class DatasetAdminService {
       Dataset dataset = null;
       try {
         try {
-          dataset = ImpersonationUtils.doAs(ugi, new Callable<Dataset>() {
-            @Override
-            public Dataset call() throws Exception {
-              return type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
-            }
-          });
+          dataset = ImpersonationUtils.doAs(ugi, () -> type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS));
         } catch (Exception e) {
           LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
         }
@@ -201,23 +190,20 @@ public class DatasetAdminService {
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
-      ImpersonationUtils.doAs(ugi, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
+      ImpersonationUtils.doAs(ugi, (Callable<Void>) () -> {
+        DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
 
-          if (type == null) {
-            throw new BadRequestException(
-              String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
-          }
-          DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
-          try {
-            admin.drop();
-          } finally {
-            Closeables.closeQuietly(admin);
-          }
-          return null;
+        if (type == null) {
+          throw new BadRequestException(
+            String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
         }
+        DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
+        try {
+          admin.drop();
+        } finally {
+          Closeables.closeQuietly(admin);
+        }
+        return null;
       });
     }
 

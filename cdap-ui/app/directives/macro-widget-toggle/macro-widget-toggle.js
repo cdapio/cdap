@@ -20,7 +20,11 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
   vm.isMacro = false;
 
   let timeout;
-
+  vm.editorTypeWidgets = [
+    'scala-editor',
+    'javascript-editor',
+    'python-editor'
+  ];
   vm.toggleMacro = () => {
     if (vm.disabled) { return; }
 

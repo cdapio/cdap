@@ -29,6 +29,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.http.NettyHttpService;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
+import org.apache.twill.api.TwillPreparer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,9 @@ public final class SystemArguments {
   // Keys for metrics system
   public static final String METRICS_ENABLED = "system.metrics.enabled";
   public static final String METRICS_CONTEXT_TASK_INCLUDED = "system.metrics.context.task.included";
+  private static final String YARN_MAX_APP_ATTEMPTS = "system.yarn.max.app.attempts";
+  private static final String YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL
+    = "system.yarn.attempt.failures.validity.interval";
 
   // Keys for http service
   public static final String SERVICE_THREADS = "system.service.threads";
@@ -263,6 +267,27 @@ public final class SystemArguments {
     }
     return new Resources(memory != null ? memory : defaultResources.getMemoryMB(),
                          cores != null ? cores : defaultResources.getVirtualCores());
+  }
+
+  /**
+   * Returns the twill configurations to be used in {@link TwillPreparer#withConfiguration(Map)} based on the
+   * runtime arguments.
+   */
+  public static Map<String, String> getTwillApplicationConfigs(Map<String, String> args) {
+    Map<String, String> result = new HashMap<>();
+
+    Integer maxAttempts = getPositiveInt(args, YARN_MAX_APP_ATTEMPTS, YARN_MAX_APP_ATTEMPTS);
+    if (maxAttempts != null) {
+      result.put(Configs.Keys.YARN_MAX_APP_ATTEMPTS, maxAttempts.toString());
+    }
+
+    Long failureValidityInterval = getLong(args, YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
+                                           YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL);
+    if (failureValidityInterval != null) {
+      result.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL, failureValidityInterval.toString());
+    }
+
+    return result;
   }
 
   /**

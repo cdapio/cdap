@@ -28,7 +28,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.util.HashMap;
@@ -64,7 +64,7 @@ public class ConnectorSource<T> extends BatchSource<LongWritable, Text, T> {
     workflowConfigurer.createLocalDataset(datasetName, PartitionedFileSet.class,
                                           PartitionedFileSetProperties.builder()
                                             .setPartitioning(partitioning)
-                                            .setInputFormat(TextInputFormat.class)
+                                            .setInputFormat(CombineTextInputFormat.class)
                                             .setOutputFormat(TextOutputFormat.class)
                                             .build());
   }

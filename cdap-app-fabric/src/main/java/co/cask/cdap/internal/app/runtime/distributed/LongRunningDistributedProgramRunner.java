@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,11 @@
  * the License.
  */
 
+package co.cask.cdap.internal.app.runtime.distributed;
+
 /**
- * Similar to ellipsis.js filter, but show ellipses in the front instead
- **/
-angular.module(PKG.name+'.filters').filter('myLeadingEllipsis', function() {
-  return function (input, limit, lastDigitsToShow) {
-    if (typeof input !== 'string') {
-      input = input.toString();
-    }
+ * Just a tagging interface for {@link DistributedProgramRunner} that represents long running program.
+ */
+public interface LongRunningDistributedProgramRunner {
 
-    if (input.length > limit && limit > lastDigitsToShow) {
-      return '\u2026' + input.substring(input.length - lastDigitsToShow);
-    }
-
-    return input;
-  };
-});
+}

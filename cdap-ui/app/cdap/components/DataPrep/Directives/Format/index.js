@@ -160,9 +160,6 @@ export default class Format extends Component {
   }
 
   componentDidUpdate() {
-    if (this.props.isOpen) {
-      Mousetrap.bind('enter', this.getConcatExpressionAndApply);
-    }
     if (this.props.isOpen && !this.state.isDisabled && this.calculateOffset) {
       this.calculateOffset();
     }
@@ -203,7 +200,7 @@ export default class Format extends Component {
   };
 
   applyDateFormat = (name, format) => {
-    let directive = `format-date ${this.props.column} ${format}`;
+    let directive = `format-date :${this.props.column} ${format}`;
     this.applyDirective(directive);
   };
 

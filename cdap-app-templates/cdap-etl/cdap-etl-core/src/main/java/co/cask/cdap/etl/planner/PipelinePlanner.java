@@ -44,13 +44,15 @@ public class PipelinePlanner {
   private final Set<String> isolationTypes;
   private final Set<String> supportedPluginTypes;
   private final Set<String> actionTypes;
+  private final Set<String> multiPortTypes;
 
   public PipelinePlanner(Set<String> supportedPluginTypes, Set<String> reduceTypes, Set<String> isolationTypes,
-                         Set<String> actionTypes) {
+                         Set<String> actionTypes, Set<String> multiPortTypes) {
     this.reduceTypes = ImmutableSet.copyOf(reduceTypes);
     this.isolationTypes = ImmutableSet.copyOf(isolationTypes);
     this.supportedPluginTypes = ImmutableSet.copyOf(supportedPluginTypes);
     this.actionTypes = ImmutableSet.copyOf(actionTypes);
+    this.multiPortTypes = ImmutableSet.copyOf(multiPortTypes);
   }
 
   /**
@@ -80,6 +82,7 @@ public class PipelinePlanner {
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
     Set<String> actionNodes = new HashSet<>();
+    Set<String> multiPortNodes = new HashSet<>();
     Set<String> allNodes = new HashSet<>();
 
     // Map to hold the connection information from condition nodes to the first stage
@@ -103,6 +106,9 @@ public class PipelinePlanner {
       if (actionTypes.contains(pluginType)) {
         // Collect all Action nodes from spec
         actionNodes.add(stage.getName());
+      }
+      if (multiPortTypes.contains(pluginType)) {
+        multiPortNodes.add(stage.getName());
       }
       if (Condition.PLUGIN_TYPE.equals(pluginType)) {
         conditionBranches.put(stage.getName(), new ConditionBranches(null, null));
@@ -168,7 +174,7 @@ public class PipelinePlanner {
     Map<String, String> connectorNodes = new HashMap<>();
     // now split the logical pipeline into pipeline phases, using the connectors as split points
     Set<Dag> splittedDag = split(spec.getConnections(), conditionBranches.keySet(), reduceNodes, isolationNodes,
-                                 actionNodes, connectorNodes);
+                                 actionNodes, multiPortNodes, connectorNodes);
     Map<String, String> controlConnectors = getConnectorsAssociatedWithConditions(conditionBranches.keySet(),
                                                                                   conditionChildToParent,
                                                                                   conditionInputs, conditionOutputs,
@@ -176,8 +182,7 @@ public class PipelinePlanner {
 
     Map<String, Dag> subdags = new HashMap<>();
     for (Dag subdag : splittedDag) {
-      String name = getPhaseName(subdag.getSources(), subdag.getSinks());
-      subdags.put(name, subdag);
+      subdags.put(getPhaseName(subdag), subdag);
     }
 
     // build connections between phases and convert dags to PipelinePhase.
@@ -372,16 +377,22 @@ public class PipelinePlanner {
   }
 
   @VisibleForTesting
-  static String getPhaseName(Set<String> sources, Set<String> sinks) {
+  static String getPhaseName(Dag dag) {
+    return getPhaseName(dag.getSources(), dag.getSinks(), String.valueOf(dag.hashCode()));
+  }
+
+  @VisibleForTesting
+  static String getPhaseName(Set<String> sources, Set<String> sinks, String tail) {
     // using sorted sets to guarantee the name is deterministic
     return Joiner.on('.').join(new TreeSet<>(sources)) +
       ".to." +
-      Joiner.on('.').join(new TreeSet<>(sinks));
+      Joiner.on('.').join(new TreeSet<>(sinks)) + "." + tail;
   }
 
   @VisibleForTesting
   static Set<Dag> split(Set<Connection> connections, Set<String> conditions, Set<String> reduceNodes,
-                        Set<String> isolationNodes, Set<String> actionNodes, Map<String, String> connectorNodes) {
+                        Set<String> isolationNodes, Set<String> actionNodes, Set<String> multiPortNodes,
+                        Map<String, String> connectorNodes) {
     Dag dag = new Dag(connections);
     Set<Dag> subdags = dag.splitByControlNodes(conditions, actionNodes);
 
@@ -400,6 +411,7 @@ public class PipelinePlanner {
         .addDag(subdag)
         .addReduceNodes(subdagReduceNodes)
         .addIsolationNodes(subdagIsolationNodes)
+        .addMultiPortNodes(multiPortNodes)
         .build();
 
       cdag.insertConnectors();

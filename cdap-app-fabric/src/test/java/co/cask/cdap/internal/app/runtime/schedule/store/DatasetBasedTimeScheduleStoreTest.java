@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -42,10 +43,13 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
@@ -63,6 +67,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.simpl.RAMJobStore;
@@ -95,6 +100,8 @@ public class DatasetBasedTimeScheduleStoreTest {
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpsService;
   private static DatasetService dsService;
+  private static DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
+  private static ScheduleStoreTableUtil tableUtil;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -140,7 +147,9 @@ public class DatasetBasedTimeScheduleStoreTest {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
-      js = new DatasetBasedTimeScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf), conf);
+      tableUtil = new ScheduleStoreTableUtil(dsFramework, conf);
+      datasetBasedTimeScheduleStore = new DatasetBasedTimeScheduleStore(factory, tableUtil, conf);
+      js = datasetBasedTimeScheduleStore;
     } else {
       js = new RAMJobStore();
     }
@@ -325,6 +334,65 @@ public class DatasetBasedTimeScheduleStoreTest {
     verifyJobAndTriggers(job1.getKey(), 2, Trigger.TriggerState.NORMAL);
     verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
 
+    schedulerTearDown();
+  }
+
+  @Test
+  public void testTriggersWithoutJobs() throws Exception {
+    schedulerSetup(true);
+
+    // Schedule 2 Jobs each with 1 Trigger
+    final JobDetail job1 = getJobDetail("MR1");
+    final Trigger job1Trigger = getTrigger("MR1Trigger");
+    scheduler.scheduleJob(job1, job1Trigger);
+    JobDetail job2 = getJobDetail("MR2");
+    Trigger job2Trigger = getTrigger("MR2Trigger");
+    scheduler.scheduleJob(job2, job2Trigger);
+
+    // Make sure Jobs and Triggers are setup correctly
+    verifyJobAndTriggers(job1.getKey(), 1, Trigger.TriggerState.NORMAL);
+    verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
+
+    // Delete the row corresponding to the Job MR1 to create inconsistency
+    final Table table = tableUtil.getMetaTable();
+
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          datasetBasedTimeScheduleStore.removeJob(table, job1.getKey());
+        }
+      });
+
+    // Make sure Jobs and Triggers are setup correctly
+    verifyJobAndTriggers(job1.getKey(), 1, Trigger.TriggerState.NORMAL);
+    verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
+
+    // Restart the scheduler it should not throw exception
+    schedulerTearDown();
+    schedulerSetup(true);
+
+    // Make sure that Job2 still has valid trigger associated with it
+    verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
+
+    // Since Job is deleted from store, JobDetails should be null
+    JobDetail jobDetail = scheduler.getJobDetail(job1.getKey());
+    Assert.assertNull(jobDetail);
+
+    // Since we do not add trigger now if the Job is not present, getting Trigger from scheduler should return null
+    Trigger trigger = scheduler.getTrigger(job1Trigger.getKey());
+    Assert.assertNull(trigger);
+
+    // Make sure we actually deleted the entry from the persistent store as well for the Trigger
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          DatasetBasedTimeScheduleStore.TriggerStatusV2 triggerStatusV2
+            = datasetBasedTimeScheduleStore.readTrigger(table, job1Trigger.getKey());
+          Assert.assertNull(triggerStatusV2);
+        }
+      });
     schedulerTearDown();
   }
 

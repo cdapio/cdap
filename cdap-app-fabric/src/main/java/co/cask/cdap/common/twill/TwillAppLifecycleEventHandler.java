@@ -60,7 +60,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private ProgramStateWriter programStateWriter;
   private ZKClientService zkClientService;
   private AtomicBoolean runningPublished;
-  private AtomicBoolean endStatePublished;
+  private ContainerFailure lastContainerFailure;
 
   /**
    * Constructs an instance of TwillAppLifecycleEventHandler that abort the application if some runnable has no
@@ -100,7 +100,6 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     super.initialize(context);
 
     this.runningPublished = new AtomicBoolean();
-    this.endStatePublished = new AtomicBoolean();
     this.twillRunId = context.getRunId();
     this.programRunId = GSON.fromJson(context.getSpecification().getConfigs().get("programRunId"), ProgramRunId.class);
 
@@ -161,20 +160,19 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   @Override
   public void completed() {
     super.completed();
-
-    // If we already stopped the container due to an error, just return
-    if (endStatePublished.compareAndSet(false, true)) {
+    // On normal AM completion, based on the last container failure to publish the state
+    if (lastContainerFailure == null) {
       programStateWriter.completed(programRunId);
+    } else {
+      lastContainerFailure.writeError(programStateWriter, programRunId);
     }
   }
 
   @Override
   public void killed() {
     super.killed();
-
-    if (endStatePublished.compareAndSet(false, true)) {
-      programStateWriter.killed(programRunId);
-    }
+    // The AM is stopped explicitly, always record the state as killed.
+    programStateWriter.killed(programRunId);
   }
 
   @Override
@@ -186,16 +184,14 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       return;
     }
 
-    String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
-                                        containerId, instanceId, exitStatus);
     switch(programRunId.getType()) {
       case WORKFLOW:
       case SPARK:
       case MAPREDUCE:
-        // For workflow, MapReduce, and spark, if there is an error, record the error state
-        if (endStatePublished.compareAndSet(false, true)) {
-          programStateWriter.error(programRunId, new Exception(errorMessage));
-        }
+        // For workflow, MapReduce, and spark, if there is an error, the program state is failure
+        // We defer the actual publish to one of the completion methods (killed, completed, aborted)
+        // as we need to know under what condition the container failed.
+        lastContainerFailure = new ContainerFailure(runnableName, instanceId, containerId, exitStatus);
         break;
       default:
         // For other programs, the container will be re-launched - the program state will continue to be RUNNING
@@ -208,16 +204,38 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   @Override
   public void aborted() {
     super.aborted();
-    if (endStatePublished.compareAndSet(false, true)) {
-      programStateWriter.error(
-        programRunId, new Exception(String.format("No containers for %s. Abort the application", programRunId)));
-    }
+    programStateWriter.error(programRunId,
+                             new Exception(String.format("No containers for %s. Abort the application", programRunId)));
   }
 
   @Override
   public void destroy() {
     if (zkClientService != null) {
       zkClientService.stop();
+    }
+  }
+
+  /**
+   * Inner class for hold failure information provided to the {@link #containerStopped(String, int, String, int)}
+   * method.
+   */
+  private static final class ContainerFailure {
+    private final String runnableName;
+    private final int instanceId;
+    private final String containerId;
+    private final int exitStatus;
+
+    ContainerFailure(String runnableName, int instanceId, String containerId, int exitStatus) {
+      this.runnableName = runnableName;
+      this.instanceId = instanceId;
+      this.containerId = containerId;
+      this.exitStatus = exitStatus;
+    }
+
+    void writeError(ProgramStateWriter writer, ProgramRunId programRunId) {
+      String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
+                                          containerId, instanceId, exitStatus);
+      writer.error(programRunId, new Exception(errorMessage));
     }
   }
 }

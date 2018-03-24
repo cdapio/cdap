@@ -192,11 +192,11 @@ public final class SparkRuntimeUtils {
    * @param sparkConf the {@link SparkConf} to save
    * @param propertiesEntryName name of the zip entry for the properties
    * @param confDirPath directory to scan for files to include in the zip file
-   * @param outputZipPath output file
+   * @param zipFile output file
    * @return the zip file
    */
   public static File createConfArchive(SparkConf sparkConf, final String propertiesEntryName,
-                                       String confDirPath, String outputZipPath) {
+                                       String confDirPath, final File zipFile) {
     final Properties properties = new Properties();
     for (Tuple2<String, String> tuple : sparkConf.getAll()) {
       properties.put(tuple._1(), tuple._2());
@@ -204,7 +204,6 @@ public final class SparkRuntimeUtils {
 
     try {
       File confDir = new File(confDirPath);
-      final File zipFile = new File(outputZipPath);
       BundleJarUtil.createArchive(confDir, new OutputSupplier<ZipOutputStream>() {
         @Override
         public ZipOutputStream getOutput() throws IOException {

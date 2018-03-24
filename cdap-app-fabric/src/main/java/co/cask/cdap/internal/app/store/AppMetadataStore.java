@@ -752,7 +752,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   /**
-   * Checks whether the existing run record metas of a given program run are in a state for
+   * Checks whether the existing run record meta of a given program run are in a state for
    * the program run to transition into the given run status.
    * This is required because program states are not guaranteed to be written in order.
    * For example, starting can be written from a twill AM, while running may be written from a twill runnable.
