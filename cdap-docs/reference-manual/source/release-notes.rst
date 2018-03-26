@@ -43,7 +43,7 @@ Improvements
 
 - :cask-issue:`CDAP-13122` - Minor optimization to reduce the number of mappers used to read intermediate data in mapreduce pipelines
 
-- :cask-issue:`CDAP-13139` - Improves the schema generation fro database sources.
+- :cask-issue:`CDAP-13139` - Improves the schema generation for database sources.
 
 - :cask-issue:`CDAP-13179` - Automatic restart of long running program types (Service and Flow) upon application master process failure in YARN
 
