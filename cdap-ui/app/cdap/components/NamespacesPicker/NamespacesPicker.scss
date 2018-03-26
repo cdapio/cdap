@@ -1,0 +1,94 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+
+$dropdown-color: $grey-01;
+$count-color: $grey-03;
+$monitor-more-color: $blue-02;
+
+.namespace-picker {
+  margin-top: 15px;
+
+  .namespace-list-monitor {
+    font-weight: bold;
+    max-width: 350px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .namespaces-list-popover {
+    .monitor-more {
+      color: $monitor-more-color;
+      cursor: pointer;
+    }
+
+    .popper {
+      width: 300px;
+      z-index: 1; // need to be on top of the svg graph
+      text-align: left;
+
+      .title { font-size: 16px; }
+
+      .namespaces-count {
+        margin-top: 5px;
+        margin-bottom: 5px;
+        color: $count-color;
+      }
+
+      .toggle-all-dropdown {
+        .dropdown-toggle-btn {
+          color: $dropdown-color;
+          background-color: transparent;
+          border: 0;
+          padding: 0;
+          line-height: 25px;
+
+          &:hover {
+            color: $dropdown-color;
+            background-color: transparent;
+            border: 0;
+          }
+
+          &:focus { outline: none; }
+        }
+      }
+
+      .namespaces-list {
+        hr {
+          margin-top: 5px;
+          margin-bottom: 5px;
+        }
+
+        .namespace-row {
+          line-height: 25px;
+
+          &:not(.non-selectable) {
+            cursor: pointer;
+          }
+
+          .checkbox-column,
+          .namespace-section {
+            display: inline-block;
+          }
+
+          .checkbox-column { width: 20px; }
+        }
+      }
+    }
+  }
+}
