@@ -52,7 +52,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-12875` - Fixed a bug that caused errors in the File source if it read parquet files that were not generated through Hadoop.
 
-- :cask-issue:`CDAP-13110` - Fixes an issue where a dataset's class loader was closed before the dataset itself, preventing the dataset from closing properly.
+- :cask-issue:`CDAP-13110` - Fixed an issue where a dataset's class loader was closed before the dataset itself, preventing the dataset from closing properly.
 
 - :cask-issue:`CDAP-13120` - Fixed a bug that caused directories to be left around if a workflow used a partitioned fileset as a local dataset
 
@@ -62,11 +62,11 @@ Bug Fixes
 
 - :cask-issue:`CDAP-13158` - Fixed a race condition when running multiple spark programs concurrently at a Workflow fork that can lead to workflow failure
 
-- :cask-issue:`CDAP-13171` - Fixes an issue with creating a namespace if the namespace principal is not a member of the namespace home's group.
+- :cask-issue:`CDAP-13171` - Fixed an issue with creating a namespace if the namespace principal is not a member of the namespace home's group.
 
 - :cask-issue:`CDAP-13191` - Fixed a bug that caused completed run records to be missed when storing run state, resulting in misleading log messages about ignoring killed states.
 
-- :cask-issue:`CDAP-13192` - Fixes a bug in FileBatchSource that prevented ignoreFolders property from working with avro and parquet inputs
+- :cask-issue:`CDAP-13192` - Fixed a bug in FileBatchSource that prevented ignoreFolders property from working with avro and parquet inputs
 
 - :cask-issue:`CDAP-13205` - Fixed an issue where inconsistencies in the schedulestore caused scheduler service to keep exiting.
 
