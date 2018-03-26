@@ -56,7 +56,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-13120` - Fixed a bug that caused directories to be left around if a workflow used a partitioned fileset as a local dataset
 
-- :cask-issue:`CDAP-13123` - Fixed a bug that stream hive exploration query does not work in an impersonated namespace.
+- :cask-issue:`CDAP-13123` - Fixed a bug that caused a hive Explore query on Streams to not work.
 
 - :cask-issue:`CDAP-13129` - Fixed a planner bug to ensure that sinks are never placed in two different mapreduce phases in the same pipeline.
 
