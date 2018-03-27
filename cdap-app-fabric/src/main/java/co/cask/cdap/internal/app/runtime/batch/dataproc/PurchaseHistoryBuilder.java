@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.examples.purchase;
+package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -41,16 +33,12 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Map;
 
 /**
- * MapReduce that reads purchases from the purchases DataSet and creates a purchase history for every user
+ *
  */
 public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
@@ -116,7 +104,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
         @Override
         public void reduce(Text customer, Iterable<Text> values,
-                Context context) throws IOException, InterruptedException {
+                           Context context) throws IOException, InterruptedException {
             int spend = 0;
             for (Text value : values) {
                 spend += getSpend(value.toString());

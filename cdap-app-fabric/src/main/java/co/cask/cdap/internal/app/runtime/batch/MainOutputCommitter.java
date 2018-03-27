@@ -101,13 +101,13 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
                                                             retryStrategy);
 
     // We start long-running tx to be used by mapreduce job tasks.
-    this.transaction = txClient.startLong();
+    //this.transaction = txClient.startLong();
 
     // Write the tx somewhere, so that we can re-use it in mapreduce tasks
     Path txFile = getTxFile(configuration, jobContext.getJobID());
     FileSystem fs = txFile.getFileSystem(configuration);
     try (FSDataOutputStream fsDataOutputStream = fs.create(txFile, false)) {
-      fsDataOutputStream.write(new TransactionCodec().encode(transaction));
+      //fsDataOutputStream.write(new TransactionCodec().encode(transaction));
     }
 
     // we can instantiate the TaskContext after we set the tx above. It's used by the operations below
@@ -135,6 +135,9 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   }
 
   private void commitTx() throws IOException {
+      if (transaction == null) {
+          return;
+      }
     try {
       LOG.debug("Committing MapReduce Job transaction: {}", transaction.getWritePointer());
 
@@ -150,12 +153,12 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       taskContext.flushOperations();
       // no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
       // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
-      try {
-        txClient.commitOrThrow(transaction);
-      } catch (TransactionFailureException e) {
-        LOG.warn("MapReduce Job transaction {} failed to commit", transaction.getTransactionId());
-        throw e;
-      }
+      //try {
+        //txClient.commitOrThrow(transaction);
+      //} catch (TransactionFailureException e) {
+      //  LOG.warn("MapReduce Job transaction {} failed to commit", transaction.getTransactionId());
+      //  throw e;
+      //}
       taskContext.postTxCommit();
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);

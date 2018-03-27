@@ -53,6 +53,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.context.AbstractMessagePublisher;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -127,7 +128,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             DiscoveryServiceClient discoveryServiceClient,
                             MetricsCollectionService metricsCollectionService,
                             TransactionSystemClient txClient,
-                            Transaction transaction,
+                            @Nullable Transaction transaction,
                             DatasetFramework dsFramework,
                             @Nullable PluginInstantiator pluginInstantiator,
                             Map<String, File> localizedResources,
@@ -274,9 +275,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
               throw new UnsupportedOperationException("Publish to topic '" + topicId.getTopic() + "' is not supported");
             }
             // Use storePayload
-            getMessagingService().storePayload(StoreRequestBuilder.of(topicId)
-                                                 .setTransaction(transaction.getWritePointer())
-                                                 .addPayloads(payloads).build());
+              StoreRequestBuilder storeRequestBuilder = StoreRequestBuilder.of(topicId);
+            if (transaction != null) {
+                storeRequestBuilder.setTransaction(transaction.getWritePointer());
+            }
+              storeRequestBuilder.addPayloads(payloads).build();
+              getMessagingService().storePayload(storeRequestBuilder.build());
           }
         };
       }
@@ -325,6 +329,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Initializes the transaction-awares.
    */
   private void initializeTransactionAwares() {
+      if (transaction == null) {
+          return;
+      }
     Iterable<TransactionAware> txAwares = Iterables.concat(getDatasetCache().getStaticTransactionAwares(),
                                                            getDatasetCache().getExtraTransactionAwares());
     for (TransactionAware txAware : txAwares) {
@@ -365,6 +372,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * If a dataset is a new transaction-aware, it starts the transaction and remembers the dataset.
    */
   private <T extends Dataset> void startDatasetTransaction(T dataset) {
+      // return null if tx ==null? or throw exception?
     if (dataset instanceof TransactionAware) {
       TransactionAware txAware = (TransactionAware) dataset;
       if (txAwares.add(txAware)) {
@@ -397,6 +405,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * If any Throwable is encountered, it is suppressed and logged.
    */
   public void postTxCommit() throws Exception {
+      // same here?
     for (TransactionAware txAware : txAwares) {
       try {
         txAware.postTxCommit();

@@ -186,16 +186,16 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         // taskAttemptId could be null if used from a org.apache.hadoop.mapreduce.Partitioner or
         // from a org.apache.hadoop.io.RawComparator, in which case we can get the JobId from the conf. Note that the
         // JobId isn't in the conf for the OutputCommitter#setupJob method, in which case we use the taskAttemptId
-        Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(),
-                                                    taskAttemptId != null ? taskAttemptId.getJobID() : null);
-        FileSystem fs = txFile.getFileSystem(key.getConfiguration());
-        Preconditions.checkArgument(fs.exists(txFile));
+        //Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(),
+        //                                            taskAttemptId != null ? taskAttemptId.getJobID() : null);
+        //FileSystem fs = txFile.getFileSystem(key.getConfiguration());
+        //Preconditions.checkArgument(fs.exists(txFile));
 
-        Transaction tx;
-        try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
-          byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
-          tx = new TransactionCodec().decode(txByteArray);
-        }
+        //Transaction tx;
+        //try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
+        //  byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
+        //  tx = new TransactionCodec().decode(txByteArray);
+        //}
 
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
         MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
@@ -247,7 +247,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         return new BasicMapReduceTaskContext(
           program, options, cConf, taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
-          tx, programDatasetFramework, classLoader.getPluginInstantiator(),
+          null, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
           authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader
         );

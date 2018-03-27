@@ -556,6 +556,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                            mapReduce, "initialize", MapReduceContext.class)
       : TransactionControl.IMPLICIT;
 
+    txControl = TransactionControl.EXPLICIT;
     context.initializeProgram(programLifecycle, txControl, false);
 
     // once the initialize method is executed, set the status of the MapReduce to RUNNING
@@ -598,6 +599,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, MapReduce.class, mapReduce, "destroy")
       : TransactionControl.IMPLICIT;
 
+    txControl = TransactionControl.EXPLICIT;
     context.destroyProgram(programLifecycle, txControl, false);
   }
 
@@ -920,6 +922,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
       classes.add(hbaseTableUtilClass);
     } catch (ProvisionException e) {
+        // this>
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 

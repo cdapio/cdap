@@ -76,7 +76,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
         Preconditions.checkState(future.get() == State.RUNNING, "Failed to start services: %s, %s, %s, %s",
                                  zkClientService, kafkaClientService, metricsCollectionService);
       }
-      logAppenderInitializer.initialize();
+      //logAppenderInitializer.initialize();
       ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
     } catch (Exception e) {
@@ -95,7 +95,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     super.shutDown();
     Exception failure = null;
     try {
-      logAppenderInitializer.close();
+      //logAppenderInitializer.close();
     } catch (Exception e) {
       failure = e;
     }
@@ -121,7 +121,11 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     String runId = arguments.getOption(ProgramOptionConstants.RUN_ID);
     String instanceId = arguments.getOption(ProgramOptionConstants.INSTANCE_ID);
     return Guice.createInjector(
-      new DistributedProgramRunnableModule(cConf, hConf).createModule(mapReduceContextConfig.getProgramId().run(runId),
-                                                                      instanceId, principal));
+//<<<<<<< HEAD
+//      new DistributedProgramRunnableModule(cConf, hConf).createModule(mapReduceContextConfig.getProgramId().run(runId),
+//                                                                      instanceId, principal));
+//=======
+            new co.cask.cdap.internal.app.runtime.batch.dataproc.DistributedProgramRunnableModule(cConf, hConf)
+                                  .createModule(mapReduceContextConfig.getProgramId(), runId, instanceId, principal));
   }
 }
