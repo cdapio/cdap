@@ -26,6 +26,7 @@ const DashboardActions = {
   enableLoading: 'DASHBOARD_ENABLE_LOADING',
   setData: 'DAHBOARD_SET_DATA',
   updateData: 'DASHBOARD_UPDATE_DATA',
+  changeDisplayType: 'DASHBOARD_CHANGE_DISPLAY_TYPE',
   reset: 'DASHBOARD_RESET'
 };
 
@@ -45,7 +46,8 @@ const defaultInitialState = {
   displayRunsList: false,
   displayBucketInfo: null,
   pipeline: true,
-  customApp: true
+  customApp: true,
+  displayType: 'chart'
 };
 
 const legendsInitialState = {
@@ -101,6 +103,11 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         loading: true
+      };
+    case DashboardActions.changeDisplayType:
+      return {
+        ...state,
+        displayType: action.payload.displayType
       };
     case DashboardActions.reset:
       return defaultInitialState;
