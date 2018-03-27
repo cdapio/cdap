@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,13 @@ import KeyValuePairs from 'components/KeyValuePairs';
 import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
 import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
 import NamespaceStore from 'services/NamespaceStore';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
+
+export const PREFERENCES_LEVEL = {
+  SYSTEM: 'SYSTEM',
+  NAMESPACE: 'NAMESPACE'
+};
 
 export default class SetPreferenceModal extends Component {
   constructor(props) {
@@ -47,9 +54,8 @@ export default class SetPreferenceModal extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     this.params = {};
-    this.setAtSystemLevel = this.props.setAtSystemLevel;
 
-    if (this.setAtSystemLevel) {
+    if (this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM) {
       this.getSpecifiedPreferencesApi = MyPreferenceApi.getSystemPreferences;
       this.setPreferencesApi = MyPreferenceApi.setSystemPreferences;
     } else {
@@ -82,6 +88,7 @@ export default class SetPreferenceModal extends Component {
     }
 
     this.apiSubscriptions = [];
+    this.eventEmitter = ee(ee);
     this.toggleTooltip = this.toggleTooltip.bind(this);
     this.onKeyValueChange = this.onKeyValueChange.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
@@ -171,6 +178,9 @@ export default class SetPreferenceModal extends Component {
             if (this.props.onSuccess) {
               this.props.onSuccess();
             }
+            if (this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE) {
+              this.eventEmitter.emit(globalEvents.NSPREFERENCESSAVED);
+            }
             this.props.toggleModal();
             this.setState({saving: false});
           },
@@ -184,17 +194,16 @@ export default class SetPreferenceModal extends Component {
   }
 
   getKeyValPair(prefObj) {
-    let prefArray = [];
-    for (let key in prefObj) {
-      if (prefObj.hasOwnProperty(key)) {
-        prefArray.push({
-          key: key,
-          value: prefObj[key],
-          uniqueId: uuidV4()
-        });
-      }
-    }
-    return prefArray;
+    // doing this to make sure that we iterate through the keys
+    // in alphabetical order
+    let sortedPrefObjectKeys = [...Object.keys(prefObj)].sort();
+    return sortedPrefObjectKeys.map(key => {
+      return {
+        key: key,
+        value: prefObj[key],
+        uniqueId: uuidV4()
+      };
+    });
   }
 
   getKeyValObject() {
@@ -267,7 +276,7 @@ export default class SetPreferenceModal extends Component {
   renderSpecifyPreferences() {
     const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
     let entity, entityWithType, description, tooltipID;
-    if (this.setAtSystemLevel) {
+    if (this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM) {
       entityWithType = 'CDAP';
       description = T.translate('features.FastAction.setPreferencesDescriptionLabel.system');
       tooltipID = `${entityWithType}-title`;
@@ -515,7 +524,7 @@ export default class SetPreferenceModal extends Component {
               </div>
             </div>
             {
-              !this.setAtSystemLevel ?
+              !this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM ?
                 <hr />
               :
                 null
@@ -540,13 +549,11 @@ SetPreferenceModal.propTypes = {
   }),
   isOpen: PropTypes.func.isRequired,
   toggleModal: PropTypes.func.isRequired,
-  setAtNamespaceLevel: PropTypes.bool,
-  setAtSystemLevel: PropTypes.bool,
+  setAtLevel: PropTypes.string,
   onSuccess: PropTypes.func
 };
 
 SetPreferenceModal.defaultProps = {
-  setAtNamespaceLevel: false,
-  setAtSystemLevel: false,
+  setAtLevel: PREFERENCES_LEVEL.SYSTEM,
   onSuccess: () => {}
 };

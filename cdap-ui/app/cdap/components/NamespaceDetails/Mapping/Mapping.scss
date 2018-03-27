@@ -14,23 +14,48 @@
  * the License.
 */
 
+$first-label-width: 150px;
+$last-label-width: 175px;
+
 .namespace-details-mapping {
   .mapping-values-group {
     .mapping-values {
-      strong {
+      display: inline-flex;
+      align-items: center;
+
+      strong,
+      span {
+        display: inline-block;
+      }
+
+      span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         display: inline-block;
       }
 
       &:first-child {
-        padding-right: 200px;
+        width: 40%;
+
         strong {
-          width: 150px;
+          width: $first-label-width;
+        }
+
+        span {
+          max-width: calc(100% - #{$first-label-width});
         }
       }
 
       &:last-child {
+        width: 60%;
+
         strong {
-          width: 175px;
+          width: $last-label-width;
+        }
+
+        span {
+          max-width: calc(100% - #{$last-label-width});
         }
       }
     }
