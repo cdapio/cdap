@@ -48,8 +48,9 @@ public interface Provisioner {
    * @param context provisioner context
    * @return information about the cluster
    * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
    */
-  Cluster createCluster(ProvisionerContext context) throws RetryableProvisionException;
+  Cluster createCluster(ProvisionerContext context) throws Exception;
 
   /**
    * Get the status of the cluster.
@@ -58,8 +59,9 @@ public interface Provisioner {
    * @param cluster the cluster to get the status of
    * @return status of the cluster
    * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
    */
-  ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException;
+  ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception;
 
   /**
    * Request to delete a cluster. The cluster does not have to be deleted before the method returns, but it must
@@ -68,7 +70,8 @@ public interface Provisioner {
    * @param context provisioner context
    * @param cluster the cluster to delete
    * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
    */
-  void deleteCluster(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException;
+  void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception;
 
 }

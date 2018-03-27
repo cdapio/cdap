@@ -427,6 +427,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-runtime-ext-dataproc</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -620,6 +626,20 @@
                       <targetPath>ext/runtimeproviders/yarn</targetPath>
                       <includes>
                         <include>co.cask.cdap.cdap-runtime-ext-yarn-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec</directory>
+                      <targetPath>ext/runtimeproviders/gce-dataproc</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec</directory>
+                      <targetPath>ext/runtimeproviders/gce-dataproc</targetPath>
+                      <includes>
+                        <include>gce-dataproc.json</include>
                       </includes>
                     </resource>
                   </resources>

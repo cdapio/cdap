@@ -272,6 +272,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-runtime-ext-dataproc</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -486,7 +492,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.providers.ext.dir}/default</outputDirectory>
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/yarn</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -494,6 +500,34 @@
                       </directory>
                       <includes>
                         <include>co.cask.cdap.cdap-runtime-ext-yarn-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-runtime-ext-dataproc</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/gce-dataproc</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-dataproc/src/main/resources
+                      </directory>
+                      <includes>
+                        <include>gce-dataproc.json</include>
                       </includes>
                     </resource>
                   </resources>

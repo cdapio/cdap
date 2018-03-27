@@ -25,6 +25,10 @@ public class RetryableProvisionException extends Exception {
     super(message);
   }
 
+  public RetryableProvisionException(Throwable cause) {
+    super(cause);
+  }
+
   public RetryableProvisionException(String message, Throwable cause) {
     super(message, cause);
   }
