@@ -77,6 +77,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -203,6 +204,7 @@ public class TestBase {
   private static Scheduler programScheduler;
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
+  private static ProgramLifecycleService programLifecycleService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -305,6 +307,8 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
+    programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
+    programLifecycleService.startAndWait();
     programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
     programNotificationSubscriberService.startAndWait();
     scheduler = injector.getInstance(Scheduler.class);
@@ -475,6 +479,7 @@ public class TestBase {
       return;
     }
 
+
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
@@ -489,6 +494,7 @@ public class TestBase {
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
     }
+    programLifecycleService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();

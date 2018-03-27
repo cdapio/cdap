@@ -1470,8 +1470,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
     // trying to update a non-existing schedule should fail
+    ScheduleDetail nonExistingSchedule = new ScheduleDetail("NonExistingSchedule", "updatedDescription", null,
+                                                            ImmutableMap.of("twoKey", "twoValue"),
+                                                            new TimeTrigger("0 4 * * *"),
+                                                            ImmutableList.of(new ConcurrencyConstraint(5)), null);
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null,
-                              "NonExistingSchedule", updateDetail);
+                              "NonExistingSchedule", nonExistingSchedule);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
     // should be able to update an existing schedule with a valid new time schedule
