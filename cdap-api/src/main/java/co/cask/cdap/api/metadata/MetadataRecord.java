@@ -23,12 +23,11 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link MetadataEntity} including its properties, tags in a given
+ * Represents the complete metadata of a {@link MetadataEntity} including its properties, tags for a given
  * {@link MetadataScope}
  */
 public class MetadataRecord {
   private final MetadataEntity metadataEntity;
-  private final MetadataScope scope;
   private final Map<String, String> properties;
   private final Set<String> tags;
 
@@ -36,36 +35,40 @@ public class MetadataRecord {
    * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
   public MetadataRecord(MetadataEntity metadataEntity, MetadataScope scope) {
-    this(metadataEntity, scope, Collections.emptyMap(), Collections.emptySet());
+    this(metadataEntity, Collections.emptyMap(), Collections.emptySet());
   }
 
   /**
    * Returns a new {@link MetadataRecord} from the specified existing {@link MetadataRecord}.
    */
   public MetadataRecord(MetadataRecord other) {
-    this(other.getMetadataEntity(), other.getScope(), other.getProperties(), other.getTags());
+    this(other.getMetadataEntity(), other.getProperties(), other.getTags());
   }
 
-  public MetadataRecord(MetadataEntity metadataEntity, MetadataScope scope, Map<String, String> properties,
+  public MetadataRecord(MetadataEntity metadataEntity, Map<String, String> properties,
                         Set<String> tags) {
     this.metadataEntity = metadataEntity;
-    this.scope = scope;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.tags = Collections.unmodifiableSet(new HashSet<>(tags));
   }
 
+  /**
+   * @return the metadata entity to which this record belongs to
+   */
   public MetadataEntity getMetadataEntity() {
     return metadataEntity;
   }
 
-  public MetadataScope getScope() {
-    return scope;
-  }
-
+  /**
+   * @return the properties
+   */
   public Map<String, String> getProperties() {
     return properties;
   }
 
+  /**
+   * @return the tags
+   */
   public Set<String> getTags() {
     return tags;
   }
@@ -82,21 +85,19 @@ public class MetadataRecord {
     MetadataRecord that = (MetadataRecord) o;
 
     return Objects.equals(metadataEntity, that.metadataEntity) &&
-      scope == that.scope &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(metadataEntity, scope, properties, tags);
+    return Objects.hash(metadataEntity, properties, tags);
   }
 
   @Override
   public String toString() {
     return "MetadataRecord{" +
       "metadataEntity=" + metadataEntity +
-      ", scope=" + scope +
       ", properties=" + properties +
       ", tags=" + tags +
       '}';

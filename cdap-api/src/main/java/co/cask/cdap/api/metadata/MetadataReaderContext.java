@@ -16,7 +16,6 @@
 package co.cask.cdap.api.metadata;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The context for reading metadata from program
@@ -24,37 +23,15 @@ import java.util.Set;
 public interface MetadataReaderContext {
 
   /**
-   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
-   * {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
+   * Returns a Map of {@link MetadataScope} to {@link MetadataRecord} representing all metadata (including properties
+   * and tags) for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
+   * {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
+  Map<MetadataScope, MetadataRecord> getMetadata(MetadataEntity metadataEntity);
 
   /**
-   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
+   * Returns a {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
    * {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
-  Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
-
-  /**
-   * @return all the properties for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
-   * {@link MetadataScope#SYSTEM}
-   */
-  Map<MetadataScope, Map<String, String>> getProperties(MetadataEntity metadataEntity);
-
-  /**
-   * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in the specified
-   * {@link MetadataScope}
-   */
-  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity);
-
-  /**
-   * @return all the tags for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
-   * {@link MetadataScope#SYSTEM}
-   */
-  Map<MetadataScope, Set<String>> getTags(MetadataEntity metadataEntity);
-
-  /**
-   * @return all the tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}
-   */
-  Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity);
+  MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 }
