@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data2.audit.payload.builder;
 
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.HashMap;
 import java.util.Map;

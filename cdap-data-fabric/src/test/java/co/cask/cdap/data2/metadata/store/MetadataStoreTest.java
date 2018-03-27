@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -39,8 +41,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;

@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.service.Retries;
@@ -42,7 +43,6 @@ import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import com.google.common.base.Throwables;
@@ -522,19 +522,19 @@ public class DefaultMetadataStore implements MetadataStore {
                                                                 Map<NamespacedEntityId, Metadata> userMetadata) {
     Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
     for (NamespacedEntityId entity : entities) {
-      ImmutableMap.Builder<MetadataScope, co.cask.cdap.proto.metadata.Metadata> builder = ImmutableMap.builder();
+      ImmutableMap.Builder<MetadataScope, co.cask.cdap.api.metadata.Metadata> builder = ImmutableMap.builder();
       // Add system metadata
       Metadata metadata = systemMetadata.get(entity);
       if (metadata != null) {
         builder.put(MetadataScope.SYSTEM,
-                    new co.cask.cdap.proto.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
+                    new co.cask.cdap.api.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
       }
 
       // Add user metadata
       metadata = userMetadata.get(entity);
       if (metadata != null) {
         builder.put(MetadataScope.USER,
-                    new co.cask.cdap.proto.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
+                    new co.cask.cdap.api.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
       }
 
       // Create result

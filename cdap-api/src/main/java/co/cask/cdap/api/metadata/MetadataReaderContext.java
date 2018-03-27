@@ -23,15 +23,15 @@ import java.util.Map;
 public interface MetadataReaderContext {
 
   /**
-   * Returns a Map of {@link MetadataScope} to {@link MetadataRecord} representing all metadata (including properties
+   * Returns a Map of {@link MetadataScope} to {@link Metadata} representing all metadata (including properties
    * and tags) for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}.
    */
-  Map<MetadataScope, MetadataRecord> getMetadata(MetadataEntity metadataEntity);
+  Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity);
 
   /**
-   * Returns a {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
+   * Returns a {@link Metadata} representing all metadata (including properties and tags) for the specified
    * {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
-  MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 }

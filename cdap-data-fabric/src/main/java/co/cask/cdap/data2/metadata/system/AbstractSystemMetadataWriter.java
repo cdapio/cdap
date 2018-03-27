@@ -16,11 +16,11 @@
 
 package co.cask.cdap.data2.metadata.system;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.api.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;

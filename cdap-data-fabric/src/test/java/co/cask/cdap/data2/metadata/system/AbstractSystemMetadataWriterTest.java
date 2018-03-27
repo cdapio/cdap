@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -28,7 +29,6 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;

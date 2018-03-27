@@ -16,6 +16,7 @@
 package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 

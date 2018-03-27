@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto.audit;
 
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.access.AccessType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
@@ -24,8 +26,6 @@ import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SystemServiceId;
-import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataScope;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

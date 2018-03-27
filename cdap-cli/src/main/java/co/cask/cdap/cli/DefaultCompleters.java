@@ -17,6 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.api.data.format.Formats;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.cli.command.system.RenderAsCommand;
 import co.cask.cdap.cli.completer.StringsCompleter;
@@ -32,7 +33,6 @@ import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.security.Principal;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;

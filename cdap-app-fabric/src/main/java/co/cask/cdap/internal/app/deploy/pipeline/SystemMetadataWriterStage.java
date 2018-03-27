@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
@@ -26,7 +27,6 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.api.metadata.MetadataScope;
 import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
