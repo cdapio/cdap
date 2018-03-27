@@ -16,13 +16,13 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;

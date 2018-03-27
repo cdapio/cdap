@@ -18,11 +18,11 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

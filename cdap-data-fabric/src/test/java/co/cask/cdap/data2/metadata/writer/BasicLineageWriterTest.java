@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -33,7 +34,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -25,7 +26,6 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
 import java.io.IOException;

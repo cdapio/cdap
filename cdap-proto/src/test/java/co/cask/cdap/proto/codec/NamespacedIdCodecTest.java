@@ -16,10 +16,10 @@
 
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.metadata.Metadata;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;

@@ -17,12 +17,12 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
