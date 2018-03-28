@@ -57,11 +57,28 @@ public interface ProgramManager<T extends ProgramManager> {
   boolean isRunning();
 
   /**
-   * Wait for the status of the program with 5 seconds timeout.
+   * Wait for the status of the program with 5 seconds timeout. A started program does not mean all functionality
+   * is available. For example, a started service may not yet have registered its url. In most cases,
+   * {@link #waitForRun(ProgramRunStatus, long, TimeUnit)} should be used
+   * with {@link ProgramRunStatus#RUNNING} to wait for a program to actually be running, and
+   * {@link #waitForStopped(long, TimeUnit)} should be used to wait for the program to stop.
+   *
    * @param status true if waiting for started, false if waiting for stopped.
    * @throws InterruptedException if the method is interrupted while waiting for the status.
+   * @deprecated use {@link #waitForRun(ProgramRunStatus, long, TimeUnit)} or {@link #waitForStopped(long, TimeUnit)}.
    */
+  @Deprecated
   void waitForStatus(boolean status) throws InterruptedException;
+
+  /**
+   * Wait for the program to be stopped.
+   *
+   * @throws InterruptedException if method is interrupted while waiting for runs
+   * @throws TimeoutException if timeout reached
+   * @throws ExecutionException if error getting program status
+   */
+  void waitForStopped(long timeout, TimeUnit timeUnit) throws InterruptedException, TimeoutException,
+    ExecutionException;
 
   /**
    * Blocks until at least the one run record is available with the given {@link ProgramRunStatus}.
@@ -73,7 +90,6 @@ public interface ProgramManager<T extends ProgramManager> {
    * @throws TimeoutException if timeout reached
    * @throws ExecutionException if error getting runs
    */
-  @Beta
   void waitForRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException;
 
@@ -88,7 +104,6 @@ public interface ProgramManager<T extends ProgramManager> {
    * @throws TimeoutException if timeout reached
    * @throws ExecutionException if error getting runs
    */
-  @Beta
   void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException;
 
@@ -98,7 +113,9 @@ public interface ProgramManager<T extends ProgramManager> {
    * @param retries number of attempts to check for status.
    * @param timeout timeout in seconds between attempts.
    * @throws InterruptedException if the method is interrupted while waiting for the status.
+   * @deprecated use {@link #waitForRun(ProgramRunStatus, long, TimeUnit)} or {@link #waitForStopped(long, TimeUnit)}.
    */
+  @Deprecated
   void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
 
   /**

@@ -88,7 +88,7 @@ public class DataCleansingMapReduceTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(DataCleansing.class);
 
     ServiceManager serviceManager = applicationManager.getServiceManager(DataCleansingService.NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL serviceURL = serviceManager.getServiceURL();
 
     // write a set of records to one partition and run the DataCleansingMapReduce job on that one partition

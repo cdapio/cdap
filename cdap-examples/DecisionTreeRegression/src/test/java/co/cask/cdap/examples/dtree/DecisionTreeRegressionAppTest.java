@@ -58,7 +58,7 @@ public class DecisionTreeRegressionAppTest extends TestBaseWithSpark2 {
 
     // Start the Service
     ServiceManager serviceManager = appManager.getServiceManager(ModelDataService.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true, 30, 1);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 30, TimeUnit.SECONDS);
 
     URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     URL addDataURL = new URL(serviceURL, "labels");

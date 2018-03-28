@@ -122,7 +122,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       }
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
       // Reset the http server properties to speed up test
       System.clearProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
     }
@@ -178,7 +178,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
       // Reset the http server properties to speed up test
       System.clearProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
     }
@@ -268,7 +268,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
 
@@ -315,7 +315,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
 
@@ -377,7 +377,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
 
@@ -392,7 +392,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     uploadLatch.countDown();
     Assert.assertEquals(500, completion.get().intValue());
     serviceManager.stop();
-    serviceManager.waitForStatus(false);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -435,7 +435,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       Assert.assertEquals("0123456789", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
       urlConn.disconnect();
     }
   }

@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
@@ -68,7 +69,7 @@ public class TestAppWithCube extends TestBase {
 
     ServiceManager serviceManager = appManager.getServiceManager(AppWithCube.SERVICE_NAME).start();
     try {
-      serviceManager.waitForStatus(true);
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
       URL url = serviceManager.getServiceURL();
 
       long tsInSec = System.currentTimeMillis() / 1000;
@@ -166,7 +167,7 @@ public class TestAppWithCube extends TestBase {
 
     } finally {
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
 

@@ -22,6 +22,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test for {@link IntegrationTestBase}.
@@ -53,7 +55,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   public void testFlowManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
     FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
-    flowManager.waitForStatus(true);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     flowManager.stop();
   }
 
@@ -96,7 +98,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
 
     ApplicationManager appManager = deployApplication(NamespaceId.DEFAULT, AppUsingCustomModule.class);
     ServiceManager serviceManager = appManager.getServiceManager("MyService").start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     put(serviceManager, "a", "1");
     put(serviceManager, "b", "2");

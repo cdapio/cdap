@@ -66,7 +66,7 @@ public class SparkPageRankAppTest extends TestBase {
       .start();
 
     // Wait for service to start since the Spark program needs it
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.getSparkManager(SparkPageRankApp.PageRankSpark.class.getSimpleName())

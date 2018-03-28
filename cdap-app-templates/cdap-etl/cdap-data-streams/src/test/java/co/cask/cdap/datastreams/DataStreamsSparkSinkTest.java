@@ -109,7 +109,7 @@ public class DataStreamsSparkSinkTest  extends HydratorTestBase {
   private void testSparkSink(ApplicationManager appManager, final String output) throws Exception {
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start(ImmutableMap.of("tablename", output));
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -134,7 +134,7 @@ public class DataStreamsSparkSinkTest  extends HydratorTestBase {
       }, 1, TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
     sparkManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 }
