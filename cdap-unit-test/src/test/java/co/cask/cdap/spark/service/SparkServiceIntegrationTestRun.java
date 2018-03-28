@@ -33,7 +33,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test Spark program integration with Service
@@ -63,11 +65,11 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
   /**
    * Starts a Service
    */
-  private void startService(ApplicationManager applicationManager) {
+  private void startService(ApplicationManager applicationManager) throws TimeoutException, ExecutionException {
     ServiceManager serviceManager =
       applicationManager.getServiceManager(TestSparkServiceIntegrationApp.SERVICE_NAME).start();
     try {
-      serviceManager.waitForStatus(true);
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Failed to start {} service", TestSparkServiceIntegrationApp.SERVICE_NAME, e);
       throw Throwables.propagate(e);

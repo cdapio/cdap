@@ -119,7 +119,7 @@ public class SpamClassifierTest extends TestBase {
 
     // Start and wait for service to start
     final ServiceManager serviceManager = appManager.getServiceManager(SpamClassifier.SERVICE_HANDLER).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // wait for spark streaming program to write to dataset
     Tasks.waitFor(true, new Callable<Boolean>() {

@@ -87,7 +87,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithPartitionConsumers.class);
 
     ServiceManager serviceManager = applicationManager.getServiceManager("DatasetService").start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL serviceURL = serviceManager.getServiceURL();
 
     // write a file to the file set using the service and run the WordCount MapReduce job on that one partition

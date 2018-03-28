@@ -98,7 +98,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
 
     ApplicationManager appManager = deployApplication(NamespaceId.DEFAULT, AppUsingCustomModule.class);
     ServiceManager serviceManager = appManager.getServiceManager("MyService").start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     put(serviceManager, "a", "1");
     put(serviceManager, "b", "2");

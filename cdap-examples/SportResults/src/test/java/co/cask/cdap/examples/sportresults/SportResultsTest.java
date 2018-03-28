@@ -61,7 +61,7 @@ public class SportResultsTest extends TestBase {
     // deploy the application and start the upload service
     ApplicationManager appManager = deployApplication(SportResults.class);
     ServiceManager serviceManager = appManager.getServiceManager("UploadService").start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // upload a few dummy results
     URL url = serviceManager.getServiceURL();

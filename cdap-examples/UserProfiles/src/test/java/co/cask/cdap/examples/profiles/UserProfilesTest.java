@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -57,7 +58,7 @@ public class UserProfilesTest extends TestBase {
     FlowManager flowManager = applicationManager.getFlowManager("ActivityFlow").start();
 
     ServiceManager serviceManager = applicationManager.getServiceManager("UserProfileService").start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL serviceURL = serviceManager.getServiceURL();
 
     // create a user through the service

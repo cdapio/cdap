@@ -39,7 +39,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Unit test for {@link LogAnalysisApp}
@@ -131,13 +133,13 @@ public class LogAnalysisAppTest extends TestBase {
   }
 
   private ServiceManager getServiceManager(ApplicationManager appManager, String serviceName)
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException, ExecutionException {
     // Start the service
     ServiceManager serviceManager =
       appManager.getServiceManager(serviceName).start();
 
     // Wait for service startup
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     return serviceManager;
   }
 }

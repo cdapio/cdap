@@ -121,7 +121,8 @@ public class Spark2Test extends TestBaseWithSpark2 {
     prepareInputData(keysManager);
 
     SparkManager sparkManager = applicationManager.getSparkManager(CharCountProgram.class.getSimpleName()).start();
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.waitForStatus(false, 6, 10);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
@@ -162,7 +163,8 @@ public class Spark2Test extends TestBaseWithSpark2 {
     prepareInputData(keysManager);
 
     SparkManager sparkManager = applicationManager.getSparkManager(ScalaCharCountProgram.class.getSimpleName()).start();
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.waitForStatus(false, 6, 10);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
@@ -196,7 +198,8 @@ public class Spark2Test extends TestBaseWithSpark2 {
                                                ScalaCrossNSProgram.DATASET_NAME(), "count");
     SparkManager sparkManager =
       applicationManager.getSparkManager(ScalaCrossNSProgram.class.getSimpleName()).start(args);
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.waitForStatus(false, 6, 10);
 
     // get the dataset from the other namespace where we expect it to exist and compare the data
     DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().dataset("count"));
@@ -223,7 +226,8 @@ public class Spark2Test extends TestBaseWithSpark2 {
     ApplicationManager applicationManager = deploy(NamespaceId.DEFAULT, SparkAppUsingObjectStore.class);
     SparkManager sparkManager =
       applicationManager.getSparkManager(ScalaCharCountProgram.class.getSimpleName()).start(args);
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.waitForStatus(false, 6, 10);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
@@ -281,7 +285,8 @@ public class Spark2Test extends TestBaseWithSpark2 {
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram)
       .start(Collections.singletonMap(SparkAppUsingLocalFiles.LOCAL_FILE_RUNTIME_ARG, localFile.toString()));
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.waitForStatus(false, 12, 10);
 
     DataSetManager<KeyValueTable> kvTableManager = getDataset(SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME);
     KeyValueTable kvTable = kvTableManager.get();

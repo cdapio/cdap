@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -86,7 +87,7 @@ public class WordCountTest extends TestBase {
     ServiceManager serviceManager = appManager.getServiceManager(RetrieveCounts.SERVICE_NAME).start();
 
     // Wait service startup
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // First verify global statistics
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "stats"));

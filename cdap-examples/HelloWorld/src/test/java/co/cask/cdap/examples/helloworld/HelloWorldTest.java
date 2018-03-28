@@ -18,6 +18,7 @@ package co.cask.cdap.examples.helloworld;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
@@ -49,7 +50,7 @@ public class HelloWorldTest extends TestBase {
 
     // Start WhoFlow
     FlowManager flowManager = appManager.getFlowManager("WhoFlow").start();
-    flowManager.waitForStatus(true);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Send stream events to the "who" Stream
     StreamManager streamManager = getStreamManager("who");
@@ -72,7 +73,7 @@ public class HelloWorldTest extends TestBase {
     ServiceManager serviceManager = appManager.getServiceManager(HelloWorld.Greeting.SERVICE_NAME).start();
 
     // Wait service startup
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     URL url = new URL(serviceManager.getServiceURL(), "greet");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
