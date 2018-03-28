@@ -213,6 +213,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientsExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metastore-client-gc"));
 
+
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
 

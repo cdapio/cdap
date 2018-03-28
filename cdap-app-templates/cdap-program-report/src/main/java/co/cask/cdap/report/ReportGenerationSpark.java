@@ -16,10 +16,15 @@
 
 package co.cask.cdap.report;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.messaging.Message;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
@@ -48,6 +53,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +65,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -78,7 +85,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportGenerationRequest.Filter.class, new FilterDeserializer())
     .create();
-
+  private TMSSubscriber tmsSubscriber;
+  private ExecutorService executorService;
   @Override
   protected void configure() {
     setMainClass(ReportGenerationSpark.class);
@@ -88,6 +96,62 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
+    executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("tms-runrecord-reader"));
+    Admin admin = sec.getAdmin();
+    if (!admin.datasetExists(ReportGenerationApp.RUN_META_FILESET)) {
+      admin.createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
+                          FileSetProperties.builder().build());
+    }
+    tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher());
+
+    executorService.submit(tmsSubscriber);
+  }
+
+
+  private class TMSSubscriber extends Thread {
+    private static final String TOPIC = "programstatusrecordevent";
+    private static final String NAMESPACE_SYSTEM = "system";
+    private final MessageFetcher messageFetcher;
+    private volatile boolean isStopped;
+
+
+    TMSSubscriber(MessageFetcher messageFetcher) {
+      this.messageFetcher = messageFetcher;
+      isStopped = false;
+    }
+
+    public void shutdown() {
+      isStopped = true;
+      LOG.info("Shutting down tms-subscriber thread");
+    }
+
+    @Override
+    public void run() {
+      while (!isStopped) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(10);
+        } catch (InterruptedException e) {
+          break;
+        }
+        try (CloseableIterator<Message> messageCloseableIterator =
+               messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, 10, 0)) {
+          while (messageCloseableIterator.hasNext()) {
+            Message message  = messageCloseableIterator.next();
+            Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
+            ProgramRunIdFields programRunIdFields =
+              GSON.fromJson(notification.getProperties().get("programRunId"), ProgramRunIdFields.class);
+            LOG.info("Found record {}", notification);
+          }
+        } catch (TopicNotFoundException tpe) {
+          LOG.error("Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix", TOPIC, tpe);
+          isStopped = true;
+        } catch (IOException ioe) {
+          LOG.error("Exception during fetching from TMS", ioe);
+          // retry
+        }
+      }
+      LOG.info("Done reading from tms meta");
+    }
   }
 
   /**
@@ -120,6 +184,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         // It's ok if the dataset already exists
       }
       sparkSession = new SQLContext(getContext().getSparkContext()).sparkSession();
+    }
+
+    @Override
+    public void destroy() {
+      LOG.info("Stopping TMSSubscriber");
     }
 
     @GET

@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
  * Represents a dataset that is split into partitions that can be uniquely addressed
  * by partition keys along multiple dimensions. Each partition is a path in a file set,
  * the partition key attached as meta data. Note that the partitioning of the dataset
- * is fixed, that is, all operations that accept a partition key as a parameter require
+ * is fixed, that is, all operations that accept a partition key as a parame ter require
  * that that key has exactly the same schema as the partitioning.
  *
  * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
