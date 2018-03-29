@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Provisions a cluster using GCE DataProc.
@@ -57,12 +58,12 @@ public class DataProcProvisioner implements Provisioner {
 
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
-      com.google.cloud.dataproc.v1.Cluster existing = client.getCluster(clusterName);
+      Optional<com.google.cloud.dataproc.v1.Cluster> existing = client.getCluster(clusterName);
 
       // TODO: figure out how to get this if existing is not null
       long createTime = System.currentTimeMillis();
 
-      if (existing == null) {
+      if (!existing.isPresent()) {
         client.createCluster(clusterName);
       }
 
@@ -84,12 +85,12 @@ public class DataProcProvisioner implements Provisioner {
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
-      com.google.cloud.dataproc.v1.Cluster existing = client.getCluster(clusterName);
-      if (existing == null) {
+      Optional<com.google.cloud.dataproc.v1.Cluster> existing = client.getCluster(clusterName);
+      if (!existing.isPresent()) {
         return ClusterStatus.NOT_EXISTS;
       }
 
-      switch (existing.getStatus().getState()) {
+      switch (existing.get().getStatus().getState()) {
         case ERROR:
           return ClusterStatus.FAILED;
         case RUNNING:

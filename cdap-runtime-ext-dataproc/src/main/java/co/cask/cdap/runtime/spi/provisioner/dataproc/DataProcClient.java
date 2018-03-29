@@ -19,6 +19,7 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import com.google.api.client.util.Throwables;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.cloud.dataproc.v1.Cluster;
@@ -31,6 +32,7 @@ import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -53,7 +55,17 @@ public class DataProcClient implements AutoCloseable {
     this.client = client;
   }
 
-  public OperationSnapshot createCluster(String name) throws RetryableProvisionException {
+  /**
+   * Create a cluster. This will return after the initial request to create the cluster is completed.
+   * At this point, the cluster is likely not yet running, but in a provisioning state.
+   *
+   * @param name the name of the cluster to create
+   * @return the response for issuing the create
+   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
+   * @throws AlreadyExistsException if the cluster already exists
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  public OperationSnapshot createCluster(String name) throws RetryableProvisionException, InterruptedException {
 
     // TODO: figure out how to set labels
     try {
@@ -83,34 +95,27 @@ public class DataProcClient implements AutoCloseable {
                      .build())
         .build();
 
-      return client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster)
-        .getInitialFuture().get(10, TimeUnit.SECONDS);
-    } catch (ApiException e) {
-      throw handleApiException(e);
+      return client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster).getInitialFuture().get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
         throw handleApiException((ApiException) cause);
       }
       throw Throwables.propagate(e);
-    }  catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RetryableProvisionException(e);
-    } catch (TimeoutException e) {
-      throw new RetryableProvisionException(e);
     }
   }
 
-  // if there was an API exception that was not a 4xx, we can just try again
-  private RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
-    if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
-      throw new RetryableProvisionException(e);
-    }
-    throw e;
-  }
-
-  @Nullable
-  public OperationSnapshot deleteCluster(String name) throws RetryableProvisionException {
+  /**
+   * Delete the specified cluster if it exists. This will return after the initial request to delete the cluster
+   * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
+   *
+   * @param name the name of the cluster to delete
+   * @return the response for issuing the delete, or empty if the cluster already does not exist
+   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  public Optional<OperationSnapshot> deleteCluster(String name)
+    throws RetryableProvisionException, InterruptedException {
 
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
@@ -119,37 +124,37 @@ public class DataProcClient implements AutoCloseable {
         .setRegion(conf.getRegion())
         .build();
 
-      return client.deleteClusterAsync(request).getInitialFuture().get(10, TimeUnit.SECONDS);
-    } catch (ApiException e) {
-      if (e.getStatusCode().getCode().getHttpStatusCode() == 404) {
-        // if the cluster was not found, it's ok that means it's deleted
-        return null;
-      }
-      throw handleApiException(e);
+      return Optional.of(client.deleteClusterAsync(request).getInitialFuture().get());
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
+        ApiException apiException = (ApiException) cause;
+        if (apiException.getStatusCode().getCode().getHttpStatusCode() == 404) {
+          // if the cluster was not found, it's ok that means it's deleted
+          return Optional.empty();
+        }
         throw handleApiException((ApiException) cause);
       }
       throw Throwables.propagate(e);
-    }  catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RetryableProvisionException(e);
-    } catch (TimeoutException e) {
-      throw new RetryableProvisionException(e);
     }
   }
 
-  @Nullable
-  public Cluster getCluster(String name) throws RetryableProvisionException {
+  /**
+   * Get information about the specified cluster. The cluster will not be present if it could not be found.
+   *
+   * @param name the cluster name
+   * @return the cluster information if it exists
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  public Optional<Cluster> getCluster(String name) throws RetryableProvisionException {
     try {
-      return client.getCluster(GetClusterRequest.newBuilder()
-                                 .setClusterName(name)
-                                 .setProjectId(conf.getProjectId())
-                                 .setRegion(conf.getRegion())
-                                 .build());
+      return Optional.of(client.getCluster(GetClusterRequest.newBuilder()
+                                             .setClusterName(name)
+                                             .setProjectId(conf.getProjectId())
+                                             .setRegion(conf.getRegion())
+                                             .build()));
     } catch (NotFoundException e) {
-      return null;
+      return Optional.empty();
     } catch (ApiException e) {
       if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
         // if there was an API exception that was not a 4xx, we can just try again
@@ -163,5 +168,13 @@ public class DataProcClient implements AutoCloseable {
   @Override
   public void close() throws Exception {
     client.close();
+  }
+
+  // if there was an API exception that was not a 4xx, we can just try again
+  private RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
+    if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
+      throw new RetryableProvisionException(e);
+    }
+    throw e;
   }
 }

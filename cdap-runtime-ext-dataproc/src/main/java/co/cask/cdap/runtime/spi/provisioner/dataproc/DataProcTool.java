@@ -30,6 +30,7 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Manual tool for testing out dataproc provisioning and deprovisioning.
@@ -98,8 +99,10 @@ public class DataProcTool {
       if ("provision".equals(command)) {
         client.createCluster(name);
       } else if ("details".equals(command)) {
-        Cluster cluster = client.getCluster(name);
-        System.out.println(GSON.toJson(cluster));
+        Optional<Cluster> cluster = client.getCluster(name);
+        if (cluster.isPresent()) {
+          System.out.println(GSON.toJson(cluster));
+        }
       } else if ("deprovision".equals(command)) {
         client.deleteCluster(name);
       }
