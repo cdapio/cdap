@@ -74,6 +74,12 @@ export default function ConfigurationsSidePanel({isDetailView, isPreview, isBatc
                 {T.translate(`${PREFIX}.PipelineConfig.title`)}
               </div>
               <div
+                className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.COMPUTECONFIG})}
+                onClick={onTabChange.bind(null, TAB_OPTIONS.COMPUTECONFIG)}
+              >
+                {T.translate(`${PREFIX}.ComputeConfig.title`)}
+              </div>
+              <div
                 className={classnames("configuration-tab", {"active": activeTab === TAB_OPTIONS.ENGINE_CONFIG})}
                 onClick={onTabChange.bind(null, TAB_OPTIONS.ENGINE_CONFIG)}
               >

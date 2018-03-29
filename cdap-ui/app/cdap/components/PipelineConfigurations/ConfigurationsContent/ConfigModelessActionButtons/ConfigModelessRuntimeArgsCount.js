@@ -21,6 +21,7 @@ import T from 'i18n-react';
 import {TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import isEmpty from 'lodash/isEmpty';
+import {getFilteredRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
@@ -40,7 +41,7 @@ const ConfigModelessRuntimeArgsCount = ({runtimeArgs, activeTab, isHistoricalRun
 
   return (
     <span className="num-runtime-args">
-      {T.translate(`${PREFIX}.runtimeArgsCount`, {context: runtimeArgs.pairs.length})}
+      {T.translate(`${PREFIX}.runtimeArgsCount`, {context: getFilteredRuntimeArgs().pairs.length})}
     </span>
   );
 };

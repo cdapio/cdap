@@ -17,11 +17,15 @@
 import KeyValuePairs from 'components/KeyValuePairs';
 import {connect} from 'react-redux';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updateKeyValueStore} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {
+  updateKeyValueStore,
+  getFilteredRuntimeArgs,
+  updateRunTimeArgs
+} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    keyValues: state.runtimeArgs,
+    keyValues: getFilteredRuntimeArgs(ownProps.disabled),
     disabled: ownProps.disabled,
     onPaste: ownProps.onPaste
   };
@@ -29,12 +33,7 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    onKeyValueChange: (keyValues) => {
-      dispatch({
-        type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-        payload: { runtimeArgs: keyValues }
-      });
-    },
+    onKeyValueChange: updateRunTimeArgs,
     getResettedKeyValue: (index) => {
       dispatch({
         type: PipelineConfigurationsActions.RESET_RUNTIME_ARG_TO_RESOLVED_VALUE,

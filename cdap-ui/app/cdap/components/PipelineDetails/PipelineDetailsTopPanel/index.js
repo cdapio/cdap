@@ -21,13 +21,9 @@ import PipelineDetailsButtons from 'components/PipelineDetails/PipelineDetailsTo
 import PipelineDetailsDetailsActions from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
 import PlusButton from 'components/PlusButton';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {MyPipelineApi} from 'api/pipeline';
-import {MyPreferenceApi} from 'api/preference';
-import {objectQuery} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
+import {fetchAndUpdateRuntimeArgs} from 'components/PipelineDetails/store/ActionCreator';
 
 require('./PipelineDetailsTopPanel.scss');
 
@@ -59,42 +55,12 @@ export default class PipelineDetailsTopPanel extends Component {
     });
   }
   componentDidMount() {
-    const params = {
-      namespace: getCurrentNamespace(),
-      appId: PipelineDetailStore.getState().name
-    };
-
-    MyPipelineApi.fetchMacros(params)
-      .combineLatest(MyPreferenceApi.getAppPreferencesResolved(params))
-      .subscribe((res) => {
-        let macrosSpec = res[0];
-        let macrosMap = {};
-        let macros = [];
-        macrosSpec.map(ms => {
-          if (objectQuery(ms, 'spec', 'properties', 'macros', 'lookupProperties')) {
-            macros = macros.concat(ms.spec.properties.macros.lookupProperties);
-          }
-        });
-        macros.forEach(macro => {
-          macrosMap[macro] = '';
-        });
-
-        let currentAppPrefs = res[1];
-        let resolvedMacros = getMacrosResolvedByPrefs(currentAppPrefs, macrosMap);
-
-        PipelineConfigurationsStore.dispatch({
-          type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
-          payload: { resolvedMacros }
-        });
-      }, (err) => {
-        console.log(err);
-      }
-    );
+    fetchAndUpdateRuntimeArgs();
   }
   render() {
     return (
       <Provider store={PipelineDetailStore}>
-        <div className = "pipeline-details-top-panel">
+        <div className="pipeline-details-top-panel">
           <PipelineDetailsMetadata />
           <ConnectedPipelineDetailsButtons />
           <PipelineDetailsDetailsActions />

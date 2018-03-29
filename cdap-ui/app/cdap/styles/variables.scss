@@ -143,6 +143,7 @@ $red-02: #d40001;
 $red-03: #d15668;
 $yellow-01: #ffba01;
 $yellow-02: #ffd500;
+$yellow-02-lighter: transparentize($color: $yellow-02, $amount: 0.7);
 $green-01: #01b133;
 $green-02: #3cc801;
 $green-03: #8af302;

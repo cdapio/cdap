@@ -16,6 +16,13 @@
 
 import {MyPipelineApi} from 'api/pipeline';
 import PipelineDetailStore, {ACTIONS} from 'components/PipelineDetails/store';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import {MyPreferenceApi} from 'api/preference';
+import {objectQuery} from 'services/helpers';
+import {getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/ActionCreator';
+import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import uuidV4 from 'uuid/v4';
+import uniqBy from 'lodash/uniqBy';
 
 const init = (pipeline) => {
   PipelineDetailStore.dispatch({
@@ -248,6 +255,63 @@ const setUserRuntimeArguments = (argsMap) => {
   });
 };
 
+const fetchAndUpdateRuntimeArgs = () => {
+  const params = {
+    namespace: getCurrentNamespace(),
+    appId: PipelineDetailStore.getState().name
+  };
+
+  let observable$ = MyPipelineApi.fetchMacros(params)
+    .combineLatest([
+      MyPreferenceApi.getAppPreferences(params),
+      // This is required to resolve macros from preferences
+      // Say DEFAULT_STREAM is a namespace level preference used as a macro
+      // in one of the plugins in the pipeline.
+      MyPreferenceApi.getAppPreferencesResolved(params)
+    ]);
+
+  observable$.subscribe((res) => {
+    let macrosSpec = res[0];
+    let macrosMap = {};
+    let macros = [];
+    macrosSpec.map(ms => {
+      if (objectQuery(ms, 'spec', 'properties', 'macros', 'lookupProperties')) {
+        macros = macros.concat(ms.spec.properties.macros.lookupProperties);
+      }
+    });
+    macros.forEach(macro => {
+      macrosMap[macro] = '';
+    });
+
+    let currentAppPrefs = res[1];
+    let currentAppResolvedPrefs = res[2];
+    let resolvedMacros = getMacrosResolvedByPrefs(currentAppResolvedPrefs, macrosMap);
+
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
+      payload: { resolvedMacros }
+    });
+    const getPairs = (map) => (
+      Object
+        .entries(map)
+        .filter(([key]) => key.length)
+        .map(([key, value]) => ({key, value, uniqueId: uuidV4()}))
+    );
+    let runtimeArgsPairs = getPairs(currentAppPrefs);
+    let resolveMacrosPairs = getPairs(resolvedMacros);
+
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
+      payload: {
+        runtimeArgs: {
+          pairs: uniqBy(runtimeArgsPairs.concat(resolveMacrosPairs), (pair) => pair.key)
+        }
+      }
+    });
+  });
+  return observable$;
+};
+
 const setMacrosAndUserRuntimeArguments = (macrosMap, argsMap) => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.SET_MACROS_AND_USER_RUNTIME_ARGUMENTS,
@@ -349,5 +413,6 @@ export {
   setScheduleError,
   setStopButtonLoading,
   setStopError,
-  reset
+  reset,
+  fetchAndUpdateRuntimeArgs
 };

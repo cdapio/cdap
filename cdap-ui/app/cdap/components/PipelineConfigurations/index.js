@@ -93,13 +93,13 @@ export default class PipelineConfigurations extends Component {
     this.setState({
       activeTab: tab
     });
-  }
+  };
 
   toggleAdvancedTabs = () => {
     this.setState({
       showAdvancedTabs: !this.state.showAdvancedTabs
     });
-  }
+  };
 
   renderHeader() {
     let headerLabel;
