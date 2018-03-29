@@ -117,12 +117,14 @@ export default class Header extends Component {
     let connectionsBasePath = `${basePath}/connections`;
     let rulesenginepath = `${basePath}/rulesengine`;
     let analytics = `${basePath}/experiments`;
+    let namespaceDetails = `${basePath}/details`;
     if (
       location.pathname.startsWith(basePath) &&
       !location.pathname.startsWith(dataprepBasePath) &&
       !location.pathname.startsWith(connectionsBasePath) &&
       !location.pathname.startsWith(rulesenginepath) &&
-      !location.pathname.startsWith(analytics)
+      !location.pathname.startsWith(analytics) &&
+      !location.pathname.startsWith(namespaceDetails)
     ) {
       return true;
     }
