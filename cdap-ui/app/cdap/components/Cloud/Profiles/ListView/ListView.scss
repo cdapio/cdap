@@ -16,12 +16,28 @@
 
 @import "../../../../styles/mixins.scss";
 @import "../../../../styles/variables.scss";
+$row-height: 50px;
 
 .profiles-list-view {
   .grid.grid-container {
     max-height: 550px;
     .grid-item {
       grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20px;
+
+      .sortable-header {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+
+        &.active {
+          text-decoration: underline;
+        }
+
+        .icon-svg {
+          font-size: 1.3rem;
+        }
+      }
+
       &.sub-header {
         border: 0;
         padding: 0;
@@ -50,10 +66,17 @@
     }
     .grid-body {
       .grid-item {
+        height: $row-height;
+
         &:last-child {
           border-bottom: 0;
         }
       }
     }
+  }
+
+  .view-more-label {
+    color: $link-color;
+    cursor: pointer;
   }
 }

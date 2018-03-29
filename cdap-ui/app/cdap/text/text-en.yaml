@@ -87,8 +87,10 @@ commons:
   noLabel: No
   notAvailable: 'N/A'
   please: Please
+  pipelines: Pipelines
   resource-center: Add Entity
   schemaLabel: Schema
+  scope: Scope
   secondsShortLabel: secs
   secShortLabel: sec
   stream: Stream
@@ -218,6 +220,22 @@ features:
       message1: "Create a new namespace "
       message2: "(Note: You will require ADMIN privileges on CDAP for creating a namespace)"
     mainMessage: " You are not authorized to access any existing namespace"
+  Cloud:
+    Profiles:
+      ListView:
+        assosciations: Assosciations
+        createOne: "creating one"
+        last24HrNodeHr: Last 24 hrs node/hr
+        last24HrRuns: Last 24 hrs runs
+        noProfiles: "No compute profiles have been defined in this namespace. Start by "
+        profileName: Profile Name
+        profileUsage: Profile usage
+        provisioner: Provisioner
+        schedules: Schedules
+        totalNodeHr: Total node/hr
+        triggers: Triggers
+        viewAll: View All
+        viewLess: View Less
   ConfirmationModal:
     cancelDefaultText: Cancel
     confirmDefaultText: OK
@@ -1298,11 +1316,15 @@ features:
   MarketEntityModal:
     version: "Version :"
   NamespaceDetails:
+    computeProfiles:
+      create: Create New Profile
+      description: Select a row to view details about the compute profile
+      label: Compute Profiles
+      labelWithCount: Compute Profiles ({count})
     edit: Edit
     entityCounts:
       customApps: Custom Apps
       datasets: Datasets
-      pipelines: Pipelines
       streams: Streams
     mapping:
       hbaseNamespaceName: 'HBase Namespace Name: '
@@ -1312,13 +1334,14 @@ features:
       schedulerQueueName: 'Scheduler Queue Name: '
     namespace: Namespace
     namespaceName: Namespace '{namespace}'
+    pipelines: Pipelines
     preferences:
       label: Preferences
       labelWithCount: Preferences ({count})
       noPreferences: No Preferences set for this namespace
-      scope: Scope
       viewAll: View All
       viewLess: View Less
+    scope: Scope
     security:
       keytabURI: 'Keytab URI: '
       label: Security

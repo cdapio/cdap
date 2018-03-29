@@ -23,10 +23,10 @@ import {getData} from 'components/NamespaceDetails/store/ActionCreator';
 import TopPanel from 'components/NamespaceDetails/TopPanel';
 import Description from 'components/NamespaceDetails/Description';
 import EntityCounts from 'components/NamespaceDetails/EntityCounts';
+import ComputeProfiles from 'components/NamespaceDetails/ComputeProfiles';
 import Preferences from 'components/NamespaceDetails/Preferences';
 import Mapping from 'components/NamespaceDetails/Mapping';
 import Security from 'components/NamespaceDetails/Security';
-import ProfilesListView from 'components/Cloud/Profiles/ListView';
 
 require('./NamespaceDetails.scss');
 
@@ -49,8 +49,8 @@ const NamespaceDetailsComp = ({loading}) => {
         <hr />
         <EntityCounts />
         <hr />
-        <ProfilesListView />
-        <hr />
+        <ComputeProfiles />
+        <hr className="more-margin-top" />
         <Preferences />
         <hr className="more-margin-top" />
         <Mapping />

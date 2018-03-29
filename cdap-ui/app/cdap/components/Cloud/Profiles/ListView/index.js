@@ -14,16 +14,85 @@
  * the License.
 */
 
-import React, { Component } from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {MyProfileApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {Link} from 'react-router-dom';
+import T from 'i18n-react';
+import classnames from 'classnames';
+import IconSVG from 'components/IconSVG';
+import LoadingSVG from 'components/LoadingSVG';
+import orderBy from 'lodash/orderBy';
 require('./ListView.scss');
+
+const PREFIX = 'features.Cloud.Profiles.ListView';
+
+const PROFILES_TABLE_HEADERS = [
+  {
+    label: ''
+  },
+  {
+    property: 'name',
+    label: T.translate(`${PREFIX}.profileName`)
+  },
+  {
+    property: (profile) => (profile.provisioner.name),
+    label: T.translate(`${PREFIX}.provisioner`)
+  },
+  {
+    property: 'scope',
+    label: T.translate('commons.scope')
+  },
+  {
+    property: 'pipelines',
+    label: T.translate('commons.pipelines')
+  },
+  {
+    property: 'last24HrRuns',
+    label: T.translate(`${PREFIX}.last24HrRuns`)
+  },
+  {
+    property: 'last24HrNodeHr',
+    label: T.translate(`${PREFIX}.last24HrNodeHr`)
+  },
+  {
+    property: 'totalNodeHr',
+    label: T.translate(`${PREFIX}.totalNodeHr`)
+  },
+  {
+    property: 'schedules',
+    label: T.translate(`${PREFIX}.schedules`)
+  },
+  {
+    property: 'triggers',
+    label: T.translate(`${PREFIX}.triggers`)
+  },
+  {
+    label: ''
+  },
+  {
+    label: ''
+  }
+];
+
+const SORT_METHODS = {
+  asc: 'asc',
+  desc: 'desc'
+};
 
 export default class ProfilesListView extends Component {
   state = {
     profiles: [],
     error: null,
-    loading: true
+    loading: true,
+    viewAll: false,
+    sortMethod: SORT_METHODS.asc,
+    sortColumn: PROFILES_TABLE_HEADERS[1].property,
+  };
+
+  static propTypes = {
+    onChange: PropTypes.func
   };
 
   componentDidMount() {
@@ -35,6 +104,10 @@ export default class ProfilesListView extends Component {
         this.setState({
           profiles,
           loading: false
+        }, () => {
+          if (typeof this.props.onChange === 'function') {
+            this.props.onChange(profiles);
+          }
         });
       },
       err => {
@@ -45,7 +118,168 @@ export default class ProfilesListView extends Component {
       }
     );
   }
+
+  toggleViewAll = () => {
+    this.setState({
+      viewAll: !this.state.viewAll
+    });
+  }
+
+  handleProfilesSort = (field) => {
+    let newSortColumn, newSortMethod;
+    if (this.state.sortColumn === field) {
+      newSortColumn = this.state.sortColumn;
+      newSortMethod = this.state.sortMethod === SORT_METHODS.asc ? SORT_METHODS.desc : SORT_METHODS.asc;
+    } else {
+      newSortColumn = field;
+      newSortMethod = SORT_METHODS.asc;
+    }
+
+    this.setState({
+      sortColumn: newSortColumn,
+      sortMethod: newSortMethod,
+      profiles: orderBy(this.state.profiles, [newSortColumn], [newSortMethod])
+    });
+  };
+
+  renderProfilesTable() {
+    if (!this.state.profiles.length) {
+      return (
+        <div className="text-xs-center">
+          {T.translate(`${PREFIX}.noProfiles`)}
+          <Link to={`/ns/${getCurrentNamespace()}/create-profile`}>
+            {T.translate(`${PREFIX}.createOne`)}
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <div className="grid grid-container">
+          {this.renderProfilesTableHeader()}
+          {this.renderProfilesTableBody()}
+        </div>
+        {this.renderViewAllLabel()}
+      </div>
+    );
+  }
+
+  renderSortIcon(field) {
+    if (field !== this.state.sortColumn) {
+      return null;
+    }
+
+    return (
+      this.state.sortMethod === SORT_METHODS.asc ?
+        <IconSVG name="icon-caret-down" />
+      :
+        <IconSVG name="icon-caret-up" />
+    );
+  }
+
+  renderProfilesTableHeader() {
+    return (
+      <div className="grid-header">
+        <div className="grid-item sub-header">
+          <div />
+          <div />
+          <div />
+          <div />
+          <div />
+          <div />
+          <div className="sub-title">Pipeline Usage</div>
+          <div/>
+          <div className="sub-title">Associations</div>
+          <div/>
+          <div/>
+          <div/>
+        </div>
+        <div className="grid-item">
+          {
+            PROFILES_TABLE_HEADERS.map((header, i) => {
+              if (header.property) {
+                return (
+                  <strong
+                    className={classnames("sortable-header", {"active": this.state.sortColumn === header.property})}
+                    key={i}
+                    onClick={this.handleProfilesSort.bind(this, header.property)}
+                  >
+                    <span>{header.label}</span>
+                    {this.renderSortIcon(header.property)}
+                  </strong>
+                );
+              }
+              return (
+                <strong key={i}>
+                  {header.label}
+                </strong>
+              );
+            })
+          }
+        </div>
+      </div>
+    );
+  }
+
+  renderProfilesTableBody() {
+    let profiles = [...this.state.profiles];
+
+    if (!this.state.viewAll && profiles.length > 10) {
+      profiles = profiles.slice(0, 10);
+    }
+
+    return (
+      <div className="grid-body">
+        {
+          profiles.map((profile, i) => {
+            return (
+              <div
+                className="grid-item"
+                key={i}
+              >
+                <div></div>
+                <div title={profile.name}>
+                  {profile.name}
+                </div>
+                <div>{profile.provisioner.name}</div>
+                <div>{profile.scope}</div>
+              </div>
+            );
+          })
+        }
+      </div>
+    );
+  }
+
+  renderViewAllLabel() {
+    if (this.state.profiles.length <= 10) {
+      return null;
+    }
+
+    return (
+      <span
+        className="view-more-label"
+        onClick={this.toggleViewAll}
+      >
+        {
+          this.state.viewAll ?
+            T.translate(`${PREFIX}.viewLess`)
+          :
+            T.translate(`${PREFIX}.viewAll`)
+        }
+      </span>
+    );
+  }
+
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="text-xs-center">
+          <LoadingSVG />
+        </div>
+      );
+    }
     if (this.state.error) {
       return (
         <div className="text-danger">
@@ -55,52 +289,7 @@ export default class ProfilesListView extends Component {
     }
     return (
       <div className="profiles-list-view">
-        <div className="grid grid-container">
-          <div className="grid-header">
-            <div className="grid-item sub-header">
-              <div />
-              <div />
-              <div />
-              <div />
-              <div />
-              <div />
-              <div className="sub-title">Pipeline Usage</div>
-              <div/>
-              <div className="sub-title">Associations</div>
-              <div/>
-              <div/>
-              <div/>
-            </div>
-            <div className="grid-item">
-              <div></div>
-              <strong> Profile Name </strong>
-              <strong> Provider </strong>
-              <strong> Scope </strong>
-              <strong> Pipelines </strong>
-              <strong> Last 24hrs runs </strong>
-              <strong> Last 24hrs <br /> node/hr </strong>
-              <strong> Total <br /> node/hr </strong>
-              <strong> Schedules </strong>
-              <strong> Triggers </strong>
-              <div></div>
-              <div></div>
-            </div>
-          </div>
-          <div className="grid-body">
-            {
-              this.state.profiles.map(profile => {
-                return (
-                  <div className="grid-item">
-                    <div></div>
-                    <div>{profile.name}</div>
-                    <div>{profile.provisioner.name}</div>
-                    <div>{profile.scope}</div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
+        {this.renderProfilesTable()}
       </div>
     );
   }

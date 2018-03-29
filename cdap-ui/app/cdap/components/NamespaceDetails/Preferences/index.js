@@ -36,7 +36,7 @@ const PREFERENCES_TABLE_HEADERS = [
   },
   {
     property: 'scope',
-    label: T.translate(`${PREFIX}.scope`)
+    label: T.translate('commons.scope')
   },
   {
     property: 'value',
@@ -47,8 +47,6 @@ const PREFERENCES_TABLE_HEADERS = [
 class NamespaceDetailsPreferences extends Component {
   state = {
     modalOpen: false,
-    namespacePrefs: this.props.namespacePrefs,
-    systemPrefs: this.props.systemPrefs,
     prefs: this.getPrefsForDisplay(this.props.namespacePrefs, this.props.systemPrefs),
     newNamespacePrefsKeys: [],
     viewAll: false
