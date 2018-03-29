@@ -16,38 +16,18 @@
 
 package co.cask.cdap.proto.profile;
 
-import co.cask.cdap.proto.EntityScope;
-
 import java.util.Objects;
 
 /**
- * Information of a profile. It encapsulates any information required to setup and teardown the program execution
- * environment. A profile is identified by name and must be assigned a provisioner and its related configuration.
+ * Information about a profile.
  */
-public class Profile {
-  private final String name;
+public class ProfileCreateRequest {
   private final String description;
-  private final EntityScope scope;
   private final ProvisionerInfo provisioner;
 
-  public Profile(String name, String description, ProvisionerInfo provisioner) {
-    this(name, description, EntityScope.USER, provisioner);
-  }
-
-  public Profile(String name, String description, EntityScope scope,
-                 ProvisionerInfo provisioner) {
-    this.name = name;
+  public ProfileCreateRequest(String description, ProvisionerInfo provisioner) {
     this.description = description;
-    this.scope = scope;
     this.provisioner = provisioner;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public EntityScope getScope() {
-    return scope;
   }
 
   public ProvisionerInfo getProvisioner() {
@@ -63,19 +43,17 @@ public class Profile {
     if (this == o) {
       return true;
     }
-
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Profile profile = (Profile) o;
-    return Objects.equals(name, profile.name) &&
-      Objects.equals(description, profile.description) &&
-      Objects.equals(scope, profile.scope) &&
-      Objects.equals(provisioner, profile.provisioner);
+
+    ProfileCreateRequest that = (ProfileCreateRequest) o;
+    return Objects.equals(description, that.description) &&
+      Objects.equals(provisioner, that.provisioner);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, scope, provisioner);
+    return Objects.hash(description, provisioner);
   }
 }

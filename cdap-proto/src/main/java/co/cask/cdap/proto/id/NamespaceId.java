@@ -78,6 +78,10 @@ public class NamespaceId extends NamespacedEntityId {
     return new TopicId(namespace, topic);
   }
 
+  public ProfileId profile(String profile) {
+    return new ProfileId(namespace, profile);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) {

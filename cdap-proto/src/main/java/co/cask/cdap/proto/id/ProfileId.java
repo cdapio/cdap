@@ -20,6 +20,7 @@ import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -29,8 +30,12 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
   private final String profileName;
   private transient Integer hashCode;
 
-  protected ProfileId(String namespace, EntityType entity, String profileName) {
-    super(namespace, entity);
+  public ProfileId(String namespace, String profileName) {
+    super(namespace, EntityType.PROFILE);
+    if (profileName == null) {
+      throw new NullPointerException("Profile name cannot be null.");
+    }
+    ensureValidId("profile", profileName);
     this.profileName = profileName;
   }
 
@@ -51,6 +56,12 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, profileName));
+  }
+
+  @SuppressWarnings("unused")
+  public static ProfileId fromIdParts(Iterable<String> idString) {
+    Iterator<String> iterator = idString.iterator();
+    return new ProfileId(next(iterator, "namespace"), nextAndEnd(iterator, "profile"));
   }
 
   @Override
