@@ -53,7 +53,8 @@ public class SparkBatchSourceContext extends AbstractBatchContext
 
   @Override
   public void setInput(Input input) {
-    Input trackableInput = ExternalDatasets.makeTrackable(admin, suffixInput(input));
+    //Input trackableInput = ExternalDatasets.makeTrackable(admin, suffixInput(input));
+    Input trackableInput = suffixInput(input);
     sourceFactory.addInput(getStageName(), trackableInput);
   }
 

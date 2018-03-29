@@ -53,8 +53,8 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
   @Override
   public void addOutput(Output output) {
     Output actualOutput = suffixOutput(getOutput(output));
-    Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(admin, actualOutput);
-    sinkFactory.addOutput(getStageName(), trackableOutput);
+    //Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(admin, actualOutput);
+    sinkFactory.addOutput(getStageName(), actualOutput);
   }
 
   @Override

@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.api.common.Bytes;
@@ -8,16 +24,17 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
 import com.jcraft.jsch.Session;
+import org.junit.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import org.junit.Test;
 
 public class SSHAction {
 
-    public static final String privateKey = "-----BEGIN RSA PRIVATE KEY-----\n"
+    private static final String privateKey = "-----BEGIN RSA PRIVATE KEY-----\n"
             + "MIIJJgIBAAKCAgEAsm3a0AmM+WsWGVJINnXqrTCwBlMlkDgVu9am5x6JU1CERurw\n"
             + "pzlkGrXYTN2anFfc+6JjPhbiWTD9wi4DFfhcEL53i6shh5SYZVlG23U2qsfM6JZs\n"
             + "Jl7AKQ1JS6heyMtBlN8mBrLuWQXXZt9lgq/DyttKJD2iK4/kMsmob5i54oeXc+tS\n"
@@ -74,12 +91,12 @@ public class SSHAction {
     }
 
     public static String t(String input) throws JSchException, IOException {
-        JSch jsch=new JSch();
+        JSch jsch = new JSch();
         jsch.addIdentity("name", Bytes.toBytes(privateKey), null, null);
 
         String host = "35.200.155.105";
         String user = "yourname";
-        Session session=jsch.getSession(user, host, 22);
+        Session session = jsch.getSession(user, host, 22);
 
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();

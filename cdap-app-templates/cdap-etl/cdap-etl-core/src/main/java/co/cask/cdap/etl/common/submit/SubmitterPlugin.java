@@ -61,29 +61,30 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
 
   @Override
   public void onFinish(final boolean succeeded) {
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext datasetContext) throws Exception {
-          T context = contextProvider.getContext(datasetContext);
+    //try {
+    //  transactional.execute(new TxRunnable() {
+    //    @Override
+    //    public void run(DatasetContext datasetContext) throws Exception {
+          T context = contextProvider.getContext(null);
           delegate.onRunFinish(succeeded, context);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      LOG.warn("Error calling onRunFinish on stage {}", stageName);
-    }
+        //}
+      //});
+    //} catch (TransactionFailureException e) {
+    //  LOG.warn("Error calling onRunFinish on stage {}", stageName);
+    //}
   }
 
   @Override
-  public void prepareRun() throws TransactionFailureException {
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetContext) throws Exception {
-        U context = contextProvider.getContext(datasetContext);
+  public void prepareRun() throws Exception {
+
+    //transactional.execute(new TxRunnable() {
+    //  @Override
+    //  public void run(DatasetContext datasetContext) throws Exception {
+        U context = contextProvider.getContext(null);
         delegate.prepareRun(context);
         prepareAction.act(context);
-      }
-    });
+      //}
+    //});
   }
 
   /**
