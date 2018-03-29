@@ -41,7 +41,7 @@ function download_includes() {
   download_file ${target_includes_dir} ${file_source} README.rst bcf5148f45a778a7bc9f842ba84cbc10 cdap-sentry-extension-readme.txt
   # Download Apache Ranger File
   local file_source="${base_source}${branch}cdap-ranger/"
-  download_file ${target_includes_dir} ${file_source} README.rst 899b1568b5dbb29ae5f6df4a103bf2be cdap-ranger-extension-readme.txt
+  download_file ${target_includes_dir} ${file_source} README.rst 827c906f1fcd0b895452f4450811d531 cdap-ranger-extension-readme.txt
 }
 
 run_command ${1}
