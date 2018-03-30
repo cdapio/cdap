@@ -15,12 +15,14 @@
 */
 
 import React, {Component} from 'react';
-import {Form, FormGroup, Col, Input, Button} from 'reactstrap';
+import {Form, FormGroup, Col, Input} from 'reactstrap';
 import {preventPropagation} from 'services/helpers';
 import SampleViewSpecJson from './sample-view-spec.json';
 import AbstractWidget from 'components/AbstractWidget';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
+import {Link, Redirect} from 'react-router-dom';
+import {MyProfileApi} from 'api/cloud';
+import BtnWithLoading from 'components/BtnWithLoading';
 
 require('./CreateView.scss');
 
@@ -28,7 +30,10 @@ export default class ProfilesCreateView extends Component {
 
   state = {
     profileName: '',
-    profileDescription: ''
+    profileDescription: '',
+    redirectToNamespace: false,
+    loading: false,
+    error: null
   };
 
   parseSpecAndGetInitialState = () => {
@@ -64,6 +69,9 @@ export default class ProfilesCreateView extends Component {
   };
 
   createProfile = () => {
+    this.setState({
+      loading: true
+    });
     let jsonBody = {
       description: this.state.profileDescription,
       provisioner: {
@@ -77,9 +85,24 @@ export default class ProfilesCreateView extends Component {
         })
       }
     };
-    console.log(`Coming soon. This is the state right now:
-      ${JSON.stringify(jsonBody, null, 2)}
-    `);
+    MyProfileApi
+      .create({
+        namespace: getCurrentNamespace(),
+        profile: this.state.profileName
+      }, jsonBody)
+      .subscribe(
+        () => {
+          this.setState({
+            redirectToNamespace: true
+          });
+        },
+        err => {
+          this.setState({
+            loading: false,
+            error: JSON.stringify(err, null, 2)
+          });
+        }
+      );
   };
 
   renderProfileName = () => {
@@ -172,35 +195,42 @@ export default class ProfilesCreateView extends Component {
   };
 
   render() {
+    if (this.state.redirectToNamespace) {
+      return (
+        <Redirect to={`/ns/${getCurrentNamespace()}/details`} />
+      );
+    }
     let configurationGroups = SampleViewSpecJson['configuration-groups'];
     return (
       <div className="profile-create-view">
         <div className="create-view-top-panel">
-          Create a Goolge Dataproc Profile
+          Create a Google Dataproc Profile
         </div>
         <div className="create-form-container">
-          <Form
-            className="form-horizontal"
-            onSubmit={(e) => {
-              preventPropagation(e);
-              return false;
-            }}
-          >
-            {this.renderProfileName()}
-            {this.renderDescription()}
-            {
-              configurationGroups.map(group => this.renderGroup(group))
-            }
-          </Form>
+          <fieldset disabled={this.state.loading}>
+            <Form
+              className="form-horizontal"
+              onSubmit={(e) => {
+                preventPropagation(e);
+                return false;
+              }}
+            >
+              {this.renderProfileName()}
+              {this.renderDescription()}
+              {
+                configurationGroups.map(group => this.renderGroup(group))
+              }
+            </Form>
+          </fieldset>
         </div>
         <div className="btns-section">
-          <Button
-            color="primary"
+          <BtnWithLoading
+            className="btn-primary"
             onClick={this.createProfile}
+            loading={this.state.loading}
             disabled={!this.state.profileName.length || !this.state.profileDescription.length}
-          >
-            Create Compute Profile
-          </Button>
+            label="Create Compute Profile"
+          />
           <Link to={`/ns/${getCurrentNamespace()}`}>
             Close
           </Link>

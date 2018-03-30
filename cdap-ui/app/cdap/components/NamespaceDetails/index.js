@@ -26,6 +26,8 @@ import EntityCounts from 'components/NamespaceDetails/EntityCounts';
 import Preferences from 'components/NamespaceDetails/Preferences';
 import Mapping from 'components/NamespaceDetails/Mapping';
 import Security from 'components/NamespaceDetails/Security';
+import ProfilesListView from 'components/Cloud/Profiles/ListView';
+
 require('./NamespaceDetails.scss');
 
 const mapStateToProps = (state) => {
@@ -46,6 +48,8 @@ const NamespaceDetailsComp = ({loading}) => {
         <Description />
         <hr />
         <EntityCounts />
+        <hr />
+        <ProfilesListView />
         <hr />
         <Preferences />
         <hr className="more-margin-top" />

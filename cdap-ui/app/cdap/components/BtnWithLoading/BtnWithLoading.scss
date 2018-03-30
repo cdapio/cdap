@@ -12,14 +12,17 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
-let dataSrc = DataSourceConfigurer.getInstance();
+.btn-with-loading {
+  > div {
+    display: flex;
+    align-items: center;
+  }
+  svg.loading-bar {
+    // Standard bootstrap btn height is 31px
+    // padding top and bottom are 0.5rem each. Hence the calculation.
+    height: calc(31px - 1rem);
+  }
 
-var basepath = '/namespaces/:namespace';
-export const MyProfileApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/profiles`),
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/profiles/:profile`)
-};
+}

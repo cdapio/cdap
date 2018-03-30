@@ -24,8 +24,6 @@ $header-bg-color: $grey-08;
 .runs-table-container {
   padding: 10px 75px;
 
-  @include grid();
-
   .grid.grid-container {
     max-height: 300px;
     border-bottom: 1px solid $border-color;

@@ -36,8 +36,6 @@
     }
   }
 
-  @include grid();
-
   .grid.grid-container {
     max-height: calc(100% - 32px);
     height: 100%;
