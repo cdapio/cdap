@@ -619,7 +619,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
           partitionLocation.renameTo(dstLocation);
         }
       } catch (IOException ioe) {
-        throw new DataSetException(String.format("Failed to move location %s into quarantine", partitionLocation));
+        throw new DataSetException(String.format("Failed to move location %s into quarantine", partitionLocation), ioe);
       }
       operationsInThisTx.add(new DropPartitionOperation(key, partition.getRelativePath()));
     }
