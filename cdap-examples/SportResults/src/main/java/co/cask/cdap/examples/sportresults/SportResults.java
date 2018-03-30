@@ -17,52 +17,15 @@
 package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
- * An example that illustrates using partitioned file sets through an example of sport results analytics.
+ *
  */
 public class SportResults extends AbstractApplication {
 
   @Override
   public void configure() {
+    setName("PartitionApp");
     addService(new UploadService());
-    addMapReduce(new ScoreCounter());
-
-    // Create the "results" partitioned file set, configure it to work with MapReduce and with Explore
-    createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
-      // Properties for partitioning
-      .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
-      // Properties for file set
-      .setInputFormat(TextInputFormat.class)
-      .setOutputFormat(TextOutputFormat.class)
-      .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
-      // Properties for Explore (to create a partitioned Hive table)
-      .setEnableExploreOnCreate(true)
-      .setExploreFormat("csv")
-      .setExploreSchema("`date` STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
-      .setExploreTableName("results")
-      .setDescription("FileSet dataset of game results for a sport league and season")
-      .build());
-
-    // Create the aggregates partitioned file set, configure it to work with MapReduce and with Explore
-    createDataset("totals", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
-      // Properties for partitioning
-      .setPartitioning(Partitioning.builder().addStringField("league").build())
-      // Properties for file set
-      .setInputFormat(TextInputFormat.class)
-      .setOutputFormat(TextOutputFormat.class)
-      .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
-      // Properties for Explore (to create a partitioned Hive table)
-      .setEnableExploreOnCreate(true)
-      .setExploreTableName("totals")
-      .setExploreFormat("csv")
-      .setExploreSchema("team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT")
-      .setDescription("FileSet dataset of aggregated results for each sport league")
-      .build());
   }
 }
