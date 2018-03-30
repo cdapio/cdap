@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.metadata;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -30,7 +31,6 @@ import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;

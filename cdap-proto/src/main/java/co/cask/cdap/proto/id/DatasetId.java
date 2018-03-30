@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -49,6 +50,11 @@ public class DatasetId extends NamespacedEntityId implements ParentedId<Namespac
   @Override
   public String getEntityName() {
     return getDataset();
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() {
+    return MetadataEntity.ofDataset(namespace, dataset);
   }
 
   @Override

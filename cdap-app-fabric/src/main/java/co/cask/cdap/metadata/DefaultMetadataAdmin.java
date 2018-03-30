@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -29,7 +30,6 @@ import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
