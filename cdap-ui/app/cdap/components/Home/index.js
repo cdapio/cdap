@@ -25,6 +25,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import OpsDashboard from 'components/OpsDashboard';
+import Reports from 'components/Reports';
 require('./Home.scss');
 
 const DataPrepBrowser = Loadable({
@@ -108,6 +109,7 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route exact path="/ns/:namespace/create-profile" component={ProfileCreateView} />
+          <Route exact path="/ns/:namespace/reports" component={Reports} />
           <Route component={Page404} />
         </Switch>
       </div>

@@ -1758,6 +1758,23 @@ features:
     user: Business
     value: Value
 
+  Reports:
+    Customizer:
+      Options:
+        customApps: Custom Apps runs
+        duration: Duration
+        end: End time
+        namespace: Namespace
+        numLogErrors: "# of log errors"
+        numLogWarnings: "# of log warnings"
+        numRecordsOut: "# of records out"
+        pipelines: Pipelines runs
+        runtimeArguments: Runtime args
+        start: Start time
+        startMethod: Start method
+        status: Status
+        user: User
+
   Resource-Center:
     Application:
       actionbtn0: Upload
