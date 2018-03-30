@@ -16,27 +16,36 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.profile.ProvisionerInfo;
-import co.cask.cdap.proto.profile.ProvisionerPropertyValue;
+import co.cask.cdap.proto.profile.ProfileCreateRequest;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -50,22 +59,13 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
-  // TODO: remove these variables
-  private static final List<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
-    ImmutableList.<ProvisionerPropertyValue>builder()
-      .add(new ProvisionerPropertyValue("1st property", "1st value", false))
-      .add(new ProvisionerPropertyValue("2nd property", "2nd value", true))
-      .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
-      .build();
-  private static final Profile SYSTEM_PROFILE = new Profile("system mock", "system mock profile for UI",
-                                                            EntityScope.SYSTEM,
-                                                            new ProvisionerInfo("mock provisioner",
-                                                                                PROPERTY_SUMMARIES));
-  private static final Profile USER_PROFILE = new Profile("user mock", "user mock profile for UI",
-                                                            EntityScope.USER,
-                                                            new ProvisionerInfo("mock provisioner",
-                                                                                PROPERTY_SUMMARIES));
 
+  private final ProfileStore profileStore;
+
+  @Inject
+  public ProfileHttpHandler(ProfileStore profileStore) {
+    this.profileStore = profileStore;
+  }
 
   /**
    * List the profiles in the given namespace. By default the results will not contain profiles in system scope.
@@ -74,11 +74,14 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
-                          @Nullable @QueryParam("includeSystem") String includeSystem) {
-    // TODO: implement the method and remove the mock data
+                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) throws IOException {
     List<Profile> profiles = new ArrayList<>();
-    profiles.add(SYSTEM_PROFILE);
-    profiles.add(USER_PROFILE);
+    NamespaceId namespace = new NamespaceId(namespaceId);
+    boolean include = Boolean.valueOf(includeSystem);
+    if (include && !namespace.equals(NamespaceId.SYSTEM)) {
+      profiles.addAll(profileStore.getProfiles(NamespaceId.SYSTEM));
+    }
+    profiles.addAll(profileStore.getProfiles(namespace));
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
   }
 
@@ -89,13 +92,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("profile-name") String profileName) throws NotFoundException {
-    // TODO: implement the method and remove the mock data
-    if (new NamespaceId(namespaceId).equals(NamespaceId.SYSTEM)) {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(SYSTEM_PROFILE));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(USER_PROFILE));
-    }
+                         @PathParam("profile-name") String profileName) throws NotFoundException, IOException {
+    ProfileId profileId = new ProfileId(namespaceId, profileName);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileStore.getProfile(profileId)));
   }
 
   /**
@@ -103,10 +102,22 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/profiles/{profile-name}")
-  public void writeProfile(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId,
-                           @PathParam("profile-name") String profileName) throws BadRequestException {
-    // TODO: implement the method
+  public void writeProfile(
+    FullHttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+    @PathParam("profile-name") String profileName) throws BadRequestException, IOException, AlreadyExistsException {
+    ProfileCreateRequest profileCreateRequest;
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
+      // TODO: validate the profileCreateRequest, the provisoner should exist and the property should be correct
+      profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage(), e);
+    }
+    ProfileId profileId = new ProfileId(namespaceId, profileName);
+    Profile profile =
+      new Profile(profileName, profileCreateRequest.getDescription(),
+                  profileId.getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER,
+                  profileCreateRequest.getProvisioner());
+    profileStore.add(profileId, profile);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -117,10 +128,12 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    */
   @DELETE
   @Path("/profiles/{profile-name}")
-  public void deleteProfile(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("profile-name") String profileName) throws NotFoundException, ConflictException {
-    // TODO: implement the method
+  public void deleteProfile(
+    HttpRequest request, HttpResponder responder,
+    @PathParam("namespace-id") String namespaceId,
+    @PathParam("profile-name") String profileName) throws NotFoundException, ConflictException, IOException {
+    // TODO: add the check if there is any program or schedule associated with the profile
+    profileStore.delete(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

@@ -64,6 +64,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
@@ -487,6 +488,7 @@ public class UpgradeTool {
       // then leave this block empty but do not remove block so that it can be used in next release if needed
       // owner meta
       DefaultOwnerStore.setupDatasets(datasetFramework);
+      ProfileStore.setupDatasets(datasetFramework);
     }
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
