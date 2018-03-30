@@ -16,157 +16,96 @@
 
 package co.cask.cdap.examples.sportresults;
 
-import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
+import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
-import com.google.common.io.Closeables;
+import com.google.common.base.Preconditions;
 import org.apache.tephra.TransactionFailureException;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * A service for uploading sport results for a given league and season.
+ *
  */
 public class UploadService extends AbstractService {
 
   @Override
   protected void configure() {
-    setName("UploadService");
-    setDescription("A service for uploading sport results for a given league and season.");
-    setInstances(1);
-    addHandler(new UploadHandler());
+    setName("PartitionedFileSetService");
+    setDescription("A service for managing partitions of PartitionedFileSets.");
+    addHandler(new PartitionHandler());
   }
 
   /**
-   * A handler that allows reading and writing files.
+   *
    */
-  public static class UploadHandler extends AbstractHttpServiceHandler {
+  public static class PartitionHandler extends AbstractHttpServiceHandler {
+      private static final Predicate<PartitionDetail> ALWAYS_TRUE = new Predicate<PartitionDetail>() {
+          @Override
+          public boolean apply(PartitionDetail partitionDetail) {
+              return true;
+          }
+      };
 
-    private static final Logger LOG = LoggerFactory.getLogger(UploadHandler.class);
-
-    @UseDataSet("results")
-    private PartitionedFileSet results;
-
-    @GET
-    @Path("leagues/{league}/seasons/{season}")
-    @TransactionPolicy(TransactionControl.EXPLICIT)
-    public void read(HttpServiceRequest request, HttpServiceResponder responder,
-                     @PathParam("league") final String league,
-                     @PathParam("season") final int season) throws TransactionFailureException {
-
-      final PartitionKey key = PartitionKey.builder()
-        .addStringField("league", league)
-        .addIntField("season", season)
-        .build();
-      final AtomicReference<PartitionDetail> partitionDetail = new AtomicReference<>();
-
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          partitionDetail.set(results.getPartition(key));
-        }
-      });
-      if (partitionDetail.get() == null) {
-        responder.sendString(404, "Partition not found.", Charsets.UTF_8);
-        return;
+      @Path("dataset/{datasetName}")
+      @GET
+      public void history(HttpServiceRequest request, HttpServiceResponder responder,
+              @PathParam("datasetName") String datasetName) {
+          Dataset dataset = getContext().getDataset(datasetName);
+          if (!(dataset instanceof PartitionedFileSet)) {
+              throw new IllegalArgumentException();
+          }
+          PartitionedFileSet pfs = (PartitionedFileSet) dataset;
+          PartitionConsumerResult result =
+                  pfs.consumePartitions(PartitionConsumerState.FROM_BEGINNING, 100, ALWAYS_TRUE);
+          responder.sendJson(result.getPartitions());
       }
 
-      try {
-        responder.send(200, partitionDetail.get().getLocation().append("file"), "text/plain");
-      } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.get().getRelativePath()));
-      }
-    }
-
-    @PUT
-    @Path("leagues/{league}/seasons/{season}")
+    @DELETE
+    @Path("dataset/{datasetName}")
     @TransactionPolicy(TransactionControl.EXPLICIT)
-    public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
-                                     @PathParam("league") String league, @PathParam("season") int season)
-      throws TransactionFailureException {
+    public void deletePartition(HttpServiceRequest request, HttpServiceResponder responder,
+            @PathParam("datasetName") final String datasetName) throws TransactionFailureException {
 
-      final PartitionKey key = PartitionKey.builder()
-        .addStringField("league", league)
-        .addIntField("season", season)
-        .build();
-      final AtomicReference<PartitionOutput> partitionOutput = new AtomicReference<>();
+        getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+                Dataset dataset = context.getDataset(datasetName);
+                if (!(dataset instanceof PartitionedFileSet)) {
+                    throw new IllegalArgumentException();
+                }
+                PartitionedFileSet pfs = (PartitionedFileSet) dataset;
+                Partitioning partitioning = pfs.getPartitioning();
 
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          if (results.getPartition(key) != null) {
-            throw new PartitionAlreadyExistsException("results", key);
-          }
-          partitionOutput.set(results.getPartitionOutput(key));
-        }
-      });
+                PartitionKey.Builder keyBuilder = PartitionKey.builder(partitioning);
+                for (Map.Entry<String, Partitioning.FieldType> fieldTypeEntry : partitioning.getFields().entrySet()) {
+                    String headerValue = request.getHeader(fieldTypeEntry.getKey());
+                    Preconditions.checkArgument(headerValue != null);
+                    keyBuilder.addField(fieldTypeEntry.getKey(), fieldTypeEntry.getValue().parse(headerValue));
+                }
 
-      final PartitionOutput output = partitionOutput.get();
-      try {
-        final Location partitionDir = output.getLocation();
-        if (!partitionDir.mkdirs()) {
-          responder.sendString(409, "Partition exists.", Charsets.UTF_8);
-          return null;
-        }
-
-        final Location location = partitionDir.append("file");
-        final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
-        return new HttpContentConsumer() {
-          @Override
-          public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
-            channel.write(chunk);
-          }
-
-          @Override
-          public void onFinish(HttpServiceResponder responder) throws Exception {
-            channel.close();
-            output.addPartition();
-            responder.sendStatus(200);
-          }
-
-          @Override
-          public void onError(HttpServiceResponder responder, Throwable failureCause) {
-            Closeables.closeQuietly(channel);
-            try {
-              partitionDir.delete(true);
-            } catch (IOException e) {
-              LOG.warn("Failed to delete partition directory '{}'", partitionDir, e);
+                PartitionKey partitionKey = keyBuilder.build();
+                pfs.dropPartition(partitionKey);
             }
-            LOG.debug("Unable to write path {}", location, failureCause);
-            responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'",
-                                                   location, failureCause.getMessage()));
-          }
-        };
-      } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'",
-                                               output.getRelativePath(), e.getMessage()));
-        return null;
-      }
+        });
+        responder.sendStatus(200);
     }
   }
 }
