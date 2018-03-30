@@ -17,32 +17,43 @@
 @import "../../../../styles/mixins.scss";
 @import "../../../../styles/variables.scss";
 
-.profiles-list-view-on-pipeline {
-
+.profiles-list-view {
   .grid.grid-container {
+    max-height: 550px;
     .grid-item {
-      grid-template-columns: 30px 1fr 1fr 1fr;
+      grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20px;
+      &.sub-header {
+        border: 0;
+        padding: 0;
+        color: $grey-05;
+        grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 2fr 0fr 2fr 0fr 1fr 20px;
+
+        .sub-title {
+          border-bottom: 2px solid gray;
+        }
+
+        .sub-title + div {
+          margin-left: -25px;
+        }
+
+        > div {
+          padding: 0 5px 0 0;
+          margin-right: 20px;
+          margin-left: 5px;
+        }
+      }
     }
     .grid-header {
       .grid-item {
-        background: $grey-07;
-        padding: 5px 0;
+        padding-top: 0;
       }
     }
     .grid-body {
       .grid-item {
-        padding: 3px 0;
-        // FIXME: This should be moved to the common styles. We should use the same
-        // pattern in all the tables.
-        &:hover,
-        &.active {
-          background: $yellow-02-lighter;
+        &:last-child {
+          border-bottom: 0;
         }
       }
     }
-  }
-  .profiles-count {
-    color: $grey-04;
-    margin: 5px 0;
   }
 }

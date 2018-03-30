@@ -30,57 +30,6 @@
   }
 }
 
-@mixin grid($maxGridHeight: 200px, $minGridWidth: 10px, $maxGridWidth: 1fr, $headerBgColor: white, $borderColor: $grey-04) {
-  .grid{
-    &.grid-container {
-      max-height: $maxGridHeight;
-      overflow-y: auto;
-      .grid-item {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax($minGridWidth, $maxGridWidth));
-
-        > strong,
-        > div {
-          border-left: 0;
-          border-bottom: 0;
-          padding: 5px;
-          max-width: 100%;
-          overflow: hidden;
-          word-break: inherit;
-          text-overflow: ellipsis;
-        }
-      }
-      .grid-header {
-        position: sticky;
-        top: 0;
-        background: $headerBgColor;
-        > .grid-item {
-          border-bottom: 1px solid $grey-04;
-          padding: 10px 0;
-          border-left: 0;
-          border-right: 0;
-          border-top: 0;
-        }
-      }
-      .grid-body {
-        .grid-item {
-          padding: 7px 0;
-          cursor: pointer;
-          align-content: center;
-          align-items: center;
-          border-bottom: 1px solid $grey-04;
-          &:hover {
-            background: $grey-08;
-          }
-        }
-        a {
-          text-decoration: none;
-        }
-      }
-    }
-  }
-}
-
 @mixin border-element($right: -17px, $top: 28px) {
   content: "";
   position: absolute;
