@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,19 +20,12 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Guice;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.ElectionHandler;
-import org.apache.twill.api.RunId;
-import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Test;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Test case that simple creates a Guice injector from the {@link DistributedProgramRunnableModule}, to ensure
@@ -43,76 +36,12 @@ public class DistributedProgramRunnableModuleTest {
   public void createModule() throws Exception {
     DistributedProgramRunnableModule distributedProgramRunnableModule =
       new DistributedProgramRunnableModule(CConfiguration.create(), new Configuration());
-    Guice.createInjector(distributedProgramRunnableModule.createModule(
-      new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program"), RunIds.generate().getId(),
-      "0", "user/host@KDC.NET"));
-    Guice.createInjector(distributedProgramRunnableModule.createModule(new TwillContext() {
-      @Override
-      public RunId getRunId() {
-        return null;
-      }
 
-      @Override
-      public RunId getApplicationRunId() {
-        return null;
-      }
+    ProgramRunId programRunId = new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program")
+      .run(RunIds.generate().getId());
 
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public InetAddress getHost() {
-        // used by DistributedProgramRunnableModule#createModule(TwillContext)
-        return new InetSocketAddress("localhost", 0).getAddress();
-      }
-
-      @Override
-      public String[] getArguments() {
-        return new String[0];
-      }
-
-      @Override
-      public String[] getApplicationArguments() {
-        return new String[0];
-      }
-
-      @Override
-      public TwillRunnableSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getVirtualCores() {
-        return 0;
-      }
-
-      @Override
-      public int getMaxMemoryMB() {
-        return 0;
-      }
-
-      @Override
-      public ServiceDiscovered discover(String name) {
-        return null;
-      }
-
-      @Override
-      public Cancellable electLeader(String name, ElectionHandler participantHandler) {
-        return null;
-      }
-
-      @Override
-      public Lock createLock(String name) {
-        return null;
-      }
-
+    Guice.createInjector(distributedProgramRunnableModule.createModule(programRunId, "0", "user/host@KDC.NET",
+                                                                       new ServiceAnnouncer() {
       @Override
       public Cancellable announce(String serviceName, int port) {
         return null;
@@ -122,7 +51,6 @@ public class DistributedProgramRunnableModuleTest {
       public Cancellable announce(String serviceName, int port, byte[] payload) {
         return null;
       }
-    }, new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program"), RunIds.generate().getId(), "0",
-                                                                       "user/host@KDC.NET"));
+    }));
   }
 }
