@@ -122,7 +122,7 @@ export default class ProfilesListViewInPipeline extends Component {
                   }
                 </div>
                 <div>{profile.name}</div>
-                <div>{profile.provisionerInfo.name}</div>
+                <div>{profile.provisioner.name}</div>
                 <div>{profile.scope}</div>
               </div>
             );
