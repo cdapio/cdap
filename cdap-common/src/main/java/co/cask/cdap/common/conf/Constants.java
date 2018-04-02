@@ -104,6 +104,7 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String MESSAGING_SERVICE = "messaging.service";
+    public static final String RUNTIME_HTTP = "runtime.http";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -793,7 +794,14 @@ public final class Constants {
   public static final class RuntimeMonitor {
     public static final String POLL_TIME_MS = "app.program.runtime.monitor.polltime.ms";
     public static final String BATCH_LIMIT = "app.program.runtime.monitor.batch.limit";
-    public static final String TOPICS = "app.program.runtime.monitor.topics";
+    public static final String TOPICS_CONFIGS = "app.program.runtime.monitor.topics.configs";
+  }
+
+  /**
+   * Runtime Handler constants.
+   */
+  public static final class RuntimeHandler {
+    public static final String SERVER_PORT = "app.program.runtime.handler.bind.port";
   }
 
   /**
