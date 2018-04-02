@@ -15,9 +15,9 @@
  */
 
 import React from 'react';
-import Customizer from 'components/Reports/Customizer';
 import {Provider} from 'react-redux';
 import ReportsStore from 'components/Reports/store/ReportsStore';
+import ReportsList from 'components/Reports/ReportsList';
 
 require('./Reports.scss');
 
@@ -33,7 +33,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <Customizer />
+        <ReportsList />
       </div>
     </Provider>
   );
