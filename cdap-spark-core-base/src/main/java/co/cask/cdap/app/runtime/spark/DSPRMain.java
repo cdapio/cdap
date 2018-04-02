@@ -27,7 +27,10 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -43,6 +46,8 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
@@ -91,9 +96,8 @@ public class DSPRMain {
             + "nk-output-dir\\\",\\\"referenceName\\\":\\\"HDFSinkTest\\\",\\\"delimite"
             + "r\\\":\\\"|\\\"}}},{\\\"name\\\":\\\"source\\\",\\\"plugin\\\":{\\\"name\\\":\\\"Fil"
             + "e\\\",\\\"type\\\":\\\"batchsource\\\",\\\"properties\\\":{\\\"referenceName"
-            + "\\\":\\\"TestFile\\\",\\\"fileSystem\\\":\\\"Text\\\",\\\"path\\\":\\\"/Users/aa"
-            + "nwar/src/hydrator-plugins/core-plugins/target/junit555045997"
-            + "8545741420/junit5499898826057422683/test.txt\\\",\\\"format\\\":\\\""
+            + "\\\":\\\"TestFile\\\",\\\"fileSystem\\\":\\\"Text\\\",\\\"path\\\":\\\"/tmp/input.txt"
+            + "\\\",\\\"format\\\":\\\""
             + "text\\\",\\\"ignoreNonExistingFolders\\\":\\\"false\\\",\\\"pathField\\\":"
             + "\\\"file\\\",\\\"schema\\\":\\\"{\\\\\\\"type\\\\\\\":\\\\\\\"record\\\\\\\",\\\\\\\"name\\"
             + "\\\\\":\\\\\\\"file.record\\\\\\\",\\\\\\\"fields\\\\\\\":[{\\\\\\\"name\\\\\\\":\\\\\\\"of"
@@ -118,9 +122,8 @@ public class DSPRMain {
             + "1\\\",\\\"phase\\\":{\\\"stagesByType\\\":{\\\"batchsource\\\":[{\\\"name\\\":"
             + "\\\"source\\\",\\\"plugin\\\":{\\\"type\\\":\\\"batchsource\\\",\\\"name\\\":\\\"F"
             + "ile\\\",\\\"properties\\\":{\\\"referenceName\\\":\\\"TestFile\\\",\\\"fileS"
-            + "ystem\\\":\\\"Text\\\",\\\"path\\\":\\\"/Users/aanwar/src/hydrator-plugi"
-            + "ns/core-plugins/target/junit5550459978545741420/junit5499898"
-            + "826057422683/test.txt\\\",\\\"format\\\":\\\"text\\\",\\\"ignoreNonExist"
+            + "ystem\\\":\\\"Text\\\",\\\"path\\\":\\\"/tmp/input.txt"
+            + "\\\",\\\"format\\\":\\\"text\\\",\\\"ignoreNonExist"
             + "ingFolders\\\":\\\"false\\\",\\\"pathField\\\":\\\"file\\\",\\\"schema\\\":\\\"{"
             + "\\\\\\\"type\\\\\\\":\\\\\\\"record\\\\\\\",\\\\\\\"name\\\\\\\":\\\\\\\"file.record\\\\\\\""
             + ",\\\\\\\"fields\\\\\\\":[{\\\\\\\"name\\\\\\\":\\\\\\\"offset\\\\\\\",\\\\\\\"type\\\\\\\":\\"
@@ -171,9 +174,8 @@ public class DSPRMain {
             + "puts\\\":[\\\"source\\\"],\\\"outputs\\\":[]},\\\"source\\\":{\\\"name\\\":\\\"s"
             + "ource\\\",\\\"plugin\\\":{\\\"type\\\":\\\"batchsource\\\",\\\"name\\\":\\\"File"
             + "\\\",\\\"properties\\\":{\\\"referenceName\\\":\\\"TestFile\\\",\\\"fileSyst"
-            + "em\\\":\\\"Text\\\",\\\"path\\\":\\\"/Users/aanwar/src/hydrator-plugins/"
-            + "core-plugins/target/junit5550459978545741420/junit5499898826"
-            + "057422683/test.txt\\\",\\\"format\\\":\\\"text\\\",\\\"ignoreNonExisting"
+            + "em\\\":\\\"Text\\\",\\\"path\\\":\\\"/tmp/input.txt"
+            + "\\\",\\\"format\\\":\\\"text\\\",\\\"ignoreNonExisting"
             + "Folders\\\":\\\"false\\\",\\\"pathField\\\":\\\"file\\\",\\\"schema\\\":\\\"{\\\\\\"
             + "\"type\\\\\\\":\\\\\\\"record\\\\\\\",\\\\\\\"name\\\\\\\":\\\\\\\"file.record\\\\\\\",\\\\"
             + "\\\"fields\\\\\\\":[{\\\\\\\"name\\\\\\\":\\\\\\\"offset\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\""
@@ -211,9 +213,8 @@ public class DSPRMain {
             + "ne.spec\":\"{\\\"endingActions\\\":[],\\\"stages\\\":[{\\\"name\\\":\\\"sour"
             + "ce\\\",\\\"plugin\\\":{\\\"type\\\":\\\"batchsource\\\",\\\"name\\\":\\\"File\\\","
             + "\\\"properties\\\":{\\\"referenceName\\\":\\\"TestFile\\\",\\\"fileSystem\\"
-            + "\":\\\"Text\\\",\\\"path\\\":\\\"/Users/aanwar/src/hydrator-plugins/cor"
-            + "e-plugins/target/junit5550459978545741420/junit5499898826057"
-            + "422683/test.txt\\\",\\\"format\\\":\\\"text\\\",\\\"ignoreNonExistingFol"
+            + "\":\\\"Text\\\",\\\"path\\\":\\\"/tmp/input.txt"
+            + "\\\",\\\"format\\\":\\\"text\\\",\\\"ignoreNonExistingFol"
             + "ders\\\":\\\"false\\\",\\\"pathField\\\":\\\"file\\\",\\\"schema\\\":\\\"{\\\\\\\"ty"
             + "pe\\\\\\\":\\\\\\\"record\\\\\\\",\\\\\\\"name\\\\\\\":\\\\\\\"file.record\\\\\\\",\\\\\\\"f"
             + "ields\\\\\\\":[{\\\\\\\"name\\\\\\\":\\\\\\\"offset\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"lon"
@@ -372,9 +373,8 @@ public class DSPRMain {
             + "record\\\",\\\"name\\\":\\\"file.record\\\",\\\"fields\\\":[{\\\"name\\\":\\\"of"
             + "fset\\\",\\\"type\\\":\\\"long\\\"},{\\\"name\\\":\\\"body\\\",\\\"type\\\":[\\\"str"
             + "ing\\\",\\\"null\\\"]},{\\\"name\\\":\\\"file\\\",\\\"type\\\":[\\\"string\\\",\\\"n"
-            + "ull\\\"]}]}\",\"fileSystem\":\"Text\",\"path\":\"/Users/aanwar/src/hyd"
-            + "rator-plugins/core-plugins/target/junit5550459978545741420/j"
-            + "unit5499898826057422683/test.txt\",\"format\":\"text\",\"ignoreNon"
+            + "ull\\\"]}]}\",\"fileSystem\":\"Text\",\"path\":\"/tmp/input.txt"
+            + "\",\"format\":\"text\",\"ignoreNon"
             + "ExistingFolders\":\"false\",\"pathField\":\"file\",\"referenceName\":"
             + "\"TestFile\"},\"macros\":{\"lookupProperties\":[],\"macroFunctions\""
             + ":[]}}}}}";
@@ -394,11 +394,27 @@ public class DSPRMain {
 
         Preconditions.checkArgument(jarLocation.exists());
 
+
+
+        File tempDir = new File("/tmp/dsprmain_tmp");
+        File programJarUnpacked = new File(tempDir, "unpacked");
+        //programJarUnpacked.mkdirs();
+        //try {
+        //    File programJar = Locations.linkOrCopy(jarLocation, new File(tempDir, "program.jar"));
+        //    // Unpack the JAR file
+        //    BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), programJarUnpacked);
+        //} catch (IOException ioe) {
+        //    throw ioe;
+        //} catch (Exception e) {
+        //    // should not happen
+        //    throw Throwables.propagate(e);
+        //}
+
         ProgramDescriptor programDescriptor =
                 new ProgramDescriptor(programId, GSON.fromJson(appSpecString, ApplicationSpecification.class));
-// See AbstractProgramRuntimeService#run
+        // See AbstractProgramRuntimeService#run
         Program program = Programs.create(cConf, sparkProgramRunner, programDescriptor,
-                jarLocation, new File("/tmp/spark_unpcked"));
+                jarLocation, programJarUnpacked);
 
 
         Map<String, String> optionsMap = new HashMap<>();
@@ -435,6 +451,8 @@ public class DSPRMain {
         ProgramController controller = sparkProgramRunner.run(program, options);
 
         System.out.println("output: " + waitForCompletion(controller));
+
+        //DirUtils.deleteDirectoryContents(tempDir);
     }
 
     private static boolean waitForCompletion(ProgramController controller) throws InterruptedException {
