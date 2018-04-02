@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,8 @@ const mapStateToPrincipalProps = (state) => {
   return {
     value: state.security.principal,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step3.principal-placeholder')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step3.principal-placeholder'),
+    disabled: state.editableFields.fields.indexOf('principal') === -1
   };
 };
 
@@ -46,7 +47,8 @@ const mapStateTokeytabURIProps = (state) => {
   return {
     value: state.security.keyTab,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-placeholder')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-placeholder'),
+    disabled: state.editableFields.fields.indexOf('keyTab') === -1
   };
 };
 

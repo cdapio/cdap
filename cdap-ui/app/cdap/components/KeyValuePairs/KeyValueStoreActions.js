@@ -14,8 +14,8 @@
 * the License.
 */
 
-import uuid from 'uuid/v4';
 import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
+import {convertMapToKeyValuePairs, convertKeyValuePairsToMap} from 'services/helpers';
 
 const KeyValueStoreActions = {
   setKey: 'SET-KEY',
@@ -28,14 +28,9 @@ const KeyValueStoreActions = {
 };
 
 const convertMapToKeyValuePairsObj = (obj) => {
-  let keyValuePairsObj = {};
-  keyValuePairsObj.pairs = Object.keys(obj).map(objKey => {
-    return {
-      key: objKey,
-      value: obj[objKey],
-      uniqueId: 'id-' + uuid()
-    };
-  });
+  let keyValuePairsObj = {
+    pairs: convertMapToKeyValuePairs(obj)
+  };
   if (!keyValuePairsObj.pairs.length) {
     keyValuePairsObj.pairs.push(getDefaultKeyValuePair());
   }
@@ -43,16 +38,7 @@ const convertMapToKeyValuePairsObj = (obj) => {
 };
 
 const convertKeyValuePairsObjToMap = (keyValues) => {
-  let map = {};
-  if (keyValues.pairs) {
-    keyValues.pairs.forEach((currentPair) => {
-      if (currentPair.key.length > 0 && currentPair.value.length > 0) {
-        let key = currentPair.key;
-        map[key] = currentPair.value;
-      }
-    });
-  }
-  return map;
+  return convertKeyValuePairsToMap(keyValues.pairs || []);
 };
 
 const keyValuePairsHaveMissingValues = (keyValues) => {

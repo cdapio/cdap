@@ -50,7 +50,7 @@ export default class Wizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeStep: this.props.wizardConfig.steps[0].id,
+      activeStep: this.props.activeStepId || this.props.wizardConfig.steps[0].id,
       loading: false,
       loadingCTA: false,
       error: '',
@@ -513,4 +513,5 @@ Wizard.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   successInfo: PropTypes.object,
   onClose: PropTypes.func.isRequired,
+  activeStepId: PropTypes.string
 };

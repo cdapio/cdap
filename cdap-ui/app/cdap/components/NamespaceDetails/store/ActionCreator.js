@@ -48,6 +48,33 @@ function getNamespacePrefs() {
     );
 }
 
+function getNamespaceProperties() {
+  let namespace = getCurrentNamespace();
+
+  MyNamespaceApi
+    .get({namespace})
+    .subscribe(
+      (res) => {
+        let config = res.config;
+
+        NamespaceDetailsStore.dispatch({
+          type: NamespaceDetailsActions.setData,
+          payload: {
+            name: res.name,
+            description: res.description,
+            hdfsRootDirectory: config['root.directory'],
+            hbaseNamespaceName: config['hbase.namespace'],
+            hiveDatabaseName: config['hive.database'],
+            schedulerQueueName: config['scheduler.queue.name'],
+            principal: config.principal,
+            keytabURI: config.keytabURI
+          }
+        });
+      },
+      (err) => console.log(err)
+    );
+}
+
 function getData() {
   enableLoading();
 
@@ -118,5 +145,6 @@ function getData() {
 
 export {
   getData,
+  getNamespaceProperties,
   getNamespacePrefs
 };

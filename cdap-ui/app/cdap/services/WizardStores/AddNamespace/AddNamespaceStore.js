@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 import {combineReducers, createStore, compose} from 'redux';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
+import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
 import head from 'lodash/head';
 import uuidV4 from 'uuid/v4';
 
@@ -51,13 +52,22 @@ const defaultSecurityState = Object.assign({
 }, skippableDefaultState);
 
 const defaultPreferencesState = Object.assign({
-  keyValues : {
+  preferences : {
     pairs : [{
       key : '',
       value : '',
       uniqueId : uuidV4()
     }]
   }
+}, skippableDefaultState);
+
+const defaultEditableFieldsState = Object.assign({
+  fields: Object.keys({
+    ...defaultGeneralState,
+    ...defaultMappingState,
+    ...defaultSecurityState,
+    ...defaultPreferencesState
+  })
 }, skippableDefaultState);
 
 const defaultAction = {
@@ -70,7 +80,8 @@ const defaultInitialState = {
   general: defaultGeneralState,
   mapping: defaultMappingState,
   security: defaultSecurityState,
-  preferences: defaultPreferencesState
+  preferences: defaultPreferencesState,
+  editableFields: defaultEditableFieldsState
 };
 
 // Utilities. FIXME: Move to a common place?
@@ -122,6 +133,13 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
         schedulerQueue: action.payload.schedulerQueue
       });
       break;
+    case AddNamespaceActions.setProperties:
+      stateCopy = {
+        ...state,
+        name: action.payload.name,
+        description: action.payload.description
+      };
+      break;
     case AddNamespaceActions.onError:
       return onErrorHandler('general', Object.assign({}, state), action);
     case AddNamespaceActions.onSuccess:
@@ -160,6 +178,15 @@ const mapping = (state = defaultMappingState, action = defaultAction) => {
         schedulerQueueName: action.payload.schedulerQueueName
       });
       break;
+    case AddNamespaceActions.setProperties:
+      stateCopy = {
+        ...state,
+        hdfsDirectory: action.payload.hdfsRootDirectory,
+        hiveDatabaseName: action.payload.hiveDatabaseName,
+        hbaseNamespace: action.payload.hbaseNamespaceName,
+        schedulerQueueName: action.payload.schedulerQueueName
+      };
+      break;
     case AddNamespaceActions.onError:
       return onErrorHandler('mapping', Object.assign({}, state), action);
     case AddNamespaceActions.onSuccess:
@@ -188,6 +215,13 @@ const security = (state = defaultSecurityState, action = defaultAction) => {
         keyTab: action.payload.keyTab
       });
       break;
+    case AddNamespaceActions.setProperties:
+      stateCopy = {
+        ...state,
+        principal: action.payload.principal,
+        keyTab: action.payload.keytabURI
+      };
+      break;
     case AddNamespaceActions.onError:
       return onErrorHandler('security', Object.assign({}, state), action);
     case AddNamespaceActions.onSuccess:
@@ -208,8 +242,14 @@ const preferences = (state = defaultPreferencesState, action = defaultAction) =>
   switch (action.type) {
     case AddNamespaceActions.setPreferences :
       stateCopy = Object.assign({}, state, {
-        keyValues : action.payload.keyValues
+        preferences : action.payload.keyValues
       });
+      break;
+    case AddNamespaceActions.setProperties:
+      stateCopy = {
+        ...state,
+        preferences: convertMapToKeyValuePairsObj(action.payload.namespacePrefs)
+      };
       break;
     case AddNamespaceActions.onReset:
       return defaultPreferencesState;
@@ -220,6 +260,20 @@ const preferences = (state = defaultPreferencesState, action = defaultAction) =>
     __skipped: false,
     __error: action.payload.error || false
   });
+};
+
+const editableFields = (state = defaultEditableFieldsState, action = defaultAction) => {
+  switch (action.type) {
+    case AddNamespaceActions.setEditableFields:
+      return {
+        ...state,
+        fields: action.payload.editableFields
+      };
+    case AddNamespaceActions.onReset:
+      return defaultEditableFieldsState;
+    default:
+      return state;
+  }
 };
 
 const composeEnhancers =
@@ -236,7 +290,8 @@ const createAddNamespaceStore = () => {
       general,
       mapping,
       security,
-      preferences
+      preferences,
+      editableFields
     }),
     defaultInitialState,
     composeEnhancers()

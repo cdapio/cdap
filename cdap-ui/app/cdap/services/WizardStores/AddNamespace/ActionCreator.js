@@ -16,7 +16,15 @@
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import {MyNamespaceApi} from 'api/namespace';
 
-const PublishNamespace = () => {
+const createNamespace = () => {
+  return createOrEditNamespace(MyNamespaceApi.create);
+};
+
+const editNamespaceProperties = () => {
+  return createOrEditNamespace(MyNamespaceApi.editProperties);
+};
+
+const createOrEditNamespace = (api) => {
   let state = AddNamespaceStore.getState();
   let urlParams = {
     namespace: state.general.name
@@ -54,19 +62,18 @@ const PublishNamespace = () => {
     putParams["config"]["scheduler.queue.name"] = state.mapping.schedulerQueueName;
   }
 
-  return MyNamespaceApi
-    .create(urlParams, putParams);
+  return api(urlParams, putParams);
 };
 
-const PublishPreferences = () => {
+const setNamespacePreferences = () => {
   let state = AddNamespaceStore.getState();
   let urlParams = {
     namespace: state.general.name
   };
   let preferences = {};
 
-  if (state.preferences.keyValues && state.preferences.keyValues.pairs.length > 0) {
-    state.preferences.keyValues.pairs.forEach((pair) => {
+  if (state.preferences.preferences && state.preferences.preferences.pairs.length > 0) {
+    state.preferences.preferences.pairs.forEach((pair) => {
       if (pair.key.length && pair.value.length) {
         preferences[pair.key] = pair.value;
       }
@@ -77,4 +84,8 @@ const PublishPreferences = () => {
   }
 };
 
-export {PublishNamespace, PublishPreferences};
+export {
+  createNamespace,
+  editNamespaceProperties,
+  setNamespacePreferences
+};
