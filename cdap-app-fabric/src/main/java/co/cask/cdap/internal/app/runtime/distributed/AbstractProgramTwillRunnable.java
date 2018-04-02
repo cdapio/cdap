@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -421,8 +421,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   protected Module createModule(TwillContext context, ProgramId programId, String runId, String instanceId,
                                 @Nullable String principal) {
-    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context, programId, runId,
-                                                                           instanceId, principal);
+    return new DistributedProgramRunnableModule(cConf, hConf)
+      .createModule(programId.run(runId), instanceId, principal, context);
   }
 
   /**

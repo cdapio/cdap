@@ -23,7 +23,6 @@ import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -46,6 +45,8 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import co.cask.cdap.internal.app.runtime.artifact.RemotePluginFinder;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
@@ -54,6 +55,7 @@ import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
@@ -68,19 +70,18 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.api.TwillContext;
-import org.apache.twill.common.Cancellable;
 
-import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Defines guice modules for distributed program runnables. For instance, AbstractProgramTwillRunnable, as well as
- * mapreduce tasks / spark executors.
+ * Defines guice modules for distributed program containers, include client containers
+ * (e.g. {@link MapReduceProgramRunner}, {@link WorkflowProgramRunner}) as well as task containers.
  */
 public class DistributedProgramRunnableModule {
 
@@ -92,64 +93,52 @@ public class DistributedProgramRunnableModule {
     this.hConf = hConf;
   }
 
-  // usable from any program runtime, such as mapreduce task, spark task, etc
-  public Module createModule(final ProgramId programId, String runId, String instanceId,
-                             @Nullable final String principal) {
+  /**
+   * Creates a guice {@link Module} that contains all bindings needed for the CDAP runtime environment,
+   * except for service announcement.
+   *
+   * @param programRunId the {@link ProgramRunId} of the program run
+   * @param instanceId the id for the current container instance
+   * @param principal an principal of the application owner
+   * @return a guice {@link Module}
+   */
+  public Module createModule(ProgramRunId programRunId, String instanceId, @Nullable String principal) {
+    return createModule(programRunId, instanceId, principal, null);
+  }
 
-    Module combined = getCombinedModules(programId, generateClient(programId, runId, instanceId));
+  /**
+   * Creates a guice {@link Module} that contains all bindings needed for the CDAP runtime environment.
+   *
+   * @param programRunId the {@link ProgramRunId} of the program run
+   * @param instanceId the id for the current container instance
+   * @param principal an principal of the application owner
+   * @param serviceAnnouncer the {@link ServiceAnnouncer} to use in the binding.
+   * @return a guice {@link Module}
+   */
+  public Module createModule(ProgramRunId programRunId, String instanceId,
+                             @Nullable String principal, @Nullable ServiceAnnouncer serviceAnnouncer) {
+    String txClientId = generateClientId(programRunId, instanceId);
+    List<Module> modules = getCoreModules(programRunId.getParent(), txClientId);
 
-    combined = addAuthenticationModule(principal, combined);
+    AuthenticationContextModules authModules = new AuthenticationContextModules();
+    modules.add(principal == null
+                  ? authModules.getProgramContainerModule()
+                  : authModules.getProgramContainerModule(principal));
 
-    return Modules.override(combined).with(new AbstractModule() {
+    return Modules.override(modules).with(new AbstractModule() {
       @Override
       protected void configure() {
         bind(LineageWriter.class).to(RemoteLineageWriter.class);
         bind(RuntimeUsageRegistry.class).to(RemoteRuntimeUsageRegistry.class).in(Scopes.SINGLETON);
+        if (serviceAnnouncer != null) {
+          bind(ServiceAnnouncer.class).toInstance(serviceAnnouncer);
+        }
       }
     });
   }
 
-  private static String generateClient(ProgramId programId, String runId, String instanceId) {
-    return String.format("%s.%s.%s", programId.toString(), runId, instanceId);
-  }
-
-  // TODO(terence) make this works for different mode
-  // usable from anywhere a TwillContext is exposed
-  public Module createModule(final TwillContext context, ProgramId programId, String runId, String instanceId,
-                             @Nullable String principal) {
-    return Modules.combine(createModule(programId, runId, instanceId, principal), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(InetAddress.class)
-          .annotatedWith(Names.named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
-          .toInstance(context.getHost());
-
-        bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
-          @Override
-          public Cancellable announce(String serviceName, int port) {
-            return context.announce(serviceName, port);
-          }
-
-          @Override
-          public Cancellable announce(String serviceName, int port, byte[] payload) {
-            return context.announce(serviceName, port, payload);
-          }
-        });
-      }
-   });
-  }
-
-  private Module addAuthenticationModule(@Nullable String principal, Module combined) {
-    if (principal != null) {
-      return Modules.combine(combined,
-                             new AuthenticationContextModules().getProgramContainerModule(principal));
-    }
-    return Modules.combine(combined,
-                           new AuthenticationContextModules().getProgramContainerModule());
-  }
-
-  private Module getCombinedModules(final ProgramId programId, String txClientId) {
-    return Modules.combine(
+  private List<Module> getCoreModules(final ProgramId programId, String txClientId) {
+    return new ArrayList<>(Arrays.<Module>asList(
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new ZKClientModule(),
@@ -210,7 +199,7 @@ public class DistributedProgramRunnableModule {
           bind(PluginFinder.class).to(RemotePluginFinder.class);
         }
       }
-    );
+    ));
   }
 
   private Module createStreamFactoryModule() {
@@ -222,5 +211,9 @@ public class DistributedProgramRunnableModule {
         expose(StreamWriterFactory.class);
       }
     };
+  }
+
+  private static String generateClientId(ProgramRunId programRunId, String instanceId) {
+    return String.format("%s.%s.%s", programRunId.getParent(), programRunId.getRun(), instanceId);
   }
 }
