@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
@@ -316,13 +317,14 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
+   * @param artifactId artifact id of the program's application
    * @return {@link ProgramRunClusterStatus#PROVISIONING} if it is successfully persisted, {@code null} otherwise.
    */
   @Nullable
   public ProgramRunClusterStatus recordProgramProvisioning(ProgramRunId programRunId, long startTs,
                                                            Map<String, String> runtimeArgs,
                                                            Map<String, String> systemArgs,
-                                                           byte[] sourceId) {
+                                                           byte[] sourceId, ArtifactId artifactId) {
     MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
 
     RunRecordMeta existing = getRun(programRunId);
@@ -356,6 +358,8 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       .setSystemArgs(systemArgs)
       .setCluster(cluster)
       .setSourceId(sourceId)
+      .setArtifactId(artifactId)
+      .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
       .build();
     write(key, meta);
     return ProgramRunClusterStatus.PROVISIONING;

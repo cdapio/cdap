@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
@@ -63,7 +64,8 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId) {
+  public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
+                    ArtifactId artifactId) {
     long startTime = RunIds.getTime(RunIds.fromString(programRunId.getRun()), TimeUnit.MILLISECONDS);
     if (startTime == -1) {
       // If RunId is not time-based, use current time as start time
@@ -74,7 +76,9 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       .put(ProgramOptionConstants.START_TIME, String.valueOf(startTime))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()));
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId));
+
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }

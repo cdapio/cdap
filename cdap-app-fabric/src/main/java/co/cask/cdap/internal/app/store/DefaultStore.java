@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -189,14 +190,14 @@ public class DefaultStore implements Store {
   public void setProvisioning(ProgramRunId id, long startTime, Map<String, String> runtimeArgs,
                               Map<String, String> systemArgs, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramProvisioning(id, startTime, runtimeArgs, systemArgs, sourceId);
+      getAppMetadataStore(context).recordProgramProvisioning(id, startTime, runtimeArgs, systemArgs, sourceId, null);
     });
   }
 
   @Override
   public void setProvisioned(ProgramRunId id, int numNodes, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramProvisioned(id, numNodes, sourceId);
+      getAppMetadataStore(context).recordProgramProvisioned(id, numNodes, sourceId, null);
     });
   }
 
@@ -219,7 +220,7 @@ public class DefaultStore implements Store {
   @Override
   public void setStart(ProgramRunId id, String twillRunId, Map<String, String> systemArgs, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId);
+      getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId, null);
     });
   }
 

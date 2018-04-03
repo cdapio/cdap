@@ -110,7 +110,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     RunId runId = RunIds.generate();
 
     // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
-    programStateWriter.start(programId.run(runId), options, null);
+    programStateWriter.start(programId.run(runId), options, null, programDescriptor.getArtifactId().toApiArtifactId());
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
     File tempDir = createTempDirectory(programId, runId);

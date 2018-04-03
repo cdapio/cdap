@@ -19,6 +19,7 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.worker.Worker;

@@ -22,6 +22,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
@@ -380,14 +381,17 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // These notifications should not trigger the program
     ProgramRunId anotherWorkflowRun = ANOTHER_WORKFLOW.run(RunIds.generate());
-    programStateWriter.start(anotherWorkflowRun, new SimpleProgramOptions(anotherWorkflowRun.getParent()), null);
+
+    ArtifactId artifactId = ANOTHER_WORKFLOW.getNamespaceId().artifact("test", "1.0").toApiArtifactId();
+    programStateWriter.start(anotherWorkflowRun, new SimpleProgramOptions(anotherWorkflowRun.getParent()), null,
+                             artifactId);
     programStateWriter.running(anotherWorkflowRun, null);
     long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.error(anotherWorkflowRun, null);
     waitUntilProcessed(programEventTopic, lastProcessed);
 
     ProgramRunId someWorkflowRun = SOME_WORKFLOW.run(RunIds.generate());
-    programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent()), null);
+    programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent()), null, null);
     programStateWriter.running(someWorkflowRun, null);
     lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.killed(someWorkflowRun);

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
@@ -78,13 +79,16 @@ public class AppMetadataStoreTest {
   }
 
   private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     metadataStoreDataset.recordProgramProvisioning(programRunId,
                                                    RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null, null,
-                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                   artifactId);
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-    metadataStoreDataset.recordProgramStart(programRunId, null, null,
-                                            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                  artifactId);
+    metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
+                                            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), artifactId);
   }
 
   // TODO: [CDAP-12458] since recordProgramStart doesn't use version-less key builder, this test fails.
@@ -162,6 +166,7 @@ public class AppMetadataStoreTest {
   public void testInvalidStatusPersistence() throws Exception {
     final AppMetadataStore metadataStoreDataset = getMetadataStore("testInvalidStatusPersistence");
     TransactionExecutor txnl = getTxExecutor(metadataStoreDataset);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
     final RunId runId1 = RunIds.generate(runIdTime.incrementAndGet());
@@ -243,7 +248,8 @@ public class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       metadataStoreDataset.recordProgramStart(programRunId6, null, ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                              artifactId);
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
       Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
@@ -256,7 +262,8 @@ public class AppMetadataStoreTest {
                                                 null,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       metadataStoreDataset.recordProgramStart(programRunId7, null, ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                              artifactId);
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
       // STARTING status is ignored since there's an existing RUNNING record
       Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
@@ -267,6 +274,7 @@ public class AppMetadataStoreTest {
                                      final long startSourceId, final long runningSourceId,
                                      final long killedSourceId, final ProgramRunStatus expectedRunStatus)
     throws Exception {
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     // Add some run records
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
@@ -277,11 +285,13 @@ public class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramProvisioning(programRunId,
                                                      RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                                                      null, null,
-                                                     AppFabricTestHelper.createSourceId(startSourceId));
+                                                     AppFabricTestHelper.createSourceId(startSourceId), artifactId);
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
-                                                    AppFabricTestHelper.createSourceId(startSourceId + 1));
-      metadataStoreDataset.recordProgramStart(programRunId, null, null,
-                                              AppFabricTestHelper.createSourceId(startSourceId + 2));
+                                                    AppFabricTestHelper.createSourceId(startSourceId + 1),
+                                                    artifactId);
+      metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(startSourceId + 2),
+                                              artifactId);
       metadataStoreDataset.recordProgramRunning(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
                                                 null, AppFabricTestHelper.createSourceId(runningSourceId));
       metadataStoreDataset.recordProgramStop(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
@@ -299,6 +309,7 @@ public class AppMetadataStoreTest {
 
     // Add some run records
     TreeSet<Long> expected = new TreeSet<>();
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     for (int i = 0; i < 100; ++i) {
       ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
       final ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
@@ -382,7 +393,7 @@ public class AppMetadataStoreTest {
     // Add some run records
     final Set<String> expected = new TreeSet<>();
     final Set<String> expectedHalf = new TreeSet<>();
-
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     final Set<ProgramRunId> programRunIdSet = new HashSet<>();
     final Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
     for (int i = 0; i < 100; ++i) {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramRunId;
 
@@ -32,8 +33,10 @@ public interface ProgramStateWriter {
    *
    * @param programRunId the id of the program run
    * @param twillRunId the run id of the twill application
+   * @param artifactId artifact id of the program
    */
-  void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId);
+  void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
+             ArtifactId artifactId);
 
   /**
    * Updates the program run's status to be {@link ProgramRunStatus#RUNNING} at the given start time in seconds
