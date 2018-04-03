@@ -16,9 +16,13 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.inject.Inject;
@@ -45,6 +49,15 @@ public class ProvisioningService {
     provisionerExtensionLoader = new ProvisionerExtensionLoader(cConf.get(Constants.Provisioner.EXTENSIONS_DIR));
     provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
     reloadProvisioners();
+  }
+
+  public Cluster provision(ProgramRunId programRunId, ProgramOptions programOptions) {
+    // TODO: implement
+    return new Cluster("name", ClusterStatus.RUNNING, Collections.emptyList(), Collections.emptyMap());
+  }
+
+  public void deprovision(ProgramRunId programRunId) {
+    // TODO: implement
   }
 
   /**

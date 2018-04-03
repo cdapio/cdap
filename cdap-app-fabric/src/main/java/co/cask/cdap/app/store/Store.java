@@ -103,12 +103,15 @@ public interface Store extends RuntimeStore {
    * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
    *
    * @param id run id of the program
+   * @param startTime start timestamp in seconds
    * @param twillRunId Twill run id
+   * @param runtimeArgs the runtime arguments for this program run
    * @param systemArgs the system arguments for this program run
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setStart(ProgramRunId id, @Nullable String twillRunId, Map<String, String> systemArgs, byte[] sourceId);
+  void setStart(ProgramRunId id, long startTime, @Nullable String twillRunId,
+                Map<String, String> runtimeArgs, Map<String, String> systemArgs, byte[] sourceId);
 
   /**
    * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.

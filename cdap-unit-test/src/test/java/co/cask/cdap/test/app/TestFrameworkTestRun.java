@@ -254,7 +254,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, history.size());
 
     countService.start();
-    countService.waitForStatus(true);
+    countService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     Assert.assertEquals(2, countService.getProvisionedInstances());
 
     // requesting with ProgramRunStatus.KILLED returns empty list
@@ -412,7 +412,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(appId, createRequest);
     ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     URL serviceURL = serviceManager.getServiceURL();
     Gson gson = new Gson();
@@ -427,7 +427,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     appManager = deployApplication(appId, createRequest);
     serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     serviceURL = serviceManager.getServiceURL();
     Assert.assertEquals("tV2", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
@@ -651,7 +651,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationManager appManager = deployApplication(DatasetWithCustomActionApp.class);
     ServiceManager serviceManager = appManager.getServiceManager(DatasetWithCustomActionApp.CUSTOM_SERVICE).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(DatasetWithCustomActionApp.CUSTOM_WORKFLOW).start();
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
@@ -1094,13 +1094,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager centralServiceManager =
       applicationManager.getServiceManager(AppUsingGetServiceURL.CENTRAL_SERVICE).start();
-    centralServiceManager.waitForStatus(true);
+    centralServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     WorkerManager pingingWorker = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
 
     // Test service's getServiceURL
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.
@@ -1166,7 +1166,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testWorkerInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
-    workerManager.waitForStatus(true);
+    workerManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Should be 5 instances when first started.
     workerInstancesCheck(workerManager, 5);
@@ -1185,7 +1185,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     WorkerManager lifecycleWorkerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER);
     lifecycleWorkerManager.setInstances(3);
-    lifecycleWorkerManager.start().waitForStatus(true);
+    lifecycleWorkerManager.start().waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     workerInstancesCheck(lifecycleWorkerManager, 3);
     for (int i = 0; i < 3; i++) {
@@ -1339,7 +1339,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       flowManager.stop();
       flowManager.waitForStatus(false);
 
-      serviceManager.waitForStatus(true);
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
       callServicePut(serviceManager.getServiceURL(), "tx", "hello");
       callServicePut(serviceManager.getServiceURL(), "tx", AppWithCustomTx.FAIL_PRODUCER, 200);
       callServicePut(serviceManager.getServiceURL(), "tx", AppWithCustomTx.FAIL_CONSUMER, 500);
@@ -1586,7 +1586,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     LOG.info("Service Started");
 
@@ -1639,7 +1639,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       .getServiceManager(AppWithServices.DATASET_WORKER_SERVICE_NAME).start(args);
     WorkerManager datasetWorker =
       applicationManager.getWorkerManager(AppWithServices.DATASET_UPDATE_WORKER).start(args);
-    datasetWorkerServiceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     ServiceManager noopManager = applicationManager.getServiceManager("NoOpService").start();
     serviceManager.waitForStatus(true, 2, 1);
@@ -1689,7 +1689,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ServiceManager serviceManager =
       applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     LOG.info("Service Started");
 
     final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
@@ -2149,6 +2149,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     } catch (Exception e) {
       Assert.assertTrue(Throwables.getRootCause(e) instanceof ConflictException);
     }
+    workerManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     workerManager.stop();
 
     // Start the workflow

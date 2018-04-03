@@ -75,7 +75,7 @@ public class SparkKMeansAppTest extends TestBase {
     ServiceManager serviceManager = appManager.getServiceManager(SparkKMeansApp.CentersService.SERVICE_NAME).start();
 
     // Wait service startup
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Request data and verify it
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/0"));

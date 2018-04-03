@@ -77,6 +77,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +131,7 @@ public class DefaultStoreTest {
                         final Map<String, String> systemArgs) {
     store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id, startTime, null, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   @Test
@@ -781,11 +782,11 @@ public class DefaultStoreTest {
 
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     setStartAndRunning(flowProgramId.run(flowRunId), nowSecs,
-                       ImmutableMap.of("model", "click"), null);
+                       ImmutableMap.of("model", "click"), Collections.emptyMap());
     setStartAndRunning(mapreduceProgramId.run(mapreduceRunId), nowSecs,
-                       ImmutableMap.of("path", "/data"), null);
+                       ImmutableMap.of("path", "/data"), Collections.emptyMap());
     setStartAndRunning(workflowProgramId.run(workflowRunId), nowSecs,
-                       ImmutableMap.of("whitelist", "cask"), null);
+                       ImmutableMap.of("whitelist", "cask"), Collections.emptyMap());
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());

@@ -203,7 +203,7 @@ public class DataQualityAppTest extends TestBase {
 
     ServiceManager serviceManager = applicationManager.getServiceManager
       (DataQualityService.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     /* Test for aggregationsGetter handler */
 
@@ -248,7 +248,7 @@ public class DataQualityAppTest extends TestBase {
 
     ServiceManager serviceManager = applicationManager.getServiceManager
       (DataQualityService.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL url = new URL(serviceManager.getServiceURL(),
                       "v1/sources/logStream/fields/content_length/aggregations/DiscreteValuesHistogram/totals");
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());

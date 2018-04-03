@@ -39,7 +39,6 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.test.SlowTests;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -53,9 +52,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -350,7 +349,7 @@ public class LineageTestRun extends MetadataTestBase {
   }
 
   private void waitForStop(ProgramId program, boolean needsStop) throws Exception {
-    if (needsStop && programClient.getStatus(program).equals(ProgramRunStatus.RUNNING.toString())) {
+    if (needsStop && !programClient.getStatus(program).equals(ProgramStatus.STOPPED.toString())) {
       LOG.info("Stopping program {}", program);
       programClient.stop(program);
     }
@@ -363,20 +362,15 @@ public class LineageTestRun extends MetadataTestBase {
   }
 
   private RunId getRunId(final ProgramId program, @Nullable final RunId exclude) throws Exception {
-    final AtomicReference<Iterable<RunRecord>> runRecords = new AtomicReference<>();
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        runRecords.set(Iterables.filter(
-          programClient.getProgramRuns(program, ProgramRunStatus.ALL.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE),
-          new Predicate<RunRecord>() {
-            @Override
-            public boolean apply(RunRecord input) {
-              return exclude == null || !input.getPid().equals(exclude.getId());
-            }
-          }));
-        return Iterables.size(runRecords.get());
-      }
+    AtomicReference<Iterable<RunRecord>> runRecords = new AtomicReference<>();
+    Tasks.waitFor(1, () -> {
+      runRecords.set(
+        programClient.getProgramRuns(program, ProgramRunStatus.ALL.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE)
+          .stream()
+          .filter(record -> (exclude == null || !record.getPid().equals(exclude.getId())) &&
+            record.getStatus() != ProgramRunStatus.PENDING)
+          .collect(Collectors.toList()));
+      return Iterables.size(runRecords.get());
     }, 60, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
     Assert.assertEquals(1, Iterables.size(runRecords.get()));
     return RunIds.fromString(Iterables.getFirst(runRecords.get(), null).getPid());

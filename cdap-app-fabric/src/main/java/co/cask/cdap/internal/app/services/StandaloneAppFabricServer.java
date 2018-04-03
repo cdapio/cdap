@@ -27,6 +27,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
+import co.cask.cdap.internal.provision.ProvisionerNotificationSubscriberService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
@@ -59,6 +60,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    @Nullable MetricsCollectionService metricsCollectionService,
                                    ProgramRuntimeService programRuntimeService,
                                    ApplicationLifecycleService applicationLifecycleService,
+                                   ProvisionerNotificationSubscriberService provisionerNotificationSubscriberService,
                                    ProgramNotificationSubscriberService programNotificationSubscriberService,
                                    ProgramLifecycleService programLifecycleService,
                                    RunRecordCorrectorService runRecordCorrectorService,
@@ -73,9 +75,9 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    CoreSchedulerService coreSchedulerService) {
     super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
-          programNotificationSubscriberService, programLifecycleService, streamCoordinatorClient, servicesNames,
-          handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, null, routeStore,
-          coreSchedulerService);
+          provisionerNotificationSubscriberService, programNotificationSubscriberService, programLifecycleService,
+          streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin, systemArtifactLoader,
+          pluginService, null, routeStore, coreSchedulerService);
     this.metricStore = metricStore;
   }
 

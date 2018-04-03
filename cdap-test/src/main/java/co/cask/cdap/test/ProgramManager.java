@@ -57,7 +57,11 @@ public interface ProgramManager<T extends ProgramManager> {
   boolean isRunning();
 
   /**
-   * Wait for the status of the program with 5 seconds timeout.
+   * Wait for the status of the program with 5 seconds timeout. A started program does not mean all functionality
+   * is available. For example, a started service may not yet have registered its url. In most cases, this should only
+   * be used to wait for the program to stop, with {@link #waitForRun(ProgramRunStatus, long, TimeUnit)} used
+   * with {@link ProgramRunStatus#RUNNING} to wait for a program to actually be running.
+   *
    * @param status true if waiting for started, false if waiting for stopped.
    * @throws InterruptedException if the method is interrupted while waiting for the status.
    */

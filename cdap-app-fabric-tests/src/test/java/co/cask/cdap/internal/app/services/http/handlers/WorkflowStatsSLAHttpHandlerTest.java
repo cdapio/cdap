@@ -86,7 +86,8 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     store.setProvisioning(id.run(pid), startTime, runtimeArgs, systemArgs,
                           AppFabricTestHelper.createSourceId(++sourceId));
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStart(id.run(pid), null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id.run(pid), startTime, null, runtimeArgs, systemArgs,
+                   AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 

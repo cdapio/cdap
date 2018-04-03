@@ -205,7 +205,6 @@ public class DefaultStore implements Store {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).recordProgramDeprovisioning(id, sourceId);
     });
-
   }
 
   @Override
@@ -213,13 +212,13 @@ public class DefaultStore implements Store {
     Transactionals.execute(transactional, context -> {
       getAppMetadataStore(context).recordProgramDeprovisioned(id, sourceId);
     });
-
   }
 
   @Override
-  public void setStart(ProgramRunId id, String twillRunId, Map<String, String> systemArgs, byte[] sourceId) {
+  public void setStart(ProgramRunId id, long startTime, @Nullable String twillRunId,
+                       Map<String, String> runtimeArgs, Map<String, String> systemArgs, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId);
+      getAppMetadataStore(context).recordProgramStart(id, startTime, twillRunId, runtimeArgs, systemArgs, sourceId);
     });
   }
 
