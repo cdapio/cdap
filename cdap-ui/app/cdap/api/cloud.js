@@ -21,5 +21,6 @@ let dataSrc = DataSourceConfigurer.getInstance();
 var basepath = '/namespaces/:namespace';
 export const MyProfileApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/profiles`),
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/profiles/:profile`)
+  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/profiles/:profile`),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/profiles/:profile`)
 };

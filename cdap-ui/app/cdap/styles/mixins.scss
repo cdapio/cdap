@@ -41,3 +41,33 @@
   transform: rotate(90deg);
   z-index: 1;
 }
+
+@mixin multi-line-ellipsis($max-height: 4.5em) {
+  .multi-line-text {
+    font-size: 13px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    max-height: $max-height;
+    margin-right: -10px;
+    padding-right: 10px;
+    word-break: break-word;
+
+    &:before {
+      content: "\2026\0020";
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
+
+    &:after {
+      content: '';
+      position: absolute;
+      right: 0;
+      width: 1em;
+      height: 1em;
+      margin-top: 0.2em;
+      background: white;
+    }
+  }
+}

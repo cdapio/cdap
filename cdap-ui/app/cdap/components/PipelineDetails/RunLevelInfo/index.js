@@ -25,6 +25,7 @@ import RunStartTime from 'components/PipelineDetails/RunLevelInfo/RunStartTime';
 import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
 import RunNumWarnings from 'components/PipelineDetails/RunLevelInfo/RunNumWarnings';
 import RunNumErrors from 'components/PipelineDetails/RunLevelInfo/RunNumErrors';
+import RunComputeProfile from 'components/PipelineDetails/RunLevelInfo/RunComputeProfile';
 import {GLOBALS} from 'services/global-constants';
 
 require('./RunLevelInfo.scss');
@@ -54,6 +55,7 @@ export default function RunLevelInfo() {
         <RunDuration />
         <ConnectedRunNumWarnings />
         <ConnectedRunNumErrors />
+        <RunComputeProfile />
       </div>
     </Provider>
   );
