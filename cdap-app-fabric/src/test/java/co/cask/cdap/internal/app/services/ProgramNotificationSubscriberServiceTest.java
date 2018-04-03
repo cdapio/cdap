@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -40,6 +41,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -75,12 +77,17 @@ public class ProgramNotificationSubscriberServiceTest {
     ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
     ProgramOptions programOptions = new SimpleProgramOptions(programId);
     final ProgramRunId runId = programId.run(RunIds.generate());
-    programStateWriter.start(runId, programOptions, null);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    programStateWriter.start(runId, programOptions, null, artifactId);
 
     Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {
-      RunRecordMeta meta = metadataStoreDataset.getRun(runId);
-      return meta == null ? null : meta.getStatus();
-    }),
+                    RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+                    if (meta == null) {
+                      return null;
+                    }
+                    Assert.assertEquals(artifactId, meta.getArtifactId());
+                    return meta.getStatus();
+                  }),
                   10, TimeUnit.SECONDS);
 
     programStateWriter.running(runId, UUID.randomUUID().toString());

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -37,7 +38,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -154,12 +155,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                    programRunId, notification);
           return;
         }
+        String artifactIdString = notification.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
+        ArtifactId artifactId = null;
+        // can be null for notifications before upgrading that were not processed earlier
+        if (artifactIdString != null) {
+          artifactId = GSON.fromJson(artifactIdString, ArtifactId.class);
+        }
         Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
         Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
         // TODO: CDAP-13096 move to provisioner status subscriber
         // for now, save these states here to follow correct lifecycle
         appMetadataStore.recordProgramProvisioning(programRunId, startTimeSecs, userArguments, systemArguments,
-                                                   messageIdBytes);
+                                                   messageIdBytes, artifactId);
         appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
         recordedStatus = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                              systemArguments, messageIdBytes);
@@ -207,16 +214,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
     }
     if (recordedStatus != null) {
-      publishRecordedStatus(programRunId, recordedStatus);
+      publishRecordedStatus(notification, programRunId, recordedStatus);
     }
   }
 
-  private void publishRecordedStatus(ProgramRunId programRunId, ProgramRunStatus status) throws Exception {
-    Notification programStatusNotification =
-      new Notification(Notification.Type.PROGRAM_STATUS,
-                       ImmutableMap.of(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
-                                       ProgramOptionConstants.PROGRAM_STATUS, status.name()));
 
+  private void publishRecordedStatus(Notification notification,
+                                     ProgramRunId programRunId, ProgramRunStatus status) throws Exception {
+    Map<String, String> notificationProperties = new HashMap<>();
+    notificationProperties.putAll(notification.getProperties());
+    notificationProperties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
+    notificationProperties.put(ProgramOptionConstants.PROGRAM_STATUS, status.name());
+    Notification programStatusNotification =
+      new Notification(Notification.Type.PROGRAM_STATUS, notificationProperties);
     getMessagingContext().getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(),
                                                         recordedProgramStatusPublishTopic,
                                                         GSON.toJson(programStatusNotification));
