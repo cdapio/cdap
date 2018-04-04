@@ -29,9 +29,10 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
+import co.cask.cdap.internal.app.namespace.DefaultEntityEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
@@ -89,7 +90,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
 
-  private DefaultNamespaceEnsurer defaultNamespaceEnsurer;
+  private DefaultEntityEnsurer defaultEntityEnsurer;
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
@@ -117,7 +118,8 @@ public class AppFabricServer extends AbstractIdleService {
                          PluginService pluginService,
                          @Nullable AppVersionUpgradeService appVersionUpgradeService,
                          RouteStore routeStore,
-                         CoreSchedulerService coreSchedulerService) {
+                         CoreSchedulerService coreSchedulerService,
+                         ProfileStore profileStore) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -137,7 +139,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.pluginService = pluginService;
     this.appVersionUpgradeService = appVersionUpgradeService;
     this.routeStore = routeStore;
-    this.defaultNamespaceEnsurer = new DefaultNamespaceEnsurer(namespaceAdmin);
+    this.defaultEntityEnsurer = new DefaultEntityEnsurer(namespaceAdmin, profileStore);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
   }
@@ -198,7 +200,7 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
-    defaultNamespaceEnsurer.startAndWait();
+    defaultEntityEnsurer.startAndWait();
     if (appVersionUpgradeService != null) {
       appVersionUpgradeService.startAndWait();
     }
@@ -208,7 +210,7 @@ public class AppFabricServer extends AbstractIdleService {
   protected void shutDown() throws Exception {
     coreSchedulerService.stopAndWait();
     routeStore.close();
-    defaultNamespaceEnsurer.stopAndWait();
+    defaultEntityEnsurer.stopAndWait();
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
