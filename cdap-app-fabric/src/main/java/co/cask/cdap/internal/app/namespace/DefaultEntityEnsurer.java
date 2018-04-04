@@ -37,7 +37,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Thread that ensures that the default namespace exists
+ * Thread that ensures that the default entities exists
  */
 public final class DefaultEntityEnsurer extends AbstractService {
 
@@ -51,6 +51,8 @@ public final class DefaultEntityEnsurer extends AbstractService {
     this.serviceDelegate = new RetryOnStartFailureService(() -> new AbstractService() {
       @Override
       protected void doStart() {
+        boolean failed = false;
+        Exception failureException = null;
         try {
           if (!namespaceAdmin.exists(NamespaceId.DEFAULT)) {
             namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -64,8 +66,8 @@ public final class DefaultEntityEnsurer extends AbstractService {
           // default namespace already exists
           LOG.info("Default namespace already exists.");
         } catch (Exception e) {
-          notifyFailed(e);
-          return;
+          failed = true;
+          failureException = e;
         }
 
         try {
@@ -77,10 +79,19 @@ public final class DefaultEntityEnsurer extends AbstractService {
         } catch (AlreadyExistsException e) {
           // don't expect this to happen, but it already exists so we're ok.
         } catch (Exception e) {
-          notifyFailed(e);
-          return;
+          failed = true;
+          if (failureException == null) {
+            failureException = e;
+          } else {
+            failureException.addSuppressed(e);
+          }
         }
-        notifyStarted();
+
+        if (failed) {
+          notifyFailed(failureException);
+        } else {
+          notifyStarted();
+        }
       }
 
       @Override
