@@ -18,6 +18,7 @@ package co.cask.cdap.proto.profile;
 
 import co.cask.cdap.proto.EntityScope;
 
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -25,6 +26,8 @@ import java.util.Objects;
  * environment. A profile is identified by name and must be assigned a provisioner and its related configuration.
  */
 public class Profile {
+  public static final Profile DEFAULT = new Profile("default", "Runs programs locally on the cluster",
+                                                    new ProvisionerInfo("yarn", Collections.emptyList()));
   private final String name;
   private final String description;
   private final EntityScope scope;

@@ -27,6 +27,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
@@ -70,12 +71,13 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
                                    RouteStore routeStore,
-                                   CoreSchedulerService coreSchedulerService) {
+                                   CoreSchedulerService coreSchedulerService,
+                                   ProfileStore profileStore) {
     super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
           programNotificationSubscriberService, programLifecycleService, streamCoordinatorClient, servicesNames,
           handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, null, routeStore,
-          coreSchedulerService);
+          coreSchedulerService, profileStore);
     this.metricStore = metricStore;
   }
 
