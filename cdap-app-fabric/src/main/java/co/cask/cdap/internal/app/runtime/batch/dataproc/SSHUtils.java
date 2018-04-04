@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -40,7 +41,9 @@ public class SSHUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(SSHUtils.class);
 
-  public static String runCommand(SSHConfig sshConfig, String input) throws JSchException, IOException {
+  public static String runCommand(SSHConfig sshConfig,
+                                  String input) throws JSchException, IOException, InterruptedException {
+    System.out.println("running command: " + input);
     Session session = createSession(sshConfig);
 
     Channel channel = session.openChannel("shell");
@@ -57,6 +60,7 @@ public class SSHUtils {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     channel.setOutputStream(baos);
     channel.connect();
+    TimeUnit.SECONDS.sleep(1);
     String output = baos.toString("UTF-8");
     baos.close();
     session.disconnect();

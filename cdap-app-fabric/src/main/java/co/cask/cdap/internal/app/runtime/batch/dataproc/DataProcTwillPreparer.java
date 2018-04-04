@@ -403,53 +403,35 @@ public class DataProcTwillPreparer implements TwillPreparer {
 
 
 
+
+      // if it ends in a number, the directory will be scp'd ONTO
+      // (directory will be replaced by a file and contents of the source file will be written onto that file)
+      String remoteDir = "/tmp/remoteDir/dplauncher-" + System.currentTimeMillis();
+      // TODO: sometimes we disconnect before the folder is created... fix this!
+      System.out.println(SSHUtils.runCommand(sshConfig, "mkdir -p " + remoteDir));
+      System.out.println(SSHUtils.runCommand(sshConfig, "ls -ltrh " + remoteDir));
+
       Map<String, String> remoteFiles = new HashMap<>();
-      String remoteDir = "/tmp/remoteDir";
       for (Map.Entry<String, LocalFile> localFileEntry : localFiles.entrySet()) {
         URI localFileURI = localFileEntry.getValue().getURI();
         String localFilePath = localFileURI.getPath();
 
         File localFile = new File(localFileURI);
         String remoteFilePath = remoteDir + "/" + localFile.getName();
-        SSHUtils.scp(sshConfig, localFilePath, remoteDir);
+        SSHUtils.scp(sshConfig, localFilePath, remoteFilePath);
 
         remoteFiles.put(localFileEntry.getKey(), remoteFilePath);
       }
 
       createLocalizeFilesJson(remoteFiles);
       SSHUtils.scp(sshConfig, remoteFiles.get(Constants.Files.LOCALIZE_FILES), remoteDir);
-      int i = 2;
 
-            // java -Djava.io.tmpdir=tmp -cp launcher.jar:$HADOOP_CONF_DIR -XmxMemory
-            //     org.apache.twill.internal.TwillLauncher
-            //     appMaster.jar
-            //     org.apache.twill.internal.appmaster.ApplicationMasterMain
-            //     false
-//            int memory = Resources.computeMaxHeapSize(appMasterInfo.getMemoryMB(),
-//                                                      twillRuntimeSpec.getAMReservedMemory(),
-//                                                      twillRuntimeSpec.getAMMinHeapRatio());
-//          launcher.prepareLaunch(ImmutableMap.of(), localFiles.values(),
-//                                        createSubmissionCredentials())
-//              .addCommand(
-//                "$JAVA_HOME/bin/java",
-//                "-Djava.io.tmpdir=tmp",
-//                "-Dyarn.appId=$" + EnvKeys.YARN_APP_ID_STR,
-//                "-Dtwill.app=$" + Constants.TWILL_APP_NAME,
-//                "-cp", Constants.Files.LAUNCHER_JAR + ":$HADOOP_CONF_DIR",
-//                "-Xmx" + memory + "m",
-//                jvmOptions.getAMExtraOptions(),
-//                TwillLauncher.class.getName(),
-//                ApplicationMasterMain.class.getName(),
-//                Boolean.FALSE.toString())
-//              .launch();
-
-
-      boolean logCollectionEnabled = config.getBoolean(Configs.Keys.LOG_COLLECTION_ENABLED,
-                                                       Configs.Defaults.LOG_COLLECTION_ENABLED);
-  //    YarnTwillController controller = controllerFactory.create(runId, logCollectionEnabled,
-  //                                                              logHandlers, submitTask, timeout, timeoutUnit);
-  //    controller.start();
-  //    return controller;
+      // TODO: how to get the error from this command: (its a type - nohub)
+      // TODO: how to make this command blocking (And know that the command is done)
+//      System.out.println(SSHUtils.runCommand(sshConfig, "nohub bash /home/aanwar/dp_launcher.sh " + remoteDir));
+      System.out.println(SSHUtils.runCommand(sshConfig, "nohup bash /home/aanwar/dp_launcher.sh " + remoteDir));
+      TimeUnit.SECONDS.sleep(5);
+      // TODO: need to sleep? not seeing the yarn app run sometimes...
       return null;
     } catch (Exception e) {
       LOG.error("Failed to submit application {}", twillSpec.getName(), e);

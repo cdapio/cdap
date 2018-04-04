@@ -66,6 +66,7 @@ import java.io.Writer;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,8 +80,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class DPLauncher {
-
-  private static final String tmpBootstrapPath = "/tmp/remoteDir";
 
   private final Configuration config;
 
@@ -96,7 +95,7 @@ public class DPLauncher {
   }
 
   private TwillController doStart() throws IOException {
-    File bootstrapDir = new File(tmpBootstrapPath);
+    File bootstrapDir = new File(System.getProperty("user.dir"));
     LocalLocationFactory locationFactory = new LocalLocationFactory(bootstrapDir);
     // TODO: unzip some jar files (at least the config one)
 

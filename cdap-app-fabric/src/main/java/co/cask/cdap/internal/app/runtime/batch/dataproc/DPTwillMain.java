@@ -103,12 +103,8 @@ public class DPTwillMain {
     "      $HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*," +
     "      $HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*'";
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException, JSchException {
     SSHConfig sshConfig = new SSHConfig("35.200.155.105", "yourname", getPrivateKey());
-
-    String tempDir = "/tmp/dptwill/" + System.currentTimeMillis();
-//    System.out.println(SSHUtils.runCommand(sshConfig, "mkdir -p " + tempDir));
-//    System.out.println(SSHUtils.runCommand(sshConfig, "ls -ltrh " + tempDir));
 
     DataProcTwillRunner twillRunner = new DataProcTwillRunner(sshConfig);
 

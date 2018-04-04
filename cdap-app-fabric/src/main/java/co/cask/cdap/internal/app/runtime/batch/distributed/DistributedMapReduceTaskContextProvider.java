@@ -121,8 +121,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     String runId = arguments.getOption(ProgramOptionConstants.RUN_ID);
     String instanceId = arguments.getOption(ProgramOptionConstants.INSTANCE_ID);
     return Guice.createInjector(
+      // TODO:
 //<<<<<<< HEAD
-//      new DistributedProgramRunnableModule(cConf, hConf).createModule(mapReduceContextConfig.getProgramId().run(runId),
+//new DistributedProgramRunnableModule(cConf, hConf).createModule(mapReduceContextConfig.getProgramId().run(runId),
 //                                                                      instanceId, principal));
 //=======
             new co.cask.cdap.internal.app.runtime.batch.dataproc.DistributedProgramRunnableModule(cConf, hConf)

@@ -71,7 +71,6 @@ public class DataProcTwillRunner implements TwillRunner {
   public TwillPreparer prepare(TwillApplication twillApplication) {
 //    Preconditions.checkState(serviceDelegate.isRunning(), "Service not start. Please call start() first.");
     final TwillSpecification twillSpec = twillApplication.configure();
-    final String appName = twillSpec.getName();
     RunId runId = RunIds.generate();
     Location appLocation = locationFactory.create(String.format("/%s/%s", twillSpec.getName(), runId.getId()));
     LocationCache locationCache = new NoCachingLocationCache(appLocation); // TODO: do it?
