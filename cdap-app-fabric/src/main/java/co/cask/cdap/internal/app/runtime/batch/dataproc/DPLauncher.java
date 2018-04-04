@@ -32,6 +32,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.apache.twill.internal.EnvKeys;
@@ -59,7 +60,9 @@ import org.apache.zookeeper.KeeperException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -92,9 +95,8 @@ public class DPLauncher {
     }
   }
 
-  private TwillController doStart() throws IOException, URISyntaxException {
+  private TwillController doStart() throws IOException {
     File bootstrapDir = new File(tmpBootstrapPath);
-    LocalLocationFactory rootLocationFactory = new LocalLocationFactory();
     LocalLocationFactory locationFactory = new LocalLocationFactory(bootstrapDir);
     // TODO: unzip some jar files (at least the config one)
 
@@ -127,6 +129,8 @@ public class DPLauncher {
     archives.add(Constants.Files.APPLICATION_JAR);
     // TODO: what else?
 
+
+//    localizeFiles.put(Constants.Files.LOCALIZE_FILES, Constants.Files.LOCALIZE_FILES);
     final Map<String, LocalFile> localFiles = new HashMap<>();
     for (Map.Entry<String, String> stringStringEntry : localizeFiles.entrySet()) {
       File localizeFile = new File(stringStringEntry.getValue());
@@ -136,6 +140,18 @@ public class DPLauncher {
                                           localizeFile.length(), archives.contains(stringStringEntry.getKey()), null)
       );
     }
+
+    Location location = locationFactory.create(Constants.Files.LOCALIZE_FILES + "_map");
+    System.out.println("exists: " + location.exists());
+    System.out.println("delete: " + location.delete());
+    // Serialize the list of LocalFiles, except the one we are generating here, as this file is used by AM only.
+    // This file should never use LocationCache.
+    try (Writer writer = new OutputStreamWriter(location.getOutputStream(), StandardCharsets.UTF_8)) {
+      new Gson().toJson(localFiles.values(), writer);
+    }
+    localFiles.put(Constants.Files.LOCALIZE_FILES,
+                   new DefaultLocalFile(Constants.Files.LOCALIZE_FILES, location.toURI(), location.lastModified(),
+                                        location.length(), false, null));
 
 
     try {

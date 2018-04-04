@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.jcraft.jsch.JSchException;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.TwillController;
@@ -25,6 +27,8 @@ import org.apache.twill.api.logging.PrinterLogHandler;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -93,6 +97,11 @@ public class DPTwillMain {
       + "-----END RSA PRIVATE KEY-----";
   }
 
+  private static final String yarnAppClasspath = "$HADOOP_CONF_DIR," +
+    "      $HADOOP_COMMON_HOME/*,$HADOOP_COMMON_HOME/lib/*," +
+    "      $HADOOP_HDFS_HOME/*,$HADOOP_HDFS_HOME/lib/*," +
+    "      $HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*," +
+    "      $HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*'";
 
   public static void main(String[] args) {
     SSHConfig sshConfig = new SSHConfig("35.200.155.105", "yourname", getPrivateKey());
@@ -106,6 +115,10 @@ public class DPTwillMain {
     TwillPreparer twillPreparer = twillRunner.prepare(new EchoServer());
     twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out, true)));
     twillPreparer.withBundlerClassAcceptor(new HadoopClassExcluder());
+
+    List<String> applicationClassPaths = new ArrayList<>();
+    Iterables.addAll(applicationClassPaths, Splitter.on(",").split(yarnAppClasspath));
+    twillPreparer.withApplicationClassPaths(applicationClassPaths);
     TwillController controller = twillPreparer.start();
   }
 }

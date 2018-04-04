@@ -712,7 +712,7 @@ public class DataProcTwillPreparer implements TwillPreparer {
 
       TwillRuntimeSpecification twillRuntimeSpec = new TwillRuntimeSpecification(
               newTwillSpec, appLocation.getLocationFactory().getHomeLocation().getName(),
-              appLocation.toURI(), "zkConnectStr:null", runId, twillSpec.getName(),
+              appLocation.toURI(), "localhost:2181", runId, twillSpec.getName(),
               null,
               logLevels, maxRetries, configMap, runnableConfigs);
       TwillRuntimeSpecificationAdapter.create().toJson(twillRuntimeSpec, writer);
