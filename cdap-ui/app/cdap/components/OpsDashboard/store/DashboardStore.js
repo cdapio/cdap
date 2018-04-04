@@ -138,7 +138,7 @@ const namespaces = (state = namespacesInitialState, action = defaultAction) => {
         namespacesPick: action.payload.namespacesPick
       };
     case DashboardActions.reset:
-      return legendsInitialState;
+      return namespacesInitialState;
     default:
       return state;
   }

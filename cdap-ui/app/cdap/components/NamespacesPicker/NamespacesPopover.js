@@ -49,9 +49,11 @@ class NamespacesPopoverView extends Component {
   }
 
   getNamespaceList() {
+    let namespace = getCurrentNamespace();
+
     return NamespaceStore.getState().namespaces
       .map(ns => ns.name)
-      .filter(ns => ns !== this.state.namespace);
+      .filter(ns => ns !== namespace);
   }
 
   namespaceClick = (ns) => {
