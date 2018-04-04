@@ -24,6 +24,7 @@ import {getNamespacePrefs} from 'components/NamespaceDetails/store/ActionCreator
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import classnames from 'classnames';
+import ViewAllLabel from 'components/ViewAllLabel';
 require('./Preferences.scss');
 
 const PREFIX = 'features.NamespaceDetails.preferences';
@@ -189,26 +190,6 @@ class NamespaceDetailsPreferences extends Component {
     );
   }
 
-  renderViewMore() {
-    if (this.state.prefs.length <= 5) {
-      return null;
-    }
-
-    return (
-      <span
-        className="view-more-label"
-        onClick={this.toggleViewAll}
-      >
-        {
-          this.state.viewAll ?
-            T.translate(`${PREFIX}.viewLess`)
-          :
-            T.translate(`${PREFIX}.viewAll`)
-        }
-      </span>
-    );
-  }
-
   renderPreferencesTableBody = (prefs) => {
     return (
       <tbody>
@@ -240,7 +221,12 @@ class NamespaceDetailsPreferences extends Component {
       <div className="namespace-details-preferences">
         {this.renderPreferencesLabel()}
         {this.renderPreferencesTable()}
-        {this.renderViewMore()}
+        <ViewAllLabel
+          arrayToLimit={this.state.prefs}
+          limit={5}
+          viewAllState={this.state.viewAll}
+          toggleViewAll={this.toggleViewAll}
+        />
         {
           this.state.modalOpen ?
             <SetPreferenceModal

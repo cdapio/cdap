@@ -1,0 +1,96 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../../styles/variables.scss';
+$btn-color: $blue-03;
+$border-color: $grey-03;
+$hover-active-color: $grey-08;
+
+.admin-config-tab-content {
+  .btn.btn-secondary {
+    color: $btn-color;
+    border-color: $border-color;
+    font-size: 12px;
+    padding: 5px 20px;
+  }
+
+  .action-buttons {
+    margin: 10px 0;
+
+    .btn:first-child {
+      margin-right: 15px;
+    }
+  }
+
+  .admin-config-container {
+    border-top: 1px solid $border-color;
+    border-bottom: 1px solid $border-color;
+    padding: 0 20px;
+
+    .admin-config-container-toggle {
+      cursor: pointer;
+      height: 70px;
+      display: flex;
+      align-items: center;
+
+      .admin-config-container-label {
+        width: 250px;
+        display: inline-flex;
+
+        .icon-svg {
+          font-size: 1.25rem;
+          margin-left: -15px;
+          margin-right: 5px;
+
+          &.icon-spinner {
+            margin-left: 0;
+          }
+        }
+      }
+
+      .admin-config-container-description {
+        color: $border-color;
+      }
+    }
+
+    .admin-config-container-content {
+      .btn.btn-secondary {
+        margin-top: -10px;
+      }
+
+      .grid-wrapper {
+        margin-bottom: 20px;
+
+        .grid.grid-container {
+          max-height: none;
+
+          .grid-header {
+            background-color: $hover-active-color;
+          }
+
+          .grid-row:hover {
+            background-color: $hover-active-color;
+          }
+        }
+      }
+    }
+
+    &:hover,
+    &.expanded {
+      background-color: $hover-active-color;
+    }
+  }
+}

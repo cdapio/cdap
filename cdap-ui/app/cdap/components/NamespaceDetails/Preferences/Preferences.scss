@@ -16,7 +16,7 @@
 
 @import "../../../styles/variables.scss";
 $tr-height: 30px;
-$link-color: #0275d8;
+$link-color: $blue-03;
 
 .namespace-details-preferences {
   .namespace-details-section-label {
@@ -66,10 +66,5 @@ $link-color: #0275d8;
         white-space: nowrap;
       }
     }
-  }
-
-  .view-more-label {
-    color: $link-color;
-    cursor: pointer;
   }
 }

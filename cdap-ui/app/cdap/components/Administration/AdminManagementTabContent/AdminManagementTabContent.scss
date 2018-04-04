@@ -12,26 +12,35 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-@import "../../../styles/variables.scss";
+@import '../../../styles/variables.scss';
+$grey-theme-color: $grey-08;
 
-.namespace-details-entity-count {
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-
-  .entity-count {
-    text-align: center;
-
-    > span {
-      font-weight: bold;
-      color: $grey-03;
-    }
+.admin-management-tab-content {
+  .services-details {
+    display: flex;
+    width: 100%;
+    background: $grey-theme-color;
+    padding: 10px;
 
     > div {
-      font-size: 24px;
+      width: calc(50% - 20px);
+      margin: 10px;
     }
+    .services-table-section {
+      strong {
+        font-size: 18px;
+        display: block;
+      }
+    }
+  }
+
+  .admin-bottom-panel {
+    display: flex;
+    padding: 0 10px;
+    background: $grey-theme-color;
+    padding-bottom: 40px;
+    justify-content: flex-end;
   }
 }

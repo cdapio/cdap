@@ -14,11 +14,14 @@
  * the License.
 */
 
+@import "../../../styles/variables.scss";
+
 .namespace-details-compute-profiles {
   .namespace-details-section-label {
     margin-bottom: 0;
 
     .create-new-profile-label {
+      color: $blue-03;
       margin-left: 10px;
       font-size: 13px;
       text-decoration: none;

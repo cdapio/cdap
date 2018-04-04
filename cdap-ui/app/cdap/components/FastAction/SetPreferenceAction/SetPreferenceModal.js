@@ -439,10 +439,7 @@ export default class SetPreferenceModal extends Component {
         size="lg"
         backdrop='static'
       >
-        <ModalHeader
-          className="modal-header"
-          onClick={this.preventPropagation}
-        >
+        <ModalHeader className="modal-header">
           <div className="float-xs-left">
             <span className="button-icon fa fa-wrench" />
             <span className="button-icon title">
@@ -452,7 +449,7 @@ export default class SetPreferenceModal extends Component {
           <div className="float-xs-right">
             <div
               className="close-modal-btn"
-              onClick={this.props.toggleModal.bind(this)}
+              onClick={this.props.toggleModal}
             >
               <span className="button-icon fa fa-times" />
             </div>

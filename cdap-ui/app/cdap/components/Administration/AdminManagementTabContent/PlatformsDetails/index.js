@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import GenericDetails from 'components/Administration/PlatformsDetails/Genericdetails';
+import GenericDetails from 'components/Administration/AdminManagementTabContent/PlatformsDetails/Genericdetails';
 import LoadingSVG from 'components/LoadingSVG';
 
 const ADMINPREFIX = 'features.Administration.Component-Overview.headers';
@@ -36,7 +36,7 @@ export default class PlatformsDetails extends Component {
   };
 
   state = {
-    activeTab: null,
+    activeTab: Object.keys(this.props.platforms)[0],
     platforms: this.props.platforms
   };
 

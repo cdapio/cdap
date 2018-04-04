@@ -1,5 +1,5 @@
 /*
-* Copyright © 2017 Cask Data, Inc.
+* Copyright © 2017-2018 Cask Data, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,17 @@
 * the License.
 */
 
-@import '../../PipelineSummary/StickyTableHeader.scss';
-@import '../../../styles/variables.scss';
+@import '../../../PipelineSummary/StickyTableHeader.scss';
+@import '../../../../styles/variables.scss';
 
 $table_cell_border_color: gray;
 $table_background_color: transparent;
 $table_border_color: lightgray;
-$instance_bg_color: #cccccc;
+$instance_bg_color: $grey-05;
 $instance_bg_hover_color: white;
 $height_of_header: 35px;
 $height_of_conent: 415px;
-$table_row_hover_bg_color: #f5f5f5;
+$table_row_hover_bg_color: $grey-08;
 
 .services-table {
   background: $cdap-white;

@@ -309,7 +309,7 @@ const convertMapToKeyValuePairs = (map, addUniqueId = true) => {
   return Object.entries(map).map(([key, value]) => {
     return {
       key,
-      value,
+      value
     };
   });
 };
