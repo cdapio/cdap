@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 public class LastRunConstraintTest {
   private static final NamespaceId TEST_NS = new NamespaceId("LastRunConstraintTest");
   private static final ApplicationId APP_ID = TEST_NS.app("app1");
+  private static final ArtifactId ARTIFACT_ID = TEST_NS.artifact("test", "1.0").toApiArtifactId();
   private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
@@ -58,7 +60,8 @@ public class LastRunConstraintTest {
   private void setStartAndRunning(Store store, final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),
+                          ARTIFACT_ID);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));

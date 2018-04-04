@@ -188,16 +188,17 @@ public class DefaultStore implements Store {
 
   @Override
   public void setProvisioning(ProgramRunId id, long startTime, Map<String, String> runtimeArgs,
-                              Map<String, String> systemArgs, byte[] sourceId) {
+                              Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramProvisioning(id, startTime, runtimeArgs, systemArgs, sourceId, null);
+      getAppMetadataStore(context).recordProgramProvisioning(id, startTime, runtimeArgs, systemArgs, sourceId,
+                                                             artifactId);
     });
   }
 
   @Override
   public void setProvisioned(ProgramRunId id, int numNodes, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramProvisioned(id, numNodes, sourceId, null);
+      getAppMetadataStore(context).recordProgramProvisioned(id, numNodes, sourceId);
     });
   }
 
@@ -220,7 +221,7 @@ public class DefaultStore implements Store {
   @Override
   public void setStart(ProgramRunId id, String twillRunId, Map<String, String> systemArgs, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId, null);
+      getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId);
     });
   }
 

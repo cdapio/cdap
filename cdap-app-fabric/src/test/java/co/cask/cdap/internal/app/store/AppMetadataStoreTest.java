@@ -85,10 +85,9 @@ public class AppMetadataStoreTest {
                                                    AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                    artifactId);
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
-                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
-                                                  artifactId);
+                                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
     metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
-                                            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), artifactId);
+                                            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
   }
 
   // TODO: [CDAP-12458] since recordProgramStart doesn't use version-less key builder, this test fails.
@@ -166,7 +165,6 @@ public class AppMetadataStoreTest {
   public void testInvalidStatusPersistence() throws Exception {
     final AppMetadataStore metadataStoreDataset = getMetadataStore("testInvalidStatusPersistence");
     TransactionExecutor txnl = getTxExecutor(metadataStoreDataset);
-    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
     final RunId runId1 = RunIds.generate(runIdTime.incrementAndGet());
@@ -248,8 +246,7 @@ public class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       metadataStoreDataset.recordProgramStart(programRunId6, null, ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
-                                              artifactId);
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
       Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
@@ -262,8 +259,7 @@ public class AppMetadataStoreTest {
                                                 null,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       metadataStoreDataset.recordProgramStart(programRunId7, null, ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
-                                              artifactId);
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
       // STARTING status is ignored since there's an existing RUNNING record
       Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
@@ -287,11 +283,9 @@ public class AppMetadataStoreTest {
                                                      null, null,
                                                      AppFabricTestHelper.createSourceId(startSourceId), artifactId);
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
-                                                    AppFabricTestHelper.createSourceId(startSourceId + 1),
-                                                    artifactId);
+                                                    AppFabricTestHelper.createSourceId(startSourceId + 1));
       metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
-                                              AppFabricTestHelper.createSourceId(startSourceId + 2),
-                                              artifactId);
+                                              AppFabricTestHelper.createSourceId(startSourceId + 2));
       metadataStoreDataset.recordProgramRunning(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
                                                 null, AppFabricTestHelper.createSourceId(runningSourceId));
       metadataStoreDataset.recordProgramStop(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),

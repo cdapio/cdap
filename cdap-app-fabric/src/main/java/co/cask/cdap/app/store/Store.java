@@ -68,9 +68,10 @@ public interface Store extends RuntimeStore {
    * @param systemArgs the system arguments for this program run
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
+   * @param artifactId artifact id used to create the application the program belongs to
    */
   void setProvisioning(ProgramRunId id, long startTime, Map<String, String> runtimeArgs,
-                       Map<String, String> systemArgs, byte[] sourceId);
+                       Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId);
 
   /**
    * Persists program run cluster status to {@link ProgramRunClusterStatus#PROVISIONED}.

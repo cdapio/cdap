@@ -30,6 +30,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -113,22 +114,23 @@ public class DefaultStoreTest {
     admin.create(NamespaceMeta.DEFAULT);
   }
 
-  private void setStartAndRunning(final ProgramRunId id, final long startTime) {
-    setStartAndRunning(id, startTime, ImmutableMap.of(), ImmutableMap.of());
+  private void setStartAndRunning(final ProgramRunId id, final long startTime, ArtifactId artifactId) {
+    setStartAndRunning(id, startTime, ImmutableMap.of(), ImmutableMap.of(), artifactId);
 
   }
 
   private void setStartAndRunning(final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
-                                  final Map<String, String> systemArgs) {
-    setStart(id, startTime, runtimeArgs, systemArgs);
+                                  final Map<String, String> systemArgs, ArtifactId artifactId) {
+    setStart(id, startTime, runtimeArgs, systemArgs, artifactId);
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   private void setStart(final ProgramRunId id, final long startTime,
                         final Map<String, String> runtimeArgs,
-                        final Map<String, String> systemArgs) {
-    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+                        final Map<String, String> systemArgs, ArtifactId artifactId) {
+    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),
+                          artifactId);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
   }
@@ -162,8 +164,9 @@ public class DefaultStoreTest {
     // Test delete application
     ApplicationId appId1 = namespaceId.app("app1");
     ProgramId programId1 = appId1.workflow("pgm1");
+    ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
     RunId run1 = RunIds.generate();
-    setStartAndRunning(programId1.run(run1.getId()), runIdToSecs(run1));
+    setStartAndRunning(programId1.run(run1.getId()), runIdToSecs(run1), artifactId);
     store.setSuspend(programId1.run(run1.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     store.removeApplication(appId1);
     Assert.assertTrue(store.getRuns(programId1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
@@ -171,7 +174,7 @@ public class DefaultStoreTest {
     // Test delete namespace
     ProgramId programId2 = namespaceId.app("app2").workflow("pgm2");
     RunId run2 = RunIds.generate();
-    setStartAndRunning(programId2.run(run2.getId()), runIdToSecs(run2));
+    setStartAndRunning(programId2.run(run2.getId()), runIdToSecs(run2), artifactId);
     store.setSuspend(programId2.run(run2.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     store.removeAll(namespaceId);
     nsStore.delete(namespaceId);
@@ -193,9 +196,10 @@ public class DefaultStoreTest {
     long currentTime = System.currentTimeMillis();
     String workflowRunId = RunIds.generate(currentTime).getId();
     ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId);
+    ArtifactId artifactId = appId.getParent().artifact("testArtifact", "1.0").toApiArtifactId();
 
     // start Workflow
-    setStartAndRunning(workflowRun, currentTime);
+    setStartAndRunning(workflowRun, currentTime, artifactId);
 
     // start MapReduce as a part of Workflow
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
@@ -204,7 +208,8 @@ public class DefaultStoreTest {
 
     RunId mapReduceRunId = RunIds.generate(currentTime + 10);
 
-    setStartAndRunning(mapReduceProgram.run(mapReduceRunId.getId()), currentTime + 10, ImmutableMap.of(), systemArgs);
+    setStartAndRunning(mapReduceProgram.run(mapReduceRunId.getId()), currentTime + 10, ImmutableMap.of(),
+                       systemArgs, artifactId);
 
     // stop the MapReduce program
     store.setStop(mapReduceProgram.run(mapReduceRunId.getId()), currentTime + 50, ProgramRunStatus.COMPLETED,
@@ -217,7 +222,7 @@ public class DefaultStoreTest {
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
     setStartAndRunning(sparkProgram.run(sparkRunId.getId()), currentTime + 60,
-                       ImmutableMap.of(), systemArgs);
+                       ImmutableMap.of(), systemArgs, artifactId);
 
     // stop the Spark program with failure
     NullPointerException npe = new NullPointerException("dataset not found");
@@ -266,9 +271,10 @@ public class DefaultStoreTest {
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
     RunId run1 = RunIds.generate(now - 10000);
-    setStartAndRunning(programId.run(run1.getId()), runIdToSecs(run1));
+    ArtifactId artifactId = programId.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    setStartAndRunning(programId.run(run1.getId()), runIdToSecs(run1), artifactId);
     RunId run2 = RunIds.generate(now - 10000);
-    setStartAndRunning(programId.run(run2.getId()), runIdToSecs(run2));
+    setStartAndRunning(programId.run(run2.getId()), runIdToSecs(run2), artifactId);
 
     store.setStop(programId.run(run1.getId()), nowSecs, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
@@ -293,24 +299,25 @@ public class DefaultStoreTest {
     long startTimeDelaySecs = 1;
 
     RunId run1 = RunIds.generate(now - 20000);
-    setStartAndRunning(programId.run(run1.getId()), runIdToSecs(run1));
+    ArtifactId artifactId = programId.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    setStartAndRunning(programId.run(run1.getId()), runIdToSecs(run1), artifactId);
     store.setStop(programId.run(run1.getId()), startTimeSecs - 10, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // record another finished flow
     RunId run2 = RunIds.generate(now - 10000);
-    setStartAndRunning(programId.run(run2.getId()), runIdToSecs(run2));
+    setStartAndRunning(programId.run(run2.getId()), runIdToSecs(run2), artifactId);
     store.setStop(programId.run(run2.getId()), startTimeSecs - 5, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // record a suspended flow
     RunId run21 = RunIds.generate(now - 7500);
-    setStartAndRunning(programId.run(run21.getId()), runIdToSecs(run21));
+    setStartAndRunning(programId.run(run21.getId()), runIdToSecs(run21), artifactId);
     store.setSuspend(programId.run(run21.getId()), AppFabricTestHelper.createSourceId(++sourceId));
 
     // record not finished flow
     RunId run3 = RunIds.generate(now);
-    setStartAndRunning(programId.run(run3.getId()), runIdToSecs(run3));
+    setStartAndRunning(programId.run(run3.getId()), runIdToSecs(run3), artifactId);
 
     // For a RunRecordMeta that has not yet been completed, getStopTs should return null
     RunRecordMeta runRecord = store.getRun(programId.run(run3.getId()));
@@ -320,13 +327,13 @@ public class DefaultStoreTest {
     // record run of different program
     ProgramId programId2 = new ProgramId("account1", "application1", ProgramType.FLOW, "flow2");
     RunId run4 = RunIds.generate(now - 5000);
-    setStartAndRunning(programId2.run(run4.getId()), runIdToSecs(run4));
+    setStartAndRunning(programId2.run(run4.getId()), runIdToSecs(run4), artifactId);
     store.setStop(programId2.run(run4.getId()), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // record for different account
     setStartAndRunning(new ProgramId("account2", "application1", ProgramType.FLOW, "flow1").run(run3.getId()),
-                       runIdToSecs(run3));
+                       runIdToSecs(run3), artifactId);
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     Map<ProgramRunId, RunRecordMeta> successHistorymap = store.getRuns(programId, ProgramRunStatus.COMPLETED,
@@ -396,7 +403,7 @@ public class DefaultStoreTest {
     // Backwards compatibility test with random UUIDs
     // record finished flow
     RunId run5 = RunIds.fromString(UUID.randomUUID().toString());
-    setStartAndRunning(programId.run(run5.getId()), startTimeSecs - 8);
+    setStartAndRunning(programId.run(run5.getId()), startTimeSecs - 8, artifactId);
     store.setStop(programId.run(run5.getId()), startTimeSecs - 4, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
     ProgramRunCluster emptyCluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, 0);
@@ -412,7 +419,7 @@ public class DefaultStoreTest {
 
     // record not finished flow
     RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
-    setStartAndRunning(programId.run(run6.getId()), startTimeSecs - 2);
+    setStartAndRunning(programId.run(run6.getId()), startTimeSecs - 2, artifactId);
     RunRecordMeta expectedRecord6 = RunRecordMeta.builder()
       .setProgramRunId(programId.run(run6))
       .setStartTime(startTimeSecs - 2)
@@ -434,7 +441,7 @@ public class DefaultStoreTest {
     // Record flow that starts but encounters error before it runs
     RunId run7 = RunIds.fromString(UUID.randomUUID().toString());
     Map<String, String> emptyArgs = ImmutableMap.of();
-    setStart(programId.run(run7.getId()), startTimeSecs, emptyArgs, emptyArgs);
+    setStart(programId.run(run7.getId()), startTimeSecs, emptyArgs, emptyArgs, artifactId);
     store.setStop(programId.run(run7.getId()), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
     RunRecordMeta expectedRunRecord7 = RunRecordMeta.builder()
@@ -450,7 +457,7 @@ public class DefaultStoreTest {
 
     // Record flow that starts and suspends before it runs
     RunId run8 = RunIds.fromString(UUID.randomUUID().toString());
-    setStart(programId.run(run8.getId()), startTimeSecs, emptyArgs, emptyArgs);
+    setStart(programId.run(run8.getId()), startTimeSecs, emptyArgs, emptyArgs, artifactId);
     store.setSuspend(programId.run(run8.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     RunRecordMeta expectedRunRecord8 = RunRecordMeta.builder()
       .setProgramRunId(programId.run(run8))
@@ -464,7 +471,7 @@ public class DefaultStoreTest {
 
     // Record flow that is killed while suspended
     RunId run9 = RunIds.fromString(UUID.randomUUID().toString());
-    setStartAndRunning(programId.run(run9.getId()), startTimeSecs);
+    setStartAndRunning(programId.run(run9.getId()), startTimeSecs, artifactId);
     store.setSuspend(programId.run(run9.getId()), AppFabricTestHelper.createSourceId(++sourceId));
     store.setStop(programId.run(run9.getId()), startTimeSecs + 5, ProgramRunStatus.KILLED,
                   AppFabricTestHelper.createSourceId(++sourceId));
@@ -778,14 +785,15 @@ public class DefaultStoreTest {
     ProgramRunId flowProgramRunId = flowProgramId.run(flowRunId);
     ProgramRunId mapreduceProgramRunId = mapreduceProgramId.run(mapreduceRunId);
     ProgramRunId workflowProgramRunId = workflowProgramId.run(workflowRunId);
+    ArtifactId artifactId = appId.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     setStartAndRunning(flowProgramId.run(flowRunId), nowSecs,
-                       ImmutableMap.of("model", "click"), null);
+                       ImmutableMap.of("model", "click"), null, artifactId);
     setStartAndRunning(mapreduceProgramId.run(mapreduceRunId), nowSecs,
-                       ImmutableMap.of("path", "/data"), null);
+                       ImmutableMap.of("path", "/data"), null, artifactId);
     setStartAndRunning(workflowProgramId.run(workflowRunId), nowSecs,
-                       ImmutableMap.of("whitelist", "cask"), null);
+                       ImmutableMap.of("whitelist", "cask"), null, artifactId);
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());
@@ -831,6 +839,7 @@ public class DefaultStoreTest {
     ProgramId flowProgramId1 = appId1.flow("NoOpFlow");
     ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
     ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
+    ArtifactId artifactId = appId1.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
     ProgramId flowProgramId2 = appId2.flow("WordCountFlow");
 
@@ -840,22 +849,22 @@ public class DefaultStoreTest {
     long now = System.currentTimeMillis();
 
     ProgramRunId flowProgramRunId1 = flowProgramId1.run(RunIds.generate());
-    setStartAndRunning(flowProgramRunId1, now - 1000);
+    setStartAndRunning(flowProgramRunId1, now - 1000, artifactId);
     store.setStop(flowProgramRunId1, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     ProgramRunId mapreduceProgramRunId1 = mapreduceProgramId1.run(RunIds.generate());
-    setStartAndRunning(mapreduceProgramRunId1, now - 1000);
+    setStartAndRunning(mapreduceProgramRunId1, now - 1000, artifactId);
     store.setStop(mapreduceProgramRunId1, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
-    setStartAndRunning(workflowProgramId1.run(runId.getId()), now - 1000);
+    setStartAndRunning(workflowProgramId1.run(runId.getId()), now - 1000, artifactId);
     store.setStop(workflowProgramId1.run(runId.getId()), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     ProgramRunId flowProgramRunId2 = flowProgramId2.run(RunIds.generate());
-    setStartAndRunning(flowProgramRunId2, now - 1000);
+    setStartAndRunning(flowProgramRunId2, now - 1000, artifactId);
     store.setStop(flowProgramRunId2, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
@@ -897,16 +906,17 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec);
 
     ProgramId flowProgramId = new ProgramId("testRunsLimit", spec.getName(), ProgramType.FLOW, "NoOpFlow");
+    ArtifactId artifactId = appId.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
     Assert.assertNotNull(store.getApplication(appId));
 
     long now = System.currentTimeMillis();
     ProgramRunId flowProgramRunId = flowProgramId.run(RunIds.generate());
-    setStartAndRunning(flowProgramRunId, now - 3000);
+    setStartAndRunning(flowProgramRunId, now - 3000, artifactId);
     store.setStop(flowProgramRunId, now - 100, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    setStartAndRunning(flowProgramId.run(RunIds.generate()), now - 2000);
+    setStartAndRunning(flowProgramId.run(RunIds.generate()), now - 2000, artifactId);
 
     // even though there's two separate run records (one that's complete and one that's active), only one should be
     // returned by the query, because the limit parameter of 1 is being passed in.
@@ -990,13 +1000,13 @@ public class DefaultStoreTest {
     ProgramRunId run4 = ns.app("a4").program(ProgramType.SERVICE, "f4").run(RunIds.generate(70000).getId());
     ProgramRunId run5 = ns.app("a5").program(ProgramType.SPARK, "f5").run(RunIds.generate(30000).getId());
     ProgramRunId run6 = ns.app("a6").program(ProgramType.WORKFLOW, "f6").run(RunIds.generate(60000).getId());
-
-    writeStartRecord(run1);
-    writeStartRecord(run2);
-    writeStartRecord(run3);
-    writeStartRecord(run4);
-    writeStartRecord(run5);
-    writeStartRecord(run6);
+    ArtifactId artifactId = ns.artifact("testArtifact", "1.0").toApiArtifactId();
+    writeStartRecord(run1, artifactId);
+    writeStartRecord(run2, artifactId);
+    writeStartRecord(run3, artifactId);
+    writeStartRecord(run4, artifactId);
+    writeStartRecord(run5, artifactId);
+    writeStartRecord(run6, artifactId);
 
     Assert.assertEquals(runsToTime(run1, run2), runIdsToTime(store.getRunningInRange(1, 30)));
     Assert.assertEquals(runsToTime(run1, run2, run5, run3), runIdsToTime(store.getRunningInRange(30, 50)));
@@ -1024,13 +1034,14 @@ public class DefaultStoreTest {
     TreeSet<Long> runningPrograms = new TreeSet<>();
     for (int i = 0; i < 99; ++i) {
       ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
+      ArtifactId artifactId = application.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
       ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
                                               "program" + i);
       long startTime = (i + 1) * 10000;
       RunId runId = RunIds.generate(startTime);
       allPrograms.add(startTime);
       ProgramRunId run = program.run(runId.getId());
-      writeStartRecord(run);
+      writeStartRecord(run, artifactId);
 
       // For every 3rd program starting from 0th, write stop record
       if ((i % 3) == 0) {
@@ -1089,9 +1100,9 @@ public class DefaultStoreTest {
                         runIdsToTime(store.getRunningInRange(1, 45 * 10)));
   }
 
-  private void writeStartRecord(ProgramRunId run) {
+  private void writeStartRecord(ProgramRunId run, ArtifactId artifactId) {
     long startTimeSecs = RunIds.getTime(RunIds.fromString(run.getRun()), TimeUnit.SECONDS);
-    setStartAndRunning(run, startTimeSecs);
+    setStartAndRunning(run, startTimeSecs, artifactId);
     Assert.assertNotNull(store.getRun(run));
   }
 
