@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,10 @@ package co.cask.cdap.scheduler;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -37,7 +37,9 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -45,89 +47,97 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
  * Subscribe to notification TMS topic and update schedules in schedule store and job queue
  */
-public class ScheduleNotificationSubscriberService extends AbstractNotificationSubscriberService {
+public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleNotificationSubscriberService.class);
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
+  private final MessagingService messagingService;
   private final DatasetFramework datasetFramework;
-  private ExecutorService taskExecutorService;
+  private final TransactionSystemClient txClient;
+  private final MetricsCollectionService metricsCollectionService;
+  private final List<Service> subscriberServices;
 
   @Inject
-  ScheduleNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
+  ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                         MetricsCollectionService metricsCollectionService) {
-    super(messagingService, cConf, datasetFramework, txClient, metricsCollectionService);
-
     this.cConf = cConf;
+    this.messagingService = messagingService;
     this.datasetFramework = datasetFramework;
+    this.txClient = txClient;
+    this.metricsCollectionService = metricsCollectionService;
+    this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(),
+                                            new DataEventSubscriberService(),
+                                            new ProgramStatusEventSubscriberService());
   }
 
   @Override
-  protected void startUp() {
+  protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
-    taskExecutorService =
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task-%d").build());
-    taskExecutorService.submit(new SchedulerEventSubscriberRunnable(
-      cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
-      cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE)));
-    taskExecutorService.submit(new DataEventSubscriberRunnable());
-    taskExecutorService.submit(new ProgramStatusEventSubscriberRunnable());
+    // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
+    Futures.successfulAsList(subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
   }
 
   @Override
-  protected void shutDown() {
-    super.shutDown();
-    try {
-      taskExecutorService.shutdownNow();
-      taskExecutorService.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-    } finally {
-      if (!taskExecutorService.isTerminated()) {
-        taskExecutorService.shutdownNow();
+  protected void shutDown() throws Exception {
+    // This never throw
+    Futures.successfulAsList(subscriberServices.stream().map(Service::stop).collect(Collectors.toList())).get();
+
+    for (Service service : subscriberServices) {
+      // The service must have been stopped, and calling stop again will just return immediate with the
+      // future that carries the stop state.
+      try {
+        service.stop().get();
+      } catch (ExecutionException e) {
+        LOG.warn("Exception raised when stopping service {}", service, e.getCause());
       }
     }
+
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
   /**
    * Abstract base class for implementing job queue logic for various kind of notifications.
    */
-  private abstract class AbstractSchedulerSubscriberRunnable extends AbstractSubscriberRunnable {
+  private abstract class AbstractSchedulerSubscriberService extends AbstractNotificationSubscriberService {
 
-    AbstractSchedulerSubscriberRunnable(String name, String topic, int fetchSize, boolean transactionalFetch) {
-      super(name, topic, cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS), fetchSize, transactionalFetch);
+    AbstractSchedulerSubscriberService(String name, String topic, int fetchSize, boolean transactionalFetch) {
+      super(name, cConf, topic, transactionalFetch, fetchSize,
+            cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
+            messagingService, datasetFramework, txClient, metricsCollectionService);
     }
 
     @Nullable
     @Override
-    protected final String initialize(DatasetContext context) throws RetryableException {
-      return getJobQueue(context).retrieveSubscriberState(getTopic());
+    protected String loadMessageId(DatasetContext datasetContext) throws Exception {
+      return getJobQueue(datasetContext).retrieveSubscriberState(getTopicId().getTopic());
     }
 
     @Override
-    protected final void persistMessageId(DatasetContext context, String lastFetchedMessageId) {
-      getJobQueue(context).persistSubscriberState(getTopic(), lastFetchedMessageId);
+    protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
+      getJobQueue(datasetContext).persistSubscriberState(getTopicId().getTopic(), messageId);
     }
 
     @Override
-    protected final void processNotifications(
-      DatasetContext context, AbstractNotificationSubscriberService.NotificationIterator notifications) {
-      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(context);
-      JobQueueDataset jobQueue = getJobQueue(context);
+    protected void processMessages(DatasetContext datasetContext,
+                                   Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(datasetContext);
+      JobQueueDataset jobQueue = getJobQueue(datasetContext);
 
-      while (notifications.hasNext()) {
-        processNotification(scheduleStore, jobQueue, notifications.next());
+      while (messages.hasNext()) {
+        processNotification(scheduleStore, jobQueue, messages.next().getSecond());
       }
     }
 
@@ -149,11 +159,12 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   /**
    * Class responsible for time and stream size events.
    */
-  private final class SchedulerEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
+  private final class SchedulerEventSubscriberService extends AbstractSchedulerSubscriberService {
 
-    SchedulerEventSubscriberRunnable(String topic, int fetchSize) {
+    SchedulerEventSubscriberService() {
       // Time and stream size events are non-transactional
-      super("scheduler.event", topic, fetchSize, false);
+      super("scheduler.event", cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
+            cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), false);
     }
 
     @Override
@@ -190,9 +201,9 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   /**
    * Class responsible for dataset partition events.
    */
-  private final class DataEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
+  private final class DataEventSubscriberService extends AbstractSchedulerSubscriberService {
 
-    DataEventSubscriberRunnable() {
+    DataEventSubscriberService() {
       // Dataset partition events are published transactionally, hence fetch need to be transactional too.
       super("scheduler.data.event", cConf.get(Constants.Dataset.DATA_EVENT_TOPIC),
             cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), true);
@@ -215,9 +226,9 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   /**
    * Class responsible for program status events.
    */
-  private final class ProgramStatusEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
+  private final class ProgramStatusEventSubscriberService extends AbstractSchedulerSubscriberService {
 
-    ProgramStatusEventSubscriberRunnable() {
+    ProgramStatusEventSubscriberService() {
       // Fetch transactionally since publishing from AppMetadataStore is transactional.
       super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
             cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true);
