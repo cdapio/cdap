@@ -79,6 +79,7 @@ import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -276,6 +277,7 @@ public class TestBase {
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewHttpModule(),
+      new MockProvisionerModule(),
       new AbstractModule() {
         @Override
         @SuppressWarnings("deprecation")

@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.inject.Inject;
@@ -37,13 +35,13 @@ import javax.annotation.Nullable;
  */
 public class ProvisioningService {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningService.class);
-  private final ProvisionerExtensionLoader provisionerExtensionLoader;
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
+  private final ProvisionerProvider provisionerProvider;
 
   @Inject
-  ProvisioningService(CConfiguration cConf) {
-    provisionerExtensionLoader = new ProvisionerExtensionLoader(cConf.get(Constants.Provisioner.EXTENSIONS_DIR));
-    provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
+  ProvisioningService(ProvisionerProvider provisionerProvider) {
+    this.provisionerProvider = provisionerProvider;
+    this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
     reloadProvisioners();
   }
 
@@ -52,7 +50,7 @@ public class ProvisioningService {
    * will be removed.
    */
   public void reloadProvisioners() {
-    Map<String, Provisioner> provisioners = provisionerExtensionLoader.getAll();
+    Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
     LOG.debug("Provisioners = {}", provisioners);
     Map<String, ProvisionerSpecification> specs = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
