@@ -16,21 +16,13 @@
 
 package co.cask.cdap.messaging;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.common.io.ByteBufferInputStream;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
-import com.jcraft.jsch.Session;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 
 public class SSHAction {
 
@@ -87,47 +79,16 @@ public class SSHAction {
             + "-----END RSA PRIVATE KEY-----";
 
     public static void main(String[] arg) throws JSchException, IOException {
-        System.out.println("output:" + t("pwd\n"));
+//        System.out.println("output:" + runCommand("touch /tmp/TOUCHED.txt\n"));
     }
 
-    public static String t(String input) throws JSchException, IOException {
-        JSch jsch = new JSch();
-        jsch.addIdentity("name", Bytes.toBytes(privateKey), null, null);
 
-        String host = "35.200.155.105";
-        String user = "yourname";
-        Session session = jsch.getSession(user, host, 22);
-
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.connect();
-
-        Channel channel = session.openChannel("shell");
-        OutputStream ops = channel.getOutputStream();
-        PrintStream ps = new PrintStream(ops);
-        channel.connect();
-        ps.println("touch a.txt");
-        ps.println("touch b.txt");
-        ps.println("touch c.txt");
-        ps.println("ls");
-        ps.flush();
-        ps.close();
-        if (ps.checkError()) {
-            //
-        }
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        channel.setOutputStream(baos);
-        channel.connect();
-        String output = baos.toString("UTF-8");
-        baos.close();
-        return output;
-    }
 
 
 
     // does this work with types other than RSA/DSA?
     // TODO: do we need to support passphrase? probably not
-    public static void t(int keyPairType, String comment) throws JSchException, IOException {
+    public static void generateKeyPair(int keyPairType, String comment) throws JSchException, IOException {
         JSch jsch = new JSch();
         KeyPair kpair = KeyPair.genKeyPair(jsch, keyPairType);
 
@@ -149,7 +110,7 @@ public class SSHAction {
     }
 
     public static void main2(String[] arg) throws IOException, JSchException {
-        t(KeyPair.RSA, "commento");
+        generateKeyPair(KeyPair.RSA, "commento");
     }
 
 

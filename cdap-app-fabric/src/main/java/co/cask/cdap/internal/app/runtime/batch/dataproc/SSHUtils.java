@@ -16,20 +16,22 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
+import co.cask.cdap.api.common.Bytes;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Properties;
+import java.io.PrintStream;
 
 /**
  *
@@ -38,42 +40,60 @@ public class SSHUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(SSHUtils.class);
 
-  public static void scp(SSHConfig SSHConfig, String localFile, String remoteDir) throws JSchException, IOException {
+  public static String runCommand(SSHConfig sshConfig, String input) throws JSchException, IOException {
+    Session session = createSession(sshConfig);
+
+    Channel channel = session.openChannel("shell");
+    OutputStream ops = channel.getOutputStream();
+    PrintStream ps = new PrintStream(ops);
+    channel.connect();
+    ps.println(input);
+    ps.flush();
+    ps.close();
+    if (ps.checkError()) {
+      //
+    }
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    channel.setOutputStream(baos);
+    channel.connect();
+    String output = baos.toString("UTF-8");
+    baos.close();
+    session.disconnect();
+    return output;
+  }
+
+  public static void scp(SSHConfig sshConfig, String localFile, String remoteDir) throws JSchException, IOException {
     // https://medium.com/@ldclakmal/scp-with-java-b7b7dbcdbc85
-    com.jcraft.jsch.Session session =
-      createSession(SSHConfig.user, SSHConfig.host, SSHConfig.port, SSHConfig.privateKeyFile, SSHConfig.passphrase);
+    com.jcraft.jsch.Session session = createSession(sshConfig);
 
     LOG.info("Starting SCP from {} to {}", localFile, remoteDir);
     copyLocalToRemote(session, localFile, remoteDir);
     LOG.info("Finished SCP from {} to {}", localFile, remoteDir);
   }
 
-  private static com.jcraft.jsch.Session createSession(String user, String host, int port, String keyFilePath, String keyPassword) throws JSchException, UnsupportedEncodingException {
+  private static com.jcraft.jsch.Session createSession(SSHConfig sshConfig) throws JSchException {
     JSch jsch = new JSch();
 
-//    if (keyFilePath != null) {
+//    if (privateKey != null) {
 //      if (keyPassword != null) {
-//        jsch.addIdentity(keyFilePath, keyPassword);
+//        jsch.addIdentity(privateKey, keyPassword);
 //      } else {
-//        jsch.addIdentity(keyFilePath);
-//        jsch.addIdentity("");
+//        jsch.addIdentity(privateKey);
 //      }
 //    }
 
-    jsch.addIdentity("name", keyFilePath.getBytes("UTF-8"), null, null);
+//    jsch.addIdentity("name", keyFilePath.getBytes("UTF-8"), null, null);
 
 
-    Properties config = new Properties();
-    config.put("StrictHostKeyChecking", "no");
-
-    com.jcraft.jsch.Session session = jsch.getSession(user, host, port);
-    session.setConfig(config);
+    jsch.addIdentity("name", Bytes.toBytes(sshConfig.privateKey), null, null);
+    Session session = jsch.getSession(sshConfig.user, sshConfig.host, sshConfig.port);
+    session.setConfig("StrictHostKeyChecking", "no");
     session.connect();
-
     return session;
   }
 
-  private static void copyLocalToRemote(com.jcraft.jsch.Session session, String from, String to) throws JSchException, IOException {
+  private static void copyLocalToRemote(Session session, String from, String to) throws JSchException, IOException {
     boolean ptimestamp = true;
 
     // exec 'scp -t rfile' remotely
@@ -91,13 +111,13 @@ public class SSHUtils {
       throw new IllegalStateException("Ack failed.");
     }
 
-    File _lfile = new File(from);
+    File fromFile = new File(from);
 
     if (ptimestamp) {
-      command = "T" + (_lfile.lastModified() / 1000) + " 0";
+      command = "T" + (fromFile.lastModified() / 1000) + " 0";
       // The access time should be sent here,
       // but it is not accessible with JavaAPI ;-<
-      command += (" " + (_lfile.lastModified() / 1000) + " 0\n");
+      command += (" " + (fromFile.lastModified() / 1000) + " 0\n");
       out.write(command.getBytes());
       out.flush();
       if (checkAck(in) != 0) {
@@ -106,7 +126,7 @@ public class SSHUtils {
     }
 
     // send "C0644 filesize filename", where filename should not include '/'
-    long filesize = _lfile.length();
+    long filesize = fromFile.length();
     command = "C0644 " + filesize + " ";
     if (from.lastIndexOf('/') > 0) {
       command += from.substring(from.lastIndexOf('/') + 1);
@@ -127,7 +147,9 @@ public class SSHUtils {
     byte[] buf = new byte[1024];
     while (true) {
       int len = fis.read(buf, 0, buf.length);
-      if (len <= 0) break;
+      if (len <= 0) {
+        break;
+      }
       out.write(buf, 0, len); //out.flush();
     }
 
@@ -155,8 +177,12 @@ public class SSHUtils {
     //          1 for error,
     //          2 for fatal error,
     //         -1
-    if (b == 0) return b;
-    if (b == -1) return b;
+    if (b == 0) {
+      return b;
+    }
+    if (b == -1) {
+      return b;
+    }
 
     if (b == 1 || b == 2) {
       StringBuffer sb = new StringBuffer();

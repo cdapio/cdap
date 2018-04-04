@@ -16,21 +16,19 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
+import org.apache.twill.api.AbstractTwillRunnable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Configurations necessary for SSH.
+ *
  */
-public class SSHConfig {
-  String host;
-  int port;
+public class EchoServer extends AbstractTwillRunnable {
 
-  String user;
-  String privateKey;
-  String passphrase;
+  private static final Logger LOG = LoggerFactory.getLogger(EchoServer.class);
 
-  public SSHConfig(String host, String user, String privateKey) {
-    this.host = host;
-    this.user = user;
-    this.privateKey = privateKey;
-    this.port = 22;
+  @Override
+  public void run() {
+    LOG.info("Hello World. My first distributed application.");
   }
 }
