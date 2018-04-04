@@ -11,7 +11,7 @@
           "widget-attributes": {
             "default": "northamerica-northeast1",
             "size": "medium",
-            "options": [
+            "values": [
               {
                 "id": "northamerica-northeast1",
                 "value": "northamerica-northeast1"
@@ -46,7 +46,7 @@
           "widget-attributes": {
             "default": "northamerica-northeast1-a",
             "size": "medium",
-            "options": [
+            "values": [
               {
                 "id": "northamerica-northeast1-a",
                 "value": "northamerica-northeast1-a"
@@ -104,7 +104,7 @@
           "widget-attributes": {
             "default": 8,
             "size": "small",
-            "options": [
+            "values": [
               {
                 "id": 8,
                 "value": 8
@@ -130,7 +130,7 @@
           "widget-type": "memory-dropdown",
           "widget-attributes": {
             "default": 8,
-            "options": [
+            "values": [
               {
                 "id": 8,
                 "value": 8
@@ -181,7 +181,7 @@
           "widget-attributes": {
             "default": 8,
             "size": "small",
-            "options": [
+            "values": [
               {
                 "id": 8,
                 "value": 8
@@ -207,7 +207,7 @@
           "widget-type": "memory-dropdown",
           "widget-attributes": {
             "default": 8,
-            "options": [
+            "values": [
               {
                 "id": 8,
                 "value": 8
