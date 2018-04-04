@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.messaging;
+package co.cask.cdap.messaging.context;
 
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.transaction.MultiThreadTransactionAware;
+import co.cask.cdap.common.transaction.MultiThreadTransactionAware;
 import co.cask.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionAware;
 
@@ -28,9 +27,8 @@ import org.apache.tephra.TransactionAware;
  * The basic implementation of {@link MessagingContext} for supporting message publishing/fetching in both
  * non-transactional context and short transaction context (hence not for MR and Spark).
  *
- * Each program context should have an instance of this class, which is added as an extra {@link TransactionAware}
- * through the {@link DynamicDatasetCache#addExtraTransactionAware(TransactionAware)} method so that it can tap into
- * all transaction lifecycle events across all threads.
+ * Instance of this class can be added as an extra {@link TransactionAware} to the program context so
+ * that it can tap into all transaction lifecycle events across all threads.
  */
 public class MultiThreadMessagingContext extends MultiThreadTransactionAware<BasicMessagingContext>
                                          implements MessagingContext {

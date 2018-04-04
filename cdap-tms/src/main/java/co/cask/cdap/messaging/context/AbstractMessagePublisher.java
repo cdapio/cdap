@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.messaging;
+package co.cask.cdap.messaging.context;
 
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 import java.io.IOException;
@@ -56,12 +55,7 @@ public abstract class AbstractMessagePublisher implements MessagePublisher {
   @Override
   public final void publish(String namespace, String topic, final Charset charset,
                             Iterator<String> payloads) throws IOException, TopicNotFoundException {
-    publish(namespace, topic, Iterators.transform(payloads, new Function<String, byte[]>() {
-      @Override
-      public byte[] apply(String input) {
-        return ByteBuffers.getByteArray(charset.encode(input));
-      }
-    }));
+    publish(namespace, topic, Iterators.transform(payloads, input -> ByteBuffers.getByteArray(charset.encode(input))));
   }
 
   @Override
