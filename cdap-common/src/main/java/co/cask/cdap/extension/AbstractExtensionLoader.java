@@ -16,6 +16,7 @@
 
 package co.cask.cdap.extension;
 
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -271,7 +272,14 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
       }
     }), URL.class);
 
-    URLClassLoader classLoader = new URLClassLoader(urls, getClass().getClassLoader());
+    URLClassLoader classLoader = new URLClassLoader(urls, getExtensionParentClassLoader());
     return ServiceLoader.load(extensionClass, classLoader);
+  }
+
+  /**
+   * @return parent classloader for extensions
+   */
+  protected ClassLoader getExtensionParentClassLoader() {
+    return getClass().getClassLoader();
   }
 }
