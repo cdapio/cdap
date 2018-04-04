@@ -16,18 +16,18 @@
 
 package co.cask.cdap.internal.provision;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
+import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 
 /**
- * Guice module for provisioner classes.
+ * Provides provisioners for unit tests.
  */
-public class ProvisionerModule extends AbstractModule {
+public class MockProvisionerProvider implements ProvisionerProvider {
 
   @Override
-  protected void configure() {
-    bind(ProvisioningService.class).in(Scopes.SINGLETON);
-    bind(ProvisionerProvider.class).to(ProvisionerExtensionLoader.class);
+  public Map<String, Provisioner> loadProvisioners() {
+    return ImmutableMap.of("yarn", new MockProvisioner());
   }
-
 }

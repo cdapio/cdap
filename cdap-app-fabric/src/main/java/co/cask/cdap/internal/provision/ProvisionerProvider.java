@@ -16,18 +16,17 @@
 
 package co.cask.cdap.internal.provision;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
+import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+
+import java.util.Map;
 
 /**
- * Guice module for provisioner classes.
+ * Provides provisioners.
  */
-public class ProvisionerModule extends AbstractModule {
+public interface ProvisionerProvider {
 
-  @Override
-  protected void configure() {
-    bind(ProvisioningService.class).in(Scopes.SINGLETON);
-    bind(ProvisionerProvider.class).to(ProvisionerExtensionLoader.class);
-  }
-
+  /**
+   * @return map from provisioner name to provisioner
+   */
+  Map<String, Provisioner> loadProvisioners();
 }

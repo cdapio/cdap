@@ -20,14 +20,14 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 
 /**
- * Guice module for provisioner classes.
+ * Test module for provisioner classes.
  */
-public class ProvisionerModule extends AbstractModule {
+public class MockProvisionerModule extends AbstractModule {
 
   @Override
   protected void configure() {
     bind(ProvisioningService.class).in(Scopes.SINGLETON);
-    bind(ProvisionerProvider.class).to(ProvisionerExtensionLoader.class);
+    bind(ProvisionerProvider.class).to(MockProvisionerProvider.class);
   }
 
 }
