@@ -14,30 +14,25 @@
  * the License.
 */
 
-@import "../../styles/variables.scss";
+.namespace-details-compute-profiles {
+  .namespace-details-section-label {
+    margin-bottom: 0;
 
-.namespace-details-container {
-  height: inherit;
-  overflow: auto;
-
-  .namespace-details-content {
-    padding: 0 50px 10px;
-  }
-
-  .namespace-details-content {
-    hr {
-      height: 2px;
-      background-color: $grey-03;
-
-      &.more-margin-top {
-        margin-top: 20px;
-      }
+    .create-new-profile-label {
+      margin-left: 10px;
+      font-size: 13px;
+      text-decoration: none;
     }
 
-    .namespace-details-section-label {
-      margin-bottom: 10px;
-      font-size: 14px;
-      line-height: 14px;
+    .create-new-profile-description {
+      margin-top: 10px;
+    }
+  }
+
+  .profiles-list-view {
+    .grid.grid-container {
+      margin-top: -10px;
+      max-height: none;
     }
   }
 }

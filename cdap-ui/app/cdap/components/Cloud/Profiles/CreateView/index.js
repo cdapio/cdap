@@ -231,7 +231,7 @@ export default class ProfilesCreateView extends Component {
             disabled={!this.state.profileName.length || !this.state.profileDescription.length}
             label="Create Compute Profile"
           />
-          <Link to={`/ns/${getCurrentNamespace()}`}>
+          <Link to={`/ns/${getCurrentNamespace()}/details`}>
             Close
           </Link>
         </div>
