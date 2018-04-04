@@ -23,8 +23,13 @@ $header-bg-color: $grey-08;
 .runs-table-container {
   padding: 10px 75px;
 
+  .grid-wrapper {
+    height: 300px;
+    overflow: auto;
+  }
+
   .grid.grid-container {
-    max-height: 300px;
+    max-height: 100%;
     border-bottom: 1px solid $border-color;
 
     .grid-header,

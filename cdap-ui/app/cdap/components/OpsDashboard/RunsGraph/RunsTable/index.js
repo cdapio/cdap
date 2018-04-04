@@ -114,7 +114,7 @@ const renderBody = (data, onRowClick) => {
 
 function RunsTableView({data, onRowClick}) {
   return (
-    <div className="runs-table-container">
+    <div className="runs-table-container grid-wrapper">
       <div className="grid grid-container">
         {renderHeader()}
 

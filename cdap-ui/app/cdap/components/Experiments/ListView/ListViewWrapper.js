@@ -145,7 +145,7 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
             return (
               <Link
                 to={`/ns/${getCurrentNamespace()}/experiments/${experiment.name}`}
-                className="grid-row"
+                className="grid-row grid-link"
               >
                 <div>
                   <h5>
@@ -239,7 +239,9 @@ function ExperimentsListView({
           numberOfEntities={totalCount}
         />
       </div>
-      { renderGrid(list, sortMethod, sortColumn) }
+      <div className="grid-wrapper">
+        { renderGrid(list, sortMethod, sortColumn) }
+      </div>
     </div>
   );
 }

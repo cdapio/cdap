@@ -19,15 +19,16 @@
 $row-height: 50px;
 
 .profiles-list-view {
+  .grid-wrapper {
+    max-height: none;
+  }
   .grid.grid-container {
-    max-height: 550px;
+    max-height: none;
     .grid-row {
       grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20px;
 
       .sortable-header {
         cursor: pointer;
-        display: flex;
-        align-items: center;
 
         &.active {
           text-decoration: underline;
@@ -56,6 +57,7 @@ $row-height: 50px;
           padding: 0 5px 0 0;
           margin-right: 20px;
           margin-left: 5px;
+          border: 0;
         }
       }
     }
