@@ -38,16 +38,18 @@ $table-color: white;
 
   .list-container {
     background-color: $table-color;
-    padding-bottom: 40px;
+    padding: 10px 10px 40px;
 
-    .grid.grid-container {
+    .grid-wrapper {
       max-height: 500px;
-
+      overflow: auto;
+    }
+    .grid.grid-container {
+      max-height: 100%;
       .grid-header,
       .grid-body {
         .grid-row {
           grid-template-columns: 2fr 250px 250px 1fr 50px;
-          padding: 5px 25px;
         }
       }
 

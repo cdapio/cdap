@@ -109,7 +109,7 @@ export default class ProfilesListViewInPipeline extends Component {
           this.state.profiles.map(profile => {
             return (
               <div
-                className={classnames("grid-row", {
+                className={classnames("grid-row grid-link", {
                   "active": this.state.selectedProfile === profile.name
                 })}
                 onClick={this.onProfileSelect.bind(this, profile.name)}
@@ -147,7 +147,7 @@ export default class ProfilesListViewInPipeline extends Component {
       );
     }
     return (
-      <div>
+      <div className="profiles-listview grid-wrapper">
         <strong> Select the compute profile you want to use to run this pipeline</strong>
         <div className="profiles-count text-right">{this.state.profiles.length} Compute Profiles</div>
         <div className="grid grid-container">

@@ -125,7 +125,7 @@ class ReportsListView extends Component {
             Select a report to view
           </div>
 
-          <div className="list-container">
+          <div className="list-container grid-wrapper">
             <div className="grid grid-container">
               {this.renderHeader()}
               {this.renderBody()}

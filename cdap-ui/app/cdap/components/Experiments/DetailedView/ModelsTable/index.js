@@ -139,7 +139,7 @@ const renderMetrics = (newHeaders, model) => {
 
 const renderFeaturesTable = (features) => {
   return (
-    <div className="features-grid-wrapper">
+    <div className="grid-wrapper">
       <div className="grid grid-container">
         <div className="grid-header">
           <div className="grid-row">
@@ -156,7 +156,7 @@ const renderFeaturesTable = (features) => {
 
 const renderDirectivesTables = (directives) => {
   return (
-    <div className="features-grid-wrapper">
+    <div className="grid-wrapper">
       <div className="grid grid-container">
         <div className="grid-header">
           <div className="grid-row">
@@ -279,7 +279,7 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let Component = 'div';
   let props = {
-    className: classnames("grid-row", {
+    className: classnames("grid-row grid-link", {
       "opened": model.detailedView,
       "active": model.active,
       "highlight": model.id === newlyTrainingModelId
@@ -418,7 +418,9 @@ function ModelsTable({
           numberOfEntities={modelsTotalCount}
         />
       </div>
-      {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod)}
+      <div className="grid-wrapper">
+        {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod)}
+      </div>
     </div>
   );
 }

@@ -57,10 +57,13 @@
     }
   }
 
-  .grid.grid-container {
+  .grid-wrapper {
     // 50px (top panel) + 310 for chart + 51px for pagination
     max-height: calc(100% - 411px);
-
+    overflow: auto;
+  }
+  .grid.grid-container {
+    max-height: 100%;
     .grid-header {
       .grid-row {
         grid-template-rows: auto;
