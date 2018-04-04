@@ -92,7 +92,7 @@ export default class ProfilesListViewInPipeline extends Component {
   renderGridHeader = () => {
     return (
       <div className="grid-header">
-        <div className="grid-item">
+        <div className="grid-row">
           <div></div>
           <strong>Profile Name</strong>
           <strong>Provider</strong>
@@ -109,7 +109,7 @@ export default class ProfilesListViewInPipeline extends Component {
           this.state.profiles.map(profile => {
             return (
               <div
-                className={classnames("grid-item", {
+                className={classnames("grid-row", {
                   "active": this.state.selectedProfile === profile.name
                 })}
                 onClick={this.onProfileSelect.bind(this, profile.name)}
