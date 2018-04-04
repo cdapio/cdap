@@ -14,11 +14,19 @@
  * the License.
  */
 
+@import '../../styles/variables.scss';
+
 $header-height: 70px;
+$header-bg-color: white;
+$bg-color: $grey-08;
 
 .reports-container {
+  height: 100%;
+  background-color: $bg-color;
+
   .header {
     height: $header-height;
+    background-color: $header-bg-color;
 
     .reports-view-options {
       font-size: 18px;

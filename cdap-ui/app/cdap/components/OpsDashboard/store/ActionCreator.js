@@ -14,7 +14,7 @@
  * the License.
  */
 
-import MyOperationsApi from 'api/operations';
+import {MyOperationsApi} from 'api/operations';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import moment from 'moment';
 import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
