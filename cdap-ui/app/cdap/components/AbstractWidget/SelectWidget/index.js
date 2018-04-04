@@ -24,7 +24,7 @@ export default function SelectWidget({...props}) {
   return (
     <div className={`select-widget ${size}`}>
       <SelectWithOptions
-        options={props.widgetProps.options}
+        options={props.widgetProps.values}
         value={props.value}
         className="form-control"
         onChange={props.onChange}

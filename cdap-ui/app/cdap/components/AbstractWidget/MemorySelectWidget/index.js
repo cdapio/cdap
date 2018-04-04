@@ -23,7 +23,7 @@ export default function MemorySelectWidget({...props}) {
   return (
     <div className="memory-select-widget">
       <SelectWithOptions
-        options={props.widgetProps.options}
+        options={props.widgetProps.values}
         value={props.value}
         className="form-control"
         onChange={props.onChange}
