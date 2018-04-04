@@ -45,7 +45,7 @@ $table-color: white;
 
       .grid-header,
       .grid-body {
-        .grid-item {
+        .grid-row {
           grid-template-columns: 2fr 250px 250px 1fr 50px;
           padding: 5px 25px;
         }

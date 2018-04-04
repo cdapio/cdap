@@ -25,7 +25,7 @@ require('./RunsTable.scss');
 const renderHeader = () => {
   return (
     <div className="grid-header">
-      <div className="grid-item">
+      <div className="grid-row">
         <div>
           Time
         </div>
@@ -71,7 +71,7 @@ const renderBody = (data, onRowClick) => {
           return (
             <div
               key={row.time}
-              className="grid-item"
+              className="grid-row"
               onClick={onRowClick.bind(this, row)}
             >
               <div className="column-time">

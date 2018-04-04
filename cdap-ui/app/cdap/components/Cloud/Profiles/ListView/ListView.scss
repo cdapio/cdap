@@ -21,7 +21,7 @@ $row-height: 50px;
 .profiles-list-view {
   .grid.grid-container {
     max-height: 550px;
-    .grid-item {
+    .grid-row {
       grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20px;
 
       .sortable-header {
@@ -60,12 +60,12 @@ $row-height: 50px;
       }
     }
     .grid-header {
-      .grid-item {
+      .grid-row {
         padding-top: 0;
       }
     }
     .grid-body {
-      .grid-item {
+      .grid-row {
         height: $row-height;
 
         &:last-child {

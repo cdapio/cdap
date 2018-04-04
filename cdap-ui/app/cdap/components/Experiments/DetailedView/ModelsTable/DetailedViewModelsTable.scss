@@ -54,7 +54,7 @@
     }
     .grid-header,
     .grid-body {
-      .grid-item {
+      .grid-row {
         grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
         padding: 7px;
         &:hover {
@@ -65,7 +65,7 @@
       }
     }
     .grid-body {
-      .grid-item {
+      .grid-row {
         &.opened {
           grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
           background: $grey-08;
@@ -91,7 +91,7 @@
             .grid.grid-container {
               max-height: 300px;
               padding: 0 10px;
-              .grid-item {
+              .grid-row {
                 grid-template-columns: 1fr;
               }
             }
@@ -130,12 +130,12 @@
     &.classification {
       .grid-header,
       .grid-body {
-        .grid-item {
+        .grid-row {
           grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 20px;
         }
       }
       .grid-body {
-        .grid-item {
+        .grid-row {
           &.opened {
             grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
             cursor: auto;

@@ -20,17 +20,17 @@
 .profiles-list-view-on-pipeline {
 
   .grid.grid-container {
-    .grid-item {
+    .grid-row {
       grid-template-columns: 30px 1fr 1fr 1fr;
     }
     .grid-header {
-      .grid-item {
+      .grid-row {
         background: $grey-07;
         padding: 5px 0;
       }
     }
     .grid-body {
-      .grid-item {
+      .grid-row {
         padding: 3px 0;
         // FIXME: This should be moved to the common styles. We should use the same
         // pattern in all the tables.

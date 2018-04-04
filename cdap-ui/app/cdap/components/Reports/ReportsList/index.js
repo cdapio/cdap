@@ -75,7 +75,7 @@ class ReportsListView extends Component {
   renderHeader() {
     return (
       <div className="grid-header">
-        <div className="grid-item">
+        <div className="grid-row">
           <div>Report Name</div>
           <div>Created</div>
           <div>Expiration</div>
@@ -94,7 +94,7 @@ class ReportsListView extends Component {
             return (
               <div
                 key={report.id}
-                className="grid-item"
+                className="grid-row"
               >
                 <div className="report-name">{report.name}</div>
                 <div>

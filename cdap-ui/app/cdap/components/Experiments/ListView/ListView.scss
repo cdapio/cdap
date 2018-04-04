@@ -62,7 +62,7 @@
     max-height: calc(100% - 411px);
 
     .grid-header {
-      .grid-item {
+      .grid-row {
         grid-template-rows: auto;
       }
       .sortable-header {
@@ -78,7 +78,7 @@
       }
     }
 
-    .grid-item {
+    .grid-row {
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: 50px;
       > div {
@@ -88,7 +88,7 @@
         color: $cdap-lightgray;
       }
     }
-    a.grid-item {
+    a.grid-row {
       color: inherit;
     }
   }

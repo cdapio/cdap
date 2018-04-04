@@ -46,7 +46,7 @@ body {
     &.grid-container {
       max-height: $maxGridHeight;
       overflow-y: auto;
-      .grid-item {
+      .grid-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax($minGridWidth, $maxGridWidth));
 
@@ -65,7 +65,7 @@ body {
         position: sticky;
         top: 0;
         background: $headerBgColor;
-        > .grid-item {
+        > .grid-row {
           border-bottom: 1px solid $grey-04;
           padding: 10px 0;
           border-left: 0;
@@ -74,7 +74,7 @@ body {
         }
       }
       .grid-body {
-        .grid-item {
+        .grid-row {
           padding: 7px 0;
           cursor: pointer;
           align-content: center;
