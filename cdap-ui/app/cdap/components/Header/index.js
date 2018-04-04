@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import NavLinkWrapper from 'components/NavLinkWrapper';
+import ControlCenterDropdown from 'components/Header/ControlCenterDropdown';
 
 require('./Header.scss');
 
@@ -108,29 +109,6 @@ export default class Header extends Component {
     return false;
   };
 
-  isCDAPActive = (match, location = window.location) => {
-    if (match && match.isExact) {
-      return true;
-    }
-    let basePath = `/ns/${this.state.currentNamespace}`;
-    let dataprepBasePath = `${basePath}/dataprep`;
-    let connectionsBasePath = `${basePath}/connections`;
-    let rulesenginepath = `${basePath}/rulesengine`;
-    let analytics = `${basePath}/experiments`;
-    let namespaceDetails = `${basePath}/details`;
-    if (
-      location.pathname.startsWith(basePath) &&
-      !location.pathname.startsWith(dataprepBasePath) &&
-      !location.pathname.startsWith(connectionsBasePath) &&
-      !location.pathname.startsWith(rulesenginepath) &&
-      !location.pathname.startsWith(analytics) &&
-      !location.pathname.startsWith(namespaceDetails)
-    ) {
-      return true;
-    }
-    return false;
-  };
-
   isMMDSActive = (match, location = window.location) => {
     if (match && match.isExact) {
       return true;
@@ -179,13 +157,10 @@ export default class Header extends Component {
         </div>
         <ul className="navbar-list-section control-center">
           <li className="with-shadow">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
-              isActive={this.isCDAPActive}
-            >
-              {T.translate('features.Navbar.overviewLabel')}
-            </NavLinkWrapper>
+            <ControlCenterDropdown
+              nativeLink={this.props.nativeLink}
+              namespace={this.state.currentNamespace}
+            />
           </li>
           <li className="with-shadow">
             <NavLinkWrapper

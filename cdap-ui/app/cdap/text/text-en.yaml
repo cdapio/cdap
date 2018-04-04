@@ -1347,6 +1347,11 @@ features:
       label: Security
       principal: 'Principal: '
   Navbar:
+    ControlCenter:
+      dashboard: Dashboard
+      entities: Entities
+      label: Control Center
+      reports: Reports
     dataprepLabel: Data Preparation
     Dataprep: Preparation
     metadataLabel: Metadata
@@ -1362,7 +1367,6 @@ features:
       datasets: Datasets
       namespaceLabel: Namespace
       streams: Streams
-    overviewLabel: Control Center
     pipelinesLabel: Pipelines
     ProductDropdown:
       aboutLabel: About CDAP
