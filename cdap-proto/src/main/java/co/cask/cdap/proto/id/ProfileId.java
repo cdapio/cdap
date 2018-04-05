@@ -27,6 +27,7 @@ import java.util.Objects;
  * Uniquely identifies an artifact.
  */
 public class ProfileId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+  public static final ProfileId DEFAULT = NamespaceId.SYSTEM.profile("default");
   private final String profileName;
   private transient Integer hashCode;
 

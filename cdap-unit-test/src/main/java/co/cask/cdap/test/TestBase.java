@@ -79,6 +79,7 @@ import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -99,8 +100,10 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
@@ -360,6 +363,8 @@ public class TestBase {
       // the namespaceAdmin.delete(Id.Namespace.DEFAULT) in finish() only clears the default namespace
       // but does not remove it entirely
       namespaceAdmin.create(NamespaceMeta.DEFAULT);
+      ProfileStore profileStore = injector.getInstance(ProfileStore.class);
+      profileStore.add(ProfileId.DEFAULT, Profile.DEFAULT);
     }
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
