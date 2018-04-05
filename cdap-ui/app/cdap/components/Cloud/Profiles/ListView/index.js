@@ -155,7 +155,7 @@ export default class ProfilesListView extends Component {
     }
 
     return (
-      <div>
+      <div className="grid-wrapper">
         <div className="grid grid-container">
           {this.renderProfilesTableHeader()}
           {this.renderProfilesTableBody()}
@@ -181,7 +181,7 @@ export default class ProfilesListView extends Component {
   renderProfilesTableHeader() {
     return (
       <div className="grid-header">
-        <div className="grid-item sub-header">
+        <div className="grid-row sub-header">
           <div />
           <div />
           <div />
@@ -195,7 +195,7 @@ export default class ProfilesListView extends Component {
           <div/>
           <div/>
         </div>
-        <div className="grid-item">
+        <div className="grid-row">
           {
             PROFILES_TABLE_HEADERS.map((header, i) => {
               if (header.property) {
@@ -235,7 +235,7 @@ export default class ProfilesListView extends Component {
           profiles.map((profile, i) => {
             return (
               <div
-                className="grid-item"
+                className="grid-row grid-link"
                 key={i}
               >
                 <div></div>
@@ -244,6 +244,14 @@ export default class ProfilesListView extends Component {
                 </div>
                 <div>{profile.provisioner.name}</div>
                 <div>{profile.scope}</div>
+                <div />
+                <div />
+                <div />
+                <div />
+                <div />
+                <div />
+                <div />
+                <div />
               </div>
             );
           })

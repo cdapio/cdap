@@ -139,15 +139,15 @@ const renderMetrics = (newHeaders, model) => {
 
 const renderFeaturesTable = (features) => {
   return (
-    <div className="features-grid-wrapper">
+    <div className="grid-wrapper">
       <div className="grid grid-container">
         <div className="grid-header">
-          <div className="grid-item">
+          <div className="grid-row">
             <strong> Features </strong>
           </div>
         </div>
         <div className="grid-body">
-          {features.map(feature => (<div className="grid-item"> {feature}</div>))}
+          {features.map(feature => (<div className="grid-row"> {feature}</div>))}
         </div>
       </div>
     </div>
@@ -156,15 +156,15 @@ const renderFeaturesTable = (features) => {
 
 const renderDirectivesTables = (directives) => {
   return (
-    <div className="features-grid-wrapper">
+    <div className="grid-wrapper">
       <div className="grid grid-container">
         <div className="grid-header">
-          <div className="grid-item">
+          <div className="grid-row">
             <strong> Directives </strong>
           </div>
         </div>
         <div className="grid-body">
-          {directives.map(directive => (<div className="grid-item"> {directive}</div>))}
+          {directives.map(directive => (<div className="grid-row"> {directive}</div>))}
         </div>
       </div>
     </div>
@@ -192,7 +192,7 @@ const constructModelTrainingLogs = (model, experimentId) => {
 const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let props = {
-    className: classnames("grid-item", {
+    className: classnames("grid-row", {
       "opened": model.detailedView,
       "active": model.active,
       "highlight": model.id === newlyTrainingModelId,
@@ -279,7 +279,7 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let Component = 'div';
   let props = {
-    className: classnames("grid-item", {
+    className: classnames("grid-row grid-link", {
       "opened": model.detailedView,
       "active": model.active,
       "highlight": model.id === newlyTrainingModelId
@@ -349,7 +349,7 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, model
       "classification": NUMBER_TYPES.indexOf(outcomeType) === -1
     })}>
       <div className="grid-header">
-        <div className="grid-item">
+        <div className="grid-row">
           <strong></strong>
           {
             newHeaders.map(header => {
@@ -418,7 +418,9 @@ function ModelsTable({
           numberOfEntities={modelsTotalCount}
         />
       </div>
-      {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod)}
+      <div className="grid-wrapper">
+        {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod)}
+      </div>
     </div>
   );
 }

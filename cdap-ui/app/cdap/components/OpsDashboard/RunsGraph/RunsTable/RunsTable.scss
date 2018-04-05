@@ -23,13 +23,18 @@ $header-bg-color: $grey-08;
 .runs-table-container {
   padding: 10px 75px;
 
+  .grid-wrapper {
+    height: 300px;
+    overflow: auto;
+  }
+
   .grid.grid-container {
-    max-height: 300px;
+    max-height: 100%;
     border-bottom: 1px solid $border-color;
 
     .grid-header,
     .grid-body {
-      .grid-item {
+      .grid-row {
         grid-template-columns: 75px 150px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
         padding: 0;
 
@@ -44,11 +49,11 @@ $header-bg-color: $grey-08;
       background-color: $header-bg-color;
       border-bottom: 2px solid $border-color;
 
-      .grid-item { align-items: end; }
+      .grid-row { align-items: end; }
     }
 
     .grid-body {
-      .grid-item {
+      .grid-row {
         > div:not(.column-date):not(.column-delay) {
           color: $column-color;
         }

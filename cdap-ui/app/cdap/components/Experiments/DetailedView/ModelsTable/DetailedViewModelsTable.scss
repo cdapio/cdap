@@ -36,9 +36,12 @@
     }
   }
 
+  .grid-wrapper {
+    height: calc(100% - 32px);
+    overflow: auto;
+  }
   .grid.grid-container {
-    max-height: calc(100% - 32px);
-    height: 100%;
+    max-height: 100%;
     .grid-header {
       .sortable-header {
         cursor: pointer;
@@ -54,9 +57,8 @@
     }
     .grid-header,
     .grid-body {
-      .grid-item {
+      .grid-row {
         grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
-        padding: 7px;
         &:hover {
           [class*="icon-"] {
             color: $blue-03;
@@ -65,7 +67,7 @@
       }
     }
     .grid-body {
-      .grid-item {
+      .grid-row {
         &.opened {
           grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
           background: $grey-08;
@@ -91,7 +93,7 @@
             .grid.grid-container {
               max-height: 300px;
               padding: 0 10px;
-              .grid-item {
+              .grid-row {
                 grid-template-columns: 1fr;
               }
             }
@@ -130,12 +132,12 @@
     &.classification {
       .grid-header,
       .grid-body {
-        .grid-item {
+        .grid-row {
           grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 20px;
         }
       }
       .grid-body {
-        .grid-item {
+        .grid-row {
           &.opened {
             grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
             cursor: auto;

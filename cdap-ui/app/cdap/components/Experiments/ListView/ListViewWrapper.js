@@ -115,7 +115,7 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
   return (
     <div className="grid grid-container">
       <div className="grid-header">
-        <div className="grid-item">
+        <div className="grid-row">
           {
             tableHeaders.map((header, i) => {
               if (sortColumn === header.property) {
@@ -145,7 +145,7 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
             return (
               <Link
                 to={`/ns/${getCurrentNamespace()}/experiments/${experiment.name}`}
-                className="grid-item"
+                className="grid-row grid-link"
               >
                 <div>
                   <h5>
@@ -239,7 +239,9 @@ function ExperimentsListView({
           numberOfEntities={totalCount}
         />
       </div>
-      { renderGrid(list, sortMethod, sortColumn) }
+      <div className="grid-wrapper">
+        { renderGrid(list, sortMethod, sortColumn) }
+      </div>
     </div>
   );
 }

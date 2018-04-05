@@ -284,11 +284,54 @@ footer {
 @headerBgColor: white;
 @borderColor: @grey-04;
 
+/* This is the fallback for browsers that doesn't support css grid */
+
+.grid.grid-container {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+
+  .grid-row {
+    width: 100%;
+    display: table-row;
+    > strong,
+    > div {
+      display: table-cell;
+    }
+  }
+  .grid-header {
+    display: table-header-group;
+    .grid-row {
+      > * {
+        display: table-cell;
+        padding: 10px;
+      }
+    }
+  }
+  .grid-body {
+    display: table-row-group;
+    .grid-row {
+      &:hover {
+        background: @grey-08;
+      }
+      &:last-of-type,
+      &:first-of-type {
+        > div {
+          border: 0;
+        }
+      }
+    }
+  }
+}
+
+/* End of css grid fallback */
+
 .grid {
   &.grid-container {
     max-height: @maxGridHeight;
     overflow-y: auto;
-    .grid-item {
+    display: grid;
+    .grid-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(@minGridWidth, @maxGridWidth));
 
@@ -305,23 +348,27 @@ footer {
     }
     .grid-header {
       position: sticky;
+      display: grid;
       top: 0;
       background: @headerBgColor;
-      > .grid-item {
+      > .grid-row {
         border-bottom: 1px solid @grey-04;
-        padding: 10px 0;
+        padding: 0;
         border-left: 0;
         border-right: 0;
         border-top: 0;
       }
     }
     .grid-body {
-      .grid-item {
-        padding: 7px 0;
-        cursor: pointer;
+      display: grid;
+      .grid-row {
+        padding: 7px 5px;
         align-content: center;
         align-items: center;
         border-bottom: 1px solid @grey-04;
+        &.grid-link {
+          cursor: pointer;
+        }
         &:hover {
           background: @grey-08;
         }

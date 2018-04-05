@@ -17,20 +17,30 @@
 @import "../../../../styles/mixins.scss";
 @import "../../../../styles/variables.scss";
 
+.compute-tab-content {
+  height: 100%;
+}
 .profiles-list-view-on-pipeline {
-
+  height: calc(100% - 40px); // 40px for the buttons at the bottom
+  > div {
+    height: 100%;
+  }
+  .grid-wrapper {
+    height: 100%;
+    overflow: auto;
+  }
   .grid.grid-container {
-    .grid-item {
+    max-height: 100%;
+    .grid-row {
       grid-template-columns: 30px 1fr 1fr 1fr;
     }
     .grid-header {
-      .grid-item {
+      .grid-row {
         background: $grey-07;
-        padding: 5px 0;
       }
     }
     .grid-body {
-      .grid-item {
+      .grid-row {
         padding: 3px 0;
         // FIXME: This should be moved to the common styles. We should use the same
         // pattern in all the tables.
