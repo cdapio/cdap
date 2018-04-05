@@ -83,12 +83,12 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
   @Inject
   @VisibleForTesting
-  public DistributedSparkProgramRunner(SparkCompat sparkComat, TwillRunner twillRunner,
+  public DistributedSparkProgramRunner(SparkCompat sparkCompat, TwillRunner twillRunner,
                                        YarnConfiguration hConf, CConfiguration cConf,
                                        TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                        Impersonator impersonator, LocationFactory locationFactory) {
     super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
-    this.sparkCompat = sparkComat;
+    this.sparkCompat = sparkCompat;
     this.locationFactory = locationFactory;
   }
 

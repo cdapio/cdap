@@ -211,16 +211,13 @@ public class DPLauncher {
 
 
 
-      // TODO:
-      // RunIdCodec
-      RunId runId = RunIds.generate();
       ZKClient zkClient = getZKClient(twillRuntimeSpec.getTwillAppName());
-      Iterable<LogHandler> logHandlers = new ArrayList<>();
-      // timeout, timeoutUnits
+      Iterable<LogHandler> logHandlers = new ArrayList<>(); // TODO
+      // timeout, timeoutUnits // TODO
 
-      // get name from runtime spec or twill spec?
       YarnTwillController controller =
-        new YarnTwillController(twillRuntimeSpec.getTwillAppName(), runId, zkClient, logCollectionEnabled,
+        new YarnTwillController(twillRuntimeSpec.getTwillAppName(), twillRuntimeSpec.getTwillAppRunId(), zkClient,
+                                logCollectionEnabled,
                                 logHandlers, submitTask, Constants.APPLICATION_MAX_START_SECONDS, TimeUnit.SECONDS);
       controller.start();
       return controller;
@@ -235,16 +232,21 @@ public class DPLauncher {
     //   cConf.get(co.cask.cdap.common.conf.Constants.Zookeeper.QUORUM)
     //   + cConf.get(co.cask.cdap.common.conf.Constants.CFG_TWILL_ZK_NAMESPACE);
 
-    String zkConnectStr = "localhost:2181/cdap" + "/twill";
+    String zkConnectStr = "localhost:2181/cdap";
     ZKClientService zkClientService = getZKClientService(zkConnectStr);
     zkClientService.startAndWait();
+
+    // creating the /cdap node first. Attempting to directly create the /cdap/twill node fails.
 
     // Create the root node, so that the namespace root would get created if it is missing
     // If the exception is caused by node exists, then it's ok. Otherwise propagate the exception.
     ZKOperations.ignoreError(zkClientService.create("/", null, CreateMode.PERSISTENT),
                              KeeperException.NodeExistsException.class, null).get();
 
-    return ZKClients.namespace(zkClientService, "/" + appName);
+    ZKOperations.ignoreError(zkClientService.create("/twill", null, CreateMode.PERSISTENT),
+                             KeeperException.NodeExistsException.class, null).get();
+
+    return ZKClients.namespace(zkClientService, "/twill/" + appName);
   }
 
   private static final int ZK_TIMEOUT = 10000;

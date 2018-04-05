@@ -22,6 +22,7 @@ import com.jcraft.jsch.JSchException;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
 
 import java.io.IOException;
@@ -103,10 +104,13 @@ public class DPTwillMain {
     "      $HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*," +
     "      $HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*'";
 
-  public static void main(String[] args) throws IOException, JSchException {
+  public static TwillRunner getConfiguredTwillRunner() {
     SSHConfig sshConfig = new SSHConfig("35.200.155.105", "yourname", getPrivateKey());
+    return new DataProcTwillRunner(sshConfig);
+  }
 
-    DataProcTwillRunner twillRunner = new DataProcTwillRunner(sshConfig);
+  public static void main(String[] args) {
+    TwillRunner twillRunner = getConfiguredTwillRunner();
 
     TwillPreparer twillPreparer = twillRunner.prepare(new EchoServer());
     twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out, true)));

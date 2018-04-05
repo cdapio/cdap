@@ -35,6 +35,8 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.security.SecureStoreRenewer;
 import org.apache.twill.api.security.SecureStoreWriter;
 import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -44,6 +46,7 @@ import java.util.concurrent.TimeUnit;
  * A {@link TwillRunnerService} wrapper that provides impersonation support.
  */
 final class ImpersonatedTwillRunnerService implements TwillRunnerService {
+  private static final Logger LOG = LoggerFactory.getLogger(ImpersonatedTwillRunnerService.class);
 
   private final TwillRunnerService delegate;
   private final Impersonator impersonator;
@@ -77,6 +80,8 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
   @Override
   public TwillPreparer prepare(TwillApplication application) {
+    LOG.info("twill name: {}", application.configure().getName());
+    // I can have a hook here
     if (application instanceof AbstractProgramTwillApplication) {
       ProgramId programId = ((AbstractProgramTwillApplication) application).getProgramId();
       return new ImpersonatedTwillPreparer(delegate.prepare(application), impersonator, programId);

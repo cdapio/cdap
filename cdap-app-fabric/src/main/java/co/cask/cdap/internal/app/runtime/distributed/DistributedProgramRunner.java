@@ -45,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.batch.dataproc.DPTwillMain;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -244,7 +245,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  launchConfig.getLaunchOrder(),
                                                                                  localizeResources,
                                                                                  createEventHandler(cConf, options));
-          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+//          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+          TwillPreparer twillPreparer = DPTwillMain.getConfiguredTwillRunner().prepare(twillApplication);
 
           // Add the configuration to container classpath
           twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());
@@ -375,9 +377,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           } finally {
             ClassLoaders.setContextClassLoader(oldClassLoader);
           }
-          return createProgramController(addCleanupListener(twillController, program, tempDir),
-                                         new ProgramDescriptor(program.getId(), program.getApplicationSpecification()),
-                                         ProgramRunners.getRunId(options));
+
+          return null;
+//          return createProgramController(addCleanupListener(twillController, program, tempDir),
+//                                         new ProgramDescriptor(program.getId(), program.getApplicationSpecification())
+//                                         ProgramRunners.getRunId(options));
         }
       };
 
