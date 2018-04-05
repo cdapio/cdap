@@ -45,6 +45,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,8 @@ public class AppMetadataStoreTest {
   private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     metadataStoreDataset.recordProgramProvisioning(programRunId,
-                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null, null,
+                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null,
+                                                   new HashMap<>(),
                                                    AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                    artifactId);
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
@@ -280,7 +282,7 @@ public class AppMetadataStoreTest {
     txnl.execute(() -> {
       metadataStoreDataset.recordProgramProvisioning(programRunId,
                                                      RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
-                                                     null, null,
+                                                     null, new HashMap<>(),
                                                      AppFabricTestHelper.createSourceId(startSourceId), artifactId);
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                     AppFabricTestHelper.createSourceId(startSourceId + 1));

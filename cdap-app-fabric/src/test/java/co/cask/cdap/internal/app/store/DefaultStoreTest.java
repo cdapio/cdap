@@ -415,6 +415,7 @@ public class DefaultStoreTest {
       .setStatus(ProgramRunStatus.COMPLETED)
       .setProperties(noRuntimeArgsProps)
       .setCluster(emptyCluster)
+      .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
 
     // record not finished flow
@@ -427,6 +428,7 @@ public class DefaultStoreTest {
       .setStatus(ProgramRunStatus.RUNNING)
       .setProperties(noRuntimeArgsProps)
       .setCluster(emptyCluster)
+      .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
 
     // Get run record for run5
@@ -451,6 +453,7 @@ public class DefaultStoreTest {
       .setStatus(ProgramRunStatus.FAILED)
       .setProperties(noRuntimeArgsProps)
       .setCluster(emptyCluster)
+      .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
     RunRecordMeta actualRecord7 = store.getRun(programId.run(run7.getId()));
     Assert.assertEquals(expectedRunRecord7, actualRecord7);
@@ -465,6 +468,7 @@ public class DefaultStoreTest {
       .setStatus(ProgramRunStatus.SUSPENDED)
       .setProperties(noRuntimeArgsProps)
       .setCluster(emptyCluster)
+      .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
     RunRecordMeta actualRecord8 = store.getRun(programId.run(run8.getId()));
     Assert.assertEquals(expectedRunRecord8, actualRecord8);
@@ -484,6 +488,7 @@ public class DefaultStoreTest {
       .setStatus(ProgramRunStatus.KILLED)
       .setProperties(noRuntimeArgsProps)
       .setCluster(emptyCluster)
+      .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
     RunRecordMeta actualRecord9 = store.getRun(programId.run(run9.getId()));
     Assert.assertEquals(expectedRunRecord9, actualRecord9);
@@ -789,11 +794,11 @@ public class DefaultStoreTest {
 
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     setStartAndRunning(flowProgramId.run(flowRunId), nowSecs,
-                       ImmutableMap.of("model", "click"), null, artifactId);
+                       ImmutableMap.of("model", "click"), new HashMap<>(), artifactId);
     setStartAndRunning(mapreduceProgramId.run(mapreduceRunId), nowSecs,
-                       ImmutableMap.of("path", "/data"), null, artifactId);
+                       ImmutableMap.of("path", "/data"), new HashMap<>(), artifactId);
     setStartAndRunning(workflowProgramId.run(workflowRunId), nowSecs,
-                       ImmutableMap.of("whitelist", "cask"), null, artifactId);
+                       ImmutableMap.of("whitelist", "cask"), new HashMap<>(), artifactId);
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());
