@@ -17,6 +17,8 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.proto.id.NamespaceId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -30,6 +32,8 @@ public final class NamespaceMeta {
 
   public static final NamespaceMeta SYSTEM =
     new NamespaceMeta.Builder().setName(NamespaceId.SYSTEM).setDescription("System Namespace").build();
+
+  private static final Logger LOG = LoggerFactory.getLogger(NamespaceMeta.class);
 
   private final String name;
   private final String description;
@@ -65,7 +69,8 @@ public final class NamespaceMeta {
     private String hiveDatabase;
     private String principal;
     private String groupName;
-    private String keytabURI;
+    private String keytabURIWithoutVersion;
+    private int keytabURIVersion;
     private boolean exploreAsPrincipal = true;
 
     public Builder() {
@@ -83,7 +88,8 @@ public final class NamespaceMeta {
         this.hiveDatabase = config.getHiveDatabase();
         this.principal = config.getPrincipal();
         this.groupName = config.getGroupName();
-        this.keytabURI = config.getKeytabURI();
+        this.keytabURIWithoutVersion = config.getKeytabURIWithoutVersion();
+        this.keytabURIVersion = config.getKeytabURIVersion();
         this.exploreAsPrincipal = config.isExploreAsPrincipal();
       }
     }
@@ -134,8 +140,23 @@ public final class NamespaceMeta {
     }
 
     public Builder setKeytabURI(String keytabURI) {
-      this.keytabURI = keytabURI;
+      this.keytabURIWithoutVersion = keytabURI;
+      this.keytabURIVersion = 0;
       return this;
+    }
+
+    public Builder setKeytabURIWithoutVersion(String keytabURIWithoutVersion) {
+      this.keytabURIWithoutVersion = keytabURIWithoutVersion;
+      return this;
+    }
+
+    public Builder incrementKeytabURIVersion() {
+      keytabURIVersion++;
+      return this;
+    }
+
+    public void setKeytabURIVersion(int keytabURIVersion) {
+      this.keytabURIVersion = keytabURIVersion;
     }
 
     public Builder setExploreAsPrincipal(boolean exploreAsPrincipal) {
@@ -157,9 +178,31 @@ public final class NamespaceMeta {
         schedulerQueueName = "";
       }
 
+      // combine the keytab URI with the version if the version is not 0
+      String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
       return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                                       hbaseNamespace, hiveDatabase,
-                                                                      principal, groupName, keytabURI,
+                                                                      principal, groupName, uri,
+                                                                      exploreAsPrincipal));
+    }
+
+    public NamespaceMeta buildWithoutKeytabURIVersion() {
+      if (name == null) {
+        throw new IllegalArgumentException("Namespace id cannot be null.");
+      }
+      if (description == null) {
+        description = "";
+      }
+
+      // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
+      // compatibility
+      if (schedulerQueueName == null) {
+        schedulerQueueName = "";
+      }
+
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
+                                                                      hbaseNamespace, hiveDatabase,
+                                                                      principal, groupName, keytabURIWithoutVersion,
                                                                       exploreAsPrincipal));
     }
   }

@@ -105,6 +105,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(initialSize + 1, namespaces.size());
     Assert.assertEquals(NAME, namespaces.get(0).get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespaces.get(0).get(DESCRIPTION_FIELD).getAsString());
+    // verify that keytab URI cannot be updated since the namespace was created with no principal
+    NamespaceMeta meta =
+      new NamespaceMeta.Builder().setName(NAME).setKeytabURI("new.keytab").build();
+    response = setProperties(NAME, meta);
+    assertResponseCode(400, response);
     // cleanup
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
@@ -391,8 +396,12 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testProperties() throws Exception {
-    // create with no metadata
-    HttpResponse response = createNamespace(NAME);
+    // create a namespace with principal
+    String nsPrincipal = "nsCreator/somehost.net@somekdc.net";
+    String nsKeytabURI = "some/path";
+    NamespaceMeta impNsMeta =
+      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal).setKeytabURI(nsKeytabURI).build();
+    HttpResponse response = createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
     assertResponseCode(200, response);
     // verify
     response = getNamespace(NAME);
@@ -403,7 +412,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     // Update scheduler queue name.
     String nonexistentName = NAME + "nonexistent";
-    NamespaceMeta meta = new NamespaceMeta.Builder().setName(nonexistentName).setSchedulerQueueName("prod").build();
+    NamespaceMeta meta =
+      new NamespaceMeta.Builder(impNsMeta).setName(nonexistentName).setSchedulerQueueName("prod").build();
     setProperties(NAME, meta);
     // assert that the name in the metadata is ignored (the name from the url should be used, instead
     HttpResponse nonexistentGet = getNamespace(nonexistentName);
@@ -420,7 +430,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
     // Update description
-    meta = new NamespaceMeta.Builder().setName(NAME).setDescription("new fancy description").build();
+    meta = new NamespaceMeta.Builder(impNsMeta).setName(NAME).setDescription("new fancy description").build();
     setProperties(NAME, meta);
     response = getNamespace(NAME);
     namespace = readGetResponse(response);
@@ -434,6 +444,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(), NamespaceConfig.class);
     Assert.assertEquals("prod", config.getSchedulerQueueName());
 
+    // verify updating keytab URI with version initialized
+    setProperties(NAME, new NamespaceMeta.Builder(impNsMeta).setKeytabURI("new/url").build());
+    response = getNamespace(NAME);
+    namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+    config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(), NamespaceConfig.class);
+    // verify that the uri has changed
+    Assert.assertEquals("new/url", config.getKeytabURI());
     // cleanup
     response = deleteNamespace(NAME);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());

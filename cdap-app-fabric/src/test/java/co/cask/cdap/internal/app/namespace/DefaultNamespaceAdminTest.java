@@ -251,7 +251,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       // expected
     }
 
-    // updating the keytabURI for an existing namespace should fail
+    // updating the keytabURI for an existing namespace with no existing principal should fail
     try {
       namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setKeytabURI("/new/keytab/uri").build());
@@ -278,6 +278,30 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     //clean up
     namespaceAdmin.delete(namespaceId);
     Locations.deleteQuietly(customlocation);
+  }
+
+  @Test
+  public void testUpdateExistingKeytab() throws Exception {
+    String namespace = "updateNamespace";
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
+      .setPrincipal("alice").setKeytabURI("/alice/keytab").build();
+    namespaceAdmin.create(nsMeta);
+    Assert.assertTrue(namespaceAdmin.exists(namespaceId));
+    // update the keytab URI
+    String newKeytab = "/alice/new_keytab";
+    NamespaceMeta newKeytabMeta = new NamespaceMeta.Builder(nsMeta).setKeytabURI(newKeytab).build();
+    namespaceAdmin.updateProperties(nsMeta.getNamespaceId(), newKeytabMeta);
+    // assert the keytab URI is updated and the version remains 0
+    Assert.assertEquals(newKeytab, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIWithoutVersion());
+    Assert.assertEquals(0, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIVersion());
+    // update the namespace with the same keytab URI
+    namespaceAdmin.updateProperties(nsMeta.getNamespaceId(), newKeytabMeta);
+    // assert the keytab URI without version remains the same and the version is incremented to 1
+    Assert.assertEquals(newKeytab, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIWithoutVersion());
+    Assert.assertEquals(1, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIVersion());
+    //clean up
+    namespaceAdmin.delete(namespaceId);
   }
 
   @Test

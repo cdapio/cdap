@@ -108,6 +108,34 @@ public class NamespaceConfig {
     return keytabURI;
   }
 
+  /**
+   * @return the keytab URI without the fragment containing version.
+   */
+  @Nullable
+  public String getKeytabURIWithoutVersion() {
+    // try to get the keytab URI version if the keytab URI is not null
+    if (keytabURI != null) {
+      // find the position of the fragment containing the version in the keytab URI
+      int versionIdx = keytabURI.lastIndexOf("#");
+      return versionIdx < 0 ? keytabURI : keytabURI.substring(0, versionIdx);
+    }
+    return keytabURI;
+  }
+
+  /**
+   * @return the version of the keytab URI or 0 if no version is present in the keytab URI.
+   */
+  public int getKeytabURIVersion() {
+    // try to get the keytab URI version if the keytab URI is not null
+    if (keytabURI != null) {
+      // find the position where the fragment containing the version in the keytab URI
+      int versionIdx = keytabURI.lastIndexOf("#");
+      // if the version doesn't exist in the keytab URI, initialize it to 0
+      return versionIdx < 0 ? 0 : Integer.parseInt(keytabURI.substring(versionIdx + 1));
+    }
+    return 0;
+  }
+
   public Boolean isExploreAsPrincipal() {
     return exploreAsPrincipal == null || exploreAsPrincipal;
   }
@@ -137,10 +165,6 @@ public class NamespaceConfig {
 
     if (!Objects.equals(this.groupName, other.groupName)) {
       difference.add("groupName");
-    }
-
-    if (!Objects.equals(this.keytabURI, other.keytabURI)) {
-      difference.add("keytabURI");
     }
     return difference;
   }
