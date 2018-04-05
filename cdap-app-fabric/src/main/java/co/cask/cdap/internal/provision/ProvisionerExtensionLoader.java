@@ -16,13 +16,14 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.extension.AbstractExtensionLoader;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+import com.google.inject.Inject;
 
-import java.io.File;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,8 +33,9 @@ import java.util.Set;
 public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, Provisioner>
   implements ProvisionerProvider {
 
-  public ProvisionerExtensionLoader(String extDirs) {
-    super(extDirs);
+  @Inject
+  ProvisionerExtensionLoader(CConfiguration cConf) {
+    super(cConf.get(Constants.Provisioner.EXTENSIONS_DIR));
   }
 
   @Override
