@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,13 +66,13 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   private final MetadataStore metadataStore;
   private final CConfiguration cConf;
-  private final EntityExistenceVerifier entityExistenceVerifier;
+  private final EntityExistenceVerifier<EntityId> entityExistenceVerifier;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   DefaultMetadataAdmin(MetadataStore metadataStore, CConfiguration cConf,
-                       EntityExistenceVerifier entityExistenceVerifier,
+                       EntityExistenceVerifier<EntityId> entityExistenceVerifier,
                        AuthorizationEnforcer authorizationEnforcer,
                        AuthenticationContext authenticationContext) {
     this.metadataStore = metadataStore;

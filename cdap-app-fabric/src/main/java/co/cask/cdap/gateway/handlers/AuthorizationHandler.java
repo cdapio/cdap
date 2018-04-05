@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.logging.AuditLogEntry;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -36,7 +35,6 @@ import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpResponder;
@@ -83,8 +81,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   AuthorizationHandler(PrivilegesManager privilegesManager, AuthorizerInstantiator authorizerInstantiator,
-                       CConfiguration cConf, AuthorizationEnforcer authorizationEnforcer,
-                       AuthenticationContext authenticationContext, EntityExistenceVerifier entityExistenceVerifier) {
+                       CConfiguration cConf, AuthenticationContext authenticationContext) {
     this.privilegesManager = privilegesManager;
     this.authorizer = authorizerInstantiator.get();
     this.authenticationContext = authenticationContext;

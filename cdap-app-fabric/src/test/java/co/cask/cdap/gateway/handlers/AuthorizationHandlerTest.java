@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.http.AuthenticationChannelHandler;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.proto.element.EntityType;
@@ -76,9 +75,6 @@ public class AuthorizationHandlerTest {
   private final Properties properties = new Properties();
   private final EntityId ns1 = new NamespaceId("ns1");
   private final EntityId ns2 = new NamespaceId("ns2");
-  private final EntityExistenceVerifier entityExistenceVerifier = new InMemoryEntityExistenceVerifier(
-    ImmutableSet.of(ns1, ns2)
-  );
 
   private NettyHttpService service;
   private AuthorizationClient client;
@@ -97,7 +93,7 @@ public class AuthorizationHandlerTest {
         public Authorizer get() {
           return auth;
         }
-      }, conf, auth, new MasterAuthenticationContext(), entityExistenceVerifier))
+      }, conf, new MasterAuthenticationContext()))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
@@ -151,7 +147,7 @@ public class AuthorizationHandlerTest {
         public Authorizer get() {
           return authorizer;
         }
-      }, cConf, authorizer, new MasterAuthenticationContext(), entityExistenceVerifier))
+      }, cConf, new MasterAuthenticationContext()))
       .build();
     service.start();
     try {

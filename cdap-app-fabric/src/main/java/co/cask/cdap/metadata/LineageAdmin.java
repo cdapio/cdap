@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -66,49 +67,29 @@ import javax.annotation.Nullable;
 public class LineageAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(LineageAdmin.class);
 
-  private static final Function<Relation, ProgramId> RELATION_TO_PROGRAM_FUNCTION =
-    new Function<Relation, ProgramId>() {
-      @Override
-      public ProgramId apply(Relation input) {
-        return input.getProgram();
-      }
-    };
+  private static final Function<Relation, ProgramId> RELATION_TO_PROGRAM_FUNCTION = Relation::getProgram;
 
-  private static final Function<Relation, NamespacedEntityId> RELATION_TO_DATA_FUNCTION =
-    new Function<Relation, NamespacedEntityId>() {
-      @Override
-      public NamespacedEntityId apply(Relation input) {
-        return input.getData();
-      }
-    };
+  private static final Function<Relation, NamespacedEntityId> RELATION_TO_DATA_FUNCTION = Relation::getData;
 
-  private static final Predicate<Relation> UNKNOWN_TYPE_FILTER = new Predicate<Relation>() {
-    @Override
-    public boolean apply(Relation relation) {
-      return relation.getAccess() != AccessType.UNKNOWN;
-    }
-  };
+  private static final Predicate<Relation> UNKNOWN_TYPE_FILTER = relation -> relation.getAccess() != AccessType.UNKNOWN;
 
   private static final Function<Collection<Relation>, Collection<Relation>> COLLAPSE_UNKNOWN_TYPE_FUNCTION =
-    new Function<Collection<Relation>, Collection<Relation>>() {
-      @Override
-      public Collection<Relation> apply(Collection<Relation> relations) {
-        if (relations.size() <= 1) {
-          return relations;
-        }
-        // If the size is > 1, then we can safely filter out the UNKNOWN
-        return Collections2.filter(relations, UNKNOWN_TYPE_FILTER);
+    relations -> {
+      if (relations.size() <= 1) {
+        return relations;
       }
+      // If the size is > 1, then we can safely filter out the UNKNOWN
+      return Collections2.filter(relations, UNKNOWN_TYPE_FILTER);
     };
 
   private final LineageStoreReader lineageStoreReader;
   private final Store store;
   private final MetadataStore metadataStore;
-  private final EntityExistenceVerifier entityExistenceVerifier;
+  private final EntityExistenceVerifier<EntityId> entityExistenceVerifier;
 
   @Inject
   LineageAdmin(LineageStoreReader lineageStoreReader, Store store, MetadataStore metadataStore,
-               EntityExistenceVerifier entityExistenceVerifier) {
+               EntityExistenceVerifier<EntityId> entityExistenceVerifier) {
     this.lineageStoreReader = lineageStoreReader;
     this.store = store;
     this.metadataStore = metadataStore;

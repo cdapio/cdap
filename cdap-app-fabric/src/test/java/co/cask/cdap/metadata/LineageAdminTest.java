@@ -88,7 +88,6 @@ public class LineageAdminTest extends AppFabricTestBase {
   private final ProgramRunId run5 = program5.run(RunIds.generate(700).getId());
 
   private final ProgramId program6 = new ProgramId("default", "app6", ProgramType.WORKFLOW, "workflow6");
-  private final ProgramRunId run6 = program6.run(RunIds.generate(700).getId());
   private int sourceId;
 
   @After
@@ -187,10 +186,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     DatasetId customDataset1 = customNamespace.dataset(dataset1.getEntityName());
     ProgramRunId customRun1 = customNamespace.app(program1.getApplication()).program(program1.getType(),
                                program1.getEntityName()).run(run1.getEntityName());
-    Assert.assertEquals(new Lineage(ImmutableSet.<Relation>of()),
+    Assert.assertEquals(new Lineage(ImmutableSet.of()),
                         lineageAdmin.computeLineage(customDataset1, 500,
                                                     System.currentTimeMillis() + 10000, 100));
-    Assert.assertEquals(ImmutableSet.<MetadataRecord>of(), lineageAdmin.getMetadataForRun(customRun1));
+    Assert.assertTrue(lineageAdmin.getMetadataForRun(customRun1).isEmpty());
   }
 
   @Test
@@ -649,10 +648,10 @@ public class LineageAdminTest extends AppFabricTestBase {
       program1.getApplication()).program(program1.getType(),
                                          program1.getEntityName()).run(run1.getEntityName()
     );
-    Assert.assertEquals(new Lineage(ImmutableSet.<Relation>of()),
+    Assert.assertEquals(new Lineage(ImmutableSet.of()),
                         lineageAdmin.computeLineage(customDataset1, 500,
                                                     System.currentTimeMillis() + 10000, 100));
-    Assert.assertEquals(ImmutableSet.<MetadataRecord>of(), lineageAdmin.getMetadataForRun(customRun1));
+    Assert.assertTrue(lineageAdmin.getMetadataForRun(customRun1).isEmpty());
   }
 
   @Test
@@ -670,7 +669,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     Assert.assertEquals(100, scanRange.getStart());
     Assert.assertEquals(701, scanRange.getEnd());
 
-    scanRange = LineageAdmin.getScanRange(ImmutableSet.<RunId>of());
+    scanRange = LineageAdmin.getScanRange(ImmutableSet.of());
     Assert.assertEquals(0, scanRange.getStart());
     Assert.assertEquals(0, scanRange.getEnd());
 
@@ -752,7 +751,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     return getInjector().getInstance(DatasetFramework.class);
   }
 
-  private static final class NoOpEntityExistenceVerifier implements EntityExistenceVerifier {
+  private static final class NoOpEntityExistenceVerifier implements EntityExistenceVerifier<EntityId> {
     @Override
     public void ensureExists(EntityId entityId) throws NotFoundException {
       // no-op

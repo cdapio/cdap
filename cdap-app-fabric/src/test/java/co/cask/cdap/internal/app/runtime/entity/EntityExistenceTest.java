@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -52,7 +54,7 @@ import java.io.File;
 public class EntityExistenceTest {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
-  private static EntityExistenceVerifier existenceVerifier;
+  private static EntityExistenceVerifier<EntityId> existenceVerifier;
   private static final String EXISTS = "exists";
   private static final String DOES_NOT_EXIST = "doesNotExist";
   private static final NamespaceId NAMESPACE = new NamespaceId(EXISTS);
@@ -68,7 +70,7 @@ public class EntityExistenceTest {
     ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     cConf = injector.getInstance(CConfiguration.class);
     nsStore.create(new NamespaceMeta.Builder().setName(EXISTS).build());
-    existenceVerifier = injector.getInstance(EntityExistenceVerifier.class);
+    existenceVerifier = injector.getInstance(Key.get(new TypeLiteral<EntityExistenceVerifier<EntityId>>() { }));
     LocalLocationFactory lf = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     File artifactFile = new File(AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class).toURI());
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(ARTIFACT), artifactFile);
