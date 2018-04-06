@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,9 @@ public interface LineageWriter {
    * @param datasetInstance dataset accessed by the program
    * @param accessType access type
    */
-  void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType);
+  default void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType) {
+    addAccess(run, datasetInstance, accessType, null);
+  }
 
   /**
    * Add a program-dataset access.
@@ -55,7 +57,9 @@ public interface LineageWriter {
    * @param stream stream accessed by the program
    * @param accessType access type
    */
-  void addAccess(ProgramRunId run, StreamId stream, AccessType accessType);
+  default void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
+    addAccess(run, stream, accessType, null);
+  }
 
   /**
    * Add a program-stream access.

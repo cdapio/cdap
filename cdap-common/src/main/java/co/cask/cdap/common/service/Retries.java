@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,18 +30,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Retries {
   private static final Logger LOG = LoggerFactory.getLogger(Retries.class);
-  public static final Predicate<Throwable> ALWAYS_TRUE = new Predicate<Throwable>() {
-    @Override
-    public boolean apply(Throwable throwable) {
-      return true;
-    }
-  };
-  private static final Predicate<Throwable> DEFAULT_PREDICATE = new Predicate<Throwable>() {
-    @Override
-    public boolean apply(Throwable throwable) {
-      return throwable instanceof RetryableException;
-    }
-  };
+  public static final Predicate<Throwable> ALWAYS_TRUE = t -> true;
+  private static final Predicate<Throwable> DEFAULT_PREDICATE = t -> t instanceof RetryableException;
 
   private Retries() {
 

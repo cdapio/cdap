@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.tephra.TransactionAware;
@@ -66,18 +65,14 @@ public class LineageDatasetTest {
       }
     });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Relation expected = new Relation(datasetInstance, program, AccessType.READ,
-                                         runId, ImmutableSet.of(flowlet));
-        Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000,
-                                                              Predicates.<Relation>alwaysTrue());
-        Assert.assertEquals(1, relations.size());
-        Assert.assertEquals(expected, relations.iterator().next());
-        Assert.assertEquals(toSet(program, datasetInstance), lineageDataset.getEntitiesForRun(run));
-        Assert.assertEquals(ImmutableList.of(accessTimeMillis), lineageDataset.getAccessTimesForRun(run));
-      }
+    txnl.execute(() -> {
+      Relation expected = new Relation(datasetInstance, program, AccessType.READ,
+                                       runId, ImmutableSet.of(flowlet));
+      Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000, x -> true);
+      Assert.assertEquals(1, relations.size());
+      Assert.assertEquals(expected, relations.iterator().next());
+      Assert.assertEquals(toSet(program, datasetInstance), lineageDataset.getEntitiesForRun(run));
+      Assert.assertEquals(ImmutableList.of(accessTimeMillis), lineageDataset.getAccessTimesForRun(run));
     });
   }
 
@@ -115,76 +110,70 @@ public class LineageDatasetTest {
     final long run23Stream2AccessTime = now + 1;
     final long run23Data2AccessTime = now + 3;
     //noinspection UnnecessaryLocalVariable
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime, flowlet1);
-        lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
-        lineageDataset.addAccess(run22, stream1, AccessType.READ, run22Stream1AccessTime);
-        lineageDataset.addAccess(run23, stream2, AccessType.READ, run23Stream2AccessTime);
-        lineageDataset.addAccess(run23, datasetInstance2, AccessType.WRITE, run23Data2AccessTime);
-        lineageDataset.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, System.currentTimeMillis());
-        lineageDataset.addAccess(run34, stream2, AccessType.UNKNOWN, System.currentTimeMillis());
-      }
+    txnl.execute(() -> {
+      lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime, flowlet1);
+      lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
+      lineageDataset.addAccess(run22, stream1, AccessType.READ, run22Stream1AccessTime);
+      lineageDataset.addAccess(run23, stream2, AccessType.READ, run23Stream2AccessTime);
+      lineageDataset.addAccess(run23, datasetInstance2, AccessType.WRITE, run23Data2AccessTime);
+      lineageDataset.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, System.currentTimeMillis());
+      lineageDataset.addAccess(run34, stream2, AccessType.UNKNOWN, System.currentTimeMillis());
     });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Assert.assertEquals(
-          ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1, ImmutableSet.of(flowlet1))),
-          lineageDataset.getRelations(datasetInstance1, 0, 100000, Predicates.<Relation>alwaysTrue())
-        );
+    txnl.execute(() -> {
+      Assert.assertEquals(
+        ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1, ImmutableSet.of(flowlet1))),
+        lineageDataset.getRelations(datasetInstance1, 0, 100000, x -> true)
+      );
 
-        Assert.assertEquals(
-          ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
-                          new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
-                          new Relation(datasetInstance2, program3, AccessType.READ_WRITE, runId4)
-          ),
-          lineageDataset.getRelations(datasetInstance2, 0, 100000, Predicates.<Relation>alwaysTrue())
-        );
+      Assert.assertEquals(
+        ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
+                        new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
+                        new Relation(datasetInstance2, program3, AccessType.READ_WRITE, runId4)
+        ),
+        lineageDataset.getRelations(datasetInstance2, 0, 100000, x -> true)
+      );
 
-        Assert.assertEquals(
-          ImmutableSet.of(new Relation(stream1, program2, AccessType.READ, runId2)),
-          lineageDataset.getRelations(stream1, 0, 100000, Predicates.<Relation>alwaysTrue())
-        );
+      Assert.assertEquals(
+        ImmutableSet.of(new Relation(stream1, program2, AccessType.READ, runId2)),
+        lineageDataset.getRelations(stream1, 0, 100000, x -> true)
+      );
 
-        Assert.assertEquals(
-          ImmutableSet.of(new Relation(stream2, program2, AccessType.READ, runId3),
-                          new Relation(stream2, program3, AccessType.UNKNOWN, runId4)),
-          lineageDataset.getRelations(stream2, 0, 100000, Predicates.<Relation>alwaysTrue())
-        );
+      Assert.assertEquals(
+        ImmutableSet.of(new Relation(stream2, program2, AccessType.READ, runId3),
+                        new Relation(stream2, program3, AccessType.UNKNOWN, runId4)),
+        lineageDataset.getRelations(stream2, 0, 100000, x -> true)
+      );
 
-        Assert.assertEquals(
-          ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
-                          new Relation(stream1, program2, AccessType.READ, runId2),
-                          new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
-                          new Relation(stream2, program2, AccessType.READ, runId3)
-          ),
-          lineageDataset.getRelations(program2, 0, 100000, Predicates.<Relation>alwaysTrue())
-        );
+      Assert.assertEquals(
+        ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
+                        new Relation(stream1, program2, AccessType.READ, runId2),
+                        new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
+                        new Relation(stream2, program2, AccessType.READ, runId3)
+        ),
+        lineageDataset.getRelations(program2, 0, 100000, x -> true)
+      );
 
-        // Reduced time range
-        Assert.assertEquals(
-          ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
-                          new Relation(datasetInstance2, program2, AccessType.WRITE, runId3)
-          ),
-          lineageDataset.getRelations(datasetInstance2, 0, 35000, Predicates.<Relation>alwaysTrue())
-        );
+      // Reduced time range
+      Assert.assertEquals(
+        ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
+                        new Relation(datasetInstance2, program2, AccessType.WRITE, runId3)
+        ),
+        lineageDataset.getRelations(datasetInstance2, 0, 35000, x -> true)
+      );
 
-        Assert.assertEquals(toSet(program1, datasetInstance1), lineageDataset.getEntitiesForRun(run11));
-        Assert.assertEquals(ImmutableList.of(run11Data1AccessTime), lineageDataset.getAccessTimesForRun(run11));
+      Assert.assertEquals(toSet(program1, datasetInstance1), lineageDataset.getEntitiesForRun(run11));
+      Assert.assertEquals(ImmutableList.of(run11Data1AccessTime), lineageDataset.getAccessTimesForRun(run11));
 
-        Assert.assertEquals(toSet(program2, datasetInstance2, stream1), lineageDataset.getEntitiesForRun(run22));
-        Assert.assertEquals(ImmutableList.of(run22Data2AccessTime, run22Stream1AccessTime),
-                            lineageDataset.getAccessTimesForRun(run22));
+      Assert.assertEquals(toSet(program2, datasetInstance2, stream1), lineageDataset.getEntitiesForRun(run22));
+      Assert.assertEquals(ImmutableList.of(run22Data2AccessTime, run22Stream1AccessTime),
+                          lineageDataset.getAccessTimesForRun(run22));
 
-        Assert.assertEquals(toSet(program2, datasetInstance2, stream2), lineageDataset.getEntitiesForRun(run23));
-        Assert.assertEquals(ImmutableList.of(run23Data2AccessTime, run23Stream2AccessTime),
-                            lineageDataset.getAccessTimesForRun(run23));
+      Assert.assertEquals(toSet(program2, datasetInstance2, stream2), lineageDataset.getEntitiesForRun(run23));
+      Assert.assertEquals(ImmutableList.of(run23Data2AccessTime, run23Stream2AccessTime),
+                          lineageDataset.getAccessTimesForRun(run23));
 
-        Assert.assertEquals(toSet(program3, datasetInstance2, stream2), lineageDataset.getEntitiesForRun(run34));
-      }
+      Assert.assertEquals(toSet(program3, datasetInstance2, stream2), lineageDataset.getEntitiesForRun(run34));
     });
   }
 

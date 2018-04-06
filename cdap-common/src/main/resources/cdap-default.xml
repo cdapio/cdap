@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014-2017 Cask Data, Inc.
+  Copyright © 2014-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -601,14 +601,6 @@
   </property>
 
   <property>
-    <name>stream.size.event.topic</name>
-    <value>streamsizeevent</value>
-    <description>
-      Topic name for publishing time events from stream size scheduler to the messaging system
-    </description>
-  </property>
-
-  <property>
     <name>program.status.event.topic</name>
     <value>programstatusevent</value>
     <description>
@@ -634,7 +626,7 @@
   </property>
 
 
-  <!-- Audit Configuration -->
+  <!-- Audit and lineage configuration -->
 
   <property>
     <name>audit.enabled</name>
@@ -657,6 +649,31 @@
     <value>audit</value>
     <description>
       Topic name used to publish audit messages in the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>lineage.topic</name>
+    <value>lineage</value>
+    <description>
+      Topic name used to publish lineage messages in the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>lineage.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Number of messages to fetch from messaging system for each batch
+    </description>
+  </property>
+
+  <property>
+    <name>lineage.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds that the lineage processor checks again for
+      new events after it detects there was no event
     </description>
   </property>
 
@@ -1924,7 +1941,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic},${program.status.event.topic},${program.status.record.event.topic}</value>
+    <value>${audit.topic},${lineage.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2682,6 +2699,47 @@
     <value>fixed.delay</value>
     <description>
       The type of retry policy for log processing. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>system.metadata.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.metadata.retry.policy.max.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.metadata.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.metadata.retry.policy.max.time.secs</name>
+    <value>120</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.metadata.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for workers. Allowed options: "none",
       "fixed.delay", or "exponential.backoff".
     </description>
   </property>

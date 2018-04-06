@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1259,6 +1259,15 @@ public final class Constants {
     public static final String ENABLED = "audit.enabled";
     public static final String TOPIC = "audit.topic";
     public static final String PUBLISH_TIMEOUT_MS = "audit.publish.timeout.ms";
+  }
+
+  /**
+   * Constants for lineage
+   */
+  public static final class Lineage {
+    public static final String TOPIC = "lineage.topic";
+    public static final String EVENT_FETCH_SIZE = "lineage.event.fetch.size";
+    public static final String EVENT_POLL_DELAY_MILLIS = "lineage.event.poll.delay.millis";
   }
 
   /**

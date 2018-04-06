@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,12 @@ package co.cask.cdap.data2.audit;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.MessagingServices;
+import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -36,7 +38,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,9 +68,9 @@ public final class DefaultAuditPublisher implements AuditPublisher {
     AuditMessage auditMessage = new AuditMessage(System.currentTimeMillis(), entityId, userId, auditType, auditPayload);
     LOG.trace("Publishing audit message {}", auditMessage);
 
+    StoreRequest storeRequest = StoreRequestBuilder.of(auditTopic).addPayloads(GSON.toJson(auditMessage)).build();
     try {
-      MessagingServices.publishWithRetry(messagingService, auditTopic, retryStrategy,
-                                         GSON.toJson(auditMessage).getBytes(StandardCharsets.UTF_8));
+      Retries.callWithRetries(() -> messagingService.publish(storeRequest), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (TopicNotFoundException e) {
       LOG.error("Missing topic for audit publish: {}", auditTopic);
     } catch (Exception e) {
