@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -59,7 +59,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DefaultStreamWriter implements StreamWriter {
   private final ConcurrentMap<StreamId, Boolean> isStreamRegistered;
-  private final RuntimeUsageRegistry runtimeUsageRegistry;
+  private final UsageWriter usageWriter;
 
   /**
    * The namespace that this {@link StreamWriter} belongs to.
@@ -80,7 +80,7 @@ public class DefaultStreamWriter implements StreamWriter {
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
                              @Assisted("owners") Iterable<? extends EntityId> owners,
                              @Assisted("retryStrategy") RetryStrategy retryStrategy,
-                             RuntimeUsageRegistry runtimeUsageRegistry,
+                             UsageWriter usageWriter,
                              LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient,
                              AuthenticationContext authenticationContext,
@@ -90,7 +90,7 @@ public class DefaultStreamWriter implements StreamWriter {
     this.owners = owners;
     this.lineageWriter = lineageWriter;
     this.isStreamRegistered = Maps.newConcurrentMap();
-    this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.usageWriter = usageWriter;
     this.authenticationContext = authenticationContext;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.retryStrategy = retryStrategy;
@@ -199,7 +199,7 @@ public class DefaultStreamWriter implements StreamWriter {
   private void registerStream(StreamId stream) {
     // prone to being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      runtimeUsageRegistry.registerAll(owners, stream);
+      usageWriter.registerAll(owners, stream);
       isStreamRegistered.put(stream, true);
     }
 

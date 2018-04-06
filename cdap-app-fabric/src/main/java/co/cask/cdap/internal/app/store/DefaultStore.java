@@ -21,7 +21,6 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -41,9 +40,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -65,9 +61,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
@@ -93,7 +86,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -104,8 +96,7 @@ import javax.annotation.Nullable;
  */
 public class DefaultStore implements Store {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
-  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
+
   private static final String NAME = DefaultStore.class.getSimpleName();
 
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
@@ -118,8 +109,6 @@ public class DefaultStore implements Store {
   private CConfiguration configuration;
   private DatasetFramework dsFramework;
   private Transactional transactional;
-  private AtomicBoolean upgradeComplete;
-  private LoadingCache<byte[], Boolean> upgradeCacheLoader;
 
   @Inject
   public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
@@ -131,17 +120,15 @@ public class DefaultStore implements Store {
         NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-
-    this.upgradeComplete = new AtomicBoolean(false);
-    this.upgradeCacheLoader = CacheBuilder.newBuilder()
-      .expireAfterWrite(1, TimeUnit.MINUTES)
-      .build(new DefaultStoreUpgradeCacheLoader(transactional, dsFramework, configuration, upgradeComplete));
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
   // updated asynchronously.
   public boolean isUpgradeComplete() {
-    return upgradeCacheLoader.getUnchecked(APP_VERSION_UPGRADE_KEY);
+    return Transactionals.execute(transactional, context -> {
+      // The create call will update the upgradeComplete flag
+      return AppMetadataStore.create(configuration, context, dsFramework).hasUpgraded();
+    });
   }
 
   /**
@@ -150,15 +137,13 @@ public class DefaultStore implements Store {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), AppMetadataStore.APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
   private AppMetadataStore getAppMetadataStore(DatasetContext datasetContext) throws IOException,
                                                                                      DatasetManagementException {
-    Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, APP_META_INSTANCE_ID,
-                                                  Table.class.getName(), DatasetProperties.EMPTY);
-    return new AppMetadataStore(table, configuration, upgradeComplete);
+    return AppMetadataStore.create(configuration, datasetContext, dsFramework);
   }
 
   private WorkflowDataset getWorkflowDataset(DatasetContext datasetContext) throws IOException,
@@ -716,16 +701,16 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    truncate(dsFramework.getAdmin(APP_META_INSTANCE_ID, null));
+    truncate(dsFramework.getAdmin(AppMetadataStore.APP_META_INSTANCE_ID, null));
     truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
   }
 
   /**
    * Method to add version in DefaultStore.
    *
-   * @throws InterruptedException
-   * @throws IOException
-   * @throws DatasetManagementException
+   * @throws InterruptedException if the thread is interrupted
+   * @throws IOException if failed to access the AppMetadataStore
+   * @throws DatasetManagementException if failed to instantiate the AppMetadataStore
    */
   public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
     // If upgrade is already complete, then simply return.
@@ -738,9 +723,7 @@ public class DefaultStore implements Store {
     AtomicInteger sleepTimeInSecs = new AtomicInteger(60);
 
     LOG.info("Starting upgrade of {}.", NAME);
-    // Repeated calls to upgradeComplete are necessary since it will trigger the cache to load the value from the table
-    // and that will eventually set the upgradeComplete flag to true, which is used by the methods in AppMetadataStore
-    // to check whether they need to do additional scans to accommodate old data formats.
+
     while (!isUpgradeComplete()) {
       sleepTimeInSecs.set(60);
       try {
@@ -748,7 +731,7 @@ public class DefaultStore implements Store {
           AppMetadataStore store = getAppMetadataStore(context);
           boolean upgradeComplete = store.upgradeVersionKeys(maxRows.get());
           if (upgradeComplete) {
-            store.setUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+            store.upgradeCompleted();
           }
         });
       } catch (TransactionFailureException e) {
@@ -958,47 +941,5 @@ public class DefaultStore implements Store {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
     });
-  }
-
-  private static class DefaultStoreUpgradeCacheLoader extends CacheLoader<byte[], Boolean> {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultStoreUpgradeCacheLoader.class);
-    private static final Logger LIMITED_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
-
-    private Transactional transactional;
-    private DatasetFramework dsFramework;
-    private CConfiguration cConf;
-    private AtomicBoolean upgradeComplete;
-
-    DefaultStoreUpgradeCacheLoader(Transactional transactional, DatasetFramework dsFramework, CConfiguration cConf,
-                                   AtomicBoolean upgradeComplete) {
-      this.transactional = transactional;
-      this.dsFramework = dsFramework;
-      this.cConf = cConf;
-      this.upgradeComplete = upgradeComplete;
-    }
-
-    @Override
-    public Boolean load(byte[] key) throws Exception {
-      if (upgradeComplete.get()) {
-        // Result flag is already set, so no need to check the table.
-        return true;
-      }
-
-      try {
-        transactional.execute(context -> {
-          Table table = DatasetsUtil.getOrCreateDataset(context, dsFramework, APP_META_INSTANCE_ID,
-                                                        Table.class.getName(), DatasetProperties.EMPTY);
-          AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
-          boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
-          if (isUpgradeComplete) {
-            upgradeComplete.set(true);
-          }
-        });
-      } catch (Exception ex) {
-        LIMITED_LOGGER.debug("Upgrade Check got an exception while trying to read the " +
-                               "upgrade version of {} table.", NAME, ex);
-      }
-      return upgradeComplete.get();
-    }
   }
 }

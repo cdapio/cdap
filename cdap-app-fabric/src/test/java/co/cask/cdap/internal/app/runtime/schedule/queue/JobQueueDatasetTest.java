@@ -149,7 +149,7 @@ public class JobQueueDatasetTest {
     DatasetsUtil.createIfNotExists(datasetFramework, Schedulers.JOB_QUEUE_DATASET_ID,
                                    JobQueueDataset.class.getName(), DatasetProperties.EMPTY);
 
-    jobQueue = datasetFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<String, String>(), null);
+    jobQueue = datasetFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<>(), null);
     txExecutor = new DynamicTransactionExecutorFactory(new InMemoryTxSystemClient(txManager))
       .createExecutor(Collections.<TransactionAware>singleton(jobQueue));
   }

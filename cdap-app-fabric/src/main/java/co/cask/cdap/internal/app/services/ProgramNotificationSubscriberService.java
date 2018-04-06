@@ -17,16 +17,11 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
@@ -36,10 +31,8 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -48,14 +41,12 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -68,12 +59,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
-  // These attributes are used to fetch the AppMetadataStore
-  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
-
   private final CConfiguration cConf;
-  private final AtomicBoolean upgradeComplete;
   private final DatasetFramework datasetFramework;
   private final String recordedProgramStatusPublishTopic;
 
@@ -87,19 +73,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           messagingService, datasetFramework, txClient, metricsCollectionService);
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
-    this.upgradeComplete = new AtomicBoolean(false);
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
   }
 
   @Nullable
   @Override
   protected String loadMessageId(DatasetContext datasetContext) throws Exception {
-    return getAppMetadataStore(datasetContext).retrieveSubscriberState(getTopicId().getTopic());
+    return getAppMetadataStore(datasetContext).retrieveSubscriberState(getTopicId().getTopic(), "");
   }
 
   @Override
   protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
-    getAppMetadataStore(datasetContext).persistSubscriberState(getTopicId().getTopic(), messageId);
+    getAppMetadataStore(datasetContext).persistSubscriberState(getTopicId().getTopic(), "", messageId);
   }
 
   @Override
@@ -319,20 +304,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Returns an instance of {@link AppMetadataStore}.
    */
   private AppMetadataStore getAppMetadataStore(DatasetContext context) {
-    try {
-      Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
-                                                    Table.class.getName(), DatasetProperties.EMPTY);
-      AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
-      // If upgrade was not complete, check if it is and update boolean
-      if (!upgradeComplete.get()) {
-        boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
-        if (isUpgradeComplete) {
-          upgradeComplete.set(true);
-        }
-      }
-      return appMetadataStore;
-    } catch (DatasetManagementException | IOException e) {
-      throw Throwables.propagate(e);
-    }
+    return AppMetadataStore.create(cConf, context, datasetFramework);
   }
 }

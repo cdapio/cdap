@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,7 @@ import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
@@ -143,7 +143,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
-  private final RuntimeUsageRegistry runtimeUsageRegistry;
+  private final UsageWriter usageWriter;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messageService;
@@ -159,7 +159,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
-                              RuntimeUsageRegistry runtimeUsageRegistry,
+                              UsageWriter usageWriter,
                               SecureStore secureStore,
                               SecureStoreManager secureStoreManager,
                               MessagingService messagingService) {
@@ -173,7 +173,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.dsFramework = dsFramework;
-    this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.usageWriter = usageWriter;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messageService = messagingService;
@@ -577,7 +577,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
               Node sourceNode = entry.getKey();
               if (sourceNode.getType() == FlowletConnection.Type.STREAM) {
                 ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(flowletContext.getOwners(),
-                                                                                            runtimeUsageRegistry,
+                                                                                            usageWriter,
                                                                                             dataFabricFacade,
                                                                                             queueName, consumerConfig);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
@@ -601,7 +601,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                    queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
                 ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(flowletContext.getOwners(),
-                                                                                           runtimeUsageRegistry,
+                                                                                           usageWriter,
                                                                                            dataFabricFacade, queueName,
                                                                                            consumerConfig, numGroups);
                 queueConsumerSupplierBuilder.add(consumerSupplier);

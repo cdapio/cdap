@@ -26,7 +26,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -62,7 +61,7 @@ import javax.annotation.Nullable;
  *   For TMS MessageId:
  *     'M':<topic>
  */
-public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicMessageIdStore {
+public class JobQueueDataset extends AbstractDataset implements JobQueue {
 
   static final String EMBEDDED_TABLE_NAME = "t"; // table
   private static final Gson GSON =
@@ -324,19 +323,31 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
     return Bytes.add(getRowKeyPrefix(scheduleId), Bytes.toBytes(timestamp));
   }
 
-  @Override
+  /**
+   * Gets the id of the last fetched message that was set the given TMS topic
+   *
+   * @param topic the topic to lookup the last message id
+   * @return the id of the last fetched message for this subscriber on this topic,
+   *         or {@code null} if no message id was stored before
+   */
   public String retrieveSubscriberState(String topic) {
     Row row = table.get(getRowKey(topic));
     byte[] messageIdBytes = row.get(COL);
     return messageIdBytes == null ? null : Bytes.toString(messageIdBytes);
   }
 
-  @Override
+  /**
+   * Updates the given topic's last fetched message id with the given message id.
+   *
+   * @param topic the topic to persist the message id
+   * @param messageId the most recently processed message id
+   */
   public void persistSubscriberState(String topic, String messageId) {
     table.put(getRowKey(topic), COL, Bytes.toBytes(messageId));
   }
 
   private byte[] getRowKey(String topic) {
+    // For backward compatibility, the subscriber is not used
     return Bytes.concat(MESSAGE_ID_ROW_PREFIX, ROW_KEY_SEPARATOR, Bytes.toBytes(topic));
   }
 }

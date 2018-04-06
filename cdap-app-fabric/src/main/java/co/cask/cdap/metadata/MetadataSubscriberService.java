@@ -21,19 +21,21 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
+import co.cask.cdap.data2.metadata.writer.MetadataMessage;
+import co.cask.cdap.data2.registry.DatasetUsage;
+import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
@@ -41,9 +43,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
@@ -51,10 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -62,148 +60,181 @@ import javax.annotation.Nullable;
  * This is a wrapping service to host multiple {@link AbstractMessagingSubscriberService}s for lineage, usage
  * and metadata subscriptions.
  */
-public class MetadataSubscriberService extends AbstractIdleService {
+public class MetadataSubscriberService extends AbstractMessagingSubscriberService<MetadataMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetadataSubscriberService.class);
-
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final RetryStrategy retryStrategy;
-  private final MetricsContext baseMetricsContext;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
-  private final List<Service> subscriberServices;
+
   private DatasetId lineageDatasetId = LineageDataset.LINEAGE_DATASET_ID;
+  private DatasetId usageDatasetId = UsageDataset.USAGE_INSTANCE_ID;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             DatasetFramework datasetFramework, TransactionSystemClient txClient,
                             MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metadata.");
-    this.baseMetricsContext = metricsCollectionService.getContext(ImmutableMap.of(
-      Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
-      Constants.Metrics.Tag.INSTANCE_ID, "0",
-      Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace()));
+    super(
+      NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
+      true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+      cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
+      RetryStrategies.fromConfiguration(cConf, "system.metadata."),
+      metricsCollectionService.getContext(ImmutableMap.of(
+        Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
+        Constants.Metrics.Tag.INSTANCE_ID, "0",
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+        Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
+        Constants.Metrics.Tag.CONSUMER, "metadata.writer"
+      ))
+    );
 
+    this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.of(), null, null, messagingContext)),
+        NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
-
-    // Adding all metadata related subscribers
-    this.subscriberServices = Collections.singletonList(new DataAccessLineageSubscriber());
   }
 
   /**
    * Sets the {@link DatasetId} for the {@link LineageDataset}. This method is only for testing.
    */
   @VisibleForTesting
-  public void setLineageDatasetId(DatasetId lineageDatasetId) {
+  MetadataSubscriberService setLineageDatasetId(DatasetId lineageDatasetId) {
     this.lineageDatasetId = lineageDatasetId;
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
-    Futures.successfulAsList(subscriberServices.stream().map(s -> {
-      LOG.debug("Starting metadata subscriber {}", s.getClass().getSimpleName());
-      return s.start();
-    }).collect(Collectors.toList())).get();
-
-    LOG.debug("All metadata subscribers started");
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    // This never throw
-    Futures.successfulAsList(subscriberServices.stream().map(s -> {
-      LOG.debug("Stopping metadata subscriber {}", s.getClass().getSimpleName());
-      return s.stop();
-    }).collect(Collectors.toList())).get();
-
-    for (Service service : subscriberServices) {
-      // The service must have been stopped, and calling stop again will just return immediate with the
-      // future that carries the stop state.
-      try {
-        service.stop().get();
-      } catch (ExecutionException e) {
-        LOG.warn("Exception raised when stopping service {}", service.getClass().getSimpleName(), e.getCause());
-      }
-    }
-
-    LOG.debug("All metadata subscribers stopped");
+    return this;
   }
 
   /**
-   * A message subscriber for consuming lineage messages from the {@link Constants.Lineage#TOPIC} configuration
-   * and writes to {@link LineageDataset}.
+   * Sets the {@link DatasetId} for the {@link UsageDataset}. This method is only for testing.
    */
-  private final class DataAccessLineageSubscriber extends AbstractMessagingSubscriberService<DataAccessLineage> {
+  @VisibleForTesting
+  MetadataSubscriberService setUsageDatasetId(DatasetId usageDatasetId) {
+    this.usageDatasetId = usageDatasetId;
+    return this;
+  }
 
-    DataAccessLineageSubscriber() {
-      super(NamespaceId.SYSTEM.topic(cConf.get(Constants.Lineage.TOPIC)),
-            false, cConf.getInt(Constants.Lineage.EVENT_FETCH_SIZE),
-            cConf.getLong(Constants.Lineage.EVENT_POLL_DELAY_MILLIS), retryStrategy,
-            baseMetricsContext.childContext(ImmutableMap.of(
-              Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Lineage.TOPIC),
-              Constants.Metrics.Tag.CONSUMER, "lineage.writer"
-            )));
-    }
+  @Override
+  protected MessagingContext getMessagingContext() {
+    return messagingContext;
+  }
 
-    @Override
-    protected MessagingContext getMessagingContext() {
-      return messagingContext;
-    }
+  @Override
+  protected Transactional getTransactional() {
+    return transactional;
+  }
 
-    @Override
-    protected Transactional getTransactional() {
-      return transactional;
-    }
+  @Override
+  protected MetadataMessage decodeMessage(Message message) throws Exception {
+    return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
+  }
 
-    @Nullable
-    @Override
-    protected String loadMessageId(DatasetContext datasetContext) throws Exception {
-      LineageDataset lineageDataset = LineageDataset.getLineageDataset(datasetContext,
-                                                                       datasetFramework, lineageDatasetId);
-      return lineageDataset.loadMessageId(getTopicId());
-    }
+  @Nullable
+  @Override
+  protected String loadMessageId(DatasetContext datasetContext) throws Exception {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
+    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
+  }
 
-    @Override
-    protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
-      LineageDataset lineageDataset = LineageDataset.getLineageDataset(datasetContext,
-                                                                       datasetFramework, lineageDatasetId);
-      lineageDataset.storeMessageId(getTopicId(), messageId);
-    }
+  @Override
+  protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
+    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
+  }
 
-    @Override
-    protected DataAccessLineage decodeMessage(Message message) throws Exception {
-      return GSON.fromJson(message.getPayloadAsString(), DataAccessLineage.class);
-    }
+  @Override
+  protected void processMessages(DatasetContext datasetContext,
+                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) throws Exception {
+    Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
-    @Override
-    protected void processMessages(DatasetContext datasetContext,
-                                   Iterator<ImmutablePair<String, DataAccessLineage>> messages) throws Exception {
-      LineageDataset lineageDataset = LineageDataset.getLineageDataset(datasetContext,
-                                                                       datasetFramework, lineageDatasetId);
-      while (messages.hasNext()) {
-        DataAccessLineage lineage = messages.next().getSecond();
-        if (lineage.getDatasetId() != null) {
-          lineageDataset.addAccess(lineage.getProgramRunId(), lineage.getDatasetId(),
-                                   lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
-        } else if (lineage.getStreamId() != null) {
-          lineageDataset.addAccess(lineage.getProgramRunId(), lineage.getStreamId(),
-                                   lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
-        } else {
-          // This shouldn't happen
-          LOG.warn("Missing dataset id from the lineage access information. Ignoring the message {}", lineage);
+    while (messages.hasNext()) {
+      MetadataMessage message = messages.next().getSecond();
+
+      MetadataMessageProcessor processor = processors.computeIfAbsent(message.getType(), type -> {
+        switch (type) {
+          case LINEAGE:
+            return new DataAccessLineageProcessor(datasetContext);
+          case USAGE:
+            return new UsageProcessor(datasetContext);
+          default:
+            return null;
         }
+      });
+
+      if (processor == null) {
+        LOG.warn("Unsupported metadata message type {}. Message ignored.", message.getType());
+        continue;
+      }
+
+      processor.processMessage(message);
+    }
+  }
+
+  /**
+   * Private interface to help dispatch and process different types of {@link MetadataMessage}.
+   */
+  private interface MetadataMessageProcessor {
+
+    /**
+     * Processes one {@link MetadataMessage}.
+     */
+    void processMessage(MetadataMessage message);
+  }
+
+  /**
+   * The {@link MetadataMessageProcessor} for processing {@link DataAccessLineage}.
+   */
+  private final class DataAccessLineageProcessor implements MetadataMessageProcessor {
+
+    private final LineageDataset lineageDataset;
+
+    DataAccessLineageProcessor(DatasetContext datasetContext) {
+      lineageDataset = LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+    }
+
+    @Override
+    public void processMessage(MetadataMessage message) {
+      DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
+      if (lineage.getDatasetId() != null) {
+        lineageDataset.addAccess(lineage.getProgramRunId(), lineage.getDatasetId(),
+                                 lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
+      } else if (lineage.getStreamId() != null) {
+        lineageDataset.addAccess(lineage.getProgramRunId(), lineage.getStreamId(),
+                                 lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
+      } else {
+        // This shouldn't happen
+        LOG.warn("Missing dataset id from the lineage access information. Ignoring the message {}", lineage);
+      }
+    }
+  }
+
+  /**
+   * The {@link MetadataMessageProcessor} for processing
+   */
+  private final class UsageProcessor implements MetadataMessageProcessor {
+
+    private final UsageDataset usageDataset;
+
+    UsageProcessor(DatasetContext datasetContext) {
+      usageDataset = UsageDataset.getUsageDataset(datasetContext, datasetFramework, usageDatasetId);
+    }
+
+    @Override
+    public void processMessage(MetadataMessage message) {
+      DatasetUsage usage = message.getPayload(GSON, DatasetUsage.class);
+      if (usage.getDatasetId() != null) {
+        usageDataset.register(usage.getProgramId(), usage.getDatasetId());
+      } else if (usage.getStreamId() != null) {
+        usageDataset.register(usage.getProgramId(), usage.getStreamId());
+      } else {
+        // This shouldn't happen
+        LOG.warn("Missing dataset id from the usage information. Ignoring the message {}", usage);
       }
     }
   }
