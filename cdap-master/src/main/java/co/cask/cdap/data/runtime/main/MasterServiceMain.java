@@ -576,8 +576,7 @@ public class MasterServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
-      new OperationalStatsModule(),
-      new ProvisionerModule()
+      new OperationalStatsModule()
     );
   }
 

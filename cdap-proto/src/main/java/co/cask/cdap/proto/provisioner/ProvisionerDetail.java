@@ -14,30 +14,38 @@
  * the License.
  */
 
-package co.cask.cdap.proto.profile;
+package co.cask.cdap.proto.provisioner;
 
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
- * Information about a profile.
+ * A class which contains the config of a provisioner
  */
-public class ProfileCreateRequest {
+public class ProvisionerDetail {
+  private final String name;
   private final String description;
-  private final ProvisionerInfo provisioner;
+  @SerializedName("configuration-groups")
+  private final List<Object> configurationGroups;
 
-  public ProfileCreateRequest(String description, ProvisionerInfo provisioner) {
+  public ProvisionerDetail(String name, String description, List<Object> configurationGroups) {
+    this.name = name;
     this.description = description;
-    this.provisioner = provisioner;
+    this.configurationGroups = configurationGroups;
   }
 
-  public ProvisionerInfo getProvisioner() {
-    return provisioner;
+  public String getName() {
+    return name;
   }
 
   public String getDescription() {
     return description;
+  }
+
+  public List<Object> getConfigurationGroups() {
+    return configurationGroups;
   }
 
   @Override
@@ -48,14 +56,15 @@ public class ProfileCreateRequest {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+    ProvisionerDetail that = (ProvisionerDetail) o;
 
-    ProfileCreateRequest that = (ProfileCreateRequest) o;
-    return Objects.equals(description, that.description) &&
-      Objects.equals(provisioner, that.provisioner);
+    return Objects.equals(name, that.name) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(configurationGroups, that.configurationGroups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(description, provisioner);
+    return Objects.hash(name, description, configurationGroups);
   }
 }

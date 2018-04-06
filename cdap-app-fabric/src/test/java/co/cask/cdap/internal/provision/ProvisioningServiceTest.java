@@ -18,14 +18,15 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -43,13 +44,14 @@ public class ProvisioningServiceTest {
 
   @Test
   public void testGetSpecs() {
-    Collection<ProvisionerSpecification> specs = provisioningService.getProvisionerSpecs();
+    Collection<ProvisionerDetail> specs = provisioningService.getProvisionerDetails();
     Assert.assertEquals(1, specs.size());
 
-    ProvisionerSpecification expected = new MockProvisioner().getSpec();
+    ProvisionerSpecification spec = new MockProvisioner().getSpec();
+    ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getDescription(), new ArrayList<>());
     Assert.assertEquals(expected, specs.iterator().next());
 
-    Assert.assertEquals(expected, provisioningService.getProvisionerSpec("yarn"));
-    Assert.assertNull(provisioningService.getProvisionerSpec("abc"));
+    Assert.assertEquals(expected, provisioningService.getProvisionerDetail("yarn"));
+    Assert.assertNull(provisioningService.getProvisionerDetail("abc"));
   }
 }

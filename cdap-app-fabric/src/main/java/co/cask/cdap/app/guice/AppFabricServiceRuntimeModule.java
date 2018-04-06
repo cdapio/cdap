@@ -92,6 +92,7 @@ import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
+import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
 import co.cask.cdap.logging.run.InMemoryExploreServiceManager;
@@ -208,6 +209,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getStandaloneModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
+                           new ProvisionerModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -288,6 +290,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getDistributedModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
+                           new ProvisionerModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
