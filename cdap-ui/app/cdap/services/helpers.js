@@ -21,6 +21,7 @@ import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import {compose} from 'redux';
+import uuidV4 from 'uuid/v4';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -295,6 +296,39 @@ const reverseArrayWithoutMutating = (array) => {
   return newArray;
 };
 
+const convertMapToKeyValuePairs = (map, addUniqueId = true) => {
+  if (addUniqueId) {
+    return Object.entries(map).map(([key, value]) => {
+      return {
+        key,
+        value,
+        uniqueId: 'id-' + uuidV4()
+      };
+    });
+  }
+  return Object.entries(map).map(([key, value]) => {
+    return {
+      key,
+      value,
+    };
+  });
+};
+
+const convertKeyValuePairsToMap = (keyValuePairs) => {
+  let map = {};
+  keyValuePairs.forEach((currentPair) => {
+    if (
+      currentPair.key &&
+      currentPair.key.length > 0 &&
+      currentPair.value &&
+      currentPair.value.length > 0
+    ) {
+      map[currentPair.key] = currentPair.value;
+    }
+  });
+  return map;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -324,5 +358,7 @@ export {
   ONE_YEAR_SECONDS,
   isNumeric,
   wholeArrayIsNumeric,
-  reverseArrayWithoutMutating
+  reverseArrayWithoutMutating,
+  convertMapToKeyValuePairs,
+  convertKeyValuePairsToMap
 };

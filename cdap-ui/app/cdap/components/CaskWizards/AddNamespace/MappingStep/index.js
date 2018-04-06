@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,8 @@ const mapStateToHDFSRootDirectoryProps = (state) => {
   return {
     value: state.mapping.hdfsDirectory,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hdfs-root-directory-placeholder')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hdfs-root-directory-placeholder'),
+    disabled: state.editableFields.fields.indexOf('hdfsDirectory') === -1
   };
 };
 
@@ -46,7 +47,8 @@ const mapStateToHiveDatabaseNameProps = (state) => {
   return {
     value: state.mapping.hiveDatabaseName,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hive-db-name-placeholder')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hive-db-name-placeholder'),
+    disabled: state.editableFields.fields.indexOf('hiveDatabaseName') === -1
   };
 };
 
@@ -66,7 +68,8 @@ const mapStateToHBASENamespaceNameProps = (state) => {
   return {
     value: state.mapping.hbaseNamespace,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hbase-nm-name-placeholder')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hbase-nm-name-placeholder'),
+    disabled: state.editableFields.fields.indexOf('hbaseNamespace') === -1
   };
 };
 
@@ -85,7 +88,8 @@ const mapStateToSchedulerQueueNameProps = (state) => {
   return {
     value: state.mapping.schedulerQueueName,
     type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-placeholder')
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-placeholder'),
+    disabled: state.editableFields.fields.indexOf('schedulerQueueName') === -1
   };
 };
 const mapDispatchToSchedulerQueueNameProps = (dispatch) => {

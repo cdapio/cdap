@@ -15,6 +15,7 @@
 */
 
 @import "../../styles/variables.scss";
+$link-color: #0275d8;
 
 .namespace-details-container {
   height: inherit;
@@ -38,6 +39,12 @@
       margin-bottom: 10px;
       font-size: 14px;
       line-height: 14px;
+
+      .edit-label {
+        color: $link-color;
+        margin-left: 10px;
+        cursor: pointer;
+      }
     }
   }
 }

@@ -18,7 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updateKeyValueStore} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {convertMapToKeyValuePairsObj, convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
+import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
+import {convertMapToKeyValuePairs} from 'services/helpers';
 import RuntimeArgsPairs from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/RuntimeArgsPairs';
 import ProvidedPopover from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/ProvidedPopover';
 import classnames from 'classnames';
@@ -59,8 +60,8 @@ const onPaste = (dataObj, index) => {
     }
   });
   if (!isEmpty(dataObj)) {
-    let remainingRuntimeArgs = convertMapToKeyValuePairsObj(dataObj);
-    runtimeArgs.pairs = runtimeArgs.pairs.concat(remainingRuntimeArgs.pairs);
+    let remainingRuntimeArgs = convertMapToKeyValuePairs(dataObj);
+    runtimeArgs.pairs = runtimeArgs.pairs.concat(remainingRuntimeArgs);
   }
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
