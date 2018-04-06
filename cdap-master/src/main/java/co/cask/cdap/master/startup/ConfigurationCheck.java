@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -175,6 +175,11 @@ class ConfigurationCheck extends AbstractMasterCheck {
   private void checkMessagingTopics(Set<String> problemKeys) {
     validateMessagingTopic(Constants.Audit.TOPIC, problemKeys);
     validateMessagingTopic(Constants.Notification.TOPIC, problemKeys);
+    validateMessagingTopic(Constants.Dataset.DATA_EVENT_TOPIC, problemKeys);
+    validateMessagingTopic(Constants.Metrics.TOPIC_PREFIX, problemKeys);
+    validateMessagingTopic(Constants.Scheduler.TIME_EVENT_TOPIC, problemKeys);
+    validateMessagingTopic(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, problemKeys);
+    validateMessagingTopic(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC, problemKeys);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,8 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.metadata.lineage.LineageStore;
+import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.LineageStoreWriter;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
@@ -66,8 +65,7 @@ public class DataSetsModules extends RuntimeModule {
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
           .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
 
-        bind(LineageStoreReader.class).to(LineageStore.class);
-        bind(LineageStoreWriter.class).to(LineageStore.class);
+        bind(LineageStoreReader.class).to(DefaultLineageStoreReader.class);
         // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
         expose(LineageStoreReader.class);
 
@@ -115,8 +113,7 @@ public class DataSetsModules extends RuntimeModule {
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
 
-        bind(LineageStoreReader.class).to(LineageStore.class);
-        bind(LineageStoreWriter.class).to(LineageStore.class);
+        bind(LineageStoreReader.class).to(DefaultLineageStoreReader.class);
         // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
         expose(LineageStoreReader.class);
 

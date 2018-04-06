@@ -23,8 +23,8 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -39,8 +39,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -59,19 +57,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
- * Service to compute Lineage based on Dataset accesses of a Program stored in {@link LineageStore}.
+ * Service to compute Lineage based on Dataset accesses of a Program stored in {@link DefaultLineageStoreReader}.
  */
 public class LineageAdmin {
+
   private static final Logger LOG = LoggerFactory.getLogger(LineageAdmin.class);
 
   private static final Function<Relation, ProgramId> RELATION_TO_PROGRAM_FUNCTION = Relation::getProgram;
 
   private static final Function<Relation, NamespacedEntityId> RELATION_TO_DATA_FUNCTION = Relation::getData;
-
-  private static final Predicate<Relation> UNKNOWN_TYPE_FILTER = relation -> relation.getAccess() != AccessType.UNKNOWN;
 
   private static final Function<Collection<Relation>, Collection<Relation>> COLLAPSE_UNKNOWN_TYPE_FUNCTION =
     relations -> {
@@ -79,7 +77,7 @@ public class LineageAdmin {
         return relations;
       }
       // If the size is > 1, then we can safely filter out the UNKNOWN
-      return Collections2.filter(relations, UNKNOWN_TYPE_FILTER);
+      return Collections2.filter(relations, relation -> relation.getAccess() != AccessType.UNKNOWN);
     };
 
   private final LineageStoreReader lineageStoreReader;
@@ -365,7 +363,7 @@ public class LineageAdmin {
   @VisibleForTesting
   static ScanRangeWithFilter getScanRange(final Set<RunId> runIds) {
     if (runIds.isEmpty()) {
-      return new ScanRangeWithFilter(0, 0, Predicates.<Relation>alwaysFalse());
+      return new ScanRangeWithFilter(0, 0, x -> false);
     }
 
     // Pick the earliest start time and latest start time for lineage range
@@ -382,12 +380,7 @@ public class LineageAdmin {
     }
 
     // scan end key is exclusive, so need to add 1 to  to include the last runid
-    return new ScanRangeWithFilter(earliest, latest + 1, new Predicate<Relation>() {
-      @Override
-      public boolean apply(Relation input) {
-        return runIds.contains(input.getRun());
-      }
-    });
+    return new ScanRangeWithFilter(earliest, latest + 1, input -> runIds.contains(input.getRun()));
   }
 
   @VisibleForTesting

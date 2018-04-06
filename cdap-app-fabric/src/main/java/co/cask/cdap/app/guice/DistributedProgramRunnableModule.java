@@ -36,6 +36,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
@@ -47,7 +48,6 @@ import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import co.cask.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -128,7 +128,7 @@ public class DistributedProgramRunnableModule {
     return Modules.override(modules).with(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LineageWriter.class).to(RemoteLineageWriter.class);
+        bind(LineageWriter.class).to(MessagingLineageWriter.class);
         bind(RuntimeUsageRegistry.class).to(RemoteRuntimeUsageRegistry.class).in(Scopes.SINGLETON);
         if (serviceAnnouncer != null) {
           bind(ServiceAnnouncer.class).toInstance(serviceAnnouncer);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,34 +17,43 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -68,18 +77,68 @@ public class LineageDataset extends AbstractDataset {
   // -------------------------------------------------------------------------------
   // | p | <id.run>     | <inverted-start-time> | s | <id.stream>  | <access-type> |
   // -------------------------------------------------------------------------------
+  //
+  // TMS message ID storage
+  // --------------------
+  // | t | <topic.name> |
+  // --------------------
+
+  public static final DatasetId LINEAGE_DATASET_ID = NamespaceId.SYSTEM.dataset("lineage");
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageDataset.class);
+
   // Column used to store access time
   private static final byte[] ACCESS_TIME_COLS_BYTE = {'t'};
+  private static final byte[] MESSAGE_ID_COLS_BYTE = {'m'};
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
   private static final char FLOWLET_MARKER = 'f';
   private static final char STREAM_MARKER = 's';
+  private static final char TOPIC_MARKER = 't';
   private static final char NONE_MARKER = '0';
 
   private Table accessRegistryTable;
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework}. Used by the upgrade tool to upgrade Lineage Dataset.
+   *
+   * @param framework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(LineageDataset.class.getName(), LINEAGE_DATASET_ID, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Gets an instance of {@link LineageDataset}. The dataset instance will be created if it is not yet exist.
+   *
+   * @param datasetContext the {@link DatasetContext} for getting the dataset instance.
+   * @param datasetFramework the {@link DatasetFramework} for creating the dataset instance if missing
+   * @return an instance of {@link LineageDataset}
+   */
+  public static LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+    return getLineageDataset(datasetContext, datasetFramework, LINEAGE_DATASET_ID);
+  }
+
+  /**
+   * Gets an instance of {@link LineageDataset}. The dataset instance will be created if it is not yet exist.
+   *
+   * @param datasetContext the {@link DatasetContext} for getting the dataset instance.
+   * @param datasetFramework the {@link DatasetFramework} for creating the dataset instance if missing
+   * @param datasetId the {@link DatasetId} of the {@link LineageDataset}
+   * @return an instance of {@link LineageDataset}
+   */
+  @VisibleForTesting
+  public static LineageDataset getLineageDataset(DatasetContext datasetContext,
+                                                 DatasetFramework datasetFramework,
+                                                 DatasetId datasetId) {
+    try {
+      return DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, datasetId,
+                                             LineageDataset.class.getName(), DatasetProperties.EMPTY);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
 
   public LineageDataset(String instanceName, Table accessRegistryTable) {
     super(instanceName, accessRegistryTable);
@@ -218,6 +277,28 @@ public class LineageDataset extends AbstractDataset {
   }
 
   /**
+   * Loads the message id for the given topic.
+   *
+   * @param topicId the topic id to lookup for
+   * @return the message id persisted earlier by {@link #storeMessageId(TopicId, String)} or {@code null}
+   *         if there is no message id associated with the given topic
+   */
+  @Nullable
+  public String loadMessageId(TopicId topicId) {
+    return Bytes.toString(accessRegistryTable.get(getTopicKey(topicId), MESSAGE_ID_COLS_BYTE));
+  }
+
+  /**
+   * Stores the given message id for the given topic.
+   *
+   * @param topicId the topic id to associate with the message id
+   * @param messageId
+   */
+  public void storeMessageId(TopicId topicId, String messageId) {
+    accessRegistryTable.put(getTopicKey(topicId), MESSAGE_ID_COLS_BYTE, Bytes.toBytes(messageId));
+  }
+
+  /**
    * @return a set of access times (for program and data it accesses) associated with a program run.
    */
   @VisibleForTesting
@@ -248,7 +329,7 @@ public class LineageDataset extends AbstractDataset {
           LOG.trace("Got row key = {}", Bytes.toString(row.getRow()));
         }
         Relation relation = toRelation(row);
-        if (filter.apply(relation)) {
+        if (filter.test(relation)) {
           relationsBuilder.add(relation);
         }
       }
@@ -270,6 +351,13 @@ public class LineageDataset extends AbstractDataset {
     addStream(builder, stream);
     addDataKey(builder, run, accessType, component);
     return builder.build().getKey();
+  }
+
+  private byte[] getTopicKey(TopicId topicId) {
+    return new MDSKey.Builder()
+      .add(TOPIC_MARKER)
+      .add(topicId.getNamespace())
+      .add(topicId.getTopic()).build().getKey();
   }
 
   private void addDataKey(MDSKey.Builder builder, ProgramRunId run,

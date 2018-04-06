@@ -17,18 +17,25 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageStore;
+import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -43,17 +50,20 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests lineage computation.
@@ -99,11 +109,20 @@ public class LineageAdminTest extends AppFabricTestBase {
   public void testSimpleLineage() throws Exception {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
 
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testSimpleLineage"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testSimpleLineage");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
     // Define metadata
     MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
@@ -137,14 +156,14 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     addRuns(store, run1, run2, run3);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, dataset1, AccessType.UNKNOWN, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.UNKNOWN, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset2, AccessType.READ, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.READ, System.currentTimeMillis(), flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset3, AccessType.READ, flowlet2);
 
-    lineageStore.addAccess(run3, dataset1, AccessType.UNKNOWN, System.currentTimeMillis());
+    lineageWriter.addAccess(run3, dataset1, AccessType.UNKNOWN, null);
 
     // The UNKNOWN access type will get filtered out if there is READ/WRITE. It will be preserved if it is the
     // only access type
@@ -200,25 +219,34 @@ public class LineageAdminTest extends AppFabricTestBase {
     //             |<-----------------
     //
 
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testSimpleLoopLineage"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testSimpleLoopLineage");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
 
     // Add access
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.READ, flowlet2);
+    lineageWriter.addAccess(run2, dataset1, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE, flowlet2);
 
-    lineageStore.addAccess(run3, dataset3, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run3, dataset4, AccessType.WRITE, System.currentTimeMillis());
+    lineageWriter.addAccess(run3, dataset3, AccessType.READ, null);
+    lineageWriter.addAccess(run3, dataset4, AccessType.WRITE, null);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -262,17 +290,26 @@ public class LineageAdminTest extends AppFabricTestBase {
     //
     // D1 <-> P1
     //
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testDirectCycle"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testDirectCycle");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -292,20 +329,29 @@ public class LineageAdminTest extends AppFabricTestBase {
     //
     // D1 <- P1 (run2)
     //
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testDirectCycleTwoRuns"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testDirectCycleTwoRuns");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
     // Write is in a different run
-    lineageStore.addAccess(new ProgramRunId(run1.getNamespace(), run1.getApplication(), run1.getParent().getType(),
+    lineageWriter.addAccess(new ProgramRunId(run1.getNamespace(), run1.getApplication(), run1.getParent().getType(),
                                             run1.getProgram(), run2.getEntityName()), dataset1, AccessType.WRITE,
-                           System.currentTimeMillis(), flowlet1);
+                            flowlet1);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -329,30 +375,39 @@ public class LineageAdminTest extends AppFabricTestBase {
     //       |     |           |
     // S1 -->|     ---------------> P4 -> D7
 
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testBranchLineage"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testBranchLineage");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, stream1, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, stream1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset4, AccessType.WRITE, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.READ, flowlet2);
+    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset5, AccessType.WRITE, flowlet2);
 
-    lineageStore.addAccess(run3, dataset5, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, System.currentTimeMillis());
+    lineageWriter.addAccess(run3, dataset5, AccessType.READ, null);
+    lineageWriter.addAccess(run3, dataset6, AccessType.WRITE, null);
 
-    lineageStore.addAccess(run4, dataset2, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run4, dataset3, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, System.currentTimeMillis());
+    lineageWriter.addAccess(run4, dataset2, AccessType.READ, null);
+    lineageWriter.addAccess(run4, dataset3, AccessType.READ, null);
+    lineageWriter.addAccess(run4, dataset7, AccessType.WRITE, null);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -397,34 +452,43 @@ public class LineageAdminTest extends AppFabricTestBase {
     //       |     |           |
     // S1 -->|     ---------------> P4 -> D7
 
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testBranchLoopLineage"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testBranchLoopLineage");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, stream1, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, stream1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset4, AccessType.WRITE, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.READ, flowlet2);
+    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset5, AccessType.WRITE, flowlet2);
 
-    lineageStore.addAccess(run3, dataset5, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, System.currentTimeMillis());
+    lineageWriter.addAccess(run3, dataset5, AccessType.READ, null);
+    lineageWriter.addAccess(run3, dataset6, AccessType.WRITE, null);
 
-    lineageStore.addAccess(run4, dataset2, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run4, dataset3, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, System.currentTimeMillis());
+    lineageWriter.addAccess(run4, dataset2, AccessType.READ, null);
+    lineageWriter.addAccess(run4, dataset3, AccessType.READ, null);
+    lineageWriter.addAccess(run4, dataset7, AccessType.WRITE, null);
 
-    lineageStore.addAccess(run5, dataset3, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run5, dataset6, AccessType.READ, System.currentTimeMillis());
-    lineageStore.addAccess(run5, dataset1, AccessType.WRITE, System.currentTimeMillis());
+    lineageWriter.addAccess(run5, dataset3, AccessType.READ, null);
+    lineageWriter.addAccess(run5, dataset6, AccessType.READ, null);
+    lineageWriter.addAccess(run5, dataset1, AccessType.WRITE, null);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -505,11 +569,20 @@ public class LineageAdminTest extends AppFabricTestBase {
   public void testWorkflowLineage() throws Exception {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
 
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 NamespaceId.DEFAULT.dataset("testWorkflowLineage"));
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testWorkflowLineage");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
+      @Override
+      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
+        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      }
+    };
+
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
+                                                 new NoOpEntityExistenceVerifier());
 
     // Define metadata
     MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
@@ -550,16 +623,16 @@ public class LineageAdminTest extends AppFabricTestBase {
     addRuns(store, run5);
 
     // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset2, AccessType.READ, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.READ, System.currentTimeMillis(), flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset3, AccessType.READ, flowlet2);
 
-    lineageStore.addAccess(run3, dataset1, AccessType.UNKNOWN, System.currentTimeMillis());
+    lineageWriter.addAccess(run3, dataset1, AccessType.UNKNOWN, null);
 
-    lineageStore.addAccess(run5, dataset1, AccessType.READ, System.currentTimeMillis());
+    lineageWriter.addAccess(run5, dataset1, AccessType.READ, null);
 
 
     // The UNKNOWN access type will get filtered out if there is READ/WRITE. It will be preserved if it is the
@@ -683,6 +756,40 @@ public class LineageAdminTest extends AppFabricTestBase {
     setStartAndRunning(store, id, pid, startTime, ImmutableMap.of(), ImmutableMap.of(), artifactId);
   }
 
+  @Test
+  public void testMessagingLineageWriter() throws InterruptedException, ExecutionException, TimeoutException {
+    LineageWriter lineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
+
+    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testMessagingLineageWriter");
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
+                                                                     getTxClient(), lineageDatasetId);
+
+    // Try to read lineage, which should be empty since we haven't start the MetadataSubscriberService yet.
+    Set<NamespacedEntityId> entities = lineageReader.getEntitiesForRun(run1);
+    Assert.assertTrue(entities.isEmpty());
+
+    // Start the MetadataSubscriberService
+    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
+    subscriberService.setLineageDatasetId(lineageDatasetId);
+    subscriberService.startAndWait();
+
+    try {
+      Set<NamespacedEntityId> expected = new HashSet<>(Arrays.asList(run1.getParent(), dataset1, dataset2));
+      Tasks.waitFor(true, () -> expected.equals(lineageReader.getEntitiesForRun(run1)),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      // Emit one more lineage
+      lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN);
+
+      expected.add(stream1);
+      Tasks.waitFor(true, () -> expected.equals(lineageReader.getEntitiesForRun(run1)),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    } finally {
+      subscriberService.stopAndWait();
+    }
+  }
 
   private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime,
                                   final Map<String, String> runtimeArgs,
@@ -741,10 +848,6 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private RunId twillRunId(ProgramRunId run) {
     return RunIds.fromString(run.getEntityName());
-  }
-
-  private TransactionExecutorFactory getTxExecFactory() {
-    return getInjector().getInstance(TransactionExecutorFactory.class);
   }
 
   private DatasetFramework getDatasetFramework() {

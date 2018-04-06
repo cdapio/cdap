@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,6 @@ public class RemoteSystemOperationsServiceModule extends PrivateModule {
       binder(), HttpHandler.class, Names.named(Constants.RemoteSystemOpService.HANDLERS_NAME));
 
     CommonHandlers.add(handlerBinder);
-    handlerBinder.addBinding().to(RemoteLineageWriterHandler.class);
     handlerBinder.addBinding().to(RemoteRuntimeStoreHandler.class);
     handlerBinder.addBinding().to(RemoteUsageRegistryHandler.class);
     expose(Key.get(new TypeLiteral<Set<HttpHandler>>() { },
