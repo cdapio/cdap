@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,8 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.transaction.MultiThreadTransactionAware;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.transaction.MultiThreadTransactionAware;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.messaging;
+package co.cask.cdap.messaging.context;
 
 import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
@@ -42,7 +42,7 @@ public class BasicMessagingAdmin implements MessagingAdmin {
 
   @Override
   public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
-    createTopic(topic, Collections.<String, String>emptyMap());
+    createTopic(topic, Collections.emptyMap());
   }
 
   @Override
