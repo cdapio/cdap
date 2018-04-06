@@ -1115,6 +1115,28 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return newRecords;
   }
 
+  /**
+   * Get historical runs
+   *
+   * @param namespaces namspaces
+   * @param startTime start time
+   * @param endTime end time
+   * @param limit limit of runs
+   * @return runs
+   */
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(final Set<String> namespaces,
+                                                            final long startTime, final long endTime, final int limit) {
+    MDSKey keyPrefix = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
+    //return all records in each namespace
+    Map<ProgramRunId, RunRecordMeta> runs = new HashMap<>();
+    namespaces.stream()
+      .map(ns -> getProgramRunIdMap(listKV(new MDSKey.Builder(keyPrefix).add(ns).build(), null,
+                                           RunRecordMeta.class, limit, key -> true,
+                                           meta -> meta.getStopTs() != null && meta.getStopTs() >= startTime
+                                             && meta.getStartTs() < endTime))).forEach(runs::putAll);
+    return runs;
+  }
+
   private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(MDSKey historyKey, ProgramRunStatus status,
                                                              final long startTime, final long endTime, int limit,
                                                              @Nullable Predicate<MDSKey> keyFiter,
