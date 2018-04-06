@@ -53,6 +53,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -60,6 +61,8 @@ import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
@@ -75,6 +78,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -90,21 +94,33 @@ import java.util.Map;
  * The publish timestamp of the last message processed from the topics will also be inconsistent from the Jobs in the
  * JobQueue.
  */
-public class StoreScanner {
+public class StoreScanner extends AbstractIdleService {
 
   private static final Gson GSON = new GsonBuilder().create();
 
   private final CConfiguration cConf;
+  private final ZKClientService zkClientService;
   private final Store store;
 
   @Inject
-  public StoreScanner(CConfiguration cConf, Store store) {
+  public StoreScanner(CConfiguration cConf, ZKClientService zkClientService, Store store) {
     this.cConf = cConf;
+    this.zkClientService = zkClientService;
     this.store = store;
   }
 
   public Store getStore() {
     return store;
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    zkClientService.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    zkClientService.stopAndWait();
   }
 
   private static Injector createInjector() throws Exception {
@@ -128,7 +144,7 @@ public class StoreScanner {
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(StoreScanner.class.getName()).getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
@@ -191,6 +207,7 @@ public class StoreScanner {
     }
 
     StoreScanner scanner = createScanner();
+    scanner.startAndWait();
     Store store = scanner.getStore();
     List<String> namespaces = ImmutableList.of("ns1", "ns2", "ns3", "ns4", "ns5", "ns6");
 
@@ -213,16 +230,18 @@ public class StoreScanner {
       }
 
       String ns = namespaces.get(i % (2 * namespaces.size()) / 2);
-      ProgramRunId runId = new ProgramRunId(ns, "app", ProgramType.WORKFLOW, "program", Integer.toString(i / 2));
+      ProgramId programId = new ProgramId(ns, "app", ProgramType.WORKFLOW, "program");
+      String runId = Integer.toString(i / 2);
       if (i % 2 == 0) {
-        store.setProvisioning(runId, i, Collections.emptyMap(), Collections.emptyMap(), Bytes.toBytes(i),
-                              new ArtifactId("art", new ArtifactVersion("v1"), ArtifactScope.USER));
+        store.setStart(programId, runId, i, "twill", ImmutableMap.<String, String>of(),
+                       ImmutableMap.<String, String>of(), Bytes.toBytes(i));
       } else {
-        store.setStop(runId, i, ProgramRunStatus.KILLED, Bytes.toBytes(i));
+        store.setStop(programId, runId, i, ProgramRunStatus.KILLED, Bytes.toBytes(i));
       }
     }
     Map<ProgramRunId, RunRecordMeta> runs =
       scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), number - 10, number, 100);
     System.out.println("Runs: " + runs.values());
+    scanner.stopAndWait();
   }
 }
