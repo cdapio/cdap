@@ -60,6 +60,51 @@ Deprecated and Removed Features
  	- Removed methods to add, update schedules using ScheduleInstanceConfiguration in ScheduleClient, use methods taking ScheduleDetail as parameter instead.
 
 
+`Release 4.3.4 <http://docs.cask.co/cdap/4.3.4/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13116` - Macro enabled all fields in the HTTP Callback plugin
+
+- :cask-issue:`CDAP-13119` - Optimized the planner to reduce the amount of temporary data required in certain types of mapreduce pipelines. 
+
+- :cask-issue:`CDAP-13122` - Minor optimization to reduce the number of mappers used to read intermediate data in mapreduce pipelines
+
+- :cask-issue:`CDAP-13139` - Improves the schema generation for database sources.
+
+- :cask-issue:`CDAP-13179` - Automatic restart of long running program types (Service and Flow) upon application master process failure in YARN
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-12875` - Fixed a bug that caused errors in the File source if it read parquet files that were not generated through Hadoop.
+
+- :cask-issue:`CDAP-13110` - Fixed an issue where a dataset's class loader was closed before the dataset itself, preventing the dataset from closing properly.
+
+- :cask-issue:`CDAP-13120` - Fixed a bug that caused directories to be left around if a workflow used a partitioned fileset as a local dataset
+
+- :cask-issue:`CDAP-13123` - Fixed a bug that caused a hive Explore query on Streams to not work.
+
+- :cask-issue:`CDAP-13129` - Fixed a planner bug to ensure that sinks are never placed in two different mapreduce phases in the same pipeline.
+
+- :cask-issue:`CDAP-13158` - Fixed a race condition when running multiple spark programs concurrently at a Workflow fork that can lead to workflow failure
+
+- :cask-issue:`CDAP-13171` - Fixed an issue with creating a namespace if the namespace principal is not a member of the namespace home's group.
+
+- :cask-issue:`CDAP-13191` - Fixed a bug that caused completed run records to be missed when storing run state, resulting in misleading log messages about ignoring killed states.
+
+- :cask-issue:`CDAP-13192` - Fixed a bug in FileBatchSource that prevented ignoreFolders property from working with avro and parquet inputs
+
+- :cask-issue:`CDAP-13205` - Fixed an issue where inconsistencies in the schedulestore caused scheduler service to keep exiting.
+
+- :cask-issue:`CDAP-13217` - Fixed an issue that would cause changes in program state to be ignored if the program no longer existed, resulting in the run record corrector repeatedly failing to correct run records
+
+- :cask-issue:`CDAP-13218` - Fixed the state of Workflow, MapReduce, and Spark program to be reflected correctly as KILLED state when user explicitly terminated the running program
+
+- :cask-issue:`CDAP-13223` - Fixed directive syntaxes in point and click interactions for some date formats 
+
 `Release 4.3.3 <http://docs.cask.co/cdap/4.3.3/index.html>`__
 =============================================================
 Improvements
