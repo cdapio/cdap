@@ -19,6 +19,8 @@ import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
 import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapred.JobConf
+import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -36,7 +38,10 @@ class DefaultSparkExecutionContext(sparkClassLoader: SparkClassLoader, localizeR
   override protected def saveAsNewAPIHadoopDataset[K: ClassManifest, V: ClassManifest](sc: SparkContext,
                                                                                        conf: Configuration,
                                                                                        rdd: RDD[(K, V)]): Unit = {
-    rdd.saveAsNewAPIHadoopDataset(conf)
+    // Spark expects the conf to be the job configuration, and to contain the credentials
+    val jobConf = new JobConf(conf)
+    jobConf.setCredentials(UserGroupInformation.getCurrentUser.getCredentials)
+    rdd.saveAsNewAPIHadoopDataset(jobConf)
   }
 
   override protected def createInterpreter(settings: Settings, classDir: File,
