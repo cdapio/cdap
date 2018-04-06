@@ -421,13 +421,10 @@ public class DefaultStore implements Store {
    * @return
    */
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(final Set<String> namespaces,
-                                                            final long startTime, final long endTime, final int limit) {
-    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
-      @Override
-      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
-        return getAppMetadataStore(context).getHistoricalRuns(namespaces, startTime, endTime, limit);
-      }
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<String> namespaces,
+                                                            final long startTime, final long endTime, int limit) {
+    return Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getHistoricalRuns(namespaces, startTime, endTime, limit);
     });
   }
 

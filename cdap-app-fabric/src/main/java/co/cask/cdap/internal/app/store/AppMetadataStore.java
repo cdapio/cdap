@@ -1052,20 +1052,12 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     MDSKey start = new MDSKey.Builder(keyPrefix).add(getInvertedTsScanKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(keyPrefix).add(getInvertedTsScanKeyPart(0)).build();
     //return all records (successful and failed)
-    return getProgramRunIdMap(listKV(start, stop, RunRecordMeta.class, limit, new Predicate<MDSKey>() {
-      @Override
-      public boolean apply(@Nullable MDSKey key) {
-        MDSKey.Splitter splitter = key.split();
-        splitter.skipString();
-        String namesapce = splitter.getString();
-        return namespaces.contains(namesapce);
-      }
-    }, new Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(@Nullable RunRecordMeta meta) {
-        return meta.getStopTs() != null && meta.getStopTs() >= startTime;
-      }
-    }));
+    return getProgramRunIdMap(listKV(start, stop, RunRecordMeta.class, limit, key -> {
+      MDSKey.Splitter splitter = key.split();
+      splitter.skipString();
+      String namesapce = splitter.getString();
+      return namespaces.contains(namesapce);
+    }, meta -> meta.getStopTs() != null && meta.getStopTs() >= startTime));
   }
 
   private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(MDSKey historyKey, ProgramRunStatus status,

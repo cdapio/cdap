@@ -53,7 +53,6 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -61,7 +60,6 @@ import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -230,13 +228,12 @@ public class StoreScanner extends AbstractIdleService {
       }
 
       String ns = namespaces.get(i % (2 * namespaces.size()) / 2);
-      ProgramId programId = new ProgramId(ns, "app", ProgramType.WORKFLOW, "program");
-      String runId = Integer.toString(i / 2);
+      ProgramRunId runId = new ProgramRunId(ns, "app", ProgramType.WORKFLOW, "program", Integer.toString(i / 2));
       if (i % 2 == 0) {
-        store.setStart(programId, runId, i, "twill", ImmutableMap.<String, String>of(),
-                       ImmutableMap.<String, String>of(), Bytes.toBytes(i));
+        store.setProvisioning(runId, i, Collections.emptyMap(), Collections.emptyMap(), Bytes.toBytes(i),
+                              new ArtifactId("art", new ArtifactVersion("v1"), ArtifactScope.USER));
       } else {
-        store.setStop(programId, runId, i, ProgramRunStatus.KILLED, Bytes.toBytes(i));
+        store.setStop(runId, i, ProgramRunStatus.KILLED, Bytes.toBytes(i));
       }
     }
     Map<ProgramRunId, RunRecordMeta> runs =
