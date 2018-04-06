@@ -19,6 +19,7 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.worker.Worker;
@@ -67,9 +68,10 @@ public interface Store extends RuntimeStore {
    * @param systemArgs the system arguments for this program run
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
+   * @param artifactId artifact id used to create the application the program belongs to
    */
   void setProvisioning(ProgramRunId id, long startTime, Map<String, String> runtimeArgs,
-                       Map<String, String> systemArgs, byte[] sourceId);
+                       Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId);
 
   /**
    * Persists program run cluster status to {@link ProgramRunClusterStatus#PROVISIONED}.

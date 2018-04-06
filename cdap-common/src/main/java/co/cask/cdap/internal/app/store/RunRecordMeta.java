@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.ProgramRunCluster;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -50,15 +51,26 @@ public final class RunRecordMeta extends RunRecord {
   @Nullable
   private final byte[] sourceId;
 
+  @SerializedName("artifactId")
+  @Nullable
+  private final ArtifactId artifactId;
+
+  @SerializedName("principal")
+  @Nullable
+  private final String principal;
+
   private RunRecordMeta(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
                         ProgramRunStatus status, @Nullable Map<String, String> properties,
                         @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
-                        ProgramRunCluster cluster, byte[] sourceId) {
+                        ProgramRunCluster cluster, byte[] sourceId,
+                        @Nullable ArtifactId artifactId, @Nullable String principal) {
     super(programRunId.getRun(), startTs, runTs, stopTs, status, properties, cluster);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
     this.sourceId = sourceId;
+    this.artifactId = artifactId;
+    this.principal = principal;
   }
 
   @Nullable
@@ -79,6 +91,20 @@ public final class RunRecordMeta extends RunRecord {
     return programRunId;
   }
 
+  /**
+   * returns the artifact id of the application the program belongs to.
+   * @return artifact id, null only for older run records
+   */
+  @Nullable
+  public ArtifactId getArtifactId() {
+    return artifactId;
+  }
+
+  @Nullable
+  public String getPrincipal() {
+    return principal;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -96,13 +122,16 @@ public final class RunRecordMeta extends RunRecord {
       Objects.equal(this.getStatus(), that.getStatus()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
       Objects.equal(this.getTwillRunId(), that.getTwillRunId()) &&
-      Arrays.equals(this.getSourceId(), that.getSourceId());
+      Arrays.equals(this.getSourceId(), that.getSourceId()) &&
+      Objects.equal(this.getArtifactId(), that.getArtifactId()) &&
+      Objects.equal(this.principal, that.principal);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(),
-                            getStatus(), getProperties(), getTwillRunId(), Arrays.hashCode(getSourceId()));
+                            getStatus(), getProperties(), getTwillRunId(), Arrays.hashCode(getSourceId()),
+                            getArtifactId(), getPrincipal());
   }
 
   @Override
@@ -116,6 +145,8 @@ public final class RunRecordMeta extends RunRecord {
       .add("twillrunid", getTwillRunId())
       .add("properties", getProperties())
       .add("sourceId", getSourceId() == null ? null : Bytes.toHexString(getSourceId()))
+      .add("artifactId", getArtifactId() == null ? null : getArtifactId())
+      .add("principal", getPrincipal() == null ? null : getPrincipal())
       .toString();
   }
 
@@ -142,6 +173,8 @@ public final class RunRecordMeta extends RunRecord {
     private String twillRunId;
     private Map<String, String> systemArgs;
     private byte[] sourceId;
+    private String principal;
+    private ArtifactId artifactId;
 
     private Builder() {
       systemArgs = new HashMap<>();
@@ -153,6 +186,8 @@ public final class RunRecordMeta extends RunRecord {
       twillRunId = record.getTwillRunId();
       systemArgs = new HashMap<>(record.getSystemArgs());
       sourceId = record.getSourceId();
+      principal = record.getPrincipal();
+      artifactId = record.getArtifactId();
     }
 
     public Builder setProgramRunId(ProgramRunId programRunId) {
@@ -178,6 +213,16 @@ public final class RunRecordMeta extends RunRecord {
       return this;
     }
 
+    public Builder setPrincipal(String principal) {
+      this.principal = principal;
+      return this;
+    }
+
+    public Builder setArtifactId(ArtifactId artifactId) {
+      this.artifactId = artifactId;
+      return this;
+    }
+
     public RunRecordMeta build() {
       if (programRunId == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
@@ -185,8 +230,11 @@ public final class RunRecordMeta extends RunRecord {
       if (sourceId == null) {
         throw new IllegalArgumentException("Run record source id must be specified.");
       }
+      // we are not validating artifactId for null,
+      // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
+      // we don't want to throw exception while processing them
       return new RunRecordMeta(programRunId, startTs, runTs, stopTs, status, properties, systemArgs, twillRunId,
-                               cluster, sourceId);
+                               cluster, sourceId, artifactId, principal);
     }
   }
 }

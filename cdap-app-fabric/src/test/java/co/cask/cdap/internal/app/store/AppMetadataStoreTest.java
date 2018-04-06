@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
@@ -44,6 +45,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +66,7 @@ public class AppMetadataStoreTest {
   private static TransactionExecutorFactory txExecutorFactory;
   private static final List<ProgramRunStatus> STOP_STATUSES =
     ImmutableList.of(ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.KILLED);
+  private static final ArtifactId ARTIFACT_ID = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
 
   private final AtomicInteger sourceId = new AtomicInteger();
   private final AtomicLong runIdTime = new AtomicLong();
@@ -78,12 +81,15 @@ public class AppMetadataStoreTest {
   }
 
   private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
+
     metadataStoreDataset.recordProgramProvisioning(programRunId,
-                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null, null,
-                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                   RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS), null,
+                                                   new HashMap<>(),
+                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                   ARTIFACT_ID);
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-    metadataStoreDataset.recordProgramStart(programRunId, null, null,
+    metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
   }
 
@@ -276,11 +282,11 @@ public class AppMetadataStoreTest {
     txnl.execute(() -> {
       metadataStoreDataset.recordProgramProvisioning(programRunId,
                                                      RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
-                                                     null, null,
-                                                     AppFabricTestHelper.createSourceId(startSourceId));
+                                                     null, new HashMap<>(),
+                                                     AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                     AppFabricTestHelper.createSourceId(startSourceId + 1));
-      metadataStoreDataset.recordProgramStart(programRunId, null, null,
+      metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
                                               AppFabricTestHelper.createSourceId(startSourceId + 2));
       metadataStoreDataset.recordProgramRunning(programRunId, RunIds.getTime(runId, TimeUnit.SECONDS),
                                                 null, AppFabricTestHelper.createSourceId(runningSourceId));
@@ -382,7 +388,6 @@ public class AppMetadataStoreTest {
     // Add some run records
     final Set<String> expected = new TreeSet<>();
     final Set<String> expectedHalf = new TreeSet<>();
-
     final Set<ProgramRunId> programRunIdSet = new HashSet<>();
     final Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
     for (int i = 0; i < 100; ++i) {

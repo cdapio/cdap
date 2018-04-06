@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
@@ -95,7 +96,9 @@ public class MockLogReader implements LogReader {
   private void setStartAndRunning(final ProgramRunId id, final long startTime,
                                   final Map<String, String> runtimeArgs,
                                   final Map<String, String> systemArgs) {
-    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    ArtifactId artifactId = id.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),
+                          artifactId);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));

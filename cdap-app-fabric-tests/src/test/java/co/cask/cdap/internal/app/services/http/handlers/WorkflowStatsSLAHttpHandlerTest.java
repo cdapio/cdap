@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.WorkflowApp;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
@@ -73,18 +74,18 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     metricStore = getInjector().getInstance(MetricStore.class);
   }
 
-  private void setStartAndRunning(final ProgramId id, final String pid, final long startTime) {
+  private void setStartAndRunning(final ProgramId id, final String pid, final long startTime, ArtifactId artifactId) {
     setStartAndRunning(id, pid, startTime, ImmutableMap.<String, String>of(),
-                       ImmutableMap.<String, String>of());
+                       ImmutableMap.<String, String>of(), artifactId);
 
   }
 
 
   private void setStartAndRunning(final ProgramId id, final String pid, final long startTime,
                                   final Map<String, String> runtimeArgs,
-                                  final Map<String, String> systemArgs) {
+                                  final Map<String, String> systemArgs, ArtifactId artifactId) {
     store.setProvisioning(id.run(pid), startTime, runtimeArgs, systemArgs,
-                          AppFabricTestHelper.createSourceId(++sourceId));
+                          AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id.run(pid), null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
@@ -100,7 +101,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     ProgramId workflowProgram = WORKFLOW_APP.workflow(workflowName);
     ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
     ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
-
+    ArtifactId artifactId = WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
     // Time from program starting to program running
     int startDelaySecs = 1;
 
@@ -113,7 +114,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       RunId workflowRunId = RunIds.generate(currentTimeMillis);
       long workflowStartTimeSecs = RunIds.getTime(workflowRunId, TimeUnit.SECONDS);
       setStartAndRunning(workflowProgram, workflowRunId.getId(),
-                           workflowStartTimeSecs);
+                           workflowStartTimeSecs, artifactId);
 
       // MR job starts 2 seconds after workflow started
       RunId mapreduceRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(2));
@@ -123,7 +124,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
       workflowStartTimeSecs = RunIds.getTime(mapreduceRunid, TimeUnit.SECONDS);
       setStartAndRunning(mapreduceProgram, mapreduceRunid.getId(), workflowStartTimeSecs,
-                         ImmutableMap.<String, String>of(), systemArgs);
+                         ImmutableMap.<String, String>of(), systemArgs, artifactId);
 
       store.setStop(mapreduceProgram.run(mapreduceRunid),
                     // map-reduce job ran for 17 seconds
@@ -139,7 +140,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
         workflowStartTimeSecs = RunIds.getTime(sparkRunid, TimeUnit.SECONDS);
         setStartAndRunning(sparkProgram, sparkRunid.getId(), workflowStartTimeSecs,
-                           ImmutableMap.<String, String>of(), systemArgs);
+                           ImmutableMap.<String, String>of(), systemArgs, artifactId);
 
         // spark job runs for 38 seconds
         long stopTime = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 58;
@@ -222,8 +223,8 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     WorkflowId workflowProgram = WORKFLOW_APP.workflow(workflowName);
     ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
     ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
-
-    List<RunId> runIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 13);
+    ArtifactId artifactId = WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    List<RunId> runIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 13, artifactId);
 
     String request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=%s&interval=%s",
                                    Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
@@ -276,8 +277,9 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     WorkflowId workflowProgram = WORKFLOW_APP.workflow(workflowName);
     ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
     ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
+    ArtifactId artifactId = WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
-    List<RunId> workflowRunIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 2);
+    List<RunId> workflowRunIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 2, artifactId);
     RunId workflowRun1 = workflowRunIdList.get(0);
     RunId workflowRun2 = workflowRunIdList.get(1);
 
@@ -308,7 +310,8 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
    * specific run's spark job.
    */
   private List<RunId> setupRuns(WorkflowId workflowProgram, ProgramId mapreduceProgram,
-                                ProgramId sparkProgram, Store store, int count) throws Exception {
+                                ProgramId sparkProgram, Store store, int count,
+                                ArtifactId artifactId) throws Exception {
     List<RunId> runIdList = new ArrayList<>();
     long startTime = System.currentTimeMillis();
     long currentTimeMillis;
@@ -322,8 +325,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       RunId workflowRunId = RunIds.generate(currentTimeMillis);
       runIdList.add(workflowRunId);
       long workflowStartTimeSecs = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
-      setStartAndRunning(workflowProgram, workflowRunId.getId(), workflowStartTimeSecs
-      );
+      setStartAndRunning(workflowProgram, workflowRunId.getId(), workflowStartTimeSecs, artifactId);
 
       // MR job starts 2 seconds after workflow started
       RunId mapreduceRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(2));
@@ -335,7 +337,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
       workflowStartTimeSecs = RunIds.getTime(mapreduceRunid, TimeUnit.SECONDS);
       setStartAndRunning(mapreduceProgram, mapreduceRunid.getId(), workflowStartTimeSecs,
-                         ImmutableMap.<String, String>of(), systemArgs);
+                         ImmutableMap.<String, String>of(), systemArgs, artifactId);
       store.setStop(mapreduceProgram.run(mapreduceRunid.getId()),
                     // map-reduce job ran for 17 seconds
                     TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 19,
@@ -361,7 +363,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       RunId sparkRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(20));
       workflowStartTimeSecs = RunIds.getTime(sparkRunid, TimeUnit.SECONDS);
       setStartAndRunning(sparkProgram, sparkRunid.getId(), workflowStartTimeSecs,
-                         ImmutableMap.<String, String>of(), systemArgs);
+                         ImmutableMap.<String, String>of(), systemArgs, artifactId);
 
       // spark job runs for 38 seconds
       long stopTime = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 58;

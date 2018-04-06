@@ -37,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -148,7 +149,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     // Publish the program's starting state
     RunId runId = ProgramRunners.getRunId(options);
     String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    programStateWriter.start(program.getId().run(runId), options, twillRunId);
+    programStateWriter.start(program.getId().run(runId), options, twillRunId,
+                             program.getApplicationSpecification().getArtifactId());
 
     ProgramController controller;
     try {
