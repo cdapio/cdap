@@ -136,7 +136,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       List<ReportStatusInfo> reportStatuses = new ArrayList<>();
       // The index of the report directory to start reading from, initialized to the given offset
       int idx = offset;
-      // TODO: use cache store reportIdDirs
+      // TODO: [CDAP-13292] use cache store reportIdDirs
       List<Location> reportIdDirs = new ArrayList<>(reportFilesetLocation.list());
       // sort reportIdDirs directories by the creation time of report ID
       reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS),
@@ -215,9 +215,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       List<String> reportRecords = new ArrayList<>();
       long lineCount = 0;
       Location reportDir = reportIdDir.append(REPORT_DIR);
-      // TODO: assume only one report file for now
+      // TODO: [CDAP-13290] reports should be in avro format instead of json text;
+      // TODO: [CDAP-13291] need to support reading multiple report files
       Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".json")).findFirst();
-      // TODO: use cache to store content of the reports
+      // TODO: [CDAP-13292] use cache to store content of the reports
       // Read the report file and add lines starting from the position of offset to the result until the result reaches
       // the limit
       if (reportFile.isPresent()) {
