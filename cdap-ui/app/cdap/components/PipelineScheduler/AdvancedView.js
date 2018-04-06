@@ -19,6 +19,8 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {setStateFromCron} from 'components/PipelineScheduler/Store/ActionCreator';
 import {ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
+import ProfilesForSchedule from 'components/PipelineScheduler/ProfilesForSchedule';
+import MaxConcurrentRuns from 'components/PipelineScheduler/BasicView/MaxConcurrentRuns';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineScheduler.advanced';
@@ -72,7 +74,7 @@ const ConnectedCronInput = connect(
   mapDispatchToCronInputProps
 )(CronInput);
 
-export default function AdvancedView() {
+export default function AdvancedView({isDetailView}) {
   return (
     <div className="schedule-type-content">
       <div className="schedule-advanced-header">
@@ -101,6 +103,13 @@ export default function AdvancedView() {
           colWidth={3}
         />
       </div>
+      <MaxConcurrentRuns />
+      {
+        isDetailView ? <ProfilesForSchedule /> : null
+      }
     </div>
   );
 }
+AdvancedView.propTypes = {
+  isDetailView: PropTypes.bool
+};

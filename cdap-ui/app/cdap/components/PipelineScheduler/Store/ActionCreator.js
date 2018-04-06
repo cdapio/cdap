@@ -17,7 +17,16 @@
 import moment from 'moment';
 import {isNumeric} from 'services/helpers';
 import {wholeArrayIsNumeric} from 'services/helpers';
-import PipelineSchedulerStore, {INTERVAL_OPTIONS, SCHEDULE_VIEWS, DEFAULT_SCHEDULE_OPTIONS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
+import PipelineSchedulerStore, {
+  INTERVAL_OPTIONS,
+  SCHEDULE_VIEWS,
+  DEFAULT_SCHEDULE_OPTIONS,
+  ACTIONS as PipelineSchedulerActions
+} from 'components/PipelineScheduler/Store';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import PipelineDetailStore from 'components/PipelineDetails/store';
+import {MyScheduleApi} from 'api/schedule';
+import {GLOBALS} from 'services/global-constants';
 
 function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
   let cronValues = cron.split(' ');
@@ -162,8 +171,53 @@ function updateCron() {
   });
 }
 
+function setSelectedProfile(selectedProfile) {
+  PipelineSchedulerStore.dispatch({
+    type: PipelineSchedulerActions.SET_SELECTED_PROFILE,
+    payload: {
+      selectedProfile
+    }
+  });
+}
+
+function getTimeBasedSchedule() {
+  let {name: appId} = PipelineDetailStore.getState();
+  MyScheduleApi
+    .get({
+      namespace: getCurrentNamespace(),
+      appId,
+      scheduleName: GLOBALS.defaultScheduleId
+    })
+    .subscribe(
+      (currentBackendSchedule) => {
+        PipelineSchedulerStore.dispatch({
+          type: PipelineSchedulerActions.SET_CURRENT_BACKEND_SCHEDULE,
+          payload: {
+            currentBackendSchedule
+          }
+        });
+        setStateFromCron();
+      },
+      (err) => {
+        console.log('Failed to fetch dataPipelineSchedule Schedule from backend: ', err);
+      }
+    );
+}
+
+function setScheduleStatus(scheduleStatus) {
+  PipelineSchedulerStore.dispatch({
+    type: PipelineSchedulerActions.SET_SCHEDULE_STATUS,
+    payload: {
+      scheduleStatus
+    }
+  });
+}
+
 export {
   setStateFromCron,
+  setSelectedProfile,
+  getTimeBasedSchedule,
   getCronFromState,
-  updateCron
+  updateCron,
+  setScheduleStatus
 };
