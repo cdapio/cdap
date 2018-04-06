@@ -17,9 +17,7 @@
 package co.cask.cdap.report;
 
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
@@ -37,10 +35,8 @@ import co.cask.cdap.report.proto.ReportList;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ValueFilter;
-import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -57,17 +53,19 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -103,20 +101,29 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
     }.getType();
-    private static final int MAX_LIMIT = 10000;
     private static final String DEFAULT_LIMIT = "10000";
     private SparkSession sparkSession;
 
+    public static final String READ_LIMIT = "readLimit";
+    public static final String THREAD_POOL_SIZE = "poolSize";
     public static final String START_FILE = "_START";
     public static final String REPORT_DIR = "reports";
     public static final String COUNT_FILE = "COUNT";
     public static final String SUCCESS_FILE = "_SUCCESS";
     public static final String FAILURE_FILE = "_FAILURE";
 
+    private int readLimit;
+    private ExecutorService reportGenerationExecutor;
+
     @Override
     public void initialize(SparkHttpServiceContext context) throws Exception {
       super.initialize(context);
       sparkSession = new SQLContext(getContext().getSparkContext()).sparkSession();
+      String readLimitString = context.getRuntimeArguments().get(READ_LIMIT);
+      readLimit = readLimitString == null ? 10000 : Integer.valueOf(readLimitString);
+      String threadPoolSizeString = context.getRuntimeArguments().get(THREAD_POOL_SIZE);
+      reportGenerationExecutor =
+        Executors.newFixedThreadPool(threadPoolSizeString == null ? 3 : Integer.valueOf(threadPoolSizeString));
     }
 
     @GET
@@ -132,8 +139,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       // TODO: use cache store reportIdDirs
       List<Location> reportIdDirs = new ArrayList<>(reportFilesetLocation.list());
       // sort reportIdDirs directories by the creation time of report ID
-      Collections.sort(reportIdDirs, (loc1, loc2) -> Long.compare(ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS),
-                                                                  ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS)));
+      reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS),
+                                                     ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS)));
+
       // Keep add report status information to the list until the index is no longer smaller than
       // the number of report directories or the list is reaching the given limit
       while (idx < reportIdDirs.size() && reportStatuses.size() < limit) {
@@ -160,7 +168,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
       // Read the report request from _START file, which was written at the beginning of report generation
       String reportRequest =
-        new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), Charsets.UTF_8);
+        new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
       responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportIdDir), reportRequest));
     }
 
@@ -179,8 +187,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         responder.sendError(400, "limit must be a positive integer");
         return;
       }
-      if (limit > MAX_LIMIT) {
-        responder.sendError(400, "limit must cannot be larger than " + MAX_LIMIT);
+      if (limit > readLimit) {
+        responder.sendError(400, "limit must cannot be larger than " + readLimit);
         return;
       }
       Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
@@ -207,37 +215,30 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       List<String> reportRecords = new ArrayList<>();
       long lineCount = 0;
       Location reportDir = reportIdDir.append(REPORT_DIR);
-      Location reportFile = null;
       // TODO: assume only one report file for now
-      for (Location file : reportDir.list()) {
-        if (file.getName().endsWith(".json")) {
-          reportFile = file;
-          break;
-        }
-      }
-      if (reportFile == null) {
-        responder.sendError(500, "No files found for report " + reportId);
-        return;
-      }
+      Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".json")).findFirst();
       // TODO: use cache to store content of the reports
       // Read the report file and add lines starting from the position of offset to the result until the result reaches
       // the limit
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(reportFile.getInputStream()))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          // skip lines before the offset
-          if (lineCount++ < offset) {
-            continue;
+      if (reportFile.isPresent()) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(reportFile.get().getInputStream(),
+                                                                          StandardCharsets.UTF_8))) {
+          String line;
+          while ((line = br.readLine()) != null) {
+            // skip lines before the offset
+            if (lineCount++ < offset) {
+              continue;
+            }
+            if (reportRecords.size() == limit) {
+              break;
+            }
+            reportRecords.add(line);
           }
-          if (reportRecords.size() == limit) {
-            break;
-          }
-          reportRecords.add(line);
         }
       }
       // Get the total number of records from the COUNT file
       String total =
-        new String(ByteStreams.toByteArray(reportIdDir.append(COUNT_FILE).getInputStream()), Charsets.UTF_8);
+        new String(ByteStreams.toByteArray(reportIdDir.append(COUNT_FILE).getInputStream()), StandardCharsets.UTF_8);
       responder.sendJson(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords));
     }
 
@@ -245,7 +246,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     @Path("/reports")
     public void executeReportGeneration(HttpServiceRequest request, HttpServiceResponder responder)
       throws IOException {
-      String requestJson = Charsets.UTF_8.decode(request.getContent()).toString();
+      String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       LOG.debug("Received report generation request {}", requestJson);
       ReportGenerationRequest reportRequest;
       try {
@@ -271,35 +272,54 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         return;
       }
       // Save the report generation request in the _START file
-      try (PrintWriter writer = new PrintWriter(startFile.getOutputStream())) {
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(startFile.getOutputStream(),
+                                                                       StandardCharsets.UTF_8), true)) {
         writer.write(requestJson);
       }
       LOG.debug("Wrote to startFile {}", startFile.toURI());
-      // Generate the report asynchronously in a new thread
-      Executors.newSingleThreadExecutor().submit(() -> {
-        try {
-          generateReport(reportRequest, reportIdDir);
-        } catch (Throwable t) {
-          LOG.error("Failed to generate report {}", reportId, t);
-          try {
-            // Write to the failure file in case of any exception occurs during report generation
-            Location failureFile = reportIdDir.append(FAILURE_FILE);
-            if (!failureFile.createNew()) {
-              reportIdDir.delete();
-              responder.sendError(500, "Failed to create a _FAILURE file for report " + reportId);
-              return;
-            }
-            try (PrintWriter writer = new PrintWriter(failureFile.getOutputStream())) {
-              writer.println(t.toString());
-              t.printStackTrace(writer);
-            }
-          } catch (Throwable t2) {
-            LOG.error("Failed to write cause of failure to file for report {}", reportId, t2);
-            throw new RuntimeException("Failed to write cause of failure to file for report " + reportId, t2);
-          }
-        }
+      // Generate the report asynchronously
+      if (reportGenerationExecutor == null) {
+        throw new RuntimeException("reportGenerationExecutor is null");
+      }
+      reportGenerationExecutor.execute(() -> {
+        tryGenerateReport(reportRequest, reportIdDir, reportId);
       });
       responder.sendJson(200, ImmutableMap.of("id", reportId));
+    }
+
+    /**
+     * Delegates report generation to {@link #generateReport(ReportGenerationRequest, Location)} and catch any
+     * errors in report generation and write them to a _FAILURE file.
+     *
+     * @param reportRequest the request to generate report
+     * @param reportIdDir the location of the directory which will be the parent directory of _FAILURE file
+     *                    and will be passed to {@link #generateReport(ReportGenerationRequest, Location)}
+     * @param reportId the ID of the report being generated
+     */
+    private void tryGenerateReport(ReportGenerationRequest reportRequest, Location reportIdDir, String reportId) {
+      try {
+        generateReport(reportRequest, reportIdDir);
+      } catch (Throwable t) {
+        LOG.error("Failed to generate report {}", reportId, t);
+        try {
+          // Write to the failure file in case of any exception occurs during report generation
+          Location failureFile = reportIdDir.append(FAILURE_FILE);
+          if (!failureFile.createNew()) {
+            // delete the reportIdDir in case of failing to create failure file, otherwise the report generation job
+            // will be seen as still running
+            reportIdDir.delete();
+            LOG.error("Failed to create a _FAILURE file for report {}", reportId);
+            return;
+          }
+          try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(failureFile.getOutputStream(),
+                                                                           StandardCharsets.UTF_8), true)) {
+            writer.println(t.toString());
+            t.printStackTrace(writer);
+          }
+        } catch (Throwable t2) {
+          LOG.error("Failed to write cause of failure to file for report {}", reportId, t2);
+        }
+      }
     }
 
     /**
@@ -308,9 +328,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
      * and send the paths of qualified run meta files to {@link ReportGenerationHelper#generateReport}
      * that actually launches a Spark job to generate reports.
      *
-     * @param reportRequest request
-     * @param reportIdDir location of the directory where the report files directory, COUNT file,
-     *                      and _SUCCESS file will be created.
+     * @param reportRequest the request to generate report
+     * @param reportIdDir the location of the directory where the report files directory, COUNT file,
+     *                    and _SUCCESS file will be created.
      */
     private void generateReport(ReportGenerationRequest reportRequest, Location reportIdDir) throws IOException {
       Location baseLocation = Transactionals.execute(getContext(), context -> {
