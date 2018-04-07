@@ -276,7 +276,7 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException e) {
       // Expected
     }
-    flowManager.waitForStatus(false);
+    flowManager.waitForStopped(10, TimeUnit.SECONDS);
 
     authorizer.grant(Authorizable.fromEntityId(streamId1), ALICE, ImmutableSet.of(Action.READ));
     flowManager.start();
@@ -847,7 +847,7 @@ public class AuthorizationTest extends TestBase {
     // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
-    flowManager.waitForStatus(false);
+    flowManager.waitForStopped(10, TimeUnit.SECONDS);
 
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "store");
 
@@ -1665,7 +1665,7 @@ public class AuthorizationTest extends TestBase {
       }
     }, 5, TimeUnit.MINUTES, "Not all program runs have failed status. Expected all run status to be failed");
 
-    programManager.waitForStatus(false);
+    programManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
 

@@ -2895,7 +2895,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ServiceManager serviceManager = appManager.getServiceManager(ServiceApp.Name.SERVICE_NAME).start();
 
     // Wait service startup
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     URL url = new URL(serviceManager.getServiceURL(), "name");
     HttpRequest httpRequest = HttpRequest.post(url).withBody("bob").build();

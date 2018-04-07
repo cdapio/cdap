@@ -35,7 +35,9 @@ import org.junit.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link PurchaseApp}.
@@ -114,7 +116,7 @@ public class PurchaseAppTest extends TestBase {
       appManager.getServiceManager(PurchaseHistoryService.SERVICE_NAME).start();
 
     // Wait for service startup
-    purchaseHistoryServiceManager.waitForStatus(true);
+    purchaseHistoryServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Test service to retrieve a customer's purchase history
     URL url = new URL(purchaseHistoryServiceManager.getServiceURL(15, TimeUnit.SECONDS), "history/joe");
@@ -135,13 +137,14 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromPurchaseHistory.getLastName(), "bernard");
   }
 
-  private ServiceManager getUserProfileServiceManager(ApplicationManager appManager) throws InterruptedException {
+  private ServiceManager getUserProfileServiceManager(ApplicationManager appManager)
+    throws InterruptedException, TimeoutException, ExecutionException {
     // Start UserProfileService
     ServiceManager userProfileServiceManager =
       appManager.getServiceManager(UserProfileServiceHandler.SERVICE_NAME).start();
 
     // Wait for service startup
-    userProfileServiceManager.waitForStatus(true);
+    userProfileServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     return userProfileServiceManager;
   }
 }

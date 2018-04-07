@@ -87,6 +87,11 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
     }, timeout, timeoutUnit);
   }
 
+  @Override
+  public void waitForStopped(long timeout, TimeUnit timeUnit) throws InterruptedException, TimeoutException,
+    ExecutionException {
+    Tasks.waitFor(false, () -> isRunning(), timeout, timeUnit);
+  }
 
   @Override
   public void waitForStatus(boolean status) throws InterruptedException {

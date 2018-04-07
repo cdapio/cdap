@@ -195,7 +195,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     input.send("21");
 
     ServiceManager serviceManager = applicationManager.getServiceManager("CountService").start();
-    serviceManager.waitForStatus(true, 2, 1);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     Assert.assertEquals("1", new Gson().fromJson(
       callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
@@ -254,7 +254,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, history.size());
 
     countService.start();
-    countService.waitForStatus(true);
+    countService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     Assert.assertEquals(2, countService.getProvisionedInstances());
 
     // requesting with ProgramRunStatus.KILLED returns empty list
@@ -282,13 +282,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
     serviceManager.start();
-    serviceManager.waitForStatus(true, 1, 10);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
     Assert.assertEquals(testSpace.getNamespace(), callServiceGet(serviceURL, "ns"));
 
     serviceManager.stop();
-    serviceManager.waitForStatus(false, 1, 10);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -317,7 +317,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     final WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
     workerManager.start();
-    workerManager.waitForStatus(false, 5, 1);
+    workerManager.waitForStopped(5, TimeUnit.SECONDS);
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -327,11 +327,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     final ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
     serviceManager.start();
-    serviceManager.waitForStatus(true, 1, 10);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
     callServiceGet(serviceURL, "dummy");
     serviceManager.stop();
-    serviceManager.waitForStatus(false, 1, 10);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -412,13 +412,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(appId, createRequest);
     ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     URL serviceURL = serviceManager.getServiceURL();
     Gson gson = new Gson();
     Assert.assertEquals("tV1", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
     serviceManager.stop();
-    serviceManager.waitForStatus(false);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
     appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version2");
     createRequest = new AppRequest<>(
@@ -427,7 +427,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     appManager = deployApplication(appId, createRequest);
     serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     serviceURL = serviceManager.getServiceURL();
     Assert.assertEquals("tV2", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
@@ -651,7 +651,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationManager appManager = deployApplication(DatasetWithCustomActionApp.class);
     ServiceManager serviceManager = appManager.getServiceManager(DatasetWithCustomActionApp.CUSTOM_SERVICE).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(DatasetWithCustomActionApp.CUSTOM_WORKFLOW).start();
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
@@ -1073,7 +1073,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     TimeUnit.SECONDS.sleep(1);
 
     ServiceManager queryManager = applicationManager.getServiceManager("QueryService").start();
-    queryManager.waitForStatus(true, 2, 1);
+    queryManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL serviceURL = queryManager.getServiceURL();
     Gson gson = new Gson();
 
@@ -1094,13 +1094,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager centralServiceManager =
       applicationManager.getServiceManager(AppUsingGetServiceURL.CENTRAL_SERVICE).start();
-    centralServiceManager.waitForStatus(true);
+    centralServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     WorkerManager pingingWorker = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
 
     // Test service's getServiceURL
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.
@@ -1119,10 +1119,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     } catch (Throwable e) {
       LOG.error("Got exception while stopping pinging worker", e);
     }
-    pingingWorker.waitForStatus(false);
+    pingingWorker.waitForStopped(10, TimeUnit.SECONDS);
 
     centralServiceManager.stop();
-    centralServiceManager.waitForStatus(false);
+    centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
     centralServiceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
@@ -1166,7 +1166,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testWorkerInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
-    workerManager.waitForStatus(true);
+    workerManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Should be 5 instances when first started.
     workerInstancesCheck(workerManager, 5);
@@ -1185,7 +1185,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     WorkerManager lifecycleWorkerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER);
     lifecycleWorkerManager.setInstances(3);
-    lifecycleWorkerManager.start().waitForStatus(true);
+    lifecycleWorkerManager.start().waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     workerInstancesCheck(lifecycleWorkerManager, 3);
     for (int i = 0; i < 3; i++) {
@@ -1204,12 +1204,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     lifecycleWorkerManager.stop();
-    lifecycleWorkerManager.waitForStatus(false);
+    lifecycleWorkerManager.waitForStopped(10, TimeUnit.SECONDS);
 
     if (workerManager.isRunning()) {
       workerManager.stop();
     }
-    workerManager.waitForStatus(false);
+    workerManager.waitForStopped(10, TimeUnit.SECONDS);
 
     // Should be same instances after being stopped.
     workerInstancesCheck(lifecycleWorkerManager, 5);
@@ -1337,9 +1337,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
       flowManager.getFlowletMetrics(AppWithCustomTx.FLOWLET_NOTX).waitForProcessed(1, 10, TimeUnit.SECONDS);
       flowManager.stop();
-      flowManager.waitForStatus(false);
+      flowManager.waitForStopped(10, TimeUnit.SECONDS);
 
-      serviceManager.waitForStatus(true);
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
       callServicePut(serviceManager.getServiceURL(), "tx", "hello");
       callServicePut(serviceManager.getServiceURL(), "tx", AppWithCustomTx.FAIL_PRODUCER, 200);
       callServicePut(serviceManager.getServiceURL(), "tx", AppWithCustomTx.FAIL_CONSUMER, 500);
@@ -1347,7 +1347,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       callServicePut(serviceManager.getServiceURL(), "notx", AppWithCustomTx.FAIL_PRODUCER, 200);
       callServicePut(serviceManager.getServiceURL(), "notx", AppWithCustomTx.FAIL_CONSUMER, 500);
       serviceManager.stop();
-      serviceManager.waitForStatus(false);
+      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
       txMRManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
       notxMRManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
@@ -1577,7 +1577,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
     WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
     workerManager.start();
-    workerManager.waitForStatus(false, 30, 1);
+    workerManager.waitForStopped(30, TimeUnit.SECONDS);
   }
 
   @Category(SlowTests.class)
@@ -1586,7 +1586,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     LOG.info("Service Started");
 
@@ -1639,10 +1639,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       .getServiceManager(AppWithServices.DATASET_WORKER_SERVICE_NAME).start(args);
     WorkerManager datasetWorker =
       applicationManager.getWorkerManager(AppWithServices.DATASET_UPDATE_WORKER).start(args);
-    datasetWorkerServiceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     ServiceManager noopManager = applicationManager.getServiceManager("NoOpService").start();
-    serviceManager.waitForStatus(true, 2, 1);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY);
     String decodedResult = new Gson().fromJson(result, String.class);
@@ -1667,10 +1667,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     datasetWorker.stop();
     datasetWorkerServiceManager.stop();
-    datasetWorkerServiceManager.waitForStatus(false);
+    datasetWorkerServiceManager.waitForStopped(10, TimeUnit.SECONDS);
     LOG.info("DatasetUpdateService Stopped");
     serviceManager.stop();
-    serviceManager.waitForStatus(false);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     LOG.info("ServerService Stopped");
 
     result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP);
@@ -1689,7 +1689,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ServiceManager serviceManager =
       applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     LOG.info("Service Started");
 
     final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
@@ -1736,7 +1736,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     executorService.shutdown();
     serviceManager.stop();
-    serviceManager.waitForStatus(false);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
     DataSetManager<KeyValueTable> dsManager = getDataset(testSpace.dataset(AppWithServices.TRANSACTIONS_DATASET_NAME));
     String value = Bytes.toString(dsManager.get().read(AppWithServices.DESTROY_KEY));
@@ -1763,7 +1763,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Query the result
     ServiceManager serviceManager = applicationManager.getServiceManager("WordFrequency").start();
-    serviceManager.waitForStatus(true, 2, 1);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Verify the query result
     Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
@@ -2096,7 +2096,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(app);
     // Query the result
     ServiceManager serviceManager = applicationManager.getServiceManager(serviceName).start();
-    serviceManager.waitForStatus(true, 2, 1);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     callServicePut(serviceManager.getServiceURL(), "key1", "value1");
     String response = callServiceGet(serviceManager.getServiceURL(), "key1");
     Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
@@ -2142,7 +2142,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager workerManager = appManager.getWorkerManager(ConcurrentRunTestApp.TestWorker.class.getSimpleName());
     workerManager.start();
     // Start another time should fail as worker doesn't support concurrent run.
-    workerManager.waitForStatus(true);
+    workerManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     try {
       workerManager.start();
       Assert.fail("Expected failure to start worker");

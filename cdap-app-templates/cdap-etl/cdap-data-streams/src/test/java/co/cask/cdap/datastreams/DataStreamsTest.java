@@ -47,6 +47,7 @@ import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.spark.Compat;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -156,7 +157,7 @@ public class DataStreamsTest extends HydratorTestBase {
                                        String val1, String val2, final String outputName) throws Exception {
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start(ImmutableMap.of("field", "name", "val1", val1, "val2", val2, "output", outputName));
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -182,7 +183,7 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -238,7 +239,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start(arguments);
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     final DataSetManager<Table> sink1 = getDataset("sink1");
     final DataSetManager<Table> sink2 = getDataset("sink2");
@@ -281,7 +282,7 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 30, 1);
+    sparkManager.waitForStopped(30, TimeUnit.SECONDS);
 
     MockSink.clear(sink1);
     MockSink.clear(sink2);
@@ -293,7 +294,7 @@ public class DataStreamsTest extends HydratorTestBase {
     arguments.put("flagField", "dupe");
 
     sparkManager.start(arguments);
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     aggSchema = Schema.recordOf(
       "user.count",
@@ -383,7 +384,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     Schema outputSchema1 = Schema.recordOf(
       "user.count",
@@ -440,7 +441,7 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
     
     validateMetric(appId, "source1.records.out", 2);
     validateMetric(appId, "source2.records.out", 3);
@@ -484,7 +485,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // the sink should contain at least one record with count of 3, and no records with more than 3.
     // less than 3 if the window doesn't contain all 3 records yet, but there should eventually be a window
@@ -613,7 +614,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema2)
       .set("customer_id", "1").set("customer_name", "samuel")
@@ -645,7 +646,7 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source1.records.out", 3);
     validateMetric(appId, "source2.records.out", 2);
@@ -722,7 +723,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     Schema flattenSchema =
       Schema.recordOf("erroruser",
@@ -818,7 +819,7 @@ public class DataStreamsTest extends HydratorTestBase {
     // run pipeline
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // check output
     // sink1 should only have records where both name and email are null (user0)
@@ -857,7 +858,7 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source.records.out", 4);
     validateMetric(appId, "splitter1.records.in", 4);
@@ -902,7 +903,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
-    sparkManager.waitForStatus(true, 10, 1);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     final Set<StructuredRecord> expectedRecords = ImmutableSet.of(record1, record2);
     final Set<Alert> expectedMessages = ImmutableSet.of(new Alert("nullAlert", new HashMap<String, String>()));
@@ -942,7 +943,7 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source.records.out", 3);
     validateMetric(appId, "nullAlert.records.in", 3);

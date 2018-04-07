@@ -107,6 +107,6 @@ public class ServiceArtifactTestRun extends TestFrameworkTestBase {
     }
 
     serviceManager.stop();
-    serviceManager.waitForStatus(false);
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 }

@@ -35,7 +35,7 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(TestMapReduceServiceIntegrationApp.class);
     ServiceManager serviceManager =
       applicationManager.getServiceManager(TestMapReduceServiceIntegrationApp.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet =
       getDataset(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
