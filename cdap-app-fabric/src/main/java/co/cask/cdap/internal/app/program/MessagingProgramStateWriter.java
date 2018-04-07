@@ -21,7 +21,6 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -66,12 +65,6 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
                     ArtifactId artifactId) {
-    long startTime = RunIds.getTime(RunIds.fromString(programRunId.getRun()), TimeUnit.MILLISECONDS);
-    if (startTime == -1) {
-      // This should never happen, as all runids should be time-based
-      throw new IllegalStateException(
-        String.format("Program run id '%s' does not contain the start time.", programRunId));
-    }
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())

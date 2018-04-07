@@ -230,9 +230,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
     if (recordedRunRecord != null) {
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
-      if (programRunStatus.isEndState()) {
-        // TODO: send a notification to deprovision the cluster
-      }
     }
   }
 
