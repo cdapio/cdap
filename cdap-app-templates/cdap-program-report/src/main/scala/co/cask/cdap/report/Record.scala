@@ -17,6 +17,7 @@ package co.cask.cdap.report
 
 /**
   * Represents the full content of a report record.
+  * TODO: [CDAP-13294] add artifact and app information
   */
 case class Record(namespace: String, program: String, run: String, start: Option[Long], running: Option[Long],
                   end: Option[Long], duration: Option[Long], user: Option[String],
