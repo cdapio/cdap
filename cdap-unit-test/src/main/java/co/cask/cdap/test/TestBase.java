@@ -80,7 +80,6 @@ import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.internal.provision.ProvisionerNotificationSubscriberService;
-import co.cask.cdap.internal.provision.guice.ProvisionerTestModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -282,7 +281,6 @@ public class TestBase {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new ProvisionerTestModule(),
       new PreviewHttpModule(),
       new MockProvisionerModule(),
       new AbstractModule() {

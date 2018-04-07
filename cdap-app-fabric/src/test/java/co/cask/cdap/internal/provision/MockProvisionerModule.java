@@ -29,6 +29,7 @@ public class MockProvisionerModule extends AbstractModule {
     bind(ProvisioningService.class).in(Scopes.SINGLETON);
     bind(ProvisionerProvider.class).to(MockProvisionerProvider.class);
     bind(ProvisionerConfigProvider.class).to(MockProvisionerConfigProvider.class);
+    bind(ProvisionerNotificationSubscriberService.class).in(Scopes.SINGLETON);
   }
 
 }
