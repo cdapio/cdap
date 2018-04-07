@@ -17,12 +17,14 @@
 package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,10 +39,12 @@ public class ProvisioningService {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningService.class);
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
+  private final ProvisionerConfigProvider provisionerConfigProvider;
 
   @Inject
-  ProvisioningService(ProvisionerProvider provisionerProvider) {
+  ProvisioningService(ProvisionerProvider provisionerProvider, ProvisionerConfigProvider provisionerConfigProvider) {
     this.provisionerProvider = provisionerProvider;
+    this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
     reloadProvisioners();
   }
@@ -51,19 +55,26 @@ public class ProvisioningService {
    */
   public void reloadProvisioners() {
     Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
+    Map<String, ProvisionerConfig> provisionerConfigs =
+      provisionerConfigProvider.loadProvisionerConfigs(provisioners.keySet());
     LOG.debug("Provisioners = {}", provisioners);
-    Map<String, ProvisionerSpecification> specs = new HashMap<>(provisioners.size());
+    Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
-      specs.put(provisionerEntry.getKey(), provisionerEntry.getValue().getSpec());
+      ProvisionerSpecification spec = provisionerEntry.getValue().getSpec();
+      String provisionerName = provisionerEntry.getKey();
+      ProvisionerConfig config = provisionerConfigs.getOrDefault(provisionerName,
+                                                                 new ProvisionerConfig(new ArrayList<>()));
+      details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getDescription(),
+                                                         config.getConfigurationGroups()));
     }
-    provisionerInfo.set(new ProvisionerInfo(provisioners, specs));
+    provisionerInfo.set(new ProvisionerInfo(provisioners, details));
   }
 
   /**
    * @return unmodifiable collection of all provisioner specs
    */
-  public Collection<ProvisionerSpecification> getProvisionerSpecs() {
-    return provisionerInfo.get().specs.values();
+  public Collection<ProvisionerDetail> getProvisionerDetails() {
+    return provisionerInfo.get().details.values();
   }
 
   /**
@@ -73,8 +84,8 @@ public class ProvisioningService {
    * @return the spec for the provisioner, or null if the provisioner does not exist
    */
   @Nullable
-  public ProvisionerSpecification getProvisionerSpec(String name) {
-    return provisionerInfo.get().specs.get(name);
+  public ProvisionerDetail getProvisionerDetail(String name) {
+    return provisionerInfo.get().details.get(name);
   }
 
   /**
@@ -98,11 +109,11 @@ public class ProvisioningService {
    */
   private static class ProvisionerInfo {
     private final Map<String, Provisioner> provisioners;
-    private final Map<String, ProvisionerSpecification> specs;
+    private final Map<String, ProvisionerDetail> details;
 
-    private ProvisionerInfo(Map<String, Provisioner> provisioners, Map<String, ProvisionerSpecification> specs) {
+    private ProvisionerInfo(Map<String, Provisioner> provisioners, Map<String, ProvisionerDetail> details) {
       this.provisioners = Collections.unmodifiableMap(provisioners);
-      this.specs = Collections.unmodifiableMap(specs);
+      this.details = Collections.unmodifiableMap(details);
     }
   }
 }

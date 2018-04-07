@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.profile;
 
 import co.cask.cdap.proto.EntityScope;
+import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 
 import java.util.Collections;
 import java.util.Objects;

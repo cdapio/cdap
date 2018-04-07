@@ -16,19 +16,19 @@
 
 package co.cask.cdap.internal.provision;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Test module for provisioner classes.
+ *  Provides provisioners config for unit test
  */
-public class MockProvisionerModule extends AbstractModule {
+public class MockProvisionerConfigProvider implements ProvisionerConfigProvider {
 
   @Override
-  protected void configure() {
-    bind(ProvisioningService.class).in(Scopes.SINGLETON);
-    bind(ProvisionerProvider.class).to(MockProvisionerProvider.class);
-    bind(ProvisionerConfigProvider.class).to(MockProvisionerConfigProvider.class);
+  public Map<String, ProvisionerConfig> loadProvisionerConfigs(Set<String> provisioners) {
+    // Only need to return an empty map since the provisioning service will take care of provisioner that does
+    // not have a config
+    return Collections.emptyMap();
   }
-
 }

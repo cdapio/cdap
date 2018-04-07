@@ -50,8 +50,8 @@ import javax.inject.Inject;
  * Store for profile.
  */
 public class ProfileStore {
-  private static final DatasetId DATASET_ID = NamespaceId.SYSTEM.dataset("profile.meta");
-  private static final String PROFILE_PREFIX = "p";
+  private static final DatasetId DATASET_ID = NamespaceId.SYSTEM.dataset("app.meta");
+  private static final String PROFILE_PREFIX = "profile";
   private static final DatasetProperties TABLE_PROPERTIES =
     TableProperties.builder().setConflictDetection(ConflictDetection.COLUMN).build();
 

@@ -38,6 +38,7 @@ import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
+import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -101,6 +102,7 @@ public class DefaultPreviewManagerTest {
       new SecureStoreModules().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewHttpModule(),
+      new ProvisionerModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

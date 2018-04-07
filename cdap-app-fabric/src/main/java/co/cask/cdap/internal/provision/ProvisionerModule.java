@@ -28,6 +28,7 @@ public class ProvisionerModule extends AbstractModule {
   protected void configure() {
     bind(ProvisioningService.class).in(Scopes.SINGLETON);
     bind(ProvisionerProvider.class).to(ProvisionerExtensionLoader.class);
+    bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
   }
 
 }

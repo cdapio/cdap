@@ -16,12 +16,17 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -31,19 +36,27 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class ProvisionerHttpHandler extends AbstractHttpHandler {
+  private static final Gson GSON = new GsonBuilder().create();
+  private final ProvisioningService provisioningService;
+
+  @Inject
+  public ProvisionerHttpHandler(ProvisioningService provisioningService) {
+    this.provisioningService = provisioningService;
+  }
 
   @GET
   @Path("/provisioners")
   public void getProvisioners(HttpRequest request, HttpResponder responder) {
-    // TODO: implement the method
-    responder.sendStatus(HttpResponseStatus.OK);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(provisioningService.getProvisionerDetails()));
   }
 
   @GET
   @Path("/provisioners/{provisioner-name}")
   public void getProvisioner(HttpRequest request, HttpResponder responder,
-                             @PathParam("provisioner-name") String provisionerName) {
-    // TODO: implement the method
-    responder.sendStatus(HttpResponseStatus.OK);
+                             @PathParam("provisioner-name") String provisionerName) throws NotFoundException {
+    if (provisioningService.getProvisionerDetail(provisionerName) == null) {
+      throw new NotFoundException(String.format("Provisioner %s not found", provisionerName));
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(provisioningService.getProvisionerDetail(provisionerName)));
   }
 }

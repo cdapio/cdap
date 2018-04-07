@@ -14,30 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.proto.profile;
+package co.cask.cdap.internal.provision;
 
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
- * Information about a profile.
+ * Contains the config for the provisioner
  */
-public class ProfileCreateRequest {
-  private final String description;
-  private final ProvisionerInfo provisioner;
+public class ProvisionerConfig {
+  @SerializedName("configuration-groups")
+  private final List<Object> configurationGroups;
 
-  public ProfileCreateRequest(String description, ProvisionerInfo provisioner) {
-    this.description = description;
-    this.provisioner = provisioner;
+  public ProvisionerConfig(List<Object> configurationGroups) {
+    this.configurationGroups = configurationGroups;
   }
 
-  public ProvisionerInfo getProvisioner() {
-    return provisioner;
-  }
-
-  public String getDescription() {
-    return description;
+  public List<Object> getConfigurationGroups() {
+    return configurationGroups;
   }
 
   @Override
@@ -48,14 +44,13 @@ public class ProfileCreateRequest {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+    ProvisionerConfig that = (ProvisionerConfig) o;
 
-    ProfileCreateRequest that = (ProfileCreateRequest) o;
-    return Objects.equals(description, that.description) &&
-      Objects.equals(provisioner, that.provisioner);
+    return Objects.equals(configurationGroups, that.configurationGroups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(description, provisioner);
+    return Objects.hash(configurationGroups);
   }
 }

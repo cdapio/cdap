@@ -22,11 +22,14 @@ import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.profile.ProfileCreateRequest;
+import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
@@ -42,7 +45,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -61,10 +66,12 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 
   private final ProfileStore profileStore;
+  private final ProvisioningService provisioningService;
 
   @Inject
-  public ProfileHttpHandler(ProfileStore profileStore) {
+  public ProfileHttpHandler(ProfileStore profileStore, ProvisioningService provisioningService) {
     this.profileStore = profileStore;
+    this.provisioningService = provisioningService;
   }
 
   /**
@@ -107,8 +114,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     @PathParam("profile-name") String profileName) throws BadRequestException, IOException, AlreadyExistsException {
     ProfileCreateRequest profileCreateRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
-      // TODO: validate the profileCreateRequest, the provisoner should exist and the property should be correct
       profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);
+      validateProvisionerProperties(profileCreateRequest);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage(), e);
     }
@@ -160,5 +167,22 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                             @PathParam("profile-name") String profileName) throws NotFoundException {
     // TODO: implement the method
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void validateProvisionerProperties(ProfileCreateRequest request) throws BadRequestException {
+    ProvisionerInfo provisionerInfo = request.getProvisioner();
+    Map<String, String> properties = new HashMap<>();
+    for (ProvisionerPropertyValue value : provisionerInfo.getProperties()) {
+      properties.put(value.getName(), value.getValue());
+    }
+    try {
+      provisioningService.validateProperties(provisionerInfo.getName(), properties);
+    } catch (NotFoundException e) {
+      throw new BadRequestException(String.format("The specified provisioner %s does not exist, " +
+                                                    "thus cannot be associated with a profile",
+                                                  provisionerInfo.getName()), e);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
   }
 }
