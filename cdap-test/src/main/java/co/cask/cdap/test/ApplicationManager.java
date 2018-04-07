@@ -20,6 +20,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -137,11 +138,18 @@ public interface ApplicationManager {
   boolean isRunning(Id.Program programId);
 
   /**
-   * Checks whether a particular program is running or not.
+   * Checks whether a particular program is in the {@link ProgramStatus#RUNNING} state.
    * @param programId the program to check
    * @return true if the program is running; false otherwise.
    */
   boolean isRunning(ProgramId programId);
+
+  /**
+   * Checks whether a particular program is in the {@link ProgramStatus#STOPPED} state.
+   * @param programId the program to check
+   * @return true if the program is running; false otherwise.
+   */
+  boolean isStopped(ProgramId programId);
 
   /**
    * Gets the history of the program

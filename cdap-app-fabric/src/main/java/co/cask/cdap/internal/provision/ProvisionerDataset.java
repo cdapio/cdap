@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
  * Stores subscriber offset information for TMS, cluster information for program runs, and state information for
  * each provision and deprovision operation.
  *
- * This dataset does not wrap it's operations in a transaction. It is up to the caller to decide what operations
+ * This dataset does not wrap its operations in a transaction. It is up to the caller to decide what operations
  * belong in a transaction.
  */
 public class ProvisionerDataset {
@@ -94,9 +94,5 @@ public class ProvisionerDataset {
       .add(programRunId.getProgram())
       .add(programRunId.getRun())
       .build();
-  }
-
-  private MDSKey getSubscriberRowKey(String clientId) {
-    return new MDSKey.Builder().add(SUBSCRIBER_PREFIX).add(clientId).build();
   }
 }

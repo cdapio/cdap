@@ -71,7 +71,7 @@ class ConstraintCheckerService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private final Store store;
-  private final ProgramLifecycleService programLifecycleService;
+  private final ProgramLifecycleService lifecycleService;
   private final PropertiesResolver propertiesResolver;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
@@ -81,13 +81,13 @@ class ConstraintCheckerService extends AbstractIdleService {
 
   @Inject
   ConstraintCheckerService(Store store,
-                           ProgramLifecycleService programLifecycleService, PropertiesResolver propertiesResolver,
+                           ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
                            NamespaceQueryAdmin namespaceQueryAdmin,
                            CConfiguration cConf,
                            DatasetFramework datasetFramework,
                            TransactionSystemClient txClient) {
     this.store = store;
-    this.programLifecycleService = programLifecycleService;
+    this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.cConf = cConf;
@@ -106,7 +106,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     LOG.info("Starting ConstraintCheckerService.");
     taskExecutorService = MoreExecutors.listeningDecorator(
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task").build()));
-    taskRunner = new ScheduleTaskRunner(store, programLifecycleService, propertiesResolver, namespaceQueryAdmin, cConf);
+    taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, namespaceQueryAdmin, cConf);
 
     int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework).getNumPartitions();
     for (int partition = 0; partition < numPartitions; partition++) {

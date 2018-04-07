@@ -162,10 +162,19 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public boolean isRunning(ProgramId programId) {
+    return isInState(programId, ProgramStatus.RUNNING);
+  }
+
+  @Override
+  public boolean isStopped(ProgramId programId) {
+    return isInState(programId, ProgramStatus.STOPPED);
+  }
+
+  private boolean isInState(ProgramId programId, ProgramStatus status) {
     try {
-      String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
+      String actual = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
                                                 programId.getVersion(), programId.getProgram(), programId.getType());
-      return ProgramStatus.RUNNING.name().equals(status);
+      return status.name().equals(actual);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -26,7 +26,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
@@ -118,7 +117,7 @@ public class ProgramLifecycleService {
                           PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
-                          ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
+                          ProvisionerNotifier provisionerNotifier,
                           ProvisioningService provisioningService) {
     this.store = store;
     this.profileStore = profileStore;
@@ -169,12 +168,15 @@ public class ProgramLifecycleService {
       throw new NotFoundException(programId);
     }
 
-    // A program is running if there are any PENDING, STARTING, or RUNNING
-    // A program is starting if it's cluster is provisioning, or if the actual program is starting
-    if (!store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty() ||
-      !store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty() ||
-      !store.getRuns(programId, ProgramRunStatus.PENDING, 0, Long.MAX_VALUE, 1).isEmpty()) {
+    // A program is RUNNING if there are any RUNNING run records
+    if (!store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
       return ProgramStatus.RUNNING;
+    }
+
+    // A program is starting if there are any PENDING or STARTING run records and no RUNNING run records
+    if (!store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty() ||
+      !store.getRuns(programId, ProgramRunStatus.PENDING, 0, Long.MAX_VALUE, 1).isEmpty()) {
+      return ProgramStatus.STARTING;
     }
     return ProgramStatus.STOPPED;
   }
@@ -242,11 +244,11 @@ public class ProgramLifecycleService {
    */
   public synchronized RunId run(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isRunningInSameProgram(programId)) {
+    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isStoppedInSameProgram(programId)) {
       throw new ConflictException(String.format("Program %s is already running in an version of the same application",
                                                 programId));
     }
-    if (!isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
+    if (!isStopped(programId) && !isConcurrentRunsAllowed(programId.getType())) {
       throw new ConflictException(String.format("Program %s is already running", programId));
     }
 
@@ -317,11 +319,11 @@ public class ProgramLifecycleService {
   public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
     throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isRunningInSameProgram(programId)) {
+    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isStoppedInSameProgram(programId)) {
       throw new ConflictException(String.format("Program %s is already running in an version of the same application",
                                                 programId));
     }
-    if (!isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
+    if (!isStopped(programId) && !isConcurrentRunsAllowed(programId.getType())) {
       throw new ConflictException(String.format("Program %s is already running", programId));
     }
 
@@ -608,17 +610,17 @@ public class ProgramLifecycleService {
     return store.programExists(programId);
   }
 
-  private boolean isRunning(ProgramId programId) throws Exception {
-    return ProgramStatus.RUNNING == getProgramStatus(programId);
+  private boolean isStopped(ProgramId programId) throws Exception {
+    return ProgramStatus.STOPPED == getProgramStatus(programId);
   }
 
   /**
-   * Returns whether the given program is running in all versions of the app.
-   * @param programId the id of the program for which the running status in all versions of the app is found
-   * @return whether the given program is running in all versions of the app
+   * Returns whether the given program is stopped in all versions of the app.
+   * @param programId the id of the program for which the stopped status in all versions of the app is found
+   * @return whether the given program is stopped in all versions of the app
    * @throws NotFoundException if the application to which this program belongs was not found
    */
-  private boolean isRunningInSameProgram(ProgramId programId) throws Exception {
+  private boolean isStoppedInSameProgram(ProgramId programId) throws Exception {
     // check that app exists
     Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(programId.getParent());
     if (appIds == null || appIds.isEmpty()) {
@@ -627,11 +629,11 @@ public class ProgramLifecycleService {
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     for (ApplicationId appId : appIds) {
       ProgramId pId = appId.program(programId.getType(), programId.getProgram());
-      if (!getExistingAppProgramStatus(appSpec, pId).equals(ProgramStatus.RUNNING)) {
-        return true;
+      if (!getExistingAppProgramStatus(appSpec, pId).equals(ProgramStatus.STOPPED)) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   private boolean isConcurrentRunsInSameAppForbidden(ProgramType type) {
