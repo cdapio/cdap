@@ -2666,6 +2666,7 @@
         <module>cdap-kms</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>
+        <module>cdap-runtime-ext-dataproc</module>
         <module>cdap-runtime-ext-yarn</module>
         <module>cdap-runtime-spi</module>
         <module>cdap-notifications</module>

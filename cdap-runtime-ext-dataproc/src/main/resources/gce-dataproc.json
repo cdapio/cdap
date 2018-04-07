@@ -1,0 +1,187 @@
+{
+  "configuration-groups": [
+    {
+      "label": "Account Settings",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Project ID",
+          "name": "projectId"
+        },
+        {
+          "widget-type": "json-editor",
+          "label": "Service Account Key",
+          "name": "accountKey"
+        }
+      ]
+    },
+    {
+      "label": "Location Settings",
+      "properties": [
+        {
+          "widget-type": "select",
+          "label": "Region",
+          "name": "region",
+          "widget-attributes": {
+            "values": [
+              "global",
+              "asia-east1",
+              "asia-northeast1",
+              "asia-south1",
+              "asia-southeast1",
+              "australia-southeast1",
+              "europe-west1",
+              "europe-west2",
+              "europe-west3",
+              "europe-west4",
+              "northamerica-northeast1",
+              "southamerica-east1",
+              "us-central1",
+              "us-east1",
+              "us-east4",
+              "us-west1"
+            ],
+            "default": "global"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Zone",
+          "name": "zone",
+          "widget-attributes": {
+            "values": [
+              "asia-east1-a",
+              "asia-east1-b",
+              "asia-east1-c",
+              "asia-northeast1-a",
+              "asia-northeast1-b",
+              "asia-northeast1-c",
+              "asia-south1-a",
+              "asia-south1-b",
+              "asia-south1-c",
+              "asia-southeast1-a",
+              "asia-southeast1-b",
+              "australia-southeast1-a",
+              "australia-southeast1-b",
+              "australia-southeast1-c",
+              "europe-west1-b",
+              "europe-west1-c",
+              "europe-west1-d",
+              "europe-west2-a",
+              "europe-west2-b",
+              "europe-west2-c",
+              "europe-west3-a",
+              "europe-west3-b",
+              "europe-west3-c",
+              "europe-west4-a",
+              "europe-west4-b",
+              "europe-west4-c",
+              "northamerica-northeast1-a",
+              "northamerica-northeast1-b",
+              "northamerica-northeast1-c",
+              "southamerica-east1-a",
+              "southamerica-east1-b",
+              "southamerica-east1-c",
+              "us-central1-a",
+              "us-central1-b",
+              "us-central1-c",
+              "us-central1-f",
+              "us-east1-b",
+              "us-east1-c",
+              "us-east1-d",
+              "us-east4-a",
+              "us-east4-b",
+              "us-east4-c",
+              "us-west1-a",
+              "us-west1-b",
+              "us-west1-c"
+            ],
+            "default": "us-east1-b"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Master Nodes",
+      "properties": [
+        {
+          "widget-type": "select",
+          "label": "Number of Masters",
+          "name": "masterNumNodes",
+          "widget-attributes": {
+            "values": [
+              "1",
+              "3"
+            ],
+            "default": "1"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Cores",
+          "name": "masterCPUs",
+          "widget-attributes": {
+            "values": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8"
+            ],
+            "default": "4"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Memory (MB)",
+          "name": "masterMemoryMB",
+          "widget-attributes": {
+            "default": "15360"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Worker Nodes",
+      "properties": [
+        {
+          "widget-type": "select",
+          "label": "Number of Workers",
+          "name": "workerNumNodes",
+          "widget-attributes": {
+            "default": "2"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Cores",
+          "name": "workerCPUs",
+          "widget-attributes": {
+            "values": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8"
+            ],
+            "default": "4"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Memory (MB)",
+          "name": "workerMemoryMB",
+          "widget-attributes": {
+            "default": "15360"
+          }
+        }
+      ]
+    }
+  ]
+}
