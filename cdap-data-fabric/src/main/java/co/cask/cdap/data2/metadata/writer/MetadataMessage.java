@@ -116,4 +116,14 @@ public final class MetadataMessage {
   public JsonElement getRawPayload() {
     return payload;
   }
+
+  @Override
+  public String toString() {
+    return "MetadataMessage{" +
+      "type=" + type +
+      ", programId=" + programId +
+      ", runId='" + runId + '\'' +
+      ", payload=" + payload +
+      '}';
+  }
 }

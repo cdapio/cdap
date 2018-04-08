@@ -466,8 +466,6 @@ public class RouterPathTest {
                   RouterPathLookup.STREAMS_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.DATASET_EXECUTOR),
                   RouterPathLookup.DATASET_EXECUTOR);
-    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.REMOTE_SYSTEM_OPERATION),
-                  RouterPathLookup.DATASET_EXECUTOR);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METADATA_SERVICE),
                   RouterPathLookup.METADATA_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.EXPLORE_HTTP_USER_SERVICE),
@@ -492,8 +490,6 @@ public class RouterPathTest {
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.STREAMS),
                   RouterPathLookup.STREAMS_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.DATASET_EXECUTOR),
-                  RouterPathLookup.DATASET_EXECUTOR);
-    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.REMOTE_SYSTEM_OPERATION),
                   RouterPathLookup.DATASET_EXECUTOR);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METADATA_SERVICE),
                   RouterPathLookup.METADATA_SERVICE);

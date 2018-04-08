@@ -19,7 +19,6 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -48,8 +47,9 @@ import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import co.cask.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -167,8 +167,7 @@ public class DistributedProgramRunnableModule {
           install(new DataFabricFacadeModule());
 
           bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
-
-          bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
+          bind(WorkflowStateWriter.class).to(MessagingWorkflowStateWriter.class);
 
           // For binding StreamWriter
           install(createStreamFactoryModule());

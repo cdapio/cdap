@@ -1211,7 +1211,17 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return builder.build();
   }
 
-  public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) {
+  /**
+   * Sets the {@link WorkflowToken} for the given workflow run.
+   *
+   * @param workflowRunId the {@link ProgramRunId} representing the workflow run
+   * @param workflowToken the {@link WorkflowToken} to set to
+   */
+  public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) {
+    if (workflowRunId.getType() != ProgramType.WORKFLOW) {
+      throw new IllegalArgumentException("WorkflowToken can only be set for workflow execution: " + workflowRunId);
+    }
+
     // Workflow token will be stored with following key:
     // [wft][namespace][app][WORKFLOW][workflowName][workflowRun]
     MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowRunId).build();

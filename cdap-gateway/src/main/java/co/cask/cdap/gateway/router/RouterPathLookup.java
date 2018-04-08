@@ -183,7 +183,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.APP_FABRIC_HTTP: return APP_FABRIC_HTTP;
         case Constants.Service.STREAMS: return STREAMS_SERVICE;
         case Constants.Service.DATASET_EXECUTOR: return DATASET_EXECUTOR;
-        case Constants.Service.REMOTE_SYSTEM_OPERATION: return DATASET_EXECUTOR;
         case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
         case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;

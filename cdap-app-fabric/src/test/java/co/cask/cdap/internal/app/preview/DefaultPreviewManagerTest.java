@@ -37,7 +37,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -96,7 +95,6 @@ public class DefaultPreviewManagerTest {
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
-      new RemoteSystemOperationsServiceModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new SecureStoreModules().getInMemoryModules(),

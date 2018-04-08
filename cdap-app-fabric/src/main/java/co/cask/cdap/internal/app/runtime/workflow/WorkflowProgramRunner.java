@@ -28,7 +28,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -44,10 +43,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -57,14 +53,13 @@ import java.util.List;
  * A {@link ProgramRunner} that runs a {@link Workflow}.
  */
 public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
-  private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
+
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ServiceAnnouncer serviceAnnouncer;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private final RuntimeStore runtimeStore;
+  private final WorkflowStateWriter workflowStateWriter;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -72,20 +67,19 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final ProgramStateWriter programStateWriter;
 
   @Inject
-  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
+  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
+                               WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
                                ProgramStateWriter programStateWriter) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
-    this.serviceAnnouncer = serviceAnnouncer;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.runtimeStore = runtimeStore;
+    this.workflowStateWriter = workflowStateWriter;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
@@ -124,7 +118,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       WorkflowDriver driver = new WorkflowDriver(program, options, workflowSpec, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                                 txClient, runtimeStore, cConf, pluginInstantiator,
+                                                 txClient, workflowStateWriter, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService, programStateWriter);
 
       // Controller needs to be created before starting the driver so that the state change of the driver

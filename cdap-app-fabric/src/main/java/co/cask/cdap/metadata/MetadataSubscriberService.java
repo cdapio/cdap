@@ -35,10 +35,12 @@ import co.cask.cdap.data2.registry.DatasetUsage;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -154,6 +156,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
                                  Iterator<ImmutablePair<String, MetadataMessage>> messages) throws Exception {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
+    // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
     while (messages.hasNext()) {
       MetadataMessage message = messages.next().getSecond();
 
@@ -163,6 +166,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new DataAccessLineageProcessor(datasetContext);
           case USAGE:
             return new UsageProcessor(datasetContext);
+          case WORKFLOW_TOKEN:
+          case WORKFLOW_STATE:
+            return new WorkflowProcessor(datasetContext);
           default:
             return null;
         }
@@ -196,17 +202,17 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     private final LineageDataset lineageDataset;
 
     DataAccessLineageProcessor(DatasetContext datasetContext) {
-      lineageDataset = LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      this.lineageDataset = LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
     }
 
     @Override
     public void processMessage(MetadataMessage message) {
-      DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
       if (message.getRunId() == null) {
-        LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", lineage);
+        LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", message);
         return;
       }
 
+      DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
       ProgramRunId programRunId = message.getProgramId().run(message.getRunId());
 
       if (lineage.getDatasetId() != null) {
@@ -217,20 +223,20 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
                                  lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
       } else {
         // This shouldn't happen
-        LOG.warn("Missing dataset id from the lineage access information. Ignoring the message {}", lineage);
+        LOG.warn("Missing dataset id from the lineage access information. Ignoring the message {}", message);
       }
     }
   }
 
   /**
-   * The {@link MetadataMessageProcessor} for processing
+   * The {@link MetadataMessageProcessor} for processing {@link DatasetUsage}.
    */
   private final class UsageProcessor implements MetadataMessageProcessor {
 
     private final UsageDataset usageDataset;
 
     UsageProcessor(DatasetContext datasetContext) {
-      usageDataset = UsageDataset.getUsageDataset(datasetContext, datasetFramework, usageDatasetId);
+      this.usageDataset = UsageDataset.getUsageDataset(datasetContext, datasetFramework, usageDatasetId);
     }
 
     @Override
@@ -242,7 +248,41 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         usageDataset.register(message.getProgramId(), usage.getStreamId());
       } else {
         // This shouldn't happen
-        LOG.warn("Missing dataset id from the usage information. Ignoring the message {}", usage);
+        LOG.warn("Missing dataset id from the usage information. Ignoring the message {}", message);
+      }
+    }
+  }
+
+  /**
+   * The {@link MetadataMessageProcessor} for processing workflow state updates.
+   */
+  private final class WorkflowProcessor implements MetadataMessageProcessor {
+
+    private final AppMetadataStore appMetadataStore;
+
+    WorkflowProcessor(DatasetContext datasetContext) {
+      this.appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
+    }
+
+    @Override
+    public void processMessage(MetadataMessage message) {
+      if (message.getRunId() == null) {
+        LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
+        return;
+      }
+
+      ProgramRunId programRunId = message.getProgramId().run(message.getRunId());
+
+      switch (message.getType()) {
+        case WORKFLOW_TOKEN:
+          appMetadataStore.setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
+        break;
+        case WORKFLOW_STATE:
+          appMetadataStore.addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
+        break;
+        default:
+          // This shouldn't happen
+          LOG.warn("Unknown message type for workflow state information. Ignoring the message {}", message);
       }
     }
   }
