@@ -57,17 +57,17 @@ public class MessagingLineageWriter implements LineageWriter {
   @Override
   public void addAccess(ProgramRunId programRunId, DatasetId datasetId,
                         AccessType accessType, @Nullable NamespacedEntityId componentId) {
-    publishLineage(new DataAccessLineage(programRunId, accessType, datasetId, componentId));
+    publishLineage(programRunId, new DataAccessLineage(accessType, datasetId, componentId));
   }
 
   @Override
   public void addAccess(ProgramRunId programRunId, StreamId streamId,
                         AccessType accessType, @Nullable NamespacedEntityId componentId) {
-    publishLineage(new DataAccessLineage(programRunId, accessType, streamId, componentId));
+    publishLineage(programRunId, new DataAccessLineage(accessType, streamId, componentId));
   }
 
-  private void publishLineage(DataAccessLineage lineage) {
-    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, GSON.toJsonTree(lineage));
+  private void publishLineage(ProgramRunId programRunId, DataAccessLineage lineage) {
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, programRunId, GSON.toJsonTree(lineage));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);

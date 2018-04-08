@@ -41,6 +41,7 @@ import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -201,11 +202,18 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     @Override
     public void processMessage(MetadataMessage message) {
       DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
+      if (message.getRunId() == null) {
+        LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", lineage);
+        return;
+      }
+
+      ProgramRunId programRunId = message.getProgramId().run(message.getRunId());
+
       if (lineage.getDatasetId() != null) {
-        lineageDataset.addAccess(lineage.getProgramRunId(), lineage.getDatasetId(),
+        lineageDataset.addAccess(programRunId, lineage.getDatasetId(),
                                  lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
       } else if (lineage.getStreamId() != null) {
-        lineageDataset.addAccess(lineage.getProgramRunId(), lineage.getStreamId(),
+        lineageDataset.addAccess(programRunId, lineage.getStreamId(),
                                  lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
       } else {
         // This shouldn't happen
@@ -229,9 +237,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     public void processMessage(MetadataMessage message) {
       DatasetUsage usage = message.getPayload(GSON, DatasetUsage.class);
       if (usage.getDatasetId() != null) {
-        usageDataset.register(usage.getProgramId(), usage.getDatasetId());
+        usageDataset.register(message.getProgramId(), usage.getDatasetId());
       } else if (usage.getStreamId() != null) {
-        usageDataset.register(usage.getProgramId(), usage.getStreamId());
+        usageDataset.register(message.getProgramId(), usage.getStreamId());
       } else {
         // This shouldn't happen
         LOG.warn("Missing dataset id from the usage information. Ignoring the message {}", usage);

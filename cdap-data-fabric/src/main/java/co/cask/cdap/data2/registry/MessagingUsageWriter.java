@@ -36,7 +36,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -60,13 +59,7 @@ public class MessagingUsageWriter implements UsageWriter {
   @Override
   public void registerAll(Iterable<? extends EntityId> users, StreamId streamId) {
     try {
-      // Only record usage from program
-      publishUsage(
-        StreamSupport.stream(users.spliterator(), false)
-          .filter(id -> id instanceof ProgramId)
-          .map(ProgramId.class::cast)
-          .map(id -> new DatasetUsage(id, null, streamId))
-      );
+      doRegisterAll(users, streamId);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish usage for " + streamId
                                    + " with owners " + Iterables.toString(users), e);
@@ -76,13 +69,7 @@ public class MessagingUsageWriter implements UsageWriter {
   @Override
   public void registerAll(Iterable<? extends EntityId> users, DatasetId datasetId) {
     try {
-      // Only record usage from program
-      publishUsage(
-        StreamSupport.stream(users.spliterator(), false)
-          .filter(id -> id instanceof ProgramId)
-          .map(ProgramId.class::cast)
-          .map(id -> new DatasetUsage(id, datasetId, null))
-      );
+      doRegisterAll(users, datasetId);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish usage for " + datasetId
                                    + " with owners " + Iterables.toString(users), e);
@@ -107,8 +94,8 @@ public class MessagingUsageWriter implements UsageWriter {
 
   @Override
   public void register(ProgramId programId, DatasetId datasetId) {
-    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE,
-                                                  GSON.toJsonTree(new DatasetUsage(programId, datasetId, null)));
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE, programId,
+                                                  GSON.toJsonTree(new DatasetUsage(datasetId)));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
 
     try {
@@ -120,8 +107,8 @@ public class MessagingUsageWriter implements UsageWriter {
 
   @Override
   public void register(ProgramId programId, StreamId streamId) {
-    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE,
-                                                  GSON.toJsonTree(new DatasetUsage(programId, null, streamId)));
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE, programId,
+                                                  GSON.toJsonTree(new DatasetUsage(streamId)));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
 
     try {
@@ -131,15 +118,17 @@ public class MessagingUsageWriter implements UsageWriter {
     }
   }
 
-  private void publishUsage(Stream<DatasetUsage> usages) throws Exception {
+  private void doRegisterAll(Iterable<? extends EntityId> users, EntityId entityId) throws Exception {
+    // Only record usage from program
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(
-      usages
-        .map(usage -> new MetadataMessage(MetadataMessage.Type.USAGE, GSON.toJsonTree(usage)))
+      StreamSupport.stream(users.spliterator(), false)
+        .filter(ProgramId.class::isInstance)
+        .map(ProgramId.class::cast)
+        .map(id -> new MetadataMessage(MetadataMessage.Type.USAGE, id, GSON.toJsonTree(new DatasetUsage(entityId))))
         .map(GSON::toJson)
         .map(s -> s.getBytes(StandardCharsets.UTF_8))
         .iterator()
     ).build();
-
     Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
   }
 }

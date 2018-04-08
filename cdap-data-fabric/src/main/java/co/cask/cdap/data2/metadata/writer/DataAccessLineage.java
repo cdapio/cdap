@@ -20,7 +20,6 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -39,7 +38,6 @@ public class DataAccessLineage {
   private static final Logger LOG = LoggerFactory.getLogger(DataAccessLineage.class);
 
   private final long accessTime;
-  private final ProgramRunId programRunId;
   private final AccessType accessType;
   @Nullable
   private final DatasetId datasetId;
@@ -55,13 +53,13 @@ public class DataAccessLineage {
   @Nullable
   private final StreamId streamId;
 
-  public DataAccessLineage(ProgramRunId programRunId, AccessType accessType, EntityId dataEntityId,
-                           @Nullable NamespacedEntityId componentId) {
-    this(programRunId, accessType, dataEntityId, componentId, System.currentTimeMillis());
+  DataAccessLineage(AccessType accessType, EntityId dataEntityId,
+                    @Nullable NamespacedEntityId componentId) {
+    this(accessType, dataEntityId, componentId, System.currentTimeMillis());
   }
 
   @VisibleForTesting
-  DataAccessLineage(ProgramRunId programRunId, AccessType accessType, EntityId dataEntityId,
+  DataAccessLineage(AccessType accessType, EntityId dataEntityId,
                     @Nullable NamespacedEntityId componentId, long accessTime) {
     if (dataEntityId instanceof DatasetId) {
       this.datasetId = (DatasetId) dataEntityId;
@@ -75,7 +73,6 @@ public class DataAccessLineage {
     }
 
     this.accessTime = accessTime;
-    this.programRunId = programRunId;
     this.accessType = accessType;
     this.componentId = componentId;
 
@@ -91,10 +88,6 @@ public class DataAccessLineage {
 
   public long getAccessTime() {
     return accessTime;
-  }
-
-  public ProgramRunId getProgramRunId() {
-    return programRunId;
   }
 
   public AccessType getAccessType() {
@@ -137,7 +130,6 @@ public class DataAccessLineage {
   public String toString() {
     return "DataAccessLineage{" +
       "accessTime=" + accessTime +
-      ", programRunId=" + programRunId +
       ", accessType=" + accessType +
       ", datasetId=" + datasetId +
       ", componentId=" + getComponentId() +

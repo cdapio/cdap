@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.StreamId;
 
 import javax.annotation.Nullable;
@@ -27,23 +27,18 @@ import javax.annotation.Nullable;
  */
 public final class DatasetUsage {
 
-  private final ProgramId programId;
   @Nullable
   private final DatasetId datasetId;
   @Nullable
   private final StreamId streamId;
 
-  public DatasetUsage(ProgramId programId, @Nullable DatasetId datasetId, @Nullable StreamId streamId) {
-    this.programId = programId;
-    this.datasetId = datasetId;
-    this.streamId = streamId;
-  }
+  DatasetUsage(EntityId entityId) {
+    this.datasetId = entityId instanceof DatasetId ? (DatasetId) entityId : null;
+    this.streamId = entityId instanceof StreamId ? (StreamId) entityId : null;
 
-  /**
-   * Returns the program who uses the dataset/stream.
-   */
-  public ProgramId getProgramId() {
-    return programId;
+    if (datasetId == null && streamId == null) {
+      throw new IllegalArgumentException("EntityId must a DatasetId or a StreamId");
+    }
   }
 
   /**
@@ -65,8 +60,7 @@ public final class DatasetUsage {
   @Override
   public String toString() {
     return "DatasetUsage{" +
-      "programId=" + programId +
-      ", datasetId=" + datasetId +
+      "datasetId=" + datasetId +
       ", streamId=" + streamId +
       '}';
   }
