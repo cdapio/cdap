@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
@@ -54,9 +55,10 @@ public class ProvisionerHttpHandler extends AbstractHttpHandler {
   @Path("/provisioners/{provisioner-name}")
   public void getProvisioner(HttpRequest request, HttpResponder responder,
                              @PathParam("provisioner-name") String provisionerName) throws NotFoundException {
-    if (provisioningService.getProvisionerDetail(provisionerName) == null) {
+    ProvisionerDetail provisionerDetail = provisioningService.getProvisionerDetail(provisionerName);
+    if (provisionerDetail == null) {
       throw new NotFoundException(String.format("Provisioner %s not found", provisionerName));
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(provisioningService.getProvisionerDetail(provisionerName)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(provisionerDetail));
   }
 }
