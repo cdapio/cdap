@@ -81,13 +81,14 @@ function RunsListView({bucketInfo, displayRunsList}) {
           <tbody>
             {
               bucketInfo.runsList.map((run, i) => {
+                let duration = run.end ? run.end - run.start : '--';
                 return (
                   <tr key={`${run.application}${run.program}${run.start}${i}`}>
                     <td>{run.namespace}</td>
                     <td>{run.application}</td>
                     <td>{run.artifact.name}</td>
-                    <td>{run.end - run.start}</td>
-                    <td>{run.user}</td>
+                    <td>{duration}</td>
+                    <td>{run.user || '--'}</td>
                     <td>{run.startMethod}</td>
                     <td>{run.status}</td>
                   </tr>

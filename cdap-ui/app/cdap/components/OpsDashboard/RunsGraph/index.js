@@ -27,6 +27,7 @@ import {next, prev} from 'components/OpsDashboard/store/ActionCreator';
 import RunsTable from 'components/OpsDashboard/RunsGraph/RunsTable';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import classnames from 'classnames';
+import {getData} from 'components/OpsDashboard/store/ActionCreator';
 
 require('./RunsGraph.scss');
 
@@ -74,6 +75,10 @@ class RunsGraphView extends Component {
     }
   }
 
+  last24Hour = () => {
+    getData();
+  };
+
   renderGraph(props = this.props) {
     let containerElem = document.getElementById(RUNS_GRAPH_CONTAINER);
 
@@ -101,7 +106,9 @@ class RunsGraphView extends Component {
 
           <div className="display-picker">
             <div className="time-picker">
-              <div>Last 24 hours</div>
+              <div onClick={this.last24Hour}>
+                Last 24 hours
+              </div>
             </div>
 
             <div className="display-type">

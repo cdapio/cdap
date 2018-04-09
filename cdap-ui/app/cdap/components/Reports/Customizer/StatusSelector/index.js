@@ -14,35 +14,19 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+import React from 'react';
+import StatusPopover from 'components/Reports/Customizer/StatusSelector/StatusPopover';
 
-$header-height: 70px;
-$header-bg-color: white;
-$bg-color: $grey-08;
+require('./StatusSelector.scss');
 
-.reports-container {
-  height: 100%;
-  background-color: $bg-color;
+export default function StatusSelector() {
+  return (
+    <div className="status-selector">
+      <div className="title">
+        Select Status
+      </div>
 
-  .header {
-    height: $header-height;
-    background-color: $header-bg-color;
-
-    .reports-view-options {
-      font-size: 18px;
-      line-height: $header-height;
-      padding-left: 25px;
-
-      .separator {
-        margin-right: 10px;
-        margin-left: 10px;
-      }
-    }
-  }
-
-  .error-container {
-    padding: 25px;
-    height: calc(100% - #{$header-height});
-    overflow: auto;
-  }
+      <StatusPopover />
+    </div>
+  );
 }

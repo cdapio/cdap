@@ -36,6 +36,14 @@ class TimeRangePopoverView extends Component {
     end: this.props.end
   };
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      selection: nextProps.selection,
+      start: nextProps.start,
+      end: nextProps.end
+    });
+  }
+
   changeSelection = (selection) => {
     this.setState({ selection });
   };

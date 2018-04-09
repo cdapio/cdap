@@ -14,22 +14,72 @@
  * the License.
  */
 
-import React from 'react';
+import React, { Component } from 'react';
 import {Provider} from 'react-redux';
 import {Route, Switch} from 'react-router-dom';
 import ReportsStore from 'components/Reports/store/ReportsStore';
 import ReportsList from 'components/Reports/ReportsList';
 import ReportsDetail from 'components/Reports/ReportsDetail';
+import {MyReportsApi} from 'api/reports';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import ReportsServiceControl from 'components/Reports/ReportsServiceControl';
+import ReportsAppDelete from 'components/Reports/ReportsAppDelete';
 
 require('./Reports.scss');
 
-export default function Reports() {
-  return (
-    <Provider store={ReportsStore}>
-      <Switch>
-        <Route exact path="/ns/:namespace/reports" component={ReportsList} />
-        <Route exact path="/ns/:namespace/reports/:reportId" component={ReportsDetail} />
-      </Switch>
-    </Provider>
-  );
+export default class Reports extends Component {
+  state = {
+    loading: true,
+    isRunning: false
+  };
+
+  componentWillMount() {
+    this.checkIfReportsRunning();
+  }
+
+  checkIfReportsRunning = () => {
+    MyReportsApi.ping()
+      .subscribe(() => {
+        this.setState({
+          loading: false,
+          isRunning: true
+        });
+      }, () => {
+        this.setState({
+          loading: false,
+          isRunning: false
+        });
+      });
+  }
+
+  onServiceStart = () => {
+    this.setState({
+      loading: false,
+      isRunning: true
+    });
+  };
+
+  render() {
+    if (this.state.loading) {
+      return <LoadingSVGCentered />;
+    }
+
+    if (!this.state.isRunning) {
+      return (
+        <ReportsServiceControl
+          onServiceStart={this.onServiceStart}
+        />
+      );
+    }
+
+    return (
+      <Provider store={ReportsStore}>
+        <Switch>
+          <Route exact path="/ns/:namespace/reports" component={ReportsList} />
+          <Route exact path="/ns/:namespace/reports/details/:reportId" component={ReportsDetail} />
+          <Route exact path="/ns/:namespace/reports/delete-app" component={ReportsAppDelete} />
+        </Switch>
+      </Provider>
+    );
+  }
 }

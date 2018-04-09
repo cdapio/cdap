@@ -15,8 +15,8 @@
  */
 
 import moment from 'moment';
-import uniqWith from 'lodash/uniqWith';
-import isEqual from 'lodash/isEqual';
+import uniqBy from 'lodash/uniqBy';
+import {ONE_DAY_SECONDS} from 'services/helpers';
 
 export function parseDashboardData(rawData, startTime, duration, pipeline, customApp) {
   let {
@@ -38,23 +38,27 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
       if (!customApp) { return; }
     }
 
-    let startTime = getBucket(runInfo.start);
-    let endTime = getBucket(runInfo.end);
+    let startTime = getBucket(runInfo.start * 1000);
+    let endTime = getBucket(runInfo.end * 1000);
 
-    // add start method
-    if (runInfo.startMethod === 'Manual') {
-      buckets[startTime].manual++;
-    } else {
-      buckets[startTime].schedule++;
+    if (buckets[startTime]) {
+      // add start method
+      if (runInfo.startMethod === 'manual') {
+        buckets[startTime].manual++;
+      } else {
+        buckets[startTime].schedule++;
+      }
+      buckets[startTime].runsList.push(runInfo);
+
+      if (runInfo.running && runInfo.start) {
+        // aggregate delay
+        let delay = runInfo.running - runInfo.start;
+        buckets[startTime].delay += delay;
+      }
     }
-    buckets[startTime].runsList.push(runInfo);
-
-    // aggregate delay
-    let delay = runInfo.running - runInfo.start;
-    buckets[startTime].delay += delay;
 
     // add status
-    if (endTime) {
+    if (endTime && buckets[endTime]) {
       if (runInfo.status === 'COMPLETED') {
         buckets[endTime].successful++;
       } else if (runInfo.status === 'FAILED') {
@@ -63,12 +67,27 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
       buckets[endTime].runsList.push(runInfo);
     }
 
+    // if end time is not present, that means the program is still running
+    let end = runInfo.end * 1000 || Date.now();
+    let start = runInfo.start * 1000;
+
+    let startIndex = timeArray.indexOf(startTime);
+    // if startTime not found, then the program started before the graph
+    if (startIndex === -1) {
+      start = parseInt(timeArray[0], 10);
+    }
+
+    let endIndex = timeArray.indexOf(endTime);
+    // if endTime not found, then the program end after the graph
+    if (endIndex === -1) {
+      end = Date.now();
+    }
+
     // add running
-    let duration = runInfo.end - runInfo.start;
+    let duration = end - start;
     duration = moment.duration(duration).asHours();
     duration = parseInt(duration, 10);
 
-    let startIndex = timeArray.indexOf(startTime);
     for (let i = 0; i < duration + 1; i++) {
       let time = timeArray[startIndex + i];
 
@@ -78,12 +97,9 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
     }
   });
 
-  // temporary deduping method
-  // once there is runId with the response this should not be needed.
   timeArray.forEach((time) => {
-    buckets[time].runsList = uniqWith(buckets[time].runsList, isEqual);
+    buckets[time].runsList = uniqBy(buckets[time].runsList, 'run');
   });
-
 
   let data = Object.keys(buckets).map((time) => {
     return {
@@ -109,12 +125,14 @@ function setBuckets(startTime, duration) {
   let buckets = {};
   let timeArray = [];
 
+  let start = startTime * 1000;
+
   // hourly or per 5 minutes
-  let numBuckets = duration === 1440 ? 24 : 12;
+  let numBuckets = duration === ONE_DAY_SECONDS ? 24 : 12;
 
   for (let i = 0; i < numBuckets; i++) {
-    let time = moment(startTime).startOf('hour');
-    if (duration === 1440) {
+    let time = moment(start).startOf('hour');
+    if (duration === ONE_DAY_SECONDS) {
       time = time.add(i, 'h').format('x');
     } else {
       time = time.add(i*5, 'm').format('x');

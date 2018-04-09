@@ -20,6 +20,8 @@ $bg-color: $grey-08;
 $border-color: $grey-03;
 $table-color: white;
 $grid-link-color: $grey-01;
+$empty-color: $grey-02;
+$active-border-color: $green-01;
 
 .reports-list-container {
   .customizer-container {
@@ -41,8 +43,17 @@ $grid-link-color: $grey-01;
     background-color: $table-color;
     padding: 10px 10px 40px;
 
-    .grid-wrapper {
+    &.empty {
+      padding: 50px 0 75px;
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 2;
+      color: $empty-color;
+    }
+
+    &.grid-wrapper {
       max-height: 500px;
+      height: 500px;
       overflow: auto;
     }
     .grid.grid-container {
@@ -50,10 +61,16 @@ $grid-link-color: $grey-01;
       .grid-header,
       .grid-body {
         .grid-row {
-          grid-template-columns: 2fr 250px 250px 1fr 50px;
+          grid-template-columns: 1fr 250px 250px 50px;
         }
 
-        .grid-link { color: $grid-link-color; }
+        .grid-link {
+          color: $grid-link-color;
+
+          &.active { border: 2px solid $active-border-color; }
+
+          &.not-allowed { cursor: not-allowed; }
+        }
       }
 
       .grid-header { font-weight: bold; }
@@ -63,6 +80,17 @@ $grid-link-color: $grey-01;
 
     .generating {
       span.fa { margin-right: 5px; }
+    }
+  }
+
+  .reports-list-action-popover {
+    display: inline-block;
+
+    .popper {
+      padding: 10px;
+      text-align: left;
+
+      .option { cursor: pointer; }
     }
   }
 }

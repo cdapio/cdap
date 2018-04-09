@@ -16,41 +16,45 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyReportsApi} from 'api/reports';
 import Customizer from 'components/Reports/Customizer';
 import {humanReadableDate} from 'services/helpers';
 import IconSVG from 'components/IconSVG';
-import ReportsStore, {ReportsActions} from 'components/Reports/store/ReportsStore';
 import {connect} from 'react-redux';
 import Duration from 'components/Duration';
 import { Link } from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {listReports} from 'components/Reports/store/ActionCreator';
+import {Observable} from 'rxjs/Observable';
+import classnames from 'classnames';
+import ActionPopover from 'components/Reports/ReportsList/ActionPopover';
 
 require('./ReportsList.scss');
 
 class ReportsListView extends Component {
   static propTypes = {
-    reports: PropTypes.array
+    reports: PropTypes.array,
+    activeId: PropTypes.string
   };
 
   componentWillMount() {
-    let params = {
-      offset: 0,
-      limit: 20
-    };
+    listReports();
+    this.interval$ = Observable.interval(10000)
+      .subscribe(listReports);
+  }
 
-    MyReportsApi.list(params)
-      .subscribe((res) => {
-        ReportsStore.dispatch({
-          type: ReportsActions.setList,
-          payload: res
-        });
-      });
+  componentWillUnmount() {
+    if (this.interval$) {
+      this.interval$.unsubscribe();
+    }
   }
 
   renderCreated(report) {
     if (report.status === 'COMPLETED') {
       return humanReadableDate(report.created);
+    }
+
+    if (report.status === 'FAILED') {
+      return 'Failed';
     }
 
     return (
@@ -81,10 +85,54 @@ class ReportsListView extends Component {
           <div>Report Name</div>
           <div>Created</div>
           <div>Expiration</div>
-          <div>Tags</div>
           <div></div>
         </div>
       </div>
+    );
+  }
+
+  renderLoadingRow(report) {
+    return (
+      <div
+        key={report.id}
+        className={classnames('grid-row grid-link not-allowed', {
+          'active': report.id === this.props.activeId,
+        })}
+      >
+        <div className="report-name">{report.name}</div>
+        <div>
+          {this.renderCreated(report)}
+        </div>
+        <div>
+          {this.renderExpiry(report)}
+        </div>
+        <div>
+          <ActionPopover report={report} />
+        </div>
+      </div>
+    );
+  }
+
+  renderLinkRow(report) {
+    return (
+      <Link
+        key={report.id}
+        to={`/ns/${getCurrentNamespace()}/reports/details/${report.id}`}
+        className={classnames('grid-row grid-link', {
+          'active': report.id === this.props.activeId,
+        })}
+      >
+        <div className="report-name">{report.name}</div>
+        <div>
+          {this.renderCreated(report)}
+        </div>
+        <div>
+          {this.renderExpiry(report)}
+        </div>
+        <div>
+          <ActionPopover report={report} />
+        </div>
+      </Link>
     );
   }
 
@@ -93,27 +141,38 @@ class ReportsListView extends Component {
       <div className="grid-body">
         {
           this.props.reports.map((report) => {
-            return (
-              <Link
-                key={report.id}
-                to={`/ns/${getCurrentNamespace()}/reports/${report.id}`}
-                className="grid-row grid-link"
-              >
-                <div className="report-name">{report.name}</div>
-                <div>
-                  {this.renderCreated(report)}
-                </div>
-                <div>
-                  {this.renderExpiry(report)}
-                </div>
-                <div></div>
-                <div>
-                  <IconSVG name="icon-cog" />
-                </div>
-              </Link>
-            );
+            return report.status === 'RUNNING' ?
+              this.renderLoadingRow(report) : this.renderLinkRow(report);
           })
         }
+      </div>
+    );
+  }
+
+  renderEmpty() {
+    return (
+      <div className="list-container empty">
+        <div className="text-xs-center">
+          No reports are available
+        </div>
+        <div className="text-xs-center">
+          Make a selection to specify your criteria and generate new report.
+        </div>
+      </div>
+    );
+  }
+
+  renderTable() {
+    if (this.props.reports.length === 0) {
+      return this.renderEmpty();
+    }
+
+    return (
+      <div className="list-container grid-wrapper">
+        <div className="grid grid-container">
+          {this.renderHeader()}
+          {this.renderBody()}
+        </div>
       </div>
     );
   }
@@ -134,12 +193,7 @@ class ReportsListView extends Component {
               Select a report to view
             </div>
 
-            <div className="list-container grid-wrapper">
-              <div className="grid grid-container">
-                {this.renderHeader()}
-                {this.renderBody()}
-              </div>
-            </div>
+            {this.renderTable()}
           </div>
         </div>
       </div>
@@ -149,7 +203,8 @@ class ReportsListView extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    reports: state.list.reports
+    reports: state.list.reports,
+    activeId: state.list.activeId
   };
 };
 

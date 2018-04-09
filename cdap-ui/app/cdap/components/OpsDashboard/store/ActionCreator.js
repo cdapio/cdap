@@ -20,20 +20,22 @@ import moment from 'moment';
 import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
 import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 
+const DAY_IN_SEC = 24 * 60 * 60;
+
 export function enableLoading() {
   DashboardStore.dispatch({
     type: DashboardActions.enableLoading
   });
 }
 
-export function getData(start, duration = 1440, namespaces = DashboardStore.getState().namespaces.namespacesPick) {
+export function getData(start, duration = DAY_IN_SEC, namespaces = DashboardStore.getState().namespaces.namespacesPick) {
   enableLoading();
 
   let state = DashboardStore.getState().dashboard;
 
   if (!start) {
-    start = moment().subtract(24, 'h').format('x');
-    start = parseInt(start, 10);
+    start = moment().subtract(23, 'h').format('x');
+    start = Math.floor(parseInt(start, 10) / 1000);
   }
 
   let namespacesList = [...namespaces, getCurrentNamespace()];
@@ -70,15 +72,15 @@ export function getData(start, duration = 1440, namespaces = DashboardStore.getS
 export function next() {
   let state = DashboardStore.getState().dashboard;
 
-  let start = moment(state.startTime);
+  let start = moment(state.startTime * 1000);
 
-  if (state.duration === 1440) {
+  if (state.duration === DAY_IN_SEC) {
     start = start.add(12, 'h').format('x');
   } else {
     start = start.add(30, 'm').format('x');
   }
 
-  start = parseInt(start, 10);
+  start = Math.round(parseInt(start, 10) / 1000);
 
   getData(start, state.duration);
 }
@@ -86,15 +88,15 @@ export function next() {
 export function prev() {
   let state = DashboardStore.getState().dashboard;
 
-  let start = moment(state.startTime);
+  let start = moment(state.startTime * 1000);
 
-  if (state.duration === 1440) {
+  if (state.duration === DAY_IN_SEC) {
     start = start.subtract(12, 'h').format('x');
   } else {
     start = start.subtract(30, 'm').format('x');
   }
 
-  start = parseInt(start, 10);
+  start = Math.round(parseInt(start, 10) / 1000);
 
   getData(start, state.duration);
 }

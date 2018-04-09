@@ -23,7 +23,7 @@ $header-bg-color: $grey-08;
 .runs-table-container {
   padding: 10px 75px;
 
-  .grid-wrapper {
+  &.grid-wrapper {
     height: 300px;
     overflow: auto;
   }

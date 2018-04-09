@@ -64,4 +64,11 @@ $bg-color: $grey-08;
       flex-wrap: wrap;
     }
   }
+
+  .action-buttons {
+    .btn:focus {
+      outline: none;
+      text-decoration: none;
+    }
+  }
 }
