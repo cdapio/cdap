@@ -14,29 +14,18 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+.reports-detail-container {
+  // 70px for header
+  height: calc(100% - 70px);
 
-$header-height: 70px;
-$header-bg-color: white;
-$bg-color: $grey-08;
+  .action-section {
+    height: 40px;
+    line-height: 40px;
+    background-color: white;
+    padding: 0 35px;
 
-.reports-container {
-  height: 100%;
-  background-color: $bg-color;
-
-  .header {
-    height: $header-height;
-    background-color: $header-bg-color;
-
-    .reports-view-options {
-      font-size: 18px;
-      line-height: $header-height;
-      padding-left: 25px;
-
-      .separator {
-        margin-right: 10px;
-        margin-left: 10px;
-      }
+    .btn {
+      padding: 3px 10px;
     }
   }
 }

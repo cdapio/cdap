@@ -20,6 +20,7 @@ import {defaultAction} from 'services/helpers';
 const ReportsActions = {
   toggleCustomizerOption: 'REPORTS_TOGGLE_CUSTOMIZER_OPTION',
   setList: 'REPORTS_SET_LIST',
+  setDetails: 'REPORTS_SET_DETAILS',
   reset: 'REPORTS_RESET'
 };
 
@@ -43,6 +44,11 @@ const defaultListState = {
   total: 0,
   reports: [],
   offset: 0
+};
+
+const defaultDetailsState = {
+  summary: {},
+  runs: []
 };
 
 const customizer = (state = defaultCustomizerState, action = defaultAction) => {
@@ -74,14 +80,30 @@ const list = (state = defaultListState, action = defaultAction) => {
   }
 };
 
+const details = (state = defaultDetailsState, action = defaultAction) => {
+  switch (action.type) {
+    case ReportsActions.setDetails:
+      return {
+        summary: action.payload.summary,
+        runs: action.payload.runs
+      };
+    case ReportsActions.reset:
+      return defaultDetailsState;
+    default:
+      return state;
+  }
+};
+
 const ReportsStore = createStore(
   combineReducers({
     customizer,
-    list
+    list,
+    details
   }),
   {
     reports: defaultCustomizerState,
-    list: defaultListState
+    list: defaultListState,
+    details: defaultDetailsState
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );

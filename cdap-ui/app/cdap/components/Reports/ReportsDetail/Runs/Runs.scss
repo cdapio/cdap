@@ -1,0 +1,64 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../../styles/variables.scss';
+
+$header-bg-color: $grey-08;
+$border-color: $grey-03;
+
+.reports-runs-container {
+  // 40px height of action section
+  // 182px height of summary section plus border
+  height: calc(100% - 40px - 182px);
+
+  .grid-wrapper {
+    height: 100%;
+    min-height: 300px;
+  }
+
+  .grid.grid-container {
+    max-height: 100%;
+
+    .grid-header,
+    .grid-body {
+      padding: 0 35px;
+
+      .grid-row > * {
+        padding: 5px 10px;
+      }
+    }
+
+    .grid-header {
+      background-color: $header-bg-color;
+      border-bottom: 2px solid $border-color;
+      font-weight: bold;
+
+      .grid-row {
+        border-bottom: 0;
+        align-items: end;
+      }
+    }
+
+    .grid-body {
+      background-color: white;
+      font-size: 12px;
+
+      .grid-row {
+        padding: 3px 0;
+      }
+    }
+  }
+}

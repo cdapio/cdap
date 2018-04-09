@@ -109,7 +109,7 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route exact path="/ns/:namespace/create-profile" component={ProfileCreateView} />
-          <Route exact path="/ns/:namespace/reports" component={Reports} />
+          <Route path="/ns/:namespace/reports" component={Reports} />
           <Route component={Page404} />
         </Switch>
       </div>

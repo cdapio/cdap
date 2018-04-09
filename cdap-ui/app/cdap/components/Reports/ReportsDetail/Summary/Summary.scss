@@ -14,28 +14,24 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+@import '../../../../styles/variables.scss';
 
-$header-height: 70px;
-$header-bg-color: white;
-$bg-color: $grey-08;
+$summary-bg-color: $grey-08;
+$border-color: $grey-03;
 
-.reports-container {
-  height: 100%;
-  background-color: $bg-color;
+.reports-summary-container {
+  background-color: white;
+  padding: 0 50px 15px;
 
-  .header {
-    height: $header-height;
-    background-color: $header-bg-color;
+  .summary-section {
+    background-color: $summary-bg-color;
+    border-top: 3px solid $border-color;
 
-    .reports-view-options {
-      font-size: 18px;
-      line-height: $header-height;
-      padding-left: 25px;
+    .table {
+      td { border-color: $border-color; }
 
-      .separator {
-        margin-right: 10px;
-        margin-left: 10px;
+      .no-border {
+        td { border-top: 0; }
       }
     }
   }

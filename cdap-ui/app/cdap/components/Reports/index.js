@@ -16,25 +16,20 @@
 
 import React from 'react';
 import {Provider} from 'react-redux';
+import {Route, Switch} from 'react-router-dom';
 import ReportsStore from 'components/Reports/store/ReportsStore';
 import ReportsList from 'components/Reports/ReportsList';
+import ReportsDetail from 'components/Reports/ReportsDetail';
 
 require('./Reports.scss');
 
 export default function Reports() {
   return (
     <Provider store={ReportsStore}>
-      <div className="reports-container">
-        <div className="header">
-          <div className="reports-view-options">
-            <span className="active">Reports List</span>
-            <span className="separator">|</span>
-            <span>Reports View</span>
-          </div>
-        </div>
-
-        <ReportsList />
-      </div>
+      <Switch>
+        <Route exact path="/ns/:namespace/reports" component={ReportsList} />
+        <Route exact path="/ns/:namespace/reports/:reportId" component={ReportsDetail} />
+      </Switch>
     </Provider>
   );
 }

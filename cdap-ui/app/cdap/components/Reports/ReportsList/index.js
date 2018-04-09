@@ -23,6 +23,8 @@ import IconSVG from 'components/IconSVG';
 import ReportsStore, {ReportsActions} from 'components/Reports/store/ReportsStore';
 import {connect} from 'react-redux';
 import Duration from 'components/Duration';
+import { Link } from 'react-router-dom';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./ReportsList.scss');
 
@@ -92,9 +94,10 @@ class ReportsListView extends Component {
         {
           this.props.reports.map((report) => {
             return (
-              <div
+              <Link
                 key={report.id}
-                className="grid-row"
+                to={`/ns/${getCurrentNamespace()}/reports/${report.id}`}
+                className="grid-row grid-link"
               >
                 <div className="report-name">{report.name}</div>
                 <div>
@@ -107,7 +110,7 @@ class ReportsListView extends Component {
                 <div>
                   <IconSVG name="icon-cog" />
                 </div>
-              </div>
+              </Link>
             );
           })
         }
@@ -117,18 +120,25 @@ class ReportsListView extends Component {
 
   render() {
     return (
-      <div className="reports-list-container">
-        <Customizer />
-
-        <div className="list-view">
-          <div className="section-title">
-            Select a report to view
+      <div className="reports-container">
+        <div className="header">
+          <div className="reports-view-options">
+            <span>Reports</span>
           </div>
+        </div>
+        <div className="reports-list-container">
+          <Customizer />
 
-          <div className="list-container grid-wrapper">
-            <div className="grid grid-container">
-              {this.renderHeader()}
-              {this.renderBody()}
+          <div className="list-view">
+            <div className="section-title">
+              Select a report to view
+            </div>
+
+            <div className="list-container grid-wrapper">
+              <div className="grid grid-container">
+                {this.renderHeader()}
+                {this.renderBody()}
+              </div>
             </div>
           </div>
         </div>

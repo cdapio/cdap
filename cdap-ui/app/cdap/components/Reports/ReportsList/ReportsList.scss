@@ -19,6 +19,7 @@
 $bg-color: $grey-08;
 $border-color: $grey-03;
 $table-color: white;
+$grid-link-color: $grey-01;
 
 .reports-list-container {
   .customizer-container {
@@ -51,6 +52,8 @@ $table-color: white;
         .grid-row {
           grid-template-columns: 2fr 250px 250px 1fr 50px;
         }
+
+        .grid-link { color: $grid-link-color; }
       }
 
       .grid-header { font-weight: bold; }
