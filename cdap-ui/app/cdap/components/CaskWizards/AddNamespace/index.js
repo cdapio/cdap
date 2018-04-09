@@ -26,6 +26,8 @@ import {createNamespace, setNamespacePreferences, editNamespaceProperties} from 
 import T from 'i18n-react';
 import {Observable} from 'rxjs/Observable';
 import isEmpty from 'lodash/isEmpty';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 export default class AddNamespaceWizard extends Component {
   state = {
@@ -63,6 +65,8 @@ export default class AddNamespaceWizard extends Component {
     }
   }
 
+  eventEmitter = ee(ee);
+
   componentWillReceiveProps({isOpen}) {
     this.setState({
       showWizard: isOpen
@@ -84,6 +88,7 @@ export default class AddNamespaceWizard extends Component {
           if (res.includes('already exists')) {
             return Observable.throw(res);
           } else {
+            this.eventEmitter.emit(globalEvents.NAMESPACECREATED);
             this.buildSuccessInfo(res);
             return setNamespacePreferences();
           }

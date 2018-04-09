@@ -14,24 +14,9 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
+@import "../../styles/variables.scss";
 
-.namespace-details-entity-count {
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-
-  .entity-count {
-    text-align: center;
-
-    > span {
-      font-weight: bold;
-      color: $grey-03;
-    }
-
-    > div {
-      font-size: 24px;
-    }
-  }
+.view-all-label {
+  color: $blue-03;
+  cursor: pointer;
 }

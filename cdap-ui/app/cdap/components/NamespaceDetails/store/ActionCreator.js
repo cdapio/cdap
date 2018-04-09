@@ -17,12 +17,10 @@
 import {MyNamespaceApi} from 'api/namespace';
 import {MyPreferenceApi} from 'api/preference';
 import {MySearchApi} from 'api/search';
-import {MyAppApi} from 'api/app';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import NamespaceDetailsStore, {NamespaceDetailsActions} from 'components/NamespaceDetails/store';
 import {Observable} from 'rxjs/Observable';
-import {GLOBALS} from 'services/global-constants';
-import EntityType from 'services/metadata-parser/EntityType';
+import {getCustomAppPipelineDatasetCounts} from 'services/metadata-parser';
 
 function enableLoading() {
   NamespaceDetailsStore.dispatch({
@@ -82,7 +80,7 @@ function getData() {
 
   let searchParams = {
     namespace,
-    target: ['dataset', 'stream'],
+    target: ['dataset', 'app'],
     query: '*'
   };
 
@@ -91,12 +89,11 @@ function getData() {
       MyNamespaceApi.get({namespace}),
       MyPreferenceApi.getNamespacePreferences({namespace}),
       MyPreferenceApi.getNamespacePreferencesResolved({namespace}),
-      MyAppApi.list({namespace}),
       MySearchApi.search(searchParams)
     )
     .subscribe(
       (res) => {
-        let [namespaceInfo, namespacePrefs, resolvedPrefs, apps, datasets] = res;
+        let [namespaceInfo, namespacePrefs, resolvedPrefs, entities] = res;
 
         let systemPrefs = {};
         if (Object.keys(resolvedPrefs).length > Object.keys(namespacePrefs).length) {
@@ -107,15 +104,11 @@ function getData() {
           });
         }
 
-        let pipelineCount = apps.filter(app => {
-          return GLOBALS.etlPipelineTypes.indexOf(app.artifact.name) !== -1;
-        }).length;
-        let customAppCount = apps.length - pipelineCount;
-
-        let datasetCount = datasets.results.filter(entity => {
-          return entity.entityId.entity === EntityType.dataset;
-        }).length;
-        let streamCount = datasets.results.length - datasetCount;
+        let {
+          pipelineCount,
+          customAppCount,
+          datasetCount
+        } = getCustomAppPipelineDatasetCounts(entities);
 
         let config = namespaceInfo.config;
 
@@ -127,7 +120,6 @@ function getData() {
             pipelineCount,
             customAppCount,
             datasetCount,
-            streamCount,
             namespacePrefs,
             systemPrefs,
             hdfsRootDirectory: config['root.directory'],

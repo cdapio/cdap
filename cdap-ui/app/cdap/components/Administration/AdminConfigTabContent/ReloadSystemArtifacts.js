@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 
 import React, { Component } from 'react';
-import ConfigureButton from 'components/ConfigureButton';
 import ConfirmationModal from 'components/ConfirmationModal';
 import {MyArtifactApi} from 'api/artifact';
 import T from 'i18n-react';
@@ -23,21 +22,14 @@ import T from 'i18n-react';
 const PREFIX = 'features.Administration.Configure.buttons.ReloadSystemArtifacts';
 
 export default class ReloadSystemArtifacts extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      openConfirmation: false,
-      loading: false,
-      errorMessage: null,
-      extendedMessage: null
-    };
-
-    this.onClick = this.onClick.bind(this);
-    this.reload = this.reload.bind(this);
+  state = {
+    openConfirmation: false,
+    loading: false,
+    errorMessage: null,
+    extendedMessage: null
   }
 
-  onClick() {
+  onClick = () => {
     this.setState({
       openConfirmation: !this.state.openConfirmation,
       loading: false,
@@ -46,7 +38,7 @@ export default class ReloadSystemArtifacts extends Component {
     });
   }
 
-  reload() {
+  reload = () => {
     this.setState({
       loading: true
     });
@@ -66,11 +58,12 @@ export default class ReloadSystemArtifacts extends Component {
   render() {
     return (
       <span>
-        <ConfigureButton
-          label={T.translate(`${PREFIX}.label`)}
+        <button
+          className="btn btn-secondary"
           onClick={this.onClick}
-          iconClass="icon-artifacts"
-        />
+        >
+          {T.translate(`${PREFIX}.label`)}
+        </button>
 
         <ConfirmationModal
           headerTitle={T.translate(`${PREFIX}.confirmationHeader`)}

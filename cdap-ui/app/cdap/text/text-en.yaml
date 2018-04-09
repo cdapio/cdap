@@ -128,6 +128,24 @@ features:
       error: Login failed. Please check your username and password and try again.
     modalHeader: Access Token
   Administration:
+    Accordions:
+      Namespace:
+        create: Create New Namespace
+        customApps: Custom Apps
+        description: Create, View and Manage Namespaces
+        label: "Namespaces "
+        labelWithCount: "Namespaces ({count})"
+      SystemPrefs:
+        create: Edit System Preferences
+        description: Manage system preferences available as runtime arguments to programs across all namespaces
+        label: "System Preferences "
+        labelWithCount: "System Preferences ({count})"
+        noPrefs: No System Preferences set
+      SystemProfiles:
+        create: Create New Profile
+        description: Manage compute profiles available to launch programs in all namespaces
+        label: "System Compute Profiles "
+        labelWithCount: "System Compute Profiles ({count})"
     Component-Overview:
       emptyMessage: Available only in Distributed mode
       headers:
@@ -184,6 +202,9 @@ features:
       streams: Streams
       transaction: Transaction
       viewlogs: View Logs
+    Tabs:
+      config: Configuration
+      management: Management
     Top:
       primaryLabelOne: DAY
       primaryLabelTwo: HR
@@ -196,6 +217,7 @@ features:
         singular: second ago
       version-label: Version
     Title: Administration
+    TitleWithCDAP: CDAP | Administration
     uptimeLabel: Uptime {time}
   AppDetailedView:
     History:
@@ -228,14 +250,13 @@ features:
         last24HrNodeHr: Last 24 hrs node/hr
         last24HrRuns: Last 24 hrs runs
         noProfiles: "No compute profiles have been defined in this namespace. Start by "
+        noProfilesSystem: "No compute profiles have been defined in the system. Start by "
         profileName: Profile Name
         profileUsage: Profile usage
         provisioner: Provisioner
         schedules: Schedules
         totalNodeHr: Total node/hr
         triggers: Triggers
-        viewAll: View All
-        viewLess: View Less
   ConfirmationModal:
     cancelDefaultText: Cancel
     confirmDefaultText: OK
@@ -1324,8 +1345,6 @@ features:
     edit: Edit
     entityCounts:
       customApps: Custom Apps
-      datasets: Datasets
-      streams: Streams
     mapping:
       hbaseNamespaceName: 'HBase Namespace Name: '
       hdfsRootDirectory: 'HDFS Root Directory: '
@@ -1339,8 +1358,6 @@ features:
       label: Preferences
       labelWithCount: Preferences ({count})
       noPreferences: No Preferences set for this namespace
-      viewAll: View All
-      viewLess: View Less
     scope: Scope
     security:
       keytabURI: 'Keytab URI: '
@@ -1989,6 +2006,10 @@ features:
     pipelineName: Pipeline Name
     title: "Pipelines to be triggered by \"{pipelineName}\""
     viewPipeline: View Pipeline
+
+  ViewAllLabel:
+    viewAll: View All
+    viewLess: View Less
 
   ViewSwitch:
     actionsLabel: Actions

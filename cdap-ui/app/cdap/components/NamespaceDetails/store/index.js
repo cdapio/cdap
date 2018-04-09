@@ -29,7 +29,6 @@ const defaultInitialState = {
   customAppCount: 0,
   pipelineCount: 0,
   datasetCount: 0,
-  streamCount: 0,
   namespacePrefs: {},
   systemPrefs: {},
   hdfsRootDirectory: '',

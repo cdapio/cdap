@@ -15,6 +15,7 @@
 */
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {Form, FormGroup, Col, Input} from 'reactstrap';
 import {preventPropagation} from 'services/helpers';
 import SampleViewSpecJson from './sample-view-spec.json';
@@ -23,17 +24,23 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link, Redirect} from 'react-router-dom';
 import {MyProfileApi} from 'api/cloud';
 import BtnWithLoading from 'components/BtnWithLoading';
+import {objectQuery} from 'services/helpers';
 
 require('./CreateView.scss');
 
 export default class ProfilesCreateView extends Component {
-
   state = {
     profileName: '',
     profileDescription: '',
     redirectToNamespace: false,
+    redirectToAdmin: false,
     loading: false,
-    error: null
+    error: null,
+    isSystem: objectQuery(this.props.location, 'pathname') === '/create-profile'
+  };
+
+  static propTypes = {
+    location: PropTypes.object
   };
 
   parseSpecAndGetInitialState = () => {
@@ -56,6 +63,13 @@ export default class ProfilesCreateView extends Component {
     if (this.profileNameInput) {
       this.profileNameInput.focus();
     }
+    if (this.state.isSystem) {
+      document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    }
+  }
+
+  componentWillUnmount() {
+    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
   onValueChange = (property, value) => {
@@ -87,14 +101,20 @@ export default class ProfilesCreateView extends Component {
     };
     MyProfileApi
       .create({
-        namespace: getCurrentNamespace(),
+        namespace: this.state.isSystem ? 'system' : getCurrentNamespace(),
         profile: this.state.profileName
       }, jsonBody)
       .subscribe(
         () => {
-          this.setState({
-            redirectToNamespace: true
-          });
+          if (this.state.isSystem) {
+            this.setState({
+              redirectToAdmin: true
+            });
+          } else {
+            this.setState({
+              redirectToNamespace: true
+            });
+          }
         },
         err => {
           this.setState({
@@ -200,6 +220,14 @@ export default class ProfilesCreateView extends Component {
         <Redirect to={`/ns/${getCurrentNamespace()}/details`} />
       );
     }
+    if (this.state.redirectToAdmin) {
+      return (
+        <Redirect to={{
+          pathname: '/administration',
+          state: { showConfigTab: true }
+        }}/>
+      );
+    }
     let configurationGroups = SampleViewSpecJson['configuration-groups'];
     return (
       <div className="profile-create-view">
@@ -231,9 +259,19 @@ export default class ProfilesCreateView extends Component {
             disabled={!this.state.profileName.length || !this.state.profileDescription.length}
             label="Create Compute Profile"
           />
-          <Link to={`/ns/${getCurrentNamespace()}/details`}>
-            Close
-          </Link>
+          {
+            this.state.isSystem ?
+              <Link to={{
+                pathname: '/administration',
+                state: { showConfigTab: true }
+              }}>
+                Close
+              </Link>
+            :
+              <Link to={`/ns/${getCurrentNamespace()}/details`}>
+                Close
+              </Link>
+          }
         </div>
       </div>
     );

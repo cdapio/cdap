@@ -26,12 +26,11 @@ const mapStateToProps = (state) => {
   return {
     customAppCount: state.customAppCount,
     pipelineCount: state.pipelineCount,
-    datasetCount: state.datasetCount,
-    streamCount: state.streamCount
+    datasetCount: state.datasetCount
   };
 };
 
-const NamespaceDetailsEntityCounts = ({customAppCount, pipelineCount, datasetCount, streamCount}) => {
+const NamespaceDetailsEntityCounts = ({customAppCount, pipelineCount, datasetCount}) => {
   return (
     <div className="namespace-details-entity-count">
       <div className="entity-count">
@@ -43,12 +42,8 @@ const NamespaceDetailsEntityCounts = ({customAppCount, pipelineCount, datasetCou
         <div>{pipelineCount}</div>
       </div>
       <div className="entity-count">
-        <span>{T.translate(`${PREFIX}.datasets`)}</span>
+        <span>{T.translate('commons.entity.dataset.plural')}</span>
         <div>{datasetCount}</div>
-      </div>
-      <div className="entity-count">
-        <span>{T.translate(`${PREFIX}.streams`)}</span>
-        <div>{streamCount}</div>
       </div>
     </div>
   );
@@ -57,8 +52,7 @@ const NamespaceDetailsEntityCounts = ({customAppCount, pipelineCount, datasetCou
 NamespaceDetailsEntityCounts.propTypes = {
   customAppCount: PropTypes.number,
   pipelineCount: PropTypes.number,
-  datasetCount: PropTypes.number,
-  streamCount: PropTypes.number
+  datasetCount: PropTypes.number
 };
 
 const ConnectedNamespaceDetailsEntityCounts = connect(mapStateToProps)(NamespaceDetailsEntityCounts);

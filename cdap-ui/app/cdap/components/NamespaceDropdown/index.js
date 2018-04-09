@@ -33,6 +33,7 @@ import uuidV4 from 'uuid/v4';
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 import EntityType from 'services/metadata-parser/EntityType';
+import {preventPropagation} from 'services/helpers';
 require('./NamespaceDropdown.scss');
 
 export default class NamespaceDropdown extends Component {
@@ -227,7 +228,10 @@ export default class NamespaceDropdown extends Component {
         <span>{T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'Namespace'})}</span>
         <IconSVG
           name='icon-close'
-          onClick={() => this.setState({preferencesSavedMessage: false})}
+          onClick={(e) => {
+            preventPropagation(e);
+            this.setState({preferencesSavedMessage: false});
+          }}
         />
       </div>
     );

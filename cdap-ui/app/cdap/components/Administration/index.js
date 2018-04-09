@@ -1,5 +1,5 @@
 /*
-* Copyright © 2016-2017 Cask Data, Inc.
+* Copyright © 2016-2018 Cask Data, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -15,45 +15,41 @@
 */
 
 import React, {Component} from 'react';
-require('./Administration.scss');
-import AdminConfigurePane from '../AdminConfigurePane';
-import AdminOverviewPane from '../AdminOverviewPane';
-import AbstractWizard from '../AbstractWizard';
-import SetPreferenceModal from '../FastAction/SetPreferenceAction/SetPreferenceModal';
+import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
 import VersionStore from 'services/VersionStore';
 import VersionActions from 'services/VersionStore/VersionActions';
 import MyCDAPVersionApi from 'api/version';
 import {MyServiceProviderApi} from 'api/serviceproviders';
-import {humanReadableDuration} from 'services/helpers';
-import T from 'i18n-react';
-import PlatformsDetails from 'components/Administration/PlatformsDetails';
-import ServicesTable from 'components/Administration/ServicesTable';
-import {humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
+import {humanReadableDuration, humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
 import isNil from 'lodash/isNil';
+import classnames from 'classnames';
+import AdminManagementTabContent from 'components/Administration/AdminManagementTabContent';
+import AdminConfigTabContent from 'components/Administration/AdminConfigTabContent';
+import T from 'i18n-react';
+import {objectQuery} from 'services/helpers';
+
+require('./Administration.scss');
 
 const PREFIX = 'features.Administration';
 const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
 
-class Administration extends Component {
+const ADMIN_TABS = {
+  management: T.translate(`${PREFIX}.Tabs.management`),
+  config: T.translate(`${PREFIX}.Tabs.config`)
+};
 
+class Administration extends Component {
   state = {
-    services: [],
     platformsDetails: {},
     platforms: [],
-    activeApplication: null,
-    wizard : {
-      actionIndex : null,
-      actionType : null
-    },
-    preferenceModal: false,
     uptime: 0,
-    showNamespaceWizard: false,
-    loading: true
+    loading: true,
+    currentTab: objectQuery(this.props.location, 'state', 'showConfigTab') ? ADMIN_TABS.config : ADMIN_TABS.management
   };
 
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+  static propTypes = {
+    location: PropTypes.object
   }
 
   componentDidMount() {
@@ -65,6 +61,10 @@ class Administration extends Component {
     }
 
     document.querySelector('#header-namespace-dropdown').style.display = 'none';
+  }
+
+  componentWillUnmount() {
+    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
   getPlatforms() {
@@ -179,107 +179,82 @@ class Administration extends Component {
       });
   }
 
-  onSystemPreferencesSaved = () => {
+  toggleCurrentTab = (tab) => {
     this.setState({
-      preferencesSaved: true
-    });
-    setTimeout(() => {
-      this.setState({
-        preferencesSaved: false
-      });
-    }, 3000);
-  };
-
-  closePreferencesSavedMessage = () => {
-    this.setState({
-      preferencesSaved: false
+      currentTab: tab
     });
   };
 
-  closeWizard = () => {
-    this.setState({
-      showNamespaceWizard: false
-    });
-  };
+  renderTabTitle() {
+    return (
+      <span className="tab-title">
+        <h5
+          className={classnames({"active": this.state.currentTab === ADMIN_TABS.management})}
+          onClick={this.toggleCurrentTab.bind(this, ADMIN_TABS.management)}
+        >
+          {T.translate(`${PREFIX}.Tabs.management`)}
+        </h5>
+        <span className="divider"> | </span>
+        <h5
+          className={classnames({"active": this.state.currentTab === ADMIN_TABS.config})}
+          onClick={this.toggleCurrentTab.bind(this, ADMIN_TABS.config)}
+        >
+          {T.translate(`${PREFIX}.Tabs.config`)}
+        </h5>
+      </span>
+    );
+  }
 
-  openNamespaceWizard = () => {
-    this.setState({
-      showNamespaceWizard: true
-    });
-  };
+  renderUptimeVersion() {
+    if (this.state.currentTab === ADMIN_TABS.config) {
+      return null;
+    }
 
-  togglePreferenceModal = () => {
-    this.setState({
-      preferenceModal: !this.state.preferenceModal
-    });
-  };
+    return (
+      <span className="uptime-version-container">
+        <span>
+          {
+            this.state.uptime ?
+              T.translate(`${PREFIX}.uptimeLabel`, {
+                time: humanReadableDuration(Math.ceil(this.state.uptime / 1000))
+              })
+            :
+              null
+          }
+        </span>
+        {
+          isNil(this.state.version) ?
+            null
+          :
+            (
+              <i className="cdap-version">
+                {T.translate(`${PREFIX}.Top.version-label`)} - {this.state.version}
+              </i>
+            )
+        }
+      </span>
+    );
+  }
 
   render () {
     return (
-       <div className="administration">
+      <div className="administration">
         <Helmet
-          title={T.translate(`${PREFIX}.Title`)}
+          title={T.translate(`${PREFIX}.TitleWithCDAP`)}
         />
-        <div>
-          <div className="page-title-and-version">
-            <span>
-              <h3>{T.translate(`${PREFIX}.Title`)}</h3>
-            </span>
-            <span className="uptime-version-container">
-              <span>
-                {
-                  this.state.uptime ?
-                    T.translate(`${PREFIX}.uptimeLabel`, {
-                      time: humanReadableDuration(Math.ceil(this.state.uptime / 1000))
-                    })
-                  :
-                    null
-                }
-              </span>
-              {
-                isNil(this.state.version) ?
-                  null
-                :
-                  (
-                    <i className="cdap-version">
-                      {T.translate(`${PREFIX}.Top.version-label`)} - {this.state.version}
-                    </i>
-                  )
-              }
-            </span>
-          </div>
+        <div className="tab-title-and-version">
+          {this.renderTabTitle()}
+          {this.renderUptimeVersion()}
         </div>
-        <div className="services-details">
-          <div className="services-table-section">
-            <strong> {T.translate(`${PREFIX}.Services.title`)} </strong>
-            <ServicesTable />
-          </div>
-          <div className="platform-section">
-            <PlatformsDetails platforms={this.state.platformsDetails} />
-          </div>
-        </div>
-        <div className="admin-bottom-panel">
-          <AdminConfigurePane
-            openNamespaceWizard={this.openNamespaceWizard}
-            openPreferenceModal={this.togglePreferenceModal}
-            preferencesSavedState={this.state.preferencesSaved}
-            closePreferencesSavedMessage={this.closePreferencesSavedMessage}
-          />
-          <AdminOverviewPane
-            isLoading={this.state.loading}
-            platforms={this.state.platformsDetails}
-          />
-        </div>
-        <AbstractWizard
-          isOpen={this.state.showNamespaceWizard}
-          onClose={this.closeWizard.bind(this)}
-          wizardType={'add_namespace'}
-        />
-        <SetPreferenceModal
-          isOpen={this.state.preferenceModal}
-          toggleModal={this.togglePreferenceModal}
-          onSuccess={this.onSystemPreferencesSaved}
-        />
+        {
+          this.state.currentTab === ADMIN_TABS.management ?
+            <AdminManagementTabContent
+              platformsDetails={this.state.platformsDetails}
+              loading={this.state.loading}
+            />
+          :
+            <AdminConfigTabContent />
+        }
       </div>
     );
   }
