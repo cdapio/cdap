@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
@@ -39,9 +41,10 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Injector;
-import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -53,30 +56,45 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Tests program run state persistence.
  */
 public class ProgramNotificationSubscriberServiceTest {
+  private static Table appMetaTable;
+  private static AppMetadataStore metadataStoreDataset;
+  private static TransactionExecutor txnl;
+  private static ProgramStateWriter programStateWriter;
 
-  @Test
-  public void testAppSpecNotRequiredToWriteState() throws Exception {
+  @BeforeClass
+  public static void setupClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
-    ProgramNotificationSubscriberService programNotificationSubscriberService =
-      injector.getInstance(ProgramNotificationSubscriberService.class);
-    programNotificationSubscriberService.startAndWait();
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
     DatasetId storeTable = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-    Table table = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
-                                                  DatasetProperties.EMPTY, Collections.<String, String>emptyMap());
-    final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf, new AtomicBoolean(false));
-    final TransactionExecutor txnl = txExecutorFactory.createExecutor(
-      Collections.singleton((TransactionAware) metadataStoreDataset));
+    appMetaTable = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
+                                                   DatasetProperties.EMPTY, Collections.emptyMap());
 
-    ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf, new AtomicBoolean(false));
+    txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
 
+    programStateWriter = injector.getInstance(ProgramStateWriter.class);
+  }
+
+  @After
+  public void cleanupTest() throws Exception {
+    txnl.execute(() -> {
+      Scanner scanner = appMetaTable.scan(null, null);
+      Row row;
+      while ((row = scanner.next()) != null) {
+        appMetaTable.delete(row.getRow());
+      }
+    });
+  }
+
+  @Test
+  public void testAppSpecNotRequiredToWriteState() throws Exception {
     ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
     ProgramOptions programOptions = new SimpleProgramOptions(programId);
-    final ProgramRunId runId = programId.run(RunIds.generate());
+    ProgramRunId runId = programId.run(RunIds.generate());
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     programStateWriter.start(runId, programOptions, null, artifactId);
 

@@ -1649,20 +1649,22 @@ public class AuthorizationTest extends TestBase {
   private <T extends ProgramManager> void assertProgramFailure(
     Map<String, String> programArgs, final ProgramManager<T> programManager)
     throws TimeoutException, InterruptedException, ExecutionException {
+    final int prevNumFailures = programManager.getHistory(ProgramRunStatus.FAILED).size();
+
     programManager.start(programArgs);
 
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        // verify program history just have failures
-        List<RunRecord> history = programManager.getHistory();
-        for (final RunRecord runRecord : history) {
-          if (runRecord.getStatus() != ProgramRunStatus.FAILED) {
-            return false;
-          }
+    // need to check that every run has failed as well as the number of failures
+    // otherwise there is a race where start() returns before any run record is written
+    // and this check passes because there are existing failed runs, but the new run has not failed.
+    Tasks.waitFor(true, () -> {
+      // verify program history just have failures, and there is one more failure than before program start
+      List<RunRecord> history = programManager.getHistory();
+      for (final RunRecord runRecord : history) {
+        if (runRecord.getStatus() != ProgramRunStatus.FAILED) {
+          return false;
         }
-        return !history.isEmpty();
       }
+      return history.size() == prevNumFailures + 1;
     }, 5, TimeUnit.MINUTES, "Not all program runs have failed status. Expected all run status to be failed");
 
     programManager.waitForStopped(10, TimeUnit.SECONDS);

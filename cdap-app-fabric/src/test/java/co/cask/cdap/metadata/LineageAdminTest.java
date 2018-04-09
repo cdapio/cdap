@@ -751,9 +751,8 @@ public class LineageAdminTest extends AppFabricTestBase {
     Assert.assertEquals(101, scanRange.getEnd());
   }
 
-  private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime,
-                                  ArtifactId artifactId) {
-    setStartAndRunning(store, id, pid, startTime, ImmutableMap.of(), ImmutableMap.of(), artifactId);
+  private void setStartAndRunning(Store store, ProgramId id, String pid, ArtifactId artifactId) {
+    setStartAndRunning(store, id, pid, ImmutableMap.of(), ImmutableMap.of(), artifactId);
   }
 
   @Test
@@ -791,10 +790,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     }
   }
 
-  private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime,
-                                  final Map<String, String> runtimeArgs,
-                                  final Map<String, String> systemArgs, ArtifactId artifactId) {
-    store.setProvisioning(id.run(pid), startTime, runtimeArgs, systemArgs,
+  private void setStartAndRunning(Store store, ProgramId id, String pid, Map<String, String> runtimeArgs,
+                                  Map<String, String> systemArgs, ArtifactId artifactId) {
+    long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
+    store.setProvisioning(id.run(pid), runtimeArgs, systemArgs,
                           AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id.run(pid), null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
@@ -803,9 +802,8 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private void addRuns(Store store, ProgramRunId... runs) {
     for (ProgramRunId run : runs) {
-      long startTimeSecs = RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS);
       ArtifactId artifactId = run.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
-      setStartAndRunning(store, run.getParent(), run.getEntityName(), startTimeSecs, artifactId);
+      setStartAndRunning(store, run.getParent(), run.getEntityName(), artifactId);
     }
   }
 
@@ -824,11 +822,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
     for (ProgramRunId run : runs) {
       ArtifactId artifactId = run.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
-      store.setProvisioning(run, RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS),
-                            emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
+      store.setProvisioning(run, emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
       store.setProvisioned(run, 0, AppFabricTestHelper.createSourceId(++sourceId));
       store.setStart(run, null, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
-      store.setRunning(run, RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS) + 1, null,
+      store.setRunning(run, RunIds.getTime(run.getRun(), TimeUnit.SECONDS) + 1, null,
                        AppFabricTestHelper.createSourceId(++sourceId));
     }
   }

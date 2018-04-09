@@ -38,6 +38,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link ConcurrencyConstraint}.
@@ -53,16 +54,16 @@ public class ConcurrencyConstraintTest {
   
   private int sourceId;
   
-  private void setStartAndRunning(Store store, final ProgramRunId id, final long startTime) {
-    setStartAndRunning(store, id, startTime, ImmutableMap.of(), ImmutableMap.of());
+  private void setStartAndRunning(Store store, ProgramRunId id) {
+    setStartAndRunning(store, id, ImmutableMap.of(), ImmutableMap.of());
 
   }
 
-  private void setStartAndRunning(Store store, final ProgramRunId id, final long startTime,
-                                  final Map<String, String> runtimeArgs,
-                                  final Map<String, String> systemArgs) {
-    store.setProvisioning(id, startTime, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),
-                          ARTIFACT_ID);
+  private void setStartAndRunning(Store store, ProgramRunId id,
+                                  Map<String, String> runtimeArgs,
+                                  Map<String, String> systemArgs) {
+    long startTime = RunIds.getTime(id.getRun(), TimeUnit.SECONDS);
+    store.setProvisioning(id, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId), ARTIFACT_ID);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
@@ -90,18 +91,18 @@ public class ConcurrencyConstraintTest {
 
     // add a run for the schedule
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
-    setStartAndRunning(store, pid1, System.currentTimeMillis(), EMPTY_MAP, systemArgs);
+    setStartAndRunning(store, pid1, EMPTY_MAP, systemArgs);
     assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
 
     // add a run for the program from a different schedule. Since there are now 2 running instances of the
     // workflow (regardless of the schedule name), the constraint is not met
     systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, "not" + schedule.getName());
-    setStartAndRunning(store, pid2, System.currentTimeMillis(), EMPTY_MAP, systemArgs);
+    setStartAndRunning(store, pid2, EMPTY_MAP, systemArgs);
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
     // add a run for the program that wasn't from a schedule
     // there are now three concurrent runs, so the constraint will not be met
-    setStartAndRunning(store, pid3, System.currentTimeMillis());
+    setStartAndRunning(store, pid3);
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
     // stop the first program; constraint will not be satisfied as there are still 2 running
