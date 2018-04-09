@@ -636,7 +636,7 @@
                       </includes>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec</directory>
+                      <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/src/main/resources</directory>
                       <targetPath>ext/runtimeproviders/gce-dataproc</targetPath>
                       <includes>
                         <include>gce-dataproc.json</include>
