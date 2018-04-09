@@ -114,7 +114,7 @@ public class DPTwillMain {
   }
 
   public static TwillRunner getConfiguredTwillRunner(Configuration yarnConfiguration, LocationFactory locationFactory) {
-    SSHConfig sshConfig = new SSHConfig("35.200.155.105", "yourname", getPrivateKey());
+    SSHConfig sshConfig = new SSHConfig("35.200.132.238", "yourname", getPrivateKey());
     return new DataProcTwillRunner(sshConfig, yarnConfiguration, locationFactory);
   }
 

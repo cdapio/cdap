@@ -96,7 +96,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
     workerRunner = new DistributedWorkerProgramRunner(null, yConf, cConf, null, null);
     mapreduceRunner = new DistributedMapReduceProgramRunner(null, yConf, cConf, null, null);
     sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, null, yConf, cConf, null, null, null);
-    workflowRunner = new DistributedWorkflowProgramRunner(null, yConf, cConf, null, null, null);
+    workflowRunner = new DistributedWorkflowProgramRunner(null, yConf, cConf, null, null, null, null);
   }
 
   @Test

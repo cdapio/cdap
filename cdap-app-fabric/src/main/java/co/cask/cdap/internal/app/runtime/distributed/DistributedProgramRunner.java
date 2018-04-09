@@ -230,8 +230,13 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       // Save the configuration to files
-      final File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
-      final File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
+//      final File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
+//      final File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
+      // we don't want to send local cluster's hConf and cConf to the dataproc cluster
+      final File hConfFile = saveHConf(new Configuration(false), new File(tempDir, HADOOP_CONF_FILE_NAME));
+      // TODO: how to create an empty CConfiguration (defaults only)
+      final File cConfFile = saveCConf(CConfiguration.create(hConfFile), new File(tempDir, CDAP_CONF_FILE_NAME));
+
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -262,8 +267,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  localizeResources,
                                                                                  createEventHandler(cConf, options));
 //          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
-          TwillPreparer twillPreparer = DPTwillMain.getConfiguredTwillRunner(hConf,
-                                                                             locationFactory).prepare(twillApplication);
+          TwillPreparer twillPreparer =
+            DPTwillMain.getConfiguredTwillRunner(hConf, locationFactory).prepare(twillApplication);
 
           // Add the configuration to container classpath
           twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());

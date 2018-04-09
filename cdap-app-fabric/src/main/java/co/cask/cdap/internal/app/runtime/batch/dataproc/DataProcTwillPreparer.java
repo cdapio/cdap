@@ -285,7 +285,7 @@ public class DataProcTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer withResources(Iterable<URI> resources) {
-      Iterables.addAll(this.resources, resources);
+    Iterables.addAll(this.resources, resources);
     return this;
   }
 

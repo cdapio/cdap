@@ -117,13 +117,18 @@ public class SSHUtils {
   public static void scp(SSHConfig sshConfig, String localFile, String remoteDir) throws JSchException, IOException {
     // https://medium.com/@ldclakmal/scp-with-java-b7b7dbcdbc85
     Session session = createSession(sshConfig);
+    scp(session, localFile, remoteDir);
+    session.disconnect();
+  }
 
+  public static void scp(Session session, String localFile, String remoteDir) throws JSchException, IOException {
     LOG.info("Starting SCP from {} to {}", localFile, remoteDir);
     copyLocalToRemote(session, localFile, remoteDir);
     LOG.info("Finished SCP from {} to {}", localFile, remoteDir);
   }
 
   public static Session createSession(SSHConfig sshConfig) throws JSchException {
+    Stopwatch sw = new Stopwatch().start();
     JSch jsch = new JSch();
 
 //    if (privateKey != null) {
@@ -141,6 +146,7 @@ public class SSHUtils {
     Session session = jsch.getSession(sshConfig.user, sshConfig.host, sshConfig.port);
     session.setConfig("StrictHostKeyChecking", "no");
     session.connect();
+    System.out.println("createSession took: " + sw.elapsedMillis());
     return session;
   }
 
@@ -219,7 +225,6 @@ public class SSHUtils {
     }
 
     channel.disconnect();
-    session.disconnect();
   }
 
   private static int checkAck(InputStream in) throws IOException {

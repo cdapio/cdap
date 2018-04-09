@@ -203,13 +203,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (!(workflow instanceof ProgramLifecycle)) {
       return workflow;
     }
-    final TransactionControl txControl =
+    TransactionControl txControl =
       Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class,
                                          workflow, "initialize", WorkflowContext.class);
+    txControl = TransactionControl.EXPLICIT;
     basicWorkflowToken.setCurrentNode(workflowSpec.getName());
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
     basicWorkflowContext.initializeProgram((ProgramLifecycle) workflow, txControl, false);
-    workflowStateWriter.setWorkflowToken(workflowRunId, basicWorkflowToken);
+//    workflowStateWriter.setWorkflowToken(workflowRunId, basicWorkflowToken);
     return workflow;
   }
 
@@ -278,12 +279,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (!(workflow instanceof ProgramLifecycle)) {
       return;
     }
-    final TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
                                                                             Workflow.class, workflow, "destroy");
+    txControl = TransactionControl.EXPLICIT;
     basicWorkflowToken.setCurrentNode(workflowSpec.getName());
     basicWorkflowContext.destroyProgram((ProgramLifecycle) workflow, txControl, false);
     try {
-      workflowStateWriter.setWorkflowToken(workflowRunId, basicWorkflowToken);
+//      workflowStateWriter.setWorkflowToken(workflowRunId, basicWorkflowToken);
     } catch (Throwable t) {
       LOG.error("Failed to store the final workflow token of Workflow {}", workflowRunId, t);
     }
@@ -327,7 +329,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       executorTerminateLatch.await();
       status.remove(node.getNodeId());
     }
-    workflowStateWriter.setWorkflowToken(workflowRunId, token);
+//    workflowStateWriter.setWorkflowToken(workflowRunId, token);
   }
 
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
@@ -371,7 +373,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       }
     } finally {
       // Update the WorkflowToken after the execution of the FORK node completes.
-      workflowStateWriter.setWorkflowToken(workflowRunId, token);
+//      workflowStateWriter.setWorkflowToken(workflowRunId, token);
       executorService.shutdownNow();
       // Wait for the executor termination
       executorTerminateLatch.await();
@@ -402,8 +404,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     secureStoreManager, messagingService);
     customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
-    workflowStateWriter.addWorkflowNodeState(workflowRunId,
-                                             new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
+//    workflowStateWriter.addWorkflowNodeState(workflowRunId,
+//                                             new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
     try {
       customActionExecutor.execute();
@@ -411,14 +413,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       failureCause = t;
       throw t;
     } finally {
-      status.remove(node.getNodeId());
-      workflowStateWriter.setWorkflowToken(workflowRunId, token);
-      NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
-      nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
-      BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
-      workflowStateWriter.addWorkflowNodeState(workflowRunId,
-                                               new WorkflowNodeStateDetail(node.getNodeId(), status, null,
-                                                                           defaultThrowable));
+//      status.remove(node.getNodeId());
+//      workflowStateWriter.setWorkflowToken(workflowRunId, token);
+//      NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
+//      nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
+//      BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
+//      workflowStateWriter.addWorkflowNodeState(workflowRunId,
+//                                               new WorkflowNodeStateDetail(node.getNodeId(), status, null,
+//                                                                           defaultThrowable));
     }
   }
 
@@ -494,7 +496,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // If a workflow updates its token at a condition node, it will be persisted after the execution of the next node.
     // However, the call below ensures that even if the workflow fails/crashes after a condition node, updates from the
     // condition node are also persisted.
-    workflowStateWriter.setWorkflowToken(workflowRunId, token);
+//    workflowStateWriter.setWorkflowToken(workflowRunId, token);
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 

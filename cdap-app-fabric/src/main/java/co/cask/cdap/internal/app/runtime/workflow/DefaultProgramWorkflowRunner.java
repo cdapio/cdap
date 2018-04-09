@@ -149,8 +149,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     // Publish the program's starting state
     RunId runId = ProgramRunners.getRunId(options);
     String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    programStateWriter.start(program.getId().run(runId), options, twillRunId,
-                             program.getApplicationSpecification().getArtifactId());
+//    programStateWriter.start(program.getId().run(runId), options, twillRunId,
+//                             program.getApplicationSpecification().getArtifactId());
 
     ProgramController controller;
     try {
@@ -158,7 +158,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     } catch (Throwable t) {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
-      programStateWriter.error(program.getId().run(runId), t);
+//      programStateWriter.error(program.getId().run(runId), t);
       Closeables.closeQuietly(closeable);
       throw t;
     }

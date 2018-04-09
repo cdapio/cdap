@@ -164,8 +164,6 @@ public class DPLauncher {
 
 
 
-    System.out.println("twill runtimeSpec: " + twillRuntimeSpec);
-
     // TODO: get this from file. note: file may not always exist (according to comment in YarnTwillPreparer)
     // TODO: add classloader name
     String globalOptions = "";
@@ -178,6 +176,7 @@ public class DPLauncher {
     archives.add(Constants.Files.TWILL_JAR);
     archives.add(Constants.Files.RUNTIME_CONFIG_JAR);
     archives.add(Constants.Files.APPLICATION_JAR);
+    archives.add(Constants.Files.RESOURCES_JAR);
     // TODO: what else?
 
 
