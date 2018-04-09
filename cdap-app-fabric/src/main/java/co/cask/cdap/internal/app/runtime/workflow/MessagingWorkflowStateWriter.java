@@ -14,32 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
-
-import javax.annotation.Nullable;
-import javax.inject.Inject;
+import com.google.inject.Inject;
 
 /**
- * An implementation of {@link LineageWriter} that publish lineage information to TMS.
+ * An implementation of {@link WorkflowStateWriter} that writes to TMS.
  */
-public class MessagingLineageWriter implements LineageWriter {
+public class MessagingWorkflowStateWriter implements WorkflowStateWriter {
 
   private static final Gson GSON = new Gson();
 
@@ -48,31 +45,35 @@ public class MessagingLineageWriter implements LineageWriter {
   private final RetryStrategy retryStrategy;
 
   @Inject
-  MessagingLineageWriter(CConfiguration cConf, MessagingService messagingService) {
+  MessagingWorkflowStateWriter(CConfiguration cConf, MessagingService messagingService) {
     this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC));
     this.messagingService = messagingService;
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metadata.");
   }
 
   @Override
-  public void addAccess(ProgramRunId programRunId, DatasetId datasetId,
-                        AccessType accessType, @Nullable NamespacedEntityId componentId) {
-    publishLineage(programRunId, new DataAccessLineage(accessType, datasetId, componentId));
-  }
-
-  @Override
-  public void addAccess(ProgramRunId programRunId, StreamId streamId,
-                        AccessType accessType, @Nullable NamespacedEntityId componentId) {
-    publishLineage(programRunId, new DataAccessLineage(accessType, streamId, componentId));
-  }
-
-  private void publishLineage(ProgramRunId programRunId, DataAccessLineage lineage) {
-    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, programRunId, GSON.toJsonTree(lineage));
+  public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.WORKFLOW_TOKEN,
+                                                  workflowRunId, GSON.toJsonTree(token));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to publish data access lineage: " + lineage, e);
+      // Don't log the workflow token, as it can be large and may contain sensitive data
+      throw new RuntimeException("Failed to publish workflow token for workflow run " + workflowRunId, e);
+    }
+  }
+
+  @Override
+  public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail state) {
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.WORKFLOW_STATE,
+                                                  workflowRunId, GSON.toJsonTree(state));
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    try {
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to publish workflow node state for workflow run " + workflowRunId
+                                   + "of node " + state.getNodeId() + " with state " + state.getNodeStatus(), e);
     }
   }
 }

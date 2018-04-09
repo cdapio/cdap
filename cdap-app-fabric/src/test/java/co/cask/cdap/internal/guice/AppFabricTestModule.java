@@ -36,7 +36,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -109,7 +108,6 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new StreamServiceRuntimeModule().getInMemoryModules());
     install(new NamespaceStoreModule().getStandaloneModules());
     install(new MetadataServiceModule());
-    install(new RemoteSystemOperationsServiceModule());
     install(new AuthorizationModule());
     install(new AuthorizationEnforcementModule().getStandaloneModules());
     install(new SecureStoreModules().getInMemoryModules());

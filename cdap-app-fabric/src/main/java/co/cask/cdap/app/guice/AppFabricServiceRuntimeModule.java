@@ -22,7 +22,6 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,7 +35,6 @@ import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
-import co.cask.cdap.data2.datafabric.dataset.RemoteSystemOperationServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
@@ -83,6 +81,8 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.DistributedRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.LocalRunRecordCorrectorService;
@@ -321,8 +321,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
                                  .to(MetadataServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.REMOTE_SYSTEM_OPERATION)
-                                 .to(RemoteSystemOperationServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                  .to(ExploreServiceManager.class);
                                mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
@@ -372,8 +370,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
 
       bind(Store.class).to(DefaultStore.class);
-      // we can simply use DefaultStore for RuntimeStore, when its not running in a separate container
-      bind(RuntimeStore.class).to(DefaultStore.class);
+
+      // In App-Fabric, we can write directly, hence bind to the basic implementation
+      bind(WorkflowStateWriter.class).to(BasicWorkflowStateWriter.class);
+
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProfileStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);

@@ -672,23 +672,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
-    Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).updateWorkflowToken(workflowRunId, token);
-    });
-  }
-
-  @Override
   public WorkflowToken getWorkflowToken(WorkflowId workflowId, String workflowRunId) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getWorkflowToken(workflowId, workflowRunId);
-    });
-  }
-
-  @Override
-  public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
-    Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
     });
   }
 

@@ -16,6 +16,10 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -28,8 +32,13 @@ import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
@@ -38,12 +47,14 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.WorkflowId;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +74,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   private final FlowletId flowlet1 = flow1.flowlet("flowlet1");
 
   private final ProgramId spark1 = NamespaceId.DEFAULT.app("app2").program(ProgramType.SPARK, "spark1");
+  private final WorkflowId workflow1 = NamespaceId.DEFAULT.app("app3").workflow("workflow1");
 
   @Test
   public void testSubscriber() throws InterruptedException, ExecutionException, TimeoutException {
@@ -91,7 +103,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     UsageRegistry usageRegistry = new BasicUsageRegistry(getDatasetFramework(), getTxClient(), usageDatasetId);
     Assert.assertTrue(usageRegistry.getDatasets(spark1).isEmpty());
 
-
     // Start the MetadataSubscriberService
     MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
     subscriberService
@@ -106,7 +117,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Emit one more lineage
-      lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN);
+      lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN, flowlet1);
       expectedLineage.add(stream1);
       Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -129,7 +140,54 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     } finally {
       subscriberService.stopAndWait();
     }
+  }
 
+  @Test
+  public void testWorkflow() throws InterruptedException, ExecutionException, TimeoutException {
+    ProgramRunId workflowRunId = workflow1.run(RunIds.generate());
+
+    BasicWorkflowToken token = new BasicWorkflowToken(1024);
+    token.setCurrentNode("node1");
+    token.put("key", "value");
+
+    // Publish some workflow states
+    WorkflowStateWriter workflowStateWriter = getInjector().getInstance(MessagingWorkflowStateWriter.class);
+    workflowStateWriter.setWorkflowToken(workflowRunId, token);
+    workflowStateWriter.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail("action1", NodeStatus.RUNNING));
+
+    // Try to read, should have nothing
+    Store store = getInjector().getInstance(DefaultStore.class);
+    WorkflowToken workflowToken = store.getWorkflowToken(workflow1, workflowRunId.getRun());
+    Assert.assertNull(workflowToken.get("key"));
+
+    // Start the MetadataSubscriberService
+    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
+    subscriberService.startAndWait();
+    try {
+      // Verify the WorkflowToken
+      Tasks.waitFor("value", () ->
+        Optional.ofNullable(
+          store.getWorkflowToken(workflow1, workflowRunId.getRun()).get("key")
+        ).map(Value::toString).orElse(null)
+      , 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      // Verify the workflow node state
+      Tasks.waitFor(NodeStatus.RUNNING, () ->
+        store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
+             .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
+        10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      // Update the node state
+      workflowStateWriter.addWorkflowNodeState(workflowRunId,
+                                               new WorkflowNodeStateDetail("action1", NodeStatus.COMPLETED));
+      // Verify the updated node state
+      Tasks.waitFor(NodeStatus.COMPLETED, () ->
+        store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
+             .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
+        10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    } finally {
+      subscriberService.stopAndWait();
+    }
   }
 
   private DatasetFramework getDatasetFramework() {

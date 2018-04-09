@@ -18,7 +18,6 @@ package co.cask.cdap.app.preview;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -40,6 +39,8 @@ import co.cask.cdap.internal.app.preview.DefaultDataTracerFactory;
 import co.cask.cdap.internal.app.preview.DefaultPreviewRunner;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.preview.DefaultPreviewStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -125,8 +126,8 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
     expose(UGIProvider.class);
 
-    bind(RuntimeStore.class).to(DefaultStore.class);
-    expose(RuntimeStore.class);
+    bind(WorkflowStateWriter.class).to(BasicWorkflowStateWriter.class);
+    expose(WorkflowStateWriter.class);
 
     // we don't delete namespaces in preview as we just delete preview directory when its done
     bind(NamespaceResourceDeleter.class).to(NoopNamespaceResourceDeleter.class).in(Scopes.SINGLETON);

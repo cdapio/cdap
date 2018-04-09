@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
  *
  * TODO: set state methods are only called from unit tests. They should be removed in favor of using AppMetadataStore.
  */
-public interface Store extends RuntimeStore {
+public interface Store {
 
   /**
    * Logs initialization of program run and persists program cluster status to

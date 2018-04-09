@@ -38,8 +38,6 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
-import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -118,7 +116,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new MetadataServiceModule(),
-      new RemoteSystemOperationsServiceModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
@@ -142,7 +139,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
   protected void addServices(List<? super Service> services) {
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
-    services.add(injector.getInstance(RemoteSystemOperationsService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
   }
 }
