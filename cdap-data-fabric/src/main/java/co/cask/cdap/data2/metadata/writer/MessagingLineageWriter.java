@@ -49,7 +49,7 @@ public class MessagingLineageWriter implements LineageWriter {
 
   @Inject
   MessagingLineageWriter(CConfiguration cConf, MessagingService messagingService) {
-    this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Lineage.TOPIC));
+    this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC));
     this.messagingService = messagingService;
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metadata.");
   }
@@ -67,7 +67,8 @@ public class MessagingLineageWriter implements LineageWriter {
   }
 
   private void publishLineage(DataAccessLineage lineage) {
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(lineage)).build();
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, GSON.toJsonTree(lineage));
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {

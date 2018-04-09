@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -102,7 +102,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
-  private final RuntimeUsageRegistry runtimeUsageRegistry;
+  private final UsageWriter usageWriter;
   private final LineageWriter lineageWriter;
   private final StreamMetaStore streamMetaStore;
   private final OwnerAdmin ownerAdmin;
@@ -120,7 +120,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
                          NotificationFeedManager notificationFeedManager,
-                         RuntimeUsageRegistry runtimeUsageRegistry,
+                         UsageWriter usageWriter,
                          LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
                          OwnerAdmin ownerAdmin,
@@ -134,7 +134,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
-    this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.usageWriter = usageWriter;
     this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
     this.ownerAdmin = ownerAdmin;
@@ -519,7 +519,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void register(Iterable<? extends EntityId> owners, StreamId streamId) {
-    runtimeUsageRegistry.registerAll(owners, streamId);
+    usageWriter.registerAll(owners, streamId);
   }
 
   @Override

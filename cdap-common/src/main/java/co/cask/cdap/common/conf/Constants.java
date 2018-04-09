@@ -1239,6 +1239,10 @@ public final class Constants {
     public static final String SERVICE_EXEC_THREADS = "metadata.service.exec.threads";
     public static final String HANDLERS_NAME = "metadata.handlers";
     public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
+
+    public static final String MESSAGING_TOPIC = "metadata.messaging.topic";
+    public static final String MESSAGING_FETCH_SIZE = "metadata.messaging.fetch.size";
+    public static final String MESSAGING_POLL_DELAY_MILLIS = "metadata.messaging.poll.delay.millis";
   }
 
   /**
@@ -1259,15 +1263,6 @@ public final class Constants {
     public static final String ENABLED = "audit.enabled";
     public static final String TOPIC = "audit.topic";
     public static final String PUBLISH_TIMEOUT_MS = "audit.publish.timeout.ms";
-  }
-
-  /**
-   * Constants for lineage
-   */
-  public static final class Lineage {
-    public static final String TOPIC = "lineage.topic";
-    public static final String EVENT_FETCH_SIZE = "lineage.event.fetch.size";
-    public static final String EVENT_POLL_DELAY_MILLIS = "lineage.event.poll.delay.millis";
   }
 
   /**

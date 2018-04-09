@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import co.cask.cdap.proto.id.StreamId;
  * Store program -> dataset/stream usage information. Differs from UsageRegistry in that UsageRegistry does not have
  * a remote implementation, usable from program runtime.
  */
-public interface RuntimeUsageRegistry {
+public interface UsageWriter {
 
   /**
    * Registers usage of a stream by multiple ids.
@@ -33,7 +33,11 @@ public interface RuntimeUsageRegistry {
    * @param users the users of the stream
    * @param streamId the stream
    */
-  void registerAll(Iterable<? extends EntityId> users, StreamId streamId);
+  default void registerAll(Iterable<? extends EntityId> users, StreamId streamId) {
+    for (EntityId user : users) {
+      register(user, streamId);
+    }
+  }
 
   /**
    * Register usage of a stream by an id.
@@ -49,7 +53,11 @@ public interface RuntimeUsageRegistry {
    * @param users the users of the stream
    * @param datasetId the stream
    */
-  void registerAll(Iterable<? extends EntityId> users, DatasetId datasetId);
+  default void registerAll(Iterable<? extends EntityId> users, DatasetId datasetId) {
+    for (EntityId user : users) {
+      register(user, datasetId);
+    }
+  }
 
   /**
    * Registers usage of a dataset by multiple ids.

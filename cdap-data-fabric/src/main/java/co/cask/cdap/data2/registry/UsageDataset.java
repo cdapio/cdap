@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,12 @@
 
 package co.cask.cdap.data2.registry;
 
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.registry.internal.keymaker.DatasetKeyMaker;
@@ -28,10 +33,14 @@ import co.cask.cdap.data2.registry.internal.pair.OrderedPairs;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,12 +48,43 @@ import java.util.Set;
  * Store program -> dataset/stream usage information.
  */
 public class UsageDataset extends MetadataStoreDataset {
+
+  public static final DatasetId USAGE_INSTANCE_ID = NamespaceId.SYSTEM.dataset("usage.registry");
+
   // The following constants are used as row key prefixes. Any changes to these will make existing data unusable.
   private static final String PROGRAM = "p";
   private static final String DATASET = "d";
   private static final String STREAM = "s";
 
   private final OrderedPairs orderedPairs;
+
+  /**
+   * Gets an instance of {@link UsageDataset}. If no such dataset instance exists, it will be created.
+   *
+   * @param datasetContext the {@link DatasetContext} for getting the {@link UsageDataset} instance
+   * @param datasetFramework the {@link DatasetFramework} for creating the {@link UsageDataset}
+   * @param datasetId the {@link DatasetId} to use for the usage dataset
+   * @return a {@link UsageDataset} instance
+   */
+  @VisibleForTesting
+  public static UsageDataset getUsageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework,
+                                             DatasetId datasetId) {
+    try {
+      return DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, datasetId,
+                                             UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by usage registry.
+   *
+   * @param datasetFramework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
+    datasetFramework.addInstance(UsageDataset.class.getSimpleName(), USAGE_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
 
   public UsageDataset(Table table) {
     super(table);

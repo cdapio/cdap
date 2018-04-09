@@ -626,7 +626,7 @@
   </property>
 
 
-  <!-- Audit and lineage configuration -->
+  <!-- Audit configuration -->
 
   <property>
     <name>audit.enabled</name>
@@ -651,32 +651,6 @@
       Topic name used to publish audit messages in the messaging system
     </description>
   </property>
-
-  <property>
-    <name>lineage.topic</name>
-    <value>lineage</value>
-    <description>
-      Topic name used to publish lineage messages in the messaging system
-    </description>
-  </property>
-
-  <property>
-    <name>lineage.event.fetch.size</name>
-    <value>100</value>
-    <description>
-      Number of messages to fetch from messaging system for each batch
-    </description>
-  </property>
-
-  <property>
-    <name>lineage.event.poll.delay.millis</name>
-    <value>2000</value>
-    <description>
-      The delay in milliseconds that the lineage processor checks again for
-      new events after it detects there was no event
-    </description>
-  </property>
-
 
   <!-- Datasets Configuration -->
 
@@ -1941,7 +1915,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${lineage.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic}</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2041,6 +2015,30 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.messaging.topic</name>
+    <value>metadata</value>
+    <description>
+      Topic name used to publish metadata messages in the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.messaging.fetch.size</name>
+    <value>100</value>
+    <description>
+      Number of messages to fetch from messaging system for each batch
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.messaging.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds that the lineage processor checks again for
+      new events after it detects there was no event
+    </description>
+  </property>
 
   <!-- Metrics Configuration -->
 

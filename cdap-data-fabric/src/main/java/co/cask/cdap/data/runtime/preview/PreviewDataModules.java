@@ -29,8 +29,8 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.NoOpUsageRegistry;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.inject.AbstractModule;
@@ -95,8 +95,8 @@ public class PreviewDataModules {
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
 
-        bind(RuntimeUsageRegistry.class).to(NoOpUsageRegistry.class).in(Scopes.SINGLETON);
-        expose(RuntimeUsageRegistry.class);
+        bind(UsageWriter.class).to(NoOpUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageWriter.class);
 
         bind(UsageRegistry.class).to(NoOpUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);

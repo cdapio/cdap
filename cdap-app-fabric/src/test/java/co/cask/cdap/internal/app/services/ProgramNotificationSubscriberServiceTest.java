@@ -50,7 +50,6 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tests program run state persistence.
@@ -72,8 +71,7 @@ public class ProgramNotificationSubscriberServiceTest {
     DatasetId storeTable = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
     appMetaTable = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
                                                    DatasetProperties.EMPTY, Collections.emptyMap());
-
-    metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf, new AtomicBoolean(false));
+    metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf);
     txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
 
     programStateWriter = injector.getInstance(ProgramStateWriter.class);

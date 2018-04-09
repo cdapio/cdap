@@ -77,11 +77,6 @@ public class LineageDataset extends AbstractDataset {
   // -------------------------------------------------------------------------------
   // | p | <id.run>     | <inverted-start-time> | s | <id.stream>  | <access-type> |
   // -------------------------------------------------------------------------------
-  //
-  // TMS message ID storage
-  // --------------------
-  // | t | <topic.name> |
-  // --------------------
 
   public static final DatasetId LINEAGE_DATASET_ID = NamespaceId.SYSTEM.dataset("lineage");
 
@@ -89,7 +84,6 @@ public class LineageDataset extends AbstractDataset {
 
   // Column used to store access time
   private static final byte[] ACCESS_TIME_COLS_BYTE = {'t'};
-  private static final byte[] MESSAGE_ID_COLS_BYTE = {'m'};
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
@@ -277,28 +271,6 @@ public class LineageDataset extends AbstractDataset {
   }
 
   /**
-   * Loads the message id for the given topic.
-   *
-   * @param topicId the topic id to lookup for
-   * @return the message id persisted earlier by {@link #storeMessageId(TopicId, String)} or {@code null}
-   *         if there is no message id associated with the given topic
-   */
-  @Nullable
-  public String loadMessageId(TopicId topicId) {
-    return Bytes.toString(accessRegistryTable.get(getTopicKey(topicId), MESSAGE_ID_COLS_BYTE));
-  }
-
-  /**
-   * Stores the given message id for the given topic.
-   *
-   * @param topicId the topic id to associate with the message id
-   * @param messageId
-   */
-  public void storeMessageId(TopicId topicId, String messageId) {
-    accessRegistryTable.put(getTopicKey(topicId), MESSAGE_ID_COLS_BYTE, Bytes.toBytes(messageId));
-  }
-
-  /**
    * @return a set of access times (for program and data it accesses) associated with a program run.
    */
   @VisibleForTesting
@@ -481,8 +453,8 @@ public class LineageDataset extends AbstractDataset {
 
   private byte[] getProgramScanStartKey(ProgramId program, long end) {
     // time is inverted, hence we need to have end time in start key.
-    // Since end time is exclusive, add 1 to make it inclusive.
-    return getProgramScanKey(program, end + 1);
+    // Since end time is exclusive, add 1 to make it inclusive (except when end is max long, which will overflow if +1)
+    return getProgramScanKey(program, end == Long.MAX_VALUE ? end : end + 1);
   }
 
   private byte[] getProgramScanEndKey(ProgramId program, long start) {

@@ -54,7 +54,7 @@ import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
-import co.cask.cdap.data2.registry.DefaultUsageRegistry;
+import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -507,6 +507,6 @@ public class UpgradeTool {
     DefaultMetricDatasetFactory.setupDatasets(factory);
 
     // Usage registry
-    DefaultUsageRegistry.setupDatasets(datasetFramework);
+    UsageDataset.setupDatasets(datasetFramework);
   }
 }

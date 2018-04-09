@@ -19,18 +19,23 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -40,6 +45,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -57,6 +63,7 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
@@ -69,7 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -93,11 +99,16 @@ import javax.annotation.Nullable;
  * Workflow node state is updated whenever program state is updated
  * and we notice that the program belongs to a workflow.
  */
-public class AppMetadataStore extends MetadataStoreDataset implements TopicMessageIdStore {
+public class AppMetadataStore extends MetadataStoreDataset {
+
+  static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type BYTE_TYPE = new TypeToken<byte[]>() { }.getType();
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
+
   private static final String TYPE_APP_META = "appMeta";
   private static final String TYPE_STREAM = "stream";
   private static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
@@ -117,13 +128,35 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
     .build();
 
-  private final CConfiguration cConf;
-  private final AtomicBoolean upgradeComplete;
+  // These are for caching the upgraded state to avoid reading from Table again after upgrade is completed
+  // The interval is to avoid frequent reading from Table before upgrade is completed
+  // The upgrade is done outside of this class asynchronously.
+  // One upgrade is completed, the upgradeCompleted() method will be called from the upgrade thread
+  // to clear the lastUpgradeCompletedCheck.
+  private static final long UPGRADE_COMPLETED_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(1L);
+  private static volatile boolean upgradeCompleted;
+  private static long lastUpgradeCompletedCheck;
 
-  public AppMetadataStore(Table table, CConfiguration cConf, AtomicBoolean upgradeComplete) {
+  private final CConfiguration cConf;
+
+  /**
+   * Static method for creating an instance of {@link AppMetadataStore}.
+   */
+  public static AppMetadataStore create(CConfiguration cConf,
+                                        DatasetContext datasetContext,
+                                        DatasetFramework datasetFramework) {
+    try {
+      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, APP_META_INSTANCE_ID,
+                                                    Table.class.getName(), DatasetProperties.EMPTY);
+      return new AppMetadataStore(table, cConf);
+    } catch (DatasetManagementException | IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public AppMetadataStore(Table table, CConfiguration cConf) {
     super(table);
     this.cConf = cConf;
-    this.upgradeComplete = upgradeComplete;
   }
 
   @Override
@@ -154,7 +187,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       return appMeta;
     }
 
-    if (!upgradeComplete.get() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
+    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
       appMeta = get(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
     }
     return appMeta;
@@ -183,7 +216,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
-    if (!upgradeComplete.get() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
+    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
       MDSKey mdsKey = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
       ApplicationMeta appMeta = get(mdsKey, ApplicationMeta.class);
       // If app meta exists for the application without a version, delete that key.
@@ -196,7 +229,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   public void deleteApplication(String namespaceId, String appId, String versionId) {
-    if (!upgradeComplete.get() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
+    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
       MDSKey mdsKey = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
       ApplicationMeta appMeta = get(mdsKey, ApplicationMeta.class);
       // If app meta exists for the application without a version, delete only that key.
@@ -220,7 +253,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     ApplicationMeta updated;
 
     // Check again without the version to account for old data format if might not have been upgraded yet
-    if (!upgradeComplete.get() && existing == null && (versionId.equals(ApplicationId.DEFAULT_VERSION))) {
+    if (!hasUpgraded() && existing == null && (versionId.equals(ApplicationId.DEFAULT_VERSION))) {
       versionLessKey = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
       existing = get(versionLessKey, ApplicationMeta.class);
     }
@@ -252,7 +285,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     // Check again without the version to account for old data format since they might not have been updated yet
     // Since all the programs needs to be stopped before upgrade tool is run, either we will have node state details for
     // one specific run-id either in the old format or in the new format.
-    if (!upgradeComplete.get() && nodeStateDetails.isEmpty() &&
+    if (!hasUpgraded() && nodeStateDetails.isEmpty() &&
       workflowRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       key = getVersionLessProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId).build();
       nodeStateDetails = list(key, WorkflowNodeStateDetail.class);
@@ -691,7 +724,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
     // Only if existingRecords is empty & upgrade is not complete & the version is default version,
     // also try to get the record without the version string
-    if (!upgradeComplete.get() && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
+    if (!hasUpgraded() && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       MDSKey key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programRunId.getParent())
         .add(programRunId.getRun())
         .build();
@@ -942,7 +975,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
     RunRecordMeta runRecordMeta = get(runningKey, RunRecordMeta.class);
 
-    if (!upgradeComplete.get() && runRecordMeta == null &&
+    if (!hasUpgraded() && runRecordMeta == null &&
       programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       runningKey = getVersionLessProgramKeyBuilder(recordType, programRunId.getParent())
         .add(programRunId.getRun()).build();
@@ -956,7 +989,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent()).build();
     RunRecordMeta runRecordMeta = getCompletedRun(completedKey, programRunId.getRun());
 
-    if (!upgradeComplete.get() && runRecordMeta == null &&
+    if (!hasUpgraded() && runRecordMeta == null &&
       programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       completedKey = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent()).build();
       return getCompletedRun(completedKey, programRunId.getRun());
@@ -1002,7 +1035,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     Map<MDSKey, RunRecordMeta> newRecords = listKV(key, null, RunRecordMeta.class, limit, keyPredicate, valuePredicate);
 
     int remaining = limit - newRecords.size();
-    if (remaining > 0 && !upgradeComplete.get()) {
+    if (remaining > 0 && !hasUpgraded()) {
       // We need to scan twice since the scan key is modified based on whether we include the app version or not.
       key = getVersionLessProgramKeyBuilder(recordType, programId).build();
       Map<MDSKey, RunRecordMeta> oldRecords = listKV(key, null, RunRecordMeta.class, remaining, keyPredicate,
@@ -1015,7 +1048,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   private Map<ProgramRunId, RunRecordMeta> getRunsForRunIds(final Set<ProgramRunId> runIds, String recordType,
                                                             int limit) {
     Set<MDSKey> keySet = new HashSet<>();
-    boolean includeVersionLessKeys = !upgradeComplete.get();
+    boolean includeVersionLessKeys = !hasUpgraded();
     for (ProgramRunId programRunId : runIds) {
       keySet.add(getProgramKeyBuilder(recordType, programRunId.getParent()).build());
       if (includeVersionLessKeys && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
@@ -1063,7 +1096,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       key, status, startTime, endTime, limit, keyPredicate, filter);
 
     int remaining = limit - newRecords.size();
-    if (remaining > 0 && !upgradeComplete.get()) {
+    if (remaining > 0 && !hasUpgraded()) {
       // We need to scan twice since the key is modified again in getHistoricalRuns since we want to use the
       // endTime and startTime to reduce the scan range
       key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
@@ -1145,7 +1178,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   }
 
   public void deleteProgramHistory(String namespaceId, String appId, String versionId) {
-    if (!upgradeComplete.get() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
+    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
       Predicate<MDSKey> keyPredicate = new AppVersionPredicate(ApplicationId.DEFAULT_VERSION);
       deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTING, namespaceId, appId).build(), keyPredicate);
       deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build(), keyPredicate);
@@ -1195,7 +1228,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     BasicWorkflowToken workflowToken = get(key, BasicWorkflowToken.class);
 
     // Check without the version string only for default version
-    if (!upgradeComplete.get() && workflowToken == null &&
+    if (!hasUpgraded() && workflowToken == null &&
       workflowId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       key = getVersionLessProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowId).add(workflowRunId).build();
       workflowToken = get(key, BasicWorkflowToken.class);
@@ -1233,39 +1266,89 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   /**
    * @return true if the row key is value is greater or than or equal to the expected version
    */
-  public boolean isUpgradeComplete(byte[] key) {
-    MDSKey.Builder keyBuilder = new MDSKey.Builder();
-    keyBuilder.add(key);
-    String version = get(keyBuilder.build(), String.class);
-    if (version == null) {
+  public boolean hasUpgraded() {
+    boolean upgraded = upgradeCompleted;
+    if (upgraded) {
+      return true;
+    }
+
+    // See if need to check the Table or not
+    long now = System.currentTimeMillis();
+    if (now - lastUpgradeCompletedCheck < UPGRADE_COMPLETED_CHECK_INTERVAL) {
       return false;
     }
-    ProjectInfo.Version actual = new ProjectInfo.Version(version);
-    return actual.compareTo(ProjectInfo.getVersion()) >= 0;
+
+    synchronized (AppMetadataStore.class) {
+      // Check again, as it can be checked by other thread
+      upgraded = upgradeCompleted;
+      if (upgraded) {
+        return true;
+      }
+
+      lastUpgradeCompletedCheck = now;
+
+      MDSKey.Builder keyBuilder = new MDSKey.Builder();
+      keyBuilder.add(APP_VERSION_UPGRADE_KEY);
+      String version = get(keyBuilder.build(), String.class);
+      if (version == null) {
+        return false;
+      }
+      ProjectInfo.Version actual = new ProjectInfo.Version(version);
+      upgradeCompleted = upgraded = actual.compareTo(ProjectInfo.getVersion()) >= 0;
+    }
+    return upgraded;
   }
 
   /**
    * Mark the table that the upgrade is complete.
    */
-  public void setUpgradeComplete(byte[] key) {
+  public void upgradeCompleted() {
     MDSKey.Builder keyBuilder = new MDSKey.Builder();
-    keyBuilder.add(key);
+    keyBuilder.add(APP_VERSION_UPGRADE_KEY);
     write(keyBuilder.build(), ProjectInfo.getVersion().toString());
+
+    // Reset the lastUpgradeCompletedCheck to 0L to force checking from Table next time when hasUpgraded is called
+    synchronized (AppMetadataStore.class) {
+      lastUpgradeCompletedCheck = 0L;
+    }
   }
 
+  /**
+   * Gets the id of the last fetched message that was set for a subscriber of the given TMS topic
+   *
+   * @param topic the topic to lookup the last message id
+   * @param subscriber the subscriber name
+   * @return the id of the last fetched message for this subscriber on this topic,
+   *         or {@code null} if no message id was stored before
+   */
   @Nullable
-  @Override
-  public String retrieveSubscriberState(String topic) {
-    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
-      .add(topic);
+  public String retrieveSubscriberState(String topic, String subscriber) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE).add(topic);
+
+    // For backward compatibility, skip the subscriber part if it is empty or null
+    if (subscriber != null && !subscriber.isEmpty()) {
+      keyBuilder.add(subscriber);
+    }
+
     byte[] rawBytes = get(keyBuilder.build(), BYTE_TYPE);
     return (rawBytes == null) ? null : Bytes.toString(rawBytes);
   }
 
-  @Override
-  public void persistSubscriberState(String topic, String messageId) {
-    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
-      .add(topic);
+  /**
+   * Updates the given topic's last fetched message id with the given message id for the given subscriber.
+   *
+   * @param topic the topic to persist the message id
+   * @param subscriber the subscriber name
+   * @param messageId the most recently processed message id
+   */
+  public void persistSubscriberState(String topic, String subscriber, String messageId) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE).add(topic);
+
+    // For backward compatibility, skip the subscriber part if it is empty or null
+    if (subscriber != null && !subscriber.isEmpty()) {
+      keyBuilder.add(subscriber);
+    }
+
     write(keyBuilder.build(), Bytes.toBytes(messageId));
   }
 

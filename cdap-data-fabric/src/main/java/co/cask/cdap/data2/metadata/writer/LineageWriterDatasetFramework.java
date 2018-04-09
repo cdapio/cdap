@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
@@ -77,7 +77,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       }
     };
 
-  private final RuntimeUsageRegistry runtimeUsageRegistry;
+  private final UsageWriter usageWriter;
   private final LineageWriter lineageWriter;
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -88,12 +88,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Inject
   public LineageWriterDatasetFramework(@Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                                        LineageWriter lineageWriter,
-                                       RuntimeUsageRegistry runtimeUsageRegistry,
+                                       UsageWriter usageWriter,
                                        AuthenticationContext authenticationContext,
                                        AuthorizationEnforcer authorizationEnforcer) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
-    this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.usageWriter = usageWriter;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
   }
@@ -275,7 +275,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
         return;
       }
       try {
-        runtimeUsageRegistry.registerAll(owners, datasetInstanceId);
+        usageWriter.registerAll(owners, datasetInstanceId);
       } catch (Exception e) {
         LOG.warn("Failed to register usage of {} -> {}", owners, datasetInstanceId, e);
       }

@@ -24,7 +24,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
@@ -35,7 +34,6 @@ import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -55,15 +53,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Tests lineage computation.
@@ -753,41 +747,6 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private void setStartAndRunning(Store store, ProgramId id, String pid, ArtifactId artifactId) {
     setStartAndRunning(store, id, pid, ImmutableMap.of(), ImmutableMap.of(), artifactId);
-  }
-
-  @Test
-  public void testMessagingLineageWriter() throws InterruptedException, ExecutionException, TimeoutException {
-    LineageWriter lineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
-    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
-
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testMessagingLineageWriter");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-
-    // Try to read lineage, which should be empty since we haven't start the MetadataSubscriberService yet.
-    Set<NamespacedEntityId> entities = lineageReader.getEntitiesForRun(run1);
-    Assert.assertTrue(entities.isEmpty());
-
-    // Start the MetadataSubscriberService
-    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    subscriberService.setLineageDatasetId(lineageDatasetId);
-    subscriberService.startAndWait();
-
-    try {
-      Set<NamespacedEntityId> expected = new HashSet<>(Arrays.asList(run1.getParent(), dataset1, dataset2));
-      Tasks.waitFor(true, () -> expected.equals(lineageReader.getEntitiesForRun(run1)),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
-      // Emit one more lineage
-      lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN);
-
-      expected.add(stream1);
-      Tasks.waitFor(true, () -> expected.equals(lineageReader.getEntitiesForRun(run1)),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    } finally {
-      subscriberService.stopAndWait();
-    }
   }
 
   private void setStartAndRunning(Store store, ProgramId id, String pid, Map<String, String> runtimeArgs,

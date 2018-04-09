@@ -31,9 +31,9 @@ import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
-import co.cask.cdap.data2.registry.DefaultUsageRegistry;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.Module;
@@ -72,11 +72,11 @@ public class DataSetsModules extends RuntimeModule {
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
 
-        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(UsageRegistry.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);
-        bind(RuntimeUsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
-        expose(RuntimeUsageRegistry.class);
-        bind(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(UsageWriter.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageWriter.class);
+        bind(BasicUsageRegistry.class).in(Scopes.SINGLETON);
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
@@ -120,11 +120,11 @@ public class DataSetsModules extends RuntimeModule {
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
 
-        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(UsageRegistry.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);
-        bind(RuntimeUsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
-        expose(RuntimeUsageRegistry.class);
-        bind(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(UsageWriter.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
+        expose(UsageWriter.class);
+        bind(BasicUsageRegistry.class).in(Scopes.SINGLETON);
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);

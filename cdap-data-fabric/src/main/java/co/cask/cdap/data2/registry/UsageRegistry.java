@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * Store program -> dataset/stream usage information.
  */
-public interface UsageRegistry extends RuntimeUsageRegistry {
+public interface UsageRegistry extends UsageWriter {
 
   /**
    * Unregisters all usage information of an application.

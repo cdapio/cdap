@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
+import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.proto.id.EntityId;
@@ -46,31 +46,31 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
-  private final RuntimeUsageRegistry runtimeUsageRegistry;
+  private final UsageWriter usageWriter;
   private final Iterable<? extends EntityId> owners;
   private ConsumerConfig consumerConfig;
   private Closeable consumer;
 
   static <T> ConsumerSupplier<T> create(Iterable<? extends EntityId> owners,
-                                        RuntimeUsageRegistry runtimeUsageRegistry,
+                                        UsageWriter usageWriter,
                                         DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
-    return create(owners, runtimeUsageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
+    return create(owners, usageWriter, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
   static <T> ConsumerSupplier<T> create(Iterable<? extends EntityId> owners,
-                                        RuntimeUsageRegistry runtimeUsageRegistry,
+                                        UsageWriter usageWriter,
                                         DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
-    return new ConsumerSupplier<>(owners, runtimeUsageRegistry, dataFabricFacade,
-                                   queueName, consumerConfig, numGroups);
+    return new ConsumerSupplier<>(owners, usageWriter, dataFabricFacade,
+                                  queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(Iterable<? extends EntityId> owners, RuntimeUsageRegistry runtimeUsageRegistry,
+  private ConsumerSupplier(Iterable<? extends EntityId> owners, UsageWriter usageWriter,
                            DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
     this.owners = owners;
-    this.runtimeUsageRegistry = runtimeUsageRegistry;
+    this.usageWriter = usageWriter;
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
     this.numGroups = numGroups;
@@ -103,7 +103,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         StreamId queueStream = queueName.toStreamId();
         for (EntityId owner : owners) {
           try {
-            runtimeUsageRegistry.register(owner, queueStream);
+            usageWriter.register(owner, queueStream);
           } catch (Exception e) {
             LOG.warn("Failed to register usage of {} -> {}", owner, queueStream, e);
           }
