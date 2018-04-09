@@ -41,7 +41,8 @@ export default class Popover extends Component {
       'right',
       'auto'
     ]),
-    enableInteractionInPopover: PropTypes.bool
+    enableInteractionInPopover: PropTypes.bool,
+    injectOnToggle: PropTypes.bool
   };
 
   eventEmitter = ee(ee);
@@ -49,7 +50,8 @@ export default class Popover extends Component {
   static defaultProps = {
     showOn: 'Click',
     bubbleEvent: true,
-    enableInteractionInPopover: false
+    enableInteractionInPopover: false,
+    injectOnToggle: false
   };
 
   state = {
@@ -140,7 +142,12 @@ export default class Popover extends Component {
           })}
           onClick={this.handleBubbleEvent}
         >
-          {this.props.children}
+          {
+            this.props.injectOnToggle ?
+              this.state.showPopover ? this.props.children : null
+            :
+              this.props.children
+          }
           <Arrow className="popper__arrow" />
         </Popper>
       </Manager>

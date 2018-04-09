@@ -85,7 +85,7 @@ $rulebook_header_bg_color: #f5f5f5;
     word-break: break-word;
 
     &:before {
-      content: '...';
+      content: "\2026\0020";
       position: absolute;
       right: 0;
       bottom: 0;
