@@ -25,10 +25,15 @@
   (in Studio view) or to PipelineDetailStore (in Detail view)
 */
 
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import {
+  defaultAction,
+  composeEnhancers,
+  objectQuery
+} from 'services/helpers';
 import {createStore} from 'redux';
 import range from 'lodash/range';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
+import {PROFILE_NAME_PREFERENCE_PROPERTY} from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
 
 const INTERVAL_OPTIONS = {
   '5MIN': 'Every 5 min',
@@ -56,6 +61,7 @@ const SCHEDULE_VIEWS = {
 
 const ACTIONS = {
   SET_CRON: 'SET_CRON',
+  CRON_RESET: 'CRON_RESET',
   UPDATE_CRON: 'UPDATE_CRON',
   SET_STATE: 'SET_STATE',
   SET_INTERVAL_OPTION: 'SET_INTERVAL_OPTION',
@@ -70,11 +76,12 @@ const ACTIONS = {
   SET_STARTING_AT_AM_PM: 'SET_STARTING_AT_AM_PM',
   SET_MAX_CONCURRENT_RUNS: 'SET_MAXCURRENT_RUNS',
   SET_SCHEDULE_VIEW: 'SET_SCHEDULE_VIEW',
+  SET_SELECTED_PROFILE: 'SET_SELECTED_PROFILE',
+  SET_CURRENT_BACKEND_SCHEDULE: 'SET_CURRENT_BACKEND_SCHEDULE',
+  SET_SCHEDULE_STATUS: 'SET_SCHEDULE_STATUS',
   RESET: 'RESET'
 };
-
-const DEFAULT_SCHEDULE_OPTIONS = {
-  cron: HYDRATOR_DEFAULT_VALUES.schedule,
+const DEFAULT_CRON_OPTIONS = {
   intervalOption: INTERVAL_OPTIONS.DAILY,
   minInterval: 5,
   hourInterval: HOUR_OPTIONS_CLOCK[0],
@@ -84,9 +91,18 @@ const DEFAULT_SCHEDULE_OPTIONS = {
   monthInterval: MONTH_OPTIONS[0],
   startingAtMinute: MINUTE_OPTIONS[0],
   startingAtHour: HOUR_OPTIONS[0],
-  startingAtAMPM: AM_PM_OPTIONS[0],
+  startingAtAMPM: AM_PM_OPTIONS[0]
+};
+const DEFAULT_SCHEDULE_OPTIONS = {
+  cron: HYDRATOR_DEFAULT_VALUES.schedule,
+  ...DEFAULT_CRON_OPTIONS,
   maxConcurrentRuns: MAX_CONCURRENT_RUNS_OPTIONS[0],
-  scheduleView: Object.values(SCHEDULE_VIEWS)[0]
+  scheduleView: Object.values(SCHEDULE_VIEWS)[0],
+  profiles: {
+    selectedProfile: null
+  },
+  currentBackendSchedule: null,
+  scheduleStatus: null
 };
 
 const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
@@ -95,6 +111,16 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
       return {
         ...state,
         cron: action.payload.cron
+      };
+    case ACTIONS.SET_SCHEDULE_STATUS:
+      return {
+        ...state,
+        scheduleStatus: action.payload.scheduleStatus
+      };
+    case ACTIONS.CRON_RESET:
+      return {
+        ...state,
+        ...DEFAULT_CRON_OPTIONS
       };
     case ACTIONS.UPDATE_CRON: {
       let cronArray = state.cron.split(" ");
@@ -175,13 +201,40 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
         ...state,
         maxConcurrentRuns: parseInt(action.payload.maxConcurrentRuns, 10)
       };
+    case ACTIONS.SET_SELECTED_PROFILE:
+      return {
+        ...state,
+        profiles: {
+          selectedProfile: action.payload.selectedProfile
+        }
+      };
     case ACTIONS.SET_SCHEDULE_VIEW:
       return {
         ...state,
         scheduleView: action.payload.scheduleView
       };
+    case ACTIONS.SET_CURRENT_BACKEND_SCHEDULE: {
+      let {currentBackendSchedule} = action.payload;
+      let profileFromBackend = objectQuery(currentBackendSchedule, 'properties', PROFILE_NAME_PREFERENCE_PROPERTY);
+      let constraintFromBackend = (currentBackendSchedule.constraints || []).find(constraint => {
+        return constraint.type === 'CONCURRENCY';
+      });
+      let maxConcurrencyFromBackend = objectQuery(constraintFromBackend, 'maxConcurrency');
+      let cronFromBackend = objectQuery(currentBackendSchedule, 'trigger', 'cronExpression');
+      return {
+        ...state,
+        currentBackendSchedule: action.payload.currentBackendSchedule,
+        cron: cronFromBackend,
+        maxConcurrentRuns: maxConcurrencyFromBackend,
+        profiles: {
+          selectedProfile: profileFromBackend
+        }
+      };
+    }
     case ACTIONS.RESET:
+    default:
       return DEFAULT_SCHEDULE_OPTIONS;
+
   }
 };
 

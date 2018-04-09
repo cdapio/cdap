@@ -38,6 +38,9 @@ $secondary-btn-color: $brand-primary;
       margin: 16px 45px 30px 45px;
       font-size: $regular-font;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
 
       .separator {
         margin-right: 5px;
@@ -55,13 +58,9 @@ $secondary-btn-color: $brand-primary;
       }
 
       fieldset {
-        /* 70px: height from bottom of buttons to horizontal line */
-        height: calc(100% - 70px);
-
         .schedule-types {
           display: flex;
           align-items: center;
-          height: 30px;
 
           .schedule-type {
             cursor: pointer;
@@ -81,10 +80,6 @@ $secondary-btn-color: $brand-primary;
 
         .schedule-type-content {
           border-bottom: 1px solid $border-color;
-
-          /*  30px: height of Basic | Advanced options */
-          height: calc(100% - 30px);
-
           label {
             font-weight: initial;
             margin-bottom: 0;
@@ -136,6 +131,7 @@ $secondary-btn-color: $brand-primary;
 
           .schedule-advanced-values {
             display: table;
+            height: 140px;
 
             .schedule-advanced-input {
               display: table-cell;
@@ -146,8 +142,7 @@ $secondary-btn-color: $brand-primary;
       }
 
       .schedule-navigation {
-        position: absolute;
-        bottom: 0;
+        margin: 10px 0;
 
         .schedule-notes {
           padding-bottom: 7px;
@@ -171,5 +166,11 @@ $secondary-btn-color: $brand-primary;
         }
       }
     }
+  }
+}
+
+body.state-hydrator-create {
+  .pipeline-scheduler-content {
+    height: $modeless-height - 50px;
   }
 }

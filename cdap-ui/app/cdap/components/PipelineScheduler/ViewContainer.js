@@ -21,22 +21,24 @@ import BasicView from 'components/PipelineScheduler/BasicView';
 import AdvancedView from 'components/PipelineScheduler/AdvancedView';
 import {SCHEDULE_VIEWS} from 'components/PipelineScheduler/Store';
 
-const mapStateToViewContainerProps = (state) => {
+const mapStateToViewContainerProps = (state, ownProps) => {
   return {
-    scheduleView: state.scheduleView
+    scheduleView: state.scheduleView,
+    isDetailView: ownProps.isDetailView
   };
 };
 
-const ViewContainerComponent = ({scheduleView}) => {
+const ViewContainerComponent = ({scheduleView, isDetailView}) => {
   if (scheduleView === SCHEDULE_VIEWS.BASIC) {
-    return <BasicView />;
+    return <BasicView isDetailView={isDetailView} />;
   } else {
-    return <AdvancedView />;
+    return <AdvancedView isDetailView={isDetailView} />;
   }
 };
 
 ViewContainerComponent.propTypes = {
-  scheduleView: PropTypes.string
+  scheduleView: PropTypes.string,
+  isDetailView: PropTypes.bool
 };
 
 const ConnectedViewContainer = connect(
@@ -44,6 +46,10 @@ const ConnectedViewContainer = connect(
   null
 )(ViewContainerComponent);
 
-export default function ViewContainer() {
-  return <ConnectedViewContainer />;
+export default function ViewContainer({isDetailView}) {
+  return <ConnectedViewContainer isDetailView={isDetailView} />;
 }
+ViewContainer.propTypes = {
+  isDetailView: PropTypes.bool
+};
+

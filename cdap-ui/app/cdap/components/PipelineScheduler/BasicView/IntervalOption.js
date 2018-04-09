@@ -33,7 +33,7 @@ const mapDispatchToIntervalOptionProps = (dispatch) => {
   return {
     onChange: (e) => {
       dispatch({
-        type: PipelineSchedulerActions.RESET
+        type: PipelineSchedulerActions.CRON_RESET
       });
       dispatch({
         type: PipelineSchedulerActions.SET_INTERVAL_OPTION,
