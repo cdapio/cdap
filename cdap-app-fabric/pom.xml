@@ -232,7 +232,9 @@
     <dependency>
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
-      <version>0.1.51</version>
+      <!-- Not using 0.1.51 due
+      to https://stackoverflow.com/questions/26424621/algorithm-negotiation-fail-ssh-in-jenkins -->
+      <version>0.1.52</version>
     </dependency>
       <!--<dependency>-->
           <!--<groupId>org.apache.hive</groupId>-->

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
+import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.FileUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -55,7 +57,9 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.internal.Arguments;
 import org.apache.twill.internal.Constants;
@@ -101,6 +105,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -142,6 +148,7 @@ public class DataProcTwillPreparer implements TwillPreparer {
   private final Map<String, Map<String, String>> runnableConfigs = Maps.newHashMap();
   private final Map<String, String> runnableExtraOptions = Maps.newHashMap();
   private final SSHConfig sshConfig;
+  private final LocationFactory locationFactory;
   private String extraOptions;
   private JvmOptions.DebugOptions debugOptions;
   private String schedulerQueue;
@@ -150,16 +157,17 @@ public class DataProcTwillPreparer implements TwillPreparer {
 
   DataProcTwillPreparer(Configuration config, TwillSpecification twillSpec, RunId runId,
                         Location appLocation, @Nullable String extraOptions, LocationCache locationCache,
-                        SSHConfig sshConfig) {
-      this.debugOptions = JvmOptions.DebugOptions.NO_DEBUG;
-      this.config = config;
-      this.twillSpec = twillSpec;
-      this.runId = runId;
-      this.appLocation = appLocation;
-      this.extraOptions = extraOptions == null ? "" : extraOptions;
-      this.classAcceptor = new ClassAcceptor();
-      this.locationCache = locationCache;
-      this.sshConfig = sshConfig;
+                        SSHConfig sshConfig, LocationFactory locationFactory) {
+    this.debugOptions = JvmOptions.DebugOptions.NO_DEBUG;
+    this.config = config;
+    this.twillSpec = twillSpec;
+    this.runId = runId;
+    this.appLocation = appLocation;
+    this.extraOptions = extraOptions == null ? "" : extraOptions;
+    this.classAcceptor = new ClassAcceptor();
+    this.locationCache = locationCache;
+    this.sshConfig = sshConfig;
+    this.locationFactory = locationFactory;
   }
 
   private void confirmRunnableName(String runnableName) {
@@ -294,10 +302,10 @@ public class DataProcTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer withEnv(Map<String, String> env) {
-      // Add the given environments to all runnables
-      for (String runnableName : twillSpec.getRunnables().keySet()) {
-          setEnv(runnableName, env, false);
-      }
+    // Add the given environments to all runnables
+    for (String runnableName : twillSpec.getRunnables().keySet()) {
+      setEnv(runnableName, env, false);
+    }
     return this;
   }
 
@@ -367,7 +375,6 @@ public class DataProcTwillPreparer implements TwillPreparer {
     return this;
   }
 
-
   @Override
   public TwillController start() {
     return start(Constants.APPLICATION_MAX_START_SECONDS, TimeUnit.SECONDS);
@@ -426,6 +433,34 @@ public class DataProcTwillPreparer implements TwillPreparer {
       createLocalizeFilesJson(remoteFiles);
       SSHUtils.scp(sshConfig, remoteFiles.get(Constants.Files.LOCALIZE_FILES), remoteDir);
 
+
+      Map<String, Map<String, String>> runnableFiles = new HashMap<>();
+      for (Map.Entry<String, RuntimeSpecification> runnableEntry
+        : twillRuntimeSpec.getTwillSpecification().getRunnables().entrySet()) {
+
+        String runnableRemoteDir = remoteDir + "/" + runnableEntry.getKey() + System.currentTimeMillis();
+        SSHUtils.runCommand(sshConfig, "mkdir -p " + runnableRemoteDir);
+        Map<String, String> runnableFileMap = new HashMap<>();
+        for (LocalFile lf : runnableEntry.getValue().getLocalFiles()) {
+          File localFile = new File(lf.getURI());
+          String remoteFilePath = runnableRemoteDir + "/" + localFile.getName();
+          runnableFileMap.put(lf.getName(), remoteFilePath);
+          SSHUtils.scp(sshConfig, localFile.getAbsolutePath(), remoteFilePath);
+        }
+        runnableFiles.put(runnableEntry.getKey(), runnableFileMap);
+      }
+
+      Location location = appLocation.append("runnableFiles");
+      try (Writer writer = new OutputStreamWriter(location.getOutputStream(), StandardCharsets.UTF_8)) {
+        new Gson().toJson(runnableFiles, writer);
+      }
+      LOG.debug("Done {}", Constants.Files.LOCALIZE_FILES);
+
+      SSHUtils.scp(sshConfig, new File(location.toURI()).getAbsolutePath(), remoteDir + "/" + "runnableFiles");
+
+
+
+
       // TODO: how to get the error from this command: (its a type - nohub)
       // TODO: how to make this command blocking (And know that the command is done)
 //      System.out.println(SSHUtils.runCommand(sshConfig, "nohub bash /home/aanwar/dp_launcher.sh " + remoteDir));
@@ -481,47 +516,6 @@ public class DataProcTwillPreparer implements TwillPreparer {
       newLevels.put(entry.getKey(), entry.getValue().name());
     }
     this.logLevels.put(runnableName, newLevels);
-  }
-
-  /**
-   * Creates an {@link Credentials} by copying the {@link Credentials} of the current user.
-   */
-  private Credentials createCredentials() {
-    Credentials credentials = new Credentials();
-
-    try {
-      credentials.addAll(UserGroupInformation.getCurrentUser().getCredentials());
-    } catch (IOException e) {
-      LOG.warn("Failed to get current user UGI. Current user credentials not added.", e);
-    }
-    return credentials;
-  }
-
-  /**
-   * Creates a {@link Credentials} for the application submission.
-   */
-  private Credentials createSubmissionCredentials() {
-    Credentials credentials = new Credentials();
-    if (Math.random() < 1) {
-      // TODO
-      return credentials;
-    }
-    try {
-      // Acquires delegation token for the location
-      List<Token<?>> tokens = YarnUtils.addDelegationTokens(config, appLocation.getLocationFactory(), credentials);
-      if (LOG.isDebugEnabled()) {
-        for (Token<?> token : tokens) {
-          LOG.debug("Delegation token acquired for {}, {}", appLocation, token);
-        }
-      }
-    } catch (IOException e) {
-      LOG.warn("Failed to acquire delegation token for location {}", appLocation);
-    }
-
-    // Copy the user provided credentials.
-    // It will override the location delegation tokens acquired above if user supplies it.
-//    credentials.addAll(this.credentials);
-    return credentials;
   }
 
   private LocalFile createLocalFile(String name, Location location) throws IOException {
@@ -628,11 +622,12 @@ public class DataProcTwillPreparer implements TwillPreparer {
   }
 
   /**
-   * Based on the given {@link TwillSpecification}, upload LocalFiles to Yarn Cluster.
+   * Based on the given {@link TwillSpecification}, copy file to local filesystem.
    * @param twillSpec The {@link TwillSpecification} for populating resource.
    */
   private Multimap<String, LocalFile> populateRunnableLocalFiles(TwillSpecification twillSpec) throws IOException {
     Multimap<String, LocalFile> localFiles = HashMultimap.create();
+    LocalLocationFactory localLocationFactory = new LocalLocationFactory();
 
     LOG.debug("Populating Runnable LocalFiles");
     for (Map.Entry<String, RuntimeSpecification> entry: twillSpec.getRunnables().entrySet()) {
@@ -641,18 +636,18 @@ public class DataProcTwillPreparer implements TwillPreparer {
         Location location;
 
         URI uri = localFile.getURI();
-        if (appLocation.toURI().getScheme().equals(uri.getScheme())) {
-          // If the source file location is having the same scheme as the target location, no need to copy
-          location = appLocation.getLocationFactory().create(uri);
+        if (uri.getScheme() == null || "file".equals(uri.getScheme())) {
+          // If the source file location is already local file, no need to copy
+          location = localLocationFactory.create(uri);
         } else {
-          URL url = uri.toURL();
-          LOG.debug("Create and copy {} : {}", runnableName, url);
+          Location source = locationFactory.create(uri);
+          LOG.debug("Create and copy {} : {}", runnableName, uri);
           // Preserves original suffix for expansion.
-          location = copyFromURL(url,
-                  createTempLocation(Paths.addExtension(url.getFile(), localFile.getName())));
-          LOG.debug("Done {} : {}", runnableName, url);
+          location = localLocationFactory.create(localizeFile(source, localFile.getName()).toURI());
+          LOG.debug("Done {} : {}", runnableName, uri);
         }
 
+        LOG.info("runnable local file: {}", localFile.getURI());
         localFiles.put(runnableName,
                        new DefaultLocalFile(localFile.getName(), location.toURI(), location.lastModified(),
                                             location.length(), localFile.isArchive(), localFile.getPattern()));
@@ -660,6 +655,20 @@ public class DataProcTwillPreparer implements TwillPreparer {
     }
     LOG.debug("Done Runnable LocalFiles");
     return localFiles;
+  }
+
+  private File localizeFile(Location sourceLocation, String target) throws IOException {
+    // create a local file with restricted permissions
+    // only allow the owner to read/write, since it contains credentials
+    Path localKeytabFile = Files.createTempFile(getLocalStagingDir().toPath(), null, target);
+    // copy to this local file
+
+    LOG.info("Copying keytab file from {} to {}", sourceLocation, localKeytabFile);
+    try (InputStream is = sourceLocation.getInputStream()) {
+      Files.copy(is, localKeytabFile, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    return localKeytabFile.toFile();
   }
 
   private TwillRuntimeSpecification saveSpecification(TwillSpecification spec, Path targetFile) throws IOException {
@@ -693,7 +702,9 @@ public class DataProcTwillPreparer implements TwillPreparer {
       }
 
       TwillRuntimeSpecification twillRuntimeSpec = new TwillRuntimeSpecification(
+        // fsuser may be inaccurate
               newTwillSpec, appLocation.getLocationFactory().getHomeLocation().getName(),
+        // appLocation may be inaccurate
               appLocation.toURI(), "localhost:2181", runId, twillSpec.getName(),
               null,
               logLevels, maxRetries, configMap, runnableConfigs);
@@ -826,16 +837,6 @@ public class DataProcTwillPreparer implements TwillPreparer {
     LOG.debug("Done {}", Constants.Files.LOCALIZE_FILES);
     files.put(Constants.Files.LOCALIZE_FILES,
                    createLocalFile(Constants.Files.LOCALIZE_FILES, location).getURI().getPath());
-  }
-
-  private Location copyFromURL(URL url, Location target) throws IOException {
-    try (
-      InputStream is = url.openStream();
-      OutputStream os = new BufferedOutputStream(target.getOutputStream())
-    ) {
-      ByteStreams.copy(is, os);
-    }
-    return target;
   }
 
   private Location createTempLocation(String fileName) {

@@ -50,6 +50,7 @@ import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -72,8 +73,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   DistributedWorkflowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                    TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                    ProgramRunnerFactory programRunnerFactory,
-                                   Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
+                                   Impersonator impersonator, LocationFactory locationFactory) {
+    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator, locationFactory);
     this.programRunnerFactory = programRunnerFactory;
   }
 

@@ -19,17 +19,21 @@ package co.cask.cdap.internal.app.runtime.batch.dataproc;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.jcraft.jsch.JSchException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -105,8 +109,13 @@ public class DPTwillMain {
     "      $HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*'";
 
   public static TwillRunner getConfiguredTwillRunner() {
+    // TODO:
+    return getConfiguredTwillRunner(null, null);
+  }
+
+  public static TwillRunner getConfiguredTwillRunner(Configuration yarnConfiguration, LocationFactory locationFactory) {
     SSHConfig sshConfig = new SSHConfig("35.200.155.105", "yourname", getPrivateKey());
-    return new DataProcTwillRunner(sshConfig);
+    return new DataProcTwillRunner(sshConfig, yarnConfiguration, locationFactory);
   }
 
   public static void main(String[] args) {

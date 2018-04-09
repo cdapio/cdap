@@ -17,11 +17,14 @@
 package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
 import co.cask.cdap.api.common.Bytes;
+import com.google.common.base.Stopwatch;
+import com.google.common.io.CharStreams;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import org.apache.commons.io.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,19 +33,63 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * createSession takes about ~2.5 seconds
+ * connecting a ChannelExec takes about 240ms
+ * reading input from InputStream takes about 300ms
  */
 public class SSHUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(SSHUtils.class);
 
   public static String runCommand(SSHConfig sshConfig,
-                                  String input) throws JSchException, IOException, InterruptedException {
+                                  String input) throws JSchException, IOException {
+    Session session = createSession(sshConfig);
+    try {
+      return runCommand(session, input);
+    } finally {
+      session.disconnect();
+    }
+  }
+
+  public static String runCommand(Session session,
+                                  String input) throws JSchException, IOException {
+    System.out.println("running command: " + input);
+    Stopwatch sw = new Stopwatch().start();
+
+    sw.reset().start();
+    Channel channel = session.openChannel("exec");
+    System.out.println("openChannel took: " + sw.elapsedMillis());
+    ((ChannelExec) channel).setCommand(input);
+    channel.setInputStream(null);
+    ((ChannelExec) channel).setErrStream(System.err);
+    InputStream in = channel.getInputStream();
+
+    sw.reset().start();
+    channel.connect();
+    System.out.println("connect took: " + sw.elapsedMillis());
+    sw.reset().start();
+    String result = CharStreams.toString(new InputStreamReader(in, Charsets.UTF_8));
+    System.out.println("reading all input took: " + sw.elapsedMillis());
+
+    if (!channel.isClosed()) {
+      System.out.println("Channel is not closed.");
+    }
+    System.out.println("exit-status: " + channel.getExitStatus());
+    sw.reset().start();
+    channel.disconnect();
+    System.out.println("channel disconnect took: " + sw.elapsedMillis());
+    sw.reset().start();
+    return result;
+  }
+
+  public static String runCommand2(SSHConfig sshConfig,
+                                   String input) throws JSchException, IOException, InterruptedException {
     System.out.println("running command: " + input);
     Session session = createSession(sshConfig);
 
@@ -69,14 +116,14 @@ public class SSHUtils {
 
   public static void scp(SSHConfig sshConfig, String localFile, String remoteDir) throws JSchException, IOException {
     // https://medium.com/@ldclakmal/scp-with-java-b7b7dbcdbc85
-    com.jcraft.jsch.Session session = createSession(sshConfig);
+    Session session = createSession(sshConfig);
 
     LOG.info("Starting SCP from {} to {}", localFile, remoteDir);
     copyLocalToRemote(session, localFile, remoteDir);
     LOG.info("Finished SCP from {} to {}", localFile, remoteDir);
   }
 
-  private static com.jcraft.jsch.Session createSession(SSHConfig sshConfig) throws JSchException {
+  public static Session createSession(SSHConfig sshConfig) throws JSchException {
     JSch jsch = new JSch();
 
 //    if (privateKey != null) {

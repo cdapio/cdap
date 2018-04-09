@@ -149,7 +149,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   }
 
   /**
-   * Returns the path to a keytab file, after copying it to the local file system, if necessary
+   * Returns the path to a keytab file, after copying it to the local file system
    *
    * @param keytabLocation the keytabLocation of the keytab file
    * @return local keytab file

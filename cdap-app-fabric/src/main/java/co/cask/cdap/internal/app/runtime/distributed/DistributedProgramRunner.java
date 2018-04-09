@@ -79,6 +79,8 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactories;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +129,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   protected final TokenSecureStoreRenewer secureStoreRenewer;
   private final TwillRunner twillRunner;
   private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   protected DistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                      TokenSecureStoreRenewer tokenSecureStoreRenewer,
@@ -136,6 +139,19 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     this.cConf = cConf;
     this.secureStoreRenewer = tokenSecureStoreRenewer;
     this.impersonator = impersonator;
+    this.locationFactory = null;
+  }
+
+  protected DistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
+                                     TokenSecureStoreRenewer tokenSecureStoreRenewer,
+                                     // TODO: injection instead of nullable
+                                     Impersonator impersonator, @Nullable LocationFactory locationFactory) {
+    this.twillRunner = twillRunner;
+    this.hConf = hConf;
+    this.cConf = cConf;
+    this.secureStoreRenewer = tokenSecureStoreRenewer;
+    this.impersonator = impersonator;
+    this.locationFactory = LocationFactories.namespace(locationFactory, "twill");
   }
 
   protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
@@ -246,7 +262,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  localizeResources,
                                                                                  createEventHandler(cConf, options));
 //          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
-          TwillPreparer twillPreparer = DPTwillMain.getConfiguredTwillRunner().prepare(twillApplication);
+          TwillPreparer twillPreparer = DPTwillMain.getConfiguredTwillRunner(hConf,
+                                                                             locationFactory).prepare(twillApplication);
 
           // Add the configuration to container classpath
           twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());

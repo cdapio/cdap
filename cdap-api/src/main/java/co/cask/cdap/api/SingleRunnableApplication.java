@@ -27,6 +27,7 @@ import org.apache.twill.api.TwillSpecification;
  * only one {@link org.apache.twill.api.TwillRunnable}.
  *
  */
+// TODO: remove?
 public class SingleRunnableApplication implements TwillApplication {
 
   private final TwillRunnable runnable;

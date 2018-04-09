@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataproc;
 
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -48,12 +49,15 @@ public class DataProcTwillRunner implements TwillRunner {
 
   private final SSHConfig sshConfig;
   private final LocationFactory locationFactory;
+  private final Configuration hConf;
 
   private volatile String jvmOptions = null;
 
-  public DataProcTwillRunner(SSHConfig sshConfig) {
+  public DataProcTwillRunner(SSHConfig sshConfig, Configuration hConf, LocationFactory locationFactory) {
     this.sshConfig = sshConfig;
-    this.locationFactory = new LocalLocationFactory(new File("/tmp/dptr"));
+    this.hConf = hConf;
+//    this.locationFactory = new LocalLocationFactory(new File("/tmp/dptr"));
+    this.locationFactory = locationFactory;
   }
 
   // Note: CDAP doesn't use the following two methods.
@@ -72,13 +76,13 @@ public class DataProcTwillRunner implements TwillRunner {
 //    Preconditions.checkState(serviceDelegate.isRunning(), "Service not start. Please call start() first.");
     final TwillSpecification twillSpec = twillApplication.configure();
     RunId runId = RunIds.generate();
-    Location appLocation = locationFactory.create(String.format("/%s/%s", twillSpec.getName(), runId.getId()));
+    Location appLocation = new LocalLocationFactory(new File(System.getProperty("java.io.tmpdir")))
+      .create(String.format("/%s/%s", twillSpec.getName(), runId.getId()));
     LocationCache locationCache = new NoCachingLocationCache(appLocation); // TODO: do it?
 
-    Configuration config = new Configuration(false);
-    return new DataProcTwillPreparer(config, twillSpec, runId, appLocation,
+    return new DataProcTwillPreparer(new Configuration(hConf), twillSpec, runId, appLocation,
                                      jvmOptions, locationCache,
-                                     sshConfig);
+                                     sshConfig, locationFactory);
   }
 
   @Override

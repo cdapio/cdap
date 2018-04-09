@@ -29,12 +29,16 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
+import org.apache.twill.internal.DefaultRuntimeSpecification;
+import org.apache.twill.internal.DefaultTwillSpecification;
 import org.apache.twill.internal.EnvKeys;
 import org.apache.twill.internal.JvmOptions;
 import org.apache.twill.internal.ProcessController;
@@ -68,8 +72,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -112,6 +118,52 @@ public class DPLauncher {
 
     File twillSpecFile = new File(destinationFolder, Constants.Files.TWILL_SPEC);
     TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create().fromJson(twillSpecFile);
+
+
+    Map<String, Map<String, String>> runnableFiles;
+    try (Reader reader = Files.newBufferedReader(java.nio.file.Paths.get("runnableFiles"),
+                                                 StandardCharsets.UTF_8)) {
+      runnableFiles = new Gson().fromJson(reader, new TypeToken<Map<String, Map<String, String>>>() { }.getType());
+    }
+    // TODO: publish to hdfs
+
+
+    TwillSpecification spec = twillRuntimeSpec.getTwillSpecification();
+    // Rewrite LocalFiles inside twillSpec
+    Map<String, RuntimeSpecification> newRuntimeSpec = new HashMap<>();
+    for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
+      RuntimeSpecification value = entry.getValue();
+
+      Collection<LocalFile> newLocalFiles = new ArrayList<>();
+      for (LocalFile localFile : value.getLocalFiles()) {
+        File runnableFile = new File(runnableFiles.get(entry.getKey()).get(localFile.getName()));
+        newLocalFiles.add(new DefaultLocalFile(localFile.getName(), runnableFile.toURI(), runnableFile.lastModified(),
+                                               runnableFile.length(), localFile.isArchive(), localFile.getPattern()));
+      }
+      newRuntimeSpec.put(entry.getKey(),
+                         new DefaultRuntimeSpecification(value.getName(), value.getRunnableSpecification(),
+                                                         value.getResourceSpecification(), newLocalFiles));
+    }
+
+    TwillSpecification newTwillSpec =
+      new DefaultTwillSpecification(spec.getName(), newRuntimeSpec, spec.getOrders(),
+                                    spec.getPlacementPolicies(), spec.getEventHandler());
+
+
+    TwillRuntimeSpecification newTwillRuntimeSpec =
+      new TwillRuntimeSpecification(newTwillSpec, twillRuntimeSpec.getFsUser(), twillRuntimeSpec.getTwillAppDir(),
+                                    twillRuntimeSpec.getZkConnectStr(), twillRuntimeSpec.getTwillAppRunId(),
+                                    twillRuntimeSpec.getTwillAppName(), twillRuntimeSpec.getRmSchedulerAddr(),
+                                    twillRuntimeSpec.getLogLevels(), twillRuntimeSpec.getMaxRetries(),
+                                    twillRuntimeSpec.getConfig(), twillRuntimeSpec.getRunnableConfigs());
+
+
+    TwillRuntimeSpecificationAdapter.create().toJson(newTwillRuntimeSpec, twillSpecFile);
+    // overwrite the zip which container the twill spec
+    BundleJarUtil.createJar(destinationFolder, runtimeConfigJar);
+
+
+
     System.out.println("twill runtimeSpec: " + twillRuntimeSpec);
 
     // TODO: get this from file. note: file may not always exist (according to comment in YarnTwillPreparer)
@@ -157,7 +209,7 @@ public class DPLauncher {
       final YarnAppClient yarnAppClient = new VersionDetectYarnAppClientFactory().create(config);
       // TODO: schedulerQueue
       final ProcessLauncher<ApplicationMasterInfo> launcher =
-        yarnAppClient.createLauncher(twillRuntimeSpec.getTwillSpecification(), null);
+        yarnAppClient.createLauncher(newTwillSpec, null);
       final ApplicationMasterInfo appMasterInfo = launcher.getContainerInfo();
       System.out.println("appMasterInfo: " + appMasterInfo);
 
