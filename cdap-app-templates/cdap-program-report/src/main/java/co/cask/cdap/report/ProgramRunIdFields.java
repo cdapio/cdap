@@ -26,6 +26,8 @@ public class ProgramRunIdFields {
   private final String program;
   private final String run;
   private final String namespace;
+  private Long timestamp;
+  private String programStatus;
 
   ProgramRunIdFields(String application, String version, String type, String program, String run,
                      String namespace) {
@@ -36,4 +38,12 @@ public class ProgramRunIdFields {
     this.run = run;
     this.namespace = namespace;
   }
+  public void setTime(long timestamp) {
+    this.timestamp = timestamp;
+  }
+
+  public void setStatus(String status) {
+    this.programStatus = status;
+  }
+
 }

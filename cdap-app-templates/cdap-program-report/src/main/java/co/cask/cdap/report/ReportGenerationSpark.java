@@ -18,6 +18,7 @@ package co.cask.cdap.report;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -33,6 +34,7 @@ import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
@@ -65,6 +67,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +88,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportGenerationRequest.Filter.class, new FilterDeserializer())
     .create();
+  private static final Type MAP_TYPE =
+    new co.cask.cdap.internal.guava.reflect.TypeToken<Map<String, String>>() { }.getType();
+
   private TMSSubscriber tmsSubscriber;
   private ExecutorService executorService;
   @Override
@@ -140,6 +146,35 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
             Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
             ProgramRunIdFields programRunIdFields =
               GSON.fromJson(notification.getProperties().get("programRunId"), ProgramRunIdFields.class);
+            String programStatus = notification.getProperties().get("programStatus");
+            // TODO convert to switch and use ProgramRunStatus
+            if (programStatus.equals("STARTING")) {
+              programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("startTime")));
+              programRunIdFields.setStatus("STARTING");
+              ArtifactId artifactId = GSON.fromJson(notification.getProperties().get("artifactId"), ArtifactId.class);
+              Map<String, String> userArguments =
+                GSON.fromJson(notification.getProperties().get("userOverrides"), MAP_TYPE);
+              Map<String, String> systemArguments =
+                GSON.fromJson(notification.getProperties().get("systemOverrides"), MAP_TYPE);
+              systemArguments.putAll(userArguments);
+              String principal = notification.getProperties().get("principal");
+              ProgramStartInfo startInfo = new ProgramStartInfo(systemArguments, artifactId, principal);
+
+            } else if (programStatus.equals("RUNNING")) {
+              programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("logical.start.time")));
+              programRunIdFields.setStatus("RUNNING");
+            } else if (programStatus.equals("KILLED")
+              || programStatus.equals("COMPLETED") || programStatus.equals("FAILED")) {
+              programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("endTime")));
+              programRunIdFields.setStatus(programStatus);
+            } else if  (programStatus.equals(ProgramRunStatus.SUSPENDED.name())) {
+              // TODO test suspend and resume
+              programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("suspendTime")));
+              programRunIdFields.setStatus(programStatus);
+            } else if  (programStatus.equals(ProgramRunStatus.RESUMING.name())) {
+              programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("resumeTime")));
+              programRunIdFields.setStatus(programStatus);
+            }
             LOG.info("Found record {}", notification);
           }
         } catch (TopicNotFoundException tpe) {
