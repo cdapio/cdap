@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,65 +14,178 @@
  * the License.
 */
 
-import React from 'react';
-import SortableTable from 'components/SortableTable';
+import React, {Component} from 'react';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import uuidV4 from 'uuid/v4';
+import IconSVG from 'components/IconSVG';
+import orderBy from 'lodash/orderBy';
+import {objectQuery} from 'services/helpers';
+import isEqual from 'lodash/isEqual';
 
 require('./SortableStickyGrid.scss');
 
-export default class SortableStickyGrid extends SortableTable {
+const SORT_ORDERS = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+export default class SortableStickyGrid extends Component {
   constructor(props) {
     super(props);
+    let sortProperty = objectQuery(props.gridHeaders, 0, 'property');
+    let sortOrder = SORT_ORDERS.asc;
+
+    this.state = {
+      entities: orderBy(props.entities, [sortProperty], [sortOrder]),
+      sortProperty,
+      sortOrder
+    };
   }
-  renderTableHeader() {
-    if (this.props.renderTableHeaders) {
-      return this.props.renderTableHeaders(this.renderSortableTableHeader.bind(this));
+
+  static propTypes = {
+    entities: PropTypes.arrayOf(PropTypes.object).isRequired,
+    gridHeaders: PropTypes.arrayOf(
+      PropTypes.shape({
+        label: PropTypes.string,
+        property: PropTypes.string
+      })
+    ),
+    renderGridHeader: PropTypes.func,
+    renderGridBody: PropTypes.func,
+    className: PropTypes.string,
+    cellIsClickable: PropTypes.bool
+  };
+
+  static defaultProps = {
+    cellIsClickable: false
+  };
+
+  componentWillReceiveProps(nextProps) {
+    if (!isEqual(this.props.entities, nextProps.entities)) {
+      this.setState({
+        entities: orderBy(nextProps.entities, [this.state.sortProperty], [this.state.sortOrder])
+      });
     }
-    let itemWidth = 100 / this.props.tableHeaders.length;
+  }
+
+  componentDidUpdate() {
+    let highlightedElems = document.getElementsByClassName('highlighted');
+    if (highlightedElems.length) {
+      highlightedElems[0].scrollIntoView();
+    }
+  }
+
+  handleSort = (property) => {
+    let newSortProperty, newSortOrder;
+    if (this.state.sortProperty === property) {
+      newSortProperty = this.state.sortProperty;
+      newSortOrder = this.state.sortOrder === SORT_ORDERS.asc ? SORT_ORDERS.desc : SORT_ORDERS.asc;
+    } else {
+      newSortProperty = property;
+      newSortOrder = SORT_ORDERS.asc;
+    }
+
+    this.setState({
+      sortProperty: newSortProperty,
+      sortOrder: newSortOrder,
+      entities: orderBy(this.state.entities, [newSortProperty], [newSortOrder])
+    });
+  };
+
+  renderSortIcon(property) {
+    if (property !== this.state.sortProperty) {
+      return null;
+    }
+
+    return (
+      this.state.sortOrder === SORT_ORDERS.asc ?
+        <IconSVG name="icon-caret-down" />
+      :
+        <IconSVG name="icon-caret-up" />
+    );
+  }
+
+
+  renderGridHeader() {
+    if (this.props.renderGridHeader) {
+      return this.props.renderGridHeader();
+    }
+
     return (
       <div className="grid-header">
-      {
-        this.props.tableHeaders.map((tableHeader) => {
-          return (
-            <div
-              className="grid-header-item"
-              title={tableHeader.label}
-              key={uuidV4()}
-              style={
-                tableHeader.property ? { width: `${itemWidth}%`} : {}
+        <div className="grid-row">
+          {
+            this.props.gridHeaders.map((header) => {
+              if (header.property) {
+                return (
+                  <strong
+                    className={classnames("sortable-header", {"active": this.state.sortProperty === header.property})}
+                    key={uuidV4()}
+                    onClick={this.handleSort.bind(this, header.property)}
+                  >
+                    <span>{header.label}</span>
+                    {this.renderSortIcon(header.property)}
+                  </strong>
+                );
               }
-            >
-              {
-                tableHeader.property ?
-                  this.renderSortableTableHeader(tableHeader)
-                :
-                  tableHeader.label
-              }
-            </div>
-          );
-        })
-      }
+              return (
+                <strong key={uuidV4()}>
+                  {header.label}
+                </strong>
+              );
+            })
+          }
+        </div>
       </div>
     );
   }
-  render() {
-    let tableClasses = classnames('table', this.props.className);
+
+  renderGridBody() {
+    if (this.props.renderGridBody) {
+      return this.props.renderGridBody(this.state.entities);
+    }
+
     return (
-      <div className="table-container sortable-sticky-grid">
-        <div className={tableClasses}>
-          {this.renderTableHeader()}
-        </div>
-        <div className="table-scroll">
-          {this.props.renderTableBody(this.state.entities)}
+      <div className="grid-body">
+        {
+          this.state.entities.map((entity) => {
+            return (
+              <div
+                className={classnames(
+                  "grid-row", {
+                    "grid-link": this.props.cellIsClickable,
+                    "highlighted": entity.highlighted
+                  }
+                )}
+                key={uuidV4()}
+              >
+                {
+                  this.props.gridHeaders.map((header) => {
+                    return (
+                      <div key={uuidV4()}>
+                        {entity[header.property]}
+                      </div>
+                    );
+                  })
+                }
+              </div>
+            );
+          })
+        }
+      </div>
+    );
+  }
+
+  render() {
+    let gridClasses = classnames('grid-wrapper sortable-sticky-grid', this.props.className);
+    return (
+      <div className={gridClasses}>
+        <div className="grid grid-container">
+          {this.renderGridHeader()}
+          {this.renderGridBody()}
         </div>
       </div>
     );
   }
 }
-
-SortableStickyGrid.propTypes = {
-  ...SortableTable.propTypes,
-  renderTableHeaders: PropTypes.func
-};

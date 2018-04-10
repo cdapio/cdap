@@ -27,6 +27,8 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {connect, Provider} from 'react-redux';
 import ProvisionerInfoStore from 'components/Cloud/Store';
 import {fetchProvisionerSpec} from 'components/Cloud/Store/ActionCreator';
+import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
+import IconSVG from 'components/IconSVG';
 
 require('./CreateView.scss');
 
@@ -247,15 +249,29 @@ class ProfilesCreateView extends Component {
     if (this.state.redirectToAdmin) {
       return (
         <Redirect to={{
-          pathname: '/administration',
-          state: { showConfigTab: true }
+          pathname: '/administration/configuration',
+          state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
         }}/>
       );
     }
+
+    let linkObj = this.state.isSystem ? {
+      pathname: '/administration/configuration',
+      state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
+    } : `/ns/${getCurrentNamespace()}/details`;
+
     return (
       <div className="profile-create-view">
         <div className="create-view-top-panel">
-          Create a Google Dataproc Profile
+          <span>
+            Create a Google Dataproc Profile
+          </span>
+          <Link
+            className="close-create-view"
+            to={linkObj}
+          >
+            <IconSVG name="icon-close" />
+          </Link>
         </div>
         <div className="create-form-container">
           <fieldset disabled={this.state.creatingProfile}>
@@ -295,19 +311,9 @@ class ProfilesCreateView extends Component {
             disabled={!this.state.profileName.length || !this.state.profileDescription.length}
             label="Create Compute Profile"
           />
-          {
-            this.state.isSystem ?
-              <Link to={{
-                pathname: '/administration',
-                state: { showConfigTab: true }
-              }}>
-                Close
-              </Link>
-            :
-              <Link to={`/ns/${getCurrentNamespace()}/details`}>
-                Close
-              </Link>
-          }
+          <Link to={linkObj}>
+            Close
+          </Link>
         </div>
       </div>
     );

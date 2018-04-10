@@ -15,6 +15,7 @@
 */
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import ReloadSystemArtifacts from 'components/Administration/AdminConfigTabContent/ReloadSystemArtifacts';
 import NamespacesAccordion from 'components/Administration/AdminConfigTabContent/NamespacesAccordion';
 import SystemProfilesAccordion from 'components/Administration/AdminConfigTabContent/SystemProfilesAccordion';
@@ -41,7 +42,15 @@ export default class AdminConfigTabContent extends Component {
     namespacesCountLoading: true,
     systemProfilesCountLoading: true,
     systemPrefsCountLoading: true,
-    expandedAccordion: null
+    expandedAccordion: this.props.accordionToExpand || ADMIN_CONFIG_ACCORDIONS.namespaces
+  };
+
+  static propTypes = {
+    accordionToExpand: PropTypes.string
+  };
+
+  static defaultProps = {
+    accordionToExpand: ADMIN_CONFIG_ACCORDIONS.namespaces
   };
 
   expandAccordion = (accordion) => {

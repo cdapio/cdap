@@ -27,17 +27,19 @@ export default function ViewAllLabel({arrayToLimit, limit, viewAllState, toggleV
   }
 
   return (
-    <span
-      className="view-all-label"
-      onClick={toggleViewAll}
-    >
-      {
-        viewAllState ?
-          T.translate(`${PREFIX}.viewLess`)
-        :
-          T.translate(`${PREFIX}.viewAll`)
-      }
-    </span>
+    <div className="view-all-label-container">
+      <span
+        className="view-all-label"
+        onClick={toggleViewAll}
+      >
+        {
+          viewAllState ?
+            T.translate(`${PREFIX}.viewLess`)
+          :
+            T.translate(`${PREFIX}.viewAll`)
+        }
+      </span>
+    </div>
   );
 }
 

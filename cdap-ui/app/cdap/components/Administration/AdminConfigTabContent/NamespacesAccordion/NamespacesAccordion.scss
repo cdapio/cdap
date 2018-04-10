@@ -14,13 +14,21 @@
  * the License.
 */
 
-@import "../../styles/variables.scss";
+@import '../../../../styles/variables.scss';
 
-.view-all-label-container {
-  margin: 5px 0;
+.namespaces-container-content {
+  .grid.grid-container {
+    .grid-body {
+      .grid-row {
+        &.grid-link {
+          color: $grey-01;
+        }
 
-  .view-all-label {
-    color: $blue-03;
-    cursor: pointer;
+        &:hover {
+          background-color: white;
+        }
+      }
+    }
+
   }
 }

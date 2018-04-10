@@ -28,8 +28,33 @@ import ee from 'event-emitter';
 import ViewAllLabel from 'components/ViewAllLabel';
 import T from 'i18n-react';
 import isEqual from 'lodash/isEqual';
+import SortableStickyGrid from 'components/SortableStickyGrid';
+import {Link} from 'react-router-dom';
+import uuidV4 from 'uuid/v4';
+require('./NamespacesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.Namespace';
+
+const GRID_HEADERS = [
+  {
+    property: 'name',
+    label: T.translate('commons.nameLabel')
+  },
+  {
+    property: 'customAppCount',
+    label: T.translate(`${PREFIX}.customApps`)
+  },
+  {
+    property: 'pipelineCount',
+    label: T.translate('commons.pipelines')
+  },
+  {
+    property: 'datasetCount',
+    label: T.translate('commons.entity.dataset.plural')
+  }
+];
+
+const NUM_NS_TO_SHOW = 5;
 
 export default class NamespacesAccordion extends Component {
   state = {
@@ -77,7 +102,9 @@ export default class NamespacesAccordion extends Component {
       query: '*'
     };
 
+    let currentNamespaces = this.state.namespacesInfo.map(namespace => namespace.name);
     let namespacesInfo = [];
+    let hasNewNamespaces = false;
 
     namespaces.forEach(namespace => {
       searchParams.namespace = namespace.name;
@@ -91,15 +118,39 @@ export default class NamespacesAccordion extends Component {
               datasetCount
             } = getCustomAppPipelineDatasetCounts(entities);
 
+            let namespaceIsHighlighted = false;
+
+            if (currentNamespaces.length && currentNamespaces.indexOf(namespace.name) === -1) {
+              namespaceIsHighlighted = true;
+              hasNewNamespaces = true;
+            }
+
             namespacesInfo.push({
               name: namespace.name,
               pipelineCount,
               customAppCount,
-              datasetCount
+              datasetCount,
+              highlighted: namespaceIsHighlighted
             });
+
             this.setState({
               namespacesInfo,
-              loading: false
+              loading: false,
+              viewAll: hasNewNamespaces || this.state.viewAll
+            }, () => {
+              if (hasNewNamespaces) {
+                setTimeout(() => {
+                  namespacesInfo = namespacesInfo.map(namespace => {
+                    return {
+                      ...namespace,
+                      highlighted: false
+                    };
+                  });
+                  this.setState({
+                    namespacesInfo
+                  });
+                }, 4000);
+              }
             });
           },
           (err) => console.log(err)
@@ -146,6 +197,38 @@ export default class NamespacesAccordion extends Component {
     );
   }
 
+  renderGridBody = (namespaces) => {
+    return (
+      <div className="grid-body">
+        {
+          namespaces.map((namespace) => {
+            return (
+              <Link
+                to={`/ns/${namespace.name}/details`}
+                className={classnames(
+                  "grid-row grid-link", {
+                    "highlighted": namespace.highlighted
+                  }
+                )}
+                key={uuidV4()}
+              >
+                {
+                  GRID_HEADERS.map((header) => {
+                    return (
+                      <div key={uuidV4()}>
+                        {namespace[header.property]}
+                      </div>
+                    );
+                  })
+                }
+              </Link>
+            );
+          })
+        }
+      </div>
+    );
+  };
+
   renderGrid() {
     if (this.state.loading) {
       return (
@@ -157,37 +240,16 @@ export default class NamespacesAccordion extends Component {
 
     let namespacesInfo = [...this.state.namespacesInfo];
 
-    if (!this.state.viewAll && namespacesInfo.length > 10) {
-      namespacesInfo = namespacesInfo.slice(0, 10);
+    if (!this.state.viewAll && namespacesInfo.length > NUM_NS_TO_SHOW) {
+      namespacesInfo = namespacesInfo.slice(0, NUM_NS_TO_SHOW);
     }
 
     return (
-      <div className="grid-wrapper">
-        <div className="grid grid-container">
-          <div className="grid-header">
-            <div className="grid-row">
-              <strong>{T.translate('commons.nameLabel')}</strong>
-              <strong>{T.translate(`${PREFIX}.customApps`)}</strong>
-              <strong>{T.translate('commons.pipelines')}</strong>
-              <strong>{T.translate('commons.entity.dataset.plural')}</strong>
-            </div>
-          </div>
-          <div className="grid-body">
-            {
-              namespacesInfo.map((namespaceInfo, i) => {
-                return (
-                  <div className="grid-row" key={i}>
-                    <div>{namespaceInfo.name}</div>
-                    <div>{namespaceInfo.customAppCount}</div>
-                    <div>{namespaceInfo.pipelineCount}</div>
-                    <div>{namespaceInfo.datasetCount}</div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
+      <SortableStickyGrid
+        entities={namespacesInfo}
+        renderGridBody={this.renderGridBody}
+        gridHeaders={GRID_HEADERS}
+      />
     );
   }
 
@@ -204,10 +266,16 @@ export default class NamespacesAccordion extends Component {
         >
           {T.translate(`${PREFIX}.create`)}
         </button>
+        <ViewAllLabel
+          arrayToLimit={this.state.namespacesInfo}
+          limit={NUM_NS_TO_SHOW}
+          viewAllState={this.state.viewAll}
+          toggleViewAll={this.toggleViewAll}
+        />
         {this.renderGrid()}
         <ViewAllLabel
           arrayToLimit={this.state.namespacesInfo}
-          limit={10}
+          limit={NUM_NS_TO_SHOW}
           viewAllState={this.state.viewAll}
           toggleViewAll={this.toggleViewAll}
         />
