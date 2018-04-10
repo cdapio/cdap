@@ -17,7 +17,9 @@
 package co.cask.cdap.report;
 
 import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
@@ -34,15 +36,22 @@ import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportList;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
+import co.cask.cdap.report.proto.ReportSummary;
 import co.cask.cdap.report.proto.ValueFilter;
+import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumWriter;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
@@ -81,6 +90,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Filter.class, new FilterDeserializer())
     .create();
+  private static final ReportSummary MOCK_SUMMARY =
+    new ReportSummary(ImmutableList.of(new ReportSummary.NamespaceAggregate(2, "ns1"),
+                                       new ReportSummary.NamespaceAggregate(2, "ns2")),
+                      1520808000L, 1520813000L,
+                      ImmutableList.of(new ReportSummary.ArtifactAggregate("USER", "cdap-data-pipeline", "1.0.0", 1),
+                                       new ReportSummary.ArtifactAggregate("USER", "cdap-data-streams", "1.0.0", 1),
+                                       new ReportSummary.ArtifactAggregate("USER", "custom-app1", "1.0.0", 1),
+                                       new ReportSummary.ArtifactAggregate("USER", "custom-app1", "1.0.0", 1)),
+                      new ReportSummary.DurationStats(100, 3000, 500),
+                      new ReportSummary.StartStats(1520808000L, 1520811000L),
+                      ImmutableList.of(new ReportSummary.UserAggregate("user1", 2),
+                                       new ReportSummary.UserAggregate("user2", 2)),
+                      ImmutableList.of(new ReportSummary.StartMethodAggregate("MANUAL", 2),
+                                       new ReportSummary.StartMethodAggregate("TIME", 1),
+                                       new ReportSummary.StartMethodAggregate("PROGRAM_STATUS", 1)));
 
   @Override
   protected void configure() {
@@ -99,8 +123,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   public static final class ReportSparkHandler extends AbstractSparkHttpServiceHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
-    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
-    }.getType();
+    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
     private static final String DEFAULT_LIMIT = "10000";
     private SparkSession sparkSession;
 
@@ -124,6 +147,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       String threadPoolSizeString = context.getRuntimeArguments().get(THREAD_POOL_SIZE);
       reportGenerationExecutor =
         Executors.newFixedThreadPool(threadPoolSizeString == null ? 3 : Integer.valueOf(threadPoolSizeString));
+      try {
+        context.getAdmin().createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
+                                         FileSetProperties.builder().build());
+        populateMetaFiles(getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET));
+      } catch (InstanceConflictException e) {
+        // It's ok if the dataset already exists
+      }
     }
 
     @GET
@@ -149,7 +179,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         String reportId = reportIdDir.getName();
         // Report ID is time based UUID. Get the creation time from the report ID.
         long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-        reportStatuses.add(new ReportStatusInfo(reportId, creationTime, getReportStatus(reportIdDir)));
+        // Read the report request from _START file, which was written at the beginning of report generation
+        String reportRequestString =
+          new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
+        ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+        reportStatuses.add(new ReportStatusInfo(reportId, reportRequest.getName(), null, creationTime, null,
+                                                getReportStatus(reportIdDir)));
       }
       responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
     }
@@ -166,10 +201,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         return;
       }
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
+      ReportStatus status = getReportStatus(reportIdDir);
+      String error = null;
+      ReportSummary summary = null;
+      if (status.equals(ReportStatus.FAILED)) {
+        error = new String(ByteStreams.toByteArray(reportIdDir.append(FAILURE_FILE).getInputStream()),
+                           StandardCharsets.UTF_8);
+      } else if (status.equals(ReportStatus.COMPLETED)) {
+        summary = MOCK_SUMMARY;
+      }
       // Read the report request from _START file, which was written at the beginning of report generation
-      String reportRequest =
+      String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
-      responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportIdDir), reportRequest));
+      ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+      responder.sendJson(new ReportGenerationInfo(reportRequest.getName(), null, creationTime, null,
+                                                  status, error, reportRequest, summary));
     }
 
     @GET
@@ -426,6 +472,46 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         throw new IllegalArgumentException("Request body is invalid json: " + e.getMessage());
       }
       return decodedRequestBody;
+    }
+  }
+
+  /**
+   * Adds mock program run meta files to the given location.
+   * TODO: [CDAP-13216] this method should be marked as @VisibleForTesting. Temporarily calling this method
+   * when initializing report generation Spark program to add mock data
+   *
+   * @param metaBaseLocation the location to add files
+   */
+  private static void populateMetaFiles(Location metaBaseLocation) throws Exception {
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
+    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
+    for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
+      Location nsLocation = metaBaseLocation.append(namespace);
+      nsLocation.mkdirs();
+      for (int i = 0; i < 5; i++) {
+        long time = 1520808000L + 1000 * i;
+        Location reportLocation = nsLocation.append(String.format("%d.avro", time));
+        reportLocation.createNew();
+        dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
+        String program = "SmartWorkflow";
+        String run1 = ReportIds.generate().toString();
+        String run2 = ReportIds.generate().toString();
+        long delay = TimeUnit.MINUTES.toSeconds(5);
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
+                                                                  time, new StartInfo("user",
+                                                                                      ImmutableMap.of("k1", "v1",
+                                                                                                      "k2", "v2"))));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
+                                                                  "FAILED", time + delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                  "STARTING", time + delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                  "RUNNING", time + 2 * delay, null));
+        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
+                                                                  "COMPLETED", time + 4 * delay, null));
+        dataFileWriter.close();
+      }
+      LOG.debug("nsLocation.list() = {}", nsLocation.list());
     }
   }
 }

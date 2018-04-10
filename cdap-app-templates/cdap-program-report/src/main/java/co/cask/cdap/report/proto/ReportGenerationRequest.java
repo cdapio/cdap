@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
  * Represents a request to generate a program run report in an HTTP request.
  */
 public class ReportGenerationRequest {
+  private final String name;
   private final Long start;
   private final Long end;
   private final List<String> fields;
@@ -37,14 +38,22 @@ public class ReportGenerationRequest {
   @Nullable
   private final List<Filter> filters;
 
-  public ReportGenerationRequest(Long start, Long end, List<String> fields, @Nullable List<Sort> sort,
+  public ReportGenerationRequest(String name, Long start, Long end, List<String> fields, @Nullable List<Sort> sort,
                                  @Nullable List<Filter> filters) {
+    this.name = name;
     this.start = start;
     this.end = end;
     this.fields = fields;
     this.sort = sort;
     this.filters = filters;
     this.validate();
+  }
+
+  /**
+   * @return the name of the report
+   */
+  public String getName() {
+    return name;
   }
 
   /**

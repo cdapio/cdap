@@ -22,6 +22,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -63,9 +64,15 @@ public class FilterDeserializer implements JsonDeserializer<Filter> {
       throw new JsonParseException(String.format("Invalid field name '%s'. Field name must be one of: [%s]", fieldName,
                                                  String.join(", ", ReportField.FIELD_NAME_MAP.keySet())));
     }
+    LoggerFactory.getLogger(FilterDeserializer.class).info("{} with value class {} is of long type: {}", object,
+                                                           field.getValueClass().getSimpleName(),
+                                                           field.getValueClass().equals(Long.class));
     Filter filter = null;
     // if the object contains "range" field, try to deserialize it as a range filter
     if (object.get("range") != null) {
+      LoggerFactory.getLogger(FilterDeserializer.class).info("{} with value class {} is of long type: {}", object,
+                                                             field.getValueClass().getSimpleName(),
+                                                             field.getValueClass().equals(Long.class));
       // Use the type token that matches the class of this field's value to deserialize the JSON
       if (field.getValueClass().equals(Integer.class)) {
         filter = context.deserialize(json, INT_RANGE_FILTER_TYPE);
