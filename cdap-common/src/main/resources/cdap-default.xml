@@ -2353,12 +2353,20 @@
   </property>
 
   <property>
-    <name>app.program.runtime.monitor.topics</name>
-    <value>${program.status.record.event.topic}</value>
+    <name>app.program.runtime.monitor.topics.configs</name>
+    <value>${program.status.event.topic}</value>
     <description>
-      A comma-separated list of topic configs to be monitored by runtime monitor.
+      A comma-separated list of topics config to be monitored by runtime monitor.
     </description>
     <final>true</final>
+  </property>
+
+  <property>
+    <name>app.program.runtime.handler.bind.port</name>
+    <value>11020</value>
+    <description>
+      CDAP Runtime Handler service bind port
+    </description>
   </property>
 
   <!-- Notification System Configuration -->
