@@ -33,7 +33,7 @@ public class ProgramRunIdFieldsSerializer {
 
   private static final Schema STARTING_INFO = Schema.recordOf(
     "ProgramStartingInfo",
-    Schema.Field.of(Constants.USER, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.USER, Schema.nullableOf(Schema.of(Schema.Type.STRING))),
     Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                               Schema.of(Schema.Type.STRING))
     ),
@@ -48,11 +48,7 @@ public class ProgramRunIdFieldsSerializer {
     Schema.Field.of(Constants.STATUS, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.TIME, Schema.of(Schema.Type.LONG)),
     Schema.Field.of(Constants.MESSAGE_ID, Schema.of(Schema.Type.STRING)),
-    Schema.Field.of(Constants.USER, Schema.of(Schema.Type.STRING)),
-    Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING),
-                                                              Schema.of(Schema.Type.STRING))
-    ),
-    Schema.Field.of(Constants.ARTIFACT_ID, ARTIFACT_INFO)
+    Schema.Field.of(Constants.START_INFO, Schema.nullableOf(STARTING_INFO))
   ).toString();
 
   public static final org.apache.avro.Schema ARTIFACT_INFO_SCHEMA =

@@ -19,6 +19,7 @@ package co.cask.cdap.report;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -42,6 +43,7 @@ import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportList;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
+import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
@@ -49,34 +51,39 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
-import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -96,7 +103,6 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     new co.cask.cdap.internal.guava.reflect.TypeToken<Map<String, String>>() { }.getType();
 
   private TMSSubscriber tmsSubscriber;
-  private ExecutorService executorService;
 
   @Override
   protected void configure() {
@@ -107,30 +113,27 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
-    executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("tms-runrecord-reader"));
     Admin admin = sec.getAdmin();
     if (!admin.datasetExists(ReportGenerationApp.RUN_META_FILESET)) {
       admin.createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
                           FileSetProperties.builder().build());
     }
-
     tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
-                                      getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET, sec));
-
-    executorService.submit(tmsSubscriber);
-  }
-
-  @Override
-  public void destroy() {
-    tmsSubscriber.requestStop();
-    tmsSubscriber.interrupt();
-    executorService.shutdown();
+                                      getDatasetBaseLocation(sec));
+    tmsSubscriber.start();
+    try {
+      tmsSubscriber.join();
+    } catch (InterruptedException ie) {
+      tmsSubscriber.requestStop();
+      tmsSubscriber.interrupt();
+    }
   }
 
   // todo remove duplicate logic
-  private Location getDatasetBaseLocation(String datasetName, JavaSparkExecutionContext sec) {
+  private Location getDatasetBaseLocation(JavaSparkExecutionContext sec) {
     return Transactionals.execute(sec, context -> {
-      return context.<FileSet>getDataset(datasetName).getBaseLocation();
+      FileSet fileSet = context.getDataset(ReportGenerationApp.RUN_META_FILESET);
+      return fileSet.getBaseLocation();
     });
   }
 
@@ -144,6 +147,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
 
     TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation) {
+      super("TMS-RunrecordEvent-Subscriber-thread");
       this.messageFetcher = messageFetcher;
       this.namespaceToLogFileStreamMap = new HashMap<>();
       isStopped = false;
@@ -161,19 +165,24 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     @Override
     public void run() {
+      // TODO figure out messageId from files for initial offset
+      String afterMessageId = null;
+      try {
+        afterMessageId = findMessageId();
+      } catch (IOException e) {
+        LOG.error("Exception while trying to find messageId", e);
+        return;
+      }
       while (!isStopped) {
         try {
           TimeUnit.MILLISECONDS.sleep(10);
         } catch (InterruptedException e) {
           break;
         }
-        // TODO figure out messageId from files for initial offset
 
-        // TODO use updated messageId for subsequent fetch
-        String afterMessageId = null;
         try (CloseableIterator<Message> messageCloseableIterator =
                messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, 10, afterMessageId)) {
-          while (messageCloseableIterator.hasNext()) {
+          while (!isStopped && messageCloseableIterator.hasNext()) {
             Message message  = messageCloseableIterator.next();
             Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
             ProgramRunIdFields programRunIdFields =
@@ -217,21 +226,86 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
                 TimeUnit.MILLISECONDS.sleep(10);
               }
             }
-            namespaceToLogFileStreamMap.get(programRunIdFields.getNamespace()).append(programRunIdFields);
+            LogFileOutputStream outputStream = namespaceToLogFileStreamMap.get(programRunIdFields.getNamespace());
+            outputStream.append(programRunIdFields);
+            outputStream.flush();
             afterMessageId = message.getId();
             //LOG.info("Found record {}", notification);
           }
+          syncOutputStreams();
         } catch (TopicNotFoundException tpe) {
           LOG.error("Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix", TOPIC, tpe);
-          isStopped = true;
+          break;
         } catch (InterruptedException ie) {
-          isStopped = true;
+          break;
         } catch (IOException ioe) {
-          LOG.error("Exception during fetching from TMS", ioe);
-          // retry
+          LOG.error("IO Exception during fetching from TMS and writing to file", ioe);
+          // retry ?
+        } catch (Exception e) {
+          LOG.error("***Exception during fetching from TMS", e);
+          break;
         }
       }
       LOG.info("Done reading from tms meta");
+    }
+
+    private String findMessageId() throws IOException {
+      List<Location> namespaces = baseLocation.list();
+      byte[] messageId = Bytes.EMPTY_BYTE_ARRAY;
+      String resultMessageId = null;
+      for (Location namespaceLocation : namespaces) {
+        // find the latest created file in each namespace if that is empty
+        // TODO keep trying with earlier file, if the latest file is empty
+        Location latest = findLatestFileLocation(namespaceLocation);
+        if (latest != null) {
+          String messageString = getLatestMessageIdFromFile(latest);
+          if (Bytes.compareTo(Bytes.fromHexString(messageString), messageId) > 0) {
+            messageId = Bytes.fromHexString(messageString);
+            resultMessageId = messageString;
+          }
+        }
+      }
+      return resultMessageId;
+    }
+
+    private String getLatestMessageIdFromFile(Location latest) throws IOException {
+      DataFileReader<GenericRecord> dataFileReader =
+        new DataFileReader<GenericRecord>(new File(latest.toURI()),
+                                          new GenericDatumReader<GenericRecord>(ProgramRunIdFieldsSerializer.SCHEMA));
+      String messageId = null;
+      while (dataFileReader.hasNext()) {
+        GenericRecord record = dataFileReader.next();
+        messageId = record.get(Constants.MESSAGE_ID).toString();
+      }
+      return messageId;
+    }
+
+    @Nullable
+    private Location findLatestFileLocation(Location namespaceLocation) throws IOException {
+      List<Location> latestLocations = new ArrayList();
+      latestLocations.addAll(namespaceLocation.list());
+      latestLocations.sort(new Comparator<Location>() {
+        @Override
+        public int compare(Location o1, Location o2) {
+          String fileName1 = o1.getName();
+          long creatingTime1 = Long.parseLong(fileName1.substring(0, fileName1.indexOf(".avro")).split("-")[1]);
+          String fileName2 = o2.getName();
+          long creatingTime2 = Long.parseLong(fileName2.substring(0, fileName2.indexOf(".avro")).split("-")[1]);
+          // latest file should first in the list
+          return Longs.compare(creatingTime2, creatingTime1);
+        }
+      });
+      if (latestLocations.isEmpty()) {
+        return null;
+      }
+      return latestLocations.get(0);
+    }
+
+    private void syncOutputStreams() throws IOException {
+      Collection<LogFileOutputStream> outputStreams = namespaceToLogFileStreamMap.values();
+      for (LogFileOutputStream outputStream : outputStreams) {
+        outputStream.sync();
+      }
     }
 
     // how to handle duplicate timestamp ? possible when multiple programs are started at same time
@@ -534,7 +608,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       List<String> metaFilePaths = metaFiles.filter(metaFile -> {
         String fileName = metaFile.getName();
         return fileName.endsWith(".avro")
-          && Long.parseLong(fileName.substring(0, fileName.indexOf(".avro"))) < reportRequest.getEnd();
+          // "-" separates the record timestamp at first and file creation time
+          && TimeUnit.MILLISECONDS.toSeconds(
+          Long.parseLong(fileName.substring(0, fileName.indexOf("-")))) < reportRequest.getEnd();
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.debug("Filtered meta files {}", metaFiles);
       // Generate the report with the request and program run meta files

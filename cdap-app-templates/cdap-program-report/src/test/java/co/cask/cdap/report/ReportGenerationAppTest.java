@@ -16,6 +16,9 @@
 
 package co.cask.cdap.report;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.test.ApplicationManager;
@@ -34,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +51,19 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
   private static final Gson GSON = new Gson();
 
+  @Test
+  public void testSimple() throws Exception {
+    org.apache.avro.Schema schema = ProgramRunIdFieldsSerializer.SCHEMA;
+    System.out.println(schema);
+    ProgramRunIdFields runIdFields = new ProgramRunIdFields("app1", "v1", "spark", "prog1", "run1", "ns1");
+    runIdFields.setMessageId("ms1");
+    runIdFields.setTime(System.currentTimeMillis());
+    runIdFields.setStatus("RUNNING");
+//    runIdFields.setStartInfo(new ProgramStartInfo(new HashMap<String, String>(),
+//                                                  new ArtifactId("a1", new ArtifactVersion("1.0"),
+//                                                                 ArtifactScope.SYSTEM), null));
+    System.out.println(ProgramRunIdFieldsSerializer.createRecord(runIdFields));
+  }
   // TODO: Temporarily ignore this test because of problems with running the test
   @Ignore
   @Test

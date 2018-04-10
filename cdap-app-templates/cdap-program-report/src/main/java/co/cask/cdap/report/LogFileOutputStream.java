@@ -43,7 +43,6 @@ class LogFileOutputStream implements Closeable, Flushable {
   private final Location location;
   private final long createTime;
   private final Closeable closeable;
-  private final ProgramRunIdFieldsSerializer serializer;
 
   private OutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
@@ -53,9 +52,7 @@ class LogFileOutputStream implements Closeable, Flushable {
                       int syncIntervalBytes, long createTime, Closeable closeable) throws IOException {
     this.location = location;
     this.closeable = closeable;
-    this.serializer = new ProgramRunIdFieldsSerializer();
-
-    Schema schema = serializer.SCHEMA;
+    Schema schema = ProgramRunIdFieldsSerializer.SCHEMA;
     try {
       this.outputStream =
         filePermissions.isEmpty() ? location.getOutputStream() : location.getOutputStream(filePermissions);
@@ -76,7 +73,7 @@ class LogFileOutputStream implements Closeable, Flushable {
   }
 
   void append(ProgramRunIdFields programRunIdFields) throws IOException {
-    dataFileWriter.append(serializer.createRecord(programRunIdFields));
+    dataFileWriter.append(ProgramRunIdFieldsSerializer.createRecord(programRunIdFields));
   }
 
   /**

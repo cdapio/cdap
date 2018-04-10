@@ -21,10 +21,10 @@ package co.cask.cdap.report.util;
  */
 public class Constants {
   public static final String NAMESPACE = "namespace";
-  public static final String ARTIFACT_SCOPE = "artifact.scope";
-  public static final String ARTIFACT_NAME = "artifact.name";
-  public static final String ARTIFACT_VERSION = "artifact.version";
-  public static final String ARTIFACT_ID = "artifact.id";
+  public static final String ARTIFACT_SCOPE = "artifactScope";
+  public static final String ARTIFACT_NAME = "artifactName";
+  public static final String ARTIFACT_VERSION = "artifactVersion";
+  public static final String ARTIFACT_ID = "artifactId";
   public static final String APPLICATION_NAME = "application.name";
   public static final String APPLICATION_VERSION = "application.version";
   public static final String PROGRAM = "program";
