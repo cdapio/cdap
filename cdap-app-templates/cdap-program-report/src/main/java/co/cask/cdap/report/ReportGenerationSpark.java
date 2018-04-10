@@ -34,6 +34,7 @@ import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportList;
+import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ReportSummary;
@@ -78,6 +79,7 @@ import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -124,6 +126,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
+    private static final Type REPORT_SAVED_REQUEST_TYPE = new TypeToken<ReportSaveRequest>() { }.getType();
     private static final String DEFAULT_LIMIT = "10000";
     private SparkSession sparkSession;
 
@@ -134,6 +137,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
     public static final String COUNT_FILE = "COUNT";
     public static final String SUCCESS_FILE = "_SUCCESS";
     public static final String FAILURE_FILE = "_FAILURE";
+    public static final String SAVED_FILE = "_SAVED";
+    // report files will expire after 48 hours after they are generated
+    public static final long VALID_DURATION = TimeUnit.DAYS.toSeconds(2);
 
     private int readLimit;
     private ExecutorService reportGenerationExecutor;
@@ -183,8 +189,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         String reportRequestString =
           new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
         ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
-        reportStatuses.add(new ReportStatusInfo(reportId, reportRequest.getName(), null, creationTime, null,
-                                                getReportStatus(reportIdDir)));
+        ReportSaveRequest reportSavedInfo = getReportSavedInfo(reportIdDir);
+        if (reportSavedInfo != null) {
+          reportStatuses.add(new ReportStatusInfo(reportId, reportSavedInfo.getName(), reportSavedInfo.getDescription(),
+                                                  creationTime, null, getReportStatus(reportIdDir)));
+        } else {
+          reportStatuses.add(new ReportStatusInfo(reportId, reportRequest.getName(), null,
+                                                  creationTime, getExpiryTime(reportIdDir),
+                                                  getReportStatus(reportIdDir)));
+        }
       }
       responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
     }
@@ -214,8 +227,38 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
       ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
-      responder.sendJson(new ReportGenerationInfo(reportRequest.getName(), null, creationTime, null,
-                                                  status, error, reportRequest, summary));
+      ReportSaveRequest reportSavedInfo = getReportSavedInfo(reportIdDir);
+      ReportGenerationInfo reportGenerationInfo;
+      if (reportSavedInfo != null) {
+        reportGenerationInfo = new ReportGenerationInfo(reportSavedInfo.getName(), reportSavedInfo.getDescription(),
+                                                        creationTime, null, status, error, reportRequest, summary);
+      } else {
+        reportGenerationInfo = new ReportGenerationInfo(reportRequest.getName(), null, creationTime,
+                                                        getExpiryTime(reportIdDir), status, error,
+                                                        reportRequest, summary);
+      }
+      responder.sendJson(reportGenerationInfo);
+    }
+
+    @POST
+    @Path("/reports/{report-id}/save")
+    public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
+                                @PathParam("report-id") String reportId)
+      throws IOException {
+      String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      Location savedFile = reportIdDir.append(SAVED_FILE);
+      if (!savedFile.createNew()) {
+        reportIdDir.delete();
+        responder.sendError(500, "Failed to create a file for saving the report " + reportId);
+        return;
+      }
+      // Save the report generation request in the _SAVED file
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(savedFile.getOutputStream(),
+                                                                       StandardCharsets.UTF_8), true)) {
+        writer.write(requestJson);
+      }
+      responder.sendStatus(200);
     }
 
     @GET
@@ -433,6 +476,26 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         }
       }
       return null;
+    }
+
+    @Nullable
+    private static Long getExpiryTime(Location reportIdDir) throws IOException {
+      Location successFile = reportIdDir.append(SUCCESS_FILE);
+      return successFile.exists() ? TimeUnit.MILLISECONDS.toSeconds(successFile.lastModified()) + VALID_DURATION : null;
+    }
+
+    @Nullable
+    private static ReportSaveRequest getReportSavedInfo(Location reportIdDir) throws IOException {
+      Location savedFile = reportIdDir.append(SAVED_FILE);
+      if (!savedFile.exists()) {
+       return null;
+      }
+      String reportSavedRequestString =
+        new String(ByteStreams.toByteArray(savedFile.getInputStream()), StandardCharsets.UTF_8);
+      if (reportSavedRequestString.isEmpty()) {
+        return null;
+      }
+      return GSON.fromJson(reportSavedRequestString, REPORT_SAVED_REQUEST_TYPE);
     }
 
     /**

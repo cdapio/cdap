@@ -19,19 +19,19 @@ package co.cask.cdap.report.proto;
 import java.util.List;
 
 /**
- * Represents report records of program runs in an HTTP response.
+ * Represents report records of program details in an HTTP response.
  */
 public class ReportContent {
   private final long offset;
   private final int limit;
   private final long total;
-  private final List<String> runs;
+  private final List<String> details;
 
   public ReportContent(long offset, int limit, long total, List<String> reports) {
     this.offset = offset;
     this.limit = limit;
     this.total = total;
-    this.runs = reports;
+    this.details = reports;
   }
 
   /**
@@ -56,9 +56,9 @@ public class ReportContent {
   }
 
   /**
-   * @return the records of program runs in the report
+   * @return the records of program details in the report
    */
-  public List<String> getRuns() {
-    return runs;
+  public List<String> getDetails() {
+    return details;
   }
 }

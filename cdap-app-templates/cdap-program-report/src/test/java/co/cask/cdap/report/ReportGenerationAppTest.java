@@ -17,44 +17,34 @@
 package co.cask.cdap.report;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
+import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.Sort;
 import co.cask.cdap.report.proto.ValueFilter;
-import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
-import co.cask.cdap.report.util.ReportIds;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.DatumWriter;
-import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -88,9 +78,10 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
+  private URL reportGenerationSparkUrl;
 
-  @Test
-  public void testGenerateReport() throws Exception {
+  @Before
+  public void setupTest() throws Exception {
     URL avroUrl =
       ClassLoaders.getClassPathURL("com.databricks.spark.avro.DefaultSource",
                                    getClass().getClassLoader().getResource(
@@ -99,9 +90,14 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     ApplicationManager app =
       deployApplication(ReportGenerationApp.class, jarFile);
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
-    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
-    Assert.assertNotNull(url);
-    URL reportURL = url.toURI().resolve("reports/").toURL();
+    reportGenerationSparkUrl = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
+    Assert.assertNotNull(reportGenerationSparkUrl);
+  }
+
+  @Test
+  public void testGenerateReport() throws Exception {
+    Assert.assertNotNull(reportGenerationSparkUrl);
+    URL reportURL = reportGenerationSparkUrl.toURI().resolve("reports/").toURL();
     List<Filter> filters =
       ImmutableList.of(
         new ValueFilter<>("namespace", ImmutableSet.of("ns1", "ns2"), null),
@@ -112,6 +108,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
                                     new Sort("duration",
                                              Sort.Order.DESCENDING)),
                                   filters);
+    // generate a new report with the request
     HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
     urlConn.setDoOutput(true);
     urlConn.setRequestMethod("POST");
@@ -132,24 +129,36 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       }
       return reportGenerationInfo.getStatus();
     }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
+    // assert that the expiry time is not null when the report is generated without saving
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    Assert.assertNotNull(reportGenerationInfo.getExpiry());
+    // read the report's details
     URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
     Assert.assertEquals(2, reportContent.getTotal());
+    // save the report with a new name and description
+    URL reportSaveURL = reportURL.toURI().resolve(reportId + "/" + "save").toURL();
+    urlConn = (HttpURLConnection) reportSaveURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(new ReportSaveRequest("newName", "newDescription"))
+                                      .getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    // verify that the name and description of the report have been updated, and the expiry time is null
+    reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(), REPORT_GEN_INFO_TYPE);
+    Assert.assertEquals("newName", reportGenerationInfo.getName());
+    Assert.assertEquals("newDescription", reportGenerationInfo.getDescription());
+    Assert.assertNull(reportGenerationInfo.getExpiry());
   }
 
   @Test
   public void testGenerateReportFailed() throws Exception {
-    URL avroUrl =
-      ClassLoaders.getClassPathURL("com.databricks.spark.avro.DefaultSource",
-                                   getClass().getClassLoader().getResource(
-                                     "com/databricks/spark/avro/DefaultSource.class"));
-    File jarFile = new File(avroUrl.toURI());
-    ApplicationManager app =
-      deployApplication(ReportGenerationApp.class, jarFile);
-    SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
-    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
-    Assert.assertNotNull(url);
-    URL reportURL = url.toURI().resolve("reports/").toURL();
+    Assert.assertNotNull(reportGenerationSparkUrl);
+    URL reportURL = reportGenerationSparkUrl.toURI().resolve("reports/").toURL();
     List<Filter> filters =
       ImmutableList.of(
         new ValueFilter<>("namespace", ImmutableSet.of("ns1", "ns2"), null),
