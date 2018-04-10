@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,7 +109,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramId programId = programDescriptor.getProgramId();
 
     // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
-    programStateWriter.start(programId.run(runId), options, null, programDescriptor.getArtifactId().toApiArtifactId());
+    programStateWriter.start(programId.run(runId), options, null, programDescriptor);
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
     File tempDir = createTempDirectory(programId, runId);
@@ -287,11 +288,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId,
                                               ProgramOptions options, RunId runId) {
     // Build the system arguments
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.putAll(options.getArguments().asMap());
-    builder.putAll(getExtraProgramOptions());
-    builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
-    builder.put(ProgramOptionConstants.ARTIFACT_ID, Joiner.on(':').join(artifactId.toIdParts()));
+    Map<String, String> systemArguments = new HashMap<>();
+    systemArguments.putAll(options.getArguments().asMap());
+    // don't add these system arguments if they're already there
+    // this can happen if this is a program within a workflow, and the workflow already added these arguments
+    for (Map.Entry<String, String> extraOption : getExtraProgramOptions().entrySet()) {
+      systemArguments.putIfAbsent(extraOption.getKey(), extraOption.getValue());
+    }
+    systemArguments.putIfAbsent(ProgramOptionConstants.RUN_ID, runId.getId());
+    systemArguments.putIfAbsent(ProgramOptionConstants.ARTIFACT_ID, Joiner.on(':').join(artifactId.toIdParts()));
 
     // Resolves the user arguments
     // First resolves at the cluster scope if the cluster.name is not empty
@@ -306,7 +311,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     userArguments = RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
                                                   userArguments);
 
-    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(builder.build()),
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemArguments),
                                     new BasicArguments(userArguments), options.isDebug());
   }
 

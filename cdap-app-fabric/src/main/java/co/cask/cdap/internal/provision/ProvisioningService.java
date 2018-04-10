@@ -16,9 +16,17 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
@@ -29,6 +37,8 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,28 +61,37 @@ public class ProvisioningService extends AbstractIdleService {
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
-  private final ProvisionerStore provisionerStore;
   private final ProvisionerNotifier provisionerNotifier;
-  private final ExecutorService executorService;
+  private final DatasetFramework datasetFramework;
+  private final Transactional transactional;
+  private ExecutorService executorService;
 
   @Inject
   ProvisioningService(ProvisionerProvider provisionerProvider, ProvisionerConfigProvider provisionerConfigProvider,
-                      ProvisionerStore provisionerStore, ProvisionerNotifier provisionerNotifier) {
+                      ProvisionerNotifier provisionerNotifier, DatasetFramework datasetFramework,
+                      TransactionSystemClient txClient) {
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
-    this.provisionerStore = provisionerStore;
     this.provisionerNotifier = provisionerNotifier;
-    this.executorService = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setNameFormat("provisioning-service").build());
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
-    reloadProvisioners();
+    this.datasetFramework = datasetFramework;
+    this.transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+                                                                   new TransactionSystemClientAdapter(txClient),
+                                                                   NamespaceId.SYSTEM,
+                                                                   Collections.emptyMap(), null, null)),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
+    reloadProvisioners();
     // TODO: CDAP-13246 check ProvisionerDataset to find any operations that are supposed to be in progress and
     // pick up where they left off
+    this.executorService = Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("provisioning-service").build());
   }
 
   @Override
@@ -92,6 +111,11 @@ public class ProvisioningService extends AbstractIdleService {
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
+  /**
+   * Provision a cluster for a program run. This method must be run within a transaction.
+   *
+   * @param provisionRequest the provision request
+   */
   public void provision(ProvisionRequest provisionRequest) {
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
@@ -112,10 +136,13 @@ public class ProvisioningService extends AbstractIdleService {
     ClusterInfo clusterInfo =
       new ClusterInfo(programRunId, provisionRequest.getProgramDescriptor(),
                       properties, name, provisionRequest.getUser(), clusterOp, null);
+    Transactionals.execute(transactional, dsContext -> {
+      ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+      dataset.putClusterInfo(clusterInfo);
+    });
 
     executorService.execute(() -> {
       try {
-        provisionerStore.putClusterInfo(clusterInfo);
         Cluster cluster = provisioner.createCluster(context);
         if (cluster == null) {
           // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
@@ -124,8 +151,12 @@ public class ProvisioningService extends AbstractIdleService {
           return;
         }
         ClusterOp op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.POLLING_CREATE);
-        ClusterInfo info = new ClusterInfo(clusterInfo, op, cluster);
-        provisionerStore.putClusterInfo(info);
+        final ClusterInfo pollingInfo = new ClusterInfo(clusterInfo, op, cluster);
+
+        Transactionals.execute(transactional, dsContext -> {
+          ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+          dataset.putClusterInfo(pollingInfo);
+        });
         ClusterStatus status = cluster.getStatus();
 
         while (status == ClusterStatus.CREATING) {
@@ -139,8 +170,11 @@ public class ProvisioningService extends AbstractIdleService {
             cluster = new Cluster(cluster.getName(), ClusterStatus.RUNNING,
                                   cluster.getNodes(), cluster.getProperties());
             op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.CREATED);
-            info = new ClusterInfo(info, op, cluster);
-            provisionerStore.putClusterInfo(info);
+            final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, cluster);
+            Transactionals.execute(transactional, dsContext -> {
+              ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+              dataset.putClusterInfo(runningInfo);
+            });
             provisionerNotifier.provisioned(programRunId, programOptions, provisionRequest.getProgramDescriptor(),
                                             provisionRequest.getUser(), cluster);
             break;
@@ -153,8 +187,16 @@ public class ProvisioningService extends AbstractIdleService {
     });
   }
 
+  /**
+   * Deprovision a cluster for a program run. This method must be run within a transaction.
+   *
+   * @param programRunId the run to deprovision the cluster for
+   */
   public void deprovision(ProgramRunId programRunId) {
-    ClusterInfo existing = provisionerStore.getClusterInfo(programRunId);
+    ClusterInfo existing = Transactionals.execute(transactional, dsContext -> {
+      ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+      return dataset.getClusterInfo(programRunId);
+    });
     if (existing == null) {
       LOG.error("Received request to de-provision a cluster for program run {}, but could not find information " +
                   "about the cluster.", programRunId);
@@ -174,16 +216,24 @@ public class ProvisioningService extends AbstractIdleService {
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.REQUESTING_DELETE);
     ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getCluster());
+    Transactionals.execute(transactional, dsContext -> {
+      ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+      dataset.putClusterInfo(clusterInfo);
+    });
 
     executorService.execute(() -> {
       try {
-        provisionerStore.putClusterInfo(clusterInfo);
-        provisioner.deleteCluster(context, clusterInfo.getCluster());
+        Cluster cluster = clusterInfo.getCluster();
+        provisioner.deleteCluster(context, cluster);
         ClusterOp op = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.POLLING_DELETE);
-        Cluster cluster = new Cluster(clusterInfo.getCluster().getName(), ClusterStatus.DELETING,
-                                      clusterInfo.getCluster().getNodes(), clusterInfo.getCluster().getProperties());
-        ClusterInfo info = new ClusterInfo(clusterInfo, op, cluster);
-        provisionerStore.putClusterInfo(info);
+        cluster = new Cluster(cluster == null ? null : cluster.getName(), ClusterStatus.DELETING,
+                              cluster == null ? Collections.emptyList() : cluster.getNodes(),
+                              cluster == null ? Collections.emptyMap() : cluster.getProperties());
+        ClusterInfo pollingInfo = new ClusterInfo(clusterInfo, op, cluster);
+        Transactionals.execute(transactional, dsContext -> {
+          ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+          dataset.putClusterInfo(pollingInfo);
+        });
 
         ClusterStatus status = ClusterStatus.DELETING;
         while (status == ClusterStatus.DELETING) {
@@ -195,7 +245,10 @@ public class ProvisioningService extends AbstractIdleService {
         switch (status) {
           case NOT_EXISTS:
             provisionerNotifier.deprovisioned(programRunId);
-            provisionerStore.deleteClusterInfo(programRunId);
+            Transactionals.execute(transactional, dsContext -> {
+              ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+              dataset.deleteClusterInfo(programRunId);
+            });
             break;
         }
       } catch (Throwable t) {

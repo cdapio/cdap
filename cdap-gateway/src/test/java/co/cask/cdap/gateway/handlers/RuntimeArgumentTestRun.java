@@ -105,6 +105,8 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
       "/v3/namespaces/default/apps/HighPassFilterApp/flows/FilterFlow/start", json.toString());
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
 
+    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.RUNNING, 1);
+
     response = GatewayFastTestsSuite.doPost("/v3/namespaces/default/streams/inputvalue", "95");
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     response = GatewayFastTestsSuite.doPost("/v3/namespaces/default/streams/inputvalue", "105");

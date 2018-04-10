@@ -21,6 +21,7 @@ import co.cask.cdap.AppWithMultipleSchedules;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
@@ -29,6 +30,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -45,6 +47,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -373,20 +376,27 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     ProgramRunId anotherWorkflowRun = ANOTHER_WORKFLOW.run(RunIds.generate());
 
     ArtifactId artifactId = ANOTHER_WORKFLOW.getNamespaceId().artifact("test", "1.0").toApiArtifactId();
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(anotherWorkflowRun.getParent(), appSpec);
     BasicArguments systemArgs =
       new BasicArguments(ImmutableMap.of(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString()));
     ProgramOptions programOptions = new SimpleProgramOptions(anotherWorkflowRun.getParent(),
                                                              systemArgs, new BasicArguments(), false);
-    programStateWriter.start(anotherWorkflowRun, programOptions, null, artifactId);
+    programStateWriter.start(anotherWorkflowRun, programOptions, null, programDescriptor);
     programStateWriter.running(anotherWorkflowRun, null);
     long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.error(anotherWorkflowRun, null);
     waitUntilProcessed(programEventTopic, lastProcessed);
 
     ProgramRunId someWorkflowRun = SOME_WORKFLOW.run(RunIds.generate());
+    programDescriptor = new ProgramDescriptor(someWorkflowRun.getParent(), appSpec);
     programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent(),
                                                                        systemArgs, new BasicArguments()),
-                             null, null);
+                             null, programDescriptor);
     programStateWriter.running(someWorkflowRun, null);
     lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.killed(someWorkflowRun);

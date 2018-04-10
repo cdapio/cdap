@@ -373,10 +373,10 @@ public final class SystemArguments {
   }
 
   /**
-   * Get the name of the provisioner for the profile
+   * Get the properties for the profile
    *
    * @param args arguments
-   * @return name of the provisioner for the profile
+   * @return properties for the profile
    */
   public static Map<String, String> getProfileProperties(Map<String, String> args) {
     Map<String, String> properties = new HashMap<>();

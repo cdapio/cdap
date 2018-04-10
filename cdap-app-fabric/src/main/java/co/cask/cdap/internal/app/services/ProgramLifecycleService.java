@@ -168,6 +168,7 @@ public class ProgramLifecycleService {
       throw new NotFoundException(programId);
     }
 
+    // TODO: CDAP-13296 read these runs in a single transaction
     // A program is RUNNING if there are any RUNNING run records
     if (!store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
       return ProgramStatus.RUNNING;

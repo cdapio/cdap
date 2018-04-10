@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -247,7 +246,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
           appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
         } else {
-          // TODO: remove once runtime monitor emits this message
+          // TODO: CDAP-13295 remove once runtime monitor emits this message
           provisionerNotifier.deprovisioning(programRunId);
         }
       }
@@ -262,7 +261,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
     Map<String, String> systemArguments = systemArgumentsString == null ?
       Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-    ProgramOptions programOptions = getProgramOptions(programRunId.getParent(), properties);
+    ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
     boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
     boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
@@ -271,15 +270,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
     switch (clusterStatus) {
       case PROVISIONING:
-        String artifactIdString = notification.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
-        ArtifactId artifactId = null;
-        // can be null for notifications before upgrading that were not processed earlier
-        if (artifactIdString != null) {
-          artifactId = GSON.fromJson(artifactIdString, ArtifactId.class);
-        }
         appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
                                                    programOptions.getArguments().asMap(), messageIdBytes,
-                                                   artifactId);
+                                                   programDescriptor.getArtifactId().toApiArtifactId());
 
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
         if (isInWorkflow || skipProvisioning) {
@@ -294,6 +287,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         String clusterSizeStr = properties.get(ProgramOptionConstants.CLUSTER_SIZE);
         int clusterSize = clusterSizeStr == null ? 0 : Integer.parseInt(clusterSizeStr);
         appMetadataStore.recordProgramProvisioned(programRunId, clusterSize, messageIdBytes);
+
+        // if this is a preview run or a program within a workflow, we don't actually need to start the program,
+        // as it will have been started by the workflow driver or the program lifecycle service.
+        if (isInWorkflow || skipProvisioning) {
+          return;
+        }
 
         // start the program run
         String oldUser = SecurityRequestContext.getUserId();
@@ -322,7 +321,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
   }
 
-  private ProgramOptions getProgramOptions(ProgramId programId, Map<String, String> properties) {
+  private ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> properties) {
     String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
     String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
     String debugString = properties.get(ProgramOptionConstants.DEBUG_ENABLED);

@@ -14,7 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package co.cask.cdap.internal.provision;
+
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
+import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 
 import java.util.Collections;
 import java.util.HashMap;

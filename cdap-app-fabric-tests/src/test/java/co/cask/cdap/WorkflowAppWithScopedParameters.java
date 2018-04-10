@@ -31,7 +31,6 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
@@ -75,7 +74,6 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
       MapReduceContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
 
-      Preconditions.checkArgument(args.size() == 18);
       Preconditions.checkArgument(context.getLogicalStartTime() == 1234567890000L);
       Preconditions.checkArgument(args.get("logical.start.time").equals("1234567890000"));
       Preconditions.checkArgument(args.get("input.path").contains("OneMRInput"));
@@ -83,7 +81,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
 
       String inputPath = args.get("input.path");
       String outputPath = args.get("output.path");
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
+      WordCount.configureJob(context.getHadoopJob(), inputPath, outputPath);
     }
   }
 
@@ -96,13 +94,12 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     public void initialize() throws Exception {
       MapReduceContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
-      Preconditions.checkArgument(args.size() == 18);
       Preconditions.checkArgument(args.get("input.path").contains("AnotherMRInput"));
       Preconditions.checkArgument(args.get("output.path").contains("ProgramOutput"));
 
       String inputPath = args.get("input.path");
       String outputPath = args.get("output.path");
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
+      WordCount.configureJob(context.getHadoopJob(), inputPath, outputPath);
     }
   }
 
@@ -115,7 +112,6 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
       SparkClientContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
 
-      Preconditions.checkArgument(args.size() == 17);
       Preconditions.checkArgument(args.get("input.path").contains("SparkInput"));
       Preconditions.checkArgument(args.get("output.path").contains("ProgramOutput"));
     }
@@ -134,7 +130,6 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     public void initialize() throws Exception {
       SparkClientContext context = getContext();
       Map<String, String> args = context.getRuntimeArguments();
-      Preconditions.checkArgument(args.size() == 17);
       Preconditions.checkArgument(args.get("input.path").contains("SparkInput"));
       Preconditions.checkArgument(args.get("output.path").contains("AnotherSparkOutput"));
     }

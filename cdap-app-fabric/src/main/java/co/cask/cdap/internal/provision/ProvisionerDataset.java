@@ -18,7 +18,6 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
@@ -49,19 +48,17 @@ import javax.annotation.Nullable;
 public class ProvisionerDataset {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final DatasetId TABLE_ID = NamespaceId.SYSTEM.dataset("app.meta");
-  private static final byte[] SUBSCRIBER_PREFIX = Bytes.toBytes("pr.offset");
   private static final byte[] STATE_PREFIX = Bytes.toBytes("pr.state");
   private final MetadataStoreDataset table;
 
-  public static ProvisionerDataset get(DatasetContext datasetContext) {
-    Table table = datasetContext.getDataset(TABLE_ID.getNamespace(), TABLE_ID.getDataset());
-    return new ProvisionerDataset(table);
-  }
-
-  public static void createIfNotExists(DatasetFramework datasetFramework)
-    throws IOException, DatasetManagementException {
-    DatasetsUtil.getOrCreateDataset(datasetFramework, TABLE_ID, Table.class.getName(),
-                                    DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);
+  public static ProvisionerDataset get(DatasetContext datasetContext, DatasetFramework dsFramework) {
+    try {
+      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, TABLE_ID, Table.class.getName(),
+                                                    DatasetProperties.EMPTY);
+      return new ProvisionerDataset(table);
+    } catch (DatasetManagementException | IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private ProvisionerDataset(Table table) {

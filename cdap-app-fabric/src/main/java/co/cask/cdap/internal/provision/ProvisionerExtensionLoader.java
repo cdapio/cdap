@@ -24,6 +24,7 @@ import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import com.google.inject.Inject;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,6 +63,11 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
   @Override
   public Map<String, Provisioner> loadProvisioners() {
-    return getAll();
+    Map<String, Provisioner> provisioners = new HashMap<>();
+    // always include the default yarn provisioner
+    Provisioner yarnProvisioner = new YarnProvisioner();
+    provisioners.put(yarnProvisioner.getSpec().getName(), yarnProvisioner);
+    provisioners.putAll(getAll());
+    return provisioners;
   }
 }

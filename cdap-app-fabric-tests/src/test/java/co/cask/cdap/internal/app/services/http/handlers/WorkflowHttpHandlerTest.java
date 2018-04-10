@@ -78,7 +78,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -101,12 +100,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private void verifyRunningProgramCount(final Id.Program program, final String runId, final int expected)
     throws Exception {
-    Tasks.waitFor(expected, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return runningProgramCount(program, runId);
-      }
-    }, 10, TimeUnit.SECONDS);
+    Tasks.waitFor(expected, () -> runningProgramCount(program, runId), 10, TimeUnit.SECONDS);
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
@@ -122,13 +116,10 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private void waitForStatusCode(final String path, final Id.Program program, final int expectedStatusCode)
     throws Exception {
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                           program.getNamespaceId()));
-        return expectedStatusCode == response.getStatusLine().getStatusCode();
-      }
+    Tasks.waitFor(true, () -> {
+      HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                         program.getNamespaceId()));
+      return expectedStatusCode == response.getStatusLine().getStatusCode();
     }, 60, TimeUnit.SECONDS);
   }
 
@@ -506,16 +497,13 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private void verifyFileExists(final List<File> fileList)
     throws Exception {
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        for (File file : fileList) {
-          if (!file.exists()) {
-            return false;
-          }
+    Tasks.waitFor(true, () -> {
+      for (File file : fileList) {
+        if (!file.exists()) {
+          return false;
         }
-        return true;
       }
+      return true;
     }, 180, TimeUnit.SECONDS);
   }
 
@@ -648,12 +636,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   }
 
   private String getRunIdOfRunningProgram(final Id.Program programId) throws Exception {
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(programId, ProgramRunStatus.RUNNING).size();
-      }
-    }, 5, TimeUnit.SECONDS);
+    Tasks.waitFor(1, () -> getProgramRuns(programId, ProgramRunStatus.RUNNING).size(), 5, TimeUnit.SECONDS);
     List<RunRecord> historyRuns = getProgramRuns(programId, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, historyRuns.size());
     RunRecord record = historyRuns.get(0);
@@ -1173,12 +1156,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
                                              "outputPath", outputPath));
 
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(workflowId, ProgramRunStatus.COMPLETED).size();
-      }
-    }, 60, TimeUnit.SECONDS);
+    Tasks.waitFor(1, () -> getProgramRuns(workflowId, ProgramRunStatus.COMPLETED).size(), 60, TimeUnit.SECONDS);
     List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED);
     Assert.assertEquals(1, programRuns.size());
     RunRecord runRecord = programRuns.get(0);
@@ -1282,7 +1260,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, deploy(WorkflowTokenTestPutApp.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowTokenTestPutApp.NAME);
     Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowTokenTestPutApp.WorkflowTokenTestPut.NAME);
-    Id.Program mapReduceId = Id.Program.from(appId, ProgramType.MAPREDUCE, WorkflowTokenTestPutApp.RecordCounter.NAME);
     Id.Program sparkId = Id.Program.from(appId, ProgramType.SPARK, WorkflowTokenTestPutApp.SparkTestApp.NAME);
 
     // Start program with inputPath and outputPath arguments.
