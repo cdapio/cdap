@@ -16,6 +16,11 @@
 
 package co.cask.cdap.report;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+
+import java.util.Map;
+import javax.annotation.Nullable;
+
 /**
  * run id fields
  */
@@ -26,8 +31,13 @@ public class ProgramRunIdFields {
   private final String program;
   private final String run;
   private final String namespace;
+
   private Long timestamp;
+  private String messageId;
   private String programStatus;
+
+  @Nullable
+  private ProgramStartInfo startInfo;
 
   ProgramRunIdFields(String application, String version, String type, String program, String run,
                      String namespace) {
@@ -38,12 +48,66 @@ public class ProgramRunIdFields {
     this.run = run;
     this.namespace = namespace;
   }
+
   public void setTime(long timestamp) {
     this.timestamp = timestamp;
   }
 
   public void setStatus(String status) {
     this.programStatus = status;
+  }
+
+  public void setMessageId(String messageId) {
+    this.messageId = messageId;
+  }
+
+  public void setStartInfo(ProgramStartInfo startInfo) {
+    this.startInfo = startInfo;
+  }
+
+  public String getApplication() {
+    return application;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public String getProgram() {
+    return program;
+  }
+
+  public String getRun() {
+    return run;
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public Long getTimestamp() {
+    return timestamp;
+  }
+
+  public String getMessageId() {
+    return messageId;
+  }
+
+  public String getProgramStatus() {
+    return programStatus;
+  }
+
+  /**
+   * this is not null only when the program status is "STARTING"
+   * @return
+   */
+  @Nullable
+  public ProgramStartInfo getProgramSartInfo() {
+    return startInfo;
   }
 
 }

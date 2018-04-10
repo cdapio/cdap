@@ -48,6 +48,7 @@ import co.cask.cdap.report.util.ReportIds;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -61,11 +62,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -93,6 +97,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
   private TMSSubscriber tmsSubscriber;
   private ExecutorService executorService;
+
   @Override
   protected void configure() {
     setMainClass(ReportGenerationSpark.class);
@@ -108,26 +113,49 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
       admin.createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
                           FileSetProperties.builder().build());
     }
-    tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher());
+
+    tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
+                                      getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET, sec));
 
     executorService.submit(tmsSubscriber);
   }
 
+  @Override
+  public void destroy() {
+    tmsSubscriber.requestStop();
+    tmsSubscriber.interrupt();
+    executorService.shutdown();
+  }
+
+  // todo remove duplicate logic
+  private Location getDatasetBaseLocation(String datasetName, JavaSparkExecutionContext sec) {
+    return Transactionals.execute(sec, context -> {
+      return context.<FileSet>getDataset(datasetName).getBaseLocation();
+    });
+  }
 
   private class TMSSubscriber extends Thread {
     private static final String TOPIC = "programstatusrecordevent";
     private static final String NAMESPACE_SYSTEM = "system";
     private final MessageFetcher messageFetcher;
+    private Map<String, LogFileOutputStream> namespaceToLogFileStreamMap;
     private volatile boolean isStopped;
+    private Location baseLocation;
 
 
-    TMSSubscriber(MessageFetcher messageFetcher) {
+    TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation) {
       this.messageFetcher = messageFetcher;
+      this.namespaceToLogFileStreamMap = new HashMap<>();
       isStopped = false;
+      this.baseLocation = baseLocation;
     }
 
-    public void shutdown() {
+    public void requestStop() {
       isStopped = true;
+      Collection<LogFileOutputStream> outputStreams = namespaceToLogFileStreamMap.values();
+      for (LogFileOutputStream outputStream : outputStreams) {
+        Closeables.closeQuietly(outputStream);
+      }
       LOG.info("Shutting down tms-subscriber thread");
     }
 
@@ -139,13 +167,19 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         } catch (InterruptedException e) {
           break;
         }
+        // TODO figure out messageId from files for initial offset
+
+        // TODO use updated messageId for subsequent fetch
+        String afterMessageId = null;
         try (CloseableIterator<Message> messageCloseableIterator =
-               messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, 10, 0)) {
+               messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, 10, afterMessageId)) {
           while (messageCloseableIterator.hasNext()) {
             Message message  = messageCloseableIterator.next();
             Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
             ProgramRunIdFields programRunIdFields =
               GSON.fromJson(notification.getProperties().get("programRunId"), ProgramRunIdFields.class);
+            programRunIdFields.setMessageId(message.getId());
+
             String programStatus = notification.getProperties().get("programStatus");
             // TODO convert to switch and use ProgramRunStatus
             if (programStatus.equals("STARTING")) {
@@ -158,8 +192,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
                 GSON.fromJson(notification.getProperties().get("systemOverrides"), MAP_TYPE);
               systemArguments.putAll(userArguments);
               String principal = notification.getProperties().get("principal");
-              ProgramStartInfo startInfo = new ProgramStartInfo(systemArguments, artifactId, principal);
 
+              ProgramStartInfo programStartInfo = new ProgramStartInfo(systemArguments, artifactId, principal);
+              programRunIdFields.setStartInfo(programStartInfo);
             } else if (programStatus.equals("RUNNING")) {
               programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("logical.start.time")));
               programRunIdFields.setStatus("RUNNING");
@@ -175,10 +210,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
               programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("resumeTime")));
               programRunIdFields.setStatus(programStatus);
             }
-            LOG.info("Found record {}", notification);
+
+            if (!namespaceToLogFileStreamMap.containsKey(programRunIdFields.getNamespace())) {
+              while (!createLogFileOutputStream(programRunIdFields.getNamespace(),
+                                                programRunIdFields.getTimestamp())) {
+                TimeUnit.MILLISECONDS.sleep(10);
+              }
+            }
+            namespaceToLogFileStreamMap.get(programRunIdFields.getNamespace()).append(programRunIdFields);
+            afterMessageId = message.getId();
+            //LOG.info("Found record {}", notification);
           }
         } catch (TopicNotFoundException tpe) {
           LOG.error("Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix", TOPIC, tpe);
+          isStopped = true;
+        } catch (InterruptedException ie) {
           isStopped = true;
         } catch (IOException ioe) {
           LOG.error("Exception during fetching from TMS", ioe);
@@ -186,6 +232,46 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
         }
       }
       LOG.info("Done reading from tms meta");
+    }
+
+    // how to handle duplicate timestamp ? possible when multiple programs are started at same time
+    // we can add creation time to avoid duplication and retry
+    private boolean createLogFileOutputStream(String namespace, Long timestamp) {
+      try {
+        Location namespaceDir = getOrCreateAndGet(namespace);
+        Location fileLocation;
+        // todo : recheck logic
+        String fileName = String.format("%s-%s.avro", timestamp, System.currentTimeMillis());
+        fileLocation = namespaceDir.append(fileName);
+        boolean successful = fileLocation.createNew();
+        if (successful) {
+          namespaceToLogFileStreamMap.put(namespace,
+                                          // todo fix sync interval, etc
+                                          new LogFileOutputStream(fileLocation, "", 10485760,
+                                                                  System.currentTimeMillis(), new Closeable() {
+                                            @Override
+                                            public void close() throws IOException {
+                                              namespaceToLogFileStreamMap.remove(namespace);
+                                            }
+                                          }));
+        }
+        return successful;
+      } catch (IOException e) {
+        LOG.warn("Exception while trying to create file location ", e);
+        return false;
+      }
+    }
+
+    private Location getOrCreateAndGet(String namespace) throws IOException {
+      List<Location> namespaces = baseLocation.list();
+      for (Location location : namespaces) {
+        if (location.getName().equals(namespace)) {
+          return location;
+        }
+      }
+      Location namespaceLocation = baseLocation.append(namespace);
+      namespaceLocation.mkdirs();
+      return namespaceLocation;
     }
   }
 

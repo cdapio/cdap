@@ -21,16 +21,35 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * program start info
+ * additional fields provided at program start
  */
 public class ProgramStartInfo {
-  Map<String, String> runtimeArguments;
-  ArtifactId artifactId;
-  String principal;
 
-  ProgramStartInfo(Map<String, String> runtimeArguments, ArtifactId artifactId, @Nullable String principal) {
-    this.runtimeArguments = runtimeArguments;
+  private Map<String, String> runtimeArguments;
+  private ArtifactId artifactId;
+  private String principal;
+
+  ProgramStartInfo(Map<String, String> arguments, ArtifactId artifactId, String principal) {
+    this.runtimeArguments = arguments;
     this.artifactId = artifactId;
     this.principal = principal;
+  }
+
+
+  public Map<String, String> getRuntimeArguments() {
+    return runtimeArguments;
+  }
+
+  public ArtifactId getArtifactId() {
+    return artifactId;
+  }
+
+  /**
+   * null when kerberos is not enabled in the cluster
+   * @return
+   */
+  @Nullable
+  public String getPrincipal() {
+    return principal;
   }
 }
