@@ -51,6 +51,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -80,8 +81,9 @@ import javax.annotation.Nullable;
 /**
  * The {@link ProgramRunner} that executes Spark program.
  */
-final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
-                               implements ProgramClassLoaderProvider, Closeable {
+@VisibleForTesting
+public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
+                                      implements ProgramClassLoaderProvider, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 

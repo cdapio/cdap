@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
+import co.cask.cdap.app.guice.DistributedProgramContainerModule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -121,7 +121,10 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     String runId = arguments.getOption(ProgramOptionConstants.RUN_ID);
     String instanceId = arguments.getOption(ProgramOptionConstants.INSTANCE_ID);
     return Guice.createInjector(
-      new DistributedProgramRunnableModule(cConf, hConf).createModule(mapReduceContextConfig.getProgramId().run(runId),
-                                                                      instanceId, principal));
+      DistributedProgramContainerModule
+        .builder(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), instanceId)
+        .setPrincipal(principal)
+        .build()
+    );
   }
 }
