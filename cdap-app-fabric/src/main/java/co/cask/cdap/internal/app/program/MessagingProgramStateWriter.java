@@ -117,6 +117,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     publish(
       ImmutableMap.<String, String>builder()
         .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+        .put(ProgramOptionConstants.SUSPEND_TIME, String.valueOf(System.currentTimeMillis()))
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
     );
   }
@@ -126,6 +127,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     publish(
       ImmutableMap.<String, String>builder()
         .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+        .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
     );
   }
