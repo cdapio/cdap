@@ -476,6 +476,16 @@
   </property>
 
   <property>
+    <name>app.program.transaction.control</name>
+    <value>implicit</value>
+    <description>
+      Defines how transactions are controlled for program methods invocation;
+      "implicit" means that the platform encloses method execution into a transaction,
+      whereas "explicit" means that the method itself is in control of executing transactions.
+    </description>
+  </property>
+
+  <property>
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>

@@ -651,6 +651,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return retryStrategy;
   }
 
+  public TransactionControl getDefaultTxControl() {
+    return TransactionControl.valueOf(cConf.get(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL).toUpperCase());
+  }
+
   /**
    * Returns the {@link ClassLoader} used for program method invocation.
    */

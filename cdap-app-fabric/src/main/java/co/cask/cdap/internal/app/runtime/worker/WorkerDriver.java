@@ -71,6 +71,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     LOG.debug("Starting Worker Program {}", program.getId());
 
     // Initialize worker
+    // Worker is always using Explicit transaction
     TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT, Worker.class,
                                                                       worker, "initialize", WorkerContext.class);
     context.initializeProgram(worker, txControl, false);
@@ -86,6 +87,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
+    // Worker is always using Explicit transaction
     TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT,
                                                                       Worker.class, worker, "destroy");
     context.destroyProgram(worker, txControl, false);

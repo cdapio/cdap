@@ -68,15 +68,16 @@ class CustomActionExecutor {
   }
 
   void execute() throws Exception {
+    TransactionControl defaultTxControl = customActionContext.getDefaultTxControl();
     try {
       customActionContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
       // AbstractCustomAction implements final initialize(context) and requires subclass to
       // implement initialize(), whereas programs that directly implement CustomAction can
       // override initialize(context)
       TransactionControl txControl = customAction instanceof AbstractCustomAction
-        ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractCustomAction.class,
+        ? Transactions.getTransactionControl(defaultTxControl, AbstractCustomAction.class,
                                              customAction, "initialize")
-        : Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class,
+        : Transactions.getTransactionControl(defaultTxControl, CustomAction.class,
                                              customAction, "initialize", CustomActionContext.class);
       customActionContext.initializeProgram(customAction, txControl, false);
 
@@ -90,7 +91,7 @@ class CustomActionExecutor {
       throw Throwables.propagate(t);
 
     } finally {
-      TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+      TransactionControl txControl = Transactions.getTransactionControl(defaultTxControl,
                                                                         CustomAction.class, customAction, "destroy");
       customActionContext.destroyProgram(customAction, txControl, false);
     }
