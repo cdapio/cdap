@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -29,8 +29,6 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
-import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
@@ -112,11 +110,34 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Provision a cluster for a program run. This method must be run within a transaction.
+   * Execute a provisioning runnable.
+   *
+   * @param runnable the runnable to execute
+   */
+  public void execute(ProvisioningTask runnable) {
+    executorService.execute(runnable);
+  }
+
+  /**
+   * Cancel any provisioning operation currently taking place for the program run
+   *
+   * @param programRunId the program run
+   */
+  public void cancel(ProgramRunId programRunId) {
+    // TODO: CDAP-13297 implement
+  }
+
+  /**
+   * Record that a cluster will be provisioned for a program run, returning a Runnable that will actually perform
+   * the cluster provisioning. This method must be run within a transaction.
+   * The task returned should be run using the {@link #execute(ProvisioningTask)} method, and should only be executed
+   * after the transaction that ran this method has completed.
    *
    * @param provisionRequest the provision request
+   * @param datasetContext dataset context for the transaction
+   * @return runnable that will actually execute the cluster provisioning
    */
-  public void provision(ProvisionRequest provisionRequest) {
+  public ProvisioningTask provision(ProvisionRequest provisionRequest, DatasetContext datasetContext) {
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
     Map<String, String> args = programOptions.getUserArguments().asMap();
@@ -126,7 +147,7 @@ public class ProvisioningService extends AbstractIdleService {
       LOG.error("Could not provision cluster for program run {} because provisioner {} does not exist.",
                 programRunId, name);
       provisionerNotifier.deprovisioned(programRunId);
-      return;
+      return new NoOpProvisioningTask(programRunId);
     }
 
     Map<String, String> properties = SystemArguments.getProfileProperties(args);
@@ -136,79 +157,38 @@ public class ProvisioningService extends AbstractIdleService {
     ClusterInfo clusterInfo =
       new ClusterInfo(programRunId, provisionRequest.getProgramDescriptor(),
                       properties, name, provisionRequest.getUser(), clusterOp, null);
-    Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      dataset.putClusterInfo(clusterInfo);
-    });
+    ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
+    provisionerDataset.putClusterInfo(clusterInfo);
 
-    executorService.execute(() -> {
-      try {
-        Cluster cluster = provisioner.createCluster(context);
-        if (cluster == null) {
-          // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
-          // returns a null cluster.
-          provisionerNotifier.deprovisioning(programRunId);
-          return;
-        }
-        ClusterOp op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.POLLING_CREATE);
-        final ClusterInfo pollingInfo = new ClusterInfo(clusterInfo, op, cluster);
-
-        Transactionals.execute(transactional, dsContext -> {
-          ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-          dataset.putClusterInfo(pollingInfo);
-        });
-        ClusterStatus status = cluster.getStatus();
-
-        while (status == ClusterStatus.CREATING) {
-          status = provisioner.getClusterStatus(context, cluster);
-          TimeUnit.SECONDS.sleep(10);
-        }
-
-        // TODO: CDAP-13246 handle unexpected states and retry
-        switch (status) {
-          case RUNNING:
-            cluster = new Cluster(cluster.getName(), ClusterStatus.RUNNING,
-                                  cluster.getNodes(), cluster.getProperties());
-            op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.CREATED);
-            final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, cluster);
-            Transactionals.execute(transactional, dsContext -> {
-              ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-              dataset.putClusterInfo(runningInfo);
-            });
-            provisionerNotifier.provisioned(programRunId, programOptions, provisionRequest.getProgramDescriptor(),
-                                            provisionRequest.getUser(), cluster);
-            break;
-        }
-      } catch (Throwable t) {
-        // TODO: CDAP-13246 handle retries
-        LOG.warn("Error provisioning cluster for program run {}", programRunId, t);
-        provisionerNotifier.deprovisioning(programRunId);
-      }
-    });
+    return new ProvisionTask(provisionRequest, provisioner, context, provisionerNotifier,
+                             transactional, datasetFramework);
   }
 
   /**
-   * Deprovision a cluster for a program run. This method must be run within a transaction.
+   * Record that a cluster will be deprovisioned for a program run, returning a task that will actually perform
+   * the cluster deprovisioning. This method must be run within a transaction.
+   * The task returned should be run using the {@link #execute(ProvisioningTask)} method, and should only be executed
+   * after the transaction that ran this method has completed.
    *
-   * @param programRunId the run to deprovision the cluster for
+   * @param programRunId the program run to deprovision
+   * @param datasetContext dataset context for the transaction
+   * @return runnable that will actually execute the cluster deprovisioning
    */
-  public void deprovision(ProgramRunId programRunId) {
-    ClusterInfo existing = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      return dataset.getClusterInfo(programRunId);
-    });
+  public ProvisioningTask deprovision(ProgramRunId programRunId, DatasetContext datasetContext) {
+    ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
+    ClusterInfo existing = provisionerDataset.getClusterInfo(programRunId);
     if (existing == null) {
       LOG.error("Received request to de-provision a cluster for program run {}, but could not find information " +
                   "about the cluster.", programRunId);
       // TODO: CDAP-13246 move to orphaned state
-      return;
+      return new NoOpProvisioningTask(programRunId);
     }
     Provisioner provisioner = provisionerInfo.get().provisioners.get(existing.getProvisionerName());
     if (provisioner == null) {
       LOG.error("Could not de-provision cluster for program run {} because provisioner {} does not exist.",
                 programRunId, existing.getProvisionerName());
       // TODO: CDAP-13246 move to orphaned state
-      return;
+      return new NoOpProvisioningTask(programRunId);
     }
 
     Map<String, String> properties = existing.getProvisionerProperties();
@@ -216,46 +196,10 @@ public class ProvisioningService extends AbstractIdleService {
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.REQUESTING_DELETE);
     ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getCluster());
-    Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      dataset.putClusterInfo(clusterInfo);
-    });
+    provisionerDataset.putClusterInfo(clusterInfo);
 
-    executorService.execute(() -> {
-      try {
-        Cluster cluster = clusterInfo.getCluster();
-        provisioner.deleteCluster(context, cluster);
-        ClusterOp op = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.POLLING_DELETE);
-        cluster = new Cluster(cluster == null ? null : cluster.getName(), ClusterStatus.DELETING,
-                              cluster == null ? Collections.emptyList() : cluster.getNodes(),
-                              cluster == null ? Collections.emptyMap() : cluster.getProperties());
-        ClusterInfo pollingInfo = new ClusterInfo(clusterInfo, op, cluster);
-        Transactionals.execute(transactional, dsContext -> {
-          ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-          dataset.putClusterInfo(pollingInfo);
-        });
-
-        ClusterStatus status = ClusterStatus.DELETING;
-        while (status == ClusterStatus.DELETING) {
-          status = provisioner.getClusterStatus(context, cluster);
-          TimeUnit.SECONDS.sleep(10);
-        }
-
-        // TODO: CDAP-13246 handle unexpected states and retry
-        switch (status) {
-          case NOT_EXISTS:
-            provisionerNotifier.deprovisioned(programRunId);
-            Transactionals.execute(transactional, dsContext -> {
-              ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-              dataset.deleteClusterInfo(programRunId);
-            });
-            break;
-        }
-      } catch (Throwable t) {
-        LOG.warn("Error deprovisioning cluster for program run {}", programRunId, t);
-        // TODO: CDAP-13246 handle retries
-      }
-    });
+    return new DeprovisionTask(programRunId, provisioner, context, provisionerNotifier,
+                               transactional, datasetFramework);
   }
 
   /**

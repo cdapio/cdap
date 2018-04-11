@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.provision.ProvisionRequest;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.internal.provision.ProvisioningTask;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
@@ -54,6 +55,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -78,6 +81,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProgramLifecycleService programLifecycleService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
+  private final Collection<ProvisioningTask> provisionerTasks;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -98,6 +102,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.programLifecycleService = programLifecycleService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
+    this.provisionerTasks = new ArrayList<>();
   }
 
   @Nullable
@@ -117,12 +122,20 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     AppMetadataStore appMetadataStore = getAppMetadataStore(datasetContext);
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
-      processNotification(appMetadataStore, messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
+      processNotification(datasetContext, appMetadataStore, messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
                           messagePair.getSecond());
     }
   }
 
-  private void processNotification(AppMetadataStore appMetadataStore,
+  @Override
+  protected void postProcess() {
+    for (ProvisioningTask provisionerTask : provisionerTasks) {
+      provisioningService.execute(provisionerTask);
+    }
+    provisionerTasks.clear();
+  }
+
+  private void processNotification(DatasetContext datasetContext, AppMetadataStore appMetadataStore,
                                    byte[] messageIdBytes, Notification notification) throws Exception {
     Map<String, String> properties = notification.getProperties();
     // Required parameters
@@ -160,16 +173,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
 
     if (programRunStatus != null) {
-      handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes, appMetadataStore);
+      handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
+                         datasetContext, appMetadataStore);
     }
     if (clusterStatus != null) {
-      handleClusterEvent(programRunId, clusterStatus, notification, messageIdBytes, appMetadataStore);
+      handleClusterEvent(programRunId, clusterStatus, notification, messageIdBytes, datasetContext, appMetadataStore);
     }
   }
 
   private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  AppMetadataStore appMetadataStore) throws Exception {
+                                  DatasetContext datasetContext, AppMetadataStore appMetadataStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
@@ -188,9 +202,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
         if (isInWorkflow || skipProvisioning) {
           handleClusterEvent(programRunId, ProgramRunClusterStatus.PROVISIONING, notification,
-                             messageIdBytes, appMetadataStore);
+                             messageIdBytes, datasetContext, appMetadataStore);
           handleClusterEvent(programRunId, ProgramRunClusterStatus.PROVISIONED, notification,
-                             messageIdBytes, appMetadataStore);
+                             messageIdBytes, datasetContext, appMetadataStore);
         }
         recordedRunRecord = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                                 systemArguments, messageIdBytes);
@@ -255,7 +269,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private void handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  AppMetadataStore appMetadataStore) {
+                                  DatasetContext datasetContext, AppMetadataStore appMetadataStore) {
     Map<String, String> properties = notification.getProperties();
 
     String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
@@ -281,7 +295,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
         ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
                                                                  userId);
-        provisioningService.provision(provisionRequest);
+        provisionerTasks.add(provisioningService.provision(provisionRequest, datasetContext));
         break;
       case PROVISIONED:
         String clusterSizeStr = properties.get(ProgramOptionConstants.CLUSTER_SIZE);
@@ -313,7 +327,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         if (isInWorkflow || skipProvisioning) {
           return;
         }
-        provisioningService.deprovision(programRunId);
+        provisionerTasks.add(provisioningService.deprovision(programRunId, datasetContext));
         break;
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
