@@ -33,6 +33,7 @@ import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -165,11 +166,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
         // TODO: CDAP-13096 move to provisioner status subscriber
         // for now, save these states here to follow correct lifecycle
-        appMetadataStore.recordProgramProvisioning(programRunId, startTimeSecs, userArguments, systemArguments,
-                                                   messageIdBytes, artifactId);
+        ProgramRunClusterStatus clusterStatus =
+          appMetadataStore.recordProgramProvisioning(programRunId, startTimeSecs, userArguments, systemArguments,
+                                                                           messageIdBytes, artifactId);
         appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
         recordedStatus = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                              systemArguments, messageIdBytes);
+        if (recordedStatus == null && clusterStatus != null) {
+          publishRecordedStatus(notification, programRunId, ProgramRunStatus.STARTING);
+        }
         break;
       case RUNNING:
         long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
@@ -183,10 +188,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         break;
       case SUSPENDED:
-        recordedStatus = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes);
+        long suspendTime = getTimeSeconds(notification.getProperties(),
+                                                   ProgramOptionConstants.SUSPEND_TIME);
+        // since we are adding suspend time recently, there might be old suspended notificications for which time
+        // can be -1.
+        recordedStatus = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes, suspendTime);
         break;
       case RESUMING:
-        recordedStatus = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes);
+        long resumeTime = getTimeSeconds(notification.getProperties(),
+                                          ProgramOptionConstants.RESUME_TIME);
+        // since we are adding suspend time recently, there might be old suspended notificications for which time
+        // can be -1.
+        recordedStatus = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         break;
       case COMPLETED:
       case KILLED:

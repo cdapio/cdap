@@ -189,9 +189,9 @@ public class AppMetadataStoreTest {
     final ProgramRunId programRunId2 = program.run(runId2);
     txnl.execute(() -> {
       metadataStoreDataset.recordProgramSuspend(programRunId2,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), -1);
       metadataStoreDataset.recordProgramResumed(programRunId2,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), -1);
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);
       // no run record is expected to be persisted without STARTING persisted
       Assert.assertNull(runRecordMeta);
@@ -247,7 +247,7 @@ public class AppMetadataStoreTest {
     txnl.execute(() -> {
       recordProvisionAndStart(programRunId6, metadataStoreDataset);
       metadataStoreDataset.recordProgramSuspend(programRunId6,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), 1);
       metadataStoreDataset.recordProgramStart(programRunId6, null, ImmutableMap.of(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);

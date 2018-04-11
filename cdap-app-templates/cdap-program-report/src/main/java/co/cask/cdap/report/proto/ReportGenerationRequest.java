@@ -17,11 +17,10 @@
 package co.cask.cdap.report.proto;
 
 import co.cask.cdap.report.util.ReportField;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -30,8 +29,8 @@ import javax.annotation.Nullable;
  */
 public class ReportGenerationRequest {
   private final String name;
-  private final Long start;
-  private final Long end;
+  private Long start;
+  private Long end;
   private final List<String> fields;
   @Nullable
   private final List<Sort> sort;
@@ -47,6 +46,14 @@ public class ReportGenerationRequest {
     this.sort = sort;
     this.filters = filters;
     this.validate();
+  }
+
+  /**
+   * convert the timeunit of start and end from seconds to milliseconds
+   */
+  public void updateTimeRangeToMilliSeconds() {
+    start = TimeUnit.SECONDS.toMillis(start);
+    end = TimeUnit.SECONDS.toMillis(end);
   }
 
   /**

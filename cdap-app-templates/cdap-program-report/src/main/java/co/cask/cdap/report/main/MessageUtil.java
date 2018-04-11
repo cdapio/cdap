@@ -19,10 +19,8 @@ package co.cask.cdap.report.main;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
-import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.util.Constants;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
@@ -83,9 +81,9 @@ public final class MessageUtil {
     String programStatus = notification.getProperties().get("programStatus");
     programRunIdFields.setStatus(programStatus);
 
-    ProgramRunStatus runStatus = ProgramRunStatus.valueOf(programStatus);
-    switch (runStatus) {
-      case STARTING:
+
+    switch (programStatus) {
+      case "STARTING":
         programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("startTime")));
         ArtifactId artifactId = GSON.fromJson(notification.getProperties().get("artifactId"), ArtifactId.class);
         Map<String, String> userArguments =
@@ -98,19 +96,19 @@ public final class MessageUtil {
         ProgramStartInfo programStartInfo = new ProgramStartInfo(systemArguments, artifactId, principal);
         programRunIdFields.setStartInfo(programStartInfo);
         break;
-      case RUNNING:
+      case "RUNNING":
         programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("logical.start.time")));
         programRunIdFields.setStatus("");
         break;
-      case KILLED:
-      case COMPLETED:
-      case FAILED:
+      case "KILLED":
+      case "COMPLETED":
+      case "FAILED":
         programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("endTime")));
         break;
-      case SUSPENDED:
+      case "SUSPENDED":
         programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("suspendTime")));
         break;
-      case RESUMING:
+      case "RESUMING":
         programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("resumeTime")));
         break;
     }

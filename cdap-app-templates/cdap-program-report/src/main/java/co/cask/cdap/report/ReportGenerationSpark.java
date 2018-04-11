@@ -334,6 +334,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       try {
         reportRequest = decodeRequestBody(requestJson, REPORT_GENERATION_REQUEST_TYPE);
         reportRequest.validate();
+        reportRequest.updateTimeRangeToMilliSeconds();
       } catch (IllegalArgumentException e) {
         responder.sendError(400, e.getMessage());
         return;
@@ -443,7 +444,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       List<String> metaFilePaths = metaFiles.filter(metaFile -> {
         String fileName = metaFile.getName();
         return fileName.endsWith(".avro")
-          && Long.parseLong(fileName.substring(0, fileName.indexOf(".avro"))) < reportRequest.getEnd();
+          && Long.parseLong(fileName.substring(0, fileName.indexOf("-"))) < reportRequest.getEnd();
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.debug("Filtered meta files {}", metaFiles);
       // Generate the report with the request and program run meta files

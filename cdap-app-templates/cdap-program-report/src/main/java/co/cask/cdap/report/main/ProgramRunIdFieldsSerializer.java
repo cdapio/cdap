@@ -17,7 +17,6 @@ package co.cask.cdap.report.main;
 
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.report.util.Constants;
 import org.apache.avro.generic.GenericData;
 
@@ -63,7 +62,7 @@ public class ProgramRunIdFieldsSerializer {
 
   public static GenericData.Record createRecord(ProgramRunIdFields runIdFields) {
     GenericData.Record startInfoRecord = null;
-    if (runIdFields.getProgramStatus().equals(ProgramRunStatus.STARTING.name())) {
+    if (runIdFields.getProgramStatus().equals("STARTING")) {
       startInfoRecord = new GenericData.Record(STARTING_INFO_SCHEMA);
       startInfoRecord.put(Constants.USER, runIdFields.getProgramSartInfo().getPrincipal());
       startInfoRecord.put(Constants.RUNTIME_ARGUMENTS, runIdFields.getProgramSartInfo().getRuntimeArguments());
