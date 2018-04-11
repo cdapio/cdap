@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
+import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -26,7 +26,7 @@ import com.google.inject.util.Modules;
 /**
  * Location Factory guice binding for unit tests. These binding are similar to
  * {@link LocationRuntimeModule#getInMemoryModules()} but the {@link NamespacedLocationFactory} is binded to a
- * {@link NamespacedLocationFactoryTestClient} which does not perform {@link NamespaceMeta} lookup like
+ * {@link NoLookupNamespacedLocationFactory} which does not perform {@link NamespaceMeta} lookup like
  * {@link DefaultNamespacedLocationFactory} and hence in unit tests the namespace does not need to be created to get
  * namespaces locations.
  */
@@ -37,7 +37,7 @@ public class NonCustomLocationUnitTestModule {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(NamespacedLocationFactory.class).to(NamespacedLocationFactoryTestClient.class);
+          bind(NamespacedLocationFactory.class).to(NoLookupNamespacedLocationFactory.class);
         }
       }
     );

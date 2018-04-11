@@ -24,14 +24,20 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageWriter;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
@@ -44,18 +50,15 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.RemotePrivilegesManager;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 
 import java.util.ArrayList;
@@ -67,22 +70,6 @@ import javax.annotation.Nullable;
  * is used in both client/driver containers and task containers.
  */
 public class DistributedProgramContainerModule extends AbstractModule {
-
-  /**
-   * Defines the mode that the program container is getting executed.
-   */
-  public enum ClusterMode {
-    /**
-     * The mode that program containers run in the same cluster as the CDAP,
-     * hence can communicate directly with CDAP
-     */
-    ON_PREMISE,
-
-    /**
-     * The mode that program containers run in isolated cluster such that it cannot communicate with CDAP directly.
-     */
-    ISOLATED
-  }
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -108,8 +95,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    String txClientId = generateClientId(programRunId, instanceId);
-    List<Module> modules = getCoreModules(programRunId.getParent(), txClientId);
+    List<Module> modules = getCoreModules(programRunId.getParent());
 
     AuthenticationContextModules authModules = new AuthenticationContextModules();
     modules.add(principal == null
@@ -126,7 +112,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     }));
   }
 
-  private List<Module> getCoreModules(final ProgramId programId, String txClientId) {
+  private List<Module> getCoreModules(final ProgramId programId) {
     List<Module> modules = new ArrayList<>();
 
     modules.add(new ConfigModule(cConf, hConf));
@@ -134,12 +120,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new ZKClientModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingClientModule());
-    modules.add(new LocationRuntimeModule().getDistributedModules());
     modules.add(new DiscoveryRuntimeModule().getDistributedModules());
-    modules.add(new DataFabricModules(txClientId).getDistributedModules());
-    modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new AuditModule().getDistributedModules());
-    modules.add(new NamespaceClientRuntimeModule().getDistributedModules());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreModules().getDistributedModules());
     modules.add(new AbstractModule() {
@@ -150,11 +132,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
         // don't need to perform any impersonation from within user programs
         bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-
-        // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
-        bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
-
-        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
 
         // Bind ProgramId to the passed in instance programId so that we can retrieve it back later when needed.
         // For example see ProgramDiscoveryExploreClient.
@@ -183,11 +160,27 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
+    modules.add(new LocationRuntimeModule().getDistributedModules());
     modules.add(new KafkaClientModule());
     modules.add(new LoggingModules().getDistributedModules());
+    modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
+    modules.add(new DataSetsModules().getDistributedModules());
+    modules.add(new NamespaceClientRuntimeModule().getDistributedModules());
   }
 
   private void addIsolatedModules(List<Module> modules) {
+    // Uses the in memory dataset framework. We just use it for dataset metadata, not really need the dataset service.
+    modules.add(new DataSetsModules().getInMemoryModules());
+    modules.add(new SystemDatasetRuntimeModule().getInMemoryModules());
+
+    // In isolated mode, ignore the namespace mapping
+    modules.add(Modules.override(new LocationRuntimeModule().getDistributedModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NamespacedLocationFactory.class).to(NoLookupNamespacedLocationFactory.class);
+      }
+    }));
+
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -198,6 +191,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
             // no-op
           }
         });
+
+        // Bind to Unsupported class implementations for features that are not supported in isolated cluster mode
+        bind(TransactionSystemClient.class).to(UnsupportedTransactionSystemClient.class);
+        bind(StreamAdmin.class).to(UnsupportedStreamAdmin.class);
+        bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class);
       }
     });
   }

@@ -185,7 +185,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     BasicFlowletContext flowletContext = null;
     try {
       // Extract and verify parameters
-      String flowletName = options.getProgramId().getProgram();
+      String flowletName = options.getArguments().getOption(ProgramOptionConstants.FLOWLET_NAME);
 
       int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");

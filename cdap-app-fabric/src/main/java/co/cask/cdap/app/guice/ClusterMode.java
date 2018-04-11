@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import org.apache.twill.api.Command;
+package co.cask.cdap.app.guice;
 
 /**
- * The class carries {@link Command} that are used by the flow system.
+ * Defines the mode that the program container is getting executed.
  */
-public final class ProgramCommands {
+public enum ClusterMode {
+  /**
+   * The mode that program containers run in the same cluster as the CDAP,
+   * hence can communicate directly with CDAP
+   */
+  ON_PREMISE,
 
-  public static final Command SUSPEND = Command.Builder.of("suspend").build();
-  public static final Command RESUME = Command.Builder.of("resume").build();
-
-  private ProgramCommands() {
-  }
+  /**
+   * The mode that program containers run in isolated cluster such that it cannot communicate with CDAP directly.
+   */
+  ISOLATED
 }

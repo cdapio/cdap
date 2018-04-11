@@ -16,14 +16,28 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.app.guice.ClusterMode;
+
 /**
  * Defines constants used across different modules.
  */
 public final class ProgramOptionConstants {
 
+  public static final String PROGRAM_JAR = "programJar";
+
+  public static final String EXPANDED_PROGRAM_JAR = "expandedProgramJar";
+
+  public static final String CDAP_CONF_FILE = "cConfFile";
+
+  public static final String HADOOP_CONF_FILE = "hConfFile";
+
+  public static final String APP_SPEC_FILE = "appSpecFile";
+
   public static final String RUN_ID = "runId";
 
   public static final String TWILL_RUN_ID = "twillRunId";
+
+  public static final String FLOWLET_NAME = "flowletName";
 
   public static final String CLUSTER_STATUS = "clusterStatus";
 
@@ -63,16 +77,6 @@ public final class ProgramOptionConstants {
 
   public static final String CRON_EXPRESSION = "cronExpression";
 
-  public static final String RUN_DATA_SIZE = "runDataSize";
-
-  public static final String LAST_SCHEDULED_RUN_DATA_SIZE = "lastScheduledRunDataSize";
-
-  public static final String LAST_SCHEDULED_RUN_LOGICAL_START_TIME = "lastScheduledRunLogicalStartTime";
-
-  public static final String RUN_BASE_COUNT_SIZE = "runBaseCountSize";
-
-  public static final String RUN_BASE_COUNT_TIME = "runBaseCountTime";
-
   public static final String SYSTEM_OVERRIDES = "systemOverrides";
 
   public static final String USER_OVERRIDES = "userOverrides";
@@ -108,4 +112,9 @@ public final class ProgramOptionConstants {
    * Option for the program artifact id.
    */
   public static final String ARTIFACT_ID = "artifactId";
+
+  /**
+   * Option for the program runtime {@link ClusterMode}.
+   */
+  public static final String CLUSTER_MODE = "clusterMode";
 }

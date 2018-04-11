@@ -16,20 +16,28 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.test.MockTwillContext;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.ServiceAnnouncer;
 import org.junit.Test;
+
+import java.util.Optional;
 
 /**
  * Tests for guice modules used in various {@link AbstractProgramTwillRunnable}.
@@ -38,46 +46,58 @@ public class ProgramTwillRunnableModuleTest {
 
   @Test
   public void testFlowlet() {
-    ProgramId programId = NamespaceId.DEFAULT.app("test").flow("flow");
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").flow("flow").run(RunIds.generate());
     Module module = new FlowletTwillRunnable("flowlet").createModule(CConfiguration.create(), new Configuration(),
-                                                                     new MockTwillContext(), programId,
-                                                                     RunIds.generate().getId(), "0", "principal");
+                                                                     createProgramOptions(programRunId),
+                                                                     programRunId);
     Guice.createInjector(module).getInstance(FlowletProgramRunner.class);
   }
 
   @Test
   public void testService() {
-    ProgramId programId = NamespaceId.DEFAULT.app("test").service("service");
-    Module module = new ServiceTwillRunnable("service").createModule(CConfiguration.create(), new Configuration(),
-                                                                     new MockTwillContext(), programId,
-                                                                     RunIds.generate().getId(), "0", "principal");
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").service("service").run(RunIds.generate());
+    Module module = new ServiceTwillRunnable("service") {
+      @Override
+      protected Optional<ServiceAnnouncer> getServiceAnnouncer() {
+        return Optional.of(new MockTwillContext());
+      }
+    }.createModule(CConfiguration.create(), new Configuration(), createProgramOptions(programRunId), programRunId);
     Guice.createInjector(module).getInstance(ServiceProgramRunner.class);
   }
 
   @Test
   public void testWorker() {
-    ProgramId programId = NamespaceId.DEFAULT.app("test").worker("worker");
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").worker("worker").run(RunIds.generate());
     Module module = new WorkerTwillRunnable("worker").createModule(CConfiguration.create(), new Configuration(),
-                                                                   new MockTwillContext(), programId,
-                                                                   RunIds.generate().getId(), "0", "principal");
+                                                                   createProgramOptions(programRunId),
+                                                                   programRunId);
     Guice.createInjector(module).getInstance(WorkerProgramRunner.class);
   }
 
   @Test
   public void testMapReduce() {
-    ProgramId programId = NamespaceId.DEFAULT.app("test").mr("mapreduce");
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").mr("mapreduce").run(RunIds.generate());
     Module module = new MapReduceTwillRunnable("mapreduce").createModule(CConfiguration.create(), new Configuration(),
-                                                                         new MockTwillContext(), programId,
-                                                                         RunIds.generate().getId(), "0", "principal");
+                                                                         createProgramOptions(programRunId),
+                                                                         programRunId);
     Guice.createInjector(module).getInstance(MapReduceProgramRunner.class);
   }
 
   @Test
   public void testWorkflow() {
-    ProgramId programId = NamespaceId.DEFAULT.app("test").workflow("workflow");
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").workflow("workflow").run(RunIds.generate());
     Module module = new WorkflowTwillRunnable("workflow").createModule(CConfiguration.create(), new Configuration(),
-                                                                       new MockTwillContext(), programId,
-                                                                       RunIds.generate().getId(), "0", "principal");
+                                                                       createProgramOptions(programRunId),
+                                                                       programRunId);
     Guice.createInjector(module).getInstance(WorkflowProgramRunner.class);
+  }
+
+  private ProgramOptions createProgramOptions(ProgramRunId programRunId) {
+    return new SimpleProgramOptions(programRunId.getParent(),
+                                    new BasicArguments(ImmutableMap.of(
+                                      ProgramOptionConstants.INSTANCE_ID, "0",
+                                      ProgramOptionConstants.PRINCIPAL, "principal",
+                                      ProgramOptionConstants.RUN_ID, programRunId.getRun())),
+                                    new BasicArguments());
   }
 }

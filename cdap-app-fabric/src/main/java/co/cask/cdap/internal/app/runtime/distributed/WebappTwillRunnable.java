@@ -15,19 +15,17 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.webapp.ExplodeJarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
-import co.cask.cdap.proto.id.ProgramId;
-import com.google.inject.AbstractModule;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.TwillContext;
-
-import javax.annotation.Nullable;
 
 /**
  * Twill runnable wrapper for webapp.
@@ -39,18 +37,11 @@ final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgr
   }
 
   @Override
-  protected Module createModule(CConfiguration cConf, Configuration hConf, TwillContext context,
-                                ProgramId programId, String runId, String instanceId, @Nullable String principal) {
-    Module module = super.createModule(cConf, hConf, context, programId, runId, instanceId, principal);
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        install(module);
-        // Create webapp http handler factory.
-        install(new FactoryModuleBuilder()
-                  .implement(JarHttpHandler.class, ExplodeJarHttpHandler.class)
-                  .build(WebappHttpHandlerFactory.class));
-      }
-    };
+  protected Module createModule(CConfiguration cConf, Configuration hConf,
+                                ProgramOptions programOptions, ProgramRunId programRunId) {
+    Module module = super.createModule(cConf, hConf, programOptions, programRunId);
+    return Modules.combine(module, new FactoryModuleBuilder()
+      .implement(JarHttpHandler.class, ExplodeJarHttpHandler.class)
+      .build(WebappHttpHandlerFactory.class));
   }
 }

@@ -149,9 +149,12 @@ public final class InMemoryFlowProgramRunner extends AbstractInMemoryProgramRunn
     return flowlets;
   }
 
-  ProgramOptions resolveFlowletOptions(ProgramOptions options, String flowlet) {
-    return new SimpleProgramOptions(options.getProgramId().getParent().flow(flowlet),
-                                    options.getArguments(),
+  private ProgramOptions resolveFlowletOptions(ProgramOptions options, String flowlet) {
+    Map<String, String> systemArgs = new HashMap<>(options.getArguments().asMap());
+    systemArgs.put(ProgramOptionConstants.FLOWLET_NAME, flowlet);
+
+    return new SimpleProgramOptions(options.getProgramId(),
+                                    new BasicArguments(systemArgs),
                                     new BasicArguments(RuntimeArguments.extractScope(
                                       FlowUtils.FLOWLET_SCOPE, flowlet, options.getUserArguments().asMap())));
   }

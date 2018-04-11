@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
+import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.twill.filesystem.FileContextLocationFactory;
@@ -44,7 +44,7 @@ public class DFSConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBas
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     LocationFactory locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    namespacedLocationFactory = new NamespacedLocationFactoryTestClient(CConfiguration.create(), locationFactory);
+    namespacedLocationFactory = new NoLookupNamespacedLocationFactory(CConfiguration.create(), locationFactory);
 
   }
 

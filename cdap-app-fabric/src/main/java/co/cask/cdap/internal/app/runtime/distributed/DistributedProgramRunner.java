@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.Arguments;
@@ -55,6 +56,7 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -120,6 +122,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   private static final String APP_SPEC_FILE_NAME = "appSpec.json";
   private static final String LOGBACK_FILE_NAME = "logback.xml";
+  private static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
 
   protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
@@ -203,18 +206,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
       // Add extra localize resources needed by the program runner
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
-
-      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
-                                                            DirUtils.createTempDir(tempDir));
-
       final List<String> additionalClassPaths = new ArrayList<>();
       addContainerJars(cConf, localizeResources, additionalClassPaths);
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       // Save the configuration to files
-      final File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
-      final File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
+      File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
+      localizeResources.put(HADOOP_CONF_FILE_NAME, new LocalizeResource(hConfFile));
+
+      File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
+      localizeResources.put(CDAP_CONF_FILE_NAME, new LocalizeResource(cConfFile));
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -227,14 +229,32 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
-                            new LocalizeResource(saveAppSpec(program,
-                                                             File.createTempFile("appSpec", ".json", tempDir))));
+                            new LocalizeResource(saveJsonFile(program.getApplicationSpecification(),
+                                                              ApplicationSpecification.class,
+                                                              File.createTempFile("appSpec", ".json", tempDir))));
 
       final URI logbackURI = getLogBackURI(program, tempDir);
       if (logbackURI != null) {
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
       }
+
+      // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
+      // and runs it in the remote container
+      ProgramOptions options = updateProgramOptions(
+        oldOptions, localizeResources, DirUtils.createTempDir(tempDir), ImmutableMap.of(
+          ProgramOptionConstants.PROGRAM_JAR, programJarName,
+          ProgramOptionConstants.EXPANDED_PROGRAM_JAR, expandedProgramJarName,
+          ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
+          ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
+          ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME
+        ));
+
+      // Localize the serialized program options
+      localizeResources.put(PROGRAM_OPTIONS_FILE_NAME,
+                            new LocalizeResource(saveJsonFile(
+                              options, ProgramOptions.class,
+                              File.createTempFile("program.options", ".json", tempDir))));
 
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
@@ -246,7 +266,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  createEventHandler(cConf, options));
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
-          // Add the configuration to container classpath
+          // Also add the configuration files to container classpath so that the
+          // TwillAppLifecycleEventHandler can get it. This can be removed when TWILL-246 is fixed
           twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());
 
           Map<String, String> userArgs = options.getUserArguments().asMap();
@@ -281,9 +302,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
           logProgramStart(program, options);
 
-          String serializedOptions = GSON.toJson(options, ProgramOptions.class);
-          LOG.info("Starting {} with debugging enabled: {}, programOptions: {}, and logback: {}",
-                   program.getId(), options.isDebug(), serializedOptions, logbackURI);
+          LOG.info("Starting {} with debugging enabled: {}, logback: {}",
+                   program.getId(), options.isDebug(), logbackURI);
 
           // Add scheduler queue name if defined
           String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
@@ -343,15 +363,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
             .withApplicationClassPaths(yarnAppClassPath)
             .withClassPaths(yarnAppClassPath)
             .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
-            .withApplicationArguments(
-              "--" + RunnableOptions.JAR, programJarName,
-              "--" + RunnableOptions.EXPANDED_JAR, expandedProgramJarName,
-              "--" + RunnableOptions.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
-              "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
-              "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
-              "--" + RunnableOptions.PROGRAM_OPTIONS, serializedOptions,
-              "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId())
-            )
+            .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
             // Use the MainClassLoader for class rewriting
             .setClassLoader(MainClassLoader.class.getName());
 
@@ -363,12 +375,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           // all the classloaders of the dependencies classes so that Twill can trace classes.
           ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
             DistributedProgramRunner.this.getClass().getClassLoader(),
-            Iterables.transform(extraDependencies, new Function<Class<?>, ClassLoader>() {
-              @Override
-              public ClassLoader apply(Class<?> input) {
-                return input.getClassLoader();
-              }
-            })));
+            extraDependencies.stream().map(Class::getClassLoader)::iterator));
           try {
             twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                   TimeUnit.SECONDS);
@@ -467,24 +474,26 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     saveContextCancellable.cancel();
   }
 
-  private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
-                                                File tempDir) throws IOException {
+  private ProgramOptions updateProgramOptions(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
+                                              File tempDir, Map<String, String> extraSystemArgs) throws IOException {
     Arguments systemArgs = options.getArguments();
-    if (!systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
-      return options;
+
+    Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
+    newSystemArgs.putAll(extraSystemArgs);
+
+    if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+      File archiveFile = new File(tempDir, "artifacts.jar");
+      BundleJarUtil.createJar(localDir, archiveFile);
+
+      // Localize plugins to two files, one expanded into a directory, one not.
+      localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+      localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
+
     }
-
-    File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
-    File archiveFile = new File(tempDir, "artifacts.jar");
-    BundleJarUtil.createJar(localDir, archiveFile);
-
-    // Localize plugins to two files, one expanded into a directory, one not.
-    localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
-    localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
-
-    Map<String, String> newSystemArgs = Maps.newHashMap(systemArgs.asMap());
-    newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
-    newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
   }
@@ -541,9 +550,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     return file;
   }
 
-  private File saveAppSpec(Program program, File file) throws IOException {
+  private <T> File saveJsonFile(T obj, Class<T> type, File file) throws IOException {
     try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-      GSON.toJson(program.getApplicationSpecification(), writer);
+      GSON.toJson(obj, type, writer);
     }
     return file;
   }
@@ -570,16 +579,13 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                              final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
-    Runnable cleanup = new Runnable() {
-
-      @Override
-      public void run() {
-        if (!deleted.compareAndSet(false, true)) {
-          return;
-        }
-        LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
-        deleteDirectory(tempDir);
-      }};
+    Runnable cleanup = () -> {
+      if (!deleted.compareAndSet(false, true)) {
+        return;
+      }
+      LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
+      deleteDirectory(tempDir);
+    };
     controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
     controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
@@ -588,6 +594,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   /**
    * Configuration for launching Twill container for a program.
    */
+  @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
   protected static final class LaunchConfig {
 
     private final Map<String, LocalizeResource> extraResources = new HashMap<>();
@@ -601,10 +608,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     public LaunchConfig addExtraResources(Map<String, LocalizeResource> resources) {
       extraResources.putAll(resources);
       return this;
-    }
-
-    public LaunchConfig addExtraClasspath(String...classpath) {
-      return addExtraClasspath(Arrays.asList(classpath));
     }
 
     public LaunchConfig addExtraClasspath(Iterable<String> classpath) {
