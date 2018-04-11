@@ -217,30 +217,28 @@ public class StoreScanner extends AbstractIdleService {
       }
     }
 
-    int count = 2 * number;
-    for (int i = 0; i < count; i++) {
-      if (i == count / 10) {
+    for (int i = 0; i < number; i++) {
+      if (i == number / 10) {
         System.out.println("==> 10% done");
-      } else if (i == count / 5) {
+      } else if (i == number / 5) {
         System.out.println("====> 20% done");
-      } else if (i == count / 2) {
+      } else if (i == number / 2) {
         System.out.println("====> 50% done");
-      } else if (i == count / 5 * 4) {
+      } else if (i == number / 5 * 4) {
         System.out.println("====> 80% done");
       }
 
-      String ns = namespaces.get(i % (2 * namespaces.size()) / 2);
+      String ns = namespaces.get(i % namespaces.size());
       ProgramRunId runId = new ProgramRunId(ns, "app", ProgramType.WORKFLOW, "program",
-                                            RunIds.generate(TimeUnit.SECONDS.toMillis(i / 2)).getId());
-      if (i % 2 == 0) {
-        store.setProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(), Bytes.toBytes(i),
-                              new ArtifactId("art", new ArtifactVersion("v1"), ArtifactScope.USER));
-      } else {
-        store.setStop(runId, i, ProgramRunStatus.KILLED, Bytes.toBytes(i));
-      }
+                                            RunIds.generate(TimeUnit.SECONDS.toMillis(i)).getId());
+      store.setProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(), Bytes.toBytes(i),
+                            new ArtifactId("art", new ArtifactVersion("v1"), ArtifactScope.USER));
+      store.setStop(runId, i + 1, ProgramRunStatus.COMPLETED, Bytes.toBytes(i));
     }
+    long start = System.currentTimeMillis();
     Map<ProgramRunId, RunRecordMeta> runs =
       scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), number - 10, number, 100);
+    System.out.println("Time used = " + (System.currentTimeMillis() - start));
     System.out.println("Runs: " + runs.values());
     scanner.stopAndWait();
   }
