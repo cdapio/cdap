@@ -21,11 +21,10 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import co.cask.cdap.report.main.SparkPersistRunRecordMain;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.ReportContent;
@@ -44,7 +43,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.twill.common.Threads;
@@ -79,7 +77,7 @@ import javax.ws.rs.QueryParam;
 /**
  * A Spark program for generating reports, querying for report statuses, and reading reports.
  */
-public class ReportGenerationSpark extends AbstractExtendedSpark implements JavaSparkMain {
+public class ReportGenerationSpark extends AbstractExtendedSpark {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Filter.class, new FilterDeserializer())
     .create();
@@ -89,13 +87,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
   @Override
   protected void configure() {
-    setMainClass(ReportGenerationSpark.class);
+    setMainClass(SparkPersistRunRecordMain.class);
     addHandlers(new ReportSparkHandler());
-  }
-
-  @Override
-  public void run(JavaSparkExecutionContext sec) throws Exception {
-    JavaSparkContext jsc = new JavaSparkContext();
   }
 
   /**
