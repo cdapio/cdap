@@ -21,11 +21,12 @@ package co.cask.cdap.report.util;
  */
 public final class Constants {
   public static final String NAMESPACE = "namespace";
-  public static final String ARTIFACT_SCOPE = "artifact.scope";
-  public static final String ARTIFACT_NAME = "artifact.name";
-  public static final String ARTIFACT_VERSION = "artifact.version";
-  public static final String APPLICATION_NAME = "application.name";
-  public static final String APPLICATION_VERSION = "application.version";
+  public static final String ARTIFACT_SCOPE = "artifactScope";
+  public static final String ARTIFACT_NAME = "artifactName";
+  public static final String ARTIFACT_ID = "artifactId";
+  public static final String ARTIFACT_VERSION = "artifactVersion";
+  public static final String APPLICATION_NAME = "applicationName";
+  public static final String APPLICATION_VERSION = "applicationVersion";
   public static final String PROGRAM = "program";
   public static final String RUN = "run";
   public static final String STATUS = "status";
@@ -50,4 +51,38 @@ public final class Constants {
     public static final String COUNT_FILE = "COUNT";
     public static final String SUCCESS_FILE = "_SUCCESS";
   }
+  public static final String MESSAGE_ID = "messageId";
+
+  /**
+   * Notification property fields
+   */
+  public static final class Notification {
+    public static final String PROGRAM_RUN_ID = "programRunId";
+    public static final String PROGRAM_STATUS = "programStatus";
+    public static final String ARTIFACT_ID = "artifactId";
+    public static final String SYSTEM_OVERRIDES = "systemOverrides";
+    public static final String USER_OVERRIDES = "userOverrides";
+    public static final String PRINCIPAL = "principal";
+    public static final String PROGRAM_DESCRIPTOR = "programDescriptor";
+
+    public static final String LOGICAL_START_TIME = "logical.start.time";
+    public static final String END_TIME = "endTime";
+    public static final String SUSPEND_TIME = "suspendTime";
+    public static final String RESUME_TIME = "resumeTime";
+
+    /**
+     * Program status options
+     */
+    public static final class Status {
+      public static final String STARTING = "STARTING";
+      public static final String RUNNING = "RUNNING";
+      public static final String KILLED = "KILLED";
+      public static final String COMPLETED = "COMPLETED";
+      public static final String FAILED = "FAILED";
+      public static final String SUSPENDED = "SUSPENDED";
+      public static final String RESUMING = "RESUMING";
+    }
+
+  }
+
 }
