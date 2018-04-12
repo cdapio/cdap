@@ -63,6 +63,12 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-proto</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
     </dependency>

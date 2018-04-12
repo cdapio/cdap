@@ -23,11 +23,10 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import co.cask.cdap.report.main.SparkPersistRunRecordMain;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.ReportContent;
@@ -53,7 +52,6 @@ import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.twill.filesystem.Location;
@@ -79,7 +77,6 @@ import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -87,7 +84,7 @@ import javax.ws.rs.QueryParam;
 /**
  * A Spark program for generating reports, querying for report statuses, and reading reports.
  */
-public class ReportGenerationSpark extends AbstractExtendedSpark implements JavaSparkMain {
+public class ReportGenerationSpark extends AbstractExtendedSpark {
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationSpark.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Filter.class, new FilterDeserializer())
@@ -110,13 +107,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark implements Java
 
   @Override
   protected void configure() {
-    setMainClass(ReportGenerationSpark.class);
+    setMainClass(SparkPersistRunRecordMain.class);
     addHandlers(new ReportSparkHandler());
-  }
-
-  @Override
-  public void run(JavaSparkExecutionContext sec) throws Exception {
-    JavaSparkContext jsc = new JavaSparkContext();
   }
 
   /**

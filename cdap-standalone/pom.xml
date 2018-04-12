@@ -127,7 +127,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-spark-core</artifactId>
+      <artifactId>cdap-spark-core2_2.11</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
