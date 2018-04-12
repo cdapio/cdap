@@ -61,7 +61,6 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.common.http.HttpRequest;
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -100,12 +99,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   private final DatasetId myds = NamespaceId.DEFAULT.dataset("myds");
   private final StreamId mystream = NamespaceId.DEFAULT.stream("mystream");
   private final StreamViewId myview = mystream.view("myview");
-  private final ApplicationId nonExistingApp = new ApplicationId("blah", AppWithDataset.class.getSimpleName());
-  private final ProgramId nonExistingService = nonExistingApp.service("PingService");
-  private final DatasetId nonExistingDataset = new DatasetId("blah", "myds");
-  private final StreamId nonExistingStream = new StreamId("blah", "mystream");
-  private final StreamViewId nonExistingView = nonExistingStream.view("myView");
-  private final ArtifactId nonExistingArtifact = new ArtifactId("blah", "art", "1.0.0");
 
   @Before
   public void before() throws Exception {
@@ -280,14 +273,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertTrue(getProperties(mystream, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getProperties(myview, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getProperties(artifactId, MetadataScope.USER).isEmpty());
-
-    // non-existing namespace
-    addProperties(nonExistingApp, appProperties, NotFoundException.class);
-    addProperties(nonExistingService, serviceProperties, NotFoundException.class);
-    addProperties(nonExistingDataset, datasetProperties, NotFoundException.class);
-    addProperties(nonExistingStream, streamProperties, NotFoundException.class);
-    addProperties(nonExistingView, streamProperties, NotFoundException.class);
-    addProperties(nonExistingArtifact, artifactProperties, NotFoundException.class);
   }
 
   @Test
@@ -398,13 +383,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertTrue(getTags(myds, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getTags(mystream, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getTags(artifactId, MetadataScope.USER).isEmpty());
-    // non-existing namespace
-    addTags(nonExistingApp, appTags, NotFoundException.class);
-    addTags(nonExistingService, serviceTags, NotFoundException.class);
-    addTags(nonExistingDataset, datasetTags, NotFoundException.class);
-    addTags(nonExistingStream, streamTags, NotFoundException.class);
-    addTags(nonExistingView, streamTags, NotFoundException.class);
-    addTags(nonExistingArtifact, artifactTags, NotFoundException.class);
   }
 
   @Test
@@ -515,26 +493,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     } catch (NotFoundException e) {
       // expected
     }
-
-    // Now try to get from invalid entity should throw 404.
-    getPropertiesFromInvalidEntity(programId);
-  }
-
-  @Test
-  public void testInvalidEntities() throws IOException {
-    ProgramId nonExistingProgram = application.service("NonExistingService");
-    DatasetId nonExistingDataset = new DatasetId(NamespaceId.DEFAULT.getNamespace(),
-                                                                       "NonExistingDataset");
-    StreamId nonExistingStream = NamespaceId.DEFAULT.stream("NonExistingStream");
-    StreamViewId nonExistingView = nonExistingStream.view("NonExistingView");
-    ApplicationId nonExistingApp = NamespaceId.DEFAULT.app("NonExistingApp");
-
-    Map<String, String> properties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
-    addProperties(nonExistingApp, properties, NotFoundException.class);
-    addProperties(nonExistingProgram, properties, NotFoundException.class);
-    addProperties(nonExistingDataset, properties, NotFoundException.class);
-    addProperties(nonExistingView, properties, NotFoundException.class);
-    addProperties(nonExistingStream, properties, NotFoundException.class);
   }
 
   @Test
@@ -591,9 +549,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Deploy WordCount App without Flow program. No need to start/stop the flow.
     appClient.deploy(TEST_NAMESPACE1, createAppJarFile(WordCountMinusFlowApp.class));
-
-    // Get properties from deleted (flow) program - should return 404
-    getPropertiesFromInvalidEntity(program);
 
     // Delete the App after stopping the flow
     appClient.delete(TEST_NAMESPACE1.app("WordCountApp"));
@@ -1357,7 +1312,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                                                         new MetadataSearchResultRecord(dataset),
                                                                         new MetadataSearchResultRecord(stream),
                                                                         new MetadataSearchResultRecord(view));
-    List<String>  expectedCursors = ImmutableList.of();
+    List<String> expectedCursors = ImmutableList.of();
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
     Assert.assertEquals(expectedCursors, searchResponse.getCursors());
 
@@ -1404,12 +1359,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   private Set<NamespacedEntityId> getEntities(Set<MetadataSearchResultRecord> results) {
     return Sets.newHashSet(
-      Iterables.transform(results, new Function<MetadataSearchResultRecord, NamespacedEntityId>() {
-        @Override
-        public NamespacedEntityId apply(MetadataSearchResultRecord input) {
-          return input.getEntityId();
-        }
-      })
+      Iterables.transform(results, input -> input.getEntityId())
     );
   }
 

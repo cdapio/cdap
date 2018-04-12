@@ -260,41 +260,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
     }
   }
 
-  protected void getPropertiesFromInvalidEntity(ProgramId program) throws Exception {
-    try {
-      getProperties(program, MetadataScope.USER);
-      Assert.fail("Expected not to be able to get properties from invalid entity: " + program);
-    } catch (NotFoundException expected) {
-      // expected
-    }
-  }
-
-  protected void getPropertiesFromInvalidEntity(DatasetId dataset) throws Exception {
-    try {
-      getProperties(dataset, MetadataScope.USER);
-      Assert.fail("Expected not to be able to get properties from invalid entity: " + dataset);
-    } catch (NotFoundException expected) {
-      // expected
-    }
-  }
-
-  protected void getPropertiesFromInvalidEntity(StreamId stream) throws Exception {
-    try {
-      getProperties(stream, MetadataScope.USER);
-      Assert.fail("Expected not to be able to get properties from invalid entity: " + stream);
-    } catch (NotFoundException expected) {
-      // expected
-    }
-  }
-  protected void getPropertiesFromInvalidEntity(StreamViewId view) throws Exception {
-    try {
-      getProperties(view, MetadataScope.USER);
-      Assert.fail("Expected not to be able to get properties from invalid entity: " + view);
-    } catch (NotFoundException expected) {
-      // expected
-    }
-  }
-
   protected void removeMetadata(ApplicationId app) throws Exception {
     metadataClient.removeMetadata(Id.Application.fromEntityId(app));
   }
@@ -616,7 +581,10 @@ public abstract class MetadataTestBase extends ClientTestBase {
       callable.call();
       Assert.fail("Expected to have exception of class: " + expectedExceptionClass);
     } catch (Exception e) {
-      Assert.assertTrue(e.getClass() == expectedExceptionClass);
+      if(e.getClass() != expectedExceptionClass) {
+        Assert.fail(String.format("Expected %s but received %s. %s", expectedExceptionClass.getSimpleName(), e
+          .getClass().getSimpleName(), e));
+      }
     }
   }
 }

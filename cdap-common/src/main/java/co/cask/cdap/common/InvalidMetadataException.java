@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.common;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 /**
@@ -22,14 +23,19 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
  */
 public class InvalidMetadataException extends BadRequestException {
 
-  private final NamespacedEntityId targetId;
+  private final MetadataEntity metadataEntity;
 
   public InvalidMetadataException(NamespacedEntityId targetId, String message) {
     super("Unable to set metadata for " + targetId + " with error: " + message);
-    this.targetId = targetId;
+    this.metadataEntity = targetId.toMetadataEntity();
   }
 
-  public NamespacedEntityId getTargetId() {
-    return targetId;
+  public InvalidMetadataException(MetadataEntity metadataEntity, String message) {
+    super("Unable to set metadata for " + metadataEntity + " with error: " + message);
+    this.metadataEntity = metadataEntity;
+  }
+
+  public MetadataEntity getTargetId() {
+    return metadataEntity;
   }
 }

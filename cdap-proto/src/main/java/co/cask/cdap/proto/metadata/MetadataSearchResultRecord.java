@@ -17,7 +17,9 @@ package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
@@ -29,21 +31,32 @@ import java.util.Objects;
  */
 @Beta
 public class MetadataSearchResultRecord {
-  private final NamespacedEntityId entityId;
+  private final MetadataEntity metadataEntity;
   private final Map<MetadataScope, Metadata> metadata;
 
   public MetadataSearchResultRecord(NamespacedEntityId entityId) {
-    this.entityId = entityId;
-    this.metadata = Collections.emptyMap();
+    this(entityId.toMetadataEntity());
+  }
+
+  public MetadataSearchResultRecord(MetadataEntity metadataEntity) {
+    this(metadataEntity, Collections.emptyMap());
   }
 
   public MetadataSearchResultRecord(NamespacedEntityId entityId, Map<MetadataScope, Metadata> metadata) {
-    this.entityId = entityId;
+    this(entityId.toMetadataEntity(), metadata);
+  }
+
+  public MetadataSearchResultRecord(MetadataEntity metadataEntity, Map<MetadataScope, Metadata> metadata) {
+    this.metadataEntity = metadataEntity;
     this.metadata = metadata;
   }
 
   public NamespacedEntityId getEntityId() {
-    return entityId;
+    return EntityId.fromMetadataEntity(metadataEntity);
+  }
+
+  public MetadataEntity getMetadataEntity() {
+    return metadataEntity;
   }
 
   public Map<MetadataScope, Metadata> getMetadata() {
@@ -59,19 +72,19 @@ public class MetadataSearchResultRecord {
       return false;
     }
     MetadataSearchResultRecord that = (MetadataSearchResultRecord) o;
-    return Objects.equals(entityId, that.entityId) &&
+    return Objects.equals(metadataEntity, that.metadataEntity) &&
       Objects.equals(metadata, that.metadata);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, metadata);
+    return Objects.hash(metadataEntity, metadata);
   }
 
   @Override
   public String toString() {
     return "MetadataSearchResultRecord{" +
-      "entityId=" + entityId +
+      "metadataEntity=" + metadataEntity +
       ", metadata=" + metadata +
       '}';
   }
