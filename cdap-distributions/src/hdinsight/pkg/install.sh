@@ -26,7 +26,7 @@ CDAP_TAG='hdi4.1'
 # The CDAP package version passed to Chef
 CDAP_VERSION='4.1.3-1'
 # The version of Chef to install
-CHEF_VERSION='12.21.31'
+CHEF_VERSION='13.8.5'
 # cdap-site.xml configuration parameters
 EXPLORE_ENABLED='true'
 
@@ -72,7 +72,8 @@ test -d /var/chef/cookbooks && rm -rf /var/chef/cookbooks
 ${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
 
 # Install cookbooks via knife
-${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
+mkdir -p ${__tmpdir}/cookbook-download
+(cd ${__tmpdir}/cookbook-download && ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks")
 
 # CDAP cli install, ensures package dependencies are present
 # We must specify the cdap version
