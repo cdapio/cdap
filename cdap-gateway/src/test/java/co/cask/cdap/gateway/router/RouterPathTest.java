@@ -208,6 +208,11 @@ public class RouterPathTest {
   }
 
   @Test
+  public void testOpsDashboardPath() throws Exception {
+    assertRouting("/v3/dashboard", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
   public void testStreamPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
     String streamPath = "/v3/namespaces/default/streams";
