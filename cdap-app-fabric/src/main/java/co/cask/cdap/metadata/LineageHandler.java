@@ -20,7 +20,6 @@ import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
@@ -29,7 +28,6 @@ import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.DatasetField;
@@ -44,21 +42,18 @@ import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -74,7 +69,6 @@ public class LineageHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
-  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
   private final LineageAdmin lineageAdmin;
 
@@ -214,20 +208,6 @@ public class LineageHandler extends AbstractHttpHandler {
                          TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
                          lineage, getCollapseTypes(collapse)), LineageRecord.class));
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/metadata")
-  public void getAccessesForRun(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("app-id") String appId,
-                                @PathParam("program-type") String programType,
-                                @PathParam("program-id") String programId,
-                                @PathParam("run-id") String runId) throws Exception {
-    ProgramRunId run = new ProgramRunId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId,
-                                        runId);
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(lineageAdmin.getMetadataForRun(run), SET_METADATA_RECORD_TYPE));
   }
 
   private void checkLevels(int levels) throws BadRequestException {

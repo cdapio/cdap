@@ -155,7 +155,7 @@ public class LineageTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, dataProperties, dataTags),
                                 new MetadataRecord(stream, MetadataScope.USER, streamProperties,
                                                    streamTags)),
-                          fetchRunMetadata(flow.run(flowRunId.getId())));
+                          getMetadata(flow.run(flowRunId.getId())));
 
       // Assert with a time range after the flow run should return no results
       long laterStartTime = stopTime + 1000;
@@ -295,7 +295,7 @@ public class LineageTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
                                                    emptySet()),
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          fetchRunMetadata(flow.run(flowRunId.getId())));
+                          getMetadata(flow.run(flowRunId.getId())));
 
       // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
       ProgramId programForWorker = new ProgramId(worker.getNamespace(), worker.getApplication(), worker.getType(),
@@ -306,7 +306,7 @@ public class LineageTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
                                                    emptySet()),
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          fetchRunMetadata(worker.run(workerRunId.getId())));
+                          getMetadata(worker.run(workerRunId.getId())));
 
       // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
       ProgramId programForSpark = new ProgramId(spark.getNamespace(), spark.getApplication(), spark.getType(),
@@ -319,7 +319,7 @@ public class LineageTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset2, MetadataScope.USER, emptyMap(), emptySet()),
                                 new MetadataRecord(dataset3, MetadataScope.USER, emptyMap(), emptySet()),
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          fetchRunMetadata(spark.run(sparkRunId.getId())));
+                          getMetadata(spark.run(sparkRunId.getId())));
     } finally {
       namespaceClient.delete(namespace);
     }

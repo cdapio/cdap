@@ -668,7 +668,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
           streamMetaStore.removeStream(streamId);
           ownerAdmin.delete(streamId);
-          metadataStore.removeMetadata(streamId);
+          metadataStore.removeMetadata(streamId.toMetadataEntity());
           publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);

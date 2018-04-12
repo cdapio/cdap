@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.commons.lang.StringUtils;
 
@@ -85,7 +86,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   @Nullable
   private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
-      // TODO find a better way to handle that - this looks hackish
+      // TODO(Rohit) find a better way to handle that - this looks hackish
+      // This needs to now changed especially metadata since now it can have custom parts
       return null;
     } else if ("dashboard".equals(uriParts[1])) {
       return APP_FABRIC_HTTP;
@@ -107,31 +109,12 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return METRICS;
-    } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata") ||
-
-      matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata", "properties") ||
-
-      matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata", "tags") ||
-
-      matches(uriParts, "v3", "namespaces", null, "metadata", "search") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "runs", null, "metadata")) {
+    } else if ((!matches(uriParts, "v3", "namespaces", null, "securekeys")) && (endsWith(uriParts, "metadata") ||
+      // do no intercept the namespaces/<namespace-name>/securekeys/<key>/metadata as that is handled by the
+      // SecureStoreHandler
+      endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", "?") ||
+      endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", "?") ||
+      endsWith(uriParts, "metadata", "search") || endsWith(uriParts, "lineage"))) {
       return METADATA_SERVICE;
     } else if (matches(uriParts, "v3", "security", "authorization") ||
       matches(uriParts, "v3", "namespaces", null, "securekeys")) {
@@ -228,6 +211,29 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         continue;
       }
       if (!expected[i].equals(actual[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Determines if the actual ends with expected. If expected contains '?' at the end the the last element of actual
+   * is ignored as ? is considered to match one element regardless of what it is
+   */
+  @VisibleForTesting
+  boolean endsWith(String[] actual, String... expectedEnd) {
+    if (expectedEnd.length > actual.length) {
+      return false;
+    }
+    int offset = 1;
+    if (expectedEnd[expectedEnd.length - offset].equals("?")) {
+      offset++;
+    }
+    while (expectedEnd.length - offset >= 0) {
+      if (expectedEnd[expectedEnd.length - offset].equalsIgnoreCase(actual[actual.length - offset])) {
+        offset++;
+      } else {
         return false;
       }
     }

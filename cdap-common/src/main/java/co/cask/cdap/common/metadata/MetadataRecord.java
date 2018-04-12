@@ -16,7 +16,9 @@
 
 package co.cask.cdap.common.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
@@ -25,12 +27,12 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link NamespacedEntityId} including its properties, tags in a given
+ * Represents the complete metadata of a {@link MetadataEntity} including its properties, tags in a given
  * {@link MetadataScope}
  * this class was in cdap-api earlier and has been moved from cdap-common as its used only internally
  */
 public class MetadataRecord {
-  private final NamespacedEntityId entityId;
+  private final MetadataEntity metadataEntity;
   private final MetadataScope scope;
   private final Map<String, String> properties;
   private final Set<String> tags;
@@ -39,26 +41,45 @@ public class MetadataRecord {
    * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
   public MetadataRecord(NamespacedEntityId entityId, MetadataScope scope) {
-    this(entityId, scope, Collections.<String, String>emptyMap(), Collections.<String>emptySet());
+    this(entityId.toMetadataEntity(), scope);
+  }
+
+  /**
+   * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
+   */
+  public MetadataRecord(MetadataEntity metadataEntity, MetadataScope scope) {
+    this(metadataEntity, scope, Collections.emptyMap(), Collections.emptySet());
   }
 
   /**
    * Returns a new {@link MetadataRecord} from the specified existing {@link MetadataRecord}.
    */
   public MetadataRecord(MetadataRecord other) {
-    this(other.getEntityId(), other.getScope(), other.getProperties(), other.getTags());
+    this(other.getMetadataEntity(), other.getScope(), other.getProperties(), other.getTags());
   }
 
+  /**
+   * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
+   */
   public MetadataRecord(NamespacedEntityId entityId, MetadataScope scope, Map<String, String> properties,
                         Set<String> tags) {
-    this.entityId = entityId;
+    this(entityId.toMetadataEntity(), scope, properties, tags);
+  }
+
+  public MetadataRecord(MetadataEntity metadataEntity, MetadataScope scope, Map<String, String> properties,
+                        Set<String> tags) {
+    this.metadataEntity = metadataEntity;
     this.scope = scope;
     this.properties = properties;
     this.tags = tags;
   }
 
+  public MetadataEntity getMetadataEntity() {
+    return metadataEntity;
+  }
+
   public NamespacedEntityId getEntityId() {
-    return entityId;
+    return EntityId.fromMetadataEntity(metadataEntity);
   }
 
   public MetadataScope getScope() {
@@ -84,7 +105,7 @@ public class MetadataRecord {
 
     MetadataRecord that = (MetadataRecord) o;
 
-    return Objects.equals(entityId, that.entityId) &&
+    return Objects.equals(metadataEntity, that.metadataEntity) &&
       scope == that.scope &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
@@ -92,13 +113,13 @@ public class MetadataRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, scope, properties, tags);
+    return Objects.hash(metadataEntity, scope, properties, tags);
   }
 
   @Override
   public String toString() {
     return "MetadataRecord{" +
-      "entityId=" + entityId +
+      "metadataEntity=" + metadataEntity +
       ", scope=" + scope +
       ", properties=" + properties +
       ", tags=" + tags +
