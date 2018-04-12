@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -113,6 +114,14 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
       new ApplicationId(next(iterator, "namespace"), next(iterator, "application"), next(iterator, "version")),
       ProgramType.valueOfPrettyName(next(iterator, "type")),
       next(iterator, "program"), nextAndEnd(iterator, "run"));
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() {
+    return MetadataEntity.ofNamespace(namespace).append(MetadataEntity.APPLICATION, application)
+      .append(MetadataEntity.VERSION, version).append(MetadataEntity.TYPE, type.getPrettyName())
+      .append(MetadataEntity.PROGRAM, program)
+      .appendAsType(MetadataEntity.PROGRAM_RUN, run);
   }
 
   @Override
