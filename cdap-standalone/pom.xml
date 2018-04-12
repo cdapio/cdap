@@ -423,12 +423,6 @@
         <!-- Add dependencies on runtime provider extensions to make sure they are built before standalone -->
         <dependency>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-runtime-ext-yarn</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-runtime-ext-dataproc</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
@@ -621,13 +615,6 @@
                       </includes>
                     </resource>
                     <!-- copy runtime provider extensions -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-runtime-ext-yarn/target</directory>
-                      <targetPath>ext/runtimeproviders/yarn</targetPath>
-                      <includes>
-                        <include>co.cask.cdap.cdap-runtime-ext-yarn-${project.version}.jar</include>
-                      </includes>
-                    </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec</directory>
                       <targetPath>ext/runtimeproviders/gce-dataproc</targetPath>

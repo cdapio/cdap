@@ -40,6 +40,7 @@ public class ProvisioningServiceTest {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     provisioningService = injector.getInstance(ProvisioningService.class);
+    provisioningService.startAndWait();
   }
 
   @Test

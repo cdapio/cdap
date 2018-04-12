@@ -379,14 +379,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
       case "start":
-        lifecycleService.start(program, args, false);
+        lifecycleService.run(program, args, false);
         break;
       case "debug":
         if (!isDebugAllowed(programType)) {
           throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
                                                           programType));
         }
-        lifecycleService.start(program, args, true);
+        lifecycleService.run(program, args, true);
         break;
       case "stop":
         lifecycleService.stop(program);
@@ -1186,9 +1186,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                           program.getProgramId());
       try {
-        ProgramController programController = lifecycleService.start(programId, program.getRuntimeargs(), false);
-        output.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null,
-                                          programController.getRunId().getId()));
+        String runId = lifecycleService.run(programId, program.getRuntimeargs(), false).getId();
+        output.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, runId));
       } catch (NotFoundException e) {
         output.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage()));
       } catch (BadRequestException e) {
@@ -1554,7 +1553,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     FlowId flow = new FlowId(namespaceId, appId, flowId);
     try {
       ProgramStatus status = lifecycleService.getProgramStatus(flow);
-      if (ProgramStatus.RUNNING == status) {
+      if (ProgramStatus.STOPPED != status) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(flow);

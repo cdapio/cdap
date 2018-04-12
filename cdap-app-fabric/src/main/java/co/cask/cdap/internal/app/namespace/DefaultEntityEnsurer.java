@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
  */
 public final class DefaultEntityEnsurer extends AbstractService {
 
-
   private static final Logger LOG = LoggerFactory.getLogger(DefaultEntityEnsurer.class);
 
   private final Service serviceDelegate;

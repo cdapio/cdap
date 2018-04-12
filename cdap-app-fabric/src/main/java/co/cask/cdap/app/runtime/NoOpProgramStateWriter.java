@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.proto.id.ProgramRunId;
 
 import javax.annotation.Nullable;
@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 public class NoOpProgramStateWriter implements ProgramStateWriter {
   @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions,
-                    @Nullable String twillRunId, ArtifactId artifactId) {
+                    @Nullable String twillRunId, ProgramDescriptor programDescriptor) {
     // no-op
   }
 

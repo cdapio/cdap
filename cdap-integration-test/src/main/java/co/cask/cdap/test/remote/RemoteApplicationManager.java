@@ -114,7 +114,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
       for (ProgramRecord programRecord : applicationClient.listPrograms(application)) {
         // have to do a check, since appFabricServer.stop will throw error when you stop something that is not running.
         ProgramId programId = application.program(programRecord.getType(), programRecord.getName());
-        if (isRunning(programId)) {
+        if (!isStopped(programId)) {
           programClient.stop(programId);
         }
         waitForStopped(programId);
@@ -145,9 +145,18 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public boolean isRunning(ProgramId programId) {
+    return isInState(programId, ProgramStatus.RUNNING);
+  }
+
+  @Override
+  public boolean isStopped(ProgramId programId) {
+    return isInState(programId, ProgramStatus.STOPPED);
+  }
+
+  private boolean isInState(ProgramId programId, ProgramStatus status) {
     try {
-      String status = programClient.getStatus(programId);
-      return ProgramStatus.RUNNING.name().equals(status);
+      String actual = programClient.getStatus(programId);
+      return status.name().equals(actual);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.NodeStatus;
  */
 public enum ProgramRunStatus {
   ALL,
+  PENDING,
   STARTING,
   RUNNING,
   SUSPENDED,
@@ -64,6 +65,7 @@ public enum ProgramRunStatus {
 
   public static ProgramStatus toProgramStatus(ProgramRunStatus status) {
     switch(status) {
+      case PENDING:
       case STARTING:
         return ProgramStatus.INITIALIZING;
       case RUNNING:

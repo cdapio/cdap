@@ -21,16 +21,17 @@ import co.cask.cdap.AppWithMultipleSchedules;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxCallable;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
@@ -46,7 +47,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -80,7 +83,6 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -99,9 +101,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -161,7 +163,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(getInjector().getInstance(DatasetFramework.class)), getTxClient(),
-      NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null);
+      NamespaceId.SYSTEM, Collections.emptyMap(), null, null);
 
     transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
@@ -195,13 +197,13 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // add three more schedules, one for the same program, one for the same app, one for another app
     ProgramSchedule psched1 = new ProgramSchedule("psched1", "one partition schedule", PROG1_ID,
                                                   ImmutableMap.of("prop3", "abc"),
-                                                  new PartitionTrigger(DS1_ID, 1), ImmutableList.<Constraint>of());
+                                                  new PartitionTrigger(DS1_ID, 1), Collections.emptyList());
     ProgramSchedule tsched11 = new ProgramSchedule("tsched11", "two times schedule", PROG11_ID,
                                                    ImmutableMap.of("prop2", "xx"),
-                                                   new TimeTrigger("* * ? * 1,2"), ImmutableList.<Constraint>of());
+                                                   new TimeTrigger("* * ? * 1,2"), Collections.emptyList());
     ProgramSchedule psched2 = new ProgramSchedule("psched2", "two partition schedule", PROG2_ID,
                                                   ImmutableMap.of("propper", "popper"),
-                                                  new PartitionTrigger(DS2_ID, 2), ImmutableList.<Constraint>of());
+                                                  new PartitionTrigger(DS2_ID, 2), Collections.emptyList());
     scheduler.addSchedules(ImmutableList.of(psched1, tsched11, psched2));
     Assert.assertEquals(psched1, scheduler.getSchedule(PSCHED1_ID));
     Assert.assertEquals(tsched11, scheduler.getSchedule(TSCHED11_ID));
@@ -312,21 +314,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // Both workflows must run at least once.
     // If the testNewPartition() loop took longer than expected, it may be more (quartz fired multiple times)
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED) > 0
-          && getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED) > 0;
-      }
-    }, 10, TimeUnit.SECONDS);
+    Tasks.waitFor(true, () -> getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED) > 0
+          && getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED) > 0, 10, TimeUnit.SECONDS);
 
     // There shouldn't be any partition trigger in the job queue
-    Assert.assertFalse(Iterables.any(getAllJobs(), new Predicate<Job>() {
-      @Override
-      public boolean apply(Job job) {
-        return job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger;
-      }
-    }));
+    Assert.assertFalse(Iterables.any(getAllJobs(), job ->
+      job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger));
 
     ProgramId compositeWorkflow = APP_ID.workflow(AppWithFrequentScheduledWorkflows.COMPOSITE_WORKFLOW);
     // Workflow scheduled with the composite trigger has never been started
@@ -383,15 +376,27 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     ProgramRunId anotherWorkflowRun = ANOTHER_WORKFLOW.run(RunIds.generate());
 
     ArtifactId artifactId = ANOTHER_WORKFLOW.getNamespaceId().artifact("test", "1.0").toApiArtifactId();
-    programStateWriter.start(anotherWorkflowRun, new SimpleProgramOptions(anotherWorkflowRun.getParent()), null,
-                             artifactId);
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(anotherWorkflowRun.getParent(), appSpec);
+    BasicArguments systemArgs =
+      new BasicArguments(ImmutableMap.of(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString()));
+    ProgramOptions programOptions = new SimpleProgramOptions(anotherWorkflowRun.getParent(),
+                                                             systemArgs, new BasicArguments(), false);
+    programStateWriter.start(anotherWorkflowRun, programOptions, null, programDescriptor);
     programStateWriter.running(anotherWorkflowRun, null);
     long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.error(anotherWorkflowRun, null);
     waitUntilProcessed(programEventTopic, lastProcessed);
 
     ProgramRunId someWorkflowRun = SOME_WORKFLOW.run(RunIds.generate());
-    programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent()), null, null);
+    programDescriptor = new ProgramDescriptor(someWorkflowRun.getParent(), appSpec);
+    programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent(),
+                                                                       systemArgs, new BasicArguments()),
+                             null, programDescriptor);
     programStateWriter.running(someWorkflowRun, null);
     lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.killed(someWorkflowRun);
@@ -456,15 +461,14 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // A pending job will be created, but it won't run
     Assert.assertTrue("Expected a PENDING_TRIGGER job for " + scheduleId2,
-                      Iterables.any(getAllJobs(), new Predicate<Job>() {
-      @Override
-      public boolean apply(Job job) {
-        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
-          return false;
-        }
-        return scheduleId2.equals(job.getJobKey().getScheduleId()) && job.getState() == Job.State.PENDING_TRIGGER;
-      }
-    }));
+                      Iterables.any(getAllJobs(), job -> {
+                        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
+                          return false;
+                        }
+                        return scheduleId2.equals(job.getJobKey().getScheduleId()) &&
+                          job.getState() == Job.State.PENDING_TRIGGER;
+
+                      }));
 
     Assert.assertEquals(runs, getRuns(WORKFLOW_2, ProgramRunStatus.ALL));
 
@@ -497,15 +501,13 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // Again, a pending job will be created, but it won't run since updating the schedule would remove pending trigger
     Assert.assertTrue("Expected a PENDING_TRIGGER job for " + scheduleId2,
-                      Iterables.any(getAllJobs(), new Predicate<Job>() {
-      @Override
-      public boolean apply(Job job) {
-        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
-          return false;
-        }
-        return scheduleId2.equals(job.getJobKey().getScheduleId()) && job.getState() == Job.State.PENDING_TRIGGER;
-      }
-    }));
+                      Iterables.any(getAllJobs(), job -> {
+                        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
+                          return false;
+                        }
+                        return scheduleId2.equals(job.getJobKey().getScheduleId()) &&
+                          job.getState() == Job.State.PENDING_TRIGGER;
+                      }));
 
     Assert.assertEquals(runs, getRuns(WORKFLOW_2, ProgramRunStatus.ALL));
     // publish one more notification, this should kick off the workflow
@@ -535,12 +537,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   private void waitForCompleteRuns(int numRuns, final ProgramId program) throws Exception {
-    Tasks.waitFor(numRuns, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getRuns(program, ProgramRunStatus.COMPLETED);
-      }
-    }, 30, TimeUnit.SECONDS);
+    Tasks.waitFor(numRuns, () ->  getRuns(program, ProgramRunStatus.COMPLETED), 30, TimeUnit.SECONDS);
   }
 
   private int getRuns(ProgramId workflowId, ProgramRunStatus status) {
@@ -556,18 +553,15 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   @Nullable
   private MessageId getLastMessageId(final TopicId topic) {
-    return Transactionals.execute(transactional, new TxCallable<MessageId>() {
-      @Override
-      public MessageId call(DatasetContext context) throws Exception {
-        JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
-                                                      Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
-        String id = jobQueue.retrieveSubscriberState(topic.getTopic());
-        if (id == null) {
-          return null;
-        }
-        byte[] bytes = Bytes.fromHexString(id);
-        return new MessageId(bytes);
+    return Transactionals.execute(transactional, context -> {
+      JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
+                                                    Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
+      String id = jobQueue.retrieveSubscriberState(topic.getTopic());
+      if (id == null) {
+        return null;
       }
+      byte[] bytes = Bytes.fromHexString(id);
+      return new MessageId(bytes);
     });
   }
 
@@ -576,24 +570,18 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
    */
   private void waitUntilProcessed(final TopicId topic, final long minPublishTime) throws Exception {
     // Wait for the persisted message changed. That means the scheduler actually consumed the last data event
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        MessageId messageId = getLastMessageId(topic);
-        return messageId != null && messageId.getPublishTimestamp() >= minPublishTime;
-      }
+    Tasks.waitFor(true, () -> {
+      MessageId messageId = getLastMessageId(topic);
+      return messageId != null && messageId.getPublishTimestamp() >= minPublishTime;
     }, 5, TimeUnit.SECONDS);
   }
 
   private List<Job> getAllJobs() {
-    return Transactionals.execute(transactional, new TxCallable<List<Job>>() {
-      @Override
-      public List<Job> call(DatasetContext context) throws Exception {
-        JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
-                                                      Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
-        try (CloseableIterator<Job> iterator = jobQueue.fullScan()) {
-          return Lists.newArrayList(iterator);
-        }
+    return Transactionals.execute(transactional, context -> {
+      JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
+                                                    Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
+      try (CloseableIterator<Job> iterator = jobQueue.fullScan()) {
+        return Lists.newArrayList(iterator);
       }
     });
   }

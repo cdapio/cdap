@@ -16,24 +16,36 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.provision.ProvisionRequest;
+import co.cask.cdap.internal.provision.ProvisionerNotifier;
+import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.internal.provision.ProvisioningTask;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -43,6 +55,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -56,17 +71,26 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
   private final String recordedProgramStatusPublishTopic;
+  private final ProvisionerNotifier provisionerNotifier;
+  private final ProgramLifecycleService programLifecycleService;
+  private final ProvisioningService provisioningService;
+  private final ProgramStateWriter programStateWriter;
+  private final Collection<ProvisioningTask> provisionerTasks;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                       MetricsCollectionService metricsCollectionService) {
+                                       MetricsCollectionService metricsCollectionService,
+                                       ProvisionerNotifier provisionerNotifier,
+                                       ProgramLifecycleService programLifecycleService,
+                                       ProvisioningService provisioningService,
+                                       ProgramStateWriter programStateWriter) {
     super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), false,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
@@ -74,6 +98,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
+    this.provisionerNotifier = provisionerNotifier;
+    this.programLifecycleService = programLifecycleService;
+    this.provisioningService = provisioningService;
+    this.programStateWriter = programStateWriter;
+    this.provisionerTasks = new ArrayList<>();
   }
 
   @Nullable
@@ -93,12 +122,20 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     AppMetadataStore appMetadataStore = getAppMetadataStore(datasetContext);
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
-      processNotification(appMetadataStore, messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
+      processNotification(datasetContext, appMetadataStore, messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
                           messagePair.getSecond());
     }
   }
 
-  private void processNotification(AppMetadataStore appMetadataStore,
+  @Override
+  protected void postProcess() {
+    for (ProvisioningTask provisionerTask : provisionerTasks) {
+      provisioningService.execute(provisionerTask);
+    }
+    provisionerTasks.clear();
+  }
+
+  private void processNotification(DatasetContext datasetContext, AppMetadataStore appMetadataStore,
                                    byte[] messageIdBytes, Notification notification) throws Exception {
     Map<String, String> properties = notification.getProperties();
     // Required parameters
@@ -136,16 +173,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
 
     if (programRunStatus != null) {
-      writeProgramStatus(programRunId, programRunStatus, notification, messageIdBytes, appMetadataStore);
+      handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
+                         datasetContext, appMetadataStore);
     }
     if (clusterStatus != null) {
-      writeClusterStatus(programRunId, clusterStatus, notification, messageIdBytes, appMetadataStore);
+      handleClusterEvent(programRunId, clusterStatus, notification, messageIdBytes, datasetContext, appMetadataStore);
     }
   }
 
-  private void writeProgramStatus(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
+  private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  AppMetadataStore appMetadataStore) throws Exception {
+                                  DatasetContext datasetContext, AppMetadataStore appMetadataStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
@@ -155,19 +193,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     switch (programRunStatus) {
       case STARTING:
         String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-        if (systemArgumentsString == null) {
-          LOG.warn("Ignore program starting notification for program {} without system arguments, {}",
-                   programRunId, notification);
-          return;
+        Map<String, String> systemArguments = systemArgumentsString == null ?
+          Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+        boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
+        boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
+        // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
+        // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
+        if (isInWorkflow || skipProvisioning) {
+          handleClusterEvent(programRunId, ProgramRunClusterStatus.PROVISIONING, notification,
+                             messageIdBytes, datasetContext, appMetadataStore);
+          handleClusterEvent(programRunId, ProgramRunClusterStatus.PROVISIONED, notification,
+                             messageIdBytes, datasetContext, appMetadataStore);
         }
-        Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-
-        // TODO: CDAP-13096 move to provisioner status subscriber
-        // for now, save these states here to follow correct lifecycle
-        writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONING, notification, messageIdBytes,
-                           appMetadataStore);
-        writeClusterStatus(programRunId, ProgramRunClusterStatus.PROVISIONED, notification, messageIdBytes,
-                           appMetadataStore);
         recordedRunRecord = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                                 systemArguments, messageIdBytes);
         break;
@@ -215,46 +252,104 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
     if (recordedRunRecord != null) {
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
+      if (programRunStatus.isEndState()) {
+        // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
+        // instead, we just record the state as deprovisioned without notifying the provisioner
+        boolean isInWorkflow = recordedRunRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME);
+        boolean skipProvisioning =
+          Boolean.parseBoolean(recordedRunRecord.getSystemArgs().get(ProgramOptionConstants.SKIP_PROVISIONING));
+        if (isInWorkflow || skipProvisioning) {
+          appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
+          appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
+        } else {
+          // TODO: CDAP-13295 remove once runtime monitor emits this message
+          provisionerNotifier.deprovisioning(programRunId);
+        }
+      }
     }
   }
 
-  private void writeClusterStatus(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
+  private void handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  AppMetadataStore appMetadataStore) {
+                                  DatasetContext datasetContext, AppMetadataStore appMetadataStore) {
     Map<String, String> properties = notification.getProperties();
 
+    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+    Map<String, String> systemArguments = systemArgumentsString == null ?
+      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+    ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+    String userId = properties.get(ProgramOptionConstants.USER_ID);
+    boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
+    boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
+
+    ProgramDescriptor programDescriptor =
+      GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
     switch (clusterStatus) {
       case PROVISIONING:
-        String artifactIdString = notification.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
-        ArtifactId artifactId = null;
-        // can be null for notifications before upgrading that were not processed earlier
-        if (artifactIdString != null) {
-          artifactId = GSON.fromJson(artifactIdString, ArtifactId.class);
-        }
-        String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
-        String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-        if (userArgumentsString == null || systemArgumentsString == null) {
-          LOG.warn("Ignore program provisioning notification for program {} without {} arguments",
-                   programRunId, (userArgumentsString == null) ? "user" : "system", notification);
+        appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
+                                                   programOptions.getArguments().asMap(), messageIdBytes,
+                                                   programDescriptor.getArtifactId().toApiArtifactId());
+
+        // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
+        if (isInWorkflow || skipProvisioning) {
           return;
         }
-        Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
-        Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-        appMetadataStore.recordProgramProvisioning(programRunId, userArguments, systemArguments, messageIdBytes,
-                                                   artifactId);
+
+        ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
+                                                                 userId);
+        provisionerTasks.add(provisioningService.provision(provisionRequest, datasetContext));
         break;
       case PROVISIONED:
         String clusterSizeStr = properties.get(ProgramOptionConstants.CLUSTER_SIZE);
         int clusterSize = clusterSizeStr == null ? 0 : Integer.parseInt(clusterSizeStr);
         appMetadataStore.recordProgramProvisioned(programRunId, clusterSize, messageIdBytes);
+
+        // if this is a preview run or a program within a workflow, we don't actually need to start the program,
+        // as it will have been started by the workflow driver or the program lifecycle service.
+        if (isInWorkflow || skipProvisioning) {
+          return;
+        }
+
+        // start the program run
+        String oldUser = SecurityRequestContext.getUserId();
+        try {
+          SecurityRequestContext.setUserId(userId);
+          try {
+            programLifecycleService.startInternal(programDescriptor, programOptions, programRunId);
+          } catch (Exception e) {
+            programStateWriter.error(programRunId, e);
+          }
+        } finally {
+          SecurityRequestContext.setUserId(oldUser);
+        }
         break;
       case DEPROVISIONING:
         appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
+        // if this is a preview run or a program within a workflow, we don't actually need to deprovision the cluster
+        if (isInWorkflow || skipProvisioning) {
+          return;
+        }
+        provisionerTasks.add(provisioningService.deprovision(programRunId, datasetContext));
         break;
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
         break;
     }
+  }
+
+  private ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> properties) {
+    String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
+    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+    String debugString = properties.get(ProgramOptionConstants.DEBUG_ENABLED);
+
+    Boolean debug = Boolean.valueOf(debugString);
+    Map<String, String> userArguments = userArgumentsString == null ?
+      Collections.emptyMap() : GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
+    Map<String, String> systemArguments = systemArgumentsString == null ?
+      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+
+    return new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
+                                    new BasicArguments(userArguments), debug);
   }
 
 

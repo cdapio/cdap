@@ -22,6 +22,7 @@ import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -149,8 +150,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     // Publish the program's starting state
     RunId runId = ProgramRunners.getRunId(options);
     String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    programStateWriter.start(program.getId().run(runId), options, twillRunId,
-                             program.getApplicationSpecification().getArtifactId());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(program.getId(), program.getApplicationSpecification());
+    programStateWriter.start(program.getId().run(runId), options, twillRunId, programDescriptor);
 
     ProgramController controller;
     try {

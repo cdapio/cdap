@@ -1642,7 +1642,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     ServiceManager noopManager = applicationManager.getServiceManager("NoOpService").start();
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    noopManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY);
     String decodedResult = new Gson().fromJson(result, String.class);

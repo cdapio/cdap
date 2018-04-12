@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
@@ -37,6 +39,7 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +53,7 @@ import javax.inject.Inject;
  */
 public final class MessagingProgramStateWriter implements ProgramStateWriter {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStateWriter.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final MessagingService messagingService;
   private final TopicId topicId;
   private final RetryStrategy retryStrategy;
@@ -64,13 +67,13 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
-                    ArtifactId artifactId) {
+                    ProgramDescriptor programDescriptor) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
       .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
-      .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(artifactId));
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor));
 
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);

@@ -33,6 +33,7 @@ import co.cask.cdap.internal.app.namespace.DefaultEntityEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
@@ -79,12 +80,12 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
-  private final ProgramLifecycleService programLifecycleService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final CoreSchedulerService coreSchedulerService;
   private final AppVersionUpgradeService appVersionUpgradeService;
+  private final ProvisioningService provisioningService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -119,7 +120,8 @@ public class AppFabricServer extends AbstractIdleService {
                          @Nullable AppVersionUpgradeService appVersionUpgradeService,
                          RouteStore routeStore,
                          CoreSchedulerService coreSchedulerService,
-                         ProfileStore profileStore) {
+                         ProfileStore profileStore,
+                         ProvisioningService provisioningService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -133,7 +135,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
-    this.programLifecycleService = programLifecycleService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
@@ -142,6 +143,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.defaultEntityEnsurer = new DefaultEntityEnsurer(namespaceAdmin, profileStore);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
+    this.provisioningService = provisioningService;
   }
 
   /**
@@ -155,12 +157,12 @@ public class AppFabricServer extends AbstractIdleService {
     Futures.allAsList(
       ImmutableList.of(
         notificationService.start(),
+        provisioningService.start(),
         applicationLifecycleService.start(),
         systemArtifactLoader.start(),
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programNotificationSubscriberService.start(),
-        programLifecycleService.start(),
         runRecordCorrectorService.start(),
         pluginService.start(),
         coreSchedulerService.start()
@@ -217,12 +219,12 @@ public class AppFabricServer extends AbstractIdleService {
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
-    programLifecycleService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
     if (appVersionUpgradeService != null) {
       appVersionUpgradeService.stopAndWait();
     }
+    provisioningService.stopAndWait();
   }
 
   private static String generateRandomPassword() {

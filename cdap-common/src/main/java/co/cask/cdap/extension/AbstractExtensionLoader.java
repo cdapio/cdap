@@ -16,9 +16,7 @@
 
 package co.cask.cdap.extension;
 
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -26,7 +24,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -260,17 +257,14 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     List<File> files = new ArrayList<>(DirUtils.listFiles(dir, "jar"));
     Collections.sort(files);
 
-    URL[] urls = Iterables.toArray(Iterables.transform(files, new Function<File, URL>() {
-      @Override
-      public URL apply(File input) {
-        try {
-          return input.toURI().toURL();
-        } catch (MalformedURLException e) {
-          // Shouldn't happen
-          throw Throwables.propagate(e);
-        }
+    URL[] urls = files.stream().map(input -> {
+      try {
+        return input.toURI().toURL();
+      } catch (MalformedURLException e) {
+        // Shouldn't happen
+        throw Throwables.propagate(e);
       }
-    }), URL.class);
+    }).toArray(URL[]::new);
 
     URLClassLoader classLoader = new URLClassLoader(urls, getExtensionParentClassLoader());
     return ServiceLoader.load(extensionClass, classLoader);

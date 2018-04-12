@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -63,6 +64,28 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
   public static ProfileId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ProfileId(next(iterator, "namespace"), nextAndEnd(iterator, "profile"));
+  }
+
+  /**
+   * Get the profile id for the given scoped profile name. A scoped name starts with an entity scope, a ':',
+   * then the profile name. If there is no ':', it is assumed that it is user scope.
+   *
+   * @param namespaceId the namespace to use if user scoped
+   * @param scopedName the scoped name
+   * @return the profile id
+   * @throws IllegalArgumentException if the scope is invalid or the profile name is invalid.
+   */
+  public static ProfileId fromScopedName(NamespaceId namespaceId, String scopedName) {
+    int idx = scopedName.indexOf(':');
+    if (idx < 0) {
+      return namespaceId.profile(scopedName);
+    }
+    if (idx == scopedName.length()) {
+      throw new IllegalArgumentException("Invalid scoped profile " + scopedName + ". Cannot end with a ':'.");
+    }
+    EntityScope scope = EntityScope.valueOf(scopedName.substring(0, idx).toUpperCase());
+    String profileName = scopedName.substring(idx + 1);
+    return scope == EntityScope.SYSTEM ? NamespaceId.SYSTEM.profile(profileName) : namespaceId.profile(profileName);
   }
 
   @Override

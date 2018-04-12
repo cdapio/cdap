@@ -155,6 +155,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractExec
   protected abstract void processMessages(DatasetContext datasetContext,
                                           Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
+  /**
+   * Perform post processing after a batch of messages has been processed and before the next batch of
+   * messages is fetched. This will take place outside of the transaction used when processing messages.
+   */
+  protected void postProcess() {
+    // no-op
+  }
+
   @Override
   protected final void run() throws Exception {
     this.runThread = Thread.currentThread();
@@ -165,6 +173,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractExec
     while (runThread != null) {
       try {
         long sleepTime = fetchAndProcessMessages();
+        try {
+          postProcess();
+        } catch (Exception e) {
+          LOG.warn("Failed to perform post processing after processing messages.", e);
+        }
         // Don't sleep if sleepTime returned is 0
         if (sleepTime > 0) {
           TimeUnit.MILLISECONDS.sleep(sleepTime);

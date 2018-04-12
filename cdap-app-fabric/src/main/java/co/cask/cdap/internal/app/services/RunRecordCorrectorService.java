@@ -52,7 +52,8 @@ import java.util.function.Predicate;
 public abstract class RunRecordCorrectorService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RunRecordCorrectorService.class);
-  private static final Set<ProgramRunStatus> NOT_STOPPED_STATUSES = EnumSet.of(ProgramRunStatus.STARTING,
+  private static final Set<ProgramRunStatus> NOT_STOPPED_STATUSES = EnumSet.of(ProgramRunStatus.PENDING,
+                                                                               ProgramRunStatus.STARTING,
                                                                                ProgramRunStatus.RUNNING,
                                                                                ProgramRunStatus.SUSPENDED);
   private final Store store;

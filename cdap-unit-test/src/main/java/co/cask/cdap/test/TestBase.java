@@ -75,10 +75,10 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
+import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -208,7 +208,7 @@ public class TestBase {
   private static Scheduler programScheduler;
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
-  private static ProgramLifecycleService programLifecycleService;
+  private static ProvisioningService provisioningService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -312,8 +312,6 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
-    programLifecycleService.startAndWait();
     programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
     programNotificationSubscriberService.startAndWait();
     scheduler = injector.getInstance(Scheduler.class);
@@ -371,6 +369,8 @@ public class TestBase {
     messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
     previewManager = injector.getInstance(PreviewManager.class);
+    provisioningService = injector.getInstance(ProvisioningService.class);
+    provisioningService.startAndWait();
   }
 
   private static TestManager getTestManager() {
@@ -501,7 +501,6 @@ public class TestBase {
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
     }
-    programLifecycleService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
@@ -522,6 +521,7 @@ public class TestBase {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    provisioningService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {
