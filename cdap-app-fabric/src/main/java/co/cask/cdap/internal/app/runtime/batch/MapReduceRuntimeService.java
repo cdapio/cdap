@@ -548,13 +548,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // AbstractMapReduce implements final initialize(context) and requires subclass to
     // implement initialize(), whereas programs that directly implement MapReduce have
     // the option to override initialize(context) (if they implement ProgramLifeCycle)
+    TransactionControl defaultTxControl = context.getDefaultTxControl();
     TransactionControl txControl = mapReduce instanceof AbstractMapReduce
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractMapReduce.class,
+      ? Transactions.getTransactionControl(defaultTxControl, AbstractMapReduce.class,
                                            mapReduce, "initialize")
       : mapReduce instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, MapReduce.class,
+      ? Transactions.getTransactionControl(defaultTxControl, MapReduce.class,
                                            mapReduce, "initialize", MapReduceContext.class)
-      : TransactionControl.IMPLICIT;
+      : defaultTxControl;
 
     context.initializeProgram(programLifecycle, txControl, false);
 
@@ -594,9 +595,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
   private void destroy() {
+    TransactionControl defaultTxControl = context.getDefaultTxControl();
     TransactionControl txControl = mapReduce instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, MapReduce.class, mapReduce, "destroy")
-      : TransactionControl.IMPLICIT;
+      ? Transactions.getTransactionControl(defaultTxControl, MapReduce.class, mapReduce, "destroy")
+      : defaultTxControl;
 
     context.destroyProgram(programLifecycle, txControl, false);
   }

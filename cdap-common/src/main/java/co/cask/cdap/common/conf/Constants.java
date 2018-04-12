@@ -191,6 +191,8 @@ public final class Constants {
     public static final String YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL =
       "app.program.yarn.attempt.failures.validity.interval";
 
+    public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
+
     /**
      * Guice named bindings.
      */

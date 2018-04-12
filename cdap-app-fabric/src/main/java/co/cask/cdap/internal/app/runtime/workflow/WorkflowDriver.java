@@ -129,7 +129,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final TransactionSystemClient txClient;
   private final WorkflowStateWriter workflowStateWriter;
   private final ProgramRunId workflowRunId;
-  private final BasicWorkflowContext basicWorkflowContext;
+  private final BasicWorkflowContext workflowContext;
   private final BasicWorkflowToken basicWorkflowToken;
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
@@ -168,11 +168,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                            workflowSpec.getLocalDatasetSpecs().keySet(),
                                                            workflowRunId.getRun());
     this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
-    this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec,
-                                                         basicWorkflowToken, program, programOptions, cConf,
-                                                         metricsCollectionService, this.datasetFramework, txClient,
-                                                         discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                         secureStore, secureStoreManager, messagingService, null);
+    this.workflowContext = new BasicWorkflowContext(workflowSpec,
+                                                    basicWorkflowToken, program, programOptions, cConf,
+                                                    metricsCollectionService, this.datasetFramework, txClient,
+                                                    discoveryServiceClient, nodeStates, pluginInstantiator,
+                                                    secureStore, secureStoreManager, messagingService, null);
 
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(), workflowRunId.getRun());
@@ -199,16 +199,16 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Class<? extends Workflow> workflowClass = (Class<? extends Workflow>) clz;
     final Workflow workflow = new InstantiatorFactory(false).get(TypeToken.of(workflowClass)).create();
     // set metrics
-    Reflections.visit(workflow, workflow.getClass(), new MetricsFieldSetter(basicWorkflowContext.getMetrics()));
+    Reflections.visit(workflow, workflow.getClass(), new MetricsFieldSetter(workflowContext.getMetrics()));
     if (!(workflow instanceof ProgramLifecycle)) {
       return workflow;
     }
     final TransactionControl txControl =
-      Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class,
+      Transactions.getTransactionControl(workflowContext.getDefaultTxControl(), Workflow.class,
                                          workflow, "initialize", WorkflowContext.class);
     basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-    basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-    basicWorkflowContext.initializeProgram((ProgramLifecycle) workflow, txControl, false);
+    workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+    workflowContext.initializeProgram((ProgramLifecycle) workflow, txControl, false);
     workflowStateWriter.setWorkflowToken(workflowRunId, basicWorkflowToken);
     return workflow;
   }
@@ -278,10 +278,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (!(workflow instanceof ProgramLifecycle)) {
       return;
     }
-    final TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+    final TransactionControl txControl = Transactions.getTransactionControl(workflowContext.getDefaultTxControl(),
                                                                             Workflow.class, workflow, "destroy");
     basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-    basicWorkflowContext.destroyProgram((ProgramLifecycle) workflow, txControl, false);
+    workflowContext.destroyProgram((ProgramLifecycle) workflow, txControl, false);
     try {
       workflowStateWriter.setWorkflowToken(workflowRunId, basicWorkflowToken);
     } catch (Throwable t) {
@@ -470,22 +470,22 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                         new PropertyFieldSetter(node.getConditionSpecification().getProperties()),
                         new DataSetFieldSetter(context), new MetricsFieldSetter(context.getMetrics()));
 
+      TransactionControl defaultTxControl = workflowContext.getDefaultTxControl();
       try {
         // AbstractCondition implements final initialize(context) and requires subclass to
         // implement initialize(), whereas conditions that directly implement Condition can
         // override initialize(context)
-
         TransactionControl txControl = workflowCondition instanceof AbstractCondition
-          ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractCondition.class,
+          ? Transactions.getTransactionControl(defaultTxControl, AbstractCondition.class,
                                                workflowCondition, "initialize")
-          : Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class,
+          : Transactions.getTransactionControl(defaultTxControl, Condition.class,
                                                workflowCondition, "initialize", WorkflowContext.class);
 
         context.initializeProgram(workflowCondition, txControl, false);
         boolean result = context.execute(() -> workflowCondition.apply(context));
         iterator = result ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
       } finally {
-        TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class,
+        TransactionControl txControl = Transactions.getTransactionControl(defaultTxControl, Condition.class,
                                                                           workflowCondition, "destroy");
         context.destroyProgram(workflowCondition, txControl, false);
       }
@@ -517,7 +517,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private boolean keepLocal(String originalDatasetName) {
     Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, originalDatasetName,
-                                                                         basicWorkflowContext.getRuntimeArguments());
+                                                                         workflowContext.getRuntimeArguments());
 
     return Boolean.parseBoolean(datasetArguments.get("keep.local"));
   }
@@ -583,11 +583,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   protected void run() throws Exception {
     LOG.info("Starting workflow execution for '{}' with Run id '{}'", workflowSpec.getName(), workflowRunId.getRun());
     LOG.trace("Workflow specification is {}", workflowSpec);
-    basicWorkflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
+    workflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
     if (runningThread != null) {
-      basicWorkflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+      workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
     }
     LOG.info("Workflow '{}' with run id '{}' completed", workflowSpec.getName(), workflowRunId.getRun());
   }
@@ -604,10 +604,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         if (rootCause instanceof InterruptedException) {
           LOG.debug("Workflow '{}' with run id '{}' aborted", workflowSpec.getName(),
                     workflowRunId.getRun());
-          basicWorkflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
+          workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
           break;
         }
-        basicWorkflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
+        workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
         throw Throwables.propagate(rootCause);
       }
     }

@@ -107,7 +107,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
 
   private void initFlowlet() throws Exception {
     LOG.debug("Initializing flowlet: {}", flowletContext);
-    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+    TransactionControl txControl = Transactions.getTransactionControl(flowletContext.getDefaultTxControl(),
                                                                        Flowlet.class, flowlet, "initialize",
                                                                        FlowletContext.class);
     flowletContext.initializeProgram(flowlet, txControl, false);
@@ -116,7 +116,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
 
   private void destroyFlowlet() {
     LOG.debug("Destroying flowlet: {}", flowletContext);
-    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+    TransactionControl txControl = Transactions.getTransactionControl(flowletContext.getDefaultTxControl(),
                                                                       Flowlet.class, flowlet, "destroy");
     flowletContext.destroyProgram(flowlet, txControl, false);
     LOG.debug("Flowlet destroyed: {}", flowletContext);

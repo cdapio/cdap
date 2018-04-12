@@ -61,7 +61,6 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -419,12 +418,13 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // AbstractSpark implements final initialize(context) and requires subclass to
     // implement initialize(), whereas programs that directly implement Spark have
     // the option to override initialize(context) (if they implement ProgramLifeCycle)
+    TransactionControl defaultTxControl = runtimeContext.getDefaultTxControl();
     final TransactionControl txControl = spark instanceof AbstractSpark
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractSpark.class, spark, "initialize")
+      ? Transactions.getTransactionControl(defaultTxControl, AbstractSpark.class, spark, "initialize")
       : spark instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, Spark.class,
+      ? Transactions.getTransactionControl(defaultTxControl, Spark.class,
                                            spark, "initialize", SparkClientContext.class)
-      : TransactionControl.IMPLICIT;
+      : defaultTxControl;
 
     runtimeContext.initializeProgram(programLifecycle, txControl, false);;
   }
@@ -435,9 +435,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private void destroy(final ProgramState state) {
     context.setState(state);
 
+    TransactionControl defaultTxControl = runtimeContext.getDefaultTxControl();
     TransactionControl txControl = spark instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, Spark.class, spark, "destroy")
-      : TransactionControl.IMPLICIT;
+      ? Transactions.getTransactionControl(defaultTxControl, Spark.class, spark, "destroy")
+      : defaultTxControl;
 
     runtimeContext.destroyProgram(programLifecycle, txControl, false);
   }

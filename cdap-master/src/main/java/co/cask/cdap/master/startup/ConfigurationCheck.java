@@ -16,6 +16,7 @@
 
 package co.cask.cdap.master.startup;
 
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -34,9 +35,11 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -66,6 +69,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
     checkKafkaTopic(problemKeys);
     checkMessagingTopics(problemKeys);
     checkLogPartitionKey(problemKeys);
+    checkProgramConfigurations(problemKeys);
     checkPruningAndReplication(problemKeys);
     checkHBaseDDLExtension(problemKeys);
 
@@ -180,6 +184,20 @@ class ConfigurationCheck extends AbstractMasterCheck {
     validateMessagingTopic(Constants.Scheduler.TIME_EVENT_TOPIC, problemKeys);
     validateMessagingTopic(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, problemKeys);
     validateMessagingTopic(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC, problemKeys);
+  }
+
+  private void checkProgramConfigurations(Set<String> problemKeys) {
+    String value = cConf.get(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL);
+    try {
+      TransactionControl.valueOf(value.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      LOG.error("  {} must be one of {} but is {}", Constants.AppFabric.PROGRAM_JVM_OPTS,
+                Arrays.stream(TransactionControl.values())
+                  .map(Object::toString)
+                  .map(String::toLowerCase)
+                  .collect(Collectors.joining(",", "[", "]")), value);
+      problemKeys.add(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL);
+    }
   }
 
   /**

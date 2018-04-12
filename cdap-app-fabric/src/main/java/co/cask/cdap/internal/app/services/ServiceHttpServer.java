@@ -184,7 +184,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
       return new HandlerTaskExecutor(handler) {
         @Override
         protected void initHandler(HttpServiceHandler handler) throws Exception {
-          TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Object.class,
+          TransactionControl txCtrl = Transactions.getTransactionControl(context.getDefaultTxControl(), Object.class,
                                                                          handler, "initialize",
                                                                          HttpServiceContext.class);
           context.initializeProgram(handler, txCtrl, true);
@@ -192,7 +192,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
 
         @Override
         protected void destroyHandler(HttpServiceHandler handler) {
-          TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+          TransactionControl txCtrl = Transactions.getTransactionControl(context.getDefaultTxControl(),
                                                                          Object.class, handler, "destroy");
           context.destroyProgram(handler, txCtrl, true);
         }

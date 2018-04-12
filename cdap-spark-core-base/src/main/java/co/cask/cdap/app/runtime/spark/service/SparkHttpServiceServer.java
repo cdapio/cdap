@@ -120,6 +120,7 @@ public class SparkHttpServiceServer extends AbstractServiceHttpServer<SparkHttpS
       return new HandlerTaskExecutor(handler) {
         @Override
         protected void initHandler(SparkHttpServiceHandler handler) throws Exception {
+          // Spark service is always default with Explicit tx control
           TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.EXPLICIT, Object.class,
                                                                          handler, "initialize",
                                                                          SparkHttpServiceContext.class);
