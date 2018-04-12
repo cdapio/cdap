@@ -19,19 +19,12 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
@@ -90,7 +83,6 @@ final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletPro
         install(new DataFabricFacadeModule());
         bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
         bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
-        bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
       }
     };
   }

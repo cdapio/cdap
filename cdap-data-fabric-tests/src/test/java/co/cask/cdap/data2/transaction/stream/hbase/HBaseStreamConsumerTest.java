@@ -36,6 +36,7 @@ import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
@@ -135,6 +136,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
             bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
           }
         })
     );
