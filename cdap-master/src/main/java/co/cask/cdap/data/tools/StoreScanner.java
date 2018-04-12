@@ -182,6 +182,7 @@ public class StoreScanner extends AbstractIdleService {
   public static void main(String[] args) throws Exception {
     Options options = new Options()
       .addOption(new Option("h", "help", false, "Print this usage message."))
+      .addOption(new Option("s", "start", true, "Starting offset for generating records"))
       .addOption(new Option("n", "number", true, "Number of run records to generate"))
       .addOption(new Option("d", "delete", false, "delete runs in the store"))
       .addOption(new Option("t", "trace", false, "Trace mode. Prints all of the jobs being debugged."));
@@ -200,7 +201,13 @@ public class StoreScanner extends AbstractIdleService {
       System.exit(0);
     }
 
-    Integer number = 0;
+    int start = 0;
+    if (commandLine.hasOption("s")) {
+      String s = commandLine.getOptionValue("s");
+      start = Integer.valueOf(s);
+    }
+
+    int number = 0;
     if (commandLine.hasOption("n")) {
       String n = commandLine.getOptionValue("n");
       number = Integer.valueOf(n);
@@ -217,15 +224,20 @@ public class StoreScanner extends AbstractIdleService {
       }
     }
 
-    for (int i = 0; i < number; i++) {
-      if (i == number / 10) {
-        System.out.println("==> 10% done");
+    long beforeWriting = System.currentTimeMillis();
+    for (int i = start; i < start + number; i++) {
+      if (i - start == number / 10) {
+        System.out.println("==> 10% done; time elapsed: "
+                             + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
       } else if (i == number / 5) {
-        System.out.println("====> 20% done");
+        System.out.println("==> 20% done; time elapsed: "
+                             + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
       } else if (i == number / 2) {
-        System.out.println("====> 50% done");
+        System.out.println("==> 50% done; time elapsed: "
+                             + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
       } else if (i == number / 5 * 4) {
-        System.out.println("====> 80% done");
+        System.out.println("==> 80% done; time elapsed: "
+                             + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
       }
 
       String ns = namespaces.get(i % namespaces.size());
@@ -233,12 +245,14 @@ public class StoreScanner extends AbstractIdleService {
                                             RunIds.generate(TimeUnit.SECONDS.toMillis(i)).getId());
       store.setProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(), Bytes.toBytes(i),
                             new ArtifactId("art", new ArtifactVersion("v1"), ArtifactScope.USER));
-      store.setStop(runId, i + 1, ProgramRunStatus.COMPLETED, Bytes.toBytes(i));
+      store.setStop(runId, i + 1, ProgramRunStatus.COMPLETED, Bytes.toBytes(i + 1));
     }
-    long start = System.currentTimeMillis();
+    System.out.println("==> 100% done; time elapsed: "
+                         + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
+    long before = System.currentTimeMillis();
     Map<ProgramRunId, RunRecordMeta> runs =
-      scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), number - 10, number, 100);
-    System.out.println("Time used = " + (System.currentTimeMillis() - start));
+      scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), number + start - 5, number + start, 100);
+    System.out.println("Time used = " + (System.currentTimeMillis() - before));
     System.out.println("Runs: " + runs.values());
     scanner.stopAndWait();
   }
