@@ -76,17 +76,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
-  }.getType();
-  private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() {
-  }.getType();
-  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() {
-  }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
   private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
     input -> EntityTypeSimpleName.valueOf(input.toUpperCase());
-
-  private final MetadataAdmin metadataAdmin;
 
   private static final Map<String, String> API_PART_TO_ENTITY_TYPE;
 
@@ -104,6 +99,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     map.put("views", MetadataEntity.VIEW);
     API_PART_TO_ENTITY_TYPE = Collections.unmodifiableMap(map);
   }
+
+  private final MetadataAdmin metadataAdmin;
 
   @Inject
   MetadataHttpHandler(MetadataAdmin metadataAdmin) {
@@ -260,7 +257,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       // the api part which we get for program does not have type keyword as part of the uri. It goes like
       // ../apps/appName/programType/ProgramName so handle that correctly
       if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps")) {
-        metadataEntity = metadataEntity.append(MetadataEntity.TYPE, ProgramType.valueOfCategoryName(parts[curIndex]).name());
+        metadataEntity = metadataEntity.append(MetadataEntity.TYPE,
+                                               ProgramType.valueOfCategoryName(parts[curIndex]).name());
         metadataEntity = metadataEntity.append(MetadataEntity.PROGRAM, parts[curIndex + 1]);
       } else {
         metadataEntity = metadataEntity.append(API_PART_TO_ENTITY_TYPE.get(parts[curIndex]), parts[curIndex + 1]);

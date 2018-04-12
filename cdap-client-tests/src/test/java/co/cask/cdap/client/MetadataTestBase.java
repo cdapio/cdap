@@ -581,7 +581,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
       callable.call();
       Assert.fail("Expected to have exception of class: " + expectedExceptionClass);
     } catch (Exception e) {
-      if(e.getClass() != expectedExceptionClass) {
+      if (e.getClass() != expectedExceptionClass) {
         Assert.fail(String.format("Expected %s but received %s. %s", expectedExceptionClass.getSimpleName(), e
           .getClass().getSimpleName(), e));
       }

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * Entity representation for Metadata
@@ -40,12 +41,11 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
   private final List<KeyValue> details;
 
+  /**
+   * Creates a empty {@link MetadataEntity}
+   */
   public MetadataEntity() {
     this.details = Collections.emptyList();
-  }
-
-  private MetadataEntity(List<KeyValue> details) {
-    this.details = Collections.unmodifiableList(new ArrayList<>(details));
   }
 
   /**
@@ -57,6 +57,10 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
    */
   public static MetadataEntity ofDataset(String datasetName) {
     return new MetadataEntity(Collections.singletonList(new KeyValue(DATASET, datasetName)));
+  }
+
+  private MetadataEntity(List<KeyValue> details) {
+    this.details = Collections.unmodifiableList(new ArrayList<>(details));
   }
 
   /**
@@ -127,10 +131,16 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     return details;
   }
 
+  /**
+   * @return A {@link Iterator} over the keys in this {@link MetadataEntity}
+   */
   public Iterator<String> getKeys() {
     return new MetadataEntityKeyIterator();
   }
 
+  /**
+   * @return A {@link Iterator} over the values in this {@link MetadataEntity}
+   */
   public Iterator<String> getValues() {
     return new MetadataEntityValueIterator();
   }
@@ -173,6 +183,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   }
 
   @Override
+  @Nonnull
   public Iterator<KeyValue> iterator() {
     return new MetadataEntityKeyValueIterator();
   }

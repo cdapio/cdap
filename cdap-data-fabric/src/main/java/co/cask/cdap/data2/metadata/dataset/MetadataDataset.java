@@ -399,8 +399,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the tags
    */
   public void removeTags(MetadataEntity metadataEntity) {
-    removeMetadata(metadataEntity,
-                   input -> TAGS_KEY.equals(input));
+    removeMetadata(metadataEntity, input -> TAGS_KEY.equals(input));
   }
 
   /**
@@ -853,7 +852,8 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the {@code null} or empty tags
    */
   public void removeNullOrEmptyTags(final MetadataEntity metadataEntity) {
-    removeMetadata(metadataEntity, input -> TAGS_KEY.equals(input) && Strings.isNullOrEmpty(getMetadata(metadataEntity, input).getValue()));
+    removeMetadata(metadataEntity, input -> TAGS_KEY.equals(input) &&
+      Strings.isNullOrEmpty(getMetadata(metadataEntity, input).getValue()));
   }
 
   /**

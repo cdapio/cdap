@@ -181,7 +181,8 @@ public class  MetadataDatasetTest {
     });
     // reset a property
     txnl.execute(() -> dataset.setProperty(stream1, "skey1", "sv1"));
-    txnl.execute(() -> Assert.assertEquals(ImmutableMap.of("skey1", "sv1", "skey2", "svalue2"), dataset.getProperties(stream1)));
+    txnl.execute(() -> Assert.assertEquals(ImmutableMap.of("skey1", "sv1", "skey2", "svalue2"),
+                                           dataset.getProperties(stream1)));
     // cleanup
     txnl.execute(() -> {
       dataset.removeProperties(app1);
