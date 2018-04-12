@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a write operation from a collection of input fields into a destination of data.
@@ -66,5 +67,23 @@ public class WriteOperation extends Operation {
    */
   public List<InputField> getInputs() {
     return inputs;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    WriteOperation that = (WriteOperation) o;
+    return Objects.equals(inputs, that.inputs) &&
+            Objects.equals(destination, that.destination);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), inputs, destination);
   }
 }

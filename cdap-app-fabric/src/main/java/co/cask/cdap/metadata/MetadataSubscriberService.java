@@ -18,6 +18,7 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.Metadata;
@@ -32,6 +33,8 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
@@ -47,6 +50,7 @@ import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import co.cask.cdap.metadata.profile.ProfileMetadataMessageProcessor;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.codec.OperationTypeAdapter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -78,6 +82,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private static final Logger LOG = LoggerFactory.getLogger(MetadataSubscriberService.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
 
   private final CConfiguration cConf;
@@ -87,6 +92,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MultiThreadMessagingContext messagingContext;
 
   private DatasetId lineageDatasetId = LineageDataset.LINEAGE_DATASET_ID;
+  private DatasetId fieldLineageDatasetId = FieldLineageDataset.FIELD_LINEAGE_DATASET_ID;
   private DatasetId usageDatasetId = UsageDataset.USAGE_INSTANCE_ID;
 
   @Inject
@@ -126,6 +132,15 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   @VisibleForTesting
   MetadataSubscriberService setLineageDatasetId(DatasetId lineageDatasetId) {
     this.lineageDatasetId = lineageDatasetId;
+    return this;
+  }
+
+  /**
+   * Sets the {@link DatasetId} for the {@link FieldLineageDataset}. This method is only for testing.
+   */
+  @VisibleForTesting
+  MetadataSubscriberService setFieldLineageDatasetId(DatasetId fieldLineageDatasetId) {
+    this.fieldLineageDatasetId = fieldLineageDatasetId;
     return this;
   }
 
@@ -179,6 +194,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         switch (type) {
           case LINEAGE:
             return new DataAccessLineageProcessor(datasetContext);
+          case FIELD_LINEAGE:
+            return new FieldLineageProcessor(datasetContext);
           case USAGE:
             return new UsageProcessor(datasetContext);
           case WORKFLOW_TOKEN:
@@ -241,6 +258,26 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         // This shouldn't happen
         LOG.warn("Missing dataset id from the lineage access information. Ignoring the message {}", message);
       }
+    }
+  }
+
+  /**
+   * The {@link MetadataMessageProcessor} for processing field lineage.
+   */
+  private final class FieldLineageProcessor implements MetadataMessageProcessor {
+
+    private final FieldLineageDataset fieldLineageDataset;
+
+    FieldLineageProcessor(DatasetContext datasetContext) {
+      this.fieldLineageDataset = FieldLineageDataset.getFieldLineageDataset(datasetContext, datasetFramework,
+                                                                            fieldLineageDatasetId);
+    }
+
+    @Override
+    public void processMessage(MetadataMessage message) {
+      FieldLineageInfo info = message.getPayload(GSON, FieldLineageInfo.class);
+      ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
+      fieldLineageDataset.addFieldLineageInfo(programRunId, info);
     }
   }
 

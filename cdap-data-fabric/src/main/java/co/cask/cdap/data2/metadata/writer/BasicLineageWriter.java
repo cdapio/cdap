@@ -23,6 +23,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
@@ -41,9 +43,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 
 /**
- * Basic implementation of {@link LineageWriter} that writes to {@link LineageDataset} directly.
+ * Basic implementation of {@link LineageWriter} and {@link FieldLineageWriter}.
+ * Implementation of LineageWriter write to the {@link LineageDataset} where as
+ * implementation of FieldLineageWriter writes to the {@link FieldLineageDataset} directly.
  */
-public class BasicLineageWriter implements LineageWriter {
+public class BasicLineageWriter implements LineageWriter, FieldLineageWriter {
 
   private static final Logger LOG = LoggerFactory.getLogger(BasicLineageWriter.class);
 
@@ -101,5 +105,23 @@ public class BasicLineageWriter implements LineageWriter {
   @VisibleForTesting
   protected DatasetId getLineageDatasetId() {
     return LineageDataset.LINEAGE_DATASET_ID;
+  }
+
+  /**
+   * Returns the {@link DatasetId} of the field lineage dataset. This method should only be overridden in unit-test.
+   */
+  @VisibleForTesting
+  protected DatasetId getFieldLineageDatasetId() {
+    return FieldLineageDataset.FIELD_LINEAGE_DATASET_ID;
+  }
+
+  @Override
+  public void write(ProgramRunId programRunId, FieldLineageInfo info) {
+    Transactionals.execute(transactional, context -> {
+      FieldLineageDataset fieldLineageDataset = FieldLineageDataset.getFieldLineageDataset(context, datasetFramework,
+                                                                                           getFieldLineageDatasetId());
+
+      fieldLineageDataset.addFieldLineageInfo(programRunId, info);
+    });
   }
 }

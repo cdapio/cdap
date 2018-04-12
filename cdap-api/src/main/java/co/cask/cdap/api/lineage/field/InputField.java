@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.lineage.field;
 
+import java.util.Objects;
+
 /**
  * Represents an input field of an operation. The field is uniquely
  * identified by its name and the name of the operation(origin) that
@@ -53,5 +55,23 @@ public class InputField {
    */
   public static InputField of(String origin, String name) {
     return new InputField(origin, name);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    InputField that = (InputField) o;
+    return Objects.equals(origin, that.origin) &&
+            Objects.equals(name, that.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(origin, name);
   }
 }

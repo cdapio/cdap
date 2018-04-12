@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.lineage.field;
+package co.cask.cdap.data2.metadata.lineage.field;
 
 import co.cask.cdap.api.lineage.field.EndPoint;
 

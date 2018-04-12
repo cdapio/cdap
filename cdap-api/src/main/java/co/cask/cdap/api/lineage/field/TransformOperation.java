@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represent the transform operation from collection of input fields to collection of output fields.
@@ -66,5 +67,24 @@ public class TransformOperation extends Operation {
    */
   public List<String> getOutputs() {
     return outputs;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!super.equals(o)) {
+      return false;
+    }
+    TransformOperation that = (TransformOperation) o;
+    return Objects.equals(inputs, that.inputs) &&
+            Objects.equals(outputs, that.outputs);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), inputs, outputs);
   }
 }
