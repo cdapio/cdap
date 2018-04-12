@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
@@ -58,6 +59,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -158,7 +160,9 @@ public class LineageAdmin {
   public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) throws NotFoundException {
     entityExistenceVerifier.ensureExists(run);
 
-    Set<NamespacedEntityId> runEntities = new HashSet<>(lineageStoreReader.getEntitiesForRun(run));
+    Set<MetadataEntity> runEntities = lineageStoreReader.getEntitiesForRun(run).stream()
+      .map(NamespacedEntityId::toMetadataEntity)
+      .collect(Collectors.toSet());
 
     // No entities associated with the run, but run exists.
     if (runEntities.isEmpty()) {
@@ -169,7 +173,7 @@ public class LineageAdmin {
 
     // The entities returned by lineageStore does not contain application
     ApplicationId application = run.getParent().getParent();
-    runEntities.add(application);
+    runEntities.add(application.toMetadataEntity());
     return metadataStore.getSnapshotBeforeTime(MetadataScope.USER, runEntities,
                                                RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }

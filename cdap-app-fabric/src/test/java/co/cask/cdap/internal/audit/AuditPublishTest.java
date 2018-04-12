@@ -124,7 +124,7 @@ public class AuditPublishTest {
 
     Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
     for (AuditMessage message : publishedMessages) {
-      EntityId entityId = message.getEntityId();
+      EntityId entityId = EntityId.fromMetadataEntity(message.getEntity());
       if (entityId instanceof NamespacedEntityId) {
         if (((NamespacedEntityId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
           // Ignore system audit messages

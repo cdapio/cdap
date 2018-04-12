@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -38,7 +39,6 @@ import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
@@ -488,8 +488,8 @@ public abstract class StreamAdminTest {
                        new Predicate<AuditMessage>() {
                          @Override
                          public boolean apply(AuditMessage input) {
-                           return !(input.getEntityId() instanceof NamespacedEntityId &&
-                             ((NamespacedEntityId) input.getEntityId()).getNamespace().equals(systemNs));
+                           return !(input.getEntity().containsKey(MetadataEntity.NAMESPACE) && input.getEntity()
+                             .getValue(MetadataEntity.NAMESPACE).equalsIgnoreCase(systemNs));
                          }
                        });
 

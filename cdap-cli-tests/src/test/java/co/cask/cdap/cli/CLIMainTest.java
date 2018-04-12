@@ -126,10 +126,15 @@ public class CLIMainTest extends CLITestBase {
   private static final ApplicationId FAKE_APP_ID_V_1 = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT);
   private static final ArtifactId FAKE_PLUGIN_ID = NamespaceId.DEFAULT.artifact(FakePlugin.NAME, V1);
   private static final ProgramId FAKE_WORKFLOW_ID = FAKE_APP_ID.workflow(FakeWorkflow.NAME);
+  private static final ProgramId FAKE_WORKFLOW_ID_V_1 = FAKE_APP_ID_V_1.workflow(FakeWorkflow.NAME);
   private static final ProgramId FAKE_FLOW_ID = FAKE_APP_ID.flow(FakeFlow.NAME);
+  private static final ProgramId FAKE_FLOW_ID_V_1 = FAKE_APP_ID_V_1.flow(FakeFlow.NAME);
   private static final ProgramId FAKE_SPARK_ID = FAKE_APP_ID.spark(FakeSpark.NAME);
+  private static final ProgramId FAKE_SPARK_ID_V_1 = FAKE_APP_ID_V_1.spark(FakeSpark.NAME);
   private static final ServiceId PING_SERVICE_ID = FAKE_APP_ID.service(PingService.NAME);
+  private static final ServiceId PING_SERVICE_ID_V_1 = FAKE_APP_ID_V_1.service(PingService.NAME);
   private static final ServiceId PREFIXED_ECHO_HANDLER_ID = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
+  private static final ServiceId PREFIXED_ECHO_HANDLER_ID_V_1 = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
   private static final DatasetId FAKE_DS_ID = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
   private static final StreamId FAKE_STREAM_ID = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
 
@@ -859,8 +864,9 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type app", FAKE_APP_ID.toString());
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_SPARK_ID.toString(),
-                                             FAKE_FLOW_ID.toString());
+    List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_WORKFLOW_ID_V_1.toString(),
+                                             FAKE_SPARK_ID.toString(), FAKE_SPARK_ID_V_1.toString(),
+                                             FAKE_FLOW_ID.toString(), FAKE_FLOW_ID_V_1.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", FAKE_DS_ID.toString());
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type stream", FAKE_STREAM_ID.toString());
@@ -876,12 +882,14 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "search metadata bat* filtered by target-type dataset", FAKE_DS_ID.toString());
     output = getCommandOutput(cli, "search metadata batch filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_WORKFLOW_ID.toString());
+    expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_SPARK_ID_V_1.toString(),
+                                FAKE_WORKFLOW_ID.toString(), FAKE_WORKFLOW_ID_V_1.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata realtime filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_FLOW_ID.toString(), PING_SERVICE_ID.toString(),
-                                PREFIXED_ECHO_HANDLER_ID.toString());
+    expected = ImmutableList.of("Entity", FAKE_FLOW_ID.toString(), FAKE_FLOW_ID_V_1.toString(),
+                                PING_SERVICE_ID.toString(), PING_SERVICE_ID_V_1.toString(), PREFIXED_ECHO_HANDLER_ID
+                                  .toString(), PREFIXED_ECHO_HANDLER_ID_V_1.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream");
     lines = Arrays.asList(output.split("\\r?\\n"));
@@ -889,7 +897,12 @@ public class CLIMainTest extends CLITestBase {
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString(), FAKE_APP_ID.toString());
+    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString(), FAKE_APP_ID.toString(),
+                                FAKE_APP_ID_V_1.toString());
+    Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
+    output = getCommandOutput(cli, "search metadata wfTag* filtered by target-type program");
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
   }
 
