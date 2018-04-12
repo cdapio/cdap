@@ -291,6 +291,11 @@ footer {
   width: 100%;
   border-collapse: collapse;
 
+  &.disabled,
+  &.disabled * {
+    cursor: not-allowed !important;
+  }
+
   .grid-row {
     width: 100%;
     display: table-row;
@@ -327,6 +332,12 @@ footer {
     max-height: @maxGridHeight;
     overflow-y: auto;
     display: grid;
+
+    &.disabled,
+    &.disabled * {
+      cursor: not-allowed !important;
+    }
+
     .grid-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(@minGridWidth, @maxGridWidth));

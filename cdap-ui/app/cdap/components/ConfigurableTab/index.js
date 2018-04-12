@@ -14,54 +14,85 @@
  * the License.
  */
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
-
 import Tabs from '../Tabs';
-import TabHeaders from '../TabHeaders';
-import {TabContent, TabPane} from 'reactstrap';
+import TabHeaders from 'components/Tabs/TabHeaders';
+import TabHead from 'components/Tabs/TabHead';
+import TabGroup from 'components/Tabs/TabGroup';
 import IconSVG from 'components/IconSVG';
 
-import TabHead from '../TabHead';
 require('./ConfigurableTab.scss');
+const TabConfig = PropTypes.shape({
+  name: PropTypes.string,
+  content: PropTypes.node
+});
 
 export default class ConfigurableTab extends Component {
-  constructor(props) {
-    super(props);
-    /* Eventually we will be adding more to the state,
-      - Steps completed
-      - Steps with errors
-      - Short description (not sure)
-      - Long description (not sure)
-      - classNames for individual sections
-        - left tab section?
-        - right container section?
-        - highlighting tabs (both completed and errored/missing tabs)
-      - and more...
-    */
-    let {tabs, layout, defaultTab} = this.props.tabConfig;
-    this.state = { tabs, layout, activeTab: this.props.activeTab || defaultTab };
+
+  static propTypes = {
+    onTabClick: PropTypes.func,
+    activeTab: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]),
+    tabConfig: PropTypes.shape({
+      tabs: PropTypes.arrayOf(TabConfig),
+      layout: PropTypes.string,
+      defaultTab: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number
+      ])
+    })
+  };
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({ tabs: nextProps.tabConfig.tabs});
   }
-  setTab(tabId) {
+
+  state = {
+    tabs: this.props.tabConfig.tabs,
+    layout: this.props.tabConfig.layout,
+    activeTab: this.props.activeTab || this.props.tabConfig.defaultTab
+  };
+
+  setTab = (tabId) => {
     this.setState({activeTab: tabId});
     document.querySelector('.tab-content').scrollTop = 0;
 
     if (typeof this.props.onTabClick === 'function') {
       this.props.onTabClick(tabId);
     }
-  }
-  isActiveTab(tabId) {
+  };
+
+  isActiveTab = (tabId) => {
     return this.state.activeTab === tabId;
-  }
-  componentWillReceiveProps(nextProps) {
-    this.setState({ tabs: nextProps.tabConfig.tabs});
-  }
+  };
+
   render() {
+    let tabs = [];
+    this.state.tabs.forEach(tab => {
+      if (tab.type === 'tab-group') {
+        tabs = [...tabs, ...tab.subtabs];
+        return;
+      }
+      tabs.push(tab);
+    });
+    let activeTab = tabs.find(tab => this.state.activeTab === tab.id);
     return (
       <div className="cask-configurable-tab">
         <Tabs layout={this.state.layout}>
           <TabHeaders>
             {this.state.tabs.map((tab, index) => {
+              if (tab.type === 'tab-group') {
+                return (
+                  <TabGroup
+                    activeTab={this.state.activeTab}
+                    onTabClick={this.setTab}
+                    layout={this.state.layout}
+                    tabGroup={tab}
+                  />
+                );
+              }
               return (
                 <TabHead
                   layout={this.state.layout}
@@ -77,44 +108,16 @@ export default class ConfigurableTab extends Component {
               );
             })}
           </TabHeaders>
-          <TabContent activeTab={this.state.activeTab}>
-            {
-              this.state.tabs
-                .filter((tab) => tab.id === this.state.activeTab)
-                .map((tab, index) => {
-                  return (
-                    <TabPane
-                      tabId={tab.id}
-                      key={index}
-                    >
-                      {tab.content}
-                    </TabPane>
-                  );
-                }
-              )
-            }
-          </TabContent>
+          <div className="tab-content active">
+            <div
+              className="tab-pane active"
+              tabId={activeTab.id}
+            >
+              {activeTab.content}
+            </div>
+          </div>
         </Tabs>
       </div>
     );
   }
 }
-const TabConfig = PropTypes.shape({
-  name: PropTypes.string,
-  content: PropTypes.node
-});
-ConfigurableTab.propTypes = {
-  onTabClick: PropTypes.func,
-  activeTab: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number
-  ]),
-  tabConfig: PropTypes.shape({
-    tabs: PropTypes.arrayOf(TabConfig),
-    layout: PropTypes.string,
-    defaultTab: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ])
-  })
-};

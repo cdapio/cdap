@@ -49,6 +49,11 @@ body {
     border-collapse: collapse;
     width: 100%;
 
+    &.disabled,
+    &.disabled * {
+      cursor: not-allowed !important;
+    }
+
     .grid-row {
       width: 100%;
       display: table-row;
@@ -85,6 +90,12 @@ body {
       max-height: $maxGridHeight;
       overflow-y: auto;
       display: grid;
+
+      &.disabled,
+      &.disabled * {
+        cursor: not-allowed !important;
+      }
+
       .grid-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax($minGridWidth, $maxGridWidth));

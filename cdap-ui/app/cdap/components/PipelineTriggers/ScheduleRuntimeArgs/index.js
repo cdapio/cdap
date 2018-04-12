@@ -17,13 +17,21 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {fetchPipelineMacroDetails, resetStore, bulkSetArgMapping} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
+import {
+  fetchPipelineMacroDetails,
+  resetStore,
+  bulkSetArgMapping,
+  setSelectedProfile
+} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
 import ScheduleRuntimeArgsStore, {SCHEDULERUNTIMEARGSACTIONS} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
 import ConfigurableTab from 'components/ConfigurableTab';
 import TabConfig from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/TabConfig';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
+import {Provider} from 'react-redux';
+import isNil from 'lodash/isNil';
+import {PROFILE_NAME_PREFERENCE_PROPERTY} from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
 
 require('./ScheduleRuntimeArgs.scss');
 require('./Tabs/ScheduleRuntimeTabStyling.scss');
@@ -100,6 +108,7 @@ export default class ScheduleRuntimeArgs extends Component {
         });
       }
 
+      setSelectedProfile(scheduleInfo.properties[PROFILE_NAME_PREFERENCE_PROPERTY]);
       bulkSetArgMapping(argsArray);
     }
   }
@@ -112,21 +121,25 @@ export default class ScheduleRuntimeArgs extends Component {
   }
 
   configureAndEnableTrigger = () => {
-    let {argsMapping} = ScheduleRuntimeArgsStore.getState().args;
+    let {argsMapping, selectedProfile} = ScheduleRuntimeArgsStore.getState().args;
+    let config = {};
+    if (selectedProfile.name) {
+      config[PROFILE_NAME_PREFERENCE_PROPERTY] = selectedProfile.name;
+    }
     if (this.props.onEnableSchedule) {
-      this.props.onEnableSchedule(argsMapping);
+      this.props.onEnableSchedule(argsMapping, config);
     }
   };
 
   isEnableTriggerDisabled = () => {
-    let {argsMapping} = ScheduleRuntimeArgsStore.getState().args;
-    return argsMapping.length === 0;
+    let {argsMapping, selectedProfile} = ScheduleRuntimeArgsStore.getState().args;
+    let profileName = objectQuery(selectedProfile, 'name');
+    return argsMapping.length === 0 && (isNil(profileName) || profileName.length === 0);
   };
 
   render() {
     const button = (
-      <div>
-        <hr />
+      <div className="button-container clearfix">
         <button
           className="btn btn-primary pull-right"
           onClick={this.configureAndEnableTrigger}
@@ -139,11 +152,13 @@ export default class ScheduleRuntimeArgs extends Component {
 
     return (
       <div className={classnames('schedule-runtime-args', { disabled: this.props.disabled })}>
-        <fieldset disabled={this.props.disabled}>
-          <ConfigurableTab
-            tabConfig={TabConfig}
-          />
-        </fieldset>
+        <Provider store={ScheduleRuntimeArgsStore}>
+          <fieldset disabled={this.props.disabled}>
+            <ConfigurableTab
+              tabConfig={TabConfig}
+            />
+          </fieldset>
+        </Provider>
 
         {this.props.disabled ? null : button}
       </div>

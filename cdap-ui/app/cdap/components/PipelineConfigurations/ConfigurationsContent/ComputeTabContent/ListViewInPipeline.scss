@@ -22,6 +22,12 @@
 }
 .profiles-list-view-on-pipeline {
   height: calc(100% - 40px); // 40px for the buttons at the bottom
+
+  &.empty-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   > div {
     height: 100%;
   }
@@ -30,7 +36,7 @@
     overflow: auto;
   }
   .grid.grid-container {
-    max-height: 100%;
+    max-height: calc(100% - 50px); // 100% - 17px (title) - 30px (profile count)
     .grid-row {
       grid-template-columns: 30px 1fr 1fr 1fr;
     }
@@ -47,6 +53,16 @@
         &:hover,
         &.active {
           background: $yellow-02-lighter;
+        }
+      }
+    }
+    &.disabled {
+      .grid-body {
+        .grid-row {
+          &:hover,
+          &.active {
+            background: $grey-07;
+          }
         }
       }
     }
