@@ -18,12 +18,15 @@ package co.cask.cdap.api.metadata;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Entity representation for Metadata
  */
-public class MetadataEntity {
+public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
   public static final String NAMESPACE = "namespace";
   public static final String APPLICATION = "application";
@@ -31,11 +34,15 @@ public class MetadataEntity {
   public static final String VERSION = "version";
   public static final String DATASET = "dataset";
   public static final String STREAM = "stream";
-  public static final String VIEW = "view";
+  public static final String VIEW = "stream_view";
   public static final String TYPE = "type";
   public static final String PROGRAM = "program";
 
   private final List<KeyValue> details;
+
+  public MetadataEntity() {
+    this.details = Collections.emptyList();
+  }
 
   private MetadataEntity(List<KeyValue> details) {
     this.details = Collections.unmodifiableList(new ArrayList<>(details));
@@ -89,11 +96,108 @@ public class MetadataEntity {
     return new MetadataEntity(existingParts);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    MetadataEntity that = (MetadataEntity) o;
+    return Objects.equals(details, that.details);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(details);
+  }
+
+  @Override
+  public String toString() {
+    return "MetadataEntity{" +
+      "details=" + details +
+      '}';
+  }
+
   /**
    * @return A {@link List} of {@link KeyValue} representing the metadata entity
    */
   public List<KeyValue> getKeyValues() {
     return details;
+  }
+
+  public Iterator<String> getKeys() {
+    return new MetadataEntityKeyIterator();
+  }
+
+  public Iterator<String> getValues() {
+    return new MetadataEntityValueIterator();
+  }
+
+  /**
+   * @return the value for the key if the key is found else null
+   */
+  public String getValue(String key) {
+    if (key == null) {
+      throw new NullPointerException("Key cannot be null");
+    }
+    for (KeyValue detail : details) {
+      if (detail.getKey().equals(key)) {
+        return detail.getValue();
+      }
+    }
+    return null;
+  }
+
+  private class MetadataEntityValueIterator extends MetadataEntityIterator<String> {
+
+    @Override
+    public String next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException("There are no more parts in the MetadataEntity");
+      }
+      return details.get(curIndex++).getValue();
+    }
+  }
+
+  private class MetadataEntityKeyIterator extends MetadataEntityIterator<String> {
+
+    @Override
+    public String next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException("There are no more parts in the MetadataEntity");
+      }
+      return details.get(curIndex++).getKey();
+    }
+  }
+
+  @Override
+  public Iterator<KeyValue> iterator() {
+    return new MetadataEntityKeyValueIterator();
+  }
+
+  private abstract class MetadataEntityIterator<T> implements Iterator<T> {
+    int curIndex;
+
+    MetadataEntityIterator() {
+      this.curIndex = 0;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return curIndex != details.size();
+    }
+  }
+
+  class MetadataEntityKeyValueIterator extends MetadataEntityIterator<KeyValue> {
+    @Override
+    public KeyValue next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException("There are no more parts in the MetadataEntity");
+      }
+      return details.get(curIndex++);
+    }
   }
 
   /**
@@ -106,6 +210,32 @@ public class MetadataEntity {
     public KeyValue(String key, String value) {
       this.key = key;
       this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return "KeyValue{" +
+        "key='" + key + '\'' +
+        ", value='" + value + '\'' +
+        '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      KeyValue keyValue = (KeyValue) o;
+      return Objects.equals(key, keyValue.key) &&
+        Objects.equals(value, keyValue.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(key, value);
     }
 
     public String getKey() {

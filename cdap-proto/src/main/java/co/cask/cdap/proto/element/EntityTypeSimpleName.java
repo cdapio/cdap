@@ -16,6 +16,7 @@
 package co.cask.cdap.proto.element;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.metadata.MetadataEntity;
 
 /**
  * Simple names for various CDAP entities which can be used during entity serialization for persistence.
@@ -24,14 +25,14 @@ import co.cask.cdap.api.annotation.Beta;
 public enum EntityTypeSimpleName {
   // the custom values are required because these value match the entity-type stored as
   // a part of MDS key.
-  ALL("All"),
-  NAMESPACE("Namespace"),
-  ARTIFACT("Artifact"),
-  APP("Application"),
-  PROGRAM("Program"),
-  DATASET("DatasetInstance"),
-  STREAM("Stream"),
-  VIEW("View");
+  ALL("all"),
+  NAMESPACE(MetadataEntity.NAMESPACE),
+  ARTIFACT(MetadataEntity.ARTIFACT),
+  APP(MetadataEntity.APPLICATION),
+  PROGRAM(MetadataEntity.PROGRAM),
+  DATASET(MetadataEntity.DATASET),
+  STREAM(MetadataEntity.STREAM),
+  VIEW(MetadataEntity.VIEW);
 
   private final String serializedForm;
 

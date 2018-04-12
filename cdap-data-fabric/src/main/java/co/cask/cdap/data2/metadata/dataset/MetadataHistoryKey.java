@@ -17,32 +17,37 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 
 /**
  * Key used to store metadata history.
  */
-public class MdsHistoryKey {
+class MetadataHistoryKey {
   private static final byte[] ROW_PREFIX = {'h'};
 
-  public static MDSKey getMdsKey(NamespacedEntityId targetId, long time) {
+  static MDSKey getMetadataKey(MetadataEntity targetId, long time) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
-    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
+    for (MetadataEntity.KeyValue keyValue : targetId) {
+      builder.add(keyValue.getKey());
+      builder.add(keyValue.getValue());
+    }
     builder.add(invertTime(time));
     return builder.build();
   }
 
-  public static MDSKey getMdsScanStartKey(NamespacedEntityId targetId, long time) {
-    return getMdsKey(targetId, time);
+  static MDSKey getMetdatdaScanStartKey(MetadataEntity metadataEntity, long time) {
+    return getMetadataKey(metadataEntity, time);
   }
 
-  public static MDSKey getMdsScanEndKey(NamespacedEntityId targetId) {
+  static MDSKey getMetadataScanEndKey(MetadataEntity metadataEntity) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
-    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
+    for (MetadataEntity.KeyValue keyValue : metadataEntity) {
+      builder.add(keyValue.getKey());
+      builder.add(keyValue.getValue());
+    }
     byte[] key = builder.build().getKey();
     return new MDSKey(Bytes.stopKeyForPrefix(key));
   }
