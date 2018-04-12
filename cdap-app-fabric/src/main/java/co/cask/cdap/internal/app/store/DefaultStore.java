@@ -412,6 +412,14 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<String> namespaces,
+                                                            long earliestStopTime, long latestStartTime, int limit) {
+    return Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getHistoricalRuns(namespaces, earliestStopTime, latestStartTime, limit);
+    });
+  }
+
   /**
    * Returns run record for a given run.
    *

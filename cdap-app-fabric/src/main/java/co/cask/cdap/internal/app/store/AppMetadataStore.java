@@ -1047,6 +1047,31 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     return newRecords;
   }
 
+  /**
+   * Fetches the historical (i.e COMPLETED or FAILED or KILLED) run records from a given set of namespaces.
+   *
+   * @param namespaces fetch run history that is belonged to one of these namespaces
+   * @param earliestStopTime fetch run history that has stopped at or after the earliestStopTime in seconds
+   * @param latestStartTime fetch run history that has started before the latestStartTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return map of logged runs
+   */
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(final Set<String> namespaces,
+                                                            final long earliestStopTime, final long latestStartTime,
+                                                            final int limit) {
+    MDSKey keyPrefix = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
+    //return all records in each namespace
+    Map<ProgramRunId, RunRecordMeta> runs = new HashMap<>();
+    namespaces.stream()
+      .map(ns -> getProgramRunIdMap(listKV(new MDSKey.Builder(keyPrefix).add(ns).build(), null,
+                                           RunRecordMeta.class, limit, key -> true,
+                                           // only get runs with stop time equal to or later than the earliestStopTime
+                                           // and start time earlier than latestStartTime
+                                           meta -> meta.getStopTs() != null && meta.getStopTs() >= earliestStopTime
+                                             && meta.getStartTs() < latestStartTime))).forEach(runs::putAll);
+    return runs;
+  }
+
   private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(MDSKey historyKey, ProgramRunStatus status,
                                                              final long startTime, final long endTime, int limit,
                                                              @Nullable Predicate<MDSKey> keyFiter,

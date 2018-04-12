@@ -254,6 +254,18 @@ public interface Store extends RuntimeStore {
   Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId);
 
   /**
+   * Fetches the historical (i.e COMPLETED or FAILED or KILLED) run records from a given set of namespaces.
+   *
+   * @param namespaces fetch run history that is belonged to one of these namespaces
+   * @param earliestStopTime fetch run history that has stopped at or after the earliestStopTime in seconds
+   * @param latestStartTime fetch run history that has started before the latestStartTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<String> namespaces,
+                                                     long earliestStopTime, long latestStartTime, int limit);
+
+  /**
    * Fetches the run record for particular run of a program.
    *
    * @param id        run id of the program
