@@ -39,7 +39,7 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
                                       ArtifactInfo artifactInfo) {
     super(metadataStore, artifactId);
     this.artifactInfo = artifactInfo;
-    this.existing = !metadataStore.getProperties(MetadataScope.SYSTEM, artifactId).isEmpty();
+    this.existing = !metadataStore.getProperties(MetadataScope.SYSTEM, artifactId.toMetadataEntity()).isEmpty();
   }
 
   @Override

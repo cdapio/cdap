@@ -208,7 +208,7 @@ public class DatasetAdminService {
     }
 
     // Remove metadata for the dataset
-    metadataStore.removeMetadata(datasetInstanceId);
+    metadataStore.removeMetadata(datasetInstanceId.toMetadataEntity());
   }
 
   public boolean exists(DatasetId datasetInstanceId) throws Exception {

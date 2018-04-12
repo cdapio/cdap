@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metadata.system;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
@@ -59,17 +60,17 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   private static final String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";
 
   private final MetadataStore metadataStore;
-  private final NamespacedEntityId entityId;
+  private final MetadataEntity metadataEntity;
 
   AbstractSystemMetadataWriter(MetadataStore metadataStore, NamespacedEntityId entityId) {
     this.metadataStore = metadataStore;
-    this.entityId = entityId;
+    this.metadataEntity = entityId.toMetadataEntity();
   }
 
   /**
    * Define the {@link MetadataScope#SYSTEM system} metadata properties to add for this entity.
    *
-   * @return A {@link Map} of properties to add to this {@link NamespacedEntityId entity} in
+   * @return A {@link Map} of properties to add to this {@link #metadataEntity} in
    * {@link MetadataScope#SYSTEM}
    */
   protected abstract Map<String, String> getSystemPropertiesToAdd();
@@ -97,33 +98,33 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   @Override
   public void write() {
     // Delete existing system metadata before writing new metadata
-    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM, entityId).keySet();
+    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM, metadataEntity).keySet();
     Sets.SetView<String> removeProperties = Sets.difference(existingProperties, PRESERVE_PROPERTIES);
     if (!removeProperties.isEmpty()) {
       String[] propertiesArray = removeProperties.toArray(new String[removeProperties.size()]);
-      metadataStore.removeProperties(MetadataScope.SYSTEM, entityId, propertiesArray);
+      metadataStore.removeProperties(MetadataScope.SYSTEM, metadataEntity, propertiesArray);
     }
-    metadataStore.removeTags(MetadataScope.SYSTEM, entityId);
+    metadataStore.removeTags(MetadataScope.SYSTEM, metadataEntity);
 
     // Now add the new metadata. The properties that were preserved need to be provided to setProperties() so that
     // they also get indexed. 
     // First add any preserved properties that were not removed
     Map<String, String> allProperties =
-      getPreserverdProperties(metadataStore.getProperties(MetadataScope.SYSTEM, entityId));
+      getPreserverdProperties(metadataStore.getProperties(MetadataScope.SYSTEM, metadataEntity));
     // Add all the properties that need to be added
     allProperties.putAll(getSystemPropertiesToAdd());
     if (allProperties.size() > 0) {
-      metadataStore.setProperties(MetadataScope.SYSTEM, entityId, allProperties);
+      metadataStore.setProperties(MetadataScope.SYSTEM, metadataEntity, allProperties);
     }
     String[] tags = getSystemTagsToAdd();
     if (tags.length > 0) {
-      metadataStore.addTags(MetadataScope.SYSTEM, entityId, tags);
+      metadataStore.addTags(MetadataScope.SYSTEM, metadataEntity, tags);
     }
     // store additional properties that we want to index separately
     // if there is schema property then set that while providing schema indexer
     String schema = getSchemaToAdd();
     if (!Strings.isNullOrEmpty(schema)) {
-      metadataStore.setProperty(MetadataScope.SYSTEM, entityId, SCHEMA_KEY, schema);
+      metadataStore.setProperty(MetadataScope.SYSTEM, metadataEntity, SCHEMA_KEY, schema);
     }
   }
 

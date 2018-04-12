@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.metadata.MetadataRecord;
@@ -25,7 +26,6 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
  *
- * Operations supported for a specified {@link NamespacedEntityId}:
+ * Operations supported for a specified {@link MetadataEntity}:
  * <ul>
  *   <li>Adding new metadata: Supported for a single scope.</li>
  *   <li>Retrieving metadata: Supported for a specified scope as well as across both scopes.</li>
@@ -45,123 +45,123 @@ import java.util.Set;
 public interface MetadataStore {
 
   /**
-   * Adds/updates properties for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Adds/updates properties for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to add/update the properties in
-   * @param namespacedEntityId the {@link NamespacedEntityId} to add the properties to
+   * @param metadataEntity the {@link MetadataEntity} to add the properties to
    * @param properties the properties to add/update
    */
-  void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties);
+  void setProperties(MetadataScope scope, MetadataEntity metadataEntity, Map<String, String> properties);
 
   /**
-   * Sets the specified property for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Sets the specified property for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to set/update the property in
-   * @param namespacedEntityId the {@link NamespacedEntityId} to set the property for
+   * @param metadataEntity the {@link MetadataEntity} to set the property for
    * @param key the property key
    * @param value the property value
    */
-  void setProperty(MetadataScope scope, NamespacedEntityId namespacedEntityId, String key, String value);
+  void setProperty(MetadataScope scope, MetadataEntity metadataEntity, String key, String value);
 
   /**
-   * Adds tags for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Adds tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to add the tags in
-   * @param namespacedEntityId the {@link NamespacedEntityId} to add the tags to
+   * @param metadataEntity the {@link MetadataEntity} to add the tags to
    * @param tagsToAdd the tags to add
    */
-  void addTags(MetadataScope scope, NamespacedEntityId namespacedEntityId, String... tagsToAdd);
+  void addTags(MetadataScope scope, MetadataEntity metadataEntity, String... tagsToAdd);
 
   /**
    * @return a set of {@link MetadataRecord} representing all the metadata (including properties and tags) for the
-   * specified {@link NamespacedEntityId} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
+   * specified {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId);
+  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
 
   /**
    * @return a {@link MetadataRecord} representing all the metadata (including properties and tags) for the specified
-   * {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
-  MetadataRecord getMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId);
+  MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
    * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
-   * for the specified set of {@link NamespacedEntityId}s in the specified {@link MetadataScope}.
+   * for the specified set of {@link MetadataEntity}s in the specified {@link MetadataScope}.
    */
-  Set<MetadataRecord> getMetadata(MetadataScope scope, Set<NamespacedEntityId> namespacedEntityIds);
+  Set<MetadataRecord> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntitys);
 
   /**
-   * @return the properties for the specified {@link NamespacedEntityId} in both {@link MetadataScope#USER} and
+   * @return the properties for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}
    */
-  Map<String, String> getProperties(NamespacedEntityId namespacedEntityId);
+  Map<String, String> getProperties(MetadataEntity metadataEntity);
 
   /**
-   * @return the properties for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}
+   * @return the properties for the specified {@link MetadataEntity} in the specified {@link MetadataScope}
    */
-  Map<String, String> getProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId);
+  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * @return the tags for the specified {@link NamespacedEntityId} in both {@link MetadataScope#USER} and
+   * @return the tags for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}
    */
-  Set<String> getTags(NamespacedEntityId namespacedEntityId);
+  Set<String> getTags(MetadataEntity metadataEntity);
 
   /**
-   * @return the tags for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}
+   * @return the tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}
    */
-  Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId);
+  Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * Removes all metadata (including properties and tags) for the specified {@link NamespacedEntityId} in both
+   * Removes all metadata (including properties and tags) for the specified {@link MetadataEntity} in both
    * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    *
-   * @param namespacedEntityId the {@link NamespacedEntityId} to remove all metadata for
+   * @param metadataEntity the {@link MetadataEntity} to remove all metadata for
    */
-  void removeMetadata(NamespacedEntityId namespacedEntityId);
+  void removeMetadata(MetadataEntity metadataEntity);
 
   /**
-   * Removes all metadata (including properties and tags) for the specified {@link NamespacedEntityId} in the specified
+   * Removes all metadata (including properties and tags) for the specified {@link MetadataEntity} in the specified
    * {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope}
-   * @param namespacedEntityId the {@link NamespacedEntityId} to remove all metadata for
+   * @param metadataEntity the {@link MetadataEntity} to remove all metadata for
    */
-  void removeMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId);
+  void removeMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * Removes all properties for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Removes all properties for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope}
-   * @param namespacedEntityId the {@link NamespacedEntityId} to remove all properties for
+   * @param metadataEntity the {@link MetadataEntity} to remove all properties for
    */
-  void removeProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId);
+  void removeProperties(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * Removes the specified properties of the {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Removes the specified properties of the {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope}
-   * @param namespacedEntityId the {@link NamespacedEntityId} to remove the specified keys for
+   * @param metadataEntity the {@link MetadataEntity} to remove the specified keys for
    * @param keys the keys to remove
    */
-  void removeProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, String... keys);
+  void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, String... keys);
 
   /**
-   * Removes tags of the {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Removes tags of the {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope}
-   * @param namespacedEntityId the {@link NamespacedEntityId} to remove all tags for
+   * @param metadataEntity the {@link MetadataEntity} to remove all tags for
    */
-  void removeTags(MetadataScope scope, NamespacedEntityId namespacedEntityId);
+  void removeTags(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * Removes the specified tags from the {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Removes the specified tags from the {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope}
-   * @param namespacedEntityId the {@link NamespacedEntityId} to remove the specified tags for
+   * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tagsToRemove the tags to remove
    */
-  void removeTags(MetadataScope scope, NamespacedEntityId namespacedEntityId, String ... tagsToRemove);
+  void removeTags(MetadataScope scope, MetadataEntity metadataEntity, String ... tagsToRemove);
 
   /**
    * Search the Metadata Dataset for the specified target types in both {@link MetadataScope#USER} and
@@ -194,22 +194,22 @@ public interface MetadataStore {
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}
    * and {@link MetadataScope#SYSTEM}.
    *
-   * @param namespacedEntityIds entity ids
+   * @param metadataEntitys entity ids
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  Set<MetadataRecord> getSnapshotBeforeTime(Set<NamespacedEntityId> namespacedEntityIds, long timeMillis);
+  Set<MetadataRecord> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis);
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in the specified
    * {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to get the snapshot in
-   * @param namespacedEntityIds entity ids
+   * @param metadataEntitys entity ids
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<NamespacedEntityId> namespacedEntityIds,
+  Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
                                             long timeMillis);
 
   /**

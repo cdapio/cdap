@@ -155,10 +155,11 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testDeletingArtifact() throws Exception {
-    MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
+    MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM,
+                                                      APP_ARTIFACT_ID.toEntityId().toMetadataEntity());
     Assert.assertFalse(record.getProperties().isEmpty());
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
-    record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
+    record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId().toMetadataEntity());
     Assert.assertTrue(record.getProperties().isEmpty());
   }
 
@@ -183,8 +184,8 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testMultiplePluginClasses() throws InvalidArtifactException {
     DefaultArtifactRepository.validatePluginSet(ImmutableSet.of(
-      new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
-      new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.<String, PluginPropertyField>of())));
+      new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.of()),
+      new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.of())));
   }
 
   @Test

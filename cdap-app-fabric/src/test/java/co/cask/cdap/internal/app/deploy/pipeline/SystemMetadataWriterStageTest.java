@@ -77,13 +77,15 @@ public class SystemMetadataWriterStageTest {
     systemMetadataWriterStage.process(appWithPrograms);
 
     // verify that the workflow is not tagged with the fork node name
-    Set<String> workflowSystemTags = metadataStore.getTags(MetadataScope.SYSTEM, appId.workflow(workflowName));
+    Set<String> workflowSystemTags = metadataStore.getTags(MetadataScope.SYSTEM,
+                                                           appId.workflow(workflowName).toMetadataEntity());
     Sets.SetView<String> intersection = Sets.intersection(workflowSystemTags, getWorkflowForkNodes(workflowSpec));
     Assert.assertTrue("Workflows should not be tagged with fork node names, but found the following fork nodes " +
                         "in the workflow's system tags: " + intersection, intersection.isEmpty());
 
     // verify that metadata was added for the workflow's schedule
-    Map<String, String> metadataProperties = metadataStore.getMetadata(MetadataScope.SYSTEM, appId).getProperties();
+    Map<String, String> metadataProperties = metadataStore.getMetadata(MetadataScope.SYSTEM,
+                                                                       appId.toMetadataEntity()).getProperties();
     Assert.assertEquals(WorkflowAppWithFork.SCHED_NAME + ":testDescription",
                         metadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
   }

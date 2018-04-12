@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -263,27 +264,31 @@ public class MetadataStoreTest {
     // Add metadata
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
     Map<String, String> flowUserProps = ImmutableMap.of("key1", "value1",
-                                                                 "key2", "value2",
-                                                                 "multiword", multiWordValue);
+                                                        "key2", "value2",
+                                                        "multiword", multiWordValue);
     Map<String, String> flowSysProps = ImmutableMap.of("sysKey1", "sysValue1");
     Set<String> flowUserTags = ImmutableSet.of("tag1", "tag2");
     Set<String> streamUserTags = ImmutableSet.of("tag3", "tag4");
     Set<String> flowSysTags = ImmutableSet.of("sysTag1");
-    store.setProperties(MetadataScope.USER, flow1, flowUserProps);
-    store.setProperties(MetadataScope.SYSTEM, flow1, flowSysProps);
-    store.addTags(MetadataScope.USER, flow1, flowUserTags.toArray(new String[flowUserTags.size()]));
-    store.addTags(MetadataScope.SYSTEM, flow1, flowSysTags.toArray(new String[flowSysTags.size()]));
-    store.addTags(MetadataScope.USER, stream1, streamUserTags.toArray(new String[streamUserTags.size()]));
-    store.removeTags(MetadataScope.USER, stream1, streamUserTags.toArray(new String[streamUserTags.size()]));
-    store.setProperties(MetadataScope.USER, stream1, flowUserProps);
-    store.removeProperties(MetadataScope.USER, stream1, "key1", "key2", "multiword");
+    store.setProperties(MetadataScope.USER, flow1.toMetadataEntity(), flowUserProps);
+    store.setProperties(MetadataScope.SYSTEM, flow1.toMetadataEntity(), flowSysProps);
+    store.addTags(MetadataScope.USER, flow1.toMetadataEntity(),
+                  flowUserTags.toArray(new String[flowUserTags.size()]));
+    store.addTags(MetadataScope.SYSTEM, flow1.toMetadataEntity(),
+                  flowSysTags.toArray(new String[flowSysTags.size()]));
+    store.addTags(MetadataScope.USER, stream1.toMetadataEntity(),
+                  streamUserTags.toArray(new String[streamUserTags.size()]));
+    store.removeTags(MetadataScope.USER, stream1.toMetadataEntity(),
+                     streamUserTags.toArray(new String[streamUserTags.size()]));
+    store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), flowUserProps);
+    store.removeProperties(MetadataScope.USER, stream1.toMetadataEntity(), "key1", "key2", "multiword");
 
     Map<String, String> streamUserProps = ImmutableMap.of("sKey1", "sValue1 sValue2",
-                                                                   "Key1", "Value1");
-    store.setProperties(MetadataScope.USER, stream1, streamUserProps);
+                                                          "Key1", "Value1");
+    store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), streamUserProps);
 
     Map<String, String> datasetUserProps = ImmutableMap.of("sKey1", "sValuee1 sValuee2");
-    store.setProperties(MetadataScope.USER, dataset1, datasetUserProps);
+    store.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), datasetUserProps);
 
     // Test score and metadata match
     MetadataSearchResponse response = search("ns1", "value1 multiword:av2");
@@ -329,12 +334,13 @@ public class MetadataStoreTest {
   // The pagination for these queries is done in DefaultMetadataStore, so adding this test here.
   @Test
   public void testSearchPagination() throws BadRequestException {
-    NamespaceId ns = new NamespaceId("ns");
-    ProgramId flow = ns.app("app").flow("flow");
-    StreamId stream = ns.stream("stream");
-    DatasetId dataset = ns.dataset("dataset");
+    NamespaceId nsId = new NamespaceId("ns");
+    MetadataEntity ns = nsId.toMetadataEntity();
+    MetadataEntity flow = nsId.app("app").flow("flow").toMetadataEntity();
+    MetadataEntity stream = nsId.stream("stream").toMetadataEntity();
+    MetadataEntity dataset = nsId.dataset("dataset").toMetadataEntity();
     // add a dummy entity which starts with _ to test that it doesnt show up see: CDAP-7910
-    DatasetId trackerDataset = ns.dataset("_auditLog");
+    MetadataEntity trackerDataset = nsId.dataset("_auditLog").toMetadataEntity();
 
     store.addTags(MetadataScope.USER, flow, "tag", "tag1");
     store.addTags(MetadataScope.USER, stream, "tag2", "tag3 tag4");
@@ -350,7 +356,7 @@ public class MetadataStoreTest {
     // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, flow
     // (this depends on how many tags got matched with the search query)
     // trackerDataset entity should not be part
-    MetadataSearchResponse response = search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);
+    MetadataSearchResponse response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
@@ -358,14 +364,14 @@ public class MetadataStoreTest {
     );
 
     // trackerDataset entity should be be part since showHidden is true
-    response = search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1, true);
+    response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1, true);
     Assert.assertEquals(4, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(trackerDatasetSearchResult, datasetSearchResult, streamSearchResult, flowSearchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
-    response = search(ns.getNamespace(), "tag*", 0, 2, 1);
+    response = search(nsId.getNamespace(), "tag*", 0, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult),
@@ -373,7 +379,7 @@ public class MetadataStoreTest {
     );
 
     // skipping trackerDataset should not affect the offset
-    response = search(ns.getNamespace(), "tag*", 1, 2, 1);
+    response = search(nsId.getNamespace(), "tag*", 1, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(streamSearchResult, flowSearchResult),
@@ -381,21 +387,21 @@ public class MetadataStoreTest {
     );
 
     // if showHidden is true trackerDataset should affect the offset
-    response = search(ns.getNamespace(), "tag*", 1, 3, 1, true);
+    response = search(nsId.getNamespace(), "tag*", 1, 3, 1, true);
     Assert.assertEquals(4, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
-    response = search(ns.getNamespace(), "tag*", 2, 2, 1);
+    response = search(nsId.getNamespace(), "tag*", 2, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(flowSearchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
-    response = search(ns.getNamespace(), "tag*", 4, 2, 1);
+    response = search(nsId.getNamespace(), "tag*", 4, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.<MetadataSearchResultRecord>of(),
@@ -403,7 +409,7 @@ public class MetadataStoreTest {
     );
 
     // ensure overflow bug is squashed (JIRA: CDAP-8133)
-    response = search(ns.getNamespace(), "tag*", 1, Integer.MAX_VALUE, 0);
+    response = search(nsId.getNamespace(), "tag*", 1, Integer.MAX_VALUE, 0);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(streamSearchResult, flowSearchResult),
@@ -440,17 +446,17 @@ public class MetadataStoreTest {
   }
 
   private void generateMetadataUpdates() {
-    store.addTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
-    store.setProperties(MetadataScope.USER, app, appProperties);
-    store.addTags(MetadataScope.USER, app, appTags.iterator().next());
-    store.setProperties(MetadataScope.USER, stream, streamProperties);
-    store.setProperties(MetadataScope.USER, stream, streamProperties);
-    store.setProperties(MetadataScope.USER, stream, updatedStreamProperties);
-    store.addTags(MetadataScope.USER, flow, flowTags.iterator().next());
-    store.removeTags(MetadataScope.USER, flow);
-    store.removeTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
-    store.removeProperties(MetadataScope.USER, stream);
-    store.removeMetadata(MetadataScope.USER, app);
+    store.addTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags.iterator().next());
+    store.setProperties(MetadataScope.USER, app.toMetadataEntity(), appProperties);
+    store.addTags(MetadataScope.USER, app.toMetadataEntity(), appTags.iterator().next());
+    store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
+    store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
+    store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), updatedStreamProperties);
+    store.addTags(MetadataScope.USER, flow.toMetadataEntity(), flowTags.iterator().next());
+    store.removeTags(MetadataScope.USER, flow.toMetadataEntity());
+    store.removeTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags.iterator().next());
+    store.removeProperties(MetadataScope.USER, stream.toMetadataEntity());
+    store.removeMetadata(MetadataScope.USER, app.toMetadataEntity());
   }
 
   private Set<MetadataSearchResultRecord> stripMetadata(Set<MetadataSearchResultRecord> searchResultsWithMetadata) {

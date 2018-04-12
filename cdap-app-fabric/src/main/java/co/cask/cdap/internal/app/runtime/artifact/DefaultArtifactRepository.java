@@ -414,7 +414,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataStore.removeMetadata(artifactId.toEntityId());
+    metadataStore.removeMetadata(artifactId.toEntityId().toMetadataEntity());
   }
 
   @Override

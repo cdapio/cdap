@@ -89,7 +89,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       // Remove metadata for the stream
       StreamId stream = namespace.stream(spec.getName());
-      metadataStore.removeMetadata(stream);
+      metadataStore.removeMetadata(stream.toMetadataEntity());
       streamMetaStore.removeStream(stream);
     }
   }
@@ -158,7 +158,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void drop(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
-    metadataStore.removeMetadata(streamId);
+    metadataStore.removeMetadata(streamId.toMetadataEntity());
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);

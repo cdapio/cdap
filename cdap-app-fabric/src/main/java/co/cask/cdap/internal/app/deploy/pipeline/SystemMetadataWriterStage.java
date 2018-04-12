@@ -49,7 +49,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
     // only update creation time if this is a new app
-    Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, appId);
+    Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, appId.toMetadataEntity());
     SystemMetadataWriter appSystemMetadataWriter =
       new AppSystemMetadataWriter(metadataStore, appId, appSpec, !properties.isEmpty());
     appSystemMetadataWriter.write();
@@ -70,7 +70,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
                                           Iterable<? extends ProgramSpecification> specs) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
-      Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, programId);
+      Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, programId.toMetadataEntity());
       ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec,
                                                                            !properties.isEmpty());
       writer.write();
