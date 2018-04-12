@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.lineage.field;
+package co.cask.cdap.data2.metadata.lineage.field;
 
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.InputField;
@@ -22,7 +22,7 @@ import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.lineage.field.codec.OperationTypeAdapter;
+import co.cask.cdap.proto.codec.OperationTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
@@ -41,7 +41,7 @@ public class FieldLineageInfoTest {
     .create();
 
   @Test
-  public void testInvalidGraph() throws Exception {
+  public void testInvalidOperations() throws Exception {
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"), "offset", "body");
     TransformOperation parse = new TransformOperation("parse", "parse body",
                                                       Arrays.asList(InputField.of("read", "body")), "name", "address");
@@ -55,9 +55,9 @@ public class FieldLineageInfoTest {
     operations.add(write);
 
     try {
-      // Create graph without read operation
-      FieldLineageInfo graph = new FieldLineageInfo(operations);
-      Assert.fail("Graph creation should fail since no read operation is specified.");
+      // Create info without read operation
+      FieldLineageInfo info = new FieldLineageInfo(operations);
+      Assert.fail("Field lineage info creation should fail since no read operation is specified.");
     } catch (IllegalArgumentException e) {
       String msg = "Field level lineage requires at least one operation of type 'READ'.";
       Assert.assertTrue(e.getMessage().equals(msg));
@@ -69,9 +69,9 @@ public class FieldLineageInfoTest {
     operations.add(parse);
 
     try {
-      // Create graph without write operation
-      FieldLineageInfo graph = new FieldLineageInfo(operations);
-      Assert.fail("Graph creation should fail since no write operation is specified.");
+      // Create info without write operation
+      FieldLineageInfo info = new FieldLineageInfo(operations);
+      Assert.fail("Field lineage info creation should fail since no write operation is specified.");
     } catch (IllegalArgumentException e) {
       String msg = "Field level lineage requires at least one operation of type 'WRITE'.";
       Assert.assertTrue(e.getMessage().equals(msg));
@@ -80,16 +80,16 @@ public class FieldLineageInfoTest {
 
     WriteOperation duplicateWrite = new WriteOperation("write", "write data", EndPoint.of("ns", "endpoint3"),
                                                        Arrays.asList(InputField.of("read", "offset"),
-                                                                    InputField.of("parse", "name"),
-                                                                    InputField.of("parse", "body")));
+                                                                     InputField.of("parse", "name"),
+                                                                     InputField.of("parse", "body")));
 
     operations.add(write);
     operations.add(duplicateWrite);
 
     try {
-      // Create graph with non-unique operation names
-      FieldLineageInfo graph = new FieldLineageInfo(operations);
-      Assert.fail("Graph creation should fail since operation name 'write' is repeated.");
+      // Create info with non-unique operation names
+      FieldLineageInfo info = new FieldLineageInfo(operations);
+      Assert.fail("Field lineage info creation should fail since operation name 'write' is repeated.");
     } catch (IllegalArgumentException e) {
       String msg = "Operation name 'write' is repeated";
       Assert.assertTrue(e.getMessage().contains(msg));
@@ -108,9 +108,10 @@ public class FieldLineageInfoTest {
     operations.add(invalidOrigin);
 
     try {
-      // Create graph without invalid origins
-      FieldLineageInfo graph = new FieldLineageInfo(operations);
-      Assert.fail("Graph creation should fail since operation with name 'invalid' and 'anotherinvalid' do not exist.");
+      // Create info without invalid origins
+      FieldLineageInfo info = new FieldLineageInfo(operations);
+      Assert.fail("Field lineage info creation should fail since operation with name 'invalid' " +
+                    "and 'anotherinvalid' do not exist.");
     } catch (IllegalArgumentException e) {
       String msg = "No operation is associated with the origins '[invalid, anotherinvalid]'.";
       Assert.assertTrue(e.getMessage().equals(msg));
@@ -118,7 +119,7 @@ public class FieldLineageInfoTest {
   }
 
   @Test
-  public void testValidGraph() throws Exception {
+  public void testValidOperations() throws Exception {
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"), "offset", "body");
     TransformOperation parse = new TransformOperation("parse", "parse body",
                                                       Arrays.asList(InputField.of("read", "body")), "name", "address");
@@ -131,21 +132,21 @@ public class FieldLineageInfoTest {
     operations.add(read);
     operations.add(write);
     operations.add(parse);
-    FieldLineageInfo graph1 = new FieldLineageInfo(operations);
+    FieldLineageInfo info1 = new FieldLineageInfo(operations);
 
-    // Serializing and deserializing the graph should result in the same checksum.
-    String graphJson = GSON.toJson(graph1);
-    FieldLineageInfo graph2 = GSON.fromJson(graphJson, FieldLineageInfo.class);
-    Assert.assertEquals(graph1.getChecksum(), graph2.getChecksum());
+    // Serializing and deserializing should result in the same checksum.
+    String infoJson = GSON.toJson(info1);
+    FieldLineageInfo info2 = GSON.fromJson(infoJson, FieldLineageInfo.class);
+    Assert.assertEquals(info1, info2);
 
-    // Create graph with different ordering of same operations. Checksum should still be same.
+    // Create lineage info with different ordering of same operations. Checksum should still be same.
     operations.clear();
     operations.add(write);
     operations.add(parse);
     operations.add(read);
 
-    FieldLineageInfo graph3 = new FieldLineageInfo(operations);
-    Assert.assertEquals(graph1.getChecksum(), graph3.getChecksum());
+    FieldLineageInfo info3 = new FieldLineageInfo(operations);
+    Assert.assertEquals(info1, info3);
 
     // Change the namespace name of the write operation from ns to myns. The checksum should change now.
     operations.clear();
@@ -157,7 +158,7 @@ public class FieldLineageInfoTest {
     operations.add(anotherWrite);
     operations.add(parse);
     operations.add(read);
-    FieldLineageInfo graph4 = new FieldLineageInfo(operations);
-    Assert.assertNotEquals(graph1.getChecksum(), graph4.getChecksum());
+    FieldLineageInfo info4 = new FieldLineageInfo(operations);
+    Assert.assertNotEquals(info1, info4);
   }
 }

@@ -27,7 +27,9 @@ import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.NoOpUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
@@ -92,8 +94,11 @@ public class PreviewDataModules {
         // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
         expose(LineageStoreReader.class);
 
-        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        bind(LineageWriter.class).to(NoOpLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(FieldLineageWriter.class).to(NoOpLineageWriter.class);
+        expose(FieldLineageWriter.class);
 
         bind(UsageWriter.class).to(NoOpUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageWriter.class);

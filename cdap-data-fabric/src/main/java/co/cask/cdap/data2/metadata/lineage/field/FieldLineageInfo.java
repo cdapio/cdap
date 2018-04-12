@@ -14,15 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.lineage.field;
+package co.cask.cdap.data2.metadata.lineage.field;
 
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.api.lineage.field.Operation;
+import co.cask.cdap.api.lineage.field.OperationType;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.lineage.field.codec.OperationTypeAdapter;
+import co.cask.cdap.proto.codec.OperationTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -53,6 +54,8 @@ public class FieldLineageInfo {
 
   private final Set<Operation> operations;
   private long checksum;
+  private transient Set<EndPoint> sources;
+  private transient Set<EndPoint> destinations;
 
   /**
    * Create an instance of a class from supplied collection of operations.
@@ -138,6 +141,40 @@ public class FieldLineageInfo {
     return operations;
   }
 
+  /**
+   * @return all {@link EndPoint}s representing the source for read operations
+   */
+  public Set<EndPoint> getSources() {
+    if (sources == null) {
+      populateSourcesAndDestinations();
+    }
+    return sources;
+  }
+
+  /**
+   * @return all {@link EndPoint}s representing the destination for write operations
+   */
+  public Set<EndPoint> getDestinations() {
+    if (destinations == null) {
+      populateSourcesAndDestinations();
+    }
+    return destinations;
+  }
+
+  private void populateSourcesAndDestinations() {
+    sources = new HashSet<>();
+    destinations = new HashSet<>();
+    for (Operation operation : operations) {
+      if (OperationType.READ == operation.getType()) {
+        ReadOperation read = (ReadOperation) operation;
+        sources.add(read.getSource());
+      } else if (OperationType.WRITE == operation.getType()) {
+        WriteOperation write = (WriteOperation) operation;
+        destinations.add(write.getDestination());
+      }
+    }
+  }
+
   private long computeChecksum() {
     return fingerprint64(canonicalize().getBytes(Charsets.UTF_8));
   }
@@ -168,7 +205,7 @@ public class FieldLineageInfo {
    * @param data byte string for which fingerprint is to be computed
    * @return the 64-bit Rabin Fingerprint (as recommended in the Avro spec) of a byte string
    */
-   private long fingerprint64(byte[] data) {
+  private long fingerprint64(byte[] data) {
     long result = EMPTY64;
     for (byte b: data) {
       int index = (int) (result ^ b) & 0xff;
@@ -190,5 +227,24 @@ public class FieldLineageInfo {
         FP_TABLE[i] = fp;
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof FieldLineageInfo)) {
+      return false;
+    }
+
+    FieldLineageInfo info = (FieldLineageInfo) o;
+    return checksum == info.checksum;
+  }
+
+  @Override
+  public int hashCode() {
+    return (int) (checksum ^ (checksum >>> 32));
   }
 }

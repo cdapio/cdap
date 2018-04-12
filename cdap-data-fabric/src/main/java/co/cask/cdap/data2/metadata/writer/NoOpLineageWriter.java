@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * No-op {@link LineageWriter}.
  */
-public class NoOpLineageWriter implements LineageWriter {
+public class NoOpLineageWriter implements LineageWriter, FieldLineageWriter {
   @Override
   public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType) {
     // no-op
@@ -47,6 +48,11 @@ public class NoOpLineageWriter implements LineageWriter {
   @Override
   public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
                         @Nullable NamespacedEntityId component) {
+    // no-op
+  }
+
+  @Override
+  public void write(ProgramRunId programRunId, FieldLineageInfo info) {
     // no-op
   }
 }

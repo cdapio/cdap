@@ -28,6 +28,7 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
@@ -121,6 +122,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
       protected void configure() {
         // Overrides the LineageWriter, UsageWriter to write to TMS instead
         bind(LineageWriter.class).to(MessagingLineageWriter.class);
+        bind(FieldLineageWriter.class).to(MessagingLineageWriter.class);
         bind(UsageWriter.class).to(MessagingUsageWriter.class);
       }
     }));

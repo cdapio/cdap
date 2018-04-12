@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.lineage.field.codec;
+package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.OperationType;
