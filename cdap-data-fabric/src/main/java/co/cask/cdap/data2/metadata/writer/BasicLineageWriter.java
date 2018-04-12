@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
@@ -66,13 +65,19 @@ public class BasicLineageWriter implements LineageWriter {
   @Override
   public void addAccess(ProgramRunId run, DatasetId datasetId, AccessType accessType,
                         @Nullable NamespacedEntityId component) {
+    // Don't record lineage for the lineage dataset itself, otherwise there would be infinite recursion
+    if (getLineageDatasetId().equals(datasetId)) {
+      return;
+    }
+
     long accessTime = System.currentTimeMillis();
     LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, accessTime = {}",
               run, datasetId, accessType, component, accessTime);
 
     Transactionals.execute(transactional, context -> {
-      LineageDataset lineageDataset = getLineageDataset(context, datasetFramework);
-      lineageDataset.addAccess(run, datasetId, accessType, accessTime, component);
+      LineageDataset
+        .getLineageDataset(context, datasetFramework, getLineageDatasetId())
+        .addAccess(run, datasetId, accessType, accessTime, component);
     });
   }
 
@@ -84,15 +89,17 @@ public class BasicLineageWriter implements LineageWriter {
               run, streamId, accessType, component, accessTime);
 
     Transactionals.execute(transactional, context -> {
-      LineageDataset lineageDataset = getLineageDataset(context, datasetFramework);
-      lineageDataset.addAccess(run, streamId, accessType, accessTime, component);
+      LineageDataset
+        .getLineageDataset(context, datasetFramework, getLineageDatasetId())
+        .addAccess(run, streamId, accessType, accessTime, component);
     });
   }
 
   /**
-   * Returns an instance {@link LineageDataset}.
+   * Returns the {@link DatasetId} of the lineage dataset. This method should only be overridden in unit-test.
    */
-  protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-    return LineageDataset.getLineageDataset(datasetContext, datasetFramework);
+  @VisibleForTesting
+  protected DatasetId getLineageDatasetId() {
+    return LineageDataset.LINEAGE_DATASET_ID;
   }
 }

@@ -17,7 +17,6 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
@@ -28,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -108,8 +106,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
 
@@ -218,10 +216,11 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
+
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -289,8 +288,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
 
@@ -328,8 +327,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
 
@@ -374,8 +373,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
 
@@ -451,8 +450,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
 
@@ -568,8 +567,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                                      getTxClient(), lineageDatasetId);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
       @Override
-      protected LineageDataset getLineageDataset(DatasetContext datasetContext, DatasetFramework datasetFramework) {
-        return LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+      protected DatasetId getLineageDatasetId() {
+        return lineageDatasetId;
       }
     };
 

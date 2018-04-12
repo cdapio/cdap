@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -172,15 +171,10 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
         accessRecorder = new BasicDatasetAccessRecorder(datasetInstanceId, accessType, owners);
       }
 
-      return DefaultDatasetRuntimeContext.execute(enforcer, accessRecorder, principal,
-                                                  datasetInstanceId,
-                                                  getConstructorDefaultAnnotation(accessType), new Callable<T>() {
-          @Override
-          public T call() throws Exception {
-            return LineageWriterDatasetFramework.super.getDataset(datasetInstanceId, arguments, classLoader,
-                                                                  classLoaderProvider, owners, accessType);
-          }
-        });
+      return DefaultDatasetRuntimeContext.execute(
+        enforcer, accessRecorder, principal, datasetInstanceId, getConstructorDefaultAnnotation(accessType), () ->
+          LineageWriterDatasetFramework.super.getDataset(datasetInstanceId, arguments, classLoader,
+                                                         classLoaderProvider, owners, accessType));
     } catch (IOException | DatasetManagementException | ServiceUnavailableException e) {
       throw e;
     } catch (Exception e) {
@@ -190,9 +184,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
 
   @Override
   public void writeLineage(DatasetId datasetInstanceId, AccessType accessType) {
-    super.writeLineage(datasetInstanceId, accessType);
-    publishAudit(datasetInstanceId, accessType);
-    doWriteLineage(datasetInstanceId, accessType);
+    // No need to record lineage for system dataset. See getDataset call above.
+    if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
+      super.writeLineage(datasetInstanceId, accessType);
+      publishAudit(datasetInstanceId, accessType);
+      doWriteLineage(datasetInstanceId, accessType);
+    }
   }
 
   private void doWriteLineage(DatasetId datasetInstanceId, AccessType accessType) {

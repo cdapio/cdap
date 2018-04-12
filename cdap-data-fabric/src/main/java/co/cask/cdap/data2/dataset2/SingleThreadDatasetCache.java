@@ -30,12 +30,9 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import com.google.common.cache.ForwardingLoadingCache;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -49,12 +46,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -67,13 +67,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingleThreadDatasetCache.class);
 
-  private static final Iterable<TransactionAware> NO_TX_AWARES = ImmutableList.of();
+  private static final Iterable<TransactionAware> NO_TX_AWARES = Collections.emptyList();
 
-  private final LoadingCache<DatasetCacheKey, Dataset> datasetCache;
-  private final CacheLoader<DatasetCacheKey, Dataset> datasetLoader;
+  private final LoadingCache<AccessAwareDatasetCacheKey, Dataset> datasetCache;
   private final Map<DatasetCacheKey, TransactionAware> activeTxAwares = new HashMap<>();
   private final Map<DatasetCacheKey, Dataset> staticDatasets = new HashMap<>();
   private final Deque<TransactionAware> extraTxAwares = new LinkedList<>();
+  private final MetricsContext metricsContext;
 
   private DelayedDiscardingTransactionContext txContext = null;
 
@@ -91,31 +91,55 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                                   @Nullable final MetricsContext metricsContext,
                                   @Nullable Map<String, Map<String, String>> staticDatasets) {
     super(instantiator, txClient, namespace, runtimeArguments);
-    this.datasetLoader = new CacheLoader<DatasetCacheKey, Dataset>() {
-      @Override
-      @ParametersAreNonnullByDefault
-      public Dataset load(DatasetCacheKey key) throws Exception {
-        Dataset dataset = instantiator.getDataset(new DatasetId(key.getNamespace(), key.getName()),
-                                                  // avoid DatasetDefinition or Dataset from modifying the cache key
-                                                  ImmutableMap.copyOf(key.getArguments()), key.getAccessType());
-        if (dataset instanceof MeteredDataset && metricsContext != null) {
-          ((MeteredDataset) dataset).setMetricsCollector(
-            metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
-        }
-        return dataset;
-      }
-    };
-    LoadingCache<DatasetCacheKey, Dataset> delegate = CacheBuilder.newBuilder().removalListener(
+    this.metricsContext = metricsContext;
+
+    // This is a dataset cache for the actual dataset instance. Different access type of the same dataset id will
+    // give the same instance.
+    LoadingCache<DatasetCacheKey, Dataset> datasetInstanceCache = CacheBuilder.newBuilder().removalListener(
       new RemovalListener<DatasetCacheKey, Dataset>() {
-        @Override
         @ParametersAreNonnullByDefault
+        @Override
         public void onRemoval(RemovalNotification<DatasetCacheKey, Dataset> notification) {
           closeDataset(notification.getKey(), notification.getValue());
         }
-      })
-      .build(datasetLoader);
+      }).build(new CacheLoader<DatasetCacheKey, Dataset>() {
+        @ParametersAreNonnullByDefault
+        @Override
+        public Dataset load(DatasetCacheKey key) throws Exception {
+          return createDatasetInstance(key, false);
+        }
+      });
 
-    this.datasetCache = new LineageRecordingDatasetCache(delegate, instantiator, namespace);
+
+    // This is the cache used by this class and the cache key is access type aware.
+    // It gets the dataset instance from the datasetInstanceCache above.
+    // Calling this cache with the same dataset id but different access type will return the same dataset instance,
+    // although there will be multiple entries created in this cache, which we rely on to track
+    // lineage of different types.
+    // On entry invalidation, we either invalidate all cached entries that has the same dataset instance as the value,
+    // or we perform invalidateAll, hence we don't need to worry about closing dataset on one entry, while having
+    // another entry that pointing to the same dataset instance.
+    this.datasetCache = CacheBuilder.newBuilder().removalListener(
+      new RemovalListener<AccessAwareDatasetCacheKey, Dataset>() {
+        @ParametersAreNonnullByDefault
+        @Override
+        public void onRemoval(RemovalNotification<AccessAwareDatasetCacheKey, Dataset> notification) {
+          if (notification.getKey() != null) {
+            // Invalidate the dataset instance cache, which will result in closing the dataset.
+            datasetInstanceCache.invalidate(notification.getKey().getDatasetCacheKey());
+          }
+        }
+      }).build(new CacheLoader<AccessAwareDatasetCacheKey, Dataset>() {
+        @ParametersAreNonnullByDefault
+        @Override
+        public Dataset load(AccessAwareDatasetCacheKey key) throws Exception {
+          DatasetCacheKey cacheKey = key.getDatasetCacheKey();
+          Dataset instance = datasetInstanceCache.get(cacheKey);
+          instantiator.writeLineage(new DatasetId(cacheKey.getNamespace(), cacheKey.getName()),
+                                    cacheKey.getAccessType());
+          return instance;
+        }
+      });
 
     // add all the static datasets to the cache. This makes sure that a) the cache is preloaded and
     // b) if any static datasets cannot be loaded, the problem show right away (and not later). See
@@ -125,30 +149,6 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         this.staticDatasets.put(new DatasetCacheKey(namespace.getNamespace(), entry.getKey(), entry.getValue()),
                                 getDataset(entry.getKey(), entry.getValue()));
       }
-    }
-  }
-
-  /**
-   * Cache that records lineage for a dataset access each time the dataset is requested.
-   */
-  private static final class LineageRecordingDatasetCache
-    extends ForwardingLoadingCache.SimpleForwardingLoadingCache<DatasetCacheKey, Dataset> {
-
-    private final SystemDatasetInstantiator instantiator;
-    private final NamespaceId namespaceId;
-
-    private LineageRecordingDatasetCache(LoadingCache<DatasetCacheKey, Dataset> delegate,
-                                         SystemDatasetInstantiator instantiator, NamespaceId namespaceId) {
-      super(delegate);
-      this.instantiator = instantiator;
-      this.namespaceId = namespaceId;
-    }
-
-    @Override
-    public Dataset get(DatasetCacheKey key) throws ExecutionException {
-      // write lineage information on each get call
-      instantiator.writeLineage(namespaceId.dataset(key.getName()), key.getAccessType());
-      return super.get(key);
     }
   }
 
@@ -171,10 +171,10 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     Dataset dataset;
     try {
       if (bypass) {
-        dataset = datasetLoader.load(key);
+        dataset = createDatasetInstance(key, true);
       } else {
         try {
-          dataset = datasetCache.get(key);
+          dataset = datasetCache.get(new AccessAwareDatasetCacheKey(key));
         } catch (ExecutionException | UncheckedExecutionException e) {
           throw e.getCause();
         }
@@ -252,7 +252,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
    */
   private void discardSafely(Object dataset) {
     // iterates over all datasets but we do not expect this map to become large
-    for (Map.Entry<DatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
+    for (Map.Entry<AccessAwareDatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
       if (dataset == entry.getValue()) {
         datasetCache.invalidate(entry.getKey());
         return;
@@ -283,12 +283,16 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
   @Override
   public Iterable<TransactionAware> getStaticTransactionAwares() {
-    return Iterables.filter(staticDatasets.values(), TransactionAware.class);
+    return staticDatasets.values().stream()
+      .filter(TransactionAware.class::isInstance)
+      .map(TransactionAware.class::cast)::iterator;
   }
 
   @Override
   public Iterable<TransactionAware> getTransactionAwares() {
-    return (txContext == null) ? NO_TX_AWARES : Iterables.concat(activeTxAwares.values(), extraTxAwares);
+    return (txContext == null)
+      ? NO_TX_AWARES
+      : Stream.concat(activeTxAwares.values().stream(), extraTxAwares.stream())::iterator;
   }
 
   @Override
@@ -346,6 +350,23 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
     invalidate();
     super.close();
+  }
+
+  /**
+   * Creates a new instance of a dataset based on the given information.
+   */
+  private Dataset createDatasetInstance(DatasetCacheKey key, boolean recordLineage) {
+    DatasetId datasetId = new DatasetId(key.getNamespace(), key.getName());
+    Dataset dataset = instantiator.getDataset(datasetId, key.getArguments(), key.getAccessType());
+    if (dataset instanceof MeteredDataset && metricsContext != null) {
+      ((MeteredDataset) dataset).setMetricsCollector(
+        metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
+    }
+
+    if (recordLineage) {
+      instantiator.writeLineage(datasetId, key.getAccessType());
+    }
+    return dataset;
   }
 
   /**
@@ -411,6 +432,41 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       if (regularTxAwares.remove(txAware)) {
         toDiscard.add(txAware);
       }
+    }
+  }
+
+  /**
+   * Cache key the wrap around {@link DatasetCacheKey}. Unlike the {@link DatasetCacheKey}, the comparison includes the
+   * {@link DatasetCacheKey#accessType}.
+   */
+  private static final class AccessAwareDatasetCacheKey {
+
+    private final DatasetCacheKey key;
+
+    private AccessAwareDatasetCacheKey(DatasetCacheKey key) {
+      this.key = key;
+    }
+
+    DatasetCacheKey getDatasetCacheKey() {
+      return key;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      AccessAwareDatasetCacheKey other = (AccessAwareDatasetCacheKey) o;
+      return Objects.equals(key, other.key) && Objects.equals(key.getAccessType(), other.key.getAccessType());
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * key.hashCode() + key.getAccessType().hashCode();
     }
   }
 }
