@@ -17,13 +17,11 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.DistributedTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.inject.AbstractModule;
@@ -56,8 +54,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Override
   public void configure() {
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
-    bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
-    bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
     bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
     // bind transactions
@@ -65,6 +61,9 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);
     install(new TransactionModules(txClientId).getDistributedModules());
     install(new TransactionExecutorModule());
+
+    // Bind the QueueAdmin, which is used in cdap master. This will be removed when Flow support is removed.
+    bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
   }
 
   /**

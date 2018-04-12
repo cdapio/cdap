@@ -16,16 +16,29 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
+import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.Command;
+import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -55,5 +68,22 @@ final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletPro
   @Override
   protected Arguments resolveScope(Arguments arguments) {
     return new BasicArguments(RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, name, arguments.asMap()));
+  }
+
+  @Override
+  protected Module createModule(CConfiguration cConf, Configuration hConf, TwillContext context, ProgramId programId,
+                                String runId, String instanceId, @Nullable String principal) {
+    Module module = super.createModule(cConf, hConf, context, programId, runId, instanceId, principal);
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        install(module);
+
+        // Add bindings for Flow operations.
+        install(new DataFabricFacadeModule());
+        bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
+        bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
+      }
+    };
   }
 }

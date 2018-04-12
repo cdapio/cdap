@@ -16,7 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
+import co.cask.cdap.proto.id.ProgramId;
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillContext;
+
+import javax.annotation.Nullable;
 
 /**
  * A TwillRunnable for running Service components in distributed mode.
@@ -25,5 +34,18 @@ public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServicePr
 
   protected ServiceTwillRunnable(String name) {
     super(name);
+  }
+
+  @Override
+  protected Module createModule(CConfiguration cConf, Configuration hConf, TwillContext context, ProgramId programId,
+                                String runId, String instanceId, @Nullable String principal) {
+    Module module = super.createModule(cConf, hConf, context, programId, runId, instanceId, principal);
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        install(module);
+        install(new DistributedArtifactManagerModule());
+      }
+    };
   }
 }

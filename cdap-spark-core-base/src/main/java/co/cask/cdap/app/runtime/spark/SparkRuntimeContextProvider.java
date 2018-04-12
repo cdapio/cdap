@@ -21,7 +21,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
+import co.cask.cdap.app.guice.DistributedProgramContainerModule;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -309,8 +309,11 @@ public final class SparkRuntimeContextProvider {
     String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
     String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
-    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(programId.run(runId),
-                                                                                                instanceId, principal));
+    return Guice.createInjector(
+      DistributedProgramContainerModule.builder(cConf, hConf, programId.run(runId), instanceId)
+        .setPrincipal(principal)
+        .build()
+    );
   }
 
   /**
