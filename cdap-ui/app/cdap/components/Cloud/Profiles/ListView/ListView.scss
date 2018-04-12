@@ -25,7 +25,7 @@ $row-height: 50px;
   .grid.grid-container {
     max-height: none;
     .grid-row {
-      grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20px;
+      grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 30px;
 
       .sortable-header {
         cursor: pointer;
@@ -43,7 +43,7 @@ $row-height: 50px;
         border: 0;
         padding: 0;
         color: $grey-05;
-        grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 2fr 0fr 2fr 0fr 1fr 20px;
+        grid-template-columns: 20px 1.5fr 1fr 1fr 1fr 1fr 2fr 0fr 2fr 0fr 1fr 30px;
 
         .sub-title {
           border-bottom: 2px solid gray;
@@ -73,11 +73,60 @@ $row-height: 50px;
         &:last-child {
           border-bottom: 0;
         }
+
+        .profile-actions-popover {
+          .icon-cog-empty {
+            fill: white;
+            font-size: 23px;
+            stroke: $grey-04;
+          }
+
+          .popper {
+            width: 90px;
+            min-width: 90px;
+
+            ul {
+              hr {
+                height: 1px;
+                margin: 5px 8px;
+                border-top: 0;
+                background-color: $grey-03;
+              }
+
+              li.delete-action {
+                color: $red-02;
+              }
+            }
+
+            .popper__arrow {
+              border-right-color: $grey-05;
+              border-bottom-color: $grey-05;
+            }
+          }
+        }
+
+        &:hover {
+          .profile-actions-popover {
+            .icon-cog-empty {
+              stroke: $blue-03;
+            }
+          }
+        }
       }
     }
   }
 
   a {
     color: $blue-03;
+  }
+}
+
+.import-profile-label {
+  color: $blue-03;
+  cursor: pointer;
+  font-size: 13px;
+
+  #import-profile {
+    display: none;
   }
 }

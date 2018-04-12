@@ -8,6 +8,7 @@ commons:
   cdap: CDAP
   clickhere: click here
   close: Close
+  delete: Delete
   descriptionLabel: Description
   DSVEditor:
     placeholder: value
@@ -146,6 +147,7 @@ features:
         description: Manage compute profiles available to launch programs in all namespaces
         label: "System Compute Profiles "
         labelWithCount: "System Compute Profiles ({count})"
+        import: Import
     Component-Overview:
       emptyMessage: Available only in Distributed mode
       headers:
@@ -247,10 +249,15 @@ features:
       ListView:
         assosciations: Assosciations
         createOne: "creating one"
+        deleteConfirmation: Are you sure you want to delete the profile *_{profile}_*?
+        deleteError: There was a problem deleting the profile
+        deleteTitle: Delete Profile
+        export: Export
         last24HrNodeHr: Last 24 hrs node/hr
         last24HrRuns: Last 24 hrs runs
         noProfiles: "No compute profiles have been defined in this namespace. Start by "
         noProfilesSystem: "No compute profiles have been defined in the system. Start by "
+        importError: Unable to import profile
         profileName: Profile Name
         profileUsage: Profile usage
         provisioner: Provisioner
@@ -1338,10 +1345,11 @@ features:
     version: "Version :"
   NamespaceDetails:
     computeProfiles:
-      create: Create New Profile
+      create: Create New
       description: Select a row to view details about the compute profile
       label: Compute Profiles
       labelWithCount: Compute Profiles ({count})
+      import: Import
     edit: Edit
     entityCounts:
       customApps: Custom Apps

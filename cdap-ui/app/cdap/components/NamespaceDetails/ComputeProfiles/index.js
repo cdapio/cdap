@@ -15,32 +15,31 @@
 */
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link} from 'react-router-dom';
 import ProfilesListView from 'components/Cloud/Profiles/ListView';
+import ProfilesStore from 'components/Cloud/Profiles/Store';
+import {importProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {connect, Provider} from 'react-redux';
+import {Label, Input} from 'reactstrap';
 
 require('./ComputeProfiles.scss');
 
 const PREFIX = 'features.NamespaceDetails.computeProfiles';
 
-export default class NamespaceDetailsComputeProfiles extends Component {
-  state = {
-    profilesCount: 0
-  };
-
-  onChange = (profiles) => {
-    this.setState({
-      profilesCount: profiles.length
-    });
+class NamespaceDetailsComputeProfiles extends Component {
+  static propTypes = {
+    profilesCount: PropTypes.number
   }
 
   renderProfilesLabel() {
     let label;
-    if (!this.state.profilesCount) {
+    if (!this.props.profilesCount) {
       label = <strong>{T.translate(`${PREFIX}.label`)}</strong>;
     } else {
-      label = <strong>{T.translate(`${PREFIX}.labelWithCount`, {count: this.state.profilesCount})}</strong>;
+      label = <strong>{T.translate(`${PREFIX}.labelWithCount`, {count: this.props.profilesCount})}</strong>;
     }
 
     return (
@@ -52,8 +51,21 @@ export default class NamespaceDetailsComputeProfiles extends Component {
         >
           {T.translate(`${PREFIX}.create`)}
         </Link>
+        <span> | </span>
+        <Label
+          className="import-profile-label"
+          for="import-profile"
+        >
+          {T.translate(`${PREFIX}.import`)}
+          <Input
+            type="file"
+            accept='.json'
+            id="import-profile"
+            onChange={importProfile.bind(this, getCurrentNamespace())}
+          />
+        </Label>
         {
-          this.state.profilesCount ?
+          this.props.profilesCount ?
             (
               <p className="create-new-profile-description">
                 {T.translate(`${PREFIX}.description`)}
@@ -72,9 +84,24 @@ export default class NamespaceDetailsComputeProfiles extends Component {
         {this.renderProfilesLabel()}
         <ProfilesListView
           namespace={getCurrentNamespace()}
-          onChange={this.onChange}
         />
       </div>
     );
   }
+}
+
+const mapStateToProps = (state) => {
+  return {
+    profilesCount: state.profiles.length
+  };
+};
+
+const ConnectedComputeProfilesSection = connect(mapStateToProps)(NamespaceDetailsComputeProfiles);
+
+export default function NamespaceDetailsComputeProfilesFn() {
+  return (
+    <Provider store={ProfilesStore}>
+      <ConnectedComputeProfilesSection />
+    </Provider>
+  );
 }

@@ -16,7 +16,6 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link} from 'react-router-dom';
 import T from 'i18n-react';
@@ -25,6 +24,13 @@ import IconSVG from 'components/IconSVG';
 import LoadingSVG from 'components/LoadingSVG';
 import orderBy from 'lodash/orderBy';
 import ViewAllLabel from 'components/ViewAllLabel';
+import Popover from 'components/Popover';
+import ConfirmationModal from 'components/ConfirmationModal';
+import ProfilesStore from 'components/Cloud/Profiles/Store';
+import {getProfiles, exportProfile, deleteProfile, setError} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {connect, Provider} from 'react-redux';
+import Alert from 'components/Alert';
+
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles.ListView';
@@ -84,43 +90,34 @@ const SORT_METHODS = {
 
 const NUM_PROFILES_TO_SHOW = 5;
 
-export default class ProfilesListView extends Component {
+class ProfilesListView extends Component {
   state = {
-    profiles: [],
-    error: null,
-    loading: true,
+    profiles: this.props.profiles,
     viewAll: false,
     sortMethod: SORT_METHODS.asc,
     sortColumn: PROFILES_TABLE_HEADERS[1].property,
+    profileToDelete: null,
+    deleteErrMsg: '',
+    extendedDeleteErrMsg: ''
   };
 
   static propTypes = {
     namespace: PropTypes.string.isRequired,
-    onChange: PropTypes.func
+    profiles: PropTypes.array,
+    error: PropTypes.any,
+    loading: PropTypes.bool
   };
 
   componentDidMount() {
-    MyCloudApi.list({
-      namespace: this.props.namespace
-    })
-    .subscribe(
-      profiles => {
-        this.setState({
-          profiles,
-          loading: false
-        }, () => {
-          if (typeof this.props.onChange === 'function') {
-            this.props.onChange(profiles);
-          }
-        });
-      },
-      err => {
-        this.setState({
-          error: err,
-          loading: false
-        });
-      }
-    );
+    getProfiles(this.props.namespace);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.profiles.length !== this.state.profiles.length) {
+      this.setState({
+        profiles: orderBy(nextProps.profiles, this.state.sortColumn, this.state.sortMethod)
+      });
+    }
   }
 
   toggleViewAll = () => {
@@ -145,6 +142,30 @@ export default class ProfilesListView extends Component {
       profiles: orderBy(this.state.profiles, [newSortColumn], [newSortMethod])
     });
   };
+
+  deleteProfile = (profile) => {
+    deleteProfile(this.props.namespace, profile)
+      .subscribe(() => {
+        this.setState({
+          profileToDelete: null,
+          deleteErrMsg: '',
+          extendedDeleteErrMsg: ''
+        });
+      }, (err) => {
+        this.setState({
+          deleteErrMsg: T.translate(`${PREFIX}.deleteError`),
+          extendedDeleteErrMsg: err
+        });
+      });
+  };
+
+  toggleDeleteConfirmationModal = (profileToDelete = null) => {
+    this.setState({
+      profileToDelete,
+      deleteErrMsg: '',
+      extendedDeleteErrMsg: ''
+    });
+  }
 
   renderProfilesTable() {
     if (!this.state.profiles.length) {
@@ -271,7 +292,28 @@ export default class ProfilesListView extends Component {
                 <div />
                 <div />
                 <div />
-                <div />
+                <div>
+                  <Popover
+                    target={() => <IconSVG name="icon-cog-empty" />}
+                    className="profile-actions-popover"
+                    placement="bottom"
+                    bubbleEvent={false}
+                    enableInteractionInPopover={true}
+                  >
+                    <ul>
+                      <li onClick={exportProfile.bind(this, this.props.namespace, profile)}>
+                        {T.translate(`${PREFIX}.export`)}
+                      </li>
+                      <hr />
+                      <li
+                        className="delete-action"
+                        onClick={this.toggleDeleteConfirmationModal.bind(this, profile.name)}
+                      >
+                        {T.translate('commons.delete')}
+                      </li>
+                    </ul>
+                  </Popover>
+                </div>
               </div>
             );
           })
@@ -280,18 +322,53 @@ export default class ProfilesListView extends Component {
     );
   }
 
+  renderDeleteConfirmationModal() {
+    if (!this.state.profileToDelete) {
+      return null;
+    }
+
+    const confirmationText = T.translate(`${PREFIX}.deleteConfirmation`, {profile: this.state.profileToDelete});
+
+    return (
+      <ConfirmationModal
+        headerTitle={T.translate(`${PREFIX}.deleteTitle`)}
+        toggleModal={this.toggleDeleteConfirmationModal.bind(this, null)}
+        confirmationText={confirmationText}
+        confirmButtonText={T.translate('commons.delete')}
+        confirmFn={this.deleteProfile.bind(this, this.state.profileToDelete)}
+        cancelFn={this.toggleDeleteConfirmationModal.bind(this, null)}
+        isOpen={this.state.profileToDelete !== null}
+        errorMessage={this.state.deleteErrMsg}
+        extendedMessage={this.state.extendedDeleteErrMsg}
+      />
+    );
+  }
+
+  renderError() {
+    if (!this.props.error) {
+      return null;
+    }
+
+    let error = T.translate(`${PREFIX}.importError`);
+    if (typeof this.props.error === 'string') {
+      error = `${error}: ${this.props.error}`;
+    }
+
+    return (
+      <Alert
+        message={error}
+        type='error'
+        showAlert={true}
+        onClose={setError.bind(null, null)}
+      />
+    );
+  }
+
   render() {
-    if (this.state.loading) {
+    if (this.props.loading) {
       return (
         <div className="text-xs-center">
           <LoadingSVG />
-        </div>
-      );
-    }
-    if (this.state.error) {
-      return (
-        <div className="text-danger">
-          {JSON.stringify(this.state.error, null, 2)}
         </div>
       );
     }
@@ -310,7 +387,27 @@ export default class ProfilesListView extends Component {
           viewAllState={this.state.viewAll}
           toggleViewAll={this.toggleViewAll}
         />
+        {this.renderDeleteConfirmationModal()}
+        {this.renderError()}
       </div>
     );
   }
+}
+
+const mapStateToProps = (state) => {
+  return {
+    profiles: state.profiles,
+    loading: state.loading,
+    error: state.error
+  };
+};
+
+const ConnectedProfilesListView = connect(mapStateToProps)(ProfilesListView);
+
+export default function ProfilesListViewFn(props) {
+  return (
+    <Provider store={ProfilesStore}>
+      <ConnectedProfilesListView {...props} />
+    </Provider>
+  );
 }
