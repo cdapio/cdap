@@ -229,13 +229,13 @@ public class StoreScanner extends AbstractIdleService {
       if (i - start == number / 10) {
         System.out.println("==> 10% done; time elapsed: "
                              + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
-      } else if (i == number / 5) {
+      } else if (i - start == number / 5) {
         System.out.println("==> 20% done; time elapsed: "
                              + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
-      } else if (i == number / 2) {
+      } else if (i - start == number / 2) {
         System.out.println("==> 50% done; time elapsed: "
                              + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
-      } else if (i == number / 5 * 4) {
+      } else if (i - start == number / 5 * 4) {
         System.out.println("==> 80% done; time elapsed: "
                              + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
       }
