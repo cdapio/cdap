@@ -140,7 +140,7 @@ public class ProvisioningService extends AbstractIdleService {
   public ProvisioningTask provision(ProvisionRequest provisionRequest, DatasetContext datasetContext) {
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
-    Map<String, String> args = programOptions.getUserArguments().asMap();
+    Map<String, String> args = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(args);
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
     if (provisioner == null) {

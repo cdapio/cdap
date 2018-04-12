@@ -289,9 +289,15 @@ public class ProgramLifecycleService {
     if (spec == null) {
       throw new NotFoundException(String.format("Provisioner '%s' not found.", profile.getProvisioner().getName()));
     }
-    SystemArguments.addProfileArgs(userArgs, profile);
+    // add profile properties to the system arguments
+    Map<String, String> systemArgs = new HashMap<>();
+    systemArgs.putAll(sysArgs);
+    // get and add any user overrides for profile properties
+    systemArgs.putAll(SystemArguments.getProfileProperties(userArgs));
+    // add the rest of the profile properties to system properties
+    SystemArguments.addProfileArgs(systemArgs, profile);
 
-    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(sysArgs),
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                              new BasicArguments(userArgs), debug);
 
     RunId runId = RunIds.generate();

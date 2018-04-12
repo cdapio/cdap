@@ -200,7 +200,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     try {
       // the program will run and stop by itself.
       startProgram(program);
-      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 20);
+      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 60);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));

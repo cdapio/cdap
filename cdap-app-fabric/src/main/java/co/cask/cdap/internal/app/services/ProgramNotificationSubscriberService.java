@@ -189,15 +189,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
     long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
-    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-    Map<String, String> systemArguments = systemArgumentsString == null ?
-      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-    boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
-    boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
-
     RunRecordMeta recordedRunRecord;
     switch (programRunStatus) {
       case STARTING:
+        String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+        Map<String, String> systemArguments = systemArgumentsString == null ?
+          Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+        boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
+        boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
         // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
         if (isInWorkflow || skipProvisioning) {
@@ -256,6 +255,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       if (programRunStatus.isEndState()) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner
+        boolean isInWorkflow = recordedRunRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME);
+        boolean skipProvisioning =
+          Boolean.parseBoolean(recordedRunRecord.getSystemArgs().get(ProgramOptionConstants.SKIP_PROVISIONING));
         if (isInWorkflow || skipProvisioning) {
           appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
           appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
