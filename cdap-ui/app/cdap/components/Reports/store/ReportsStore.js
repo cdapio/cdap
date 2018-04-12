@@ -21,6 +21,7 @@ const ReportsActions = {
   toggleCustomizerOption: 'REPORTS_TOGGLE_CUSTOMIZER_OPTION',
   setList: 'REPORTS_SET_LIST',
   setDetails: 'REPORTS_SET_DETAILS',
+  setTimeRange: 'REPORTS_SET_TIME_RANGE',
   reset: 'REPORTS_RESET'
 };
 
@@ -38,6 +39,12 @@ const defaultCustomizerState = {
   numLogWarnings: false,
   numLogErrors: false,
   numRecordsOut: false
+};
+
+const defaultTimeRangeState = {
+  selection: null,
+  start: null,
+  end: null
 };
 
 const defaultListState = {
@@ -60,6 +67,22 @@ const customizer = (state = defaultCustomizerState, action = defaultAction) => {
       };
     case ReportsActions.reset:
       return defaultCustomizerState;
+    default:
+      return state;
+  }
+};
+
+const timeRange = (state = defaultTimeRangeState, action = defaultAction) => {
+  switch (action.type) {
+    case ReportsActions.setTimeRange:
+      return {
+        ...state,
+        selection: action.payload.selection,
+        start: action.payload.start,
+        end: action.payload.end
+      };
+    case ReportsActions.reset:
+      return defaultTimeRangeState;
     default:
       return state;
   }
@@ -98,12 +121,14 @@ const ReportsStore = createStore(
   combineReducers({
     customizer,
     list,
-    details
+    details,
+    timeRange
   }),
   {
     reports: defaultCustomizerState,
     list: defaultListState,
-    details: defaultDetailsState
+    details: defaultDetailsState,
+    timeRange: defaultTimeRangeState
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
