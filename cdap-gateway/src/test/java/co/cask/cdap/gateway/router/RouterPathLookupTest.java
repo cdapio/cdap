@@ -33,7 +33,7 @@ import java.util.EnumSet;
 /**
  *  To test the RouterPathLookup regular expression tests.
  */
-public class RouterPathTest {
+public class RouterPathLookupTest {
 
   private static RouterPathLookup pathLookup;
   private static final HttpVersion VERSION = HttpVersion.HTTP_1_1;
@@ -486,6 +486,20 @@ public class RouterPathTest {
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.MESSAGING_SERVICE),
                   RouterPathLookup.MESSAGING);
     assertRouting(String.format("/v3/system/services/%s/stacks", "unknown.service"), null);
+  }
+
+  @Test
+  public void testEndsWith() {
+    // expected should not be longer than actual
+    Assert.assertFalse(pathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b", "c", "d"));
+    // should pass as ends with is correct
+    Assert.assertTrue(pathLookup.endsWith(new String[]{"a", "b", "c"}, "b", "c"));
+    // should fail as actual does not end with 'c'
+    Assert.assertFalse(pathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b"));
+    // should pass as actual has one extra string at end
+    Assert.assertTrue(pathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b", "?"));
+    // should fail as actual has two extra string at end
+    Assert.assertFalse(pathLookup.endsWith(new String[]{"a", "b", "c", "d"}, "a", "b", "?"));
   }
 
   private void assertRouting(String path, RouteDestination destination) {

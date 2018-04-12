@@ -31,7 +31,6 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -266,19 +265,18 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     deleteArtifact(wordcountId1, false, null, 200);
     Assert.assertEquals(ImmutableMap.of(), getArtifactProperties(wordcountId1));
 
-    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(Id.Artifact.fromEntityId(wordcountId1),
-                                                                     MetadataScope.USER);
+    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     Assert.assertEquals(new MetadataRecord(wordcountId1, MetadataScope.USER),
                         metadataRecords.iterator().next());
     // delete artifact
     deleteArtifact(wordcountId1, true, null, 200);
-    try {
-      metadataClient.getMetadata(Id.Artifact.fromEntityId(wordcountId1), MetadataScope.USER);
-      Assert.fail("Should not reach here");
-    } catch (NotFoundException e) {
-      // no-op
-    }
+    Set<MetadataRecord> metadata = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
+    // the properties and tags should be empty since there is no metadata anymore
+    Assert.assertEquals(1, metadata.size());
+    MetadataRecord record = metadata.iterator().next();
+    Assert.assertTrue(record.getTags().isEmpty());
+    Assert.assertTrue(record.getProperties().isEmpty());
     actualArtifacts = getArtifacts(NamespaceId.DEFAULT);
     Assert.assertTrue(actualArtifacts.isEmpty());
   }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.audit;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -34,7 +35,12 @@ public class InMemoryAuditPublisher implements AuditPublisher {
 
   @Override
   public void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload) {
-    AuditMessage auditMessage = new AuditMessage(0, entityId, "", auditType, auditPayload);
+    publish(entityId.toMetadataEntity(), auditType, auditPayload);
+  }
+
+  @Override
+  public void publish(MetadataEntity metadataEntity, AuditType auditType, AuditPayload auditPayload) {
+    AuditMessage auditMessage = new AuditMessage(0, metadataEntity, "", auditType, auditPayload);
     messages.add(auditMessage);
   }
 

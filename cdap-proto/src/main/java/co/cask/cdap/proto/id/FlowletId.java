@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -76,6 +77,13 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
   public ProgramId getParent() {
     return new ProgramId(new ApplicationId(getNamespace(), getApplication(), getVersion()),
                          ProgramType.FLOW, getFlow());
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() {
+    return MetadataEntity.ofNamespace(namespace)
+      .append(MetadataEntity.APPLICATION, application).append(MetadataEntity.VERSION, version)
+      .append(MetadataEntity.FLOW, flow).appendAsType(MetadataEntity.FLOWLET, flowlet);
   }
 
   @Override

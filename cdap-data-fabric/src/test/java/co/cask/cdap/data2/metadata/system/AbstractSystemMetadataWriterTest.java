@@ -100,9 +100,8 @@ public class AbstractSystemMetadataWriterTest {
                          ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
                                          AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description1",
                                          AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
-                                         AbstractSystemMetadataWriter.TTL_KEY, "100"),
-                         ImmutableSet.<String>of());
-    Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance));
+                                         AbstractSystemMetadataWriter.TTL_KEY, "100"), ImmutableSet.of());
+    Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance.toMetadataEntity()));
 
     // Now remove TTL, and add dsType
     datasetSystemMetadataWriter =
@@ -114,10 +113,9 @@ public class AbstractSystemMetadataWriterTest {
                          ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
                                          AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description2",
                                          AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
-                                         DatasetSystemMetadataWriter.TYPE, "dsType"),
-                         ImmutableSet.<String>of());
-    Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance));
+                                         DatasetSystemMetadataWriter.TYPE, "dsType"), ImmutableSet.of());
+    Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance.toMetadataEntity()));
 
-    store.removeMetadata(dsInstance);
+    store.removeMetadata(dsInstance.toMetadataEntity());
   }
 }
