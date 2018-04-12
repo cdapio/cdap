@@ -34,6 +34,8 @@ import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -312,7 +314,9 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
                               AccessType accessType) {
       this.namespace = namespace;
       this.name = name;
-      this.arguments = arguments == null ? DatasetDefinition.NO_ARGUMENTS : arguments;
+      this.arguments = arguments == null
+        ? DatasetDefinition.NO_ARGUMENTS
+        : Collections.unmodifiableMap(new HashMap<>(arguments));
       this.accessType = accessType;
     }
 
