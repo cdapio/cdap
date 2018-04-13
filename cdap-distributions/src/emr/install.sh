@@ -22,11 +22,11 @@
 # The git branch to clone
 CDAP_BRANCH=${CDAP_BRANCH:-release/4.1}
 # Optional tag to checkout - All released versions of this script should set this
-CDAP_TAG=''
+CDAP_TAG=${CDAP_TAG:+emr4.1}
 # The CDAP package version passed to Chef
 CDAP_VERSION=${CDAP_VERSION:-4.1.3-1}
 # The version of Chef to install
-CHEF_VERSION=${CHEF_VERSION:-12.21.31}
+CHEF_VERSION=${CHEF_VERSION:-13.8.5}
 # cdap-site.xml configuration parameters
 EXPLORE_ENABLED='true'
 # Sleep delay before starting services (in seconds)
@@ -120,7 +120,8 @@ test -d /var/chef/cookbooks && sudo rm -rf /var/chef/cookbooks
 sudo ${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
 
 # Install cookbooks via knife
-sudo ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
+mkdir -p ${__tmpdir}/cookbook-download
+(cd ${__tmpdir}/cookbook-download && sudo ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks")
 
 # Get IP
 __ipaddr=$(ifconfig eth0 | grep addr: | cut -d: -f2 | head -n 1 | awk '{print $1}')
