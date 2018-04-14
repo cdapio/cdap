@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {MyProfileApi} from 'api/cloud';
+import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link} from 'react-router-dom';
 import T from 'i18n-react';
@@ -102,7 +102,7 @@ export default class ProfilesListView extends Component {
   };
 
   componentDidMount() {
-    MyProfileApi.list({
+    MyCloudApi.list({
       namespace: this.props.namespace
     })
     .subscribe(

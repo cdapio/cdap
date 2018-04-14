@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {MyProfileApi} from 'api/cloud';
+import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import IconSVG from 'components/IconSVG';
@@ -34,7 +34,7 @@ export default class ProfilePreview extends Component {
   };
 
   componentDidMount() {
-    MyProfileApi.get({
+    MyCloudApi.get({
       namespace: getCurrentNamespace(),
       profile: this.props.profileName
     })

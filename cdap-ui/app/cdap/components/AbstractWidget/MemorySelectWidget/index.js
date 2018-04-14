@@ -17,11 +17,13 @@
 import React from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+import {objectQuery} from 'services/helpers';
 require('./MemorySelectWidget.scss');
 
 export default function MemorySelectWidget({...props}) {
+  let size = objectQuery(props, 'widgetProps', 'size') || 'large';
   return (
-    <div className="memory-select-widget">
+    <div className={`memory-select-widget ${size}`}>
       <SelectWithOptions
         options={props.widgetProps.values}
         value={props.value}

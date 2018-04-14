@@ -17,7 +17,6 @@
 import React from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
-require('./SelectWidget.scss');
 
 export default function SelectWidget({...props}) {
   let size = props.widgetProps.size || 'large';

@@ -17,39 +17,48 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Form, FormGroup, Col, Input} from 'reactstrap';
-import {preventPropagation} from 'services/helpers';
-import SampleViewSpecJson from './sample-view-spec.json';
 import AbstractWidget from 'components/AbstractWidget';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link, Redirect} from 'react-router-dom';
-import {MyProfileApi} from 'api/cloud';
+import {MyCloudApi} from 'api/cloud';
 import BtnWithLoading from 'components/BtnWithLoading';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, preventPropagation} from 'services/helpers';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import {connect, Provider} from 'react-redux';
+import ProvisionerInfoStore from 'components/Cloud/Store';
+import {fetchProvisionerSpec} from 'components/Cloud/Store/ActionCreator';
 
 require('./CreateView.scss');
 
-export default class ProfilesCreateView extends Component {
+class ProfilesCreateView extends Component {
+  static propTypes = {
+    location: PropTypes.object,
+    provisionerJsonSpecMap: PropTypes.object,
+    loading: PropTypes.bool,
+    selectedProvisioner: PropTypes.string
+  };
+
+  static defaultProps = {
+    provisionerJsonSpecMap: {}
+  };
+
   state = {
     profileName: '',
     profileDescription: '',
     redirectToNamespace: false,
     redirectToAdmin: false,
-    loading: false,
-    error: null,
+    creatingProfile: false,
     isSystem: objectQuery(this.props.location, 'pathname') === '/create-profile'
   };
 
-  static propTypes = {
-    location: PropTypes.object
-  };
-
-  parseSpecAndGetInitialState = () => {
-    let configs = SampleViewSpecJson['configuration-groups'];
+  parseSpecAndGetInitialState = (provisionerJson = {}) => {
+    let configs = provisionerJson['configuration-groups'] || [];
     let properties = {};
     configs.forEach(config => {
       config.properties.forEach(prop => {
+        let widgetAttributes = prop['widget-attributes'] || {};
         properties[prop.name] = {
-          value: prop['widget-attributes'].default,
+          value: widgetAttributes.default,
           editable: true
         };
       });
@@ -57,9 +66,15 @@ export default class ProfilesCreateView extends Component {
     return properties;
   };
 
-  properties = this.parseSpecAndGetInitialState();
+  componentWillReceiveProps(nextProps) {
+    let {selectedProvisioner} = nextProps;
+    this.properties = this.parseSpecAndGetInitialState(nextProps.provisionerJsonSpecMap[selectedProvisioner]);
+  }
 
   componentDidMount() {
+    let {selectedProvisioner} = this.props;
+    // The name will probably come from the URL in the future when we add new provisioner types.
+    fetchProvisionerSpec(selectedProvisioner);
     if (this.profileNameInput) {
       this.profileNameInput.focus();
     }
@@ -84,12 +99,12 @@ export default class ProfilesCreateView extends Component {
 
   createProfile = () => {
     this.setState({
-      loading: true
+      creatingProfile: true
     });
     let jsonBody = {
       description: this.state.profileDescription,
       provisioner: {
-        name: 'GoogleDataProc',
+        name: this.props.selectedProvisioner,
         properties: Object.entries(this.properties).map(([property, propObj]) => {
           return {
             name: property,
@@ -99,7 +114,7 @@ export default class ProfilesCreateView extends Component {
         })
       }
     };
-    MyProfileApi
+    MyCloudApi
       .create({
         namespace: this.state.isSystem ? 'system' : getCurrentNamespace(),
         profile: this.state.profileName
@@ -118,8 +133,8 @@ export default class ProfilesCreateView extends Component {
         },
         err => {
           this.setState({
-            loading: false,
-            error: JSON.stringify(err, null, 2)
+            creatingProfile: false,
+            error: err.response
           });
         }
       );
@@ -175,8 +190,8 @@ export default class ProfilesCreateView extends Component {
 
   renderGroup = (group) => {
     return (
-      <div className="group-container" key={group.name}>
-        <strong className="group-title"> {group.name} </strong>
+      <div className="group-container" key={group.label}>
+        <strong className="group-title"> {group.label} </strong>
         <hr />
         <div className="group-description">
           {group.description}
@@ -214,6 +229,15 @@ export default class ProfilesCreateView extends Component {
     );
   };
 
+  renderGroups = () => {
+    let {selectedProvisioner} = this.props;
+    let configurationGroups = objectQuery(this.props, 'provisionerJsonSpecMap', selectedProvisioner, 'configuration-groups');
+    if (!configurationGroups) {
+      return null;
+    }
+    return configurationGroups.map(group => this.renderGroup(group));
+  };
+
   render() {
     if (this.state.redirectToNamespace) {
       return (
@@ -228,14 +252,13 @@ export default class ProfilesCreateView extends Component {
         }}/>
       );
     }
-    let configurationGroups = SampleViewSpecJson['configuration-groups'];
     return (
       <div className="profile-create-view">
         <div className="create-view-top-panel">
           Create a Google Dataproc Profile
         </div>
         <div className="create-form-container">
-          <fieldset disabled={this.state.loading}>
+          <fieldset disabled={this.state.creatingProfile}>
             <Form
               className="form-horizontal"
               onSubmit={(e) => {
@@ -243,19 +266,32 @@ export default class ProfilesCreateView extends Component {
                 return false;
               }}
             >
-              {this.renderProfileName()}
-              {this.renderDescription()}
+              <div className="group-container">
+                {this.renderProfileName()}
+                {this.renderDescription()}
+              </div>
               {
-                configurationGroups.map(group => this.renderGroup(group))
+                this.props.loading ?
+                  <LoadingSVGCentered />
+                :
+                  this.renderGroups()
               }
             </Form>
           </fieldset>
         </div>
+        {
+          this.state.error ?
+            <div className="error-section text-danger">
+              {this.state.error}
+            </div>
+          :
+            null
+        }
         <div className="btns-section">
           <BtnWithLoading
             className="btn-primary"
             onClick={this.createProfile}
-            loading={this.state.loading}
+            loading={this.state.creatingProfile}
             disabled={!this.state.profileName.length || !this.state.profileDescription.length}
             label="Create Compute Profile"
           />
@@ -276,4 +312,21 @@ export default class ProfilesCreateView extends Component {
       </div>
     );
   }
+}
+
+const mapStateToProps = (state) => {
+  return {
+    loading: state.loading,
+    provisionerJsonSpecMap: state.map,
+    selectedProvisioner: state.selectedProvisioner
+  };
+};
+const ConnectedProfilesCreateView = connect(mapStateToProps)(ProfilesCreateView);
+
+export default function ProfilesCreateViewFn({...props}) {
+  return (
+    <Provider store={ProvisionerInfoStore}>
+      <ConnectedProfilesCreateView {...props} />
+    </Provider>
+  );
 }

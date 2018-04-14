@@ -18,6 +18,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import AbstractWidgetFactory from 'components/AbstractWidget/AbstractWidgetFactory';
 import StateWrapper from 'components/AbstractWidget/StateWrapper';
+require('./AbstractWidget.scss');
 
 export const WIDGET_PROPTYPES = {
   widgetProps: PropTypes.object,
@@ -42,12 +43,14 @@ export default class AbstractWidget extends Component {
   render() {
     let Comp = AbstractWidgetFactory[this.props.type];
     return (
-      <StateWrapper
-        comp={Comp}
-        onChange={this.props.onChange}
-        value={this.props.value}
-        widgetProps={this.props.widgetProps}
-      />
+      <div className="abstract-widget-wrapper">
+        <StateWrapper
+          comp={Comp}
+          onChange={this.props.onChange}
+          value={this.props.value}
+          widgetProps={this.props.widgetProps}
+        />
+      </div>
     );
   }
 }

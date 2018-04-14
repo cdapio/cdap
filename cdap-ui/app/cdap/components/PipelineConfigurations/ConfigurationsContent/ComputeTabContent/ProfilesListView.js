@@ -15,7 +15,7 @@
 */
 
 import React, {Component} from 'react';
-import {MyProfileApi} from 'api/cloud';
+import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import classnames from 'classnames';
@@ -42,7 +42,7 @@ export default class ProfilesListViewInPipeline extends Component {
   componentWillMount() {
     let appId = PipelineDetailStore.getState().name;
     Observable.forkJoin(
-      MyProfileApi.list({
+      MyCloudApi.list({
         namespace: getCurrentNamespace()
       }),
       MyPreferenceApi.getAppPreferences({

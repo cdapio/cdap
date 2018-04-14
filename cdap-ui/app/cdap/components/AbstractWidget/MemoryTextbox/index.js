@@ -15,17 +15,33 @@
 */
 
 import React from 'react';
-import NumberTextbox from 'components/AbstractWidget/NumberTextbox';
 import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+import {Input} from 'reactstrap';
+
 require('./MemoryTextbox.scss');
 
+// MemoryTextbox explicitly displays memory in GB even though it gets the value from 
+// backend in MB. we are "big data". We don't talk in Mb we only start with Gb -_-
 export default function MemoryTextbox({...props}) {
+  let { onChange, value, widgetProps } = props;
+  let min = Math.floor(widgetProps.min / 1024);
+  let max = Math.floor(widgetProps.max / 1024);
+  let numberValue = parseInt(value, 10);
+  let size = widgetProps.size || 'large';
+  value = isNaN(numberValue) ? value : numberValue;
+  let memoryInGB = Math.floor(value / 1024);
   return (
-    <div className="memory-textbox-widget">
-      <NumberTextbox
-        widgetProps={props.widgetProps}
-        value={props.value}
-        onChange={props.onChange}
+    <div className={`memory-textbox-widget ${size}`}>
+      <Input
+        className={`number-textbox-widget ${size}`}
+        type="number"
+        onChange={(e) => {
+          let valueInMB = Math.floor(e.target.value * 1024);
+          onChange(valueInMB);
+        }}
+        value={memoryInGB}
+        min={min}
+        max={max}
       />
       <span>
         GB

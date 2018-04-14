@@ -20,11 +20,12 @@ import SelectWidget from 'components/AbstractWidget/SelectWidget';
 import NumberTextbox from 'components/AbstractWidget/NumberTextbox';
 import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
 import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
+import DefaultInput from 'components/AbstractWidget/DefaultInput';
 
 const TextArea = ({...props}) => <Input type="textarea" {...props} />;
 
 const WIDGET_FACTORY = {
-  text: Input,
+  text: DefaultInput,
   textarea: TextArea,
   number: NumberTextbox,
   select: SelectWidget,
@@ -33,6 +34,6 @@ const WIDGET_FACTORY = {
 };
 export default new Proxy(WIDGET_FACTORY, {
   get: function (obj, prop) {
-    return prop in obj ? obj[prop] : Input;
+    return prop in obj ? obj[prop] : DefaultInput;
   }
 });
