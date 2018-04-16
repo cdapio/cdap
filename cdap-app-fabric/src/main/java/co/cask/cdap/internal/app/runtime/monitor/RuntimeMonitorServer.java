@@ -20,12 +20,15 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.tools.KeyStores;
+import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -35,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.security.KeyStore;
 
 /**
  * Runtime Server which starts netty-http service to expose metadata to {@link RuntimeMonitor}
@@ -60,15 +64,22 @@ public class RuntimeMonitorServer extends AbstractIdleService {
                                                                        Constants.Service.RUNTIME_HTTP));
     InetSocketAddress address = getServerSocketAddress(cConf);
 
+    // Enable SSL for communication.
+    // TODO: CDAP-13252 to add client side authentication via SSL
+    String password = KeyStores.generateRandomPassword();
+    KeyStore ks = KeyStores.generatedCertKeyStore(SConfiguration.create(), password);
+    SSLHandlerFactory sslHandlerFactory = new SSLHandlerFactory(ks, password);
+
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
       .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, this::stop))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(address.getHostName())
       .setPort(address.getPort())
+      .enableSSL(sslHandlerFactory)
       .build();
 
     httpService.start();
-    LOG.info("Runtime HTTP server started on {}", httpService.getBindAddress());
+    LOG.info("Runtime monitor server started on {}", httpService.getBindAddress());
   }
 
   @VisibleForTesting
@@ -79,7 +90,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     httpService.stop();
-    LOG.info("Runtime HTTP server stopped");
+    LOG.info("Runtime monitor server stopped");
   }
 
   /**

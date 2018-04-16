@@ -104,6 +104,16 @@ public final class KeyStores {
   }
 
   /**
+   * Generates a cryptographically strong password
+   */
+  public static String generateRandomPassword() {
+    // This works by choosing 130 bits from a cryptographically secure random bit generator, and encoding them in
+    // base-32. 128 bits is considered to be cryptographically strong, but each digit in a base 32 number can encode
+    // 5 bits, so 128 is rounded up to the next multiple of 5. Base 32 system uses alphabets A-Z and numbers 2-7
+    return new BigInteger(130, new SecureRandom()).toString(32);
+  }
+
+  /**
    * Generate an X.509 certificate
    *
    * @param dn Distinguished name for the owner of the certificate, it will also be the signer of the certificate.

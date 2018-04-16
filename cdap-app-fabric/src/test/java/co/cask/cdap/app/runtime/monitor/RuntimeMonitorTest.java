@@ -110,11 +110,12 @@ public class RuntimeMonitorTest {
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname(runtimeServer.getBindAddress().getAddress().getHostAddress())
       .setPort(runtimeServer.getBindAddress().getPort())
-      .setSSLEnabled(false)
+      .setSSLEnabled(true)
       .build();
     ClientConfig.Builder clientConfigBuilder = ClientConfig.builder()
       .setDefaultReadTimeout(60000)
       .setApiVersion("v1")
+      .setVerifySSLCert(false)
       .setConnectionConfig(connectionConfig);
 
     CConfiguration cConfCopy = CConfiguration.copy(cConf);
