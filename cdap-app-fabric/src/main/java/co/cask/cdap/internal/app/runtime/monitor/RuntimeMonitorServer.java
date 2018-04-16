@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package co.cask.cdap.internal.app.runtime.monitor;
 
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.common.HttpExceptionHandler;
@@ -23,33 +23,34 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.internal.app.runtime.handler.RuntimeHandler;
-import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Runtime Server which starts netty-http service to expose metadata to {@link RuntimeMonitor}
  */
-public class RuntimeServer extends AbstractIdleService {
+public class RuntimeMonitorServer extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RuntimeServer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorServer.class);
 
-  private final InetAddress hostname;
   private final CConfiguration cConf;
   private final MessageFetcher messageFetcher;
   private NettyHttpService httpService;
 
-  public RuntimeServer(CConfiguration cConf, InetAddress hostname, MessageFetcher messageFetcher) {
-    this.hostname = hostname;
-    this.messageFetcher = messageFetcher;
+  @Inject
+  RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService) {
     this.cConf = cConf;
+    this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
   }
 
   @Override
@@ -57,24 +58,39 @@ public class RuntimeServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.RUNTIME_HTTP));
+    InetSocketAddress address = getServerSocketAddress(cConf);
+
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
-      .setHost(hostname.getCanonicalHostName())
       .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, this::stop))
-      .setPort(cConf.getInt(Constants.RuntimeHandler.SERVER_PORT))
-      .setExceptionHandler(new HttpExceptionHandler()).build();
+      .setExceptionHandler(new HttpExceptionHandler())
+      .setHost(address.getHostName())
+      .setPort(address.getPort())
+      .build();
 
     httpService.start();
     LOG.info("Runtime HTTP server started on {}", httpService.getBindAddress());
   }
 
   @VisibleForTesting
-  public NettyHttpService getHttpService() {
-    return httpService;
+  public InetSocketAddress getBindAddress() {
+    return httpService.getBindAddress();
   }
 
   @Override
   protected void shutDown() throws Exception {
     httpService.stop();
     LOG.info("Runtime HTTP server stopped");
+  }
+
+  /**
+   * Returns the {@link InetSocketAddress} for the http service to bind to.
+   */
+  private InetSocketAddress getServerSocketAddress(CConfiguration cConf) {
+    String host = cConf.get(Constants.RuntimeMonitor.SERVER_HOST);
+    if (host == null) {
+      host = InetAddress.getLoopbackAddress().getCanonicalHostName();
+    }
+    int port = cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT);
+    return new InetSocketAddress(host, port);
   }
 }

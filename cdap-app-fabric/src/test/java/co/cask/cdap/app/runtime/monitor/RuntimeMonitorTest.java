@@ -31,7 +31,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
-import co.cask.cdap.internal.app.services.RuntimeServer;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
@@ -50,11 +50,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -63,12 +60,10 @@ import java.util.concurrent.TimeUnit;
  * Runtime Monitor Test
  */
 public class RuntimeMonitorTest {
-  private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorTest.class);
 
-  protected static Injector injector;
-  protected static CConfiguration cConf;
-  protected static MessagingService messagingService;
-  private RuntimeServer runtimeServer;
+  private static CConfiguration cConf;
+  private static MessagingService messagingService;
+  private RuntimeMonitorServer runtimeServer;
   private MessagingContext messagingContext;
 
   @ClassRule
@@ -79,19 +74,23 @@ public class RuntimeMonitorTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "programStatus");
-    cConf.set(Constants.RuntimeHandler.SERVER_PORT, "0");
+
+    // clear the host to make sure it binds to loopback address
+    cConf.unset(Constants.RuntimeMonitor.SERVER_HOST);
+    cConf.set(Constants.RuntimeMonitor.SERVER_PORT, "0");
     cConf.set(Constants.RuntimeMonitor.BATCH_LIMIT, "2");
     cConf.set(Constants.RuntimeMonitor.POLL_TIME_MS, "200");
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
-    injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
 
-    messagingContext = new MultiThreadMessagingContext(messagingService);
     messagingService.createTopic(new TopicMetadata(new TopicId("system", "cdap-programStatus")));
-    runtimeServer = new RuntimeServer(cConf, InetAddress.getLoopbackAddress(), messagingContext.getMessageFetcher());
+    messagingContext = new MultiThreadMessagingContext(messagingService);
+
+    runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
   }
 
@@ -109,8 +108,8 @@ public class RuntimeMonitorTest {
     verifyPublishedMessages(3, cConf);
 
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
-      .setHostname(runtimeServer.getHttpService().getBindAddress().getAddress().getHostAddress())
-      .setPort(runtimeServer.getHttpService().getBindAddress().getPort())
+      .setHostname(runtimeServer.getBindAddress().getAddress().getHostAddress())
+      .setPort(runtimeServer.getBindAddress().getPort())
       .setSSLEnabled(false)
       .build();
     ClientConfig.Builder clientConfigBuilder = ClientConfig.builder()
@@ -132,13 +131,7 @@ public class RuntimeMonitorTest {
     verifyPublishedMessages(2, cConfCopy);
 
     // wait for runtime server to stop automatically
-    Tasks.waitFor(
-      true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return !runtimeServer.isRunning();
-        }
-      }, 5, TimeUnit.MINUTES);
+    Tasks.waitFor(true, () -> !runtimeServer.isRunning(), 5, TimeUnit.MINUTES);
 
     runtimeMonitor.stopAndWait();
   }
@@ -146,26 +139,24 @@ public class RuntimeMonitorTest {
   private void verifyPublishedMessages(int limit, CConfiguration cConfig) throws Exception {
     MessageFetcher fetcher = messagingContext.getMessageFetcher();
     final String[] messageId = {null};
-    Tasks.waitFor(
-      true,
-      new Callable<Boolean>() {
-        int count = 0;
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      int count = 0;
 
-        @Override
-        public Boolean call() throws Exception {
-          try (CloseableIterator<Message> iter =
-                 fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                               cConfig.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), limit, messageId[0])) {
-            while (iter.hasNext()) {
-              Message message = iter.next();
-              messageId[0] = message.getId();
-              count++;
-            }
+      @Override
+      public Boolean call() throws Exception {
+        try (CloseableIterator<Message> iter =
+               fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
+                             cConfig.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), limit, messageId[0])) {
+          while (iter.hasNext()) {
+            Message message = iter.next();
+            messageId[0] = message.getId();
+            count++;
           }
-
-          return count >= 3;
         }
-      }, 5, TimeUnit.MINUTES);
+
+        return count >= 3;
+      }
+    }, 5, TimeUnit.MINUTES);
   }
 
   private void publishProgramStatus() {

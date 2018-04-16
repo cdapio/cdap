@@ -796,13 +796,10 @@ public final class Constants {
     public static final String POLL_TIME_MS = "app.program.runtime.monitor.polltime.ms";
     public static final String BATCH_LIMIT = "app.program.runtime.monitor.batch.limit";
     public static final String TOPICS_CONFIGS = "app.program.runtime.monitor.topics.configs";
-  }
 
-  /**
-   * Runtime Handler constants.
-   */
-  public static final class RuntimeHandler {
-    public static final String SERVER_PORT = "app.program.runtime.handler.bind.port";
+    // Configuration keys for the runtime monitor server
+    public static final String SERVER_HOST = "app.program.runtime.monitor.server.host";
+    public static final String SERVER_PORT = "app.program.runtime.monitor.server.port";
   }
 
   /**

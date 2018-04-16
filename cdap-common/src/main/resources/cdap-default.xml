@@ -2372,10 +2372,10 @@
   </property>
 
   <property>
-    <name>app.program.runtime.handler.bind.port</name>
-    <value>11020</value>
+    <name>app.program.runtime.monitor.server.port</name>
+    <value>443</value>
     <description>
-      CDAP Runtime Handler service bind port
+      CDAP Runtime monitor server bind port
     </description>
   </property>
 
