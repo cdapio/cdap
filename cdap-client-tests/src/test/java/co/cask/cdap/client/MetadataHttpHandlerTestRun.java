@@ -758,14 +758,23 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                 AllProgramsApp.NoOpWorkflow.DESCRIPTION);
 
     // update dataset properties to add the workflow.local.dataset property to it.
-    datasetClient.update(datasetInstance, ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true"));
+    try {
+      datasetClient.update(datasetInstance,
+                           Collections.singletonMap(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
+                                                    Boolean.TRUE.toString()));
 
-    dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
-    Assert.assertEquals(
-      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
-                      AbstractSystemMetadataWriter.EXPLORE_TAG,
-                      DatasetSystemMetadataWriter.LOCAL_DATASET_TAG),
-      dsSystemTags);
+      dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
+      Assert.assertEquals(
+        ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
+                        AbstractSystemMetadataWriter.EXPLORE_TAG,
+                        DatasetSystemMetadataWriter.LOCAL_DATASET_TAG),
+        dsSystemTags);
+    } finally {
+      // Always reset the property. Otherwise later test could fail due to bug in CDAP-8220
+      datasetClient.update(datasetInstance,
+                           Collections.singletonMap(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
+                                                    Boolean.FALSE.toString()));
+    }
   }
 
   @Test
