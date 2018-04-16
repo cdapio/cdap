@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.handler;
+package co.cask.cdap.internal.app.runtime.monitor;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
@@ -23,8 +23,6 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.internal.app.runtime.monitor.MonitorConsumeRequest;
-import co.cask.cdap.internal.app.runtime.monitor.MonitorMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
@@ -57,13 +55,14 @@ import javax.ws.rs.Path;
  */
 @Path("/v1/runtime")
 public class RuntimeHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeHandler.class);
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =  Loggers.sampling(LOG, LogSamplers.perMessage(
     () -> LogSamplers.limitRate(60000)));
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_CONSUME_REQUEST_TYPE = new TypeToken<Map<String,
-    MonitorConsumeRequest>>() { }.getType();
+  private static final Type MAP_STRING_CONSUME_REQUEST_TYPE =
+    new TypeToken<Map<String, MonitorConsumeRequest>>() { }.getType();
   private static final int CHUNK_SIZE = 8192;
 
   private final CConfiguration cConf;
@@ -101,8 +100,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
         String topic = cConf.get(entry.getKey());
 
         try {
-          writeMessages(jsonWriter, buffer, chunkResponder, topic, entry.getValue().getLimit(),
-                        entry.getValue().getMessageId());
+          fetchAndWriteMessages(jsonWriter, buffer, chunkResponder, topic, entry.getValue().getLimit(),
+                                entry.getValue().getMessageId());
         } catch (Exception e) {
           OUTAGE_LOG.error("Exception while sending messages for topic: {}", topic, e);
         } finally {
@@ -127,8 +126,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
     shutdownRunnable.run();
   }
 
-  private void writeMessages(JsonWriter jsonWriter, ByteBuf buffer, ChunkResponder chunkResponder, String topic,
-                             int limit, @Nullable String fromMessage) throws TopicNotFoundException, IOException {
+  private void fetchAndWriteMessages(JsonWriter jsonWriter, ByteBuf buffer,
+                                     ChunkResponder chunkResponder, String topic, int limit,
+                                     @Nullable String fromMessage) throws TopicNotFoundException, IOException {
     try (CloseableIterator<Message> iter = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(), topic, limit,
                                                                 fromMessage)) {
       while (iter.hasNext()) {

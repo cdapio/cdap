@@ -57,8 +57,8 @@ public interface MessagingContext {
   /**
    * Returns an instance of {@link MessageFetcher} for fetching messages.
    * <p>
-   * Messages will be fetched transactionally if any of the {@code publish} methods in the
-   * {@link MessagePublisher} are called from a transactional context (either through {@link
+   * Messages will be fetched transactionally if any of the {@code fetch} methods in the
+   * {@link MessageFetcher} are called from a transactional context (either through {@link
    * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link Transactional#execute(TxRunnable)}
    * when {@link TransactionControl#EXPLICIT Explicit Transaction Control} is used).
    * </p>
