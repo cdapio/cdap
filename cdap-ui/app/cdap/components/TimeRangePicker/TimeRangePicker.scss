@@ -1,0 +1,235 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+
+$border-color: $grey-04;
+$active-border-color: $blue-03;
+$time-bg-color: $grey-08;
+$time-display-bg-color: $blue-grey01;
+
+$track-color: $blue-grey01;
+$thumb-color: white;
+
+$thumb-radius: 50%;
+$thumb-height: 15px;
+$thumb-width: 15px;
+$thumb-shadow-size: 1px;
+$thumb-shadow-blur: 3px;
+$thumb-shadow-color: #111111;
+$thumb-border-width: 0;
+$thumb-border-color: white;
+
+$track-width: 100%;
+$track-height: 5px;
+$track-shadow-size: 0;
+$track-shadow-blur: 0;
+$track-shadow-color: #222222;
+$track-border-width: 0;
+$track-border-color: black;
+
+$track-radius: 5px;
+$contrast: 0;
+
+.time-range-picker-container {
+  .time-range-selector {
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+    > div {
+      display: inline-block;
+    }
+
+    .separator {
+      width: 36px;
+      font-weight: bold;
+      line-height: 32px;
+    }
+
+    .time {
+      // 18px = separator width divided by 2
+      width: calc(50% - 18px);
+
+      .time-wrapper {
+        line-height: 32px;
+        border: 2px solid $border-color;
+        padding: 0 10px;
+        border-radius: 6px;
+        background-color: white;
+        cursor: pointer;
+
+        &.active {
+          border-color: $active-border-color;
+        }
+      }
+    }
+  }
+
+  .calendar {
+    border: none;
+    width: 100%;
+
+    button {
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  .time-container {
+    padding: 25px 15px;
+    background-color: $time-bg-color;
+
+    .time-display,
+    .time-slider {
+      display: inline-block;
+      width: 50%;
+      vertical-align: top;
+      padding: 0 15px;
+    }
+
+    .time-display {
+      margin-top: 10px;
+
+      .time,
+      .colon {
+        display: inline-block;
+        text-align: center;
+      }
+
+      .colon {
+        width: 20px;
+        font-weight: bold;
+        font-size: 30px;
+      }
+
+      .time {
+        text-align: center;
+        width: calc(50% - 10px);
+        font-size: 36px;
+        color: white;
+        background-color: $time-display-bg-color;
+        border-radius: 6px;
+        padding: 10px;
+      }
+    }
+
+    .time-slider {
+      label {
+        font-weight: bold;
+        margin-bottom: 0;
+      }
+
+      .minutes-slider { margin-top: 15px; }
+
+      /**
+       * Slider Styling
+       * Source: https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/
+       **/
+      @mixin shadow($shadow-size, $shadow-blur, $shadow-color) {
+        box-shadow: $shadow-size $shadow-size $shadow-blur $shadow-color, 0 0 $shadow-size lighten($shadow-color, 5%);
+      }
+
+      @mixin track() {
+        width: $track-width;
+        height: $track-height;
+        cursor: pointer;
+        animate: 0.2s;
+      }
+
+      @mixin thumb() {
+        @include shadow($thumb-shadow-size,$thumb-shadow-blur,$thumb-shadow-color);
+        border: $thumb-border-width solid $thumb-border-color;
+        height: $thumb-height;
+        width: $thumb-width;
+        border-radius: $thumb-radius;
+        background: $thumb-color;
+        cursor: pointer;
+      }
+
+      input[type=range] {
+        -webkit-appearance: none;
+        margin: $thumb-height/3 0;
+        width: $track-width;
+
+        &:focus {
+          outline: none;
+        }
+
+        &::-webkit-slider-runnable-track {
+          @include track();
+          @include shadow($track-shadow-size,$track-shadow-blur,$track-shadow-color);
+          background: $track-color;
+          border-radius: $track-radius;
+          border: $track-border-width solid $track-border-color;
+        }
+
+        &::-webkit-slider-thumb {
+          @include thumb();
+          -webkit-appearance: none;
+          margin-top: ((-$track-border-width * 2 + $track-height) / 2) - ($thumb-height / 2);
+        }
+
+        &:focus::-webkit-slider-runnable-track {
+          background: lighten($track-color, $contrast);
+        }
+
+        &::-moz-range-track {
+          @include track();
+          @include shadow($track-shadow-size,$track-shadow-blur,$track-shadow-color);
+          background: $track-color;
+          border-radius: $track-radius;
+          border: $track-border-width solid $track-border-color;
+        }
+        &::-moz-range-thumb {
+          @include thumb();
+        }
+
+        &::-ms-track {
+          @include track();
+          background: transparent;
+          border-color: transparent;
+          border-width: $thumb-width 0;
+          color: transparent;
+        }
+
+        &::-ms-fill-lower {
+          background: darken($track-color, $contrast);
+          border: $track-border-width solid $track-border-color;
+          border-radius: $track-radius*2;
+
+          @include shadow($track-shadow-size,$track-shadow-blur,$track-shadow-color);
+        }
+        &::-ms-fill-upper {
+          background: $track-color;
+          border: $track-border-width solid $track-border-color;
+          border-radius: $track-radius*2;
+
+          @include shadow($track-shadow-size,$track-shadow-blur,$track-shadow-color);
+        }
+        &::-ms-thumb {
+          @include thumb();
+        }
+        &:focus::-ms-fill-lower {
+          background: $track-color;
+        }
+        &:focus::-ms-fill-upper {
+          background: lighten($track-color, $contrast);
+        }
+      }
+    }
+  }
+}

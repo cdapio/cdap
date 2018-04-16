@@ -128,6 +128,7 @@
     "react-addons-css-transition-group": "15.3.1",
     "react-addons-transition-group": "15.3.1",
     "react-addons-update": "15.3.1",
+    "react-calendar": "2.14.0",
     "react-cookie": "0.4.8",
     "react-css-modules": "4.1.0",
     "react-datetime": "2.8.6",
