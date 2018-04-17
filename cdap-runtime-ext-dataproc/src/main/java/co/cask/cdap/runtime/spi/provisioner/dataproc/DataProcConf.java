@@ -16,8 +16,13 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.services.compute.Compute;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 
@@ -25,6 +30,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -35,6 +42,7 @@ public class DataProcConf {
   private final String region;
   private final String zone;
   private final String projectId;
+  private final String network;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -46,13 +54,14 @@ public class DataProcConf {
   private final int workerMemoryMB;
   private final int workerDiskGB;
 
-  private DataProcConf(String accountKey, String region, String zone, String projectId,
+  private DataProcConf(String accountKey, String region, String zone, String projectId, String network,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
     this.projectId = projectId;
+    this.network = network;
     this.masterNumNodes = masterNumNodes;
     this.masterCPUs = masterCPUs;
     this.masterMemoryMB = masterMemoryMB;
@@ -73,6 +82,10 @@ public class DataProcConf {
 
   public String getProjectId() {
     return projectId;
+  }
+
+  public String getNetwork() {
+    return network;
   }
 
   public int getMasterNumNodes() {
@@ -116,6 +129,16 @@ public class DataProcConf {
       .build();
   }
 
+  public Compute getCompute() throws GeneralSecurityException, IOException {
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
+      GoogleCredential credential = GoogleCredential.fromStream(is)
+        .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
+      return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), credential).build();
+    }
+  }
+
   /**
    * Create the conf from a property map while also performing validation.
    */
@@ -126,6 +149,7 @@ public class DataProcConf {
     // TODO: validate zone based on the region
     String region = getString(properties, "region", "global");
     String zone = getString(properties, "zone", "us-central1-a");
+    String network = getString(properties, "network", "default");
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
     if (masterNumNodes != 1 && masterNumNodes != 3) {
@@ -151,7 +175,7 @@ public class DataProcConf {
 
 
 
-    return new DataProcConf(accountKey, region, zone, projectId,
+    return new DataProcConf(accountKey, region, zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB);
   }

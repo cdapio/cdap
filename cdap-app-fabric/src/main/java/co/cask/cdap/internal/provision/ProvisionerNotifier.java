@@ -82,7 +82,7 @@ public class ProvisionerNotifier {
               .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
               .put(ProgramOptionConstants.USER_ID, userId)
               .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONED.name())
-              .put(ProgramOptionConstants.CLUSTER_SIZE, String.valueOf(cluster.getNodes().size()))
+              .put(ProgramOptionConstants.CLUSTER, GSON.toJson(cluster))
               .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
               .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
               .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))

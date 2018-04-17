@@ -27,7 +27,7 @@ public final class ProgramOptionConstants {
 
   public static final String CLUSTER_STATUS = "clusterStatus";
 
-  public static final String CLUSTER_SIZE = "clusterSize";
+  public static final String CLUSTER = "cluster";
 
   public static final String DEBUG_ENABLED = "debugEnabled";
 

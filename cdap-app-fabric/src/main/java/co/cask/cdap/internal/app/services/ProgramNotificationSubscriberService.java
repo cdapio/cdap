@@ -43,6 +43,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -200,10 +201,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
         // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
         if (isInWorkflow || skipProvisioning) {
-          handleClusterEvent(programRunId, ProgramRunClusterStatus.PROVISIONING, notification,
-                             messageIdBytes, datasetContext, appMetadataStore);
-          handleClusterEvent(programRunId, ProgramRunClusterStatus.PROVISIONED, notification,
-                             messageIdBytes, datasetContext, appMetadataStore);
+          ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+          ProgramDescriptor programDescriptor =
+            GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+          appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
+                                                     programOptions.getArguments().asMap(), messageIdBytes,
+                                                     programDescriptor.getArtifactId().toApiArtifactId());
+          appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
         }
         recordedRunRecord = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                                 systemArguments, messageIdBytes);
@@ -274,13 +278,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                   DatasetContext datasetContext, AppMetadataStore appMetadataStore) {
     Map<String, String> properties = notification.getProperties();
 
-    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-    Map<String, String> systemArguments = systemArgumentsString == null ?
-      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
     ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
-    boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
-    boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
 
     ProgramDescriptor programDescriptor =
       GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
@@ -290,25 +289,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                    programOptions.getArguments().asMap(), messageIdBytes,
                                                    programDescriptor.getArtifactId().toApiArtifactId());
 
-        // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
-        if (isInWorkflow || skipProvisioning) {
-          return;
-        }
-
         ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
                                                                  userId);
         provisionerTasks.add(provisioningService.provision(provisionRequest, datasetContext));
         break;
       case PROVISIONED:
-        String clusterSizeStr = properties.get(ProgramOptionConstants.CLUSTER_SIZE);
-        int clusterSize = clusterSizeStr == null ? 0 : Integer.parseInt(clusterSizeStr);
-        appMetadataStore.recordProgramProvisioned(programRunId, clusterSize, messageIdBytes);
-
-        // if this is a preview run or a program within a workflow, we don't actually need to start the program,
-        // as it will have been started by the workflow driver or the program lifecycle service.
-        if (isInWorkflow || skipProvisioning) {
-          return;
-        }
+        Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
+        appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
 
         // start the program run
         String oldUser = SecurityRequestContext.getUserId();
@@ -325,10 +312,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         break;
       case DEPROVISIONING:
         appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
-        // if this is a preview run or a program within a workflow, we don't actually need to deprovision the cluster
-        if (isInWorkflow || skipProvisioning) {
-          return;
-        }
         provisionerTasks.add(provisioningService.deprovision(programRunId, datasetContext));
         break;
       case DEPROVISIONED:

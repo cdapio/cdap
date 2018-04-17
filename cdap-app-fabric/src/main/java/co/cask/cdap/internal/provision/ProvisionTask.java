@@ -81,18 +81,15 @@ public class ProvisionTask extends ProvisioningTask {
         ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
         dataset.putClusterInfo(pollingInfo);
       });
-      ClusterStatus status = cluster.getStatus();
 
-      while (status == ClusterStatus.CREATING) {
-        status = provisioner.getClusterStatus(provisionerContext, cluster);
+      while (cluster.getStatus() == ClusterStatus.CREATING) {
+        cluster = provisioner.getClusterDetail(provisionerContext, cluster);
         TimeUnit.SECONDS.sleep(10);
       }
 
       // TODO: CDAP-13246 handle unexpected states and retry
-      switch (status) {
+      switch (cluster.getStatus()) {
         case RUNNING:
-          cluster = new Cluster(cluster.getName(), ClusterStatus.RUNNING,
-                                cluster.getNodes(), cluster.getProperties());
           op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.CREATED);
           final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, cluster);
           Transactionals.execute(transactional, dsContext -> {
