@@ -104,9 +104,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   protected val runtimeContext = sparkClassLoader.getRuntimeContext
 
   private val taskLocalizationContext = new DefaultTaskLocalizationContext(localizeResources)
-  private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
-                                                     runtimeContext.getDatasetCache,
-                                                     runtimeContext.getRetryStrategy)
+  private val transactional = new SparkTransactional(runtimeContext)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxHandler = new SparkTransactionHandler(runtimeContext.getTransactionSystemClient)
   private val sparkClassFileHandler = new SparkClassFileHandler
