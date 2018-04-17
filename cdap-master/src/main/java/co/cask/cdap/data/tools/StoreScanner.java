@@ -80,10 +80,12 @@ import org.apache.commons.cli.Options;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -184,6 +186,9 @@ public class StoreScanner extends AbstractIdleService {
     Options options = new Options()
       .addOption(new Option("h", "help", false, "Print this usage message."))
       .addOption(new Option("s", "start", true, "Starting offset for generating records"))
+      .addOption(new Option("b", "begin", true, "Begin offset for querying records"))
+      .addOption(new Option("e", "end", true, "End offset for querying records"))
+      .addOption(new Option("ns", "namesapces", true, "namespaces to query"))
       .addOption(new Option("n", "number", true, "Number of run records to generate"))
       .addOption(new Option("d", "delete", false, "delete runs in the store"))
       .addOption(new Option("t", "trace", false, "Trace mode. Prints all of the jobs being debugged."));
@@ -252,9 +257,22 @@ public class StoreScanner extends AbstractIdleService {
     System.out.println("==> 100% done; time elapsed: "
                          + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
     long before = System.currentTimeMillis();
+    int begin = 0;
+    if (commandLine.hasOption("b")) {
+      begin = Integer.valueOf(commandLine.getOptionValue("b"));
+    }
+    int end = 10;
+    if (commandLine.hasOption("e")) {
+      end = Integer.valueOf(commandLine.getOptionValue("e"));
+    }
+    Set<String> ns = new HashSet<>(namespaces);
+    if (commandLine.hasOption("ns")) {
+      ns = new HashSet<>(Arrays.asList(commandLine.getOptionValue("ns").split(",")));
+    }
     Map<ProgramRunId, RunRecordMeta> runs =
-      scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), number + start - 5, number + start, 100);
-    System.out.println("Time used = " + (System.currentTimeMillis() - before));
+      scanner.getStore().getHistoricalRuns(ns, begin, end, 100);
+    System.out.println(String.format("Time used for query [%d, %d) = %d", begin, end,
+                                     (System.currentTimeMillis() - before)));
     System.out.println("Runs: " + runs.values());
     scanner.stopAndWait();
   }
