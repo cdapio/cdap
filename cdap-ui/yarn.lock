@@ -8256,7 +8256,7 @@ react-addons-update@15.3.1:
   version "15.3.1"
   resolved "https://registry.yarnpkg.com/react-addons-update/-/react-addons-update-15.3.1.tgz#a4efa7dbe62cd07217704f69aff26bf100dc769a"
 
-react-calendar@^2.14.0:
+react-calendar@2.14.0:
   version "2.14.0"
   resolved "https://registry.yarnpkg.com/react-calendar/-/react-calendar-2.14.0.tgz#03ffce0d6e64052e552aaafdd142d1764ed88b45"
   dependencies:
