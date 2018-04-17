@@ -795,5 +795,6 @@ DataPrepConnections.propTypes = {
   enableRouting: PropTypes.bool,
   onWorkspaceCreate: PropTypes.func,
   singleWorkspaceMode: PropTypes.bool,
-  sidePanelExpanded: PropTypes.bool
+  sidePanelExpanded: PropTypes.bool,
+  scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };

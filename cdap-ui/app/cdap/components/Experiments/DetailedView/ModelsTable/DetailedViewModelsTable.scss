@@ -129,6 +129,19 @@
         }
       }
     }
+    &.directives-list {
+      .grid-header {
+        .grid-row {
+          &:hover {
+            background: transparent;
+          }
+        }
+        strong {
+          padding-left: 0;
+          color: $grey-03;
+        }
+      }
+    }
     &.classification {
       .grid-header,
       .grid-body {
