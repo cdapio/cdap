@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -94,14 +95,14 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Map<ProgramRunId, ProgramRunStatus> expectedStates = new HashMap<>();
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     for (int i = 0; i < 10; i++) {
-      ProgramRunId serviceId = NamespaceId.DEFAULT.app("test").service("service" + i).run(RunIds.generate());
+      ProgramRunId serviceId = NamespaceId.DEFAULT.app("test").service("service" + i).run(randomRunId());
       store.setProvisioning(serviceId, Collections.emptyMap(), Collections.emptyMap(),
                             Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
       store.setProvisioned(serviceId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
       store.setStart(serviceId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
       expectedStates.put(serviceId, ProgramRunStatus.FAILED);
 
-      ProgramRunId workerId = new NamespaceId("ns").app("test").service("worker" + i).run(RunIds.generate());
+      ProgramRunId workerId = new NamespaceId("ns").app("test").worker("worker" + i).run(randomRunId());
       store.setProvisioning(workerId, Collections.emptyMap(), Collections.emptyMap(),
                             Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
       store.setProvisioned(workerId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
@@ -111,7 +112,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     }
 
     // Write a flow with suspend state
-    ProgramRunId flowId = new NamespaceId("ns").app("test").service("flow").run(RunIds.generate());
+    ProgramRunId flowId = new NamespaceId("ns").app("test").service("flow").run(randomRunId());
     store.setProvisioning(flowId, Collections.emptyMap(), Collections.emptyMap(),
                           Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
     store.setProvisioned(flowId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
@@ -122,15 +123,16 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     expectedStates.put(flowId, ProgramRunStatus.SUSPENDED);
 
     // Write two MR in starting state. One with workflow information, one without.
-    ProgramRunId mrId = NamespaceId.DEFAULT.app("app").mr("mr").run(RunIds.generate());
+    ProgramRunId mrId = NamespaceId.DEFAULT.app("app").mr("mr").run(randomRunId());
     store.setProvisioning(mrId, Collections.emptyMap(), Collections.emptyMap(),
                           Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
     store.setProvisioned(mrId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
     store.setStart(mrId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
     expectedStates.put(mrId, ProgramRunStatus.FAILED);
 
-    ProgramRunId workflowId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    ProgramRunId mrInWorkflowId = workflowId.getParent().getParent().mr("mrInWorkflow").run(RunIds.generate());
+    ProgramRunId workflowId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(randomRunId());
+    ProgramRunId mrInWorkflowId =
+      workflowId.getParent().getParent().mr("mrInWorkflow").run(randomRunId());
     store.setProvisioning(mrInWorkflowId, Collections.emptyMap(),
                           ImmutableMap.of(
                             ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
@@ -280,5 +282,10 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     // Wait for the deletion of the local dataset
     Tasks.waitFor(0, () -> datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1), properties).size(),
                   30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+  }
+
+  private RunId randomRunId() {
+    long startTime = ThreadLocalRandom.current().nextLong(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+    return RunIds.generate(startTime);
   }
 }

@@ -114,27 +114,25 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     Set<ProgramRunId> fixedPrograms = new HashSet<>();
     Predicate<RunRecordMeta> filter = createFilter(fixedPrograms);
     for (ProgramRunStatus status : NOT_STOPPED_STATUSES) {
-      long startTime = 0L;
       while (true) {
-        Map<ProgramRunId, RunRecordMeta> runs = store.getRuns(status, startTime, Long.MAX_VALUE, txBatchSize, filter);
-        LOG.trace("{} run records in {} state but are not actually running", runs.size());
+        // runs are not guaranteed to come back in order of start time, so need to scan the entire time range
+        // each time. Should not be worse in performance than specifying a more restrictive time range
+        // because time range is just used as a read-time filter.
+        Map<ProgramRunId, RunRecordMeta> runs = store.getRuns(status, 0L, Long.MAX_VALUE, txBatchSize, filter);
+        LOG.trace("{} run records in {} state but are not actually running", runs.size(), status);
         if (runs.isEmpty()) {
           break;
         }
 
         for (RunRecordMeta record : runs.values()) {
-          startTime = Math.max(startTime, RunIds.getTime(record.getPid(), TimeUnit.SECONDS));
-
           ProgramRunId programRunId = record.getProgramRunId();
-          if (!fixedPrograms.contains(programRunId)) {
-            String msg = String.format(
-              "Fixed RunRecord for program run %s in %s state because it is actually not running",
-              programRunId, record.getStatus());
+          String msg = String.format(
+            "Fixed RunRecord for program run %s in %s state because it is actually not running",
+            programRunId, record.getStatus());
 
-            programStateWriter.error(programRunId, new ProgramRunAbortedException(msg));
-            fixedPrograms.add(programRunId);
-            LOG.warn(msg);
-          }
+          programStateWriter.error(programRunId, new ProgramRunAbortedException(msg));
+          fixedPrograms.add(programRunId);
+          LOG.warn(msg);
         }
       }
     }
