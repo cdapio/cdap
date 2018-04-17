@@ -16,7 +16,7 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.cloud.dataproc.v1.Cluster;
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import com.google.gson.Gson;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;

@@ -53,15 +53,16 @@ public interface Provisioner {
   Cluster createCluster(ProvisionerContext context) throws Exception;
 
   /**
-   * Get the status of the cluster.
+   * Get details about the cluster. If the cluster does not exist, a cluster with status
+   * {@link ClusterStatus#NOT_EXISTS} should be returned.
    *
    * @param context provisioner context
-   * @param cluster the cluster to get the status of
-   * @return status of the cluster
+   * @param cluster the cluster to get
+   * @return details about the cluster
    * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
    * @throws Exception if the operation failed in a non-retryable fashion
    */
-  ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception;
+  Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception;
 
   /**
    * Request to delete a cluster. The cluster does not have to be deleted before the method returns, but it must

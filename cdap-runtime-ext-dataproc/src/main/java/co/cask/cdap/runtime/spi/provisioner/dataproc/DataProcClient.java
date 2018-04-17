@@ -16,15 +16,22 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
+import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.Throwables;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.NotFoundException;
+import com.google.api.services.compute.Compute;
+import com.google.api.services.compute.model.AccessConfig;
+import com.google.api.services.compute.model.Instance;
+import com.google.api.services.compute.model.NetworkInterface;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
+import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
 import com.google.cloud.dataproc.v1.DiskConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
@@ -32,27 +39,38 @@ import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import javax.annotation.Nullable;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
 public class DataProcClient implements AutoCloseable {
+  // something like 2018-04-16T12:09:03.943-07:00
+  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
   private final DataProcConf conf;
   private final ClusterControllerClient client;
+  private final Compute compute;
 
-  public static DataProcClient fromConf(DataProcConf conf) throws IOException {
+  public static DataProcClient fromConf(DataProcConf conf) throws IOException, GeneralSecurityException {
     ClusterControllerClient client = ClusterControllerClient.create(conf.getControllerSettings());
-    return new DataProcClient(conf, client);
+    return new DataProcClient(conf, client, conf.getCompute());
   }
 
-  private DataProcClient(DataProcConf conf, ClusterControllerClient client) {
+  private DataProcClient(DataProcConf conf, ClusterControllerClient client, Compute compute) {
     this.conf = conf;
     this.client = client;
+    this.compute = compute;
   }
 
   /**
@@ -89,8 +107,9 @@ public class DataProcClient implements AutoCloseable {
                                                          .build())
                                         .build())
                      .setGceClusterConfig(GceClusterConfig.newBuilder()
-                                            .setSubnetworkUri("default")
+                                            .setNetworkUri(conf.getNetwork())
                                             .setZoneUri(conf.getZone())
+                                            .addTags("https-server")
                                             .build())
                      .build())
         .build();
@@ -146,13 +165,15 @@ public class DataProcClient implements AutoCloseable {
    * @return the cluster information if it exists
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public Optional<Cluster> getCluster(String name) throws RetryableProvisionException {
+  public Optional<co.cask.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
+    throws RetryableProvisionException, IOException {
+    Cluster cluster;
     try {
-      return Optional.of(client.getCluster(GetClusterRequest.newBuilder()
-                                             .setClusterName(name)
-                                             .setProjectId(conf.getProjectId())
-                                             .setRegion(conf.getRegion())
-                                             .build()));
+      cluster = client.getCluster(GetClusterRequest.newBuilder()
+                                    .setClusterName(name)
+                                    .setProjectId(conf.getProjectId())
+                                    .setRegion(conf.getRegion())
+                                    .build());
     } catch (NotFoundException e) {
       return Optional.empty();
     } catch (ApiException e) {
@@ -162,6 +183,70 @@ public class DataProcClient implements AutoCloseable {
       }
       // otherwise, it's not a retryable failure
       throw e;
+    }
+
+    List<Node> nodes = new ArrayList<>();
+    for (String masterName : cluster.getConfig().getMasterConfig().getInstanceNamesList()) {
+      nodes.add(getNode(compute, Constants.Node.MASTER_TYPE, masterName));
+    }
+    for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
+      nodes.add(getNode(compute, Constants.Node.WORKER_TYPE, workerName));
+    }
+    return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
+      cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
+  }
+
+  private Node getNode(Compute compute, String type, String nodeName) throws IOException {
+    Instance instance;
+    try {
+      instance = compute.instances().get(conf.getProjectId(), conf.getZone(), nodeName).execute();
+    } catch (GoogleJsonResponseException e) {
+      // this can happen right after a cluster is created
+      if (e.getStatusCode() == 404) {
+        return new Node(nodeName, -1L, Collections.emptyMap());
+      }
+      throw e;
+    }
+    Map<String, String> properties = new HashMap<>();
+    properties.put(Constants.Node.TYPE, type);
+    for (NetworkInterface networkInterface : instance.getNetworkInterfaces()) {
+      Path path = Paths.get(networkInterface.getNetwork());
+      String networkName = path.getFileName().toString();
+      if (conf.getNetwork().equals(networkName)) {
+        for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
+          if (accessConfig.getNatIP() != null) {
+            properties.put(Constants.Node.EXTERNAL_IP, accessConfig.getNatIP());
+            break;
+          }
+        }
+        properties.put(Constants.Node.INTERNAL_IP, networkInterface.getNetworkIP());
+      }
+    }
+    long ts;
+    try {
+      ts = DATE_FORMAT.parse(instance.getCreationTimestamp()).getTime();
+    } catch (ParseException e) {
+      ts = -1L;
+    }
+    return new Node(nodeName, ts, properties);
+  }
+
+  private co.cask.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
+    switch (status.getState()) {
+      case ERROR:
+        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.FAILED;
+      case RUNNING:
+        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
+      case CREATING:
+        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.CREATING;
+      case DELETING:
+        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.DELETING;
+      case UPDATING:
+        // not sure if this is correct, or how it can get to updating state
+        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
+      default:
+        // unrecognized and unknown
+        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.ORPHANED;
     }
   }
 

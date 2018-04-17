@@ -18,20 +18,16 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
-import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.annotations.VisibleForTesting;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Provisions a cluster using GCE DataProc.
@@ -59,70 +55,26 @@ public class DataProcProvisioner implements Provisioner {
 
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
-      Optional<com.google.cloud.dataproc.v1.Cluster> existing = client.getCluster(clusterName);
+      Optional<Cluster> existing = client.getCluster(clusterName);
 
-      long createTime = System.currentTimeMillis();
-
-      ClusterStatus status;
       if (!existing.isPresent()) {
         client.createCluster(clusterName);
-        status = ClusterStatus.CREATING;
+        return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
       } else {
-        com.google.cloud.dataproc.v1.Cluster existingCluster = existing.get();
-        List<com.google.cloud.dataproc.v1.ClusterStatus> existingStatuses = new ArrayList<>();
-        existingStatuses.add(existingCluster.getStatus());
-        existingStatuses.addAll(existingCluster.getStatusHistoryList());
-        // getStatus() returns the current status,
-        // getStatusHistoryList includes every state that is not the current state
-        // need to look at the CREATING status to get when the cluster was created.
-        for (com.google.cloud.dataproc.v1.ClusterStatus existingStatus : existingStatuses) {
-          if (existingStatus.getState() == com.google.cloud.dataproc.v1.ClusterStatus.State.CREATING) {
-            createTime = TimeUnit.SECONDS.toMillis(existingStatus.getStateStartTime().getSeconds());
-            break;
-          }
-        }
-        status = convertStatus(existingCluster.getStatus());
+        return existing.get();
       }
-
-      List<Node> nodes = new ArrayList<>();
-      for (int i = 0; i < conf.getMasterNumNodes(); i++) {
-        nodes.add(new Node(String.format("master-%d", i), createTime, Collections.emptyMap()));
-      }
-      for (int i = 0; i < conf.getWorkerNumNodes(); i++) {
-        nodes.add(new Node(String.format("worker-%d", i), createTime, Collections.emptyMap()));
-      }
-      return new Cluster(clusterName, status, nodes, context.getProperties());
     }
   }
 
   @Override
-  public ClusterStatus getClusterStatus(ProvisionerContext context,
-                                        Cluster cluster) throws Exception {
+  public Cluster getClusterDetail(ProvisionerContext context,
+                                  Cluster cluster) throws Exception {
     DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
-      Optional<com.google.cloud.dataproc.v1.Cluster> existing = client.getCluster(clusterName);
-      return existing.map(cluster1 -> convertStatus(cluster1.getStatus())).orElse(ClusterStatus.NOT_EXISTS);
-    }
-  }
-
-  private ClusterStatus convertStatus(com.google.cloud.dataproc.v1.ClusterStatus status) {
-    switch (status.getState()) {
-      case ERROR:
-        return ClusterStatus.FAILED;
-      case RUNNING:
-        return ClusterStatus.RUNNING;
-      case CREATING:
-        return ClusterStatus.CREATING;
-      case DELETING:
-        return ClusterStatus.DELETING;
-      case UPDATING:
-        // not sure if this is correct, or how it can get to updating state
-        return ClusterStatus.RUNNING;
-      default:
-        // unrecognized and unknown
-        return ClusterStatus.ORPHANED;
+      Optional<Cluster> existing = client.getCluster(clusterName);
+      return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
     }
   }
 

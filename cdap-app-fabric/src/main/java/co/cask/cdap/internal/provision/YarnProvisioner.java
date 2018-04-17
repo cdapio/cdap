@@ -53,10 +53,9 @@ public class YarnProvisioner implements Provisioner {
   }
 
   @Override
-  public ClusterStatus getClusterStatus(ProvisionerContext context,
-                                        Cluster cluster) throws RetryableProvisionException {
+  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
     ClusterStatus status = cluster.getStatus();
-    return status == ClusterStatus.DELETING ? ClusterStatus.NOT_EXISTS : status;
+    return new Cluster(cluster, status == ClusterStatus.DELETING ? ClusterStatus.NOT_EXISTS : status);
   }
 
   @Override
