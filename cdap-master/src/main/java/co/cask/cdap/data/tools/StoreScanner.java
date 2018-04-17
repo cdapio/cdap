@@ -184,6 +184,8 @@ public class StoreScanner extends AbstractIdleService {
       .addOption(new Option("h", "help", false, "Print this usage message."))
       .addOption(new Option("s", "start", true, "Starting offset for generating records"))
       .addOption(new Option("n", "number", true, "Number of run records to generate"))
+      .addOption(new Option("b", "begin", true, "Begin offset for querying records"))
+      .addOption(new Option("e", "end", true, "End offset for querying records"))
       .addOption(new Option("d", "delete", false, "delete runs in the store"))
       .addOption(new Option("t", "trace", false, "Trace mode. Prints all of the jobs being debugged."));
 
@@ -250,8 +252,18 @@ public class StoreScanner extends AbstractIdleService {
     System.out.println("==> 100% done; time elapsed: "
                          + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");
     long before = System.currentTimeMillis();
+    int begin = 0;
+    if (commandLine.hasOption("b")) {
+      String s = commandLine.getOptionValue("b");
+      begin = Integer.valueOf(s);
+    }
+    int end = 10;
+    if (commandLine.hasOption("e")) {
+      String s = commandLine.getOptionValue("e");
+      end = Integer.valueOf(s);
+    }
     Map<ProgramRunId, RunRecordMeta> runs =
-      scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), number + start - 5, number + start, 100);
+      scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), begin, end, 100);
     System.out.println("Time used = " + (System.currentTimeMillis() - before));
     System.out.println("Runs: " + runs.values());
     scanner.stopAndWait();
