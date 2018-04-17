@@ -25,6 +25,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -64,6 +65,18 @@ public class MessagingLineageWriter implements LineageWriter {
   public void addAccess(ProgramRunId programRunId, StreamId streamId,
                         AccessType accessType, @Nullable NamespacedEntityId componentId) {
     publishLineage(programRunId, new DataAccessLineage(accessType, streamId, componentId));
+  }
+
+  @Override
+  public void addStartStop(ProgramRunId run, long stopTime, ProgramRunStatus status) {
+    ProgramRunHistory history = new ProgramRunHistory(stopTime, status);
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.RUN, run, GSON.toJsonTree(history));
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    try {
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to publish data program run history: " + history, e);
+    }
   }
 
   private void publishLineage(ProgramRunId programRunId, DataAccessLineage lineage) {

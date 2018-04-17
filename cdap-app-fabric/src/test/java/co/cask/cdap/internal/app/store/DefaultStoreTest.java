@@ -31,6 +31,9 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -45,6 +48,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.store.ProgramHisotrySource;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -64,6 +68,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -79,6 +84,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,6 +148,23 @@ public class DefaultStoreTest {
     Assert.assertNotNull(descriptor);
     FlowSpecification flowSpec = descriptor.getSpecification();
     Assert.assertEquals("ToyFlow", flowSpec.getName());
+  }
+
+  @Test
+  public void testHisotry() throws Exception {
+    List<String> namespaces = ImmutableList.of("ns1", "ns2", "ns3", "ns4", "ns5", "ns6");
+    for (int i = 0; i < 20; i++) {
+      String ns = namespaces.get(i % namespaces.size());
+      ProgramRunId runId = new ProgramRunId(ns, "app", ProgramType.WORKFLOW, "program",
+                                            RunIds.generate(TimeUnit.SECONDS.toMillis(i)).getId());
+      store.addProgramHistory(new ProgramHisotrySource(runId, i + 1, ProgramRunStatus.COMPLETED,
+                                                       Bytes.toBytes(i), Bytes.toBytes(i + 1),
+                                                       new ArtifactId("art", new ArtifactVersion("v1"),
+                                                                      ArtifactScope.USER)));
+    }
+    Map<ProgramRunId, RunRecordMeta> runs =
+      store.getHistoricalRuns(new HashSet<>(namespaces), 15, 20, 100);
+    Assert.assertEquals(6, runs.size());
   }
 
   @Test

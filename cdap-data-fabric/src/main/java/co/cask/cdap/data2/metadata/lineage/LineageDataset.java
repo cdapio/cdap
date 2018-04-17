@@ -28,6 +28,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
@@ -84,6 +85,8 @@ public class LineageDataset extends AbstractDataset {
 
   // Column used to store access time
   private static final byte[] ACCESS_TIME_COLS_BYTE = {'t'};
+  private static final byte[] STATUS_COLS_BYTE = {'s'};
+
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
@@ -91,6 +94,7 @@ public class LineageDataset extends AbstractDataset {
   private static final char STREAM_MARKER = 's';
   private static final char TOPIC_MARKER = 't';
   private static final char NONE_MARKER = '0';
+  private static final char PROGRAM_RUN_MARKER = 'r';
 
   private Table accessRegistryTable;
 
@@ -168,6 +172,18 @@ public class LineageDataset extends AbstractDataset {
                             ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
     accessRegistryTable.put(getProgramKey(run, datasetInstance, accessType, component),
                             ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
+  }
+
+  /**
+   * Add start time and stop time of a program run
+   *
+   * @param run the program run
+   * @param stopTime stop time
+   * @param status the status of the program
+   */
+  public void addStartStop(ProgramRunId run, long stopTime, ProgramRunStatus status) {
+    accessRegistryTable.put(getStartStopKey(run, stopTime),
+                            STATUS_COLS_BYTE, Bytes.toBytes(status.name()));
   }
 
   /**
@@ -270,6 +286,7 @@ public class LineageDataset extends AbstractDataset {
                          filter);
   }
 
+
   /**
    * @return a set of access times (for program and data it accesses) associated with a program run.
    */
@@ -290,6 +307,24 @@ public class LineageDataset extends AbstractDataset {
       }
     }
     return recordBuilder.build();
+  }
+
+  public Set<ProgramRunId> getRuns(String namespace, long startTime, long endTime) {
+    ImmutableSet.Builder<ProgramRunId> setBuilder = ImmutableSet.builder();
+    try (Scanner scanner = accessRegistryTable.scan(getRunScanStartKey(namespace, startTime, endTime),
+                                                    getRunScanStopKey(namespace))) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Got row key = {}", Bytes.toString(row.getRow()));
+        }
+        RunHistory runHistory = toProgramRunId(row);
+        if (runHistory.getStopTime() >= startTime) {
+          setBuilder.add(runHistory.getId());
+        }
+      }
+    }
+    return setBuilder.build();
   }
 
   private Set<Relation> scanRelations(byte[] startKey, byte[] endKey, Predicate<Relation> filter) {
@@ -340,6 +375,17 @@ public class LineageDataset extends AbstractDataset {
     builder.add(run.getEntityName());
     builder.add(accessType.getType());
     addComponent(builder, component);
+  }
+
+  private byte[] getStartStopKey(ProgramRunId run, long endTime) {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(PROGRAM_RUN_MARKER);
+    builder.add(run.getNamespace());
+    builder.add(getInvertedStartTimeSeconds(run));
+    builder.add(endTime);
+    addProgram(builder, run.getParent());
+    builder.add(run.getRun());
+    return builder.build().getKey();
   }
 
   private byte[] getProgramKey(ProgramRunId run, DatasetId datasetInstance,
@@ -463,6 +509,23 @@ public class LineageDataset extends AbstractDataset {
     return getProgramScanKey(program, start - 1);
   }
 
+  private byte[] getRunScanStartKey(String namespace, long start, long end) {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(PROGRAM_RUN_MARKER);
+    builder.add(namespace);
+    builder.add(invertTime(end - 1)); // end time is exclusive
+    builder.add(start);
+    return builder.build().getKey();
+  }
+
+  private byte[] getRunScanStopKey(String namespace) {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(PROGRAM_RUN_MARKER);
+    builder.add(namespace);
+    builder.add(invertTime(0));
+    return builder.build().getKey();
+  }
+
   private byte[] getRunScanStartKey(ProgramRunId run) {
     MDSKey.Builder builder = new MDSKey.Builder();
     addProgram(builder, run.getParent());
@@ -537,6 +600,40 @@ public class LineageDataset extends AbstractDataset {
 
   private long getInvertedStartTime(ProgramRunId run) {
     return invertTime(RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.MILLISECONDS));
+  }
+
+  private long getInvertedStartTimeSeconds(ProgramRunId run) {
+    return invertTime(RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS));
+  }
+
+  private RunHistory toProgramRunId(Row row) {
+    MDSKey.Splitter splitter = new MDSKey(row.getRow()).split();
+    splitter.skipInt(); // skip marker
+    splitter.skipString(); // skip namespace
+    splitter.skipLong(); // skip inverted time
+    long stopTime = splitter.getLong(); // skip end time
+    char marker = (char) splitter.getInt();
+    return new RunHistory(new ProgramRunId(splitter.getString(), splitter.getString(),
+                                           ProgramType.valueOfCategoryName(splitter.getString()),
+                                           splitter.getString(), splitter.getString()), stopTime);
+  }
+
+  private static class RunHistory {
+    private final ProgramRunId id;
+    private final long stopTime;
+
+    RunHistory(ProgramRunId id, long stopTime) {
+      this.id = id;
+      this.stopTime = stopTime;
+    }
+
+    public ProgramRunId getId() {
+      return id;
+    }
+
+    public long getStopTime() {
+      return stopTime;
+    }
   }
 
   private Relation toRelation(Row row) {

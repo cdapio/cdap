@@ -68,4 +68,6 @@ public interface LineageStoreReader {
    * @return program-dataset access information
    */
   Set<Relation> getRelations(ProgramId program, long start, long end, Predicate<Relation> filter);
+
+  Set<ProgramRunId> getRuns(String namespaceId, long start, long end);
 }

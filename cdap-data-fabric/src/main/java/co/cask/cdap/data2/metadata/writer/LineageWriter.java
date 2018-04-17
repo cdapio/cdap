@@ -16,7 +16,9 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -71,4 +73,13 @@ public interface LineageWriter {
    */
   void addAccess(ProgramRunId run, StreamId stream,
                  AccessType accessType, @Nullable NamespacedEntityId component);
+
+  /**
+   * Add start time and stop time of a program run
+   *
+   * @param run the program run
+   * @param stopTime stop time
+   * @param status the status of the program
+   */
+  void addStartStop(ProgramRunId run, long stopTime, ProgramRunStatus status);
 }

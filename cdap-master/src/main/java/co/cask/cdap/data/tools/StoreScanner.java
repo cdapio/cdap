@@ -25,6 +25,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
+import co.cask.cdap.app.store.ProgramHisotrySource;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -243,9 +244,10 @@ public class StoreScanner extends AbstractIdleService {
       String ns = namespaces.get(i % namespaces.size());
       ProgramRunId runId = new ProgramRunId(ns, "app", ProgramType.WORKFLOW, "program",
                                             RunIds.generate(TimeUnit.SECONDS.toMillis(i)).getId());
-      store.setProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(), Bytes.toBytes(i),
-                            new ArtifactId("art", new ArtifactVersion("v1"), ArtifactScope.USER));
-      store.setStop(runId, i + 1, ProgramRunStatus.COMPLETED, Bytes.toBytes(i + 1));
+      store.addProgramHistory(new ProgramHisotrySource(runId, i + 1, ProgramRunStatus.COMPLETED,
+                                                       Bytes.toBytes(i), Bytes.toBytes(i + 1),
+                                                       new ArtifactId("art", new ArtifactVersion("v1"),
+                                                                      ArtifactScope.USER)));
     }
     System.out.println("==> 100% done; time elapsed: "
                          + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - beforeWriting) + "s");

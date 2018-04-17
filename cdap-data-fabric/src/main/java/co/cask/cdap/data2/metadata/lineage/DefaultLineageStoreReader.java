@@ -114,6 +114,11 @@ public class DefaultLineageStoreReader implements LineageStoreReader {
     return execute(input -> input.getRelations(program, start, end, filter));
   }
 
+  @Override
+  public Set<ProgramRunId> getRuns(String namespaceId, long start, long end) {
+    return execute(input -> input.getRuns(namespaceId, start, end));
+  }
+
   private <T> T execute(TransactionExecutor.Function<LineageDataset, T> func) {
     return Transactionals.execute(transactional, context -> {
       LineageDataset lineageDataset = LineageDataset.getLineageDataset(context, datasetFramework, lineageDatasetId);

@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
+import co.cask.cdap.data2.metadata.writer.ProgramRunHistory;
 import co.cask.cdap.data2.registry.DatasetUsage;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
@@ -166,6 +167,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new DataAccessLineageProcessor(datasetContext);
           case USAGE:
             return new UsageProcessor(datasetContext);
+          case RUN:
+            return new ProgramRunProcessor(datasetContext);
           case WORKFLOW_TOKEN:
           case WORKFLOW_STATE:
             return new WorkflowProcessor(datasetContext);
@@ -192,6 +195,31 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
      * Processes one {@link MetadataMessage}.
      */
     void processMessage(MetadataMessage message);
+  }
+
+  /**
+   * The {@link MetadataMessageProcessor} for processing start and stop time of a program run.
+   */
+  private final class ProgramRunProcessor implements MetadataMessageProcessor {
+
+    private final LineageDataset lineageDataset;
+
+    ProgramRunProcessor(DatasetContext datasetContext) {
+      this.lineageDataset = LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
+    }
+
+    @Override
+    public void processMessage(MetadataMessage message) {
+      if (message.getRunId() == null) {
+        LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", message);
+        return;
+      }
+
+      ProgramRunHistory history = message.getPayload(GSON, ProgramRunHistory.class);
+      ProgramRunId programRunId = message.getProgramId().run(message.getRunId());
+
+      lineageDataset.addStartStop(programRunId, history.getStopTime(), history.getStatus());
+    }
   }
 
   /**

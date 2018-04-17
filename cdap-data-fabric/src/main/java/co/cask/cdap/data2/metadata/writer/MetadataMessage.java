@@ -35,6 +35,7 @@ public final class MetadataMessage {
    */
   public enum Type {
     LINEAGE,
+    RUN,
     USAGE,
     WORKFLOW_TOKEN,
     WORKFLOW_STATE

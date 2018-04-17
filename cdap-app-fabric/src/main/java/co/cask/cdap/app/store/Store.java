@@ -500,4 +500,10 @@ public interface Store {
    * @return programs that were running between given start and end time.
    */
   Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs);
+
+  /**
+   * Add program histories
+   * @param history history source
+   */
+  void addProgramHistory(ProgramHisotrySource history);
 }

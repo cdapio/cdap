@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -47,6 +48,11 @@ public class NoOpLineageWriter implements LineageWriter {
   @Override
   public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
                         @Nullable NamespacedEntityId component) {
+    // no-op
+  }
+
+  @Override
+  public void addStartStop(ProgramRunId run, long stopTime, ProgramRunStatus status) {
     // no-op
   }
 }

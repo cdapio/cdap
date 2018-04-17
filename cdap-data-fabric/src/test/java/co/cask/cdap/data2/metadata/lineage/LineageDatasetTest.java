@@ -16,10 +16,16 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.FlowletId;
@@ -36,7 +42,12 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Tests storage and retrieval of Dataset accesses by Programs in {@link LineageDataset}.
@@ -73,6 +84,27 @@ public class LineageDatasetTest {
       Assert.assertEquals(expected, relations.iterator().next());
       Assert.assertEquals(toSet(program, datasetInstance), lineageDataset.getEntitiesForRun(run));
       Assert.assertEquals(ImmutableList.of(accessTimeMillis), lineageDataset.getAccessTimesForRun(run));
+    });
+  }
+
+  @Test
+  public void testGetRuns() throws Exception {
+    final LineageDataset lineageDataset = getLineageDataset("testGetHistoryRuns");
+    Assert.assertNotNull(lineageDataset);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) lineageDataset);
+    List<String> namespaces = ImmutableList.of("ns1", "ns2", "ns3", "ns4", "ns5", "ns6");
+    txnl.execute(() -> {
+      for (int i = 0; i < 20; i++) {
+        String ns = namespaces.get(i % namespaces.size());
+        ProgramRunId runId = new ProgramRunId(ns, "app", ProgramType.WORKFLOW, "program",
+                                              RunIds.generate(TimeUnit.SECONDS.toMillis(i)).getId());
+        lineageDataset.addStartStop(runId, i + 1, ProgramRunStatus.COMPLETED);
+      }
+    });
+    txnl.execute(() -> {
+      Set<ProgramRunId> runs = namespaces.stream().flatMap(ns -> lineageDataset.getRuns(ns, 15, 20).stream())
+        .collect(Collectors.toSet());
+      Assert.assertEquals(6, runs.size());
     });
   }
 

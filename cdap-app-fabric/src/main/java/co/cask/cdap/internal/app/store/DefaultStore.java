@@ -36,6 +36,7 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.ProgramHisotrySource;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
@@ -44,6 +45,8 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
@@ -81,6 +84,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -109,9 +113,12 @@ public class DefaultStore implements Store {
   private CConfiguration configuration;
   private DatasetFramework dsFramework;
   private Transactional transactional;
+  private LineageStoreReader lineageStoreReader;
+  private LineageWriter lineageWriter;
 
   @Inject
-  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
+  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient,
+                      LineageStoreReader lineageStoreReader, LineageWriter lineageWriter) {
     this.configuration = conf;
     this.dsFramework = framework;
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -120,6 +127,8 @@ public class DefaultStore implements Store {
         NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.lineageStoreReader = lineageStoreReader;
+    this.lineageWriter = lineageWriter;
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
@@ -405,8 +414,12 @@ public class DefaultStore implements Store {
   @Override
   public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<String> namespaces,
                                                             final long startTime, final long endTime, int limit) {
+
     return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getHistoricalRuns(namespaces, startTime, endTime, limit);
+      return getAppMetadataStore(context).getRuns(
+        namespaces.stream()
+          .flatMap(ns -> lineageStoreReader.getRuns(ns, startTime, endTime).stream())
+          .collect(Collectors.toSet()));
     });
   }
 
@@ -944,5 +957,17 @@ public class DefaultStore implements Store {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
     });
+  }
+
+  @Override
+  public void addProgramHistory(ProgramHisotrySource history) {
+    Transactionals.execute(transactional, context -> {
+      getAppMetadataStore(context).recordProgramProvisioning(history.getId(), Collections.emptyMap(),
+                                                             Collections.emptyMap(), history.getStartSourceId(),
+                                                             history.getArtifactId());
+      getAppMetadataStore(context).recordProgramStop(history.getId(), history.getStopTime(), history.getStatus(),
+                                                     null, history.getStopSourceId());
+    });
+    lineageWriter.addStartStop(history.getId(), history.getStopTime(), history.getStatus());
   }
 }

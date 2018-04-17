@@ -25,6 +25,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -92,6 +93,15 @@ public class BasicLineageWriter implements LineageWriter {
       LineageDataset
         .getLineageDataset(context, datasetFramework, getLineageDatasetId())
         .addAccess(run, streamId, accessType, accessTime, component);
+    });
+  }
+
+  @Override
+  public void addStartStop(ProgramRunId run, long stopTime, ProgramRunStatus status) {
+    Transactionals.execute(transactional, context -> {
+      LineageDataset
+        .getLineageDataset(context, datasetFramework, getLineageDatasetId())
+        .addStartStop(run, stopTime, status);
     });
   }
 
