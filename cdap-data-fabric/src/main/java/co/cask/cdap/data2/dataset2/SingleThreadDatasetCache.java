@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.AbstractTransactionContext;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -252,10 +254,18 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
    */
   private void discardSafely(Object dataset) {
     // iterates over all datasets but we do not expect this map to become large
+    Set<AccessType> accessTypes = EnumSet.allOf(AccessType.class);
     for (Map.Entry<AccessAwareDatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
       if (dataset == entry.getValue()) {
         datasetCache.invalidate(entry.getKey());
-        return;
+
+        // Make sure all unique access type are removed from the cache before breaking
+        // This will ensure all different cache entries that shares the same underlying dataset instance gets
+        // invalidated
+        accessTypes.remove(entry.getKey().getDatasetCacheKey().getAccessType());
+        if (accessTypes.isEmpty()) {
+          return;
+        }
       }
     }
     // we can only hope that dataset.toString() is meaningful

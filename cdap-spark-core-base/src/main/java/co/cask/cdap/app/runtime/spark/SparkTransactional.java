@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkExecutionContext;
-import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.LineageDatasetContext;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -111,13 +110,16 @@ final class SparkTransactional implements Transactional {
       }
   };
 
+  private final SparkRuntimeContext runtimeContext;
   private final TransactionSystemClient txClient;
   private final DynamicDatasetCache datasetCache;
   private final Map<String, TransactionalDatasetContext> transactionInfos;
 
-  SparkTransactional(TransactionSystemClient txClient, DynamicDatasetCache datasetCache, RetryStrategy retryStrategy) {
-    this.txClient = new RetryingLongTransactionSystemClient(txClient, retryStrategy);
-    this.datasetCache = datasetCache;
+  SparkTransactional(SparkRuntimeContext runtimeContext) {
+    this.runtimeContext = runtimeContext;
+    this.txClient = new RetryingLongTransactionSystemClient(runtimeContext.getTransactionSystemClient(),
+                                                            runtimeContext.getRetryStrategy());
+    this.datasetCache = runtimeContext.getDatasetCache();
     this.transactionInfos = new ConcurrentHashMap<>();
   }
 
@@ -360,10 +362,12 @@ final class SparkTransactional implements Transactional {
     public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
                                             AccessType accessType) throws DatasetInstantiationException {
 
-      if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      NamespaceId programNamespaceId = runtimeContext.getProgramRunId().getNamespaceId();
+      if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)
+        && !NamespaceId.SYSTEM.equals(programNamespaceId)) {
         throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. " +
                                                                 "Cannot access %s namespace.",
-                                                              name, NamespaceId.SYSTEM, NamespaceId.SYSTEM));
+                                                              name, programNamespaceId, NamespaceId.SYSTEM));
       }
       T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
 

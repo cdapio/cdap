@@ -43,6 +43,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -321,6 +322,30 @@ public abstract class DynamicDatasetCacheTest {
                           Iterables.size(cache.getTransactionAwares())
                             - Iterables.size(cache.getStaticTransactionAwares()));
     });
+  }
+
+  @Test
+  public void testAccessAwareCache() {
+    // Same dataset of different types should return the same instance
+    TestDataset a1 = cache.getDataset("a", Collections.emptyMap(), AccessType.READ);
+    TestDataset a2 = cache.getDataset("a", Collections.emptyMap(), AccessType.WRITE);
+
+    Assert.assertSame(a1, a2);
+
+    // Discarding one should automatically closed both
+    cache.discardDataset(a1);
+    Assert.assertTrue(a1.isClosed());
+    Assert.assertTrue(a2.isClosed());
+
+    // Getting the dataset again should return different instances than last one,
+    // but the two new one should be the same instance
+    TestDataset oldA1 = a1;
+    a1 = cache.getDataset("a", Collections.emptyMap(), AccessType.READ);
+    a2 = cache.getDataset("a", Collections.emptyMap(), AccessType.WRITE);
+
+    Assert.assertSame(a1, a2);
+    Assert.assertNotSame(oldA1, a1);
+    Assert.assertNotSame(oldA1, a2);
   }
 
   private Boolean verifyTxAwaresContains(List<TestDataset> txAwares, TestDataset... datasets) {
