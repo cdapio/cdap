@@ -54,11 +54,9 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -192,7 +190,7 @@ public class AppFabricServer extends AbstractIdleService {
     if (sslEnabled) {
       httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_SSL_PORT));
 
-      String password = generateRandomPassword();
+      String password = KeyStores.generateRandomPassword();
       KeyStore ks = KeyStores.generatedCertKeyStore(sConf, password);
 
       SSLHandlerFactory sslHandlerFactory = new SSLHandlerFactory(ks, password);
@@ -225,13 +223,6 @@ public class AppFabricServer extends AbstractIdleService {
       appVersionUpgradeService.stopAndWait();
     }
     provisioningService.stopAndWait();
-  }
-
-  private static String generateRandomPassword() {
-    // This works by choosing 130 bits from a cryptographically secure random bit generator, and encoding them in
-    // base-32. 128 bits is considered to be cryptographically strong, but each digit in a base 32 number can encode
-    // 5 bits, so 128 is rounded up to the next multiple of 5. Base 32 system uses alphabets A-Z and numbers 2-7
-    return new BigInteger(130, new SecureRandom()).toString(32);
   }
 
   private Cancellable startHttpService(final NettyHttpService httpService) throws Exception {
