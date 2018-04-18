@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillApplication;
+import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -77,8 +77,8 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
   @Override
   public TwillPreparer prepare(TwillApplication application) {
-    if (application instanceof AbstractProgramTwillApplication) {
-      ProgramId programId = ((AbstractProgramTwillApplication) application).getProgramId();
+    if (application instanceof ProgramTwillApplication) {
+      ProgramId programId = ((ProgramTwillApplication) application).getProgramId();
       return new ImpersonatedTwillPreparer(delegate.prepare(application), impersonator, programId);
     }
     return delegate.prepare(application);
