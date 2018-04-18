@@ -79,10 +79,12 @@ import org.apache.commons.cli.Options;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -184,6 +186,7 @@ public class StoreScanner extends AbstractIdleService {
       .addOption(new Option("h", "help", false, "Print this usage message."))
       .addOption(new Option("s", "start", true, "Starting offset for generating records"))
       .addOption(new Option("n", "number", true, "Number of run records to generate"))
+      .addOption(new Option("ns", "namespaces", true, "Namespaces"))
       .addOption(new Option("b", "begin", true, "Begin offset for querying records"))
       .addOption(new Option("e", "end", true, "End offset for querying records"))
       .addOption(new Option("d", "delete", false, "delete runs in the store"))
@@ -262,8 +265,12 @@ public class StoreScanner extends AbstractIdleService {
       String s = commandLine.getOptionValue("e");
       end = Integer.valueOf(s);
     }
+    Set<String> ns = new HashSet<>(namespaces);
+    if (commandLine.hasOption("ns")) {
+      ns = new HashSet<>(Arrays.asList(commandLine.getOptionValue("ns").split(",")));
+    }
     Map<ProgramRunId, RunRecordMeta> runs =
-      scanner.getStore().getHistoricalRuns(new HashSet<>(namespaces), begin, end, 100);
+      scanner.getStore().getHistoricalRuns(ns, begin, end, 100);
     System.out.println("Time used = " + (System.currentTimeMillis() - before));
     System.out.println("Runs: " + runs.values());
     scanner.stopAndWait();
