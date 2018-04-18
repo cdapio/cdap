@@ -269,11 +269,13 @@ public class StoreScanner extends AbstractIdleService {
     if (commandLine.hasOption("ns")) {
       ns = new HashSet<>(Arrays.asList(commandLine.getOptionValue("ns").split(",")));
     }
-    Map<ProgramRunId, RunRecordMeta> runs =
-      scanner.getStore().getHistoricalRuns(ns, begin, end, 100);
+//    Map<ProgramRunId, RunRecordMeta> runs =
+//      scanner.getStore().getHistoricalRuns(ns, begin, end, 100);
+    Set<ProgramRunId> runs =
+      scanner.getStore().getHistoricalRunIds(ns, begin, end, 100);
     System.out.println(String.format("Time used for query [%d, %d) = %d", begin, end,
                                      (System.currentTimeMillis() - before)));
-    System.out.println("Runs: " + runs.values());
+    System.out.println("Runs: " + runs);
     scanner.stopAndWait();
   }
 }

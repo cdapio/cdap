@@ -265,6 +265,18 @@ public interface Store {
                                                      final long startTime, final long endTime, int limit);
 
   /**
+   * Get historical runs
+   *
+   * @param namespaces namspaces
+   * @param startTime start time
+   * @param endTime end time
+   * @param limit limit of runs
+   * @return
+   */
+  Set<ProgramRunId> getHistoricalRunIds(Set<String> namespaces,
+                                               final long startTime, final long endTime, int limit);
+
+  /**
    * Fetches the run record for particular run of a program.
    *
    * @param id        run id of the program

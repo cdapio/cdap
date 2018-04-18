@@ -424,6 +424,26 @@ public class DefaultStore implements Store {
   }
 
   /**
+   * Get historical run id's
+   *
+   * @param namespaces namspaces
+   * @param startTime start time
+   * @param endTime end time
+   * @param limit limit of runs
+   * @return
+   */
+  @Override
+  public Set<ProgramRunId> getHistoricalRunIds(Set<String> namespaces,
+                                               final long startTime, final long endTime, int limit) {
+
+    return Transactionals.execute(transactional, context -> {
+      return namespaces.stream()
+        .flatMap(ns -> lineageStoreReader.getRuns(ns, startTime, endTime).stream())
+        .collect(Collectors.toSet());
+    });
+  }
+
+  /**
    * Returns run record for a given run.
    *
    * @param id program run id

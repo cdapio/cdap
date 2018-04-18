@@ -311,8 +311,8 @@ public class LineageDataset extends AbstractDataset {
 
   public Set<ProgramRunId> getRuns(String namespace, long startTime, long endTime) {
     ImmutableSet.Builder<ProgramRunId> setBuilder = ImmutableSet.builder();
-    try (Scanner scanner = accessRegistryTable.scan(getRunScanStartKey(namespace, startTime, endTime),
-                                                    getRunScanStopKey(namespace))) {
+    try (Scanner scanner = accessRegistryTable.scan(getRunRecordScanStartKey(namespace, startTime, endTime),
+                                                    getRunRecordScanStopKey(namespace))) {
       Row row;
       while ((row = scanner.next()) != null) {
         if (LOG.isTraceEnabled()) {
@@ -509,7 +509,7 @@ public class LineageDataset extends AbstractDataset {
     return getProgramScanKey(program, start - 1);
   }
 
-  private byte[] getRunScanStartKey(String namespace, long start, long end) {
+  private byte[] getRunRecordScanStartKey(String namespace, long start, long end) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(PROGRAM_RUN_MARKER);
     builder.add(namespace);
@@ -518,7 +518,7 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getRunScanStopKey(String namespace) {
+  private byte[] getRunRecordScanStopKey(String namespace) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(PROGRAM_RUN_MARKER);
     builder.add(namespace);
