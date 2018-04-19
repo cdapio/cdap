@@ -134,7 +134,7 @@ public final class Retries {
       try {
         V v = callable.call();
         if (failures > 0) {
-          LOG.debug("Retry succeeded after {} retries and {} ms.", failures, System.currentTimeMillis() - startTime);
+          LOG.trace("Retry succeeded after {} retries and {} ms.", failures, System.currentTimeMillis() - startTime);
         }
         return v;
       } catch (Throwable t) {
@@ -151,7 +151,7 @@ public final class Retries {
           throw t;
         }
 
-        LOG.debug("Call failed, retrying again after {} ms.", retryTime, t);
+        LOG.trace("Call failed, retrying again after {} ms.", retryTime, t);
         try {
           TimeUnit.MILLISECONDS.sleep(retryTime);
         } catch (InterruptedException e) {
