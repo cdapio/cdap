@@ -37,6 +37,10 @@ public class Cluster {
     this.properties = properties;
   }
 
+  public Cluster(Cluster existing, ClusterStatus newStatus) {
+    this(existing.getName(), newStatus, existing.getNodes(), existing.getProperties());
+  }
+
   public String getName() {
     return name;
   }

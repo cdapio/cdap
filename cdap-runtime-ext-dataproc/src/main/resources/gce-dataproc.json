@@ -22,8 +22,16 @@
       ]
     },
     {
-      "label": "Location Settings",
+      "label": "General Settings",
       "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Network",
+          "name": "network",
+          "widget-attributes": {
+            "default": "default"
+          }
+        },
         {
           "widget-type": "select",
           "label": "Region",
