@@ -14,12 +14,21 @@
  * the License.
 */
 
-@import "../WidgetVars.scss";
+import React from 'react';
+import {Input} from 'reactstrap';
+import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
 
-.number-textbox-widget {
-  input[type="number"] {
-    // The input number textbox should be the same size as the parent to push the 'GB' to the right.
-    // This is to maintain the same size as other widgets.
-    width: inherit;
-  }
+export default function DefaultInput({...props}) {
+  let { onChange, value, widgetProps } = props;
+
+  return (
+    <Input
+      value={value}
+      onChange={onChange}
+      {...widgetProps}
+    />
+  );
 }
+
+DefaultInput.propTypes = WIDGET_PROPTYPES;
+DefaultInput.defaultProps = DEFAULT_WIDGET_PROPS;

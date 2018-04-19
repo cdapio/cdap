@@ -20,14 +20,15 @@ import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget'
 require('./NumberTextbox.scss');
 
 export default function NumberTextbox({...props}) {
-  let { onChange, value, widgetProps = {} } = props;
+  let { onChange, value, widgetProps } = props;
   let min = widgetProps.min || -Infinity;
   let max = widgetProps.max || Infinity;
   let numberValue = parseInt(value, 10);
+  let size = widgetProps.size || 'large';
   value = isNaN(numberValue) ? value : numberValue;
   return (
     <Input
-      className="number-textbox-widget"
+      className={`number-textbox-widget ${size}`}
       type="number"
       onChange={onChange}
       value={value}

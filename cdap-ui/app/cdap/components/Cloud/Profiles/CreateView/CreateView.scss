@@ -28,13 +28,14 @@
   }
   .create-form-container {
     margin: 30px;
-    padding: 30px;
+    padding: 0 30px;
     border: 1px solid $grey-06;
   }
-  .btns-section {
+  .btns-section,
+  .error-section {
     margin: 30px;
     > button {
-      margin: 0 10px;
+      margin: 0 10px 0 0;
     }
   }
   .form-horizontal {

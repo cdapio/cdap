@@ -17,7 +17,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {MyProfileApi} from 'api/cloud';
+import {MyCloudApi} from 'api/cloud';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import {DropdownToggle, DropdownMenu} from 'reactstrap';
@@ -55,7 +55,7 @@ class ProfilesForSchedule extends Component {
   }
 
   getProfiles = () => {
-    MyProfileApi.list({
+    MyCloudApi.list({
       namespace: getCurrentNamespace()
     })
     .subscribe(

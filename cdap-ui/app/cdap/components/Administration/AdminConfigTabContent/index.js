@@ -21,7 +21,7 @@ import SystemProfilesAccordion from 'components/Administration/AdminConfigTabCon
 import SystemPrefsAccordion from 'components/Administration/AdminConfigTabContent/SystemPrefsAccordion';
 import {MyNamespaceApi} from 'api/namespace';
 import {MyPreferenceApi} from 'api/preference';
-import {MyProfileApi} from 'api/cloud';
+import {MyCloudApi} from 'api/cloud';
 import {Link} from 'react-router-dom';
 import T from 'i18n-react';
 
@@ -77,7 +77,7 @@ export default class AdminConfigTabContent extends Component {
   }
 
   getSystemProfiles() {
-    MyProfileApi
+    MyCloudApi
       .list({namespace: 'system'})
       .subscribe(
         (res) => {
