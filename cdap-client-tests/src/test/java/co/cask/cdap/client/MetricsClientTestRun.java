@@ -21,9 +21,11 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -70,25 +72,28 @@ public class MetricsClientTestRun extends ClientTestBase {
 
     try {
       programClient.start(flow);
+      programClient.waitForStatus(flow, ProgramStatus.RUNNING, 15, TimeUnit.SECONDS);
       streamClient.sendEvent(stream, "hello world");
-
-      // TODO: remove arbitrary sleep
-      TimeUnit.SECONDS.sleep(5);
 
       FlowletId flowletId = flow.flowlet(FakeFlow.FLOWLET_NAME);
 
+      Tasks.waitFor(true, () ->
+        metricsClient.query(MetricsTags.flowlet(flowletId), Constants.Metrics.Name.Flow.FLOWLET_INPUT)
+          .getSeries().length > 0,
+                    10, TimeUnit.SECONDS);
+
       MetricQueryResult result = metricsClient.query(MetricsTags.flowlet(flowletId),
-                                                     Constants.Metrics.Name.Flow.FLOWLET_INPUT);
+                                  Constants.Metrics.Name.Flow.FLOWLET_INPUT);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
       result = metricsClient.query(MetricsTags.flowlet(flowletId),
                                    ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
-                                   ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+                                   ImmutableList.of(), ImmutableMap.of("aggregate", "true"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
       result = metricsClient.query(MetricsTags.flowlet(flowletId),
                                    ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
-                                   ImmutableList.<String>of(), ImmutableMap.of("start", "now-20s", "end", "now"));
+                                   ImmutableList.of(), ImmutableMap.of("start", "now-20s", "end", "now"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
       List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(flowletId));
