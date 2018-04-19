@@ -19,13 +19,24 @@ package co.cask.cdap.internal.provision;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.runtime.spi.provisioner.SSHPublicKey;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,17 +48,20 @@ public class ProvisionTask extends ProvisioningTask {
   private final Provisioner provisioner;
   private final ProvisionerContext provisionerContext;
   private final ProvisionerNotifier provisionerNotifier;
+  private final LocationFactory locationFactory;
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
 
   public ProvisionTask(ProvisionRequest provisionRequest, Provisioner provisioner,
                        ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
+                       LocationFactory locationFactory,
                        Transactional transactional, DatasetFramework datasetFramework) {
     super(provisionRequest.getProgramRunId());
     this.provisionRequest = provisionRequest;
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;
+    this.locationFactory = locationFactory;
     this.transactional = transactional;
     this.datasetFramework = datasetFramework;
   }
@@ -67,7 +81,12 @@ public class ProvisionTask extends ProvisioningTask {
     }
 
     try {
-      Cluster cluster = provisioner.createCluster(provisionerContext);
+      SSHKeyInfo sshKeyInfo = generateSSHKey(programRunId);
+      SSHPublicKey sshPublicKey = new SSHPublicKey(sshKeyInfo.getUsername(), sshKeyInfo.getPublicKey());
+      ProvisionerContext contextWithKey = new DefaultProvisionerContext(programRunId,
+                                                                        provisionerContext.getProperties(),
+                                                                        sshPublicKey);
+      Cluster cluster = provisioner.createCluster(contextWithKey);
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.
@@ -75,7 +94,7 @@ public class ProvisionTask extends ProvisioningTask {
         return;
       }
       ClusterOp op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.POLLING_CREATE);
-      final ClusterInfo pollingInfo = new ClusterInfo(existing, op, cluster);
+      final ClusterInfo pollingInfo = new ClusterInfo(existing, op, sshKeyInfo, cluster);
 
       Transactionals.execute(transactional, dsContext -> {
         ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
@@ -91,13 +110,14 @@ public class ProvisionTask extends ProvisioningTask {
       switch (cluster.getStatus()) {
         case RUNNING:
           op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.CREATED);
-          final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, cluster);
+          final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, pollingInfo.getSshKeyInfo(), cluster);
           Transactionals.execute(transactional, dsContext -> {
             ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
             dataset.putClusterInfo(runningInfo);
           });
           provisionerNotifier.provisioned(programRunId, provisionRequest.getProgramOptions(),
-                                          provisionRequest.getProgramDescriptor(), provisionRequest.getUser(), cluster);
+                                          provisionRequest.getProgramDescriptor(), provisionRequest.getUser(),
+                                          cluster, sshKeyInfo);
           break;
       }
     } catch (Throwable t) {
@@ -106,4 +126,38 @@ public class ProvisionTask extends ProvisioningTask {
       provisionerNotifier.deprovisioning(programRunId);
     }
   }
+
+  /**
+   * Generates a SSH key pair.
+   */
+  private SSHKeyInfo generateSSHKey(ProgramRunId programRunId) throws JSchException, IOException {
+    JSch jsch = new JSch();
+    KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
+
+    Location keysDir = locationFactory.create(String.format("provisioner/keys/%s.%s.%s.%s.%s",
+                                                            programRunId.getNamespace(),
+                                                            programRunId.getApplication(),
+                                                            programRunId.getType().name().toLowerCase(),
+                                                            programRunId.getProgram(),
+                                                            programRunId.getRun()));
+    keysDir.mkdirs();
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    keyPair.writePublicKey(bos, "cdap@cask.co");
+    byte[] publicKey = bos.toByteArray();
+
+    Location publicKeyFile = keysDir.append("id_rsa.pub");
+    try (OutputStream os = publicKeyFile.getOutputStream()) {
+      os.write(publicKey);
+    }
+
+    Location privateKeyFile = keysDir.append("id_rsa");
+    try (OutputStream os = privateKeyFile.getOutputStream("600")) {
+      keyPair.writePrivateKey(os, null);
+    }
+
+    return new SSHKeyInfo(publicKeyFile.toURI(), privateKeyFile.toURI(),
+                          new String(publicKey, StandardCharsets.UTF_8), "cdap");
+  }
+
 }

@@ -50,7 +50,7 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    DataProcConf conf = DataProcConf.fromProvisionerContext(context);
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataProcClient client = DataProcClient.fromConf(conf)) {

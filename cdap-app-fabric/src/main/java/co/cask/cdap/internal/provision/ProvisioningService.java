@@ -37,6 +37,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,18 +61,20 @@ public class ProvisioningService extends AbstractIdleService {
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
   private final ProvisionerNotifier provisionerNotifier;
+  private final LocationFactory locationFactory;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private ExecutorService executorService;
 
   @Inject
   ProvisioningService(ProvisionerProvider provisionerProvider, ProvisionerConfigProvider provisionerConfigProvider,
-                      ProvisionerNotifier provisionerNotifier, DatasetFramework datasetFramework,
-                      TransactionSystemClient txClient) {
+                      ProvisionerNotifier provisionerNotifier,  LocationFactory locationFactory,
+                      DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
+    this.locationFactory = locationFactory;
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -156,12 +159,12 @@ public class ProvisioningService extends AbstractIdleService {
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.REQUESTING_CREATE);
     ClusterInfo clusterInfo =
       new ClusterInfo(programRunId, provisionRequest.getProgramDescriptor(),
-                      properties, name, provisionRequest.getUser(), clusterOp, null);
+                      properties, name, provisionRequest.getUser(), clusterOp, null, null);
     ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
     provisionerDataset.putClusterInfo(clusterInfo);
 
     return new ProvisionTask(provisionRequest, provisioner, context, provisionerNotifier,
-                             transactional, datasetFramework);
+                             locationFactory, transactional, datasetFramework);
   }
 
   /**
@@ -195,11 +198,11 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties);
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.REQUESTING_DELETE);
-    ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getCluster());
+    ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getSshKeyInfo(), existing.getCluster());
     provisionerDataset.putClusterInfo(clusterInfo);
 
     return new DeprovisionTask(programRunId, provisioner, context, provisionerNotifier,
-                               transactional, datasetFramework);
+                               locationFactory, transactional, datasetFramework);
   }
 
   /**

@@ -20,21 +20,31 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.runtime.spi.provisioner.SSHPublicKey;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Context for a {@link Provisioner} extension
  */
 public class DefaultProvisionerContext implements ProvisionerContext {
   private final ProgramRun programRun;
+  private final SSHPublicKey publicKey;
   private final Map<String, String> properties;
 
   public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties) {
+    this(programRunId, properties, null);
+  }
+
+  public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
+                                   @Nullable SSHPublicKey publicKey) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.properties = Collections.unmodifiableMap(properties);
+    this.publicKey = publicKey;
   }
 
   @Override
@@ -45,5 +55,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public Optional<SSHPublicKey> getSSHPublicKey() {
+    return Optional.ofNullable(publicKey);
   }
 }

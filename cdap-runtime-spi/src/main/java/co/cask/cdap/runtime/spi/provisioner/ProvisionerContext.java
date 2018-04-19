@@ -17,6 +17,7 @@
 package co.cask.cdap.runtime.spi.provisioner;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Context for provisioner operations.
@@ -38,4 +39,6 @@ public interface ProvisionerContext {
    * @return the provisioner properties for the program run
    */
   Map<String, String> getProperties();
+
+  Optional<SSHPublicKey> getSSHPublicKey();
 }

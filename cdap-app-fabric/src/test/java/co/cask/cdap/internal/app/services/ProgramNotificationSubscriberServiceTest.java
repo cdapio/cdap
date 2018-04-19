@@ -58,7 +58,6 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -118,7 +117,7 @@ public class ProgramNotificationSubscriberServiceTest {
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
     provisionerNotifier.provisioning(runId, programOptions, programDescriptor, "Bob");
-    provisionerNotifier.provisioned(runId, programOptions, programDescriptor, "Bob", cluster);
+    provisionerNotifier.provisioned(runId, programOptions, programDescriptor, "Bob", cluster, null);
 
     Tasks.waitFor(ProgramRunStatus.PENDING, () -> txnl.execute(() -> {
                     RunRecordMeta meta = metadataStoreDataset.getRun(runId);
