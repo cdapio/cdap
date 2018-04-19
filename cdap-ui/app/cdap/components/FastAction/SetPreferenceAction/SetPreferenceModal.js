@@ -551,6 +551,5 @@ SetPreferenceModal.propTypes = {
 };
 
 SetPreferenceModal.defaultProps = {
-  setAtLevel: PREFERENCES_LEVEL.SYSTEM,
   onSuccess: () => {}
 };

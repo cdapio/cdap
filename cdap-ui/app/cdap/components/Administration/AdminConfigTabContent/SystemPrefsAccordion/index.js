@@ -25,6 +25,7 @@ import ViewAllLabel from 'components/ViewAllLabel';
 import T from 'i18n-react';
 import isEqual from 'lodash/isEqual';
 import SortableStickyGrid from 'components/SortableStickyGrid';
+import {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 
 const PREFIX = 'features.Administration.Accordions.SystemPrefs';
 
@@ -203,6 +204,7 @@ export default class SystemPrefsAccordion extends Component {
               isOpen={this.state.prefsModalOpen}
               toggleModal={this.togglePrefsModal}
               onSuccess={this.fetchPrefs}
+              setAtLevel={PREFERENCES_LEVEL.SYSTEM}
             />
           :
             null
