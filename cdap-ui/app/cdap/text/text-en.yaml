@@ -246,23 +246,31 @@ features:
     mainMessage: " You are not authorized to access any existing namespace"
   Cloud:
     Profiles:
-      ListView:
-        assosciations: Assosciations
-        createOne: "creating one"
+      common:
         deleteConfirmation: Are you sure you want to delete the profile *_{profile}_*?
         deleteError: There was a problem deleting the profile
         deleteTitle: Delete Profile
         export: Export
         last24HrNodeHr: Last 24 hrs node/hr
         last24HrRuns: Last 24 hrs runs
+        provisioner: Provisioner
+        totalNodeHr: Total node/hr
+        totalRuns: Total runs
+      DetailView:
+        creation: Creation date and time
+        hideDetails: Hide Details
+        noProperties: No properties available for this profile
+        profileDetails: Profile Details
+        viewDetails: View Details
+      ListView:
+        assosciations: Assosciations
+        createOne: "creating one"
+        importError: Unable to import profile
         noProfiles: "No compute profiles have been defined in this namespace. Start by "
         noProfilesSystem: "No compute profiles have been defined in the system. Start by "
-        importError: Unable to import profile
         profileName: Profile Name
         profileUsage: Profile usage
-        provisioner: Provisioner
         schedules: Schedules
-        totalNodeHr: Total node/hr
         triggers: Triggers
   ConfirmationModal:
     cancelDefaultText: Cancel

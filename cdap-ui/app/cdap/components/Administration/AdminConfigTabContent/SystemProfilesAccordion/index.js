@@ -79,7 +79,7 @@ class SystemProfilesAccordion extends Component {
         <div className="create-import-profile">
           <Link
             className="btn btn-secondary create-profile-button"
-            to='/create-profile'
+            to='/ns/system/profiles/create'
           >
             {T.translate(`${PREFIX}.create`)}
           </Link>
@@ -93,6 +93,7 @@ class SystemProfilesAccordion extends Component {
               accept='.json'
               id="import-profile"
               onChange={importProfile.bind(this, 'system')}
+              onClick={(e) => e.target.value = null}
             />
           </Label>
         </div>

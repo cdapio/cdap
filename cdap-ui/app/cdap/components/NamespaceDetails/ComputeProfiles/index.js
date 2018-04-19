@@ -46,7 +46,7 @@ class NamespaceDetailsComputeProfiles extends Component {
       <div className="namespace-details-section-label">
         {label}
         <Link
-          to={`/ns/${getCurrentNamespace()}/create-profile`}
+          to={`/ns/${getCurrentNamespace()}/profiles/create`}
           className="create-new-profile-label"
         >
           {T.translate(`${PREFIX}.create`)}
@@ -57,11 +57,14 @@ class NamespaceDetailsComputeProfiles extends Component {
           for="import-profile"
         >
           {T.translate(`${PREFIX}.import`)}
+          {/* The onClick here is to clear the file, so if the user uploads the same file
+          twice then we can show the error, instead of showing nothing */}
           <Input
             type="file"
             accept='.json'
             id="import-profile"
             onChange={importProfile.bind(this, getCurrentNamespace())}
+            onClick={(e) => e.target.value = null}
           />
         </Label>
         {

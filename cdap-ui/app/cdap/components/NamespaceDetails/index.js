@@ -20,13 +20,15 @@ import PropTypes from 'prop-types';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import NamespaceDetailsStore, {NamespaceDetailsActions} from 'components/NamespaceDetails/store';
 import {getData} from 'components/NamespaceDetails/store/ActionCreator';
-import TopPanel from 'components/NamespaceDetails/TopPanel';
+import EntityTopPanel from 'components/EntityTopPanel';
 import Description from 'components/NamespaceDetails/Description';
 import EntityCounts from 'components/NamespaceDetails/EntityCounts';
 import ComputeProfiles from 'components/NamespaceDetails/ComputeProfiles';
 import Preferences from 'components/NamespaceDetails/Preferences';
 import Mapping from 'components/NamespaceDetails/Mapping';
 import Security from 'components/NamespaceDetails/Security';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import {objectQuery} from 'services/helpers';
 
 require('./NamespaceDetails.scss');
 
@@ -40,10 +42,13 @@ const NamespaceDetailsComp = ({loading}) => {
   if (loading) {
     return <LoadingSVGCentered />;
   }
-
+  let prevState = objectQuery(history.state, 'state', 'from');
   return (
     <div className="namespace-details-container">
-      <TopPanel />
+      <EntityTopPanel
+        title={`Namespace '${getCurrentNamespace()}'`}
+        closeBtnAnchorLink={ prevState ? prevState.replace(/\/cdap/g, '') : () => history.back()}
+      />
       <div className="namespace-details-content">
         <Description />
         <hr />

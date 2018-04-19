@@ -24,16 +24,16 @@ import IconSVG from 'components/IconSVG';
 import LoadingSVG from 'components/LoadingSVG';
 import orderBy from 'lodash/orderBy';
 import ViewAllLabel from 'components/ViewAllLabel';
-import Popover from 'components/Popover';
 import ConfirmationModal from 'components/ConfirmationModal';
 import ProfilesStore from 'components/Cloud/Profiles/Store';
-import {getProfiles, exportProfile, deleteProfile, setError} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {getProfiles, deleteProfile, setError, resetProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import Alert from 'components/Alert';
-
+import uuidV4 from 'uuid/v4';
+import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 require('./ListView.scss');
 
-const PREFIX = 'features.Cloud.Profiles.ListView';
+const PREFIX = 'features.Cloud.Profiles';
 
 const PROFILES_TABLE_HEADERS = [
   {
@@ -41,11 +41,11 @@ const PROFILES_TABLE_HEADERS = [
   },
   {
     property: 'name',
-    label: T.translate(`${PREFIX}.profileName`)
+    label: T.translate(`${PREFIX}.ListView.profileName`)
   },
   {
     property: (profile) => (profile.provisioner.name),
-    label: T.translate(`${PREFIX}.provisioner`)
+    label: T.translate(`${PREFIX}.common.provisioner`)
   },
   {
     property: 'scope',
@@ -57,23 +57,23 @@ const PROFILES_TABLE_HEADERS = [
   },
   {
     property: 'last24HrRuns',
-    label: T.translate(`${PREFIX}.last24HrRuns`)
+    label: T.translate(`${PREFIX}.common.last24HrRuns`)
   },
   {
     property: 'last24HrNodeHr',
-    label: T.translate(`${PREFIX}.last24HrNodeHr`)
+    label: T.translate(`${PREFIX}.common.last24HrNodeHr`)
   },
   {
     property: 'totalNodeHr',
-    label: T.translate(`${PREFIX}.totalNodeHr`)
+    label: T.translate(`${PREFIX}.common.totalNodeHr`)
   },
   {
     property: 'schedules',
-    label: T.translate(`${PREFIX}.schedules`)
+    label: T.translate(`${PREFIX}.ListView.schedules`)
   },
   {
     property: 'triggers',
-    label: T.translate(`${PREFIX}.triggers`)
+    label: T.translate(`${PREFIX}.ListView.triggers`)
   },
   {
     label: ''
@@ -120,6 +120,10 @@ class ProfilesListView extends Component {
     }
   }
 
+  componentWillUnmount() {
+    resetProfiles();
+  }
+
   toggleViewAll = () => {
     this.setState({
       viewAll: !this.state.viewAll
@@ -153,7 +157,7 @@ class ProfilesListView extends Component {
         });
       }, (err) => {
         this.setState({
-          deleteErrMsg: T.translate(`${PREFIX}.deleteError`),
+          deleteErrMsg: T.translate(`${PREFIX}.common.deleteError`),
           extendedDeleteErrMsg: err
         });
       });
@@ -175,18 +179,18 @@ class ProfilesListView extends Component {
             this.props.namespace === 'system' ?
               (
                 <span>
-                  {T.translate(`${PREFIX}.noProfilesSystem`)}
-                  <Link to='/create-profile'>
-                    {T.translate(`${PREFIX}.createOne`)}
+                  {T.translate(`${PREFIX}.ListView.noProfilesSystem`)}
+                  <Link to={'/ns/system/profiles/create'}>
+                    {T.translate(`${PREFIX}.ListView.createOne`)}
                   </Link>
                 </span>
               )
             :
               (
                 <span>
-                  {T.translate(`${PREFIX}.noProfiles`)}
-                  <Link to={`/ns/${getCurrentNamespace()}/create-profile`}>
-                    {T.translate(`${PREFIX}.createOne`)}
+                  {T.translate(`${PREFIX}.ListView.noProfiles`)}
+                  <Link to={`/ns/${getCurrentNamespace()}/profiles/create`}>
+                    {T.translate(`${PREFIX}.ListView.createOne`)}
                   </Link>
                 </span>
               )
@@ -270,14 +274,17 @@ class ProfilesListView extends Component {
       profiles = profiles.slice(0, NUM_PROFILES_TO_SHOW);
     }
 
+    const actionsElem = () => <IconSVG name="icon-cog-empty" />;
+
     return (
       <div className="grid-body">
         {
-          profiles.map((profile, i) => {
+          profiles.map((profile) => {
             return (
-              <div
+              <Link
+                to={`/ns/${this.props.namespace}/profiles/details/${profile.name}`}
                 className="grid-row grid-link"
-                key={i}
+                key={uuidV4()}
               >
                 <div></div>
                 <div title={profile.name}>
@@ -293,28 +300,14 @@ class ProfilesListView extends Component {
                 <div />
                 <div />
                 <div>
-                  <Popover
-                    target={() => <IconSVG name="icon-cog-empty" />}
-                    className="profile-actions-popover"
-                    placement="bottom"
-                    bubbleEvent={false}
-                    enableInteractionInPopover={true}
-                  >
-                    <ul>
-                      <li onClick={exportProfile.bind(this, this.props.namespace, profile)}>
-                        {T.translate(`${PREFIX}.export`)}
-                      </li>
-                      <hr />
-                      <li
-                        className="delete-action"
-                        onClick={this.toggleDeleteConfirmationModal.bind(this, profile.name)}
-                      >
-                        {T.translate('commons.delete')}
-                      </li>
-                    </ul>
-                  </Popover>
+                  <ActionsPopover
+                    target={actionsElem}
+                    namespace={this.props.namespace}
+                    profile={profile}
+                    onDeleteClick={this.toggleDeleteConfirmationModal.bind(this, profile.name)}
+                  />
                 </div>
-              </div>
+              </Link>
             );
           })
         }
@@ -327,11 +320,11 @@ class ProfilesListView extends Component {
       return null;
     }
 
-    const confirmationText = T.translate(`${PREFIX}.deleteConfirmation`, {profile: this.state.profileToDelete});
+    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {profile: this.state.profileToDelete});
 
     return (
       <ConfirmationModal
-        headerTitle={T.translate(`${PREFIX}.deleteTitle`)}
+        headerTitle={T.translate(`${PREFIX}.common.deleteTitle`)}
         toggleModal={this.toggleDeleteConfirmationModal.bind(this, null)}
         confirmationText={confirmationText}
         confirmButtonText={T.translate('commons.delete')}
@@ -349,7 +342,7 @@ class ProfilesListView extends Component {
       return null;
     }
 
-    let error = T.translate(`${PREFIX}.importError`);
+    let error = T.translate(`${PREFIX}.ListView.importError`);
     if (typeof this.props.error === 'string') {
       error = `${error}: ${this.props.error}`;
     }

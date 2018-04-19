@@ -47,7 +47,8 @@ export default class ControlCenterDropdown extends Component {
     let rulesenginepath = `${basePath}/rulesengine`;
     let analytics = `${basePath}/experiments`;
     let namespaceDetails = `${basePath}/details`;
-    let createProfile = `${basePath}/create-profile`;
+    let createProfile = `${basePath}/profiles/create`;
+    let profileDetails = `${basePath}/profiles/details`;
 
     if (
       location.pathname.startsWith(basePath) &&
@@ -56,7 +57,8 @@ export default class ControlCenterDropdown extends Component {
       !location.pathname.startsWith(rulesenginepath) &&
       !location.pathname.startsWith(analytics) &&
       !location.pathname.startsWith(namespaceDetails) &&
-      !location.pathname.startsWith(createProfile)
+      !location.pathname.startsWith(createProfile) &&
+      !location.pathname.startsWith(profileDetails)
     ) {
       return true;
     }

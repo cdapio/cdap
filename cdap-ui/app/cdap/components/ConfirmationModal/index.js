@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
+import IconSVG from 'components/IconSVG';
 import Mousetrap from 'mousetrap';
 import T from 'i18n-react';
 
@@ -42,7 +43,7 @@ export default class ConfirmationModal extends Component {
       return (
         <ModalBody className="loading">
           <h3 className="text-xs-center">
-            <span className="fa fa-spinner fa-spin"></span>
+            <IconSVG name="icon-spinner" className="fa-spin" />
           </h3>
         </ModalBody>
       );
