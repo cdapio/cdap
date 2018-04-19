@@ -33,6 +33,17 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-runtime-spi</artifactId>
       <version>${project.version}</version>
     </dependency>

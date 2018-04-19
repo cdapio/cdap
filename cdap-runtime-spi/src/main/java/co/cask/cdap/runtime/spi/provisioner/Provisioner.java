@@ -65,6 +65,18 @@ public interface Provisioner {
   Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception;
 
   /**
+   * Responsible for any additional initialization steps for the cluster.
+   * Gets called after the cluster is created and goes into RUNNING status.
+   * Must be implemented in an idempotent way.
+   *
+   * @param context provisioner context
+   * @param cluster the cluster to get the status of
+   * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
+   */
+  void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception;
+
+  /**
    * Request to delete a cluster. The cluster does not have to be deleted before the method returns, but it must
    * at least be in the process of being deleted. Must be implemented in an idempotent way.
    *

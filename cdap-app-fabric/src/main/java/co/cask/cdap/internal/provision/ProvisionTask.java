@@ -24,7 +24,7 @@ import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.provisioner.SSHPublicKey;
+import co.cask.cdap.runtime.spi.provisioner.SSHKeyPair;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -82,10 +81,11 @@ public class ProvisionTask extends ProvisioningTask {
 
     try {
       SSHKeyInfo sshKeyInfo = generateSSHKey(programRunId);
-      SSHPublicKey sshPublicKey = new SSHPublicKey(sshKeyInfo.getUsername(), sshKeyInfo.getPublicKey());
+      SSHKeyPair sshKeyPair =
+        new SSHKeyPair(sshKeyInfo.getUsername(), sshKeyInfo.getPublicKey(), sshKeyInfo.getPrivateKey());
       ProvisionerContext contextWithKey = new DefaultProvisionerContext(programRunId,
                                                                         provisionerContext.getProperties(),
-                                                                        sshPublicKey);
+                                                                        sshKeyPair);
       Cluster cluster = provisioner.createCluster(contextWithKey);
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
@@ -109,6 +109,7 @@ public class ProvisionTask extends ProvisioningTask {
       // TODO: CDAP-13246 handle unexpected states and retry
       switch (cluster.getStatus()) {
         case RUNNING:
+          provisioner.initializeCluster(provisionerContext, cluster);
           op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.CREATED);
           final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, pollingInfo.getSshKeyInfo(), cluster);
           Transactionals.execute(transactional, dsContext -> {
@@ -151,13 +152,17 @@ public class ProvisionTask extends ProvisioningTask {
       os.write(publicKey);
     }
 
+    bos = new ByteArrayOutputStream();
+    keyPair.writePrivateKey(bos, null);
+    byte[] privateKey = bos.toByteArray();
+
     Location privateKeyFile = keysDir.append("id_rsa");
     try (OutputStream os = privateKeyFile.getOutputStream("600")) {
-      keyPair.writePrivateKey(os, null);
+      os.write(privateKey);
     }
 
     return new SSHKeyInfo(publicKeyFile.toURI(), privateKeyFile.toURI(),
-                          new String(publicKey, StandardCharsets.UTF_8), "cdap");
+                          publicKey, privateKey, "cdap");
   }
 
 }

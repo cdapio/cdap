@@ -17,7 +17,7 @@
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.provisioner.SSHPublicKey;
+import co.cask.cdap.runtime.spi.provisioner.SSHKeyPair;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
@@ -57,12 +57,12 @@ public class DataProcConf {
   private final int workerMemoryMB;
   private final int workerDiskGB;
 
-  private final SSHPublicKey publicKey;
+  private final SSHKeyPair sshKeyPair;
 
   private DataProcConf(String accountKey, String region, String zone, String projectId, String network,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
-                       @Nullable SSHPublicKey publicKey) {
+                       @Nullable SSHKeyPair sshKeyPair) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -76,7 +76,7 @@ public class DataProcConf {
     this.workerCPUs = workerCPUs;
     this.workerMemoryMB = workerMemoryMB;
     this.workerDiskGB = workerDiskGB;
-    this.publicKey = publicKey;
+    this.sshKeyPair = sshKeyPair;
   }
 
   public String getRegion() {
@@ -120,8 +120,8 @@ public class DataProcConf {
   }
 
   @Nullable
-  public SSHPublicKey getPublicKey() {
-    return publicKey;
+  public SSHKeyPair getSSHKeyPair() {
+    return sshKeyPair;
   }
 
   private String getMachineType(int cpus, int memoryGB) {
@@ -152,7 +152,7 @@ public class DataProcConf {
   }
 
   public static DataProcConf fromProvisionerContext(ProvisionerContext context) {
-    return create(context.getProperties(), context.getSSHPublicKey().orElse(null));
+    return create(context.getProperties(), context.getSSHKeyPair().orElse(null));
   }
 
   /**
@@ -162,7 +162,7 @@ public class DataProcConf {
     return create(properties, null);
   }
 
-  private static DataProcConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
+  private static DataProcConf create(Map<String, String> properties, @Nullable SSHKeyPair sshKeyPair) {
     String accountKey = getString(properties, "accountKey");
     String projectId = getString(properties, "projectId");
 
@@ -197,7 +197,7 @@ public class DataProcConf {
 
     return new DataProcConf(accountKey, region, zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
-                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB, publicKey);
+                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB, sshKeyPair);
   }
 
   private static String getString(Map<String, String> properties, String key) {

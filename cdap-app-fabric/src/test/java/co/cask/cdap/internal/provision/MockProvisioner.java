@@ -59,6 +59,11 @@ public class MockProvisioner implements Provisioner {
   }
 
   @Override
+  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+    // no-op
+  }
+
+  @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
     // no-op
   }

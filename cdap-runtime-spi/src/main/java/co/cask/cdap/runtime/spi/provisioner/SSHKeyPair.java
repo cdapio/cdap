@@ -19,21 +19,27 @@ package co.cask.cdap.runtime.spi.provisioner;
 /**
  * Contains information of a public key.
  */
-public class SSHPublicKey {
+public class SSHKeyPair {
 
   private final String user;
-  private final String key;
+  private final byte[] publicKey;
+  private final byte[] privateKey;
 
-  public SSHPublicKey(String user, String key) {
+  public SSHKeyPair(String user, byte[] publicKey, byte[] privateKey) {
     this.user = user;
-    this.key = key;
+    this.publicKey = publicKey;
+    this.privateKey = privateKey;
   }
 
   public String getUser() {
     return user;
   }
 
-  public String getKey() {
-    return key;
+  public byte[] getPublicKey() {
+    return publicKey;
+  }
+
+  public byte[] getPrivateKey() {
+    return privateKey;
   }
 }

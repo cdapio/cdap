@@ -20,7 +20,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.provisioner.SSHPublicKey;
+import co.cask.cdap.runtime.spi.provisioner.SSHKeyPair;
 
 import java.util.Collections;
 import java.util.Map;
@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
  */
 public class DefaultProvisionerContext implements ProvisionerContext {
   private final ProgramRun programRun;
-  private final SSHPublicKey publicKey;
+  private final SSHKeyPair sshKeyPair;
   private final Map<String, String> properties;
 
   public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties) {
@@ -40,11 +40,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   }
 
   public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
-                                   @Nullable SSHPublicKey publicKey) {
+                                   @Nullable SSHKeyPair sshKeyPair) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.properties = Collections.unmodifiableMap(properties);
-    this.publicKey = publicKey;
+    this.sshKeyPair = sshKeyPair;
   }
 
   @Override
@@ -58,7 +58,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   }
 
   @Override
-  public Optional<SSHPublicKey> getSSHPublicKey() {
-    return Optional.ofNullable(publicKey);
+  public Optional<SSHKeyPair> getSSHKeyPair() {
+    return Optional.ofNullable(sshKeyPair);
   }
 }

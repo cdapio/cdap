@@ -25,13 +25,15 @@ public final class SSHKeyInfo {
 
   private final URI publicKeyURI;
   private final URI privateKeyURI;
-  private final String publicKey;
+  private final byte[] publicKey;
+  private final byte[] privateKey;
   private final String username;
 
-  SSHKeyInfo(URI publicKeyURI, URI privateKeyURI, String publicKey, String username) {
+  SSHKeyInfo(URI publicKeyURI, URI privateKeyURI, byte[] publicKey, byte[] privateKey, String username) {
     this.publicKeyURI = publicKeyURI;
     this.privateKeyURI = privateKeyURI;
     this.publicKey = publicKey;
+    this.privateKey = privateKey;
     this.username = username;
   }
 
@@ -43,8 +45,12 @@ public final class SSHKeyInfo {
     return privateKeyURI;
   }
 
-  public String getPublicKey() {
+  public byte[] getPublicKey() {
     return publicKey;
+  }
+
+  public byte[] getPrivateKey() {
+    return privateKey;
   }
 
   public String getUsername() {

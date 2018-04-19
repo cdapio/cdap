@@ -40,5 +40,5 @@ public interface ProvisionerContext {
    */
   Map<String, String> getProperties();
 
-  Optional<SSHPublicKey> getSSHPublicKey();
+  Optional<SSHKeyPair> getSSHKeyPair();
 }

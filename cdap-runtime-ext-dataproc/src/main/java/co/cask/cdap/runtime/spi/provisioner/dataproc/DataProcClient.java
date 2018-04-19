@@ -18,7 +18,7 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
-import co.cask.cdap.runtime.spi.provisioner.SSHPublicKey;
+import co.cask.cdap.runtime.spi.provisioner.SSHKeyPair;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.Throwables;
 import com.google.api.gax.longrunning.OperationSnapshot;
@@ -38,8 +38,10 @@ import com.google.cloud.dataproc.v1.DiskConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.common.base.Preconditions;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -89,12 +91,12 @@ public class DataProcClient implements AutoCloseable {
     // TODO: figure out how to set labels
     try {
       Map<String, String> metadata = new HashMap<>();
-      SSHPublicKey publicKey = conf.getPublicKey();
-      if (publicKey != null) {
-        metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
-      }
+      SSHKeyPair sshKeyPair = conf.getSSHKeyPair();
+      Preconditions.checkNotNull(sshKeyPair, "SSHKeyPair was null in DataProc configuration.");
+      metadata.put("ssh-keys",
+                   sshKeyPair.getUser() + ":" + new String(sshKeyPair.getPublicKey(), StandardCharsets.UTF_8));
 
-      Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
+      Cluster cluster = Cluster.newBuilder()
         .setClusterName(name)
         .setConfig(ClusterConfig.newBuilder()
                      .setMasterConfig(InstanceGroupConfig.newBuilder()
