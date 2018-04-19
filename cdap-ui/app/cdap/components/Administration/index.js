@@ -17,27 +17,18 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
-import VersionStore from 'services/VersionStore';
-import VersionActions from 'services/VersionStore/VersionActions';
-import MyCDAPVersionApi from 'api/version';
 import {MyServiceProviderApi} from 'api/serviceproviders';
-import {humanReadableDuration, humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
-import isNil from 'lodash/isNil';
-import classnames from 'classnames';
+import {humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
 import AdminManagementTabContent from 'components/Administration/AdminManagementTabContent';
 import AdminConfigTabContent from 'components/Administration/AdminConfigTabContent';
+import AdminTabSwitch from 'components/Administration/AdminTabSwitch';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
+import {Route, Switch} from 'react-router-dom';
 
 require('./Administration.scss');
 
 const PREFIX = 'features.Administration';
 const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
-
-const ADMIN_TABS = {
-  management: T.translate(`${PREFIX}.Tabs.management`),
-  config: T.translate(`${PREFIX}.Tabs.config`)
-};
 
 class Administration extends Component {
   state = {
@@ -45,7 +36,7 @@ class Administration extends Component {
     platforms: [],
     uptime: 0,
     loading: true,
-    currentTab: objectQuery(this.props.location, 'state', 'showConfigTab') ? ADMIN_TABS.config : ADMIN_TABS.management
+    accordionToExpand: typeof this.props.location.state === 'object' ? this.props.location.state.accordionToExpand : null
   };
 
   static propTypes = {
@@ -54,13 +45,16 @@ class Administration extends Component {
 
   componentDidMount() {
     this.getPlatforms();
-    if (!VersionStore.getState().version) {
-      this.getCDAPVersion();
-    } else {
-      this.setState({ version : VersionStore.getState().version });
-    }
-
     document.querySelector('#header-namespace-dropdown').style.display = 'none';
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.location.state !== this.props.location.state) {
+      let accordionToExpand = typeof nextProps.location.state === 'object' ? nextProps.location.state.accordionToExpand : null;
+      this.setState({
+        accordionToExpand
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -165,96 +159,30 @@ class Administration extends Component {
     });
   }
 
-  getCDAPVersion() {
-    MyCDAPVersionApi
-      .get()
-      .subscribe((res) => {
-        this.setState({ version : res.version });
-        VersionStore.dispatch({
-          type: VersionActions.updateVersion,
-          payload: {
-            version: res.version
-          }
-        });
-      });
-  }
-
-  toggleCurrentTab = (tab) => {
-    this.setState({
-      currentTab: tab
-    });
-  };
-
-  renderTabTitle() {
-    return (
-      <span className="tab-title">
-        <h5
-          className={classnames({"active": this.state.currentTab === ADMIN_TABS.management})}
-          onClick={this.toggleCurrentTab.bind(this, ADMIN_TABS.management)}
-        >
-          {T.translate(`${PREFIX}.Tabs.management`)}
-        </h5>
-        <span className="divider"> | </span>
-        <h5
-          className={classnames({"active": this.state.currentTab === ADMIN_TABS.config})}
-          onClick={this.toggleCurrentTab.bind(this, ADMIN_TABS.config)}
-        >
-          {T.translate(`${PREFIX}.Tabs.config`)}
-        </h5>
-      </span>
-    );
-  }
-
-  renderUptimeVersion() {
-    if (this.state.currentTab === ADMIN_TABS.config) {
-      return null;
-    }
-
-    return (
-      <span className="uptime-version-container">
-        <span>
-          {
-            this.state.uptime ?
-              T.translate(`${PREFIX}.uptimeLabel`, {
-                time: humanReadableDuration(Math.ceil(this.state.uptime / 1000))
-              })
-            :
-              null
-          }
-        </span>
-        {
-          isNil(this.state.version) ?
-            null
-          :
-            (
-              <i className="cdap-version">
-                {T.translate(`${PREFIX}.Top.version-label`)} - {this.state.version}
-              </i>
-            )
-        }
-      </span>
-    );
-  }
-
   render () {
     return (
       <div className="administration">
         <Helmet
           title={T.translate(`${PREFIX}.TitleWithCDAP`)}
         />
-        <div className="tab-title-and-version">
-          {this.renderTabTitle()}
-          {this.renderUptimeVersion()}
-        </div>
-        {
-          this.state.currentTab === ADMIN_TABS.management ?
-            <AdminManagementTabContent
-              platformsDetails={this.state.platformsDetails}
-              loading={this.state.loading}
-            />
-          :
-            <AdminConfigTabContent />
-        }
+        <AdminTabSwitch uptime={this.state.uptime} />
+        <Switch>
+          <Route exact path="/administration" render={() => {
+            return (
+              <AdminManagementTabContent
+                platformsDetails={this.state.platformsDetails}
+                loading={this.state.loading}
+              />
+            );
+          }} />
+          <Route exact path="/administration/configuration" render={() => {
+            return (
+              <AdminConfigTabContent
+                accordionToExpand={this.state.accordionToExpand}
+              />
+            );
+          }} />
+        </Switch>
       </div>
     );
   }

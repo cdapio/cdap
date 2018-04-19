@@ -14,8 +14,6 @@
  * the License.
 */
 
-$uptime_version_color: gray;
-
 .administration {
   height: 100%;
   padding: 20px 20px 0 20px;
@@ -23,44 +21,5 @@ $uptime_version_color: gray;
 
   > div {
     padding: 10px;
-  }
-
-  .primary-label {
-    display: inline-flex;
-    justify-content: space-around;
-  }
-
-  .tab-title-and-version {
-    padding: 0 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .tab-title {
-      h5 {
-        display: inline;
-        font-weight: bold;
-        cursor: pointer;
-
-        &.active {
-          text-decoration: underline;
-          cursor: initial;
-        }
-      }
-
-      .divider {
-        font-size: 1.25rem;
-        padding: 0 5px;
-      }
-    }
-    .uptime-version-container {
-      color: $uptime_version_color;
-      > span {
-        margin: 0 10px;
-      }
-      .cdap-version {
-        font-weight: 500;
-      }
-    }
   }
 }

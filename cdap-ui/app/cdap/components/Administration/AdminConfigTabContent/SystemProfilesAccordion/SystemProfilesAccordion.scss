@@ -24,6 +24,16 @@
           color: $grey-03;
         }
       }
+
+      .grid-body {
+        .grid-row:hover {
+          background-color: white;
+        }
+      }
     }
+  }
+
+  .view-all-label-container:first-child {
+    transform: translateY(10px);
   }
 }

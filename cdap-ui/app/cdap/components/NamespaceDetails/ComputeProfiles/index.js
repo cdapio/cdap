@@ -70,7 +70,10 @@ export default class NamespaceDetailsComputeProfiles extends Component {
     return (
       <div className="namespace-details-compute-profiles">
         {this.renderProfilesLabel()}
-        <ProfilesListView onChange={this.onChange} />
+        <ProfilesListView
+          namespace={getCurrentNamespace()}
+          onChange={this.onChange}
+        />
       </div>
     );
   }

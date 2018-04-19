@@ -1,0 +1,62 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import "../../../styles/variables.scss";
+
+$uptime_version_color: $grey-03;
+$font-color: $grey-01;
+
+.administration {
+  .tab-title-and-version {
+    padding: 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .tab-title {
+      h5 {
+        display: inline;
+        font-weight: bold;
+
+        a {
+          color: $font-color;
+        }
+
+        &.active {
+          pointer-events: none;
+
+          a {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .divider {
+        font-size: 1.25rem;
+        padding: 0 5px;
+      }
+    }
+    .uptime-version-container {
+      color: $uptime_version_color;
+      > span {
+        margin: 0 10px;
+      }
+      .cdap-version {
+        font-weight: 500;
+      }
+    }
+  }
+}

@@ -82,6 +82,8 @@ const SORT_METHODS = {
   desc: 'desc'
 };
 
+const NUM_PROFILES_TO_SHOW = 5;
+
 export default class ProfilesListView extends Component {
   state = {
     profiles: [],
@@ -95,10 +97,6 @@ export default class ProfilesListView extends Component {
   static propTypes = {
     namespace: PropTypes.string.isRequired,
     onChange: PropTypes.func
-  };
-
-  static defaultProps = {
-    namespace: getCurrentNamespace()
   };
 
   componentDidMount() {
@@ -183,12 +181,6 @@ export default class ProfilesListView extends Component {
           {this.renderProfilesTableHeader()}
           {this.renderProfilesTableBody()}
         </div>
-        <ViewAllLabel
-          arrayToLimit={this.state.profiles}
-          limit={10}
-          viewAllState={this.state.viewAll}
-          toggleViewAll={this.toggleViewAll}
-        />
       </div>
     );
   }
@@ -253,8 +245,8 @@ export default class ProfilesListView extends Component {
   renderProfilesTableBody() {
     let profiles = [...this.state.profiles];
 
-    if (!this.state.viewAll && profiles.length > 10) {
-      profiles = profiles.slice(0, 10);
+    if (!this.state.viewAll && profiles.length > NUM_PROFILES_TO_SHOW) {
+      profiles = profiles.slice(0, NUM_PROFILES_TO_SHOW);
     }
 
     return (
@@ -305,7 +297,19 @@ export default class ProfilesListView extends Component {
     }
     return (
       <div className="profiles-list-view">
+        <ViewAllLabel
+          arrayToLimit={this.state.profiles}
+          limit={NUM_PROFILES_TO_SHOW}
+          viewAllState={this.state.viewAll}
+          toggleViewAll={this.toggleViewAll}
+        />
         {this.renderProfilesTable()}
+        <ViewAllLabel
+          arrayToLimit={this.state.profiles}
+          limit={NUM_PROFILES_TO_SHOW}
+          viewAllState={this.state.viewAll}
+          toggleViewAll={this.toggleViewAll}
+        />
       </div>
     );
   }

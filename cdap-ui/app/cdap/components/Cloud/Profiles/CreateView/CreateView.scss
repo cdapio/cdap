@@ -25,6 +25,12 @@
     padding: 0 30px;
     font-size: 1.3rem;
     font-weight: 500;
+
+    .close-create-view {
+      margin-left: auto;
+      cursor: pointer;
+      color: $grey-01;
+    }
   }
   .create-form-container {
     margin: 30px;

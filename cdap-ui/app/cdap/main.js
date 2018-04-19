@@ -117,7 +117,7 @@ class CDAP extends Component {
                 <Switch>
                   <Route exact path="/" component={RouteToNamespace} />
                   <Route exact path="/notfound" component={Page404} />
-                  <Route exact path="/administration" component={Administration} />
+                  <Route path="/administration" component={Administration} />
                   <Route exact path="/ns" component={RouteToNamespace} />
                   <Route path="/ns/:namespace" history={history} component={Home} />
                   <Route path="/socket-example" component={ConnectionExample} />

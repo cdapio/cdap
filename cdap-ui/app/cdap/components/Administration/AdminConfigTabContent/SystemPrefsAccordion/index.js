@@ -19,18 +19,32 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import SetPreferenceModal from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import classnames from 'classnames';
-import {convertMapToKeyValuePairs} from 'services/helpers';
+import {convertMapToKeyValuePairs, convertKeyValuePairsToMap} from 'services/helpers';
 import {MyPreferenceApi} from 'api/preference';
 import ViewAllLabel from 'components/ViewAllLabel';
 import T from 'i18n-react';
 import isEqual from 'lodash/isEqual';
+import SortableStickyGrid from 'components/SortableStickyGrid';
 
 const PREFIX = 'features.Administration.Accordions.SystemPrefs';
+
+const GRID_HEADERS = [
+  {
+    property: 'key',
+    label: T.translate('commons.keyValPairs.keyLabel')
+  },
+  {
+    property: 'value',
+    label: T.translate('commons.keyValPairs.valueLabel')
+  }
+];
+
+const NUM_PREFS_TO_SHOW = 5;
 
 export default class SystemPrefsAccordion extends Component {
   state = {
     prefsModalOpen: false,
-    prefsForDisplay: convertMapToKeyValuePairs(this.props.prefs),
+    prefsForDisplay: convertMapToKeyValuePairs(this.props.prefs, false),
     viewAll: false
   };
 
@@ -44,7 +58,7 @@ export default class SystemPrefsAccordion extends Component {
   componentWillReceiveProps(nextProps) {
     if (!isEqual(this.props.prefs, nextProps.prefs)) {
       this.setState({
-        prefsForDisplay: convertMapToKeyValuePairs(nextProps.prefs)
+        prefsForDisplay: convertMapToKeyValuePairs(nextProps.prefs, false)
       });
     }
   }
@@ -54,8 +68,41 @@ export default class SystemPrefsAccordion extends Component {
       .getSystemPreferences()
       .subscribe(
         (prefs) => {
+          let currentPrefs = convertKeyValuePairsToMap(this.state.prefsForDisplay);
+          let hasNewPrefs = false;
+
+          let newPrefsForDisplay = Object.entries(prefs).map(([key, value]) => {
+            let prefIsHighlighted = false;
+
+            if (!(key in currentPrefs) || (key in currentPrefs && currentPrefs[key] !== value)) {
+              hasNewPrefs = true;
+              prefIsHighlighted = true;
+            }
+            return {
+              key,
+              value,
+              highlighted: prefIsHighlighted
+            };
+          });
+
           this.setState({
-            prefsForDisplay: convertMapToKeyValuePairs(prefs),
+            prefsForDisplay: newPrefsForDisplay,
+            viewAll: hasNewPrefs || this.state.viewAll
+          }, () => {
+            if (hasNewPrefs) {
+              setTimeout(() => {
+                newPrefsForDisplay = newPrefsForDisplay.map(pref => {
+                  return {
+                    key: pref.key,
+                    value: pref.value,
+                    highlighted: false
+                  };
+                });
+                this.setState({
+                  prefsForDisplay: newPrefsForDisplay
+                });
+              }, 4000);
+            }
           });
         },
         (err) => console.log(err)
@@ -112,33 +159,15 @@ export default class SystemPrefsAccordion extends Component {
 
     let prefs = [...this.state.prefsForDisplay];
 
-    if (!this.state.viewAll && prefs.length > 5) {
-      prefs = prefs.slice(0, 5);
+    if (!this.state.viewAll && prefs.length > NUM_PREFS_TO_SHOW) {
+      prefs = prefs.slice(0, NUM_PREFS_TO_SHOW);
     }
 
     return (
-      <div className="grid-wrapper">
-        <div className="grid grid-container">
-          <div className="grid-header">
-            <div className="grid-row">
-              <strong>{T.translate('commons.keyValPairs.keyLabel')}</strong>
-              <strong>{T.translate('commons.keyValPairs.valueLabel')}</strong>
-            </div>
-          </div>
-          <div className="grid-body">
-            {
-              prefs.map((pref, i) => {
-                return (
-                  <div className="grid-row" key={i}>
-                    <div>{pref.key}</div>
-                    <div>{pref.value}</div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
+      <SortableStickyGrid
+        entities={prefs}
+        gridHeaders={GRID_HEADERS}
+      />
     );
   }
 
@@ -155,10 +184,16 @@ export default class SystemPrefsAccordion extends Component {
         >
           {T.translate(`${PREFIX}.create`)}
         </button>
+        <ViewAllLabel
+          arrayToLimit={this.state.prefsForDisplay}
+          limit={NUM_PREFS_TO_SHOW}
+          viewAllState={this.state.viewAll}
+          toggleViewAll={this.toggleViewAll}
+        />
         {this.renderGrid()}
         <ViewAllLabel
           arrayToLimit={this.state.prefsForDisplay}
-          limit={5}
+          limit={NUM_PREFS_TO_SHOW}
           viewAllState={this.state.viewAll}
           toggleViewAll={this.toggleViewAll}
         />

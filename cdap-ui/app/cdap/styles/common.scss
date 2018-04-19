@@ -130,6 +130,10 @@ body {
           &:hover {
             background: $grey-08;
           }
+          &.highlighted {
+            border: 2px solid $green-03;
+            background-color: rgba($green-03, 0.1);
+          }
         }
         a {
           text-decoration: none;
