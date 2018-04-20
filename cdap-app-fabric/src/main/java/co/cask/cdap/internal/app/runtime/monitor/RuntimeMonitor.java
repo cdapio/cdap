@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -23,6 +24,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -34,6 +40,7 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.gson.Gson;
+import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +49,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,6 +76,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private final ProgramRunId programId;
   private final CConfiguration cConf;
   private final Map<String, MonitorConsumeRequest> topicsToRequest;
+  private final OffsetManager offsetManager;
 
   private final MessagePublisher messagePublisher;
   private final long pollTimeMillis;
@@ -75,7 +84,8 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private volatile boolean stopped;
   private boolean programFinished;
 
-  public RuntimeMonitor(ProgramRunId programId, CConfiguration cConf, MessagePublisher messagePublisher,
+  public RuntimeMonitor(ProgramRunId programId, CConfiguration cConf, DatasetFramework datasetFramework,
+                        TransactionSystemClient txClient, MessagePublisher messagePublisher,
                         ClientConfig clientConfig) {
     this.programId = programId;
     this.cConf = cConf;
@@ -85,6 +95,13 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     this.limit = cConf.getInt(Constants.RuntimeMonitor.BATCH_LIMIT);
     this.pollTimeMillis = cConf.getInt(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.topicsToRequest = new HashMap<>();
+    Transactional transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
+        NamespaceId.SYSTEM, Collections.emptyMap(), null, null)),
+      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
+    );
+    this.offsetManager = new OffsetManager(datasetFramework, transactional, cConf);
   }
 
   @Override
@@ -93,13 +110,43 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   }
 
   private void initializeTopics() throws Exception {
-    Set<String> topicsConfigsToMonitor = new HashSet<>();
-    topicsConfigsToMonitor.addAll(Arrays.asList(cConf.get(Constants.RuntimeMonitor.TOPICS_CONFIGS).split(",")));
+    offsetManager.initializeOffsets(topicsToRequest, programId.getRun(), getTopicConfigs());
+    programFinished = offsetManager.hasRunFinished(programId.getRun());
+  }
 
-    // TODO initialize from offset table for a given programId
-    for (String topicConfig : topicsConfigsToMonitor) {
-      topicsToRequest.put(topicConfig, new MonitorConsumeRequest(null, limit));
+  private Set<String> getTopicConfigs() {
+    Set<String> topicsConfigsToMonitor = new HashSet<>();
+
+    for (String topicConfig : Arrays.asList(cConf.get(Constants.RuntimeMonitor.TOPICS_CONFIGS).split(","))) {
+      int idx = topicConfig.lastIndexOf(':');
+
+      if (idx < 0) {
+        topicsConfigsToMonitor.add(topicConfig);
+        continue;
+      }
+
+      try {
+        int totalTopicCount = Integer.parseInt(topicConfig.substring(idx + 1));
+        if (totalTopicCount <= 0) {
+          throw new IllegalArgumentException("Total topic number must be positive for system topic config '" +
+                                               topicConfig + "'.");
+        }
+
+        String config = topicConfig.substring(0, idx);
+        for (int i = 0; i < totalTopicCount; i++) {
+          // For metrics, We make an assumption that number of metrics topics on runtime are not different than
+          // cdap system. So, we will add same number of topic configs as number of metrics topics so that we can
+          // keep track of different offsets for each metrics topic.
+          // TODO: CDAP-13303 - Handle different number of metrics topics between runtime and cdap system
+          topicsConfigsToMonitor.add(config + ":" + i);
+        }
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Total topic number must be a positive number for system topic config'"
+                                             + topicConfig + "'.");
+      }
     }
+
+    return topicsConfigsToMonitor;
   }
 
   @Override
@@ -144,21 +191,28 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
       if (monitorResponse.getKey().equals(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
         setIsRuntimeInactive(monitorResponse.getValue());
       }
-      publish(monitorResponse.getKey(), monitorResponse.getValue());
+      String topic = getTopic(monitorResponse.getKey());
+      publish(monitorResponse.getKey(), topic, monitorResponse.getValue());
       count += monitorResponse.getValue().size();
     }
     return count;
   }
 
-  private void publish(String topicConfig, List<MonitorMessage> messages) throws Exception {
+  private String getTopic(String topicConfig) {
+    int idx = topicConfig.lastIndexOf(':');
+    return idx < 0 ? cConf.get(topicConfig) : cConf.get(topicConfig.substring(0, idx)) + topicConfig.charAt(idx + 1);
+  }
+
+  private void publish(String topicConfig, String topic, List<MonitorMessage> messages) throws Exception {
     if (messages.isEmpty()) {
       return;
     }
 
     // TODO publish messages transactionally along with offset table updates
-    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), cConf.get(topicConfig),
+    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
                              messages.stream().map(s -> s.getMessage().getBytes(StandardCharsets.UTF_8)).iterator());
 
+    offsetManager.persistOffsets(programId.getRun(), topicConfig, messages.get(messages.size() - 1).getMessageId());
     topicsToRequest.put(topicConfig, new MonitorConsumeRequest(messages.get(messages.size() - 1).getMessageId(),
                                                                limit));
   }
@@ -166,19 +220,21 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private void triggerRuntimeShutdown() throws Exception {
     try {
       restClient.execute(HttpRequest.builder(HttpMethod.POST, clientConfig.resolveURL("runtime/shutdown")).build());
+      offsetManager.cleanupOffsets(programId.getRun());
     } catch (ConnectException e) {
       LOG.trace("Connection refused when attempting to connect to Runtime Http Server. " +
                   "Assuming that it is not available.");
     }
   }
 
-  private void setIsRuntimeInactive(List<MonitorMessage> monitorMessages) {
+  private void setIsRuntimeInactive(List<MonitorMessage> monitorMessages) throws Exception {
     for (MonitorMessage message : monitorMessages) {
       Notification notification = GSON.fromJson(message.getMessage(), Notification.class);
       String programStatus = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
       if (programStatus.equals(ProgramRunStatus.COMPLETED.name()) ||
         programStatus.equals(ProgramRunStatus.FAILED.name()) ||
         programStatus.equals(ProgramRunStatus.KILLED.name())) {
+        offsetManager.runFinished(programId.getRun());
         programFinished = true;
         break;
       }
