@@ -18,11 +18,15 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
+import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +37,8 @@ import java.util.Optional;
  * Provisions a cluster using GCE DataProc.
  */
 public class DataProcProvisioner implements Provisioner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DataProcProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "gce-dataproc", "GCE DataProc Provisioner",
     "Runs programs on the GCE DataProc clusters.",
@@ -50,7 +56,7 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    DataProcConf conf = DataProcConf.fromProvisionerContext(context);
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
@@ -79,6 +85,16 @@ public class DataProcProvisioner implements Provisioner {
   }
 
   @Override
+  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+    // Start the ZK server
+    try (SSHSession session = context.getSSHContext().createSSHSession(getMasterExternalIp(cluster))) {
+      LOG.debug("Starting zookeeper server.");
+      String output = session.executeAndWait("sudo zookeeper-server start");
+      LOG.debug("Zookeeper server started: {}", output);
+    }
+  }
+
+  @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
     DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
     String clusterName = getClusterName(context.getProgramRun());
@@ -86,6 +102,19 @@ public class DataProcProvisioner implements Provisioner {
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
       client.deleteCluster(clusterName);
     }
+  }
+
+  private String getMasterExternalIp(Cluster cluster) {
+    Node masterNode = cluster.getNodes().stream()
+      .filter(node -> Constants.Node.MASTER_TYPE.equals(node.getProperties().get(Constants.Node.TYPE)))
+      .findFirst().orElseThrow(() -> new IllegalArgumentException("Cluster has no node of master type: " + cluster));
+
+    String ip = masterNode.getProperties().get(Constants.Node.EXTERNAL_IP);
+    if (ip == null) {
+      throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
+                                                       masterNode.getId(), cluster));
+    }
+    return ip;
   }
 
   // Name must start with a lowercase letter followed by up to 54 lowercase letters,

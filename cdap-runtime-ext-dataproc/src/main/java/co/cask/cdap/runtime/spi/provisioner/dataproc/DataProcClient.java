@@ -18,6 +18,7 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.Throwables;
 import com.google.api.gax.longrunning.OperationSnapshot;
@@ -87,6 +88,13 @@ public class DataProcClient implements AutoCloseable {
 
     // TODO: figure out how to set labels
     try {
+      Map<String, String> metadata = new HashMap<>();
+      SSHPublicKey publicKey = conf.getPublicKey();
+      if (publicKey != null) {
+        // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
+        metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
+      }
+
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)
         .setConfig(ClusterConfig.newBuilder()
@@ -110,6 +118,7 @@ public class DataProcClient implements AutoCloseable {
                                             .setNetworkUri(conf.getNetwork())
                                             .setZoneUri(conf.getZone())
                                             .addTags("https-server")
+                                            .putAllMetadata(metadata)
                                             .build())
                      .build())
         .build();

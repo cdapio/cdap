@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 
@@ -34,23 +33,25 @@ public class ClusterInfo {
   private final Map<String, String> provisionerProperties;
   private final String user;
   private final String provisionerName;
+  private final SSHKeyInfo sshKeyInfo;
   private final Cluster cluster;
 
   public ClusterInfo(ProgramRunId programRunId, ProgramDescriptor programDescriptor,
                      Map<String, String> provisionerProperties, String provisionerName, String user,
-                     ClusterOp op, @Nullable Cluster cluster) {
+                     ClusterOp op, @Nullable SSHKeyInfo sshKeyInfo, @Nullable Cluster cluster) {
     this.programRunId = programRunId;
     this.provisionerProperties = provisionerProperties;
     this.programDescriptor = programDescriptor;
     this.user = user;
     this.provisionerName = provisionerName;
     this.op = op;
+    this.sshKeyInfo = sshKeyInfo;
     this.cluster = cluster;
   }
 
   public ClusterInfo(ClusterInfo existing, ClusterOp op, @Nullable Cluster cluster) {
     this(existing.getProgramRunId(), existing.getProgramDescriptor(), existing.getProvisionerProperties(),
-         existing.getProvisionerName(), existing.getUser(), op, cluster);
+         existing.getProvisionerName(), existing.getUser(), op, existing.getSshKeyInfo(), cluster);
   }
 
   public ProgramRunId getProgramRunId() {
@@ -75,6 +76,11 @@ public class ClusterInfo {
 
   public ClusterOp getClusterOp() {
     return op;
+  }
+
+  @Nullable
+  public SSHKeyInfo getSshKeyInfo() {
+    return sshKeyInfo;
   }
 
   @Nullable

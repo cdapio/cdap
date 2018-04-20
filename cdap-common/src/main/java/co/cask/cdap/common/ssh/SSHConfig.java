@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Configurations for creating a {@link SSHSession}.
+ * Configurations for creating a {@link DefaultSSHSession}.
  */
 public final class SSHConfig {
 

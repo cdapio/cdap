@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Performs steps to provision a cluster for a program run.
@@ -39,10 +40,12 @@ public class ProvisionTask extends ProvisioningTask {
   private final ProvisionerNotifier provisionerNotifier;
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
+  private final SSHKeyInfo sshKeyInfo;
 
   public ProvisionTask(ProvisionRequest provisionRequest, Provisioner provisioner,
                        ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
-                       Transactional transactional, DatasetFramework datasetFramework) {
+                       Transactional transactional, DatasetFramework datasetFramework,
+                       @Nullable SSHKeyInfo sshKeyInfo) {
     super(provisionRequest.getProgramRunId());
     this.provisionRequest = provisionRequest;
     this.provisioner = provisioner;
@@ -50,6 +53,7 @@ public class ProvisionTask extends ProvisioningTask {
     this.provisionerNotifier = provisionerNotifier;
     this.transactional = transactional;
     this.datasetFramework = datasetFramework;
+    this.sshKeyInfo = sshKeyInfo;
   }
 
   @Override
@@ -90,6 +94,7 @@ public class ProvisionTask extends ProvisioningTask {
       // TODO: CDAP-13246 handle unexpected states and retry
       switch (cluster.getStatus()) {
         case RUNNING:
+          provisioner.initializeCluster(provisionerContext, cluster);
           op = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.CREATED);
           final ClusterInfo runningInfo = new ClusterInfo(pollingInfo, op, cluster);
           Transactionals.execute(transactional, dsContext -> {
@@ -97,7 +102,8 @@ public class ProvisionTask extends ProvisioningTask {
             dataset.putClusterInfo(runningInfo);
           });
           provisionerNotifier.provisioned(programRunId, provisionRequest.getProgramOptions(),
-                                          provisionRequest.getProgramDescriptor(), provisionRequest.getUser(), cluster);
+                                          provisionRequest.getProgramDescriptor(), provisionRequest.getUser(),
+                                          cluster, sshKeyInfo);
           break;
       }
     } catch (Throwable t) {
