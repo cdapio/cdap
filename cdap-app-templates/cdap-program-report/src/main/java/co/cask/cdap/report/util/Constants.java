@@ -27,6 +27,7 @@ public class Constants {
   public static final String ARTIFACT_VERSION = "artifactVersion";
   public static final String APPLICATION_NAME = "applicationName";
   public static final String APPLICATION_VERSION = "applicationVersion";
+  public static final String PROGRAM_TYPE = "programType";
   public static final String PROGRAM = "program";
   public static final String RUN = "run";
   public static final String STATUS = "status";

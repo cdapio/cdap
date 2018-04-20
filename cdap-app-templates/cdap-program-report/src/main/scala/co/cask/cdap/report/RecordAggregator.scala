@@ -25,17 +25,24 @@ import org.apache.spark.sql.expressions.Aggregator
   */
 class RecordAggregator extends Aggregator[Row, RecordBuilder, Record] {
 
-  def zero: RecordBuilder = RecordBuilder("", "", "", Vector.empty, None)
+  def zero: RecordBuilder = RecordBuilder("", "", "", "", "", "", Vector.empty, None, 0, 0, 0)
   def reduce(builder: RecordBuilder, row: Row): RecordBuilder = {
     // Get the StartInfo from the builder if it exists or construct a new StartInfo from the row
     val startInfo: Option[StartInfo] = if (builder.startInfo.isDefined) builder.startInfo else {
-      Option(row.getAs[Row](Constants.START_INFO)).map(r => StartInfo(r.getAs(Constants.USER),
-        r.getAs(Constants.RUNTIME_ARGUMENTS)))
+      Option(row.getAs[Row](Constants.START_INFO)).map(r => {
+        val artifact: Row = r.getAs[Row](Constants.ARTIFACT_ID)
+        StartInfo(r.getAs(Constants.USER), r.getAs(Constants.RUNTIME_ARGUMENTS),
+          artifact.getAs(Constants.ARTIFACT_NAME), artifact.getAs(Constants.ARTIFACT_VERSION),
+          artifact.getAs(Constants.ARTIFACT_SCOPE))
+      })
     }
     // Merge statusTimes from the builder with the new status and time tuple from the row. Combined with
     // the information from the row and the startInfo to create a new RecordBuilder
-    RecordBuilder(row.getAs(Constants.NAMESPACE), row.getAs(Constants.PROGRAM), row.getAs(Constants.RUN),
-      builder.statusTimes :+ (row.getAs[String](Constants.STATUS), row.getAs[Long](Constants.TIME)), startInfo)
+    RecordBuilder(row.getAs(Constants.NAMESPACE),
+      row.getAs(Constants.APPLICATION_NAME), row.getAs(Constants.APPLICATION_VERSION),
+      row.getAs(Constants.PROGRAM_TYPE), row.getAs(Constants.PROGRAM), row.getAs(Constants.RUN),
+      builder.statusTimes :+ (row.getAs[String](Constants.STATUS), row.getAs[Long](Constants.TIME)), startInfo,
+      0, 0, 0)
   }
   def merge(b1: RecordBuilder, b2: RecordBuilder): RecordBuilder = {
     b1.merge(b2)

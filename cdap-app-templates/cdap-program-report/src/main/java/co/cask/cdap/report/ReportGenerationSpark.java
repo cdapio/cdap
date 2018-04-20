@@ -26,6 +26,8 @@ import co.cask.cdap.api.spark.AbstractExtendedSpark;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import co.cask.cdap.report.main.ProgramRunIdFields;
+import co.cask.cdap.report.main.ProgramRunIdFieldsSerializer;
 import co.cask.cdap.report.main.SparkPersistRunRecordMain;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
@@ -145,13 +147,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       String threadPoolSizeString = context.getRuntimeArguments().get(THREAD_POOL_SIZE);
       reportGenerationExecutor =
         Executors.newFixedThreadPool(threadPoolSizeString == null ? 3 : Integer.valueOf(threadPoolSizeString));
-      try {
-        context.getAdmin().createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
-                                         FileSetProperties.builder().build());
-        populateMetaFiles(getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET));
-      } catch (InstanceConflictException e) {
-        // It's ok if the dataset already exists
-      }
+//      try {
+//        context.getAdmin().createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
+//                                         FileSetProperties.builder().build());
+//        populateMetaFiles(getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET));
+//      } catch (InstanceConflictException e) {
+//        // It's ok if the dataset already exists
+//      }
     }
 
     @GET
@@ -528,46 +530,6 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         throw new IllegalArgumentException("Request body is invalid json: " + e.getMessage());
       }
       return decodedRequestBody;
-    }
-  }
-
-  /**
-   * Adds mock program run meta files to the given location.
-   * TODO: [CDAP-13216] this method should be marked as @VisibleForTesting. Temporarily calling this method
-   * when initializing report generation Spark program to add mock data
-   *
-   * @param metaBaseLocation the location to add files
-   */
-  private static void populateMetaFiles(Location metaBaseLocation) throws Exception {
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
-    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
-    for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
-      Location nsLocation = metaBaseLocation.append(namespace);
-      nsLocation.mkdirs();
-      for (int i = 0; i < 5; i++) {
-        long time = 1520808000L + 1000 * i;
-        Location reportLocation = nsLocation.append(String.format("%d.avro", time));
-        reportLocation.createNew();
-        dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
-        String program = "SmartWorkflow";
-        String run1 = ReportIds.generate().toString();
-        String run2 = ReportIds.generate().toString();
-        long delay = TimeUnit.MINUTES.toSeconds(5);
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
-                                                                  time, new StartInfo("user",
-                                                                                      ImmutableMap.of("k1", "v1",
-                                                                                                      "k2", "v2"))));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
-                                                                  "FAILED", time + delay, null));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                  "STARTING", time + delay, null));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                  "RUNNING", time + 2 * delay, null));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                  "COMPLETED", time + 4 * delay, null));
-        dataFileWriter.close();
-      }
-      LOG.debug("nsLocation.list() = {}", nsLocation.list());
     }
   }
 }

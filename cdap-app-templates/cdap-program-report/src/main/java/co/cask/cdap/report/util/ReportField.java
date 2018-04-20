@@ -36,6 +36,7 @@ public enum ReportField {
   ARTIFACT_VERSION(Constants.ARTIFACT_VERSION, String.class, Collections.singletonList(VALUE), false),
   APPLICATION_NAME(Constants.APPLICATION_NAME, String.class, Collections.singletonList(VALUE), false),
   APPLICATION_VERSION(Constants.ARTIFACT_VERSION, String.class, Collections.singletonList(VALUE), false),
+  PROGRAM_TYPE(Constants.PROGRAM_TYPE, String.class, Collections.singletonList(VALUE), false),
   PROGRAM(Constants.PROGRAM, String.class, Collections.singletonList(VALUE), false),
   RUN(Constants.RUN, String.class, Collections.singletonList(VALUE), false),
   STATUS(Constants.STATUS, String.class, Collections.singletonList(VALUE), false),

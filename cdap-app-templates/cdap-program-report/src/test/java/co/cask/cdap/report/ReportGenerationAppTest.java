@@ -44,6 +44,7 @@ import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -93,6 +94,54 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     Assert.assertNotNull(reportGenerationSparkUrl);
   }
 
+  @Test
+  public void testGenerateReportWithRealData() throws Exception {
+    Assert.assertNotNull(reportGenerationSparkUrl);
+    TimeUnit.SECONDS.sleep(10);
+    URL reportURL = reportGenerationSparkUrl.toURI().resolve("reports/").toURL();
+    List<Filter> filters =
+      ImmutableList.of(
+        new ValueFilter<>("namespace", ImmutableSet.of("default"), null));
+    long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("report1", now - 3600, now, ImmutableList.of("namespace", "applicationName",
+                                                                               "programType", "program", "run",
+                                                                               "status", "start"),
+                                  ImmutableList.of(
+                                    new Sort("duration", Sort.Order.DESCENDING)),
+                                  filters);
+    // generate a new report with the request
+    HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(request).getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
+    String reportId = reportIdMap.get("id");
+    Assert.assertNotNull(reportId);
+    URL reportStatusURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    Tasks.waitFor(ReportStatus.COMPLETED, () -> {
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+                                                                    REPORT_GEN_INFO_TYPE);
+      if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
+        Assert.fail("Report generation failed");
+      }
+      return reportGenerationInfo.getStatus();
+    }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
+    // assert that the expiry time is not null when the report is generated without saving
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    Assert.assertNotNull(reportGenerationInfo.getExpiry());
+    // read the report's details
+    URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
+    ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
+    LOG.info(reportContent.toString());
+  }
+
+  @Ignore
   @Test
   public void testGenerateReport() throws Exception {
     Assert.assertNotNull(reportGenerationSparkUrl);
@@ -154,6 +203,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     Assert.assertNull(reportGenerationInfo.getExpiry());
   }
 
+  @Ignore
   @Test
   public void testGenerateReportFailed() throws Exception {
     Assert.assertNotNull(reportGenerationSparkUrl);

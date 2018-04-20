@@ -22,12 +22,12 @@ import javax.annotation.Nullable;
  * run id fields
  */
 public class ProgramRunIdFields {
+  private final String namespace;
   private final String application;
   private final String version;
   private final String type;
   private final String program;
   private final String run;
-  private final String namespace;
 
   private Long timestamp;
   private String messageId;
@@ -36,14 +36,29 @@ public class ProgramRunIdFields {
   @Nullable
   private ProgramStartInfo startInfo;
 
-  public ProgramRunIdFields(String application, String version, String type, String program, String run,
-                     String namespace) {
+  public ProgramRunIdFields(String namespace, String application, String version,
+                            String type, String program, String run) {
+    this.namespace = namespace;
     this.application = application;
     this.version = version;
     this.type = type;
     this.program = program;
     this.run = run;
+  }
+
+  public ProgramRunIdFields(String namespace, String application, String version,
+                            String type, String program, String run, Long timestamp,
+                            String messageId, String programStatus, ProgramStartInfo startInfo) {
     this.namespace = namespace;
+    this.application = application;
+    this.version = version;
+    this.type = type;
+    this.program = program;
+    this.run = run;
+    this.timestamp = timestamp;
+    this.messageId = messageId;
+    this.programStatus = programStatus;
+    this.startInfo = startInfo;
   }
 
   public void setTime(long timestamp) {
@@ -62,12 +77,16 @@ public class ProgramRunIdFields {
     this.startInfo = startInfo;
   }
 
-  public String getApplicationVersion() {
-    return version;
+  public String getNamespace() {
+    return namespace;
   }
 
   public String getApplication() {
     return application;
+  }
+
+  public String getApplicationVersion() {
+    return version;
   }
 
   public String getType() {
@@ -82,9 +101,6 @@ public class ProgramRunIdFields {
     return run;
   }
 
-  public String getNamespace() {
-    return namespace;
-  }
 
   public Long getTimestamp() {
     return timestamp;

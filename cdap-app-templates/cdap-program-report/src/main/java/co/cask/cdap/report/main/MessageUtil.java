@@ -29,6 +29,8 @@ import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,7 @@ import javax.annotation.Nullable;
  * utility methods
  */
 public final class MessageUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(MessageUtil.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Filter.class, new FilterDeserializer())
     .create();
@@ -74,6 +77,7 @@ public final class MessageUtil {
 
   public static ProgramRunIdFields constructAndGetProgramRunIdFields(Message message) {
     Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
+    LOG.info("Get notification: {}", notification);
     ProgramRunIdFields programRunIdFields =
       GSON.fromJson(notification.getProperties().get("programRunId"), ProgramRunIdFields.class);
     programRunIdFields.setMessageId(message.getId());

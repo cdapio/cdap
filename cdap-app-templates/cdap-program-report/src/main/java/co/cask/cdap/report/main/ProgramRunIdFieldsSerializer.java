@@ -45,6 +45,7 @@ public class ProgramRunIdFieldsSerializer {
     Schema.Field.of(Constants.NAMESPACE, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.APPLICATION_NAME, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.APPLICATION_VERSION, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.PROGRAM_TYPE, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.PROGRAM, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.RUN, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.STATUS, Schema.of(Schema.Type.STRING)),
@@ -77,6 +78,7 @@ public class ProgramRunIdFieldsSerializer {
     record.put(Constants.NAMESPACE, runIdFields.getNamespace());
     record.put(Constants.APPLICATION_NAME, runIdFields.getApplication());
     record.put(Constants.APPLICATION_VERSION, runIdFields.getApplicationVersion());
+    record.put(Constants.PROGRAM_TYPE, runIdFields.getType());
     record.put(Constants.PROGRAM, runIdFields.getProgram());
     record.put(Constants.RUN, runIdFields.getRun());
     record.put(Constants.STATUS, runIdFields.getProgramStatus());

@@ -61,4 +61,14 @@ public class ReportContent {
   public List<String> getDetails() {
     return details;
   }
+
+  @Override
+  public String toString() {
+    return "ReportContent{" +
+      "offset=" + offset +
+      ", limit=" + limit +
+      ", total=" + total +
+      ", details=" + details +
+      '}';
+  }
 }
