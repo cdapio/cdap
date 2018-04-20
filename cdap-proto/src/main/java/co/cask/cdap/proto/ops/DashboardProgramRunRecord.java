@@ -108,4 +108,22 @@ public class DashboardProgramRunRecord {
   public ProgramRunStatus getStatus() {
     return status;
   }
+
+  @Override
+  public String toString() {
+    return "DashboardProgramRunRecord{" +
+      "namespace='" + namespace + '\'' +
+      ", artifact=" + artifact +
+      ", application='" + application + '\'' +
+      ", type='" + type + '\'' +
+      ", program='" + program + '\'' +
+      ", run='" + run + '\'' +
+      ", user='" + user + '\'' +
+      ", startMethod='" + startMethod + '\'' +
+      ", start=" + start +
+      ", running=" + running +
+      ", end=" + end +
+      ", status=" + status +
+      '}';
+  }
 }

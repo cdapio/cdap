@@ -518,4 +518,9 @@ public interface Store {
    * @param history history source
    */
   void addProgramHistory(ProgramHisotrySource history);
+
+  /**
+   * Get runs for run id's
+   */
+  Map<ProgramRunId, RunRecordMeta> getHistoricalRunsForRunIds(final Set<ProgramRunId> runIds, int limit);
 }

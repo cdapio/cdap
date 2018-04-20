@@ -243,6 +243,7 @@ public class DefaultStore implements Store {
       }
       // todo: delete old history data
     });
+    lineageWriter.addStartStop(id, endTime, runStatus);
   }
 
   private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowDataset workflowDataset,
@@ -416,10 +417,10 @@ public class DefaultStore implements Store {
                                                             final long startTime, final long endTime, int limit) {
 
     return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getRuns(
+      return getAppMetadataStore(context).getHistoricalRunsForRunIds(
         namespaces.stream()
           .flatMap(ns -> lineageStoreReader.getRuns(ns, startTime, endTime).stream())
-          .collect(Collectors.toSet()));
+          .collect(Collectors.toSet()), limit);
     });
   }
 
@@ -989,5 +990,12 @@ public class DefaultStore implements Store {
                                                      null, history.getStopSourceId());
     });
     lineageWriter.addStartStop(history.getId(), history.getStopTime(), history.getStatus());
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRunsForRunIds(Set<ProgramRunId> runIds, int limit) {
+    return Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getHistoricalRunsForRunIds(runIds, limit);
+    });
   }
 }

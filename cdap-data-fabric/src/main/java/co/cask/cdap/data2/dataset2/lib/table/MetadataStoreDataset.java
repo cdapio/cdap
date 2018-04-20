@@ -33,6 +33,8 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Type;
@@ -292,6 +294,45 @@ public class MetadataStoreDataset extends AbstractDataset {
 
     Scan scan = new Scan(startKey, stopKey, new FuzzyRowFilter(fuzzyKeys));
     return listCombinedFilterKV(scan, typeOfT, limit, combinedFilter);
+  }
+
+  // returns mapping of all that match the given keySet provided they pass the combinedFilter predicate
+  public <T> Map<MDSKey, T> listKVForHistoricalRuns(byte[] startKey, byte[] stopKey, List<MDSKey> sortedKeys,
+                                                    Type typeOfT, int limit,
+                                                    @Nullable Predicate<KeyValue<T>> combinedFilter) {
+
+    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    for (MDSKey key : sortedKeys) {
+      fuzzyKeys.add(getFuzzyKeyForHistoricalRun(key));
+    }
+
+    Scan scan = new Scan(startKey, stopKey, new FuzzyRowFilter(fuzzyKeys));
+    return listCombinedFilterKV(scan, typeOfT, limit, combinedFilter);
+  }
+
+  private ImmutablePair<byte[], byte[]> getFuzzyKeyForHistoricalRun(MDSKey key) {
+    byte[] keyBytes = key.getKey();
+    // byte array is automatically initialized to 0, which implies fixed match in fuzzy info
+    // the row key after targetId doesn't need to be a match.
+    // Workaround for HBASE-15676, need to have at least one 1 in the fuzzy filter
+    byte[] infoBytes = new byte[keyBytes.length + 1];
+    infoBytes[infoBytes.length - 1] = 1;
+
+    // runRecordCompleted|namespace|app|version|programtype|program|inverted start time|runid
+    MDSKey.Splitter splitter = key.split();
+    int start = Ints.BYTES + splitter.getString().length() // runRecordCompleted
+      + Ints.BYTES + splitter.getString().length() // namespace
+      + Ints.BYTES + splitter.getString().length() // app
+      + Ints.BYTES + splitter.getString().length() // version
+      + Ints.BYTES + splitter.getString().length() // programtype
+      + Ints.BYTES + splitter.getString().length(); // program
+
+    for (int i = start; i < start + Longs.BYTES; i++) {
+      infoBytes[i] = 1; // mark inverted start time as fuzzy
+    }
+
+    // the key array size and mask array size has to be equal so increase the size by 1
+    return new ImmutablePair<>(Bytes.concat(keyBytes, new byte[1]), infoBytes);
   }
 
   // returns mapping of all that match the given keySet

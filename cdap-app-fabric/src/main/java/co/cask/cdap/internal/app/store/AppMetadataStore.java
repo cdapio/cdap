@@ -55,6 +55,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -78,6 +79,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -1051,6 +1053,34 @@ public class AppMetadataStore extends MetadataStoreDataset {
       newRecords.putAll(oldRecords);
     }
     return getProgramRunIdMap(newRecords);
+  }
+
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRunsForRunIds(final Set<ProgramRunId> runIds, int limit) {
+    // Scan using fuzzy filter
+    Set<MDSKey> scanKeys = runIds.stream()
+      .map(id -> getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, id.getParent()).build()).collect(Collectors.toSet());
+    List<MDSKey> sortedScanKeys = Lists.newArrayList(scanKeys);
+    Collections.sort(sortedScanKeys);
+    byte[] startKey = sortedScanKeys.get(0).getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(sortedScanKeys.get(scanKeys.size() - 1).getKey());
+    //
+    Set<MDSKey> keySet = new HashSet<>();
+    boolean includeVersionLessKeys = !hasUpgraded();
+    for (ProgramRunId programRunId : runIds) {
+      keySet.add(getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent()).add(0L)
+                   .add(programRunId.getRun()).build());
+      if (includeVersionLessKeys && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
+        keySet.add(getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent()).build());
+      }
+    }
+
+    // Sort fuzzy keys
+    List<MDSKey> sortedKeys = Lists.newArrayList(keySet);
+    Collections.sort(sortedKeys);
+
+    Map<MDSKey, RunRecordMeta> returnMap = listKVForHistoricalRuns(startKey, stopKey, sortedKeys, RunRecordMeta.class,
+                                                                   limit, null);
+    return getProgramRunIdMap(returnMap);
   }
 
   private Map<ProgramRunId, RunRecordMeta> getRunsForRunIds(final Set<ProgramRunId> runIds, String recordType,
