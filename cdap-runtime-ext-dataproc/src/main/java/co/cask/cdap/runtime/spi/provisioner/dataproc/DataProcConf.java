@@ -135,7 +135,9 @@ public class DataProcConf {
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
       GoogleCredential credential = GoogleCredential.fromStream(is)
         .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
-      return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), credential).build();
+      return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), credential)
+        .setApplicationName("cdap")
+        .build();
     }
   }
 
