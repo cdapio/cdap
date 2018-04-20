@@ -95,9 +95,11 @@ public class RuntimeHandler extends AbstractHttpHandler {
       jsonWriter.beginObject();
 
       for (Map.Entry<String, MonitorConsumeRequest> entry : consumeRequests.entrySet()) {
-        jsonWriter.name(entry.getKey());
+        String topicConfig = entry.getKey();
+        jsonWriter.name(topicConfig);
         jsonWriter.beginArray();
-        String topic = cConf.get(entry.getKey());
+
+        String topic = getTopic(topicConfig);
 
         try {
           fetchAndWriteMessages(jsonWriter, buffer, chunkResponder, topic, entry.getValue().getLimit(),
@@ -117,6 +119,11 @@ public class RuntimeHandler extends AbstractHttpHandler {
     }
 
     Closeables.closeQuietly(chunkResponder);
+  }
+
+  private String getTopic(String topicConfig) {
+    int idx = topicConfig.lastIndexOf(':');
+    return idx < 0 ? cConf.get(topicConfig) : cConf.get(topicConfig.substring(0, idx)) + topicConfig.charAt(idx + 1);
   }
 
   @POST
