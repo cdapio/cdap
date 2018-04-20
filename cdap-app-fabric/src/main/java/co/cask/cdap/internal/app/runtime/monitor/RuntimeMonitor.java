@@ -41,7 +41,6 @@ import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,6 +67,8 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private final ProgramRunId programId;
   private final CConfiguration cConf;
   private final Map<String, MonitorConsumeRequest> topicsToRequest;
+  // caches request key to topic
+  private final Map<String, String> requestKeyToLocalTopic;
 
   private final MessagePublisher messagePublisher;
   private final long pollTimeMillis;
@@ -85,6 +86,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     this.limit = cConf.getInt(Constants.RuntimeMonitor.BATCH_LIMIT);
     this.pollTimeMillis = cConf.getInt(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.topicsToRequest = new HashMap<>();
+    this.requestKeyToLocalTopic = new HashMap<>();
   }
 
   @Override
@@ -93,13 +95,46 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   }
 
   private void initializeTopics() throws Exception {
-    Set<String> topicsConfigsToMonitor = new HashSet<>();
-    topicsConfigsToMonitor.addAll(Arrays.asList(cConf.get(Constants.RuntimeMonitor.TOPICS_CONFIGS).split(",")));
-
     // TODO initialize from offset table for a given programId
-    for (String topicConfig : topicsConfigsToMonitor) {
+    for (String topicConfig : getTopicConfigs()) {
       topicsToRequest.put(topicConfig, new MonitorConsumeRequest(null, limit));
+      requestKeyToLocalTopic.put(topicConfig, getTopic(topicConfig));
     }
+  }
+
+  private Set<String> getTopicConfigs() {
+    Set<String> topicsConfigsToMonitor = new HashSet<>();
+
+    for (String topicConfig : cConf.getTrimmedStringCollection(Constants.RuntimeMonitor.TOPICS_CONFIGS)) {
+      int idx = topicConfig.lastIndexOf(':');
+
+      if (idx < 0) {
+        topicsConfigsToMonitor.add(topicConfig);
+        continue;
+      }
+
+      try {
+        int totalTopicCount = Integer.parseInt(topicConfig.substring(idx + 1));
+        if (totalTopicCount <= 0) {
+          throw new IllegalArgumentException("Total topic number must be positive for system topic config '" +
+                                               topicConfig + "'.");
+        }
+
+        String config = topicConfig.substring(0, idx);
+        for (int i = 0; i < totalTopicCount; i++) {
+          // For metrics, We make an assumption that number of metrics topics on runtime are not different than
+          // cdap system. So, we will add same number of topic configs as number of metrics topics so that we can
+          // keep track of different offsets for each metrics topic.
+          // TODO: CDAP-13303 - Handle different number of metrics topics between runtime and cdap system
+          topicsConfigsToMonitor.add(config + ":" + i);
+        }
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Total topic number must be a positive number for system topic config'"
+                                             + topicConfig + "'.", e);
+      }
+    }
+
+    return topicsConfigsToMonitor;
   }
 
   @Override
@@ -144,19 +179,26 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
       if (monitorResponse.getKey().equals(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
         setIsRuntimeInactive(monitorResponse.getValue());
       }
-      publish(monitorResponse.getKey(), monitorResponse.getValue());
+
+      String topic = requestKeyToLocalTopic.get(monitorResponse.getKey());
+      publish(monitorResponse.getKey(), topic, monitorResponse.getValue());
       count += monitorResponse.getValue().size();
     }
     return count;
   }
 
-  private void publish(String topicConfig, List<MonitorMessage> messages) throws Exception {
+  private String getTopic(String topicConfig) {
+    int idx = topicConfig.lastIndexOf(':');
+    return idx < 0 ? cConf.get(topicConfig) : cConf.get(topicConfig.substring(0, idx)) + topicConfig.substring(idx + 1);
+  }
+
+  private void publish(String topicConfig, String topic, List<MonitorMessage> messages) throws Exception {
     if (messages.isEmpty()) {
       return;
     }
 
     // TODO publish messages transactionally along with offset table updates
-    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), cConf.get(topicConfig),
+    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
                              messages.stream().map(s -> s.getMessage().getBytes(StandardCharsets.UTF_8)).iterator());
 
     topicsToRequest.put(topicConfig, new MonitorConsumeRequest(messages.get(messages.size() - 1).getMessageId(),

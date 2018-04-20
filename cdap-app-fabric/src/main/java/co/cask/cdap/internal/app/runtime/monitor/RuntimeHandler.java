@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
@@ -68,11 +69,14 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final CConfiguration cConf;
   private final MessageFetcher messageFetcher;
   private final Runnable shutdownRunnable;
+  // caches request key to topic
+  private final Map<String, String> requestKeyToLocalTopic;
 
   public RuntimeHandler(CConfiguration cConf, MessageFetcher messageFetcher, Runnable shutdownRunnable) {
     this.cConf = cConf;
     this.messageFetcher = messageFetcher;
     this.shutdownRunnable = shutdownRunnable;
+    this.requestKeyToLocalTopic = new HashMap<>();
   }
 
   /**
@@ -95,9 +99,15 @@ public class RuntimeHandler extends AbstractHttpHandler {
       jsonWriter.beginObject();
 
       for (Map.Entry<String, MonitorConsumeRequest> entry : consumeRequests.entrySet()) {
-        jsonWriter.name(entry.getKey());
+        String topicConfig = entry.getKey();
+        jsonWriter.name(topicConfig);
         jsonWriter.beginArray();
-        String topic = cConf.get(entry.getKey());
+
+        if (!requestKeyToLocalTopic.containsKey(topicConfig)) {
+          requestKeyToLocalTopic.put(topicConfig, getTopic(topicConfig));
+        }
+
+        String topic = requestKeyToLocalTopic.get(topicConfig);
 
         try {
           fetchAndWriteMessages(jsonWriter, buffer, chunkResponder, topic, entry.getValue().getLimit(),
@@ -117,6 +127,11 @@ public class RuntimeHandler extends AbstractHttpHandler {
     }
 
     Closeables.closeQuietly(chunkResponder);
+  }
+
+  private String getTopic(String topicConfig) {
+    int idx = topicConfig.lastIndexOf(':');
+    return idx < 0 ? cConf.get(topicConfig) : cConf.get(topicConfig.substring(0, idx)) + topicConfig.substring(idx + 1);
   }
 
   @POST

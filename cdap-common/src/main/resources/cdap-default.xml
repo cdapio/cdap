@@ -2364,7 +2364,7 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>${program.status.event.topic}</value>
+    <value>program.status.event.topic,metrics.topic.prefix:${metrics.messaging.topic.num},metadata.messaging.topic,audit.topic</value>
     <description>
       A comma-separated list of topics config to be monitored by runtime monitor.
     </description>
