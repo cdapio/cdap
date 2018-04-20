@@ -33,6 +33,7 @@ import java.util.concurrent.TimeoutException;
 public class ScanTest implements Runnable {
   private static final byte[] FAMILY = {'c'};
   private static final TableName SCAN_TEST_TABLE = TableName.valueOf("scan_test");
+  private static final int NUM_SPLITS = 16;
 
   private final CountDownLatch startLatch = new CountDownLatch(0);
   private volatile Connection connection;
@@ -56,12 +57,13 @@ public class ScanTest implements Runnable {
     try {
       System.out.println(String.format("Running scan test with num-threads = %s and num-rows = %s...",
                                        numThreads, numRows));
-      scanTest.createTable(SCAN_TEST_TABLE);
+//      scanTest.createTable(SCAN_TEST_TABLE);
       try {
-        scanTest.populateData(SCAN_TEST_TABLE, numRows);
+//        scanTest.populateData(SCAN_TEST_TABLE, numRows);
         scanTest.runTest(numThreads);
       } finally {
-        scanTest.deleteTable(SCAN_TEST_TABLE);
+        System.out.println("Not deleting the table");
+//        scanTest.deleteTable(SCAN_TEST_TABLE);
       }
       System.out.println("Scan test done.");
     } finally {
@@ -91,7 +93,7 @@ public class ScanTest implements Runnable {
       System.out.println("Starting " + numThreads +  " scan threads");
       startLatch.countDown();
 
-      Futures.allAsList(futures).get(1, TimeUnit.MINUTES);
+      Futures.allAsList(futures).get(3, TimeUnit.MINUTES);
     } finally {
       executor.shutdownNow();
     }
@@ -128,9 +130,14 @@ public class ScanTest implements Runnable {
         return;
       }
 
+      byte[][] splits = new byte[NUM_SPLITS][];
+      for (int i = 0; i < NUM_SPLITS; i++) {
+        splits[i] = new byte[] {(byte) i};
+      }
+
       HTableDescriptor htd = new HTableDescriptor(tableName);
       htd.addFamily(new HColumnDescriptor(FAMILY).setMaxVersions(1));
-      admin.createTable(htd);
+      admin.createTable(htd, splits);
       System.out.println("Created table " + tableName.getNameWithNamespaceInclAsString());
     } catch (TableExistsException ex) {
       System.out.println("Not creating table since it already exists: " +
@@ -165,7 +172,8 @@ public class ScanTest implements Runnable {
         puts.clear();
         for (int j = 0; j < batchSize && i < numRows; j++) {
           i++;
-          Put put = new Put(Bytes.toBytes(i));
+          // second part is the split key
+          Put put = new Put(Bytes.add(new byte[] {(byte) (i % NUM_SPLITS)}, Bytes.toBytes(i)));
           put.addColumn(FAMILY, qualifier, value);
           puts.add(put);
         }
