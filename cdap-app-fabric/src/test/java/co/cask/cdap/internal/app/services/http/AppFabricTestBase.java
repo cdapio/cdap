@@ -69,6 +69,8 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.scheduler.CoreSchedulerService;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -80,6 +82,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
@@ -125,9 +128,11 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -243,6 +248,15 @@ public abstract class AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
+    Scheduler programScheduler = injector.getInstance(Scheduler.class);
+    // Wait for the scheduler to be functional.
+    if (programScheduler instanceof CoreSchedulerService) {
+      try {
+        ((CoreSchedulerService) programScheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
     createNamespaces();
   }
 
@@ -452,19 +466,19 @@ public abstract class AppFabricTestBase {
   /**
    * Deploys an application.
    */
-  protected HttpResponse deploy(Class<?> application) throws Exception {
-    return deploy(application, null, null);
+  protected HttpResponse deploy(Class<?> application, int expectedCode) throws Exception {
+    return deploy(application, expectedCode, null, null);
   }
 
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
+  protected HttpResponse deploy(Class<?> application, int expectedCode, @Nullable String apiVersion,
                                 @Nullable String namespace) throws Exception {
-    return deploy(application, apiVersion, namespace, null, null, null);
+    return deploy(application, expectedCode, apiVersion, namespace, null, null, null);
   }
 
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
+  protected HttpResponse deploy(Class<?> application, int expectedCode, @Nullable String apiVersion,
                                 @Nullable String namespace,
                                 @Nullable String ownerPrincipal) throws Exception {
-    return deploy(application, apiVersion, namespace, null, null, ownerPrincipal);
+    return deploy(application, expectedCode, apiVersion, namespace, null, null, ownerPrincipal);
   }
 
   protected HttpResponse deploy(Id.Application appId,
@@ -493,9 +507,9 @@ public abstract class AppFabricTestBase {
   /**
    * Deploys an application with (optionally) a defined app name and app version
    */
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String artifactVersion, @Nullable Config appConfig,
-                                @Nullable String ownerPrincipal) throws Exception {
+  protected HttpResponse deploy(Class<?> application, int expectedCode, @Nullable String apiVersion,
+                                @Nullable String namespace, @Nullable String artifactVersion,
+                                @Nullable Config appConfig, @Nullable String ownerPrincipal) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
     artifactVersion = artifactVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : artifactVersion;
@@ -526,7 +540,15 @@ public abstract class AppFabricTestBase {
       request.setHeader(AbstractAppFabricHttpHandler.PRINCIPAL_HEADER, ownerPrincipal);
     }
     request.setEntity(new FileEntity(artifactJar));
-    return execute(request);
+    HttpResponse response = execute(request);
+    if (expectedCode != response.getStatusLine().getStatusCode()) {
+      // fail within an if condition instead of Assert.equals since we close the input stream
+      Assert.fail(
+        String.format("Expected response code %d but got %d when trying to deploy app '%s' in namespace '%s'. " +
+                        "Response message = '%s'", expectedCode, response.getStatusLine().getStatusCode(),
+                      application.getName(), namespace, getResponseBody(response)));
+    }
+    return response;
   }
 
   protected String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
@@ -1092,6 +1114,11 @@ public abstract class AppFabricTestBase {
     return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
   }
 
+  protected HttpResponse deleteStream(StreamId id) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/streams/%s", Constants.Gateway.API_VERSION_3,
+                                  id.getNamespace(), id.getStream()));
+  }
+
   protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
     return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
                  GSON.toJson(meta));
@@ -1123,6 +1150,12 @@ public abstract class AppFabricTestBase {
   protected StreamProperties getStreamConfig(StreamId streamId)
     throws StreamNotFoundException, UnauthenticatedException, UnauthorizedException, IOException {
     return streamClient.getConfig(streamId);
+  }
+
+  private String getResponseBody(HttpResponse response) throws IOException {
+    try (InputStreamReader reader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
+      return CharStreams.toString(reader);
+    }
   }
 
   private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {

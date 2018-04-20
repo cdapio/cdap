@@ -210,9 +210,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> keyValueTableProperties = ImmutableMap.of("foo", "bar");
     Map<String, String> filesetProperties = ImmutableMap.of("anotherFoo", "anotherBar");
 
-    HttpResponse response = deploy(WorkflowAppWithLocalDatasets.class,
-                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WorkflowAppWithLocalDatasets.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     File waitFile = new File(tmpFolder.newFolder() + "/wait.file");
     File doneFile = new File(tmpFolder.newFolder() + "/done.file");
@@ -295,8 +293,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     File lastSimpleActionFile = new File(tmpFolder.newFolder() + "/lastsimpleaction.file");
     File lastSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/lastsimpleaction.file.done");
 
-    HttpResponse response = deploy(PauseResumeWorklowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(PauseResumeWorklowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, pauseResumeWorkflowApp, ProgramType.WORKFLOW,
                                            pauseResumeWorkflow);
@@ -411,8 +408,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testKillSuspendedWorkflow() throws Exception {
-    HttpResponse response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     WorkflowId workflow = new WorkflowId(TEST_NAMESPACE2, "SleepWorkflowApp", "SleepWorkflow");
 
@@ -445,9 +441,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     // create app in default namespace so that v2 and v3 api can be tested in the same test
     String defaultNamespace = Id.Namespace.DEFAULT.getId();
-    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   defaultNamespace);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(ConcurrentWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, defaultNamespace);
 
     Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, appWithConcurrentWorkflow, ProgramType.WORKFLOW,
                                            ConcurrentWorkflowApp.ConcurrentWorkflow.class.getSimpleName());
@@ -528,8 +522,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     runtimeArgs.put("branch2.file", branch2File.getAbsolutePath());
     runtimeArgs.put("branch2.donefile", branch2DoneFile.getAbsolutePath());
 
-    HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WorkflowAppWithFork.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program programId = Id.Program.from(
       TEST_NAMESPACE2, WorkflowAppWithFork.class.getSimpleName(), ProgramType.WORKFLOW,
@@ -660,10 +653,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testWorkflowScopedArguments() throws Exception {
     String workflowRunIdProperty = "workflowrunid";
-    HttpResponse response = deploy(WorkflowAppWithScopedParameters.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE2);
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WorkflowAppWithScopedParameters.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     ProgramId programId = Ids.namespace(TEST_NAMESPACE2).app(WorkflowAppWithScopedParameters.APP_NAME)
       .workflow(WorkflowAppWithScopedParameters.ONE_WORKFLOW);
@@ -818,8 +808,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String sampleSchedule = AppWithSchedule.SCHEDULE;
 
     // deploy app with schedule in namespace 2
-    HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithSchedule.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
@@ -930,9 +919,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String appName = "WorkflowAppWithErrorRuns";
     String workflowName = "WorkflowWithErrorRuns";
 
-    HttpResponse response = deploy(WorkflowAppWithErrorRuns.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WorkflowAppWithErrorRuns.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
@@ -1022,10 +1009,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String conditionalWorkflowApp = "ConditionalWorkflowApp";
     String conditionalWorkflow = "ConditionalWorkflow";
 
-    HttpResponse response = deploy(ConditionalWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE2);
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(ConditionalWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.WORKFLOW,
                                            conditionalWorkflow);
@@ -1149,7 +1133,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testWorkflowToken() throws Exception {
-    Assert.assertEquals(200, deploy(AppWithWorkflow.class).getStatusLine().getStatusCode());
+    deploy(AppWithWorkflow.class, 200);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
     final Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
@@ -1257,7 +1241,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testWorkflowTokenPut() throws Exception {
-    Assert.assertEquals(200, deploy(WorkflowTokenTestPutApp.class).getStatusLine().getStatusCode());
+    deploy(WorkflowTokenTestPutApp.class, 200);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowTokenTestPutApp.NAME);
     Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowTokenTestPutApp.WorkflowTokenTestPut.NAME);
     Id.Program sparkId = Id.Program.from(appId, ProgramType.SPARK, WorkflowTokenTestPutApp.SparkTestApp.NAME);
@@ -1302,7 +1286,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     // 'FirstMapReduce' and 'SecondMapReduce' in parallel. Workflow is started with runtime argument
     // "mapreduce.SecondMapReduce.throw.exception", so that the MapReduce program 'SecondMapReduce'
     // fails. This causes the 'FirstMapReduce' program to get killed and Workflow is marked as failed.
-    Assert.assertEquals(200, deploy(WorkflowFailureInForkApp.class).getStatusLine().getStatusCode());
+    deploy(WorkflowFailureInForkApp.class, 200);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowFailureInForkApp.NAME);
     Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowFailureInForkApp.WorkflowWithFailureInFork.NAME);
     Id.Program firstMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,

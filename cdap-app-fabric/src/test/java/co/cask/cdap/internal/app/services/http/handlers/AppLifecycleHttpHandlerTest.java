@@ -61,8 +61,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployNonExistingNamespace() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    HttpResponse response = deploy(WordCountApp.class, 404, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     NotFoundException nfe = new NamespaceNotFoundException(new NamespaceId("random"));
     Assert.assertEquals(nfe.getMessage(), readResponse(response));
   }
@@ -72,9 +71,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployValid() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -202,9 +201,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testOwnerInHeaders() throws Exception {
     String ownerPrincipal = "bob/somehost.net@somekdc.net";
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   NamespaceId.DEFAULT.getNamespace(), ownerPrincipal);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
+           NamespaceId.DEFAULT.getNamespace(), ownerPrincipal);
 
     ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
 
@@ -300,8 +298,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployInvalid() throws Exception {
-    HttpResponse response = deploy(String.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    HttpResponse response = deploy(String.class, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
   }
@@ -311,12 +308,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployFailure() throws Exception {
-    HttpResponse response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    HttpResponse response = deploy(AppWithDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertNotNull(response.getEntity());
 
-    response = deploy(AppWithDatasetDuplicate.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    response = deploy(AppWithDatasetDuplicate.class, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertNotNull(response.getEntity());
   }
 
@@ -335,20 +330,19 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Artifact ns2ArtifactId = Id.Artifact.from(ns2, "bloatedListAndGet", "1.0.0-SNAPSHOT");
 
     //deploy without name to testnamespace1
-    HttpResponse response = deploy(BloatedWordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(BloatedWordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     //deploy with name to testnamespace2
-    response = addAppArtifact(ns2ArtifactId, BloatedWordCountApp.class);
+    HttpResponse response = addAppArtifact(ns2ArtifactId, BloatedWordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(ns2, appName);
-    response = deploy(appId, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
     // deploy with name and version to testnamespace2
     ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, appName, VERSION1);
-    response = deploy(app1, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
+    response = deploy(app1, new AppRequest<>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
@@ -382,12 +376,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       progs[i] = programs.get(i).getAsJsonObject();
     }
     // sort the programs by name to make this test deterministic
-    Arrays.sort(progs, new Comparator<JsonObject>() {
-      @Override
-      public int compare(JsonObject o1, JsonObject o2) {
-        return o1.get("name").getAsString().compareTo(o2.get("name").getAsString());
-      }
-    });
+    Arrays.sort(progs, Comparator.comparing(o -> o.get("name").getAsString()));
     int i = 0;
     Assert.assertEquals("Worker", progs[i].get("type").getAsString());
     Assert.assertEquals("LazyGuy", progs[i].get("name").getAsString());
@@ -446,7 +435,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     // Start a fow for the App
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
     startProgram(program);
     waitState(program, "RUNNING");

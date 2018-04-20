@@ -55,9 +55,7 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, deploy(appIdV1, request).getStatusLine().getStatusCode());
     Assert.assertEquals(200, deploy(appIdV2, request).getStatusLine().getStatusCode());
 
-
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     Map<String, Integer> routes = ImmutableMap.<String, Integer>builder().put("v1", 30).put("v2", 70).build();
     String routeAPI = getVersionedAPIPath(
@@ -78,7 +76,7 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
 
     // Invalid Routes should return 400
     routes = ImmutableMap.<String, Integer>builder().put("v1", 50).build();
-    response = doPut(routeAPI, GSON.toJson(routes));
+    HttpResponse response = doPut(routeAPI, GSON.toJson(routes));
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
 
     // Valid Routes but non-existing services should return 400

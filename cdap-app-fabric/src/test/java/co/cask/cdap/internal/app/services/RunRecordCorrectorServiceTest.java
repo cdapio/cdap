@@ -48,7 +48,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;
-import org.apache.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -234,9 +233,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
   @Test
   public void testLocalDatasetDeleteion() throws Exception {
     // Create App with Flow and the deploy
-    HttpResponse response = deploy(WorkflowAppWithLocalDataset.class,
-                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WorkflowAppWithLocalDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     final ProgramId workflow = new NamespaceId(TEST_NAMESPACE1)
       .app(WorkflowAppWithLocalDataset.APP_NAME)

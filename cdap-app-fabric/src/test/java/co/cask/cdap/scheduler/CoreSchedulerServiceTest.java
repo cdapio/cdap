@@ -365,7 +365,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   public void testProgramEvents() throws Exception {
     // Deploy the app
-    deploy(AppWithMultipleSchedules.class);
+    deploy(AppWithMultipleSchedules.class, 200);
 
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     TopicId programEventTopic =
