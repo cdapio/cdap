@@ -17,17 +17,13 @@
 package co.cask.cdap.report;
 
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractExtendedSpark;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
-import co.cask.cdap.report.main.ProgramRunIdFields;
-import co.cask.cdap.report.main.ProgramRunIdFieldsSerializer;
 import co.cask.cdap.report.main.SparkPersistRunRecordMain;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
@@ -40,7 +36,6 @@ import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ReportSummary;
 import co.cask.cdap.report.proto.ValueFilter;
-import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
 import com.google.common.collect.ImmutableList;
@@ -50,10 +45,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.DatumWriter;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.twill.filesystem.Location;
@@ -76,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -95,12 +87,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     new ReportSummary(ImmutableList.of(new ReportSummary.NamespaceAggregate(2, "ns1"),
                                        new ReportSummary.NamespaceAggregate(2, "ns2")),
                       1520808000L, 1520813000L,
-                      ImmutableList.of(new ReportSummary.ArtifactAggregate("USER", "cdap-data-pipeline", "1.0.0", 1),
-                                       new ReportSummary.ArtifactAggregate("USER", "cdap-data-streams", "1.0.0", 1),
-                                       new ReportSummary.ArtifactAggregate("USER", "custom-app1", "1.0.0", 1),
-                                       new ReportSummary.ArtifactAggregate("USER", "custom-app1", "1.0.0", 1)),
+                      ImmutableList.of(new ReportSummary.ArtifactAggregate("cdap-data-pipeline", "1.0.0", "USER", 1),
+                                       new ReportSummary.ArtifactAggregate("cdap-data-streams", "1.0.0", "USER", 1),
+                                       new ReportSummary.ArtifactAggregate("custom-app1", "1.0.0", "USER", 1),
+                                       new ReportSummary.ArtifactAggregate("custom-app1", "1.0.0", "USER", 1)),
                       new ReportSummary.DurationStats(100, 3000, 500),
-                      new ReportSummary.StartStats(1520808000L, 1520811000L),
+                      new ReportSummary.StartStats(1520811000L, 1520808000L),
                       ImmutableList.of(new ReportSummary.UserAggregate("user1", 2),
                                        new ReportSummary.UserAggregate("user2", 2)),
                       ImmutableList.of(new ReportSummary.StartMethodAggregate("MANUAL", 2),
@@ -132,6 +124,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     public static final String SUCCESS_FILE = "_SUCCESS";
     public static final String FAILURE_FILE = "_FAILURE";
     public static final String SAVED_FILE = "_SAVED";
+    private static final String TO_BE_DELETED_FILE = "_TO_BE_DELETED";
     // report files will expire after 48 hours after they are generated
     public static final long VALID_DURATION = TimeUnit.DAYS.toSeconds(2);
 
@@ -176,6 +169,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // the number of report directories or the list is reaching the given limit
       while (idx < reportIdDirs.size() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirs.get(idx++);
+        ReportStatus status = getReportStatus(reportIdDir);
+        // skip adding reports that are to be deleted
+        if (ReportStatus.DELETED.equals(status)) {
+          continue;
+        }
         String reportId = reportIdDir.getName();
         // Report ID is time based UUID. Get the creation time from the report ID.
         long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
@@ -186,11 +184,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         ReportSaveRequest reportSavedInfo = getReportSavedInfo(reportIdDir);
         if (reportSavedInfo != null) {
           reportStatuses.add(new ReportStatusInfo(reportId, reportSavedInfo.getName(), reportSavedInfo.getDescription(),
-                                                  creationTime, null, getReportStatus(reportIdDir)));
+                                                  creationTime, null, status));
         } else {
           reportStatuses.add(new ReportStatusInfo(reportId, reportRequest.getName(), null,
-                                                  creationTime, getExpiryTime(reportIdDir),
-                                                  getReportStatus(reportIdDir)));
+                                                  creationTime, getExpiryTime(reportIdDir), status));
         }
       }
       responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
@@ -209,9 +206,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
       ReportStatus status = getReportStatus(reportIdDir);
+      if (ReportStatus.DELETED.equals(status)) {
+        responder.sendError(404, String.format("Report with id %s no longer exists.", reportId));
+        return;
+      }
       String error = null;
       ReportSummary summary = null;
-      if (status.equals(ReportStatus.FAILED)) {
+      if (ReportStatus.FAILED.equals(status)) {
         error = new String(ByteStreams.toByteArray(reportIdDir.append(FAILURE_FILE).getInputStream()),
                            StandardCharsets.UTF_8);
       } else if (status.equals(ReportStatus.COMPLETED)) {
@@ -234,11 +235,29 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       responder.sendJson(reportGenerationInfo);
     }
 
+    @DELETE
+    @Path("/reports/{report-id}")
+    public void deleteReport(HttpServiceRequest request, HttpServiceResponder responder,
+                             @PathParam("report-id") String reportId) throws IOException {
+      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      Location deletedFile = reportIdDir.append(TO_BE_DELETED_FILE);
+      if (!deletedFile.createNew()) {
+        reportIdDir.delete();
+        responder.sendError(500, "Failed to delete " + reportId);
+        return;
+      }
+      // Save the time of when this report is marked as to-be-deleted in the _TO_BE_DELETED_FILE file
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(deletedFile.getOutputStream(),
+                                                                       StandardCharsets.UTF_8), true)) {
+        writer.write(Long.toString(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
+      }
+      responder.sendStatus(200);
+    }
+
     @POST
     @Path("/reports/{report-id}/save")
     public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
-                                @PathParam("report-id") String reportId)
-      throws IOException {
+                                @PathParam("report-id") String reportId) throws IOException {
       String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
       Location savedFile = reportIdDir.append(SAVED_FILE);
@@ -288,6 +307,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         case FAILED:
           responder.sendError(400, String.format("Reading details of the report %s with failed status is not allowed.",
                                                  reportId));
+          return;
+        case DELETED:
+          responder.sendError(404, String.format("Report with id %s no longer exists.", reportId));
           return;
         case COMPLETED:
           break;
@@ -504,11 +526,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @return status of the report generation
      */
     private static ReportStatus getReportStatus(Location reportIdDir) throws IOException {
-      if (reportIdDir.append(SUCCESS_FILE).exists()) {
-        return ReportStatus.COMPLETED;
+      if (reportIdDir.append(TO_BE_DELETED_FILE).exists()) {
+        return ReportStatus.DELETED;
       }
       if (reportIdDir.append(FAILURE_FILE).exists()) {
         return ReportStatus.FAILED;
+      }
+      if (reportIdDir.append(SUCCESS_FILE).exists()) {
+        return ReportStatus.COMPLETED;
       }
       return ReportStatus.RUNNING;
     }

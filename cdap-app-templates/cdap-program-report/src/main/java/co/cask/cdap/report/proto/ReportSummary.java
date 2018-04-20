@@ -117,20 +117,20 @@ public class ReportSummary {
    * Represents the statistics of the start time of all program runs.
    */
   public static class StartStats {
-    private long newest;
     private long oldest;
+    private long newest;
 
-    public StartStats(long newest, long oldest) {
-      this.newest = newest;
+    public StartStats(long oldest, long newest) {
       this.oldest = oldest;
-    }
-
-    public long getNewest() {
-      return newest;
+      this.newest = newest;
     }
 
     public long getOldest() {
       return oldest;
+    }
+
+    public long getNewest() {
+      return newest;
     }
   }
 
@@ -175,22 +175,15 @@ public class ReportSummary {
    * Represents an aggregate of program runs by the parent artifact.
    */
   public static class ArtifactAggregate extends ProgramRunAggregate {
-    private final String scope;
     private final String name;
     private final String version;
+    private final String scope;
 
-    public ArtifactAggregate(String scope, String name, String version, int runs) {
+    public ArtifactAggregate(String name, String version, String scope, int runs) {
       super(runs);
-      this.scope = scope;
       this.name = name;
       this.version = version;
-    }
-
-    /**
-     * @return the scope of the artifact
-     */
-    public String getScope() {
-      return scope;
+      this.scope = scope;
     }
 
     /**
@@ -205,6 +198,13 @@ public class ReportSummary {
      */
     public String getVersion() {
       return version;
+    }
+
+    /**
+     * @return the scope of the artifact
+     */
+    public String getScope() {
+      return scope;
     }
   }
 
