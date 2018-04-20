@@ -25,9 +25,12 @@ import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
@@ -36,15 +39,15 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -52,7 +55,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -65,6 +67,10 @@ public class RuntimeMonitorTest {
   private static MessagingService messagingService;
   private RuntimeMonitorServer runtimeServer;
   private MessagingContext messagingContext;
+  private TransactionManager txManager;
+  private TransactionSystemClient transactionSystemClient;
+  private DatasetService datasetService;
+  private DatasetFramework datasetFramework;
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -80,6 +86,7 @@ public class RuntimeMonitorTest {
     cConf.set(Constants.RuntimeMonitor.SERVER_PORT, "0");
     cConf.set(Constants.RuntimeMonitor.BATCH_LIMIT, "2");
     cConf.set(Constants.RuntimeMonitor.POLL_TIME_MS, "200");
+    cConf.set(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, "1000");
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     messagingService = injector.getInstance(MessagingService.class);
@@ -90,6 +97,14 @@ public class RuntimeMonitorTest {
     messagingService.createTopic(new TopicMetadata(new TopicId("system", "cdap-programStatus")));
     messagingContext = new MultiThreadMessagingContext(messagingService);
 
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
+
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
+    datasetFramework = injector.getInstance(DatasetFramework.class);
+
     runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
   }
@@ -99,13 +114,18 @@ public class RuntimeMonitorTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+
+    txManager.stopAndWait();
+    datasetService.stopAndWait();
     runtimeServer.stopAndWait();
   }
 
   @Test
   public void testRunTimeMonitor() throws Exception {
-    publishProgramStatus();
-    verifyPublishedMessages(3, cConf);
+    RunId runId = RunIds.generate();
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("myworkflow").run(runId);
+    publishProgramStatus(programRunId);
+    verifyPublishedMessages(2, cConf, 2);
 
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname(runtimeServer.getBindAddress().getAddress().getHostAddress())
@@ -122,14 +142,30 @@ public class RuntimeMonitorTest {
     // change topic name because cdap config is different than runtime config
     cConfCopy.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "cdap-programStatus");
 
-    RuntimeMonitor runtimeMonitor = new RuntimeMonitor(new ProgramRunId("default", "app1", ProgramType.WORKFLOW,
-                                                                        "myworkflow",
-                                                                        UUID.randomUUID().toString()), cConfCopy,
-                                                       messagingContext.getMessagePublisher(),
-                                                       clientConfigBuilder.build());
+    RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId,
+                                                       cConfCopy, messagingService, clientConfigBuilder.build(),
+                                                       datasetFramework, transactionSystemClient);
+
     runtimeMonitor.startAndWait();
     // use different configuration for verification
-    verifyPublishedMessages(2, cConfCopy);
+    verifyPublishedMessages(2, cConfCopy, 2);
+    runtimeMonitor.stopAndWait();
+
+    // publish some more messages to test offset manager
+    publishProgramStatus(programRunId);
+    verifyPublishedMessages(2, cConf, 4);
+
+    runtimeMonitor = new RuntimeMonitor(programRunId, cConfCopy, messagingService, clientConfigBuilder.build(),
+                                        datasetFramework, transactionSystemClient);
+    runtimeMonitor.startAndWait();
+    // use different configuration for verification
+    verifyPublishedMessages(2, cConfCopy, 4);
+
+    // publish completed status to trigger offset clean up
+    publishCompletedStatus(programRunId);
+
+    // use different configuration for verification
+    verifyPublishedMessages(2, cConfCopy, 5);
 
     // wait for runtime server to stop automatically
     Tasks.waitFor(true, () -> !runtimeServer.isRunning(), 5, TimeUnit.MINUTES);
@@ -137,7 +173,7 @@ public class RuntimeMonitorTest {
     runtimeMonitor.stopAndWait();
   }
 
-  private void verifyPublishedMessages(int limit, CConfiguration cConfig) throws Exception {
+  private void verifyPublishedMessages(int limit, CConfiguration cConfig, int expectedCount) throws Exception {
     MessageFetcher fetcher = messagingContext.getMessageFetcher();
     final String[] messageId = {null};
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -155,20 +191,19 @@ public class RuntimeMonitorTest {
           }
         }
 
-        return count >= 3;
+        return count == expectedCount;
       }
     }, 5, TimeUnit.MINUTES);
   }
 
-  private void publishProgramStatus() {
+  private void publishProgramStatus(ProgramRunId programRunId) {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
-
-    ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "app1");
-    ProgramRunId programRunId = new ProgramRunId(appId, ProgramType.WORKFLOW, "myworkflow",
-                                                 UUID.randomUUID().toString());
-    programStateWriter.start(programRunId, new SimpleProgramOptions(new ProgramId(appId, ProgramType.WORKFLOW,
-                                                                                  "myworkflow")), null, null);
+    programStateWriter.start(programRunId, new SimpleProgramOptions(programRunId.getParent()), null, null);
     programStateWriter.running(programRunId, null);
+  }
+
+  private void publishCompletedStatus(ProgramRunId programRunId) {
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
     programStateWriter.completed(programRunId);
   }
 }

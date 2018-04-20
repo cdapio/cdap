@@ -2364,11 +2364,19 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>program.status.event.topic,metrics.topic.prefix:${metrics.messaging.topic.num},metadata.messaging.topic,audit.topic</value>
+    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic</value>
     <description>
       A comma-separated list of topics config to be monitored by runtime monitor.
     </description>
     <final>true</final>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.graceful.shutdown.ms</name>
+    <value>5000</value>
+    <description>
+      Number of milliseconds to wait for the runtime to shutdown after a program execution completed in that runtime.
+    </description>
   </property>
 
   <property>
@@ -2953,6 +2961,39 @@
     <value>exponential.backoff</value>
     <description>
       The type of retry policy for workflows. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>system.runtime.monitor.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.runtime.monitor.retry.policy.max.retries</name>
+    <value>1500</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.runtime.monitor.retry.policy.max.time.secs</name>
+    <value>1500</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.runtime.monitor.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for runtime monitor processing. Allowed options: "none",
       "fixed.delay", or "exponential.backoff".
     </description>
   </property>
