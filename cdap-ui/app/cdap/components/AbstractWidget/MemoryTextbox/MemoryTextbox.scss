@@ -19,8 +19,5 @@
   align-items: center;
   input[type="number"] {
     margin-right: 10px;
-    // The input number textbox should be the same size as the parent to push the 'GB' to the right.
-    // This is to maintain the same size as other widgets.
-    width: inherit;
   }
 }

@@ -31,6 +31,7 @@ import globalEvents from 'services/global-events';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import ControlCenterDropdown from 'components/Header/ControlCenterDropdown';
+import {objectQuery} from 'services/helpers';
 
 require('./Header.scss');
 
@@ -67,6 +68,10 @@ export default class Header extends Component {
       );
     this.nsSubscription = NamespaceStore.subscribe(() => {
       let selectedNamespace = getLastSelectedNamespace();
+      let {namespaces} = NamespaceStore.getState();
+      if (selectedNamespace === 'system') {
+        selectedNamespace = objectQuery(namespaces, 0, 'name');
+      }
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
@@ -120,9 +125,6 @@ export default class Header extends Component {
 
   render() {
     let baseCDAPURL = `/ns/${this.state.currentNamespace}`;
-    if (this.state.currentNamespace === 'system') {
-      baseCDAPURL = '/';
-    }
     let rulesengineUrl = `${baseCDAPURL}/rulesengine`;
     let dataprepUrl = `${baseCDAPURL}/dataprep`;
     let mmdsurl = `${baseCDAPURL}/experiments`;

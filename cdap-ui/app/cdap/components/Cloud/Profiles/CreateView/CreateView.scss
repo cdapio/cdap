@@ -48,8 +48,22 @@
         margin: 30px 0;
       }
     }
-    textarea {
-      max-height: 120px;
+    .form-group {
+      [class*="col-xs"] {
+        display: flex;
+        align-items: center;
+      }
+    }
+    .required-marker {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.tooltip {
+  .tooltip-inner {
+    &.provisioner-tooltip {
+      text-align: left;
     }
   }
 }

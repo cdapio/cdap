@@ -16,6 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import NamespaceActions from './NamespaceActions';
+import {composeEnhancers, objectQuery, isNilOrEmpty} from 'services/helpers';
 
 const defaultAction = {
   action : '',
@@ -39,8 +40,19 @@ const username = (state = '', action = defaultAction) => {
 
 const selectedNamespace = (state = '', action = defaultAction) => {
   switch (action.type) {
-    case NamespaceActions.selectNamespace:
+    case NamespaceActions.selectNamespace: {
+      if (action.payload.selectedNamespace === 'system') {
+        return localStorage.getItem('CurrentNamespace');
+      }
       return action.payload.selectedNamespace;
+    }
+    case NamespaceActions.updateNamespaces: {
+      let previouslyAccessedNs = localStorage.getItem('CurrentNamespace');
+      if (isNilOrEmpty(state) || state === 'system') {
+        return !isNilOrEmpty(previouslyAccessedNs) ? previouslyAccessedNs : objectQuery(action.payload, 'namespaces', 0, 'name');
+      }
+      return state;
+    }
     default:
       return state;
   }
@@ -62,7 +74,7 @@ const NamespaceStore = createStore(
     namespaces
   }),
   defaultInitialState,
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('NamespaceStore')()
 );
 
 const getCurrentNamespace = () => {

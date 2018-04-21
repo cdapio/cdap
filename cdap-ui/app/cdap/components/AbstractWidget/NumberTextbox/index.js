@@ -24,11 +24,10 @@ export default function NumberTextbox({...props}) {
   let min = widgetProps.min || -Infinity;
   let max = widgetProps.max || Infinity;
   let numberValue = parseInt(value, 10);
-  let size = widgetProps.size || 'large';
   value = isNaN(numberValue) ? value : numberValue;
   return (
     <Input
-      className={`number-textbox-widget ${size}`}
+      className={`number-textbox-widget`}
       type="number"
       onChange={onChange}
       value={value}

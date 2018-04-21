@@ -17,16 +17,15 @@
 @import "./WidgetVars.scss";
 
 .abstract-widget-wrapper {
-  > * {
-    &.small {
-      width: $small-input-width;
-      font-size: 100%; // bootstrap has a small class that defines a font size
-    }
-    &.medium {
-      width: $medium-input-width;
-    }
-    &.large {
-      width: $large-input-width;
-    }
+  display: inline-block;
+  margin-right: 10px;
+  // default is large
+  width: $large-input-width;
+  &.small {
+    width: $small-input-width;
+    font-size: 100%; // bootstrap has a small class that defines a font size
+  }
+  &.medium {
+    width: $medium-input-width;
   }
 }
