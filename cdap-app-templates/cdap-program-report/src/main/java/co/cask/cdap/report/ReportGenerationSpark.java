@@ -36,6 +36,7 @@ import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ReportSummary;
 import co.cask.cdap.report.proto.ValueFilter;
+import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
 import com.google.common.collect.ImmutableList;
@@ -83,21 +84,6 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Filter.class, new FilterDeserializer())
     .create();
-  private static final ReportSummary MOCK_SUMMARY =
-    new ReportSummary(ImmutableList.of(new ReportSummary.NamespaceAggregate(2, "ns1"),
-                                       new ReportSummary.NamespaceAggregate(2, "ns2")),
-                      1520808000L, 1520813000L,
-                      ImmutableList.of(new ReportSummary.ArtifactAggregate("cdap-data-pipeline", "1.0.0", "USER", 1),
-                                       new ReportSummary.ArtifactAggregate("cdap-data-streams", "1.0.0", "USER", 1),
-                                       new ReportSummary.ArtifactAggregate("custom-app1", "1.0.0", "USER", 1),
-                                       new ReportSummary.ArtifactAggregate("custom-app1", "1.0.0", "USER", 1)),
-                      new ReportSummary.DurationStats(100, 3000, 500),
-                      new ReportSummary.StartStats(1520811000L, 1520808000L),
-                      ImmutableList.of(new ReportSummary.UserAggregate("user1", 2),
-                                       new ReportSummary.UserAggregate("user2", 2)),
-                      ImmutableList.of(new ReportSummary.StartMethodAggregate("MANUAL", 2),
-                                       new ReportSummary.StartMethodAggregate("TIME", 1),
-                                       new ReportSummary.StartMethodAggregate("PROGRAM_STATUS", 1)));
 
   @Override
   protected void configure() {
@@ -216,7 +202,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         error = new String(ByteStreams.toByteArray(reportIdDir.append(FAILURE_FILE).getInputStream()),
                            StandardCharsets.UTF_8);
       } else if (status.equals(ReportStatus.COMPLETED)) {
-        summary = MOCK_SUMMARY;
+        String summaryJson =
+          new String(ByteStreams.toByteArray(reportIdDir.append(Constants.SUMMARY).getInputStream()),
+                     StandardCharsets.UTF_8);
+        summary = GSON.fromJson(summaryJson, ReportSummary.class);
       }
       // Read the report request from _START file, which was written at the beginning of report generation
       String reportRequestString =
@@ -358,7 +347,6 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       try {
         reportRequest = decodeRequestBody(requestJson, REPORT_GENERATION_REQUEST_TYPE);
         reportRequest.validate();
-        reportRequest.updateTimeRangeToMilliSeconds();
       } catch (IllegalArgumentException e) {
         responder.sendError(400, e.getMessage());
         return;
@@ -468,7 +456,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       List<String> metaFilePaths = metaFiles.filter(metaFile -> {
         String fileName = metaFile.getName();
         return fileName.endsWith(".avro")
-          && Long.parseLong(fileName.substring(0, fileName.indexOf("-"))) < reportRequest.getEnd();
+          && Long.parseLong(fileName.substring(0, fileName.indexOf("-")))
+          < TimeUnit.SECONDS.toMillis(reportRequest.getEnd());
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.debug("Filtered meta files {}", metaFiles);
       // Generate the report with the request and program run meta files

@@ -44,4 +44,5 @@ public class Constants {
   public static final String TIME = "time";
   public static final String START_INFO = "startInfo";
   public static final String MESSAGE_ID = "messageId";
+  public static final String SUMMARY = "_SUMMARY";
 }

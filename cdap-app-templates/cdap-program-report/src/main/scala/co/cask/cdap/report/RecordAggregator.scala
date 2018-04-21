@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.report
 
+import java.util.concurrent.TimeUnit
+
 import co.cask.cdap.report.util.Constants
 import org.apache.spark.sql.{Encoder, Encoders, Row}
 import org.apache.spark.sql.expressions.Aggregator
@@ -41,7 +43,8 @@ class RecordAggregator extends Aggregator[Row, RecordBuilder, Record] {
     RecordBuilder(row.getAs(Constants.NAMESPACE),
       row.getAs(Constants.APPLICATION_NAME), row.getAs(Constants.APPLICATION_VERSION),
       row.getAs(Constants.PROGRAM_TYPE), row.getAs(Constants.PROGRAM), row.getAs(Constants.RUN),
-      builder.statusTimes :+ (row.getAs[String](Constants.STATUS), row.getAs[Long](Constants.TIME)), startInfo,
+      builder.statusTimes :+ (row.getAs[String](Constants.STATUS),
+        TimeUnit.MILLISECONDS.toSeconds(row.getAs[Long](Constants.TIME))), startInfo,
       0, 0, 0)
   }
   def merge(b1: RecordBuilder, b2: RecordBuilder): RecordBuilder = {

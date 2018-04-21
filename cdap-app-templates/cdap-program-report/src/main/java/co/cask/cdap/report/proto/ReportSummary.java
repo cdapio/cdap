@@ -137,17 +137,17 @@ public class ReportSummary {
   /**
    * Represents an aggregate of program runs.
    */
-  private abstract static class ProgramRunAggregate {
-    private final int runs;
+  public abstract static class ProgramRunAggregate {
+    private final long runs;
 
-    ProgramRunAggregate(int runs) {
+    protected ProgramRunAggregate(long runs) {
       this.runs = runs;
     }
 
     /**
      * @return number of program runs in the aggregate
      */
-    public int getRuns() {
+    public long getRuns() {
       return runs;
     }
   }
@@ -158,7 +158,7 @@ public class ReportSummary {
   public static class NamespaceAggregate extends ProgramRunAggregate {
     private final String namespace;
 
-    public NamespaceAggregate(int runs, String namespace) {
+    public NamespaceAggregate(String namespace, long runs) {
       super(runs);
       this.namespace = namespace;
     }
@@ -179,7 +179,7 @@ public class ReportSummary {
     private final String version;
     private final String scope;
 
-    public ArtifactAggregate(String name, String version, String scope, int runs) {
+    public ArtifactAggregate(String name, String version, String scope, long runs) {
       super(runs);
       this.name = name;
       this.version = version;
@@ -214,7 +214,7 @@ public class ReportSummary {
   public static class UserAggregate extends ProgramRunAggregate {
     private final String user;
 
-    public UserAggregate(String user, int runs) {
+    public UserAggregate(String user, long runs) {
       super(runs);
       this.user = user;
     }
@@ -233,7 +233,7 @@ public class ReportSummary {
   public static class StartMethodAggregate extends ProgramRunAggregate {
     private final String method;
 
-    public StartMethodAggregate(String method, int runs) {
+    public StartMethodAggregate(String method, long runs) {
       super(runs);
       this.method = method;
     }

@@ -77,7 +77,7 @@ public final class MessageUtil {
 
   public static ProgramRunIdFields constructAndGetProgramRunIdFields(Message message) {
     Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
-    LOG.info("Get notification: {}", notification);
+    LOG.trace("Get notification: {}", notification);
     ProgramRunIdFields programRunIdFields =
       GSON.fromJson(notification.getProperties().get("programRunId"), ProgramRunIdFields.class);
     programRunIdFields.setMessageId(message.getId());
@@ -102,7 +102,6 @@ public final class MessageUtil {
         break;
       case "RUNNING":
         programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("logical.start.time")));
-        programRunIdFields.setStatus("");
         break;
       case "KILLED":
       case "COMPLETED":
