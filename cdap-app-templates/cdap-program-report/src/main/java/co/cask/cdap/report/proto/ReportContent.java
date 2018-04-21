@@ -71,4 +71,13 @@ public class ReportContent {
       ", details=" + details +
       '}';
   }
+
+  public String toJson() {
+    return "{" +
+      "\"offset\":" + offset +
+      ", \"limit\":" + limit +
+      ", \"total\":" + total +
+      ", \"details\":" + details +
+      '}';
+  }
 }

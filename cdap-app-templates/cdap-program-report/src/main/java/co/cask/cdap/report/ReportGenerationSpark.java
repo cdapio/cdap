@@ -334,7 +334,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // Get the total number of records from the COUNT file
       String total =
         new String(ByteStreams.toByteArray(reportIdDir.append(COUNT_FILE).getInputStream()), StandardCharsets.UTF_8);
-      responder.sendJson(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords));
+      responder.sendString(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords).toJson(),
+                           StandardCharsets.UTF_8);
     }
 
     @POST
