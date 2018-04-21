@@ -16,6 +16,8 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
+import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
@@ -33,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Configuratino for DataProc.
@@ -54,9 +57,12 @@ public class DataProcConf {
   private final int workerMemoryMB;
   private final int workerDiskGB;
 
+  private final SSHPublicKey publicKey;
+
   private DataProcConf(String accountKey, String region, String zone, String projectId, String network,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
-                       int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB) {
+                       int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
+                       @Nullable SSHPublicKey publicKey) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -70,6 +76,7 @@ public class DataProcConf {
     this.workerCPUs = workerCPUs;
     this.workerMemoryMB = workerMemoryMB;
     this.workerDiskGB = workerDiskGB;
+    this.publicKey = publicKey;
   }
 
   public String getRegion() {
@@ -112,6 +119,11 @@ public class DataProcConf {
     return getMachineType(workerCPUs, workerMemoryMB);
   }
 
+  @Nullable
+  public SSHPublicKey getPublicKey() {
+    return publicKey;
+  }
+
   private String getMachineType(int cpus, int memoryGB) {
     // TODO: there are special names for pre-defined cpu and memory
     // for example, 4cpu 3.6gb memory is 'n1-highcpu-4', 4cpu 15gb memory is 'n1-standard-4'
@@ -141,10 +153,18 @@ public class DataProcConf {
     }
   }
 
+  public static DataProcConf fromProvisionerContext(ProvisionerContext context) {
+    return create(context.getProperties(), context.getSSHContext().getSSHPublicKey());
+  }
+
   /**
    * Create the conf from a property map while also performing validation.
    */
   public static DataProcConf fromProperties(Map<String, String> properties) {
+    return create(properties, null);
+  }
+
+  private static DataProcConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     String projectId = getString(properties, "projectId");
 
@@ -179,7 +199,7 @@ public class DataProcConf {
 
     return new DataProcConf(accountKey, region, zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
-                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB);
+                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB, publicKey);
   }
 
   private static String getString(Map<String, String> properties, String key) {

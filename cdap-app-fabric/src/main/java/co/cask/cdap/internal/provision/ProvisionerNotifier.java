@@ -43,6 +43,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
@@ -76,17 +77,22 @@ public class ProvisionerNotifier {
   }
 
   public void provisioned(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
-                          String userId, Cluster cluster) {
-    publish(ImmutableMap.<String, String>builder()
-              .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-              .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
-              .put(ProgramOptionConstants.USER_ID, userId)
-              .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONED.name())
-              .put(ProgramOptionConstants.CLUSTER, GSON.toJson(cluster))
-              .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
-              .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-              .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
-              .build());
+                          String userId, Cluster cluster, @Nullable SSHKeyInfo clusterKeyInfo) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONED.name())
+      .put(ProgramOptionConstants.CLUSTER, GSON.toJson(cluster))
+      .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()));
+
+    if (clusterKeyInfo != null) {
+      builder.put(ProgramOptionConstants.CLUSTER_KEY_INFO, GSON.toJson(clusterKeyInfo));
+    }
+
+    publish(builder.build());
   }
 
   public void deprovisioning(ProgramRunId programRunId) {

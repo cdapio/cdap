@@ -31,7 +31,8 @@ import java.util.Map;
  * Default provisioner that doesn't provision a cluster
  */
 public class YarnProvisioner implements Provisioner {
-  private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
+
+  public static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "yarn", "Default YARN Provisioner",
     "Runs programs on the CDAP master cluster. Does not provision any resources.",
     new HashMap<>());

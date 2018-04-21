@@ -16,7 +16,10 @@
 
 package co.cask.cdap.common.ssh;
 
+import co.cask.cdap.runtime.spi.ssh.SSHProcess;
+import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
@@ -25,6 +28,7 @@ import com.jcraft.jsch.Session;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -32,7 +36,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,9 +44,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * This class encapsulates an SSH session, which allow performing remote ssh commands and scp.
+ * The default implementation of {@link SSHSession} that uses {@link JSch} library.
  */
-public class SSHSession implements AutoCloseable {
+public class DefaultSSHSession implements SSHSession {
 
   private final Session session;
 
@@ -53,11 +56,11 @@ public class SSHSession implements AutoCloseable {
    * @param config configurations about the ssh session
    * @throws IOException if failed to connect according to the configuration
    */
-  public SSHSession(SSHConfig config) throws IOException {
+  public DefaultSSHSession(SSHConfig config) throws IOException {
     JSch jsch = new JSch();
 
     try {
-      jsch.addIdentity("name", config.getPrivateKey(), null, null);
+      jsch.addIdentity(config.getUser(), config.getPrivateKey(), null, null);
       Session session = jsch.getSession(config.getUser(), config.getHost(), config.getPort());
       session.setConfig("StrictHostKeyChecking", "no");
 
@@ -72,34 +75,22 @@ public class SSHSession implements AutoCloseable {
     }
   }
 
-  /**
-   * Executes a sequence of commands on the remote host.
-   *
-   * @param commands the commands to execute
-   * @return the command result
-   * @throws IOException if failed to execute command remotely
-   */
-  public SSHProcess execute(String...commands) throws IOException {
-    return execute(Arrays.asList(commands));
-  }
-
-  /**
-   * Executes a sequence of commands on the remote host.
-   *
-   * @param commands the commands to execute
-   * @return the command result
-   * @throws IOException if failed to execute command remotely
-   */
+  @Override
   public SSHProcess execute(List<String> commands) throws IOException {
     try {
       Channel channel = session.openChannel("exec");
 
       try {
         ChannelExec channelExec = (ChannelExec) channel;
+        // Should get the stream before connecting.
+        // Otherwise JSch will write the output to some default stream, causing data missing from
+        // the InputStream that acquired later.
+        SSHProcess process = new DefaultSSHProcess(channelExec, channelExec.getOutputStream(),
+                                                   channelExec.getInputStream(), channelExec.getErrStream());
         channelExec.setCommand(commands.stream().collect(Collectors.joining(";")));
         channelExec.connect();
 
-        return new SSHProcess(channelExec);
+        return process;
       } catch (Exception e) {
         channel.disconnect();
         throw e;
@@ -110,13 +101,37 @@ public class SSHSession implements AutoCloseable {
     }
   }
 
-  /**
-   * Copies a local file to the given target path
-   *
-   * @param sourceFile source file
-   * @param targetPath the target path to copy to
-   * @throws IOException if
-   */
+  @Override
+  public String executeAndWait(List<String> commands) throws IOException {
+    SSHProcess process = execute(commands);
+
+    // Reading will be blocked until the process finished
+    String out = CharStreams.toString(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+    String err = CharStreams.toString(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
+
+    // Await uninterruptedly
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          int exitCode = process.waitFor();
+          if (exitCode != 0) {
+            throw new RuntimeException("Commands execution failed with exit code (" + exitCode + ") Commands: " +
+                                         commands + ", Output: " + out + " Error: " + err);
+          }
+          return out;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  @Override
   public void copy(Path sourceFile, String targetPath) throws IOException {
     @SuppressWarnings("OctalInteger")
     int permissions = 0644;
@@ -138,22 +153,7 @@ public class SSHSession implements AutoCloseable {
     }
   }
 
-  /**
-   * Copies content to remote host.
-   *
-   * @param input {@link InputStream} for the source content
-   * @param targetPath target path. If the path is an existing directory, file with the {@code targetName} will
-   *                   be created under the given path. If the path doesn't exist or is an existing file,
-   *                   content will be written/overwritten to the given path
-   * @param targetName file name in the {@code targetPath} if {@code targetPath} is a directory
-   * @param size size of the content
-   * @param permission permission of the target file
-   * @param lastAccessTime the optional file last access time in milliseconds.
-   *                       Both this and the {@code lastModifiedTime} should not be {@code null} to have time to be set
-   * @param lastModifiedTime the optional file last modified time in milliseconds.
-   *                         Both this and the {@code lastAccessTime} should not be {@code null} to have time to be set
-   * @throws IOException if failed to copy the content
-   */
+  @Override
   public void copy(InputStream input, String targetPath, String targetName, long size, int permission,
                    @Nullable Long lastAccessTime, @Nullable Long lastModifiedTime) throws IOException {
 

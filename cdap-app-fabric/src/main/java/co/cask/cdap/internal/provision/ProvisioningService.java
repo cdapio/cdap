@@ -32,14 +32,24 @@ import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,18 +70,20 @@ public class ProvisioningService extends AbstractIdleService {
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
   private final ProvisionerNotifier provisionerNotifier;
+  private final LocationFactory locationFactory;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private ExecutorService executorService;
 
   @Inject
   ProvisioningService(ProvisionerProvider provisionerProvider, ProvisionerConfigProvider provisionerConfigProvider,
-                      ProvisionerNotifier provisionerNotifier, DatasetFramework datasetFramework,
-                      TransactionSystemClient txClient) {
+                      ProvisionerNotifier provisionerNotifier,  LocationFactory locationFactory,
+                      DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
+    this.locationFactory = locationFactory;
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -150,18 +162,30 @@ public class ProvisioningService extends AbstractIdleService {
       return new NoOpProvisioningTask(programRunId);
     }
 
+    // Generate the SSH key pair if the provisioner is not YARN
+    SSHKeyInfo sshKeyInfo = null;
+    if (!YarnProvisioner.SPEC.equals(provisioner.getSpec())) {
+      try {
+        sshKeyInfo = generateSSHKey(programRunId);
+      } catch (Exception e) {
+        LOG.error("Failed to generate SSH key pair for program run {} with provisioner {}", programRunId, name, e);
+        provisionerNotifier.deprovisioning(programRunId);
+        return new NoOpProvisioningTask(programRunId);
+      }
+    }
+
     Map<String, String> properties = SystemArguments.getProfileProperties(args);
-    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties);
+    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties, createSSHContext(sshKeyInfo));
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.REQUESTING_CREATE);
     ClusterInfo clusterInfo =
       new ClusterInfo(programRunId, provisionRequest.getProgramDescriptor(),
-                      properties, name, provisionRequest.getUser(), clusterOp, null);
+                      properties, name, provisionRequest.getUser(), clusterOp, null, null);
     ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
     provisionerDataset.putClusterInfo(clusterInfo);
 
     return new ProvisionTask(provisionRequest, provisioner, context, provisionerNotifier,
-                             transactional, datasetFramework);
+                             transactional, datasetFramework, sshKeyInfo);
   }
 
   /**
@@ -192,14 +216,15 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     Map<String, String> properties = existing.getProvisionerProperties();
-    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties);
+    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties,
+                                                               createSSHContext(existing.getSshKeyInfo()));
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.REQUESTING_DELETE);
     ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getCluster());
     provisionerDataset.putClusterInfo(clusterInfo);
 
     return new DeprovisionTask(programRunId, provisioner, context, provisionerNotifier,
-                               transactional, datasetFramework);
+                               locationFactory, transactional, datasetFramework);
   }
 
   /**
@@ -255,6 +280,48 @@ public class ProvisioningService extends AbstractIdleService {
       throw new NotFoundException(String.format("Provisioner '%s' does not exist", provisionerName));
     }
     provisioner.validateProperties(properties);
+  }
+
+  /**
+   * Generates a SSH key pair.
+   */
+  private SSHKeyInfo generateSSHKey(ProgramRunId programRunId) throws JSchException, IOException {
+    JSch jsch = new JSch();
+    KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
+
+    Location keysDir = locationFactory.create(String.format("provisioner/keys/%s.%s.%s.%s.%s",
+                                                            programRunId.getNamespace(),
+                                                            programRunId.getApplication(),
+                                                            programRunId.getType().name().toLowerCase(),
+                                                            programRunId.getProgram(),
+                                                            programRunId.getRun()));
+    keysDir.mkdirs();
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    keyPair.writePublicKey(bos, "cdap@cask.co");
+    byte[] publicKey = bos.toByteArray();
+
+    bos.reset();
+    keyPair.writePrivateKey(bos, null);
+    byte[] privateKey = bos.toByteArray();
+
+    Location publicKeyFile = keysDir.append("id_rsa.pub");
+    try (OutputStream os = publicKeyFile.getOutputStream()) {
+      os.write(publicKey);
+    }
+
+    Location privateKeyFile = keysDir.append("id_rsa");
+    try (OutputStream os = privateKeyFile.getOutputStream("600")) {
+      os.write(privateKey);
+    }
+
+    return new SSHKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(),
+                          new String(publicKey, StandardCharsets.UTF_8), privateKey, "cdap");
+  }
+
+  @Nullable
+  private SSHContext createSSHContext(@Nullable SSHKeyInfo keyInfo) {
+    return keyInfo == null ? null : new DefaultSSHContext(keyInfo);
   }
 
   /**

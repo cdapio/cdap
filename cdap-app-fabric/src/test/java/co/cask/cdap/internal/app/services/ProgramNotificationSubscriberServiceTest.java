@@ -110,6 +110,7 @@ public class ProgramNotificationSubscriberServiceTest {
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
+
     programStateWriter.start(runId, programOptions, null, programDescriptor);
 
     Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {

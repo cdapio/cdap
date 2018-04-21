@@ -34,6 +34,7 @@ logs/
 /artifacts/
 /data/
 /data-fabric-tests/data/
+/ext
 
 # gateway test leftover
 /gateway/data/

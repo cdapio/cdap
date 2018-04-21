@@ -18,12 +18,14 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,16 +40,19 @@ public class DeprovisionTask extends ProvisioningTask {
   private final Provisioner provisioner;
   private final ProvisionerContext provisionerContext;
   private final ProvisionerNotifier provisionerNotifier;
+  private final LocationFactory locationFactory;
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
 
   public DeprovisionTask(ProgramRunId programRunId, Provisioner provisioner,
                          ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
+                         LocationFactory locationFactory,
                          Transactional transactional, DatasetFramework datasetFramework) {
     super(programRunId);
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;
+    this.locationFactory = locationFactory;
     this.transactional = transactional;
     this.datasetFramework = datasetFramework;
   }
@@ -86,8 +91,15 @@ public class DeprovisionTask extends ProvisioningTask {
             ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
             dataset.deleteClusterInfo(programRunId);
           });
+
+          // Delete the keys. We only delete when the cluster is gone.
+          SSHKeyInfo keyInfo = clusterInfo.getSshKeyInfo();
+          if (keyInfo != null) {
+            Locations.deleteQuietly(locationFactory.create(keyInfo.getKeyDirectory()), true);
+          }
           break;
       }
+
     } catch (Throwable t) {
       LOG.warn("Error deprovisioning cluster for program run {}", programRunId, t);
       // TODO: CDAP-13246 handle retries

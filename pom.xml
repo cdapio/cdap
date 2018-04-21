@@ -147,6 +147,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <spark1.version>1.6.1</spark1.version>
     <spark2.version>2.1.0</spark2.version>
+    <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.13.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
@@ -1609,6 +1610,12 @@
         <groupId>org.mockftpserver</groupId>
         <artifactId>MockFtpServer</artifactId>
         <version>${mockftp.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.sshd</groupId>
+        <artifactId>sshd-core</artifactId>
+        <version>${sshd.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

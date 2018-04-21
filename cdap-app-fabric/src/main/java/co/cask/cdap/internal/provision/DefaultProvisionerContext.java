@@ -20,9 +20,11 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.runtime.spi.ssh.SSHContext;
 
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Context for a {@link Provisioner} extension
@@ -30,11 +32,14 @@ import java.util.Map;
 public class DefaultProvisionerContext implements ProvisionerContext {
   private final ProgramRun programRun;
   private final Map<String, String> properties;
+  private final SSHContext sshContext;
 
-  public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties) {
+  public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
+                                   @Nullable SSHContext sshContext) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.properties = Collections.unmodifiableMap(properties);
+    this.sshContext = sshContext;
   }
 
   @Override
@@ -45,5 +50,13 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public SSHContext getSSHContext() {
+    if (sshContext == null) {
+      throw new UnsupportedOperationException("SSH is not supported");
+    }
+    return sshContext;
   }
 }
