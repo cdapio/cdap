@@ -19,7 +19,6 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecord;
@@ -78,71 +77,69 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
-    throws NotFoundException, InvalidMetadataException {
+    throws InvalidMetadataException {
     validateProperties(metadataEntity, properties);
     metadataStore.setProperties(MetadataScope.USER, metadataEntity, properties);
   }
 
   @Override
-  public void addTags(MetadataEntity metadataEntity, String... tags)
-    throws NotFoundException, InvalidMetadataException {
+  public void addTags(MetadataEntity metadataEntity, String... tags) throws InvalidMetadataException {
     validateTags(metadataEntity, tags);
     metadataStore.addTags(MetadataScope.USER, metadataEntity, tags);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) throws NotFoundException {
+  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
     return metadataStore.getMetadata(metadataEntity);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws NotFoundException {
+  public Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
     return ImmutableSet.of(metadataStore.getMetadata(scope, metadataEntity));
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataEntity metadataEntity) throws NotFoundException {
+  public Map<String, String> getProperties(MetadataEntity metadataEntity) {
     return metadataStore.getProperties(metadataEntity);
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity)
-    throws NotFoundException {
+  public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) {
     return metadataStore.getProperties(scope, metadataEntity);
   }
 
   @Override
-  public Set<String> getTags(MetadataEntity metadataEntity) throws NotFoundException {
+  public Set<String> getTags(MetadataEntity metadataEntity) {
     return metadataStore.getTags(metadataEntity);
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws NotFoundException {
+  public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) {
     return metadataStore.getTags(scope, metadataEntity);
   }
 
   @Override
-  public void removeMetadata(MetadataEntity metadataEntity) throws NotFoundException {
+  public void removeMetadata(MetadataEntity metadataEntity) {
     metadataStore.removeMetadata(MetadataScope.USER, metadataEntity);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity) throws NotFoundException {
+  public void removeProperties(MetadataEntity metadataEntity) {
     metadataStore.removeProperties(MetadataScope.USER, metadataEntity);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity, String... keys) throws NotFoundException {
+  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
     metadataStore.removeProperties(MetadataScope.USER, metadataEntity, keys);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity) throws NotFoundException {
+  public void removeTags(MetadataEntity metadataEntity) {
     metadataStore.removeTags(MetadataScope.USER, metadataEntity);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, String... tags) throws NotFoundException {
+  public void removeTags(MetadataEntity metadataEntity, String... tags) {
     metadataStore.removeTags(MetadataScope.USER, metadataEntity, tags);
   }
 
@@ -164,9 +161,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
    * @param results the {@link MetadataSearchResponse} to filter
    * @return filtered {@link MetadataSearchResponse}
    */
-  private MetadataSearchResponse filterAuthorizedSearchResult(final MetadataSearchResponse results)
-    throws Exception {
-
+  private MetadataSearchResponse filterAuthorizedSearchResult(final MetadataSearchResponse results) throws Exception {
     return new MetadataSearchResponse(
       results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
       ImmutableSet.copyOf(

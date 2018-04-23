@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 
@@ -114,7 +113,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(details);
+    return details.hashCode();
   }
 
   @Override
@@ -132,20 +131,6 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   }
 
   /**
-   * @return A {@link Iterator} over the keys in this {@link MetadataEntity}
-   */
-  public Iterator<String> getKeys() {
-    return new MetadataEntityKeyIterator();
-  }
-
-  /**
-   * @return A {@link Iterator} over the values in this {@link MetadataEntity}
-   */
-  public Iterator<String> getValues() {
-    return new MetadataEntityValueIterator();
-  }
-
-  /**
    * @return the value for the key if the key is found else null
    */
   public String getValue(String key) {
@@ -160,55 +145,24 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     return null;
   }
 
-  private class MetadataEntityValueIterator extends MetadataEntityIterator<String> {
-
-    @Override
-    public String next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException("There are no more parts in the MetadataEntity");
-      }
-      return details.get(curIndex++).getValue();
-    }
+  /**
+   * @return A {@link Iterator} over the keys in this {@link MetadataEntity}
+   */
+  public Iterable<String> getKeys() {
+    return details.stream().map(KeyValue::getKey)::iterator;
   }
 
-  private class MetadataEntityKeyIterator extends MetadataEntityIterator<String> {
-
-    @Override
-    public String next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException("There are no more parts in the MetadataEntity");
-      }
-      return details.get(curIndex++).getKey();
-    }
+  /**
+   * @return A {@link Iterator} over the values in this {@link MetadataEntity}
+   */
+  public Iterable<String> getValues() {
+    return details.stream().map(KeyValue::getValue)::iterator;
   }
 
   @Override
   @Nonnull
   public Iterator<KeyValue> iterator() {
-    return new MetadataEntityKeyValueIterator();
-  }
-
-  private abstract class MetadataEntityIterator<T> implements Iterator<T> {
-    int curIndex;
-
-    MetadataEntityIterator() {
-      this.curIndex = 0;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return curIndex != details.size();
-    }
-  }
-
-  class MetadataEntityKeyValueIterator extends MetadataEntityIterator<KeyValue> {
-    @Override
-    public KeyValue next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException("There are no more parts in the MetadataEntity");
-      }
-      return details.get(curIndex++);
-    }
+    return details.stream().iterator();
   }
 
   /**

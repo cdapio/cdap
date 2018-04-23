@@ -42,7 +42,6 @@ import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -116,12 +115,12 @@ public class DefaultMetadataStore implements MetadataStore {
   public void setProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                             final Map<String, String> properties) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
-    execute(input -> {
-      Map<String, String> existingProperties = input.getProperties(metadataEntity);
-      Set<String> existingTags = input.getTags(metadataEntity);
+    execute(mds -> {
+      Map<String, String> existingProperties = mds.getProperties(metadataEntity);
+      Set<String> existingTags = mds.getTags(metadataEntity);
       previousRef.set(new MetadataRecord(metadataEntity, scope, existingProperties, existingTags));
       for (Map.Entry<String, String> entry : properties.entrySet()) {
-        input.setProperty(metadataEntity, entry.getKey(), entry.getValue());
+        mds.setProperty(metadataEntity, entry.getKey(), entry.getValue());
       }
     }, scope);
     final ImmutableMap.Builder<String, String> propAdditions = ImmutableMap.builder();
@@ -150,11 +149,11 @@ public class DefaultMetadataStore implements MetadataStore {
   public void setProperty(final MetadataScope scope, final MetadataEntity metadataEntity, final String key,
                           final String value) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
-    execute(input -> {
-      Map<String, String> existingProperties = input.getProperties(metadataEntity);
-      Set<String> existingTags = input.getTags(metadataEntity);
+    execute(mds -> {
+      Map<String, String> existingProperties = mds.getProperties(metadataEntity);
+      Set<String> existingTags = mds.getTags(metadataEntity);
       previousRef.set(new MetadataRecord(metadataEntity, scope, existingProperties, existingTags));
-      input.setProperty(metadataEntity, key, value);
+      mds.setProperty(metadataEntity, key, value);
     }, scope);
     publishAudit(previousRef.get(),
                  new MetadataRecord(metadataEntity, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
@@ -168,11 +167,11 @@ public class DefaultMetadataStore implements MetadataStore {
   public void addTags(final MetadataScope scope, final MetadataEntity metadataEntity,
                       final String... tagsToAdd) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
-    execute(input -> {
-      Map<String, String> existingProperties = input.getProperties(metadataEntity);
-      Set<String> existingTags = input.getTags(metadataEntity);
+    execute(mds -> {
+      Map<String, String> existingProperties = mds.getProperties(metadataEntity);
+      Set<String> existingTags = mds.getTags(metadataEntity);
       previousRef.set(new MetadataRecord(metadataEntity, scope, existingProperties, existingTags));
-      input.addTags(metadataEntity, tagsToAdd);
+      mds.addTags(metadataEntity, tagsToAdd);
     }, scope);
     publishAudit(previousRef.get(),
                  new MetadataRecord(metadataEntity, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
@@ -187,9 +186,9 @@ public class DefaultMetadataStore implements MetadataStore {
 
   @Override
   public MetadataRecord getMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    return execute(input -> {
-      Map<String, String> properties = input.getProperties(metadataEntity);
-      Set<String> tags = input.getTags(metadataEntity);
+    return execute(mds -> {
+      Map<String, String> properties = mds.getProperties(metadataEntity);
+      Set<String> tags = mds.getTags(metadataEntity);
       return new MetadataRecord(metadataEntity, scope, properties, tags);
     }, scope);
   }
@@ -200,11 +199,11 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public Set<MetadataRecord> getMetadata(final MetadataScope scope, final Set<MetadataEntity> metadataEntities) {
-    return execute(input -> {
+    return execute(mds -> {
       Set<MetadataRecord> metadataRecords = new HashSet<>(metadataEntities.size());
       for (MetadataEntity metadataEntity : metadataEntities) {
-        Map<String, String> properties = input.getProperties(metadataEntity);
-        Set<String> tags = input.getTags(metadataEntity);
+        Map<String, String> properties = mds.getProperties(metadataEntity);
+        Set<String> tags = mds.getTags(metadataEntity);
         metadataRecords.add(new MetadataRecord(metadataEntity, scope, properties, tags));
       }
       return metadataRecords;
@@ -224,8 +223,8 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public Map<String, String> getProperties(MetadataScope scope, final MetadataEntity metadataEntity) {
-    return execute(input -> {
-      return input.getProperties(metadataEntity);
+    return execute(mds -> {
+      return mds.getProperties(metadataEntity);
     }, scope);
   }
 
@@ -242,8 +241,8 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public Set<String> getTags(MetadataScope scope, final MetadataEntity metadataEntity) {
-    return execute(input -> {
-      return input.getTags(metadataEntity);
+    return execute(mds -> {
+      return mds.getTags(metadataEntity);
     }, scope);
   }
 
@@ -259,14 +258,11 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void removeMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(metadataEntity, scope, input.getProperties(metadataEntity),
-                                           input.getTags(metadataEntity)));
-        input.removeProperties(metadataEntity);
-        input.removeTags(metadataEntity);
-      }
+    execute(mds -> {
+      previousRef.set(new MetadataRecord(metadataEntity, scope, mds.getProperties(metadataEntity),
+                                         mds.getTags(metadataEntity)));
+      mds.removeProperties(metadataEntity);
+      mds.removeTags(metadataEntity);
     }, scope);
     MetadataRecord previous = previousRef.get();
     publishAudit(previous, new MetadataRecord(metadataEntity, scope), new MetadataRecord(previous));
@@ -439,8 +435,8 @@ public class DefaultMetadataStore implements MetadataStore {
                                          final String cursor, final boolean showHidden,
                                          final Set<EntityScope> entityScope) throws BadRequestException {
     return execute(
-      input -> {
-        return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+      mds -> {
+        return mds.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
                             entityScope);
       }, scope);
   }
@@ -620,7 +616,7 @@ public class DefaultMetadataStore implements MetadataStore {
   private MetadataDataset newMetadataDataset(MetadataScope scope) {
     try {
       return DatasetsUtil.getOrCreateDataset(
-        dsFramework, EntityId.fromMetadataEntity(getMetadataDatasetInstance(scope)), MetadataDataset.class.getName(),
+        dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
         DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build(),
         DatasetDefinition.NO_ARGUMENTS);
     } catch (Exception e) {
@@ -639,26 +635,25 @@ public class DefaultMetadataStore implements MetadataStore {
 
   @Override
   public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
-    DatasetId metadataDatasetInstance = EntityId.fromMetadataEntity(getMetadataDatasetInstance(scope));
-    if (dsFramework.hasInstance(metadataDatasetInstance)) {
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    if (dsFramework.hasInstance(datasetId)) {
       if (isUpgradeRequired(scope)) {
         dsFramework.updateInstance(
-          metadataDatasetInstance,
+          datasetId,
           DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build()
         );
-        removeNullOrEmptyTags(metadataDatasetInstance, scope);
+        removeNullOrEmptyTags(datasetId, scope);
       }
     } else {
       DatasetsUtil.createIfNotExists(
-        dsFramework, metadataDatasetInstance, MetadataDataset.class.getName(),
+        dsFramework, datasetId, MetadataDataset.class.getName(),
         DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
       markUpgradeComplete(scope);
     }
   }
 
-  private MetadataEntity getMetadataDatasetInstance(MetadataScope scope) {
-    return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID.toMetadataEntity() :
-      SYSTEM_METADATA_INSTANCE_ID.toMetadataEntity();
+  private DatasetId getMetadataDatasetInstance(MetadataScope scope) {
+    return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 
   /**
@@ -674,16 +669,16 @@ public class DefaultMetadataStore implements MetadataStore {
 
   @Override
   public void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException {
-    MetadataEntity dsMetadataEntity = getMetadataDatasetInstance(scope);
-    LOG.info("Add Upgrade tag with version {} to {}", ProjectInfo.getVersion().toString(), dsMetadataEntity);
-    addTags(scope, dsMetadataEntity, getTagWithVersion(ProjectInfo.getVersion().toString()));
-    removeTags(scope, dsMetadataEntity, NEEDS_UPGRADE_TAG);
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    LOG.info("Add Upgrade tag with version {} to {}", ProjectInfo.getVersion().toString(), datasetId);
+    addTags(scope, datasetId.toMetadataEntity(), getTagWithVersion(ProjectInfo.getVersion().toString()));
+    removeTags(scope, datasetId.toMetadataEntity(), NEEDS_UPGRADE_TAG);
   }
 
   @Override
   public boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException {
-    MetadataEntity dsMetadataEntity = getMetadataDatasetInstance(scope);
-    Set<String> tags = getTags(scope, dsMetadataEntity);
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    Set<String> tags = getTags(scope, datasetId.toMetadataEntity());
     // Check if you are in the process of an Upgrade
     if (tags.contains(NEEDS_UPGRADE_TAG)) {
       LOG.debug("NEEDS_UPGRADE_TAG found on Metadata Dataset. Upgrade is required.");
@@ -697,14 +692,14 @@ public class DefaultMetadataStore implements MetadataStore {
         String datasetVersion = getVersionFromVersionTag(tag);
         if (!datasetVersion.equals(ProjectInfo.getVersion().toString())) {
           LOG.debug("Metadata Dataset version mismatch. Needs Upgrade");
-          removeTags(scope, dsMetadataEntity, tag);
-          addTags(scope, dsMetadataEntity, NEEDS_UPGRADE_TAG);
+          removeTags(scope, datasetId.toMetadataEntity(), tag);
+          addTags(scope, datasetId.toMetadataEntity(), NEEDS_UPGRADE_TAG);
           return true;
         }
       }
     }
     if (!versionTagFound) {
-      addTags(scope, dsMetadataEntity, NEEDS_UPGRADE_TAG);
+      addTags(scope, datasetId.toMetadataEntity(), NEEDS_UPGRADE_TAG);
       return true;
     }
     return false;

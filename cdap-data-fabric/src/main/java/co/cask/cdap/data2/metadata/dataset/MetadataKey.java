@@ -21,7 +21,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
-import java.nio.BufferUnderflowException;
 import javax.annotation.Nullable;
 
 /**
@@ -30,11 +29,16 @@ import javax.annotation.Nullable;
 class MetadataKey {
   private static final byte[] VALUE_ROW_PREFIX = {'v'}; // value row prefix to store metadata value
   private static final byte[] INDEX_ROW_PREFIX = {'i'}; // index row prefix used for metadata search
+  public static final byte[] VALUE_ROW_PREFIX_KEY =
+    new MDSKey.Builder().add(MetadataKey.VALUE_ROW_PREFIX).build().getKey();
+  public static final byte[] INDEX_ROW_PREFIX_KEY =
+    new MDSKey.Builder().add(MetadataKey.INDEX_ROW_PREFIX).build().getKey();
   // if a target type cannot be determined because the MetadataEntity is an unknown CDAP entity then we will store it
   // as CUSTOM_TYPE.
   private static final String CUSTOM_TARGET_TYPE = "CUSTOM_TYPE";
 
-  static String getMetadataKey(byte[] rowKey) {
+
+  static String extractMetadataKey(byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
     // The rowkey is
     // [rowPrefix][targetType][targetId][key] for value rows and
@@ -46,21 +50,20 @@ class MetadataKey {
     keySplitter.skipString();
 
     // targetId are key-value par so always in set of two. For value row we will end up with only string in end ([key])
-    // and for index row we will have two strings in end ([key][index]). In the first case trying to read second
-    // string to lead BufferUnderFlowException which we catch and ignore returning the key.
+    // and for index row we will have two strings in end ([key][index]).
     String key = null;
     while (keySplitter.hasRemaining()) {
       key = keySplitter.getString();
-      try {
+      if (keySplitter.hasRemaining()) {
         keySplitter.skipString();
-      } catch (BufferUnderflowException bfe) {
+      } else {
         break;
       }
     }
     return key;
   }
 
-  static String getTargetType(byte[] rowKey) {
+  static String extractTargetType(byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
     // skip rowPrefix
     keySplitter.skipBytes();
@@ -72,7 +75,7 @@ class MetadataKey {
    * Creates a key for metadata value row in the format:
    * [{@link #VALUE_ROW_PREFIX}][targetType][targetId][key] for value index rows
    */
-  static MDSKey getMDSValueKey(MetadataEntity metadataEntity, @Nullable String key) {
+  static MDSKey createValueRowKey(MetadataEntity metadataEntity, @Nullable String key) {
     MDSKey.Builder builder = getMDSKeyPrefix(metadataEntity, VALUE_ROW_PREFIX);
     if (key != null) {
       builder.add(key);
@@ -84,16 +87,17 @@ class MetadataKey {
    * Creates a key for metadata index row in the format:
    * [{@link #INDEX_ROW_PREFIX}][targetType][targetId][key][index] for value index rows
    */
-  static MDSKey getMDSIndexKey(MetadataEntity targetId, String key, @Nullable String index) {
+  static MDSKey createIndexRowKey(MetadataEntity targetId, String key, @Nullable String index) {
     MDSKey.Builder builder = getMDSKeyPrefix(targetId, INDEX_ROW_PREFIX);
     builder.add(key);
+    // index will be null for delete calls
     if (index != null) {
       builder.add(index);
     }
     return builder.build();
   }
 
-  static MetadataEntity getMetadataEntityFromKey(byte[] rowKey) {
+  static MetadataEntity extractMetadataEntityFromKey(byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
 
     // The rowkey is
@@ -114,23 +118,21 @@ class MetadataKey {
       // we do this since we don't want the last part as its metadata info ([key] or [key][index])
       metadataEntity = metadataEntity.append(key, value);
       key = keySplitter.getString();
-      try {
+      if (keySplitter.hasRemaining()) {
         value = keySplitter.getString();
-      } catch (BufferUnderflowException bfe) {
-        // was index row and we exhausted our buffer
+      } else {
+        break;
       }
     }
     return metadataEntity;
   }
 
   static byte[] getValueRowPrefix() {
-    MDSKey key = new MDSKey.Builder().add(MetadataKey.VALUE_ROW_PREFIX).build();
-    return key.getKey();
+    return VALUE_ROW_PREFIX;
   }
 
   static byte[] getIndexRowPrefix() {
-    MDSKey key = new MDSKey.Builder().add(MetadataKey.INDEX_ROW_PREFIX).build();
-    return key.getKey();
+    return INDEX_ROW_PREFIX_KEY;
   }
 
   private static MDSKey.Builder getMDSKeyPrefix(MetadataEntity metadataEntity, byte[] rowPrefix) {

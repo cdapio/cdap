@@ -59,6 +59,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -159,8 +160,9 @@ public class LineageAdmin {
   public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) throws NotFoundException {
     entityExistenceVerifier.ensureExists(run);
 
-    Set<MetadataEntity> runEntities = new HashSet<>();
-    lineageStoreReader.getEntitiesForRun(run).forEach(x -> runEntities.add(x.toMetadataEntity()));
+    Set<MetadataEntity> runEntities = lineageStoreReader.getEntitiesForRun(run).stream()
+      .map(NamespacedEntityId::toMetadataEntity)
+      .collect(Collectors.toSet());
 
     // No entities associated with the run, but run exists.
     if (runEntities.isEmpty()) {

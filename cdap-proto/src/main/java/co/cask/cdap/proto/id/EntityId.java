@@ -162,7 +162,7 @@ public abstract class EntityId {
     }
     T entityId;
     try {
-      entityId  = targetType.fromIdParts(metadataEntity::getValues);
+      entityId  = targetType.fromIdParts(metadataEntity.getValues());
     } catch (IllegalArgumentException e) {
       entityId = null;
     }

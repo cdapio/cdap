@@ -198,7 +198,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   @Nullable
   private MetadataEntry getMetadata(MetadataEntity metadataEntity, String key) {
-    MDSKey mdsKey = MetadataKey.getMDSValueKey(metadataEntity, key);
+    MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
       return null;
@@ -232,7 +232,7 @@ public class MetadataDataset extends AbstractDataset {
    * @return a Map representing the metadata for the specified {@link MetadataEntity}
    */
   private Map<String, String> getMetadata(MetadataEntity metadataEntity) {
-    MDSKey mdsKey = MetadataKey.getMDSValueKey(metadataEntity, null);
+    MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -240,7 +240,7 @@ public class MetadataDataset extends AbstractDataset {
     try (Scanner scan = indexedTable.scan(startKey, stopKey)) {
       Row next;
       while ((next = scan.next()) != null) {
-        String key = MetadataKey.getMetadataKey(next.getRow());
+        String key = MetadataKey.extractMetadataKey(next.getRow());
         byte[] value = next.get(VALUE_COLUMN);
         if (key == null || value == null) {
           continue;
@@ -289,7 +289,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private void removeMetadata(MetadataEntity metadataEntity, String ... keys) {
     final Set<String> keySet = Sets.newHashSet(keys);
-    removeMetadata(metadataEntity, input -> keySet.contains(input));
+    removeMetadata(metadataEntity, keySet::contains);
   }
 
   /**
@@ -299,7 +299,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
   private void removeMetadata(MetadataEntity metadataEntity, Predicate<String> filter) {
-    MDSKey mdsKey = MetadataKey.getMDSValueKey(metadataEntity, null);
+    MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
@@ -312,7 +312,7 @@ public class MetadataDataset extends AbstractDataset {
         if (value == null) {
           continue;
         }
-        String metadataKey = MetadataKey.getMetadataKey(next.getRow());
+        String metadataKey = MetadataKey.extractMetadataKey(next.getRow());
         if (filter.apply(metadataKey)) {
           indexedTable.delete(new Delete(next.getRow()));
           // store the key to delete its indexes later
@@ -336,7 +336,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataKey the key to remove from the metadata of the specified {@link MetadataEntity}
    */
   private void deleteIndexes(MetadataEntity metadataEntity, String metadataKey) {
-    MDSKey mdsKey = MetadataKey.getMDSIndexKey(metadataEntity, metadataKey, null);
+    MDSKey mdsKey = MetadataKey.createIndexRowKey(metadataEntity, metadataKey, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -417,8 +417,8 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private Metadata getSnapshotBeforeTime(MetadataEntity metadataEntity, long timeMillis) {
-    byte[] scanStartKey = MetadataHistoryKey.getMetdatdaScanStartKey(metadataEntity, timeMillis).getKey();
-    byte[] scanEndKey = MetadataHistoryKey.getMetadataScanEndKey(metadataEntity).getKey();
+    byte[] scanStartKey = MetadataHistoryKey.getMDSScanStartKey(metadataEntity, timeMillis).getKey();
+    byte[] scanEndKey = MetadataHistoryKey.getMDSScanStopKey(metadataEntity).getKey();
     // TODO: add limit to scan, we need only one row
     try (Scanner scanner = indexedTable.scan(scanStartKey, scanEndKey)) {
       Row next = scanner.next();
@@ -484,8 +484,8 @@ public class MetadataDataset extends AbstractDataset {
   @Nullable
   private MetadataEntry convertRow(Row row) {
     byte[] rowKey = row.getRow();
-    MetadataEntity namespacedEntityId = MetadataKey.getMetadataEntityFromKey(rowKey);
-    String key = MetadataKey.getMetadataKey(rowKey);
+    MetadataEntity namespacedEntityId = MetadataKey.extractMetadataEntityFromKey(rowKey);
+    String key = MetadataKey.extractMetadataKey(rowKey);
     byte[] value = row.get(VALUE_COLUMN);
     if (key == null || value == null) {
       return null;
@@ -495,7 +495,7 @@ public class MetadataDataset extends AbstractDataset {
 
   private ImmutablePair<byte[], byte[]> getFuzzyKeyFor(MetadataEntity metadataEntity) {
     // We need to create fuzzy pairs to match the first part of the key containing metadataEntity
-    MDSKey mdsKey = MetadataKey.getMDSValueKey(metadataEntity, null);
+    MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, null);
     byte[] keyBytes = mdsKey.getKey();
     // byte array is automatically initialized to 0, which implies fixed match in fuzzy info
     // the row key after metadataEntity doesn't need to be a match.
@@ -632,7 +632,7 @@ public class MetadataDataset extends AbstractDataset {
     }
 
     final byte[] rowKey = rowToProcess.getRow();
-    String targetType = MetadataKey.getTargetType(rowKey);
+    String targetType = MetadataKey.extractTargetType(rowKey);
 
     // Filter on target type if not set to include all types
     boolean includeAllTypes = entityFilter.isEmpty() || entityFilter.contains(EntityTypeSimpleName.ALL);
@@ -640,7 +640,7 @@ public class MetadataDataset extends AbstractDataset {
       return Optional.absent();
     }
 
-    MetadataEntity metadataEntity = MetadataKey.getMetadataEntityFromKey(rowKey);
+    MetadataEntity metadataEntity = MetadataKey.extractMetadataEntityFromKey(rowKey);
     // if the entity starts with _ then skip it unless the caller choose to showHidden.
     // This is done to hide entities from Tracker. See: CDAP-7910
 
@@ -648,7 +648,7 @@ public class MetadataDataset extends AbstractDataset {
     if (!showHidden && namespacedEntityId != null && namespacedEntityId.getEntityName().startsWith("_")) {
       return Optional.absent();
     }
-    String key = MetadataKey.getMetadataKey(rowKey);
+    String key = MetadataKey.extractMetadataKey(rowKey);
     MetadataEntry entry = getMetadata(metadataEntity, key);
     return Optional.fromNullable(entry);
   }
@@ -693,7 +693,7 @@ public class MetadataDataset extends AbstractDataset {
 
   private void write(MetadataEntity metadataEntity, MetadataEntry entry, Set<Indexer> indexers) {
     String key = entry.getKey();
-    MDSKey mdsValueKey = MetadataKey.getMDSValueKey(metadataEntity, key);
+    MDSKey mdsValueKey = MetadataKey.createValueRowKey(metadataEntity, key);
     Put put = new Put(mdsValueKey.getKey());
 
     // add the metadata value
@@ -764,7 +764,7 @@ public class MetadataDataset extends AbstractDataset {
    * @return {@link Put} which is a index row with the value to be indexed in the #indexColumn
    */
   private Put getIndexPut(MetadataEntity metadataEntity, String metadataKey, String index, String indexColumn) {
-    MDSKey mdsIndexKey = MetadataKey.getMDSIndexKey(metadataEntity, metadataKey, index.toLowerCase());
+    MDSKey mdsIndexKey = MetadataKey.createIndexRowKey(metadataEntity, metadataKey, index.toLowerCase());
     String namespacedIndex = metadataEntity.getValue(MetadataEntity.NAMESPACE) + KEYVALUE_SEPARATOR +
       index.toLowerCase();
     Put put = new Put(mdsIndexKey.getKey());
@@ -780,7 +780,7 @@ public class MetadataDataset extends AbstractDataset {
     Map<String, String> properties = getProperties(metadataEntity);
     Set<String> tags = getTags(metadataEntity);
     Metadata metadata = new Metadata(metadataEntity, properties, tags);
-    byte[] row = MetadataHistoryKey.getMetadataKey(metadataEntity, System.currentTimeMillis()).getKey();
+    byte[] row = MetadataHistoryKey.getMDSKey(metadataEntity, System.currentTimeMillis()).getKey();
     indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
   }
 
@@ -803,9 +803,9 @@ public class MetadataDataset extends AbstractDataset {
     try (Scanner scanner = indexedTable.scan(startRowKey, stopRowKey)) {
       while ((limit > 0) && (row = scanner.next()) != null) {
         byte[] rowKey = row.getRow();
-        String targetType = MetadataKey.getTargetType(rowKey);
-        MetadataEntity namespacedEntityId = MetadataKey.getMetadataEntityFromKey(rowKey);
-        String metadataKey = MetadataKey.getMetadataKey(rowKey);
+        String targetType = MetadataKey.extractTargetType(rowKey);
+        MetadataEntity namespacedEntityId = MetadataKey.extractMetadataEntityFromKey(rowKey);
+        String metadataKey = MetadataKey.extractMetadataKey(rowKey);
         Set<Indexer> indexers = getIndexersForKey(metadataKey);
         MetadataEntry metadataEntry = getMetadata(namespacedEntityId, metadataKey);
         if (metadataEntry == null) {

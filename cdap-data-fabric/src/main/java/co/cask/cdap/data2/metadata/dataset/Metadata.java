@@ -19,9 +19,8 @@ package co.cask.cdap.data2.metadata.dataset;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -36,7 +35,7 @@ public class Metadata {
 
 
   public Metadata(MetadataEntity metadataEntity) {
-    this(metadataEntity, ImmutableMap.of(), ImmutableSet.of());
+    this(metadataEntity, Collections.emptyMap(), Collections.emptySet());
   }
 
   /**

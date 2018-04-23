@@ -26,33 +26,32 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 class MetadataHistoryKey {
   private static final byte[] ROW_PREFIX = {'h'};
 
-  static MDSKey getMetadataKey(MetadataEntity targetId, long time) {
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(ROW_PREFIX);
-    for (MetadataEntity.KeyValue keyValue : targetId) {
-      builder.add(keyValue.getKey());
-      builder.add(keyValue.getValue());
-    }
+  static MDSKey getMDSKey(MetadataEntity targetId, long time) {
+    MDSKey.Builder builder = getKeyPart(targetId);
     builder.add(invertTime(time));
     return builder.build();
   }
 
-  static MDSKey getMetdatdaScanStartKey(MetadataEntity metadataEntity, long time) {
-    return getMetadataKey(metadataEntity, time);
+  static MDSKey getMDSScanStartKey(MetadataEntity metadataEntity, long time) {
+    return getMDSKey(metadataEntity, time);
   }
 
-  static MDSKey getMetadataScanEndKey(MetadataEntity metadataEntity) {
+  static MDSKey getMDSScanStopKey(MetadataEntity metadataEntity) {
+    MDSKey.Builder builder = getKeyPart(metadataEntity);
+    return new MDSKey(Bytes.stopKeyForPrefix(builder.build().getKey()));
+  }
+
+  private static long invertTime(long time) {
+    return Long.MAX_VALUE - time;
+  }
+
+  private static MDSKey.Builder getKeyPart(MetadataEntity metadataEntity) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
       builder.add(keyValue.getKey());
       builder.add(keyValue.getValue());
     }
-    byte[] key = builder.build().getKey();
-    return new MDSKey(Bytes.stopKeyForPrefix(key));
-  }
-
-  private static long invertTime(long time) {
-    return Long.MAX_VALUE - time;
+    return builder;
   }
 }

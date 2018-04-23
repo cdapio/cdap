@@ -34,7 +34,6 @@ import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -225,7 +224,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
     Set<EntityTypeSimpleName> types = Collections.emptySet();
     if (targets != null) {
-      types = ImmutableSet.copyOf(targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toList()));
+      types.addAll(targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toSet()));
     }
     SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, "UTF-8"));
     if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -247,9 +246,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private MetadataEntity getMetadataEntityFromPath(String uri, String s) {
+  private MetadataEntity getMetadataEntityFromPath(String uri, String suffix) {
     String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3) +
-      Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(s)).split("/");
+      Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
     MetadataEntity metadataEntity = new MetadataEntity();
 
     int curIndex = 0;

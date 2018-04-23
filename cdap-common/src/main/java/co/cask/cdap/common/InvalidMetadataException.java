@@ -35,7 +35,7 @@ public class InvalidMetadataException extends BadRequestException {
     this.metadataEntity = metadataEntity;
   }
 
-  public MetadataEntity getTargetId() {
+  public MetadataEntity getMetadataEntity() {
     return metadataEntity;
   }
 }
