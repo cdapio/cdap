@@ -21,34 +21,25 @@ import ProfilesListView from 'components/Cloud/Profiles/ListView';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import ProfilesStore from 'components/Cloud/Profiles/Store';
+import {importProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {connect, Provider} from 'react-redux';
+import {Label, Input} from 'reactstrap';
+import {getProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
 require('./SystemProfilesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.SystemProfiles';
 
-export default class SystemProfilesAccordion extends Component {
-  state = {
-    profilesCount: this.props.profiles.length
-  };
-
+class SystemProfilesAccordion extends Component {
   static propTypes = {
-    profiles: PropTypes.array,
+    profilesCount: PropTypes.number,
     loading: PropTypes.bool,
     expanded: PropTypes.bool,
     onExpand: PropTypes.func
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.profiles.length !== this.props.profiles.length) {
-      this.setState({
-        profilesCount: nextProps.profiles.length
-      });
-    }
-  }
-
-  onChange = (profiles) => {
-    this.setState({
-      profilesCount: profiles.length
-    });
+  componentDidMount() {
+    getProfiles('system');
   }
 
   renderLabel() {
@@ -68,7 +59,7 @@ export default class SystemProfilesAccordion extends Component {
                 </h5>
               )
             :
-              <h5>{T.translate(`${PREFIX}.labelWithCount`, {count: this.state.profilesCount})}</h5>
+              <h5>{T.translate(`${PREFIX}.labelWithCount`, {count: this.props.profilesCount})}</h5>
           }
         </span>
         <span className="admin-config-container-description">
@@ -85,16 +76,27 @@ export default class SystemProfilesAccordion extends Component {
 
     return (
       <div className="admin-config-container-content system-profiles-container-content">
-        <Link
-          className="btn btn-secondary"
-          to='/create-profile'
-        >
-          {T.translate(`${PREFIX}.create`)}
-        </Link>
-        <ProfilesListView
-          namespace='system'
-          onChange={this.onChange}
-        />
+        <div className="create-import-profile">
+          <Link
+            className="btn btn-secondary create-profile-button"
+            to='/create-profile'
+          >
+            {T.translate(`${PREFIX}.create`)}
+          </Link>
+          <Label
+            className="import-profile-label"
+            for="import-profile"
+          >
+            {T.translate(`${PREFIX}.import`)}
+            <Input
+              type="file"
+              accept='.json'
+              id="import-profile"
+              onChange={importProfile.bind(this, 'system')}
+            />
+          </Label>
+        </div>
+        <ProfilesListView namespace='system' />
       </div>
     );
   }
@@ -110,4 +112,21 @@ export default class SystemProfilesAccordion extends Component {
       </div>
     );
   }
+}
+
+const mapStateToProps = (state) => {
+  return {
+    profilesCount: state.profiles.length,
+    loading: state.loading
+  };
+};
+
+const ConnectedSystemProfilesAccordion = connect(mapStateToProps)(SystemProfilesAccordion);
+
+export default function SystemProfilesAccordionFn(props) {
+  return (
+    <Provider store={ProfilesStore}>
+      <ConnectedSystemProfilesAccordion {...props}/>
+    </Provider>
+  );
 }

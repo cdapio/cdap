@@ -17,23 +17,39 @@
 @import '../../../../styles/variables.scss';
 
 .system-profiles-container {
-  .profiles-list-view {
-    .grid.grid-container {
-      .grid-row {
-        &.sub-header {
-          color: $grey-03;
+  .system-profiles-container-content {
+    .profiles-list-view {
+      .grid.grid-container {
+        .grid-row {
+          &.sub-header {
+            color: $grey-03;
+          }
         }
-      }
 
-      .grid-body {
-        .grid-row:hover {
-          background-color: white;
+        .grid-body {
+          .grid-row:hover {
+            background-color: white;
+          }
         }
       }
     }
-  }
 
-  .view-all-label-container:first-child {
-    transform: translateY(10px);
+    .create-import-profile {
+      display: flex;
+      align-items: center;
+
+      .btn.btn-secondary.create-profile-button {
+        margin-top: 0;
+      }
+
+      .import-profile-label {
+        margin-bottom: 0;
+        margin-left: 10px;
+      }
+    }
+
+    .view-all-label-container:first-child {
+      margin-bottom: 0;
+    }
   }
 }
