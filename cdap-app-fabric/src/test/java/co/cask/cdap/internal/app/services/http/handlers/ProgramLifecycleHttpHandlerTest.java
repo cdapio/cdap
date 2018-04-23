@@ -138,8 +138,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testProgramStartStopStatus() throws Exception {
     // deploy, check the status
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     Id.Flow wordcountFlow1 = Id.Flow.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
     Id.Flow wordcountFlow2 = Id.Flow.from(TEST_NAMESPACE2, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
@@ -160,8 +159,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(wordcountFlow1, STOPPED);
 
     // deploy another app in a different namespace and verify
-    response = deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program dummyMR1 = Id.Program.from(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
     Id.Program dummyMR2 = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
@@ -191,8 +189,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(dummyMR2, STOPPED);
 
     // deploy an app containing a workflow
-    response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Program sleepWorkflow1 =
       Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
@@ -225,7 +222,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(sleepWorkflow2, STOPPED);
 
     // cleanup
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -383,8 +381,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testProgramStartStopStatusErrors() throws Exception {
     // deploy, check the status
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     // start unknown program
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
@@ -438,12 +435,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "STOPPED");
 
     // get run records again, should be empty now
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        Id.Program id = Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
-        return getProgramRuns(id, ProgramRunStatus.RUNNING).isEmpty();
-      }
+    Tasks.waitFor(true, () -> {
+      Id.Program id = Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+      return getProgramRuns(id, ProgramRunStatus.RUNNING).isEmpty();
     }, 10, TimeUnit.SECONDS);
 
     // stop run of the program that is not running
@@ -451,7 +445,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                 runId, 400); // active run not found
 
     // cleanup
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
     /**
@@ -479,7 +474,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNonExistingProgramHistory() throws Exception {
     ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
                                                    Constants.Gateway.API_VERSION_3_TOKEN,
                                                    TEST_NAMESPACE2)).getStatusLine().getStatusCode();
@@ -511,7 +506,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testWorkflowHistory() throws Exception {
     try {
-      deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
       Id.Program sleepWorkflow1 =
         Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
@@ -569,9 +564,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doPost(statusUrl2, EMPTY_ARRAY_JSON).getStatusLine().getStatusCode());
 
     // deploy an app in namespace1
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     // deploy another app in namespace2
-    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // data requires appId, programId, and programType. Test missing fields/invalid programType
     Assert.assertEquals(400, doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
@@ -677,8 +672,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doPost(instancesUrl1, "[]").getStatusLine().getStatusCode());
     Assert.assertEquals(200, doPost(instancesUrl2, "[]").getStatusLine().getStatusCode());
 
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // data requires appId, programId, and programType. Test missing fields/invalid programType
     // TODO: These json strings should be replaced with JsonObjects so it becomes easier to refactor in future
@@ -777,12 +772,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     testListInitialState(TEST_NAMESPACE1, ProgramType.SERVICE);
 
     // deploy WordCountApp in namespace1 and verify
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     // deploy AppWithServices in namespace2 and verify
-    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // verify list by namespace
     verifyProgramList(TEST_NAMESPACE1, ProgramType.FLOW, 1);
@@ -808,8 +801,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testWorkerSpecification() throws Exception {
     // deploy AppWithWorker in namespace1 and verify
-    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithWorker.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
                                AppWithWorker.WORKER);
@@ -820,7 +812,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testServiceSpecification() throws Exception {
-    deploy(AppWithServices.class);
+    deploy(AppWithServices.class, 200);
     HttpResponse response = doGet("/v3/namespaces/default/apps/AppWithServices/services/NoOpService");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -849,20 +841,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testProgramSpecification() throws Exception {
     // deploy WordCountApp in namespace1 and verify
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     // deploy AppWithServices in namespace2 and verify
-    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // deploy AppWithWorkflow in namespace2 and verify
-    response = deploy(AppWithWorkflow.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // deploy AppWithWorker in namespace1 and verify
-    response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithWorker.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     // verify program specification
     verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
@@ -897,8 +885,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testFlows() throws Exception {
     // deploy WordCountApp in namespace1 and verify
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     // check initial flowlet instances
     int initial = getFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME);
@@ -926,7 +913,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // test live info
     // send invalid program type to live info
-    response = sendLiveInfoRequest(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random", WORDCOUNT_FLOW_NAME);
+    HttpResponse response = sendLiveInfoRequest(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random", WORDCOUNT_FLOW_NAME);
     Assert.assertEquals(405, response.getStatusLine().getStatusCode());
 
     // test valid live info
@@ -1082,8 +1069,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testServices() throws Exception {
-    HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     Id.Service service1 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE1), APP_WITH_SERVICES_APP_ID,
                                           APP_WITH_SERVICES_SERVICE_NAME);
@@ -1134,7 +1120,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(3, instances.getProvisioned());
 
     // verify that endpoints are not available in the wrong namespace
-    response = callService(service1, HttpMethod.POST, "multi");
+    HttpResponse response = callService(service1, HttpMethod.POST, "multi");
     code = response.getStatusLine().getStatusCode();
     Assert.assertEquals(404, code);
 
@@ -1747,7 +1733,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private void testHistory(Class<?> app, Id.Program program) throws Exception {
     String namespace = program.getNamespaceId();
     try {
-      deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+      deploy(app, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
       verifyProgramHistory(program.toEntityId());
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
@@ -1837,7 +1823,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private void testRuntimeArgs(Class<?> app, String namespace, String appId, String programType, String programId)
     throws Exception {
-    deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    deploy(app, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
 
     String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + programType + "/" + programId +
                                                            "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,

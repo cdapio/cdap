@@ -39,7 +39,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -52,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
@@ -87,12 +85,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     try {
       applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId, appJarFile, null,
-                                                       null, new ProgramTerminator() {
-          @Override
-          public void stop(ProgramId programId) throws Exception {
-            // no-op
-          }
-        }, true);
+                                                       null, programId -> { }, true);
       Assert.fail("expected application deployment to fail.");
     } catch (Exception e) {
       // expected
@@ -106,8 +99,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   public void testAppDeletionMultipleNS() throws Exception {
 
     // deploy same app in two namespaces
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    deploy(WordCountApp.class);
+    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(WordCountApp.class, 200);
     ProgramId wordcountFlow1 = new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW,
                                              WORDCOUNT_FLOW_NAME);
     ApplicationId defaultNSAppId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), WORDCOUNT_APP_NAME);
@@ -118,15 +111,15 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertEquals("STOPPED", getProgramStatus(Id.Program.fromEntityId(wordcountFlow1)));
     // start a flow and check the status
     startProgram(Id.Program.fromEntityId(wordcountFlow1));
-    waitState(Id.Program.fromEntityId(wordcountFlow1), ProgramRunStatus.RUNNING.toString());
+    waitState(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
 
     // delete the app from another (default namespace)
-    deleteApp(Id.Application.fromEntityId(defaultNSAppId), 200);
+    deleteAppAndData(defaultNSAppId);
 
     // cleanup
     stopProgram(Id.Program.fromEntityId(wordcountFlow1));
-    waitState(Id.Program.fromEntityId(wordcountFlow1), "STOPPED");
-    deleteApp(Id.Application.fromEntityId(testNSAppId), 200);
+    waitState(wordcountFlow1, "STOPPED");
+    deleteAppAndData(testNSAppId);
   }
 
   /**
@@ -136,21 +129,19 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   @Test
   public void testOwner() throws Exception {
     String ownerPrincipal = "alice/somehost.net@somekdc.net";
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                                   ownerPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1, ownerPrincipal);
 
     // trying to redeploy the same app as a different owner should fail
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                      "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(),
-                        response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.FORBIDDEN.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1, "bob/somehost.net@somekdc.net");
 
     // although trying to re-deploy the app with same owner should work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                      ownerPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1, ownerPrincipal);
 
+    // delete, otherwise it conflicts with other tests
+    deleteAppAndData(new NamespaceId(TEST_NAMESPACE1).app(WordCountApp.NAME));
   }
 
   @Test
@@ -163,25 +154,20 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
 
     // deploy an app without owner
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName());
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName());
 
     // try to redeploy with some owner different than namespace principal it should fail
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(),
-                        response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.FORBIDDEN.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName(), "bob/somehost.net@somekdc.net");
 
     // although trying to re-deploy the app with namespace principal should work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      nsPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName(), nsPrincipal);
 
     // re-deploy without any owner should also work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName());
-    Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName());
 
     // cleanup
     deleteNamespace(impNsMeta.getName());
@@ -192,21 +178,19 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
 
     // deploy an app with an owner
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName(), "bob/somehost.net@somekdc.net");
 
     // re-deploy with namespace principal should fail
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      impNsMeta.getConfig().getPrincipal());
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(),
-                        response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.FORBIDDEN.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName(), impNsMeta.getConfig().getPrincipal());
 
     // although redeploy with same app principal should work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           impNsMeta.getName(), "bob/somehost.net@somekdc.net");
+
+    // delete, otherwise it conflicts with other tests
+    deleteAppAndData(impNsMeta.getNamespaceId().app(WordCountApp.NAME));
   }
 
   @Test
@@ -254,12 +238,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {
-    Tasks.waitFor(expected, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(Id.Program.fromEntityId(programId), status).size();
-      }
-    }, 5, TimeUnit.SECONDS);
+    Tasks.waitFor(expected, () -> getProgramRuns(Id.Program.fromEntityId(programId), status).size(),
+                  5, TimeUnit.SECONDS);
   }
 
   // creates an application jar for the given application class, but excludes classes that begin with 'com.google.'
@@ -285,5 +265,11 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         return true;
       }
     }, bundleEmbeddedJars);
+  }
+
+  private void deleteAppAndData(ApplicationId applicationId) throws Exception {
+    deleteApp(applicationId, 200);
+    deleteNamespaceData(applicationId.getNamespace());
+    deleteStream(applicationId.getNamespaceId().stream(WordCountApp.STREAM_NAME));
   }
 }

@@ -57,15 +57,17 @@ import javax.ws.rs.PathParam;
  * many places.
  */
 public class WordCountApp extends AbstractApplication {
-
+  public static final String NAME = "WordCountApp";
+  public static final String DATASET_NAME = "mydataset";
+  public static final String STREAM_NAME = "text";
   private static final Logger LOG = LoggerFactory.getLogger(WordCountApp.class);
 
   @Override
   public void configure() {
-    setName("WordCountApp");
+    setName(NAME);
     setDescription("Application for counting words");
-    addStream(new Stream("text"));
-    createDataset("mydataset", KeyValueTable.class);
+    addStream(new Stream(STREAM_NAME));
+    createDataset(DATASET_NAME, KeyValueTable.class);
     addFlow(new WordCountFlow());
     addService(new WordFrequencyService());
     addMapReduce(new VoidMapReduceJob());

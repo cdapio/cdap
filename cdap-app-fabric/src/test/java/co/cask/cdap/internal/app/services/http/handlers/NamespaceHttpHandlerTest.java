@@ -191,7 +191,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     response = createNamespace(METADATA_VALID, Id.Namespace.SYSTEM.getId());
     assertResponseCode(400, response);
     // we allow deleting the contents in default namespace. However, the namespace itself should never be deleted
-    deploy(AppWithDataset.class);
+    deploy(AppWithDataset.class, 200);
     response = deleteNamespace(Id.Namespace.DEFAULT.getId());
     assertResponseCode(200, response);
     response = getNamespace(Id.Namespace.DEFAULT.getId());
@@ -271,10 +271,10 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     StreamAdmin streamAdmin = getInjector().getInstance(StreamAdmin.class);
 
-    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
-    deploy(AppWithStream.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
-    deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithStream.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
+    deploy(AppForUnrecoverableResetTest.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
     DatasetId myDataset = new DatasetId(NAME, "myds");
     StreamId myStream = new StreamId(OTHER_NAME, "stream");
@@ -305,9 +305,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // Create the namespace again and deploy the application containing schedules.
     // Application deployment should succeed.
     assertResponseCode(200, createNamespace(OTHER_NAME));
-    HttpResponse response = deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   OTHER_NAME);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    deploy(AppForUnrecoverableResetTest.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
     assertResponseCode(200, deleteNamespace(OTHER_NAME));
   }
 
@@ -324,8 +322,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
 
-    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
 
     DatasetId myDataset = new DatasetId(NAME, "myds");
 

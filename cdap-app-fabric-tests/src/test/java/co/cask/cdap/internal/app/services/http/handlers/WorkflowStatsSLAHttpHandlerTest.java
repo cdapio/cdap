@@ -90,7 +90,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testStatistics() throws Exception {
-    deploy(WorkflowApp.class);
+    deploy(WorkflowApp.class, 200);
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
@@ -204,7 +204,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testDetails() throws Exception {
-    deploy(WorkflowApp.class);
+    deploy(WorkflowApp.class, 200);
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
@@ -258,7 +258,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testCompare() throws Exception {
-    deploy(WorkflowApp.class);
+    deploy(WorkflowApp.class, 200);
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
