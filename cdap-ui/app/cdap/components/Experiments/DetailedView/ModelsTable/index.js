@@ -157,7 +157,7 @@ const renderFeaturesTable = (features) => {
 const renderDirectivesTables = (directives) => {
   return (
     <div className="grid-wrapper">
-      <div className="grid grid-container">
+      <div className="grid grid-container directives-list">
         <div className="grid-header">
           <div className="grid-row">
             <strong> Directives </strong>

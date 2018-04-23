@@ -44,7 +44,7 @@ import Helmet from 'react-helmet';
 import queryString from 'query-string';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {objectQuery} from 'services/helpers';
+import MyDataPrepApi from 'api/dataprep';
 
 require('./CreateView.scss');
 
@@ -67,11 +67,10 @@ export default class ExperimentCreateView extends Component {
   componentDidMount() {
     this.dataprepsubscription = DataPrepStore.subscribe(() => {
       let {dataprep} = DataPrepStore.getState();
-      let {headers = [], directives, workspaceInfo = {}} = dataprep;
+      let {headers = [], directives, workspaceInfo = {}, workspaceId} = dataprep;
       if (!headers.length) {
         return;
       }
-      let workspaceId = objectQuery(workspaceInfo, 'workspace', 'name');
       setWorkspace(workspaceId);
       setSrcPath(workspaceInfo.properties.path);
       setOutcomeColumns(headers);
@@ -115,6 +114,15 @@ export default class ExperimentCreateView extends Component {
     fetchAlgorithmsList();
   }
   componentWillUnmount() {
+    let {experiments_create} = createExperimentStore.getState();
+    let {workspaceId} = experiments_create;
+    if (workspaceId) {
+      // Every workspace created in experiments create view is temp. So don't worry about deleting it.
+      MyDataPrepApi.delete({
+        namespace: getCurrentNamespace(),
+        workspaceId
+      }).subscribe();
+    }
     DataPrepStore.dispatch({
       type: DataPrepActions.reset
     });
@@ -149,6 +157,7 @@ export default class ExperimentCreateView extends Component {
             setWorkspace(workspaceId);
             this.setState({workspaceId});
           }}
+          scope={true}
         />
       </span>
     );

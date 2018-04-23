@@ -28,7 +28,7 @@ export const myExperimentsApi = {
   getExperiment: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId`),
   getModelsInExperiment: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/models`),
   getModel: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId`),
-  setSplitToModel: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/split`),
+  pollModel: apiCreator(dataSrc, 'GET', 'POLL', `${basePath}/experiments/:experimentId/models/:modelId`),
   getSplitDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments/:experimentId/splits/:splitId`),
   getSplitStatus: apiCreator(dataSrc, 'GET', 'POLL', `${basePath}/experiments/:experimentId/splits/:splitId/status`),
   getAlgorithms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/algorithms`),
@@ -41,7 +41,7 @@ export const myExperimentsApi = {
   deleteExperiment: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basePath}/experiments/:experimentId`),
 
   createExperiment: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basePath}/experiments/:experimentId`),
-  createSplit: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/splits`),
+  createSplit: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/split`),
   createModelInExperiment: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models`),
 
   // Service management
