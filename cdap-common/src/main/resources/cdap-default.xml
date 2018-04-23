@@ -2364,11 +2364,19 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>program.status.event.topic,metrics.topic.prefix:${metrics.messaging.topic.num},metadata.messaging.topic,audit.topic</value>
+    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic</value>
     <description>
       A comma-separated list of topics config to be monitored by runtime monitor.
     </description>
     <final>true</final>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.graceful.shutdown.ms</name>
+    <value>5000</value>
+    <description>
+      Number of milliseconds to wait for the runtime to shutdown after a program execution completed in that runtime.
+    </description>
   </property>
 
   <property>

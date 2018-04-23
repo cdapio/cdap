@@ -25,6 +25,7 @@ import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -36,10 +37,7 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.util.concurrent.Service;
@@ -52,7 +50,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -80,6 +77,7 @@ public class RuntimeMonitorTest {
     cConf.set(Constants.RuntimeMonitor.SERVER_PORT, "0");
     cConf.set(Constants.RuntimeMonitor.BATCH_LIMIT, "2");
     cConf.set(Constants.RuntimeMonitor.POLL_TIME_MS, "200");
+    cConf.set(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, "1000");
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     messagingService = injector.getInstance(MessagingService.class);
@@ -104,7 +102,9 @@ public class RuntimeMonitorTest {
 
   @Test
   public void testRunTimeMonitor() throws Exception {
-    publishProgramStatus();
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("myworkflow").run(RunIds.generate());
+
+    publishProgramStatus(programRunId);
     verifyPublishedMessages(3, cConf);
 
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
@@ -122,11 +122,9 @@ public class RuntimeMonitorTest {
     // change topic name because cdap config is different than runtime config
     cConfCopy.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "cdap-programStatus");
 
-    RuntimeMonitor runtimeMonitor = new RuntimeMonitor(new ProgramRunId("default", "app1", ProgramType.WORKFLOW,
-                                                                        "myworkflow",
-                                                                        UUID.randomUUID().toString()), cConfCopy,
-                                                       messagingContext.getMessagePublisher(),
-                                                       clientConfigBuilder.build());
+    RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId,
+                                                       cConfCopy, messagingService, clientConfigBuilder.build());
+
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     verifyPublishedMessages(2, cConfCopy);
@@ -160,14 +158,10 @@ public class RuntimeMonitorTest {
     }, 5, TimeUnit.MINUTES);
   }
 
-  private void publishProgramStatus() {
+  private void publishProgramStatus(ProgramRunId programRunId) {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
 
-    ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "app1");
-    ProgramRunId programRunId = new ProgramRunId(appId, ProgramType.WORKFLOW, "myworkflow",
-                                                 UUID.randomUUID().toString());
-    programStateWriter.start(programRunId, new SimpleProgramOptions(new ProgramId(appId, ProgramType.WORKFLOW,
-                                                                                  "myworkflow")), null, null);
+    programStateWriter.start(programRunId, new SimpleProgramOptions(programRunId.getParent()), null, null);
     programStateWriter.running(programRunId, null);
     programStateWriter.completed(programRunId);
   }
