@@ -16,13 +16,13 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
 import { Tooltip } from 'reactstrap';
 import ViewEventsModal from 'components/FastAction/ViewEventsAction/ViewEventsModal';
 
-export default class ViewEventsAccess extends Component {
+export default class ViewEventsAccess extends PureComponent {
   constructor(props) {
     super(props);
 

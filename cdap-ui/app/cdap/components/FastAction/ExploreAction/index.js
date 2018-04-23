@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import FastActionButton from '../FastActionButton';
 import {Tooltip} from 'reactstrap';
@@ -28,7 +28,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import classnames from 'classnames';
 require('./ExploreAction.scss');
 
-export default class ExploreAction extends Component {
+export default class ExploreAction extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
@@ -84,7 +84,7 @@ export default class ExploreAction extends Component {
     updateDisabledProp();
     if (objectQuery(this.props.argsToAction, 'showQueriesCount')) {
       let namespace = NamespaceStore.getState().selectedNamespace;
-      this.explroeQueriesSubscription$ = myExploreApi
+      this.exploreQueriesSubscription$ = myExploreApi
         .fetchQueries({namespace})
         .subscribe((res) => {
           let runningQueries = res
@@ -112,8 +112,8 @@ export default class ExploreAction extends Component {
   }
   componentWillUnmount() {
     this.subscription();
-    if (this.explroeQueriesSubscription$) {
-      this.explroeQueriesSubscription$.unsubscribe();
+    if (this.exploreQueriesSubscription$) {
+      this.exploreQueriesSubscription$.unsubscribe();
     }
   }
   render() {

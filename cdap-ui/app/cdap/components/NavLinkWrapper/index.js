@@ -16,34 +16,33 @@
 
 import PropTypes from 'prop-types';
 
-import React from 'react';
+import React, {PureComponent} from 'react';
 import {NavLink} from 'react-router-dom';
 
-const NavLinkWrapper = ({children, to, isNativeLink, ...attributes}) => {
-  if (isNativeLink) {
+export default class NavLinkWrapper extends PureComponent {
+  static propTypes = {
+    children: PropTypes.node,
+    to: PropTypes.string,
+    isNativeLink: PropTypes.bool
+  };
+  render() {
+    if (this.props.isNativeLink) {
+      return (
+        <a
+          {...this.props}
+          href={this.props.to}
+        >
+          {this.props.children}
+        </a>
+      );
+    }
     return (
-      <a
-        href={to}
-        {...attributes}
+      <NavLink
+        {...this.props}
+        to={this.props.to}
       >
-        {children}
-      </a>
+        {this.props.children}
+      </NavLink>
     );
   }
-  return (
-    <NavLink
-      to={to}
-      {...attributes}
-    >
-      {children}
-    </NavLink>
-  );
-};
-
-NavLinkWrapper.propTypes = {
-  children: PropTypes.node,
-  to: PropTypes.string,
-  isNativeLink: PropTypes.bool
-};
-
-export default NavLinkWrapper;
+}

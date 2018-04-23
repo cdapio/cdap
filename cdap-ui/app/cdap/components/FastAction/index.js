@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import DeleteAction from 'components/FastAction/DeleteAction';
 import TruncateAction from 'components/FastAction/TruncateAction';
 import StartStopAction from 'components/FastAction/StartStopAction';
@@ -27,7 +27,7 @@ import LogAction from 'components/FastAction/LogAction';
 import ViewEventsAction from 'components/FastAction/ViewEventsAction';
 import {objectQuery} from 'services/helpers';
 
-export default class FastAction extends Component {
+export default class FastAction extends PureComponent {
   constructor(props) {
     super(props);
   }

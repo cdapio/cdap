@@ -209,10 +209,7 @@ export default class Header extends Component {
           <div className="navbar-right-section">
             <ul>
               <li className="with-shadow">
-                <CaskMarketButton>
-                  <span className="fa icon-CaskMarket"></span>
-                  <span>{T.translate('commons.market')}</span>
-                </CaskMarketButton>
+                <CaskMarketButton />
               </li>
               <li
                 id="header-namespace-dropdown"

@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyDatasetApi} from 'api/dataset';
 import {MyStreamApi} from 'api/stream';
@@ -27,7 +27,7 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import { getType } from 'services/metadata-parser';
 
-export default class TruncateAction extends Component {
+export default class TruncateAction extends PureComponent {
   constructor(props) {
     super(props);
 

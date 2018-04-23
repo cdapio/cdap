@@ -16,19 +16,20 @@
 
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Loadable from 'react-loadable';
 import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import T from 'i18n-react';
 
 var PlusButtonModal = Loadable({
   loader: () => import(/* webpackChunkName: "PlusButtonModal" */ 'components/PlusButtonModal'),
   loading: LoadingSVGCentered
 });
 
-export default class CaskMarketButton extends Component {
+export default class CaskMarketButton extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
@@ -78,7 +79,8 @@ export default class CaskMarketButton extends Component {
         className={classnames("cask-market-button", this.props.className, {'active': this.state.showMarketPlace})}
         onClick={this.onClickHandler.bind(this)}
       >
-        {this.props.children}
+        <span className="fa icon-CaskMarket"></span>
+        <span>{T.translate('commons.market')}</span>
         <PlusButtonModal
           isOpen={this.state.showMarketPlace}
           onCloseHandler={this.onClickHandler.bind(this)}

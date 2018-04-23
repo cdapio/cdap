@@ -16,14 +16,14 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
 import { Tooltip } from 'reactstrap';
 import SendEventModal from 'components/FastAction/SendEventAction/SendEventModal';
 require('./SendEventAction.scss');
 
-export default class SendEventAction extends Component {
+export default class SendEventAction extends PureComponent {
   constructor(props) {
     super(props);
 

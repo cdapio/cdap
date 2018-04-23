@@ -18,6 +18,8 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
+const {whyDidYouUpdate} = require('why-did-you-update');
+whyDidYouUpdate(React);
 
 require('../ui-utils/url-generator');
 require('font-awesome-sass-loader!./styles/font-awesome.config.js');

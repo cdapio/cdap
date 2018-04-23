@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
 import {Tooltip} from 'reactstrap';
@@ -25,7 +25,7 @@ import SetPreferenceModal, {PREFERENCES_LEVEL} from 'components/FastAction/SetPr
 import NamespaceStore from 'services/NamespaceStore';
 require('./SetPreferenceAction.scss');
 
-export default class SetPreferenceAction extends Component {
+export default class SetPreferenceAction extends PureComponent {
   constructor(props) {
     super(props);
 

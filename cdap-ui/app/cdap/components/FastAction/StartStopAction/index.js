@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyProgramApi} from 'api/program';
 import FastActionButton from '../FastActionButton';
@@ -26,7 +26,7 @@ import IconSVG from 'components/IconSVG';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
-export default class StartStopAction extends Component {
+export default class StartStopAction extends PureComponent {
   constructor(props) {
     super(props);
 

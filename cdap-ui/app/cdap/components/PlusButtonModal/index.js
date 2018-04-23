@@ -15,7 +15,7 @@
  */
 
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import Market from 'components/Market';
 import ResourceCenter from 'components/ResourceCenter';
@@ -27,7 +27,7 @@ import T from 'i18n-react';
 
 require('./PlusButtonModal.scss');
 
-export default class PlusButtonModal extends Component {
+export default class PlusButtonModal extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {

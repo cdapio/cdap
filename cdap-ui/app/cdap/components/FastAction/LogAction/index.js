@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import IconSVG from 'components/IconSVG';
 import {MyProgramApi} from 'api/program';
 import NamespaceStore from 'services/NamespaceStore';
@@ -24,7 +24,7 @@ import {convertProgramToApi} from 'services/program-api-converter';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
-export default class LogAction extends Component {
+export default class LogAction extends PureComponent {
   constructor(props) {
     super(props);
 

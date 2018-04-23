@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyAppApi} from 'api/app';
 import {MyArtifactApi} from 'api/artifact';
@@ -29,7 +29,7 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import T from 'i18n-react';
 
-export default class DeleteAction extends Component {
+export default class DeleteAction extends PureComponent {
   constructor(props) {
     super(props);
 

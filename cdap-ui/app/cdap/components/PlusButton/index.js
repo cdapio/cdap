@@ -15,7 +15,7 @@
  */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import Popover from 'components/Popover';
 import PlusButtonModal from 'components/PlusButtonModal';
 import {Link} from 'react-router-dom';
@@ -24,7 +24,7 @@ require('./PlusButton.scss');
 
 const PLUSBUTTON_DIMENSION = 58;
 
-export default class PlusButton extends Component {
+export default class PlusButton extends PureComponent {
   propTypes = {
     contextItems: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,

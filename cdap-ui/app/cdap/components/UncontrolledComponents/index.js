@@ -20,7 +20,7 @@
   now and we can't make that change at this point in the release. So this artifact stays here until we have
   upgraded reactstrap.
 */
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {Tooltip, Dropdown} from 'reactstrap';
 
 const components = {
@@ -32,7 +32,7 @@ Object.keys(components).forEach(key => {
   const Tag = components[key];
   const defaultValue = false;
 
-  class Uncontrolled extends Component {
+  class Uncontrolled extends PureComponent {
     constructor(props) {
       super(props);
 
