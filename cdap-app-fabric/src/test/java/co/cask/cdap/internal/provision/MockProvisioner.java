@@ -31,6 +31,7 @@ import java.util.Map;
  * Provisioner for unit tests. Has the same spec as the default yarn provisioner.
  */
 public class MockProvisioner implements Provisioner {
+  public static final String NAME = "yarn";
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "yarn", "Default YARN Provisioner",
     "Runs programs on the CDAP master cluster. Does not provision any resources.",

@@ -28,6 +28,7 @@ import java.util.Objects;
  */
 public class Profile {
   public static final Profile DEFAULT = new Profile("default", "Runs programs locally on the cluster",
+                                                    EntityScope.SYSTEM,
                                                     new ProvisionerInfo("yarn", Collections.emptyList()));
   private final String name;
   private final String description;
