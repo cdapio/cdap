@@ -31,16 +31,10 @@ public class DataProcProvisionerTest {
   public void testClusterName() {
     // test basic
     ProgramRun programRun = new ProgramRun("ns", "app", "program", UUID.randomUUID().toString());
-    Assert.assertEquals("app-" + programRun.getRun(), DataProcProvisioner.getClusterName(programRun));
+    Assert.assertEquals("cdap-app-" + programRun.getRun(), DataProcProvisioner.getClusterName(programRun));
 
-    // test lowercasing and stripping of invalid characters
+    // test lowercasing, stripping of invalid characters, and truncation
     programRun = new ProgramRun("ns", "My@Appl!cation", "program", UUID.randomUUID().toString());
-    Assert.assertEquals("myapplcation-" + programRun.getRun(), DataProcProvisioner.getClusterName(programRun));
-
-    // test truncating long
-    String longName = "abcdefghijklmnopqrstuvwxyz01234567890";
-    programRun = new ProgramRun("ns", longName, "program", UUID.randomUUID().toString());
-    Assert.assertEquals("abcdefghijklmnopq-" + programRun.getRun(),
-                        DataProcProvisioner.getClusterName(programRun));
+    Assert.assertEquals("cdap-myapplcat-" + programRun.getRun(), DataProcProvisioner.getClusterName(programRun));
   }
 }

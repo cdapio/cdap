@@ -117,16 +117,17 @@ public class DataProcProvisioner implements Provisioner {
     return ip;
   }
 
-  // Name must start with a lowercase letter followed by up to 54 lowercase letters,
+  // Name must start with a lowercase letter followed by up to 51 lowercase letters,
   // numbers, or hyphens, and cannot end with a hyphen
   // We'll use app-runid, where app is truncated to fit, lowercased, and stripped of invalid characters
   @VisibleForTesting
   static String getClusterName(ProgramRun programRun) {
     String cleanedAppName = programRun.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
-    int maxAppLength = 53 - programRun.getRun().length();
+    // 51 is max length, 5 is from 'cdap-' prefix, 1 is for '-' separating app name and run id
+    int maxAppLength = 51 - 5 - 1 - programRun.getRun().length();
     if (cleanedAppName.length() > maxAppLength) {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
-    return cleanedAppName + "-" + programRun.getRun();
+    return "cdap-" + cleanedAppName + "-" + programRun.getRun();
   }
 }
