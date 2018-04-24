@@ -620,13 +620,7 @@
                       <targetPath>ext/runtimeproviders/gce-dataproc</targetPath>
                       <includes>
                         <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/src/main/resources</directory>
-                      <targetPath>ext/runtimeproviders/gce-dataproc</targetPath>
-                      <includes>
-                        <include>gce-dataproc.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>
