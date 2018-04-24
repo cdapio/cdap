@@ -14,23 +14,19 @@
  * the License.
  */
 
-.reports-detail-container {
-  // 70px for header
-  height: calc(100% - 70px);
+@import '../../../../styles/variables.scss';
 
-  .separator {
-    margin-left: 5px;
-    margin-right: 5px;
+$expires-color: $orange-02;
+$saved-color: $green-02;
+
+.reports-container {
+  .expiry-saved {
+    color: $saved-color;
   }
 
-  .action-section {
-    height: 40px;
-    line-height: 40px;
-    background-color: white;
-    padding: 0 35px;
-
-    .btn {
-      padding: 3px 10px;
-    }
+  .expiry {
+    color: $expires-color;
   }
+
+  .duration-display { margin-left: 5px; }
 }

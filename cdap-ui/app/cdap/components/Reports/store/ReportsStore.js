@@ -28,6 +28,7 @@ const ReportsActions = {
   setActiveId: 'REPORTS_SET_ACTIVE_ID',
   setStatus: 'REPORTS_SET_STATUS',
   setDetailsError: 'REPORTS_DETAILS_ERROR',
+  detailsReset: 'REPORTS_DETAILS_RESET',
   reset: 'REPORTS_RESET'
 };
 
@@ -41,7 +42,7 @@ const defaultCustomizerState = {
   duration: false,
   user: false,
   startMethod: false,
-  runtimeArguments: false,
+  runtimeArgs: false,
   numLogWarnings: false,
   numLogErrors: false,
   numRecordsOut: false
@@ -65,6 +66,7 @@ const defaultListState = {
 };
 
 const defaultDetailsState = {
+  reportId: null,
   created: null,
   expiry: null,
   name: null,
@@ -160,7 +162,8 @@ const details = (state = defaultDetailsState, action = defaultAction) => {
     case ReportsActions.setInfoStatus:
       return {
         ...state,
-        ...action.payload.info
+        ...action.payload.info,
+        reportId: action.payload.reportId
       };
     case ReportsActions.setRuns:
       return {
@@ -172,6 +175,7 @@ const details = (state = defaultDetailsState, action = defaultAction) => {
         ...state,
         detailError: action.payload.error
       };
+    case ReportsActions.detailsReset:
     case ReportsActions.reset:
       return defaultDetailsState;
     default:

@@ -1829,7 +1829,7 @@ features:
         numLogWarnings: "# of log warnings"
         numRecordsOut: "# of records out"
         pipelines: Pipelines runs
-        runtimeArguments: Runtime args
+        runtimeArgs: Runtime args
         start: Start time
         startMethod: Start method
         status: Status

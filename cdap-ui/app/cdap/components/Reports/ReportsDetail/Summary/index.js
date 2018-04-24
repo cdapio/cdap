@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {humanReadableDate} from 'services/helpers';
+import {humanReadableDate, humanReadableDuration} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
 
 require('./Summary.scss');
@@ -67,7 +67,11 @@ function renderDuration(summary) {
 
   if (!durations) { return null; }
 
-  return `Min: ${durations.min}; Max: ${durations.max}; Average: ${durations.average}`;
+  let min = humanReadableDuration(durations.min);
+  let max = humanReadableDuration(durations.max);
+  let average = humanReadableDuration(Math.round(durations.average));
+
+  return `Min: ${min}; Max: ${max}; Average: ${average}`;
 }
 
 function renderLastStarted(summary) {

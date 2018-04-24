@@ -31,7 +31,7 @@ const OPTIONS = [
   'duration',
   'user',
   'startMethod',
-  'runtimeArguments',
+  'runtimeArgs',
   'numLogWarnings',
   'numLogErrors',
   'numRecordsOut'

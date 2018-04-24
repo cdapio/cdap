@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {GLOBALS} from 'services/global-constants';
-import {humanReadableDate} from 'services/helpers';
+import {humanReadableDate, humanReadableDuration} from 'services/helpers';
 import {DefaultSelection} from 'components/Reports/store/ActionCreator';
 import difference from 'lodash/difference';
 
@@ -99,6 +99,10 @@ function renderBody(runs, headers) {
 
                   if (['start', 'end'].indexOf(head) !== -1) {
                     value = humanReadableDate(value);
+                  }
+
+                  if (head === 'duration') {
+                    value = humanReadableDuration(value);
                   }
 
                   return (

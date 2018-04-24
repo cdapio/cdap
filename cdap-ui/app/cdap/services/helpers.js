@@ -138,6 +138,7 @@ function humanReadableDuration(timeInSeconds) {
     return `${months} ${pluralize(months, 'month')} ${humanReadableDuration(timeInSeconds - (ONE_MONTH_SECONDS * months))}`;
   }
 }
+
 function contructUrl ({path}) {
   return [
     window.CDAP_CONFIG.sslEnabled? 'https://': 'http://',
