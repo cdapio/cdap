@@ -92,6 +92,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
+    } else if ("dashboard".equals(uriParts[1])) {
+      return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(uriParts[7])
       && "methods".equals(uriParts[9])) {
       // User defined services (version specific) handle methods on them:

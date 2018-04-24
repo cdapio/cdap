@@ -380,6 +380,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter) {
+    return Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getActiveRuns(namespaces, filter);
+    });
+  }
+
+  @Override
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getActiveRuns(applicationId);
@@ -390,6 +397,14 @@ public class DefaultStore implements Store {
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getActiveRuns(programId);
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<NamespaceId> namespaces,
+                                                            long earliestStopTime, long latestStartTime, int limit) {
+    return Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getHistoricalRuns(namespaces, earliestStopTime, latestStartTime, limit);
     });
   }
 

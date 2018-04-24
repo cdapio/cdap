@@ -239,6 +239,14 @@ public interface Store {
   Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId);
 
   /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records from the given NamespaceId's.
+   * @param namespaces the namespace id's to get active run records from
+   * @param filter predicate to be passed to filter the records
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter);
+
+  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ApplicationId.
    * @param applicationId the application id to match against
    * @return map of logged runs
@@ -251,6 +259,19 @@ public interface Store {
    * @return map of logged runs
    */
   Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId);
+
+  /**
+   * Fetches the historical (i.e COMPLETED or FAILED or KILLED) run records from a given set of namespaces
+   * which matches both the earliestStopTime and latestStartTime conditions.
+   *
+   * @param namespaces fetch run history that is belonged to one of these namespaces
+   * @param earliestStopTime fetch run history that has stopped at or after the earliestStopTime in seconds
+   * @param latestStartTime fetch run history that has started before the latestStartTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<NamespaceId> namespaces,
+                                                     long earliestStopTime, long latestStartTime, int limit);
 
   /**
    * Fetches the run record for particular run of a program.

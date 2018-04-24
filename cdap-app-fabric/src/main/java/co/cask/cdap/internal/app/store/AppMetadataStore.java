@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -859,6 +860,20 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return getRuns(programRunIds, Integer.MAX_VALUE);
   }
 
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter) {
+    return namespaces.stream().flatMap(namespaceId -> {
+      MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, namespaceId).build();
+      Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                              Integer.MAX_VALUE, filter));
+
+      key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, namespaceId).build();
+      activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
+      key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, namespaceId).build();
+      activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
+      return activeRuns.entrySet().stream();
+    }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) {
     // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
@@ -1113,6 +1128,33 @@ public class AppMetadataStore extends MetadataStoreDataset {
       newRecords.putAll(oldRecords);
     }
     return newRecords;
+  }
+
+  /**
+   * Fetches the historical (i.e COMPLETED or FAILED or KILLED) run records from a given set of namespaces.
+   *
+   * @param namespaces fetch run history that is belonged to one of these namespaces
+   * @param earliestStopTime fetch run history that has stopped at or after the earliestStopTime in seconds
+   * @param latestStartTime fetch run history that has started before the latestStartTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return map of logged runs
+   */
+  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(final Set<NamespaceId> namespaces,
+                                                            final long earliestStopTime, final long latestStartTime,
+                                                            final int limit) {
+    MDSKey keyPrefix = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
+    //return all records in each namespace
+    return namespaces.stream()
+      .flatMap(ns -> getProgramRunIdMap(
+        listKV(new MDSKey.Builder(keyPrefix).add(ns.getNamespace()).build(), null,
+               RunRecordMeta.class, limit, key -> true,
+               // get active runs in a time window with range [earliestStopTime, latestStartTime),
+               // which excludes program run records that stopped before earliestStopTime and
+               // program run records that started after latestStartTime, all remaining records are active
+               // at some point within the time window and will be returned
+               meta -> meta.getStopTs() != null && meta.getStopTs() >= earliestStopTime
+                 && meta.getStartTs() < latestStartTime)).entrySet().stream())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(MDSKey historyKey, ProgramRunStatus status,
