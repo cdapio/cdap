@@ -43,6 +43,7 @@ public class DataProcProvisioner implements Provisioner {
     "gce-dataproc", "GCE DataProc Provisioner",
     "Runs programs on the GCE DataProc clusters.",
     new HashMap<>());
+  private static final String CLUSTER_PREFIX = "cdap-";
 
   @Override
   public ProvisionerSpecification getSpec() {
@@ -117,16 +118,17 @@ public class DataProcProvisioner implements Provisioner {
     return ip;
   }
 
-  // Name must start with a lowercase letter followed by up to 54 lowercase letters,
+  // Name must start with a lowercase letter followed by up to 51 lowercase letters,
   // numbers, or hyphens, and cannot end with a hyphen
   // We'll use app-runid, where app is truncated to fit, lowercased, and stripped of invalid characters
   @VisibleForTesting
   static String getClusterName(ProgramRun programRun) {
     String cleanedAppName = programRun.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
-    int maxAppLength = 53 - programRun.getRun().length();
+    // 51 is max length, need to subtract the prefix and 1 extra for the '-' separating app name and run id
+    int maxAppLength = 51 - CLUSTER_PREFIX.length() - 1 - programRun.getRun().length();
     if (cleanedAppName.length() > maxAppLength) {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
-    return cleanedAppName + "-" + programRun.getRun();
+    return CLUSTER_PREFIX + cleanedAppName + "-" + programRun.getRun();
   }
 }
