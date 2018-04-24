@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,19 +35,24 @@ public class TMSSubscriber extends Thread {
   private static final Logger LOG = LoggerFactory.getLogger(TMSSubscriber.class);
   private static final String TOPIC = "programstatusrecordevent";
   private static final String NAMESPACE_SYSTEM = "system";
+  private static final String FETCH_SIZE = "tms.fetch.size";
+  private static final int DEFAULT_FETCH_SIZE = 100;
 
   private final MessageFetcher messageFetcher;
   private final RunMetaFileManager runMetaFileManager;
   private final Location baseLocation;
+  private final int fetchSize;
 
   private volatile boolean isStopped;
 
-  TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation) {
+  TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation, Map<String, String> runtimeArguments) {
     super("TMS-RunrecordEvent-Subscriber-thread");
     this.messageFetcher = messageFetcher;
     isStopped = false;
     this.baseLocation = baseLocation;
     this.runMetaFileManager = new RunMetaFileManager(baseLocation);
+    this.fetchSize = runtimeArguments.containsKey(FETCH_SIZE) ?
+      Integer.parseInt(runtimeArguments.get(FETCH_SIZE)) : DEFAULT_FETCH_SIZE;
   }
 
   public void requestStop() {
@@ -71,11 +77,11 @@ public class TMSSubscriber extends Thread {
         break;
       }
       try (CloseableIterator<Message> messageCloseableIterator =
-             messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, 10, afterMessageId)) {
+             messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, fetchSize, afterMessageId)) {
         while (!isStopped && messageCloseableIterator.hasNext()) {
           Message message  = messageCloseableIterator.next();
-          ProgramRunIdFields programRunIdFields = MessageUtil.constructAndGetProgramRunIdFields(message);
-          runMetaFileManager.append(programRunIdFields);
+          ProgramRunInfo programRunInfo = MessageUtil.constructAndGetProgramRunIdFields(message);
+          runMetaFileManager.append(programRunInfo);
           afterMessageId = message.getId();
         }
         runMetaFileManager.syncOutputStreams();

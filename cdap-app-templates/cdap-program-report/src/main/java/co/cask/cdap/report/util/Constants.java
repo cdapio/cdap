@@ -52,4 +52,36 @@ public final class Constants {
     public static final String SUCCESS_FILE = "_SUCCESS";
   }
   public static final String MESSAGE_ID = "messageId";
+
+  /**
+   * Notification property fields
+   */
+  public static final class Notification {
+    public static final String PROGRAM_RUN_ID = "programRunId";
+    public static final String PROGRAM_STATUS = "programStatus";
+    public static final String START_TIME = "startTime";
+    public static final String ARTIFACT_ID = "artifactId";
+    public static final String USER_OVERRIDES = "userOverrides";
+    public static final String PRINCIPAL = "principal";
+
+    public static final String LOGICAL_START_TIME = "logical.start.time";
+    public static final String END_TIME = "endTime";
+    public static final String SUSPEND_TIME = "suspendTime";
+    public static final String RESUME_TIME = "resumeTime";
+
+    /**
+     * Program status options
+     */
+    public static final class Status {
+      public static final String STARTING = "STARTING";
+      public static final String RUNNING = "RUNNING";
+      public static final String KILLED = "KILLED";
+      public static final String COMPLETED = "COMPLETED";
+      public static final String FAILED = "FAILED";
+      public static final String SUSPENDED = "SUSPENDED";
+      public static final String RESUMING = "RESUMING";
+    }
+
+  }
+
 }

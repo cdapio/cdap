@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class RunMetaFileManager {
   private static final Logger LOG = LoggerFactory.getLogger(RunMetaFileManager.class);
   private static final Integer MAX_FILE_SIZE_BYTES = 67108864;
+  private static final Integer SYNC_INTERVAL_BYTES = 10485760;
   private static final Long MAX_FILE_OPEN_DURATION = TimeUnit.HOURS.toMillis(6);
 
   private Map<String, RunMetaFileOutputStream> namespaceToLogFileStreamMap;
@@ -46,20 +47,20 @@ public class RunMetaFileManager {
   }
 
   /**
-   * append {@link ProgramRunIdFields} and flush to file. create or rotate file if needed before appending.
-   * @param programRunIdFields
+   * append {@link ProgramRunInfo} and flush to file. create or rotate file if needed before appending.
+   * @param programRunInfo
    * @throws InterruptedException
    */
-  public void append(ProgramRunIdFields programRunIdFields) throws InterruptedException {
-    if (!namespaceToLogFileStreamMap.containsKey(programRunIdFields.getNamespace())) {
+  public void append(ProgramRunInfo programRunInfo) throws InterruptedException {
+    if (!namespaceToLogFileStreamMap.containsKey(programRunInfo.getNamespace())) {
       // create a output stream if file doesnt exist already for this namespace in the map
-      createLogFileOutputStreamWithRetry(programRunIdFields.getNamespace(),
-                                         programRunIdFields.getTimestamp());
+      createLogFileOutputStreamWithRetry(programRunInfo.getNamespace(),
+                                         programRunInfo.getTimestamp());
     }
-    rotateOutputStreamIfNeeded(namespaceToLogFileStreamMap.get(programRunIdFields.getNamespace()),
-                               programRunIdFields.getNamespace(), programRunIdFields.getTimestamp());
-    RunMetaFileOutputStream outputStream = namespaceToLogFileStreamMap.get(programRunIdFields.getNamespace());
-    appendAndFlushWithRetry(outputStream, programRunIdFields);
+    rotateOutputStreamIfNeeded(namespaceToLogFileStreamMap.get(programRunInfo.getNamespace()),
+                               programRunInfo.getNamespace(), programRunInfo.getTimestamp());
+    RunMetaFileOutputStream outputStream = namespaceToLogFileStreamMap.get(programRunInfo.getNamespace());
+    appendAndFlushWithRetry(outputStream, programRunInfo);
   }
 
   /**
@@ -97,7 +98,7 @@ public class RunMetaFileManager {
       boolean successful = fileLocation.createNew();
       if (successful) {
         namespaceToLogFileStreamMap.put(namespace,
-                                        new RunMetaFileOutputStream(fileLocation, "", 10485760,
+                                        new RunMetaFileOutputStream(fileLocation, "", SYNC_INTERVAL_BYTES,
                                                                     System.currentTimeMillis(), () ->
                                                                       namespaceToLogFileStreamMap.remove(namespace)));
       }
@@ -130,7 +131,7 @@ public class RunMetaFileManager {
   }
 
   private void appendAndFlushWithRetry(RunMetaFileOutputStream outputStream,
-                                       ProgramRunIdFields runIdFields) throws InterruptedException {
+                                       ProgramRunInfo runIdFields) throws InterruptedException {
     retryWithCallable(() -> outputStream.append(runIdFields), "append");
     retryWithCallable(() -> outputStream.flush(), "flush");
   }

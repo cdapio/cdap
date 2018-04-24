@@ -23,6 +23,7 @@ import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.util.Constants;
 import com.google.common.primitives.Longs;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.avro.file.DataFileReader;
@@ -39,19 +40,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * utility methods
+ * Contains utility methods for finding latest message id to process from
+ * and also construct {@link ProgramRunInfo} from a given Message.
  */
 public final class MessageUtil {
   private static final Logger LOG = LoggerFactory.getLogger(MessageUtil.class);
+  private static final SampledLogging SAMPLED_LOGGING = new SampledLogging(LOG, 100);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Filter.class, new FilterDeserializer())
     .create();
   private static final Type MAP_TYPE =
-    new co.cask.cdap.internal.guava.reflect.TypeToken<Map<String, String>>() { }.getType();
+    new TypeToken<Map<String, String>>() { }.getType();
 
   private MessageUtil() {
 
@@ -61,23 +65,23 @@ public final class MessageUtil {
    * For each of the namespace at the base location, find the latest file under that namespace and from
    * the last written record, find the latest messageId for that namespace,
    * return the overall max messageId across the namespaces, if no namespace is found, return null
-   * @param baseLocation base location for all the namespaces under reporting fileset
-   * @Nullable
+   * @param baseLocation base location for all the namespaces under reporting fileset*
    * @return messageId
    * @throws InterruptedException
    */
+  @Nullable
   public static String findMessageId(Location baseLocation) throws InterruptedException {
     List<Location> namespaces = listLocationsWithRetry(baseLocation);
     byte[] messageId = Bytes.EMPTY_BYTE_ARRAY;
     String resultMessageId = null;
     for (Location namespaceLocation : namespaces) {
       // TODO keep trying with earlier file, if the latest file is empty
-      Location latest = findLatestFileLocation(namespaceLocation);
-      if (latest != null) {
-        String messageString = getLatestMessageIdFromFile(latest);
-        if (Bytes.compareTo(Bytes.fromHexString(messageString), messageId) > 0) {
-          messageId = Bytes.fromHexString(messageString);
-          resultMessageId = messageString;
+      Optional<Location> latest = findLatestFileLocation(namespaceLocation);
+      if (latest.isPresent()) {
+        String messageIdString = getLatestMessageIdFromFile(latest.get());
+        if (Bytes.compareTo(Bytes.fromHexString(messageIdString), messageId) > 0) {
+          messageId = Bytes.fromHexString(messageIdString);
+          resultMessageId = messageIdString;
         }
       }
     }
@@ -86,61 +90,62 @@ public final class MessageUtil {
 
   /**
    * Based on the {@link Message} and its ProgramStatus,
-   * construct by setting the fields of {@link ProgramRunIdFields} and return that.
+   * construct by setting the fields of {@link ProgramRunInfo} and return that.
    * @param message TMS message
-   * @return {@link ProgramRunIdFields}
+   * @return {@link ProgramRunInfo}
    */
-  public static ProgramRunIdFields constructAndGetProgramRunIdFields(Message message) {
+  public static ProgramRunInfo constructAndGetProgramRunIdFields(Message message) {
     Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
-    ProgramRunIdFields programRunIdFields =
-      GSON.fromJson(notification.getProperties().get("programRunId"), ProgramRunIdFields.class);
-    programRunIdFields.setMessageId(message.getId());
+    ProgramRunInfo programRunInfo =
+      GSON.fromJson(notification.getProperties().get(Constants.Notification.PROGRAM_RUN_ID), ProgramRunInfo.class);
+    programRunInfo.setMessageId(message.getId());
 
-    String programStatus = notification.getProperties().get("programStatus");
-    programRunIdFields.setStatus(programStatus);
+    String programStatus = notification.getProperties().get(Constants.Notification.PROGRAM_STATUS);
+    programRunInfo.setStatus(programStatus);
 
     switch (programStatus) {
-      case "STARTING":
-        programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("startTime")));
-        ArtifactId artifactId = GSON.fromJson(notification.getProperties().get("artifactId"), ArtifactId.class);
+      case Constants.Notification.Status.STARTING:
+        programRunInfo.setTime(Long.parseLong(notification.getProperties().get(Constants.Notification.START_TIME)));
+        ArtifactId artifactId =
+          GSON.fromJson(notification.getProperties().get(Constants.Notification.ARTIFACT_ID), ArtifactId.class);
         Map<String, String> userArguments =
-          GSON.fromJson(notification.getProperties().get("userOverrides"), MAP_TYPE);
-        Map<String, String> systemArguments =
-          GSON.fromJson(notification.getProperties().get("systemOverrides"), MAP_TYPE);
-        systemArguments.putAll(userArguments);
-        String principal = notification.getProperties().get("principal");
+          GSON.fromJson(notification.getProperties().get(Constants.Notification.USER_OVERRIDES), MAP_TYPE);
 
-        ProgramStartInfo programStartInfo = new ProgramStartInfo(systemArguments, artifactId, principal);
-        programRunIdFields.setStartInfo(programStartInfo);
+        String principal = notification.getProperties().get(Constants.Notification.PRINCIPAL);
+
+        ProgramStartInfo programStartInfo = new ProgramStartInfo(userArguments, artifactId, principal);
+        programRunInfo.setStartInfo(programStartInfo);
         break;
-      case "RUNNING":
-        programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("logical.start.time")));
-        programRunIdFields.setStatus("");
+      case Constants.Notification.Status.RUNNING:
+        programRunInfo.setTime(
+          Long.parseLong(notification.getProperties().get(Constants.Notification.LOGICAL_START_TIME)));
         break;
-      case "KILLED":
-      case "COMPLETED":
-      case "FAILED":
-        programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("endTime")));
+      case Constants.Notification.Status.KILLED:
+      case Constants.Notification.Status.COMPLETED:
+      case Constants.Notification.Status.FAILED:
+        programRunInfo.setTime(
+          Long.parseLong(notification.getProperties().get(Constants.Notification.END_TIME)));
         break;
-      case "SUSPENDED":
-        programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("suspendTime")));
+      case Constants.Notification.Status.SUSPENDED:
+        programRunInfo.setTime(
+          Long.parseLong(notification.getProperties().get(Constants.Notification.SUSPEND_TIME)));
         break;
-      case "RESUMING":
-        programRunIdFields.setTime(Long.parseLong(notification.getProperties().get("resumeTime")));
+      case Constants.Notification.Status.RESUMING:
+        programRunInfo.setTime(
+          Long.parseLong(notification.getProperties().get(Constants.Notification.RESUME_TIME)));
         break;
     }
-    return programRunIdFields;
+    return programRunInfo;
   }
 
 
   private static List<Location> listLocationsWithRetry(Location location) throws InterruptedException {
     boolean success = false;
-    SampledLogging sampledLogging = new SampledLogging(LOG, 100);
     while (!success) {
       try {
         return location.list();
       } catch (IOException e) {
-        sampledLogging.logWarning(
+        SAMPLED_LOGGING.logWarning(
           String.format("Exception while listing the location list at %s ", location.toURI()), e);
         TimeUnit.MILLISECONDS.sleep(10);
       }
@@ -151,7 +156,6 @@ public final class MessageUtil {
   private static String getLatestMessageIdFromFile(Location latest) throws InterruptedException {
     boolean success = false;
     String messageId = null;
-    SampledLogging sampledLogging = new SampledLogging(LOG, 100);
     while (!success) {
       try {
         DataFileReader<GenericRecord> dataFileReader =
@@ -164,7 +168,7 @@ public final class MessageUtil {
           messageId = record.get(Constants.MESSAGE_ID).toString();
         }
       } catch (IOException e) {
-        sampledLogging.logWarning(
+        SAMPLED_LOGGING.logWarning(
           String.format("IOException while trying to create a DataFileReader for the location %s ",
                         latest.toURI()), e);
         TimeUnit.MILLISECONDS.sleep(10);
@@ -174,21 +178,17 @@ public final class MessageUtil {
   }
 
   @Nullable
-  private static Location findLatestFileLocation(Location namespaceLocation) throws InterruptedException {
+  private static Optional<Location> findLatestFileLocation(Location namespaceLocation) throws InterruptedException {
     List<Location> latestLocations = new ArrayList();
     latestLocations.addAll(listLocationsWithRetry(namespaceLocation));
-    latestLocations.sort((Location o1, Location o2) -> {
-        String fileName1 = o1.getName();
-        // format is <event-ts>-<creation-ts>.avro, we parse and get the creation-ts
-        long creatingTime1 = Long.parseLong(fileName1.substring(0, fileName1.indexOf(".avro")).split("-")[1]);
-        String fileName2 = o2.getName();
-        long creatingTime2 = Long.parseLong(fileName2.substring(0, fileName2.indexOf(".avro")).split("-")[1]);
-        // latest file should be the first in the list
-        return Longs.compare(creatingTime2, creatingTime1);
+    return latestLocations.stream().max((Location o1, Location o2) -> {
+      String fileName1 = o1.getName();
+      // format is <event-ts>-<creation-ts>.avro, we parse and get the creation-ts
+      long creatingTime1 = Long.parseLong(fileName1.substring(0, fileName1.indexOf(".avro")).split("-")[1]);
+      String fileName2 = o2.getName();
+      long creatingTime2 = Long.parseLong(fileName2.substring(0, fileName2.indexOf(".avro")).split("-")[1]);
+      // latest file will be at the end in the list
+      return Longs.compare(creatingTime1, creatingTime2);
     });
-    if (latestLocations.isEmpty()) {
-      return null;
-    }
-    return latestLocations.get(0);
   }
 }

@@ -40,8 +40,9 @@ public class SparkPersistRunRecordMain implements JavaSparkMain {
       admin.createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
                           FileSetProperties.builder().build());
     }
+
     tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
-                                      getDatasetBaseLocation(sec));
+                                      getDatasetBaseLocation(sec), sec.getRuntimeArguments());
     tmsSubscriber.start();
     try {
       tmsSubscriber.join();

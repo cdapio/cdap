@@ -65,8 +65,8 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
     }
   }
 
-  void append(ProgramRunIdFields programRunIdFields) throws IOException {
-    dataFileWriter.append(ProgramRunIdFieldsSerializer.createRecord(programRunIdFields));
+  void append(ProgramRunInfo programRunInfo) throws IOException {
+    dataFileWriter.append(ProgramRunIdFieldsSerializer.createRecord(programRunInfo));
   }
 
   /**

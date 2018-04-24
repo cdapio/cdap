@@ -21,11 +21,11 @@ import co.cask.cdap.report.util.Constants;
 import org.apache.avro.generic.GenericData;
 
 /**
- * serializer for {@link ProgramRunIdFields}
+ * Serializer for {@link ProgramRunInfo}
  */
 public class ProgramRunIdFieldsSerializer {
   private static final Schema ARTIFACT_INFO = Schema.recordOf(
-    "artifactInfo",
+    "ArtifactInfo",
     Schema.Field.of(Constants.ARTIFACT_NAME, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.ARTIFACT_SCOPE, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.ARTIFACT_VERSION, Schema.of(Schema.Type.STRING)));
@@ -37,7 +37,6 @@ public class ProgramRunIdFieldsSerializer {
                                                               Schema.of(Schema.Type.STRING))
     ),
     Schema.Field.of(Constants.ARTIFACT_ID, ARTIFACT_INFO));
-
 
   private static final String SCHEMA_STRING = Schema.recordOf(
     "ReportRecord",
@@ -59,9 +58,9 @@ public class ProgramRunIdFieldsSerializer {
   public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(SCHEMA_STRING);
 
   /**
-   * convert {@link ProgramRunIdFields} to a Generic record
+   * convert {@link ProgramRunInfo} to a Generic record
    */
-  public static GenericData.Record createRecord(ProgramRunIdFields runIdFields) {
+  public static GenericData.Record createRecord(ProgramRunInfo runIdFields) {
     GenericData.Record startInfoRecord = null;
     if (runIdFields.getProgramStatus().equals("STARTING")) {
       startInfoRecord = new GenericData.Record(STARTING_INFO_SCHEMA);
