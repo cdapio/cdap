@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -23,6 +24,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -34,6 +40,7 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.gson.Gson;
+import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +48,7 @@ import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +77,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private final Map<String, MonitorConsumeRequest> topicsToRequest;
   // caches request key to topic
   private final Map<String, String> requestKeyToLocalTopic;
+  private final OffsetManager offsetManager;
 
   private final MessagePublisher messagePublisher;
   private final long pollTimeMillis;
@@ -76,7 +85,8 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private volatile boolean stopped;
   private boolean programFinished;
 
-  public RuntimeMonitor(ProgramRunId programId, CConfiguration cConf, MessagePublisher messagePublisher,
+  public RuntimeMonitor(ProgramRunId programId, CConfiguration cConf, DatasetFramework datasetFramework,
+                        TransactionSystemClient txClient, MessagePublisher messagePublisher,
                         ClientConfig clientConfig) {
     this.programId = programId;
     this.cConf = cConf;
@@ -87,6 +97,13 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     this.pollTimeMillis = cConf.getInt(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.topicsToRequest = new HashMap<>();
     this.requestKeyToLocalTopic = new HashMap<>();
+    Transactional transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
+        NamespaceId.SYSTEM, Collections.emptyMap(), null, null)),
+      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
+    );
+    this.offsetManager = new OffsetManager(datasetFramework, transactional, cConf);
   }
 
   @Override
@@ -95,11 +112,14 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   }
 
   private void initializeTopics() throws Exception {
-    // TODO initialize from offset table for a given programId
+    Set<String> topicConfigs = getTopicConfigs();
+
     for (String topicConfig : getTopicConfigs()) {
-      topicsToRequest.put(topicConfig, new MonitorConsumeRequest(null, limit));
       requestKeyToLocalTopic.put(topicConfig, getTopic(topicConfig));
     }
+
+    offsetManager.initializeOffsets(topicsToRequest, programId.getRun(), topicConfigs);
+    programFinished = offsetManager.hasRunFinished(programId.getRun());
   }
 
   private Set<String> getTopicConfigs() {
@@ -201,6 +221,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
                              messages.stream().map(s -> s.getMessage().getBytes(StandardCharsets.UTF_8)).iterator());
 
+    offsetManager.persistOffsets(programId.getRun(), topicConfig, messages.get(messages.size() - 1).getMessageId());
     topicsToRequest.put(topicConfig, new MonitorConsumeRequest(messages.get(messages.size() - 1).getMessageId(),
                                                                limit));
   }
@@ -208,19 +229,21 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private void triggerRuntimeShutdown() throws Exception {
     try {
       restClient.execute(HttpRequest.builder(HttpMethod.POST, clientConfig.resolveURL("runtime/shutdown")).build());
+      offsetManager.cleanupOffsets(programId.getRun());
     } catch (ConnectException e) {
       LOG.trace("Connection refused when attempting to connect to Runtime Http Server. " +
                   "Assuming that it is not available.");
     }
   }
 
-  private void setIsRuntimeInactive(List<MonitorMessage> monitorMessages) {
+  private void setIsRuntimeInactive(List<MonitorMessage> monitorMessages) throws Exception {
     for (MonitorMessage message : monitorMessages) {
       Notification notification = GSON.fromJson(message.getMessage(), Notification.class);
       String programStatus = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
       if (programStatus.equals(ProgramRunStatus.COMPLETED.name()) ||
         programStatus.equals(ProgramRunStatus.FAILED.name()) ||
         programStatus.equals(ProgramRunStatus.KILLED.name())) {
+        offsetManager.runFinished(programId.getRun());
         programFinished = true;
         break;
       }
