@@ -32,6 +32,7 @@ import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Runtime Server which starts netty-http service to expose metadata to {@link RuntimeMonitor}
@@ -49,12 +51,14 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
   private final CConfiguration cConf;
   private final MessageFetcher messageFetcher;
+  private final CountDownLatch shutdownLatch;
   private NettyHttpService httpService;
 
   @Inject
   RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService) {
     this.cConf = cConf;
     this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
+    this.shutdownLatch = new CountDownLatch(1);
   }
 
   @Override
@@ -71,7 +75,10 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     SSLHandlerFactory sslHandlerFactory = new SSLHandlerFactory(ks, password);
 
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
-      .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, this::stop))
+      .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, () -> {
+        shutdownLatch.countDown();
+        stop();
+      }))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(address.getHostName())
       .setPort(address.getPort())
@@ -89,6 +96,9 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    // Wait for the shutdown signal from the runtime monitor before shutting off the http server.
+    // This allows the runtime monitor still able to talk to this service until all data are fetched.
+    Uninterruptibles.awaitUninterruptibly(shutdownLatch);
     httpService.stop();
     LOG.info("Runtime monitor server stopped");
   }
