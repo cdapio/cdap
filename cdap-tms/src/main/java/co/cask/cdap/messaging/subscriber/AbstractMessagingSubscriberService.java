@@ -35,7 +35,8 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.xml.ws.handler.MessageContext;
@@ -55,7 +57,7 @@ import javax.xml.ws.handler.MessageContext;
  *
  * @param <T> the type that each message will be decoded to.
  */
-public abstract class AbstractMessagingSubscriberService<T> extends AbstractExecutionThreadService {
+public abstract class AbstractMessagingSubscriberService<T> extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMessagingSubscriberService.class);
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
@@ -66,10 +68,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractExec
   private final long emptyFetchDelayMillis;
   private final RetryStrategy retryStrategy;
   private final MetricsContext metricsContext;
-  private volatile Thread runThread;
   private String messageId;
   private int failureCount;
   private long nonFailureStartTime;
+  private ScheduledExecutorService executor;
+  private long delay;
 
   /**
    * Constructor.
@@ -156,6 +159,22 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractExec
                                           Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
+   * Performs startup task. This method will be called from the executor returned by the {@link #executor()} method.
+   * By default this method does nothing.
+   */
+  protected void doStartUp() {
+    // No-op
+  }
+
+  /**
+   * Performs shutdown task. This method will be called from the executor returned by the {@link #executor()} method.
+   * By default this method does nothing.
+   */
+  protected void doShutdown() {
+    // No-op
+  }
+
+  /**
    * Perform post processing after a batch of messages has been processed and before the next batch of
    * messages is fetched. This will take place outside of the transaction used when processing messages.
    */
@@ -164,51 +183,54 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractExec
   }
 
   @Override
-  protected final void run() throws Exception {
-    this.runThread = Thread.currentThread();
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory(getServiceName()));
+    return executor;
+  }
+
+  @Override
+  protected final void startUp() throws Exception {
+    doStartUp();
 
     // Fetch the messageId. Retry on any exceptions thrown
     messageId = Retries.supplyWithRetries(() -> Transactionals.execute(getTransactional(), this::loadMessageId),
                                           retryStrategy, Retries.ALWAYS_TRUE);
-    while (runThread != null) {
-      try {
-        long sleepTime = fetchAndProcessMessages();
-        try {
-          postProcess();
-        } catch (Exception e) {
-          LOG.warn("Failed to perform post processing after processing messages.", e);
-        }
-        // Don't sleep if sleepTime returned is 0
-        if (sleepTime > 0) {
-          TimeUnit.MILLISECONDS.sleep(sleepTime);
-        }
-      } catch (InterruptedException e) {
-        // Thread interrupted, which is the signal to stop
-        break;
+  }
+
+  @Override
+  protected final void shutDown() throws Exception {
+    try {
+      doShutdown();
+    } finally {
+      if (executor != null) {
+        executor.shutdown();
       }
     }
-
-    // Clear the interrupt flag
-    Thread.interrupted();
   }
 
   @Override
-  protected void triggerShutdown() {
-    Thread t = runThread;
-    runThread = null;
-    t.interrupt();
+  protected final void runOneIteration() throws Exception {
+    delay = Math.max(0, fetchAndProcessMessages());
+    try {
+      postProcess();
+    } catch (Exception e) {
+      LOG.warn("Failed to perform post processing after processing messages.", e);
+    }
   }
 
   @Override
-  protected Executor executor() {
-    return command -> {
-      Thread t = new Thread(command, "tms-subscriber-" + getServiceName());
-      t.setDaemon(true);
-      t.start();
+  protected final Scheduler scheduler() {
+    return new CustomScheduler() {
+      @Override
+      protected Schedule getNextSchedule() throws Exception {
+        return new Schedule(delay, TimeUnit.MILLISECONDS);
+      }
     };
   }
 
-  @Override
+  /**
+   * Return the name of this consumer service.
+   */
   protected String getServiceName() {
     return getClass().getSimpleName();
   }

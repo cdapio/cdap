@@ -44,6 +44,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -68,6 +71,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final MetricsCollectionService metricsCollectionService;
   private final List<Service> subscriberServices;
+  private ScheduledExecutorService subscriberExecutor;
 
   @Inject
   ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -86,6 +90,11 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
+
+    // Use a shared executor for all different subscribers and only keep one core thread
+    subscriberExecutor = Executors.newScheduledThreadPool(
+      1, Threads.createDaemonThreadFactory("scheduler-notification-subscriber-%d"));
+
     // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
     Futures.successfulAsList(subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
   }
@@ -105,6 +114,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       }
     }
 
+    subscriberExecutor.shutdownNow();
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
@@ -139,6 +149,11 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       while (messages.hasNext()) {
         processNotification(scheduleStore, jobQueue, messages.next().getSecond());
       }
+    }
+
+    @Override
+    protected ScheduledExecutorService executor() {
+      return subscriberExecutor;
     }
 
     /**
