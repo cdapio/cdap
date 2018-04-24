@@ -180,7 +180,7 @@ public class ProvisioningService extends AbstractIdleService {
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.REQUESTING_CREATE);
     ClusterInfo clusterInfo =
       new ClusterInfo(programRunId, provisionRequest.getProgramDescriptor(),
-                      properties, name, provisionRequest.getUser(), clusterOp, null, null);
+                      properties, name, provisionRequest.getUser(), clusterOp, sshKeyInfo, null);
     ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
     provisionerDataset.putClusterInfo(clusterInfo);
 

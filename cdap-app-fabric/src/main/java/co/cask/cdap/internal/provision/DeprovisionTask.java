@@ -86,16 +86,18 @@ public class DeprovisionTask extends ProvisioningTask {
       // TODO: CDAP-13246 handle unexpected states and retry
       switch (status) {
         case NOT_EXISTS:
-          provisionerNotifier.deprovisioned(programRunId);
-          Transactionals.execute(transactional, dsContext -> {
-            ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-            dataset.deleteClusterInfo(programRunId);
-          });
-
-          // Delete the keys. We only delete when the cluster is gone.
-          SSHKeyInfo keyInfo = clusterInfo.getSshKeyInfo();
-          if (keyInfo != null) {
-            Locations.deleteQuietly(locationFactory.create(keyInfo.getKeyDirectory()), true);
+          try {
+            provisionerNotifier.deprovisioned(programRunId);
+            Transactionals.execute(transactional, dsContext -> {
+              ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+              dataset.deleteClusterInfo(programRunId);
+            });
+          } finally {
+            // Delete the keys. We only delete when the cluster is gone.
+            SSHKeyInfo keyInfo = clusterInfo.getSshKeyInfo();
+            if (keyInfo != null) {
+              Locations.deleteQuietly(locationFactory.create(keyInfo.getKeyDirectory()), true);
+            }
           }
           break;
       }
