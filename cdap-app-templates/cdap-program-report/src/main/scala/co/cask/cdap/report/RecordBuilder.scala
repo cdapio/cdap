@@ -16,7 +16,8 @@
 package co.cask.cdap.report
 
 import co.cask.cdap.api.schedule.{TriggerInfo, TriggeringScheduleInfo}
-import com.google.gson.Gson
+import co.cask.cdap.report.util.TriggeringScheduleInfoAdapter
+import com.google.gson.{Gson, GsonBuilder}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -120,5 +121,5 @@ object RecordBuilder {
   val LOG = LoggerFactory.getLogger(RecordBuilder.getClass)
   val END_STATUSES = Set("COMPLETED", "KILLED", "FAILED")
   val MANUAL = "MANUAL"
-  val GSON = new Gson()
+  val GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder).create()
 }

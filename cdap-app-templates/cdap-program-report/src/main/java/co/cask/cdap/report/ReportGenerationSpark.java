@@ -39,7 +39,7 @@ import co.cask.cdap.report.proto.ValueFilter;
 import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.report.util.TriggeringScheduleInfoAdapter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;

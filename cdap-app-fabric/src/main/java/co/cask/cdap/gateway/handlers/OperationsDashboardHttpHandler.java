@@ -24,12 +24,14 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -50,7 +52,7 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
 public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final Store store;
 
   @Inject
