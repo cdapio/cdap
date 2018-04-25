@@ -131,6 +131,18 @@ public interface TestManager {
                                  Manifest manifest) throws Exception;
 
   /**
+   * Builds an application artifact from the specified class and then adds it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @param bundleEmbeddedJars a list of jars that will be included in the application bundle.
+   * @return an {@link ArtifactManager} to manage the added app artifact
+   */
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
+                                 Manifest manifest, File...bundleEmbeddedJars) throws Exception;
+
+  /**
    * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
