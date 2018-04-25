@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
@@ -36,6 +37,7 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -73,16 +75,21 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final MessagingService messagingService;
+  private final DatasetFramework dsFramework;
+  private final TransactionSystemClient txClient;
   private LocationCache locationCache;
   private Path cachePath;
 
   @Inject
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
-                                    LocationFactory locationFactory, MessagingService messagingService) {
+                                    LocationFactory locationFactory, MessagingService messagingService,
+                                    DatasetFramework dsFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.messagingService = messagingService;
+    this.dsFramework = dsFramework;
+    this.txClient = txClient;
   }
 
   @Override
@@ -158,7 +165,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
       return new RemoteExecutionTwillPreparer(cConf, config, sshConfig, programRunId,
                                               application.configure(), RunIds.generate(),
-                                              null, locationCache, locationFactory, messagingService);
+                                              null, locationCache, locationFactory, messagingService,
+                                              dsFramework, txClient);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
