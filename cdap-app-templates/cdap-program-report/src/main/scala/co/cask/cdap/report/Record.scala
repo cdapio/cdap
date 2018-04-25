@@ -26,5 +26,5 @@ case class Record(namespace: String, artifactName: Option[String],
                   duration: Option[Long], user: Option[String], startMethod: String,
                   // use scala.collection.Map[String,String]] instead of Map[String, String] to avoid compilation error
                   // in Janino generated code
-                  runtimeArgs: Option[scala.collection.Map[String, String]],
+                  runtimeArguments: Option[scala.collection.Map[String, String]],
                   numLogWarnings: Int, numLogErrors: Int, numRecordsOut: Int)
