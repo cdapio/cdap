@@ -1420,6 +1420,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(keyBuilder.build(), Bytes.toBytes(messageId));
   }
 
+  /**
+   * Deletes the given topic's last fetched message id with the given message id for the given subscriber.
+   *
+   * @param topic the topic to persist the message id
+   * @param subscriber the subscriber name
+   */
+  public void deleteSubscriberState(String topic, String subscriber) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE).add(topic);
+    keyBuilder.add(subscriber);
+    delete(keyBuilder.build());
+  }
+
   private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
                                                      final long endTimeInSecs, long maxScanTimeMillis) {
     List<Iterable<RunId>> batches = getRunningInRangeForStatus(statusKey, startTimeInSecs, endTimeInSecs,
