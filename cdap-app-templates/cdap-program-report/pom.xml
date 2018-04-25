@@ -54,6 +54,7 @@
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -86,7 +87,7 @@
       <scope>test</scope>
       <exclusions>
         <exclusion>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>org.apache.hive</groupId>
           <artifactId>hive-exec</artifactId>
         </exclusion>
       </exclusions>
@@ -224,7 +225,6 @@
               </manifest>
             </archive>
             <instructions>
-              <_exportcontents>co.cask.cdap.etl.api.*</_exportcontents>
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>

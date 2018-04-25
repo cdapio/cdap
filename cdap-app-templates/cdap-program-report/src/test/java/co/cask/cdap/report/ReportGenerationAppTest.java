@@ -18,7 +18,8 @@ package co.cask.cdap.report;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
@@ -34,6 +35,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
+import com.databricks.spark.avro.DefaultSource;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -41,6 +43,13 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumWriter;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.ApplicationBundler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -82,13 +91,31 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
 
   @Before
   public void setupTest() throws Exception {
-    URL avroUrl =
-      ClassLoaders.getClassPathURL("com.databricks.spark.avro.DefaultSource",
-                                   getClass().getClassLoader().getResource(
-                                     "com/databricks/spark/avro/DefaultSource.class"));
-    File jarFile = new File(avroUrl.toURI());
-    ApplicationManager app =
-      deployApplication(ReportGenerationApp.class, jarFile);
+    // Trace the dependencies for the spark avro
+    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (className.startsWith("org.apache.spark.")) {
+          return false;
+        }
+        if (className.startsWith("scala.")) {
+          return false;
+        }
+        if (className.startsWith("org.apache.hadoop.")) {
+          return false;
+        }
+        if (className.startsWith("org.codehaus.janino.")) {
+          return false;
+        }
+        return true;
+      }
+    });
+
+    Location avroSparkBundle = Locations.toLocation(TEMP_FOLDER.newFile());
+    bundler.createBundle(avroSparkBundle, DefaultSource.class);
+    File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
+
+    ApplicationManager app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
     reportGenerationSparkUrl = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
     Assert.assertNotNull(reportGenerationSparkUrl);
