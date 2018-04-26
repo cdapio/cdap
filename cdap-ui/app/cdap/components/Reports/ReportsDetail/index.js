@@ -23,31 +23,121 @@ import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsSt
 import { Link } from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
+import {connect} from 'react-redux';
+import {humanReadableDate} from 'services/helpers';
 
 require('./ReportsDetail.scss');
 
-export default class ReportsDetail extends Component {
+class ReportsDetailView extends Component {
   static propTypes = {
-    match: PropTypes.object
+    match: PropTypes.object,
+    created: PropTypes.number,
+    reportName: PropTypes.string,
+    error: PropTypes.string,
+    status: PropTypes.string,
+    detailError: PropTypes.string
   };
 
   componentWillMount() {
+    this.fetchStatus();
+  }
+
+  fetchStatus = () => {
     let params = {
       reportId: this.props.match.params.reportId
     };
 
-    MyReportsApi.getSummary(params)
-      .combineLatest(MyReportsApi.getRuns(params))
-      .subscribe(([summary, runsInfo]) => {
+    MyReportsApi.getReport(params)
+      .subscribe((res) => {
         ReportsStore.dispatch({
-          type: ReportsActions.setDetails,
+          type: ReportsActions.setInfoStatus,
           payload: {
-            runs: runsInfo.runs,
-            summary
+            info: res
+          }
+        });
+
+        if (res.status === 'COMPLETED') {
+          this.fetchDetails();
+        }
+      }, (err) => {
+        ReportsStore.dispatch({
+          type: ReportsActions.setDetailsError,
+          payload: {
+            error: err.response
           }
         });
       });
-  }
+  };
+
+  fetchDetails = () => {
+    let params = {
+      reportId: this.props.match.params.reportId
+    };
+
+    MyReportsApi.getDetails(params)
+      .subscribe((res) => {
+        ReportsStore.dispatch({
+          type: ReportsActions.setRuns,
+          payload: {
+            runs: res.details
+          }
+        });
+      }, (err) => {
+        console.log('err', err);
+        ReportsStore.dispatch({
+          type: ReportsActions.setDetailsError,
+          payload: {
+            error: err.response
+          }
+        });
+      });
+  };
+
+  renderError = (isDetail) => {
+    let errorHeaderLabel = isDetail ? 'Error' : 'Report Generation Failed';
+    let error = isDetail ? this.props.detailError : this.props.error;
+
+    return (
+      <div className="error-container">
+        <h5 className="text-danger">{errorHeaderLabel}</h5>
+        <pre>{error}</pre>
+      </div>
+    );
+  };
+
+  renderDetail = () => {
+    if (this.props.status === 'FAILED' && this.props.error) {
+      return this.renderError(false);
+    }
+
+    if (this.props.detailError) {
+      return this.renderError(true);
+    }
+
+    return (
+      <div className="reports-detail-container">
+        <div className="action-section clearfix">
+          <div className="date-container float-xs-left">
+            Report generated on {humanReadableDate(this.props.created)}
+          </div>
+
+          <div className="action-button float-xs-right">
+            <button className="btn btn-primary">
+              Save Report
+            </button>
+
+            <button className="btn btn-link">
+              Export
+            </button>
+          </div>
+        </div>
+
+        <Summary />
+
+        <Runs />
+      </div>
+    );
+  };
 
   render() {
     return (
@@ -60,33 +150,30 @@ export default class ReportsDetail extends Component {
             </Link>
             <span className="separator">|</span>
             <span>
-              {this.props.match.params.reportId}
+              {this.props.reportName}
             </span>
           </div>
         </div>
 
-        <div className="reports-detail-container">
-          <div className="action-section clearfix">
-            <div className="date-container float-xs-left">
-              Report generated on some date
-            </div>
-
-            <div className="action-button float-xs-right">
-              <button className="btn btn-primary">
-                Save Report
-              </button>
-
-              <button className="btn btn-link">
-                Export?
-              </button>
-            </div>
-          </div>
-
-          <Summary />
-
-          <Runs />
-        </div>
+        {this.renderDetail()}
       </div>
     );
   }
 }
+
+const mapStateToProps = (state, ownProps) => {
+  return {
+    match: ownProps.match,
+    created: state.details.created,
+    reportName: state.details.name,
+    error: state.details.error,
+    status: state.details.status,
+    detailError: state.details.detailError
+  };
+};
+
+const ReportsDetail = connect(
+  mapStateToProps
+)(ReportsDetailView);
+
+export default ReportsDetail;

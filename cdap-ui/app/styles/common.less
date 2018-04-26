@@ -314,12 +314,8 @@ footer {
       &:hover {
         background: @grey-08;
       }
-      &:last-of-type,
-      &:first-of-type {
-        > div {
-          border: 0;
-        }
-      }
+      &:first-of-type > div { border-top: 0; }
+      &:last-of-type > div { border-bottom: 0; }
     }
   }
 }

@@ -141,7 +141,11 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
   // Y Axis Left
   chart.append('g')
     .attr('class', 'axis axis-y-left')
-    .call(d3.axisLeft(yLeft));
+    .call(d3.axisLeft(yLeft).tickFormat((e) => {
+      // showing only integers
+      if (Math.floor(e) !== e) { return; }
+      return e;
+    }));
 
   // Y Axis Right
   chart.append('g')

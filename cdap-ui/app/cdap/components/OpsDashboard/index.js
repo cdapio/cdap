@@ -41,9 +41,7 @@ export default class OpsDashboard extends Component {
         <div className="ops-dashboard">
           <div className="header clearfix">
             <div className="links float-xs-left">
-              <span className="active">Run Monitor</span>
-              <span className="separator">|</span>
-              <span>Reports</span>
+              <span>Dashboard</span>
             </div>
 
             <NamespacesPicker />

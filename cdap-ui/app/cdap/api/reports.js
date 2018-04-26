@@ -18,13 +18,25 @@ import {apiCreator} from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 
-let basepath = `/reports/:reportId`;
+let appPath = '/namespaces/system/apps/ReportGenerationApp';
+let programPath = `${appPath}/spark/ReportGenerationSpark`;
+
+let methodsPath = `${programPath}/methods`;
+let basepath = `${methodsPath}/reports/:reportId`;
 
 export const MyReportsApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', '/reports'),
-  getReport: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/details`),
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${methodsPath}/reports`),
+  getDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/details`),
+  getReport: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  generateReport: apiCreator(dataSrc, 'POST', 'REQUEST', `${methodsPath}/reports`),
+  deleteReport: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
 
-  // temporary API until spark app is finished
-  getSummary: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/summary`),
-  getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/runs`)
+  // report service lifecycle
+  getApp: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
+  startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/start`),
+  stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/stop`),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`, { interval: 2000 }),
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${methodsPath}/reports`),
+  deleteApp: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath)
 };

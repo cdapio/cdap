@@ -19,9 +19,15 @@ import {defaultAction} from 'services/helpers';
 
 const ReportsActions = {
   toggleCustomizerOption: 'REPORTS_TOGGLE_CUSTOMIZER_OPTION',
+  setSelections: 'REPORTS_SET_SELECTIONS',
   setList: 'REPORTS_SET_LIST',
-  setDetails: 'REPORTS_SET_DETAILS',
   setTimeRange: 'REPORTS_SET_TIME_RANGE',
+  setRuns: 'REPORTS_SET_RUNS',
+  setInfoStatus: 'REPORTS_SET_INFO_STATUS',
+  clearSelection: 'REPORTS_CUSTOMIZER_CLEAR',
+  setActiveId: 'REPORTS_SET_ACTIVE_ID',
+  setStatus: 'REPORTS_SET_STATUS',
+  setDetailsError: 'REPORTS_DETAILS_ERROR',
   reset: 'REPORTS_RESET'
 };
 
@@ -41,6 +47,10 @@ const defaultCustomizerState = {
   numRecordsOut: false
 };
 
+const defaultStatusState = {
+  statusSelections: []
+};
+
 const defaultTimeRangeState = {
   selection: null,
   start: null,
@@ -50,12 +60,20 @@ const defaultTimeRangeState = {
 const defaultListState = {
   total: 0,
   reports: [],
-  offset: 0
+  offset: 0,
+  activeId: null
 };
 
 const defaultDetailsState = {
+  created: null,
+  expiry: null,
+  name: null,
+  request: {},
+  status: null,
   summary: {},
-  runs: []
+  runs: [],
+  error: null,
+  detailError: null
 };
 
 const customizer = (state = defaultCustomizerState, action = defaultAction) => {
@@ -65,8 +83,30 @@ const customizer = (state = defaultCustomizerState, action = defaultAction) => {
         ...state,
         [action.payload.type]: !state[action.payload.type]
       };
+    case ReportsActions.setSelections:
+      return {
+        ...state,
+        ...action.payload.selections
+      };
+    case ReportsActions.clearSelection:
     case ReportsActions.reset:
       return defaultCustomizerState;
+    default:
+      return state;
+  }
+};
+
+const status = (state = defaultStatusState, action = defaultAction) => {
+  switch (action.type) {
+    case ReportsActions.setStatus:
+    case ReportsActions.setSelections:
+      return {
+        ...state,
+        statusSelections: action.payload.statusSelections
+      };
+    case ReportsActions.clearSelection:
+    case ReportsActions.reset:
+      return defaultStatusState;
     default:
       return state;
   }
@@ -81,6 +121,12 @@ const timeRange = (state = defaultTimeRangeState, action = defaultAction) => {
         start: action.payload.start,
         end: action.payload.end
       };
+    case ReportsActions.setSelections:
+      return {
+        ...state,
+        ...action.payload.timeRange
+      };
+    case ReportsActions.clearSelection:
     case ReportsActions.reset:
       return defaultTimeRangeState;
     default:
@@ -92,9 +138,15 @@ const list = (state = defaultListState, action = defaultAction) => {
   switch (action.type) {
     case ReportsActions.setList:
       return {
-        total: action.payload.total,
-        reports: action.payload.reports,
-        offset: action.payload.offset
+        total: action.payload.list.total,
+        reports: action.payload.list.reports,
+        offset: action.payload.list.offset,
+        activeId: action.payload.activeId
+      };
+    case ReportsActions.setActiveId:
+      return {
+        ...state,
+        activeId: action.payload.activeId
       };
     case ReportsActions.reset:
       return defaultListState;
@@ -105,10 +157,20 @@ const list = (state = defaultListState, action = defaultAction) => {
 
 const details = (state = defaultDetailsState, action = defaultAction) => {
   switch (action.type) {
-    case ReportsActions.setDetails:
+    case ReportsActions.setInfoStatus:
       return {
-        summary: action.payload.summary,
+        ...state,
+        ...action.payload.info
+      };
+    case ReportsActions.setRuns:
+      return {
+        ...state,
         runs: action.payload.runs
+      };
+    case ReportsActions.setDetailsError:
+      return {
+        ...state,
+        detailError: action.payload.error
       };
     case ReportsActions.reset:
       return defaultDetailsState;
@@ -120,12 +182,14 @@ const details = (state = defaultDetailsState, action = defaultAction) => {
 const ReportsStore = createStore(
   combineReducers({
     customizer,
+    status,
     list,
     details,
     timeRange
   }),
   {
-    reports: defaultCustomizerState,
+    customizer: defaultCustomizerState,
+    status: defaultStatusState,
     list: defaultListState,
     details: defaultDetailsState,
     timeRange: defaultTimeRangeState

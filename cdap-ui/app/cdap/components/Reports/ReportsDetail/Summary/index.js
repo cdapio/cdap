@@ -25,7 +25,11 @@ require('./Summary.scss');
 function renderNamespaces(summary) {
   if (!summary.namespaces) { return null; }
 
-  return summary.namespaces.join(', ');
+  return summary.namespaces
+    .map((ns) => {
+      return `${ns.namespace} (${ns.runs} runs)`;
+    })
+    .join(', ');
 }
 
 function renderAppType(summary) {
@@ -86,7 +90,7 @@ function renderStartMethod(summary) {
   if (!summary.startMethods) { return null; }
   const labelMap = {
     MANUAL: 'manually',
-    TIME: 'by schedule',
+    SCHEDULED: 'by schedule',
     PROGRAM_STATUS: 'by trigger'
   };
 
