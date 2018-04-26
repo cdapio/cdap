@@ -14,23 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.report.util;
+package co.cask.cdap.report.proto;
 
 import co.cask.cdap.api.schedule.TriggerInfo;
 
 /**
- * Base class for the trigger information to be passed to the triggered program.
+ * A simple trigger information that only contains the type of the trigger.
  */
-public abstract class AbstractTriggerInfo implements TriggerInfo {
+public class SimpleTriggerInfo implements TriggerInfo {
   private final Type type;
 
-  public AbstractTriggerInfo(Type type) {
+  public SimpleTriggerInfo(Type type) {
     this.type = type;
   }
 
-  /**
-   * @return The type of the trigger.
-   */
   @Override
   public Type getType() {
     return type;

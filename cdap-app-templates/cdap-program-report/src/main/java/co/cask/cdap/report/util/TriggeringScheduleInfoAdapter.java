@@ -35,17 +35,12 @@ public class TriggeringScheduleInfoAdapter {
   public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
     return builder
       .registerTypeAdapter(TriggerInfo.class, new TriggerInfoCodec())
-      .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
       .registerTypeAdapterFactory(new TypeAdapterFactory() {
         @Override
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
           if (TriggeringScheduleInfo.class.equals(type.getRawType())) {
             //noinspection unchecked
             return (TypeAdapter<T>) gson.getAdapter(DefaultTriggeringScheduleInfo.class);
-          }
-          if (WorkflowToken.class.equals(type.getRawType())) {
-            //noinspection unchecked
-            return (TypeAdapter<T>) gson.getAdapter(BasicWorkflowToken.class);
           }
           return null;
         }

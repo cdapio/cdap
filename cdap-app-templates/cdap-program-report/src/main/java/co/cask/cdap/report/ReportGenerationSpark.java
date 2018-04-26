@@ -247,20 +247,47 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @Path("/reports/{report-id}/save")
     public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
                                 @PathParam("report-id") String reportId) throws IOException {
-      String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      if (!reportIdDir.exists()) {
+        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+        return;
+      }
+      ReportStatus status = getReportStatus(reportIdDir);
+      switch (status) {
+        case COMPLETED:
+          break;
+        default:
+          responder.sendError(403, "Cannot save the report with status " + status);
+          return;
+      }
       Location savedFile = reportIdDir.append(SAVED_FILE);
+      if (savedFile.exists()) {
+        responder.sendError(403, String.format("Report %s is already saved and cannot be saved again.", reportId));
+        return;
+      }
       if (!savedFile.createNew()) {
         reportIdDir.delete();
         responder.sendError(500, "Failed to create a file for saving the report " + reportId);
         return;
       }
+      String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      ReportSaveRequest saveRequest = null;
+      try {
+        saveRequest = GSON.fromJson(requestJson, REPORT_SAVED_REQUEST_TYPE);
+      } catch (JsonSyntaxException e) {
+        responder.sendError(400, "Failed to parse the report saving request: " + e);
+        return;
+      }
+
       // Save the report generation request in the _SAVED file
       try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(savedFile.getOutputStream(),
                                                                        StandardCharsets.UTF_8), true)) {
         writer.write(requestJson);
       }
-      responder.sendStatus(200);
+      responder.sendString(200,
+                           String.format("Report is saved successfully with the name: '%s' and description: '%s' ",
+                                         saveRequest.getName(), saveRequest.getDescription()),
+                           StandardCharsets.UTF_8);
     }
 
     @GET

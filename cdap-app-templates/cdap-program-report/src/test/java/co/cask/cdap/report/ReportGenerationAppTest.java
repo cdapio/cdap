@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.RangeFilter;
@@ -35,6 +36,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
+import co.cask.cdap.test.WorkflowManager;
 import com.databricks.spark.avro.DefaultSource;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -43,10 +45,6 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.DatumWriter;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
@@ -123,6 +121,10 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
 
   @Test
   public void testGenerateReportWithRealData() throws Exception {
+    ApplicationManager schedApp = deployApplication(NoOpWorkflowApp.class);
+    schedApp.getWorkflowManager("TriggeredWorkflow").getSchedule("sched").resume();
+    WorkflowManager sleepWf = schedApp.getWorkflowManager("NoOpWorkflow").start();
+    sleepWf.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
     Assert.assertNotNull(reportGenerationSparkUrl);
     TimeUnit.SECONDS.sleep(10);
     URL reportURL = reportGenerationSparkUrl.toURI().resolve("reports/").toURL();
@@ -133,7 +135,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     ReportGenerationRequest request =
       new ReportGenerationRequest("report1", now - 3600, now, ImmutableList.of("namespace", "applicationName",
                                                                                "programType", "program", "run",
-                                                                               "status", "start"),
+                                                                               "status", "start", "runtimeArguments"),
                                   ImmutableList.of(
                                     new Sort("duration", Sort.Order.DESCENDING)),
                                   filters);
@@ -164,8 +166,14 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     Assert.assertNotNull(reportGenerationInfo.getExpiry());
     // read the report's details
     URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
-    ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
-    LOG.info(reportContent.toString());
+    URLConnection urlConnection = reportRunsURL.openConnection();
+    String response;
+    try {
+      response = new String(ByteStreams.toByteArray(urlConnection.getInputStream()), Charsets.UTF_8);
+    } finally {
+      ((HttpURLConnection) urlConnection).disconnect();
+    }
+    LOG.info(response);
   }
 
   @Ignore
