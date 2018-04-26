@@ -18,6 +18,7 @@ import ProfilesStore, {PROFILES_ACTIONS} from 'components/Cloud/Profiles/Store';
 import {MyCloudApi} from 'api/cloud';
 import fileDownload from 'js-file-download';
 import {objectQuery} from 'services/helpers';
+import {Observable} from 'rxjs/Observable';
 
 export const getProfiles = (namespace) => {
   ProfilesStore.dispatch({
@@ -27,10 +28,17 @@ export const getProfiles = (namespace) => {
     }
   });
 
-  MyCloudApi
-    .list({ namespace })
+  let profileObservable = MyCloudApi.list({ namespace: 'system' });
+  if (namespace !== 'system') {
+    profileObservable = profileObservable.combineLatest(MyCloudApi.list({ namespace }));
+  } else {
+    profileObservable = profileObservable.combineLatest(Observable.of([]));
+  }
+
+  profileObservable
     .subscribe(
-      (profiles) => {
+      ([systemProfiles = [], namespaceProfiles = []]) => {
+        let profiles = namespaceProfiles.concat(systemProfiles);
         ProfilesStore.dispatch({
           type: PROFILES_ACTIONS.SET_PROFILES,
           payload: { profiles }
@@ -66,13 +74,13 @@ export const exportProfile = (namespace, profile) => {
     );
 };
 
-export const deleteProfile = (namespace, profile) => {
+export const deleteProfile = (namespace, profile, currentNamespace) => {
   let deleteObservable = MyCloudApi.delete({
     namespace,
     profile
   });
   deleteObservable.subscribe(() => {
-    getProfiles(namespace);
+    getProfiles(currentNamespace);
   });
   return deleteObservable;
 };
