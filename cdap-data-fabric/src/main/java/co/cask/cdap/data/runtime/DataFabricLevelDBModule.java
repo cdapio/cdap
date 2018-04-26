@@ -44,7 +44,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-    install(new TransactionModules().getInMemoryModules());
+    install(new TransactionModules().getSingleNodeModules());
     install(new TransactionExecutorModule());
   }
 }
