@@ -20,7 +20,8 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 const PROFILES_ACTIONS = {
   SET_PROFILES: 'SET_PROFILES',
   SET_LOADING: 'SET_LOADING',
-  SET_ERROR: 'SET_ERROR'
+  SET_ERROR: 'SET_ERROR',
+  RESET: 'RESET'
 };
 
 const DEFAULT_PROFILES_STATE = {

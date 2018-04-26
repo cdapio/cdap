@@ -50,7 +50,6 @@ import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
-import ProfileCreateView from 'components/Cloud/Profiles/CreateView';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -122,7 +121,6 @@ class CDAP extends Component {
                   <Route path="/ns/:namespace" history={history} component={Home} />
                   <Route path="/socket-example" component={ConnectionExample} />
                   <Route exact path="/httpexecutor" component={HttpExecutor} />
-                  <Route exact path="/create-profile" component={ProfileCreateView} />
                   <Route component={Page404} />
                 </Switch>
               </div>

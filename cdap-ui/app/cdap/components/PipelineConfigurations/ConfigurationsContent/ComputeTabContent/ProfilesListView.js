@@ -138,7 +138,7 @@ export default class ProfilesListViewInPipeline extends Component {
         <div>
           <strong> No Profiles created </strong>
           <div>
-            <a href={`/cdap/ns/${getCurrentNamespace()}/create-profile`}>
+            <a href={`/cdap/ns/${getCurrentNamespace()}/profiles/create`}>
               Click here
             </a>
             <span> to create one </span>

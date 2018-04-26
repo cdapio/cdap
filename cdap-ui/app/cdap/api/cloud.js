@@ -19,13 +19,14 @@ import {apiCreator} from 'services/resource-helper';
 let dataSrc = DataSourceConfigurer.getInstance();
 
 var basepath = '/namespaces/:namespace';
+var profilesPath = `${basepath}/profiles`;
 var provisionersPath = '/provisioners';
 
 export const MyCloudApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/profiles`),
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/profiles/:profile`),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/profiles/:profile`),
-  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/profiles/:profile`),
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', profilesPath),
+  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${profilesPath}/:profile`),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${profilesPath}/:profile`),
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${profilesPath}/:profile`),
   getProvisioners: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}`),
   getProvisionerDetailSpec: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}/:provisioner`)
 };

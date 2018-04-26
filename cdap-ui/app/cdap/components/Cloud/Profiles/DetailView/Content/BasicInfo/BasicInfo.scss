@@ -1,0 +1,86 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import "../../../../../../styles/variables.scss";
+
+.profile-detail-view {
+  .detail-view-content {
+    .detail-view-basic-info {
+      .profile-name-delete {
+        display: flex;
+        align-items: center;
+
+        .profile-name {
+          display: inline-block;
+        }
+
+        .profile-actions-popover {
+          margin-left: auto;
+          text-align: center;
+
+          &:hover {
+            color: $blue-03;
+          }
+        }
+      }
+
+      .profile-description {
+        padding-top: 10px;
+        color: $grey-03;
+      }
+
+      .profile-info-grid {
+        margin-top: 10px;
+
+        .grid.grid-container {
+          .grid-row {
+            padding: 0;
+            border-bottom: 0;
+
+            &:hover {
+              background-color: white;
+            }
+
+            & > * {
+              padding: 0;
+            }
+          }
+
+          .grid-header {
+            .grid-row {
+              strong {
+                color: $grey-03;
+                font-weight: 600;
+              }
+            }
+          }
+
+          .grid-body {
+            .grid-row {
+              font-size: 15px;
+
+              .icon-cloud {
+                font-size: 1.5rem;
+                margin-right: 5px;
+                color: $grey-03;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

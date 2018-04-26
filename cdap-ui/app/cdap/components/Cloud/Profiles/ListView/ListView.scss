@@ -69,40 +69,10 @@ $row-height: 50px;
     .grid-body {
       .grid-row {
         height: $row-height;
+        color: $grey-01;
 
         &:last-child {
           border-bottom: 0;
-        }
-
-        .profile-actions-popover {
-          .icon-cog-empty {
-            fill: white;
-            font-size: 23px;
-            stroke: $grey-04;
-          }
-
-          .popper {
-            width: 90px;
-            min-width: 90px;
-
-            ul {
-              hr {
-                height: 1px;
-                margin: 5px 8px;
-                border-top: 0;
-                background-color: $grey-03;
-              }
-
-              li.delete-action {
-                color: $red-02;
-              }
-            }
-
-            .popper__arrow {
-              border-right-color: $grey-05;
-              border-bottom-color: $grey-05;
-            }
-          }
         }
 
         &:hover {

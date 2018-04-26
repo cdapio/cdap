@@ -127,3 +127,9 @@ export const setError = (error) => {
     payload: { error }
   });
 };
+
+export const resetProfiles = () => {
+  ProfilesStore.dispatch({
+    type: PROFILES_ACTIONS.RESET
+  });
+};

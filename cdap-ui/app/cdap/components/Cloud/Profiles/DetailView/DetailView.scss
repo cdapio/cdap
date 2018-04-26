@@ -14,18 +14,7 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
-
-.namespace-details-top-panel {
-  padding: 0 50px;
-  height: 50px;
-  background-color: $grey-08;
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-
-  .close-namespace-details {
-    margin-left: auto;
-    cursor: pointer;
-  }
+.profile-detail-view {
+  height: inherit;
+  overflow: auto;
 }

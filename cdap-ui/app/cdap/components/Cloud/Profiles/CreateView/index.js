@@ -28,13 +28,13 @@ import {connect, Provider} from 'react-redux';
 import ProvisionerInfoStore from 'components/Cloud/Store';
 import {fetchProvisionerSpec} from 'components/Cloud/Store/ActionCreator';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
-import IconSVG from 'components/IconSVG';
+import EntityTopPanel from 'components/EntityTopPanel';
 
 require('./CreateView.scss');
 
-class ProfilesCreateView extends Component {
+class ProfileCreateView extends Component {
   static propTypes = {
-    location: PropTypes.object,
+    match: PropTypes.object,
     provisionerJsonSpecMap: PropTypes.object,
     loading: PropTypes.bool,
     selectedProvisioner: PropTypes.string
@@ -50,7 +50,7 @@ class ProfilesCreateView extends Component {
     redirectToNamespace: false,
     redirectToAdmin: false,
     creatingProfile: false,
-    isSystem: objectQuery(this.props.location, 'pathname') === '/create-profile'
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system'
   };
 
   parseSpecAndGetInitialState = (provisionerJson = {}) => {
@@ -258,21 +258,14 @@ class ProfilesCreateView extends Component {
     let linkObj = this.state.isSystem ? {
       pathname: '/administration/configuration',
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
-    } : `/ns/${getCurrentNamespace()}/details`;
+    } : () => history.back();
 
     return (
       <div className="profile-create-view">
-        <div className="create-view-top-panel">
-          <span>
-            Create a Google Dataproc Profile
-          </span>
-          <Link
-            className="close-create-view"
-            to={linkObj}
-          >
-            <IconSVG name="icon-close" />
-          </Link>
-        </div>
+        <EntityTopPanel
+          title="Create a Google Dataproc Profile"
+          closeBtnAnchorLink={linkObj}
+        />
         <div className="create-form-container">
           <fieldset disabled={this.state.creatingProfile}>
             <Form
@@ -327,12 +320,12 @@ const mapStateToProps = (state) => {
     selectedProvisioner: state.selectedProvisioner
   };
 };
-const ConnectedProfilesCreateView = connect(mapStateToProps)(ProfilesCreateView);
+const ConnectedProfileCreateView = connect(mapStateToProps)(ProfileCreateView);
 
-export default function ProfilesCreateViewFn({...props}) {
+export default function ProfileCreateViewFn({...props}) {
   return (
     <Provider store={ProvisionerInfoStore}>
-      <ConnectedProfilesCreateView {...props} />
+      <ConnectedProfileCreateView {...props} />
     </Provider>
   );
 }

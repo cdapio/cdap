@@ -120,6 +120,9 @@ export default class Header extends Component {
 
   render() {
     let baseCDAPURL = `/ns/${this.state.currentNamespace}`;
+    if (this.state.currentNamespace === 'system') {
+      baseCDAPURL = '/';
+    }
     let rulesengineUrl = `${baseCDAPURL}/rulesengine`;
     let dataprepUrl = `${baseCDAPURL}/dataprep`;
     let mmdsurl = `${baseCDAPURL}/experiments`;

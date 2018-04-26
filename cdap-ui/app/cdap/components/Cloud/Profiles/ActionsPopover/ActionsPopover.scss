@@ -16,40 +16,42 @@
 
 @import "../../../../styles/variables.scss";
 
-.profile-create-view {
-  .create-form-container {
-    margin: 30px 50px;
-    border: 1px solid $grey-06;
+.profile-actions-popover {
+  cursor: pointer;
+
+  .icon-cog-empty {
+    fill: white;
+    font-size: 23px;
+    stroke: $grey-04;
   }
-  .btns-section,
-  .error-section {
-    margin: 30px 50px;
-    > button {
-      margin: 0 10px 0 0;
-    }
-  }
-  .form-horizontal {
-    .label {
-      width: 100%;
-      text-align: right;
-      display: block;
-      margin-top: 0.3rem;
-    }
-    .group-container {
-      margin: 30px;
-      .group-title {
-        font-size: 1.3rem;
-      }
+
+  .popper {
+    width: 90px;
+    min-width: 90px;
+    z-index: 1;
+
+    ul {
       hr {
-        margin: 0.4rem;
-        margin-left: 0;
+        height: 1px;
+        margin: 5px 8px;
+        border-top: 0;
+        background-color: $grey-03;
       }
-      .fields-container {
-        margin: 30px 0;
+
+      li.delete-action {
+        color: $red-02;
       }
     }
-    textarea {
-      max-height: 120px;
+
+    .popper__arrow {
+      border-right-color: $grey-05;
+      border-bottom-color: $grey-05;
+    }
+  }
+
+  &:hover {
+    .icon-cog-empty {
+      stroke: $blue-03;
     }
   }
 }
