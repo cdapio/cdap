@@ -43,7 +43,8 @@ public class ProvisionerHttpHandlerTest extends AppFabricTestBase {
   public void testListAndGetProvisioners() throws Exception {
     // in unit test, we only have the mock provisioner currently
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
-    ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getDescription(), new ArrayList<>());
+    ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getLabel(),
+                                                       spec.getDescription(), new ArrayList<>());
     List<ProvisionerDetail> details = listProvisioners();
     Assert.assertEquals(ImmutableList.of(expected), details);
 

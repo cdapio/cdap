@@ -49,7 +49,8 @@ public class ProvisioningServiceTest {
     Assert.assertEquals(1, specs.size());
 
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
-    ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getDescription(), new ArrayList<>());
+    ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getLabel(),
+                                                       spec.getDescription(), new ArrayList<>());
     Assert.assertEquals(expected, specs.iterator().next());
 
     Assert.assertEquals(expected, provisioningService.getProvisionerDetail("yarn"));
