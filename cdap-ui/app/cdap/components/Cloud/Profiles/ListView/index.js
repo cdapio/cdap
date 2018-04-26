@@ -26,11 +26,13 @@ import orderBy from 'lodash/orderBy';
 import ViewAllLabel from 'components/ViewAllLabel';
 import ConfirmationModal from 'components/ConfirmationModal';
 import ProfilesStore from 'components/Cloud/Profiles/Store';
-import {getProfiles, deleteProfile, setError, resetProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {getProfiles, deleteProfile, setError} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import Alert from 'components/Alert';
 import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
+import isEqual from 'lodash/isEqual';
+
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
@@ -113,15 +115,11 @@ class ProfilesListView extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.profiles.length !== this.state.profiles.length) {
+    if (!isEqual(nextProps.profiles, this.props.profiles)) {
       this.setState({
         profiles: orderBy(nextProps.profiles, this.state.sortColumn, this.state.sortMethod)
       });
     }
-  }
-
-  componentWillUnmount() {
-    resetProfiles();
   }
 
   toggleViewAll = () => {
@@ -148,7 +146,9 @@ class ProfilesListView extends Component {
   };
 
   deleteProfile = (profile) => {
-    deleteProfile(this.props.namespace, profile)
+    let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+
+    deleteProfile(namespace, profile.name, this.props.namespace)
       .subscribe(() => {
         this.setState({
           profileToDelete: null,
@@ -280,9 +280,11 @@ class ProfilesListView extends Component {
       <div className="grid-body">
         {
           profiles.map((profile) => {
+            let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+
             return (
               <Link
-                to={`/ns/${this.props.namespace}/profiles/details/${profile.name}`}
+                to={`/ns/${namespace}/profiles/details/${profile.name}`}
                 className="grid-row grid-link"
                 key={uuidV4()}
               >
@@ -304,7 +306,7 @@ class ProfilesListView extends Component {
                     target={actionsElem}
                     namespace={this.props.namespace}
                     profile={profile}
-                    onDeleteClick={this.toggleDeleteConfirmationModal.bind(this, profile.name)}
+                    onDeleteClick={this.toggleDeleteConfirmationModal.bind(this, profile)}
                   />
                 </div>
               </Link>
@@ -320,7 +322,7 @@ class ProfilesListView extends Component {
       return null;
     }
 
-    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {profile: this.state.profileToDelete});
+    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {profile: this.state.profileToDelete.name});
 
     return (
       <ConfirmationModal
