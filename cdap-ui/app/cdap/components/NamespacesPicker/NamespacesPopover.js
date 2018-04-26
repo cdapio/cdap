@@ -19,14 +19,14 @@ import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
 import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
-import {setNamespacesPick} from 'components/OpsDashboard/store/ActionCreator';
 import {connect} from 'react-redux';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 class NamespacesPopoverView extends Component {
   static propTypes = {
-    namespacesPick: PropTypes.array
+    namespacesPick: PropTypes.array,
+    setNamespacesPick: PropTypes.func
   };
 
   state = {
@@ -65,15 +65,15 @@ class NamespacesPopoverView extends Component {
       namespacesPick.splice(index, 1);
     }
 
-    setNamespacesPick(namespacesPick);
+    this.props.setNamespacesPick(namespacesPick);
   };
 
   selectAll = () => {
-    setNamespacesPick(this.state.namespaces);
+    this.props.setNamespacesPick(this.state.namespaces);
   };
 
   clearAll = () => {
-    setNamespacesPick([]);
+    this.props.setNamespacesPick([]);
   };
 
   render() {
@@ -164,9 +164,10 @@ class NamespacesPopoverView extends Component {
   }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
   return {
-    namespacesPick: state.namespaces.namespacesPick
+    namespacesPick: state.namespaces.namespacesPick,
+    setNamespacesPick: ownProps.setNamespacesPick
   };
 };
 

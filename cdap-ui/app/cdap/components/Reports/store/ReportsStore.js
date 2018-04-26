@@ -29,6 +29,7 @@ const ReportsActions = {
   setStatus: 'REPORTS_SET_STATUS',
   setDetailsError: 'REPORTS_DETAILS_ERROR',
   detailsReset: 'REPORTS_DETAILS_RESET',
+  setNamespaces: 'REPORTS_SET_NAMESPACES',
   reset: 'REPORTS_RESET'
 };
 
@@ -56,6 +57,10 @@ const defaultTimeRangeState = {
   selection: null,
   start: null,
   end: null
+};
+
+const namespacesInitialState = {
+  namespacesPick: []
 };
 
 const defaultListState = {
@@ -136,6 +141,22 @@ const timeRange = (state = defaultTimeRangeState, action = defaultAction) => {
   }
 };
 
+const namespaces = (state = namespacesInitialState, action = defaultAction) => {
+  switch (action.type) {
+    case ReportsActions.setSelections:
+    case ReportsActions.setNamespaces:
+      return {
+        ...state,
+        namespacesPick: action.payload.namespacesPick
+      };
+    case ReportsActions.clearSelection:
+    case ReportsActions.reset:
+      return namespacesInitialState;
+    default:
+      return state;
+  }
+};
+
 const list = (state = defaultListState, action = defaultAction) => {
   switch (action.type) {
     case ReportsActions.setList:
@@ -189,14 +210,16 @@ const ReportsStore = createStore(
     status,
     list,
     details,
-    timeRange
+    timeRange,
+    namespaces
   }),
   {
     customizer: defaultCustomizerState,
     status: defaultStatusState,
     list: defaultListState,
     details: defaultDetailsState,
-    timeRange: defaultTimeRangeState
+    timeRange: defaultTimeRangeState,
+    namespaces: namespacesInitialState
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );

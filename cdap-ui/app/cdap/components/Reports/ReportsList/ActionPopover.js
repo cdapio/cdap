@@ -23,6 +23,7 @@ import IconSVG from 'components/IconSVG';
 import {DefaultSelection} from 'components/Reports/store/ActionCreator';
 import difference from 'lodash/difference';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 export default class ActionPopover extends Component {
   static propTypes = {
@@ -83,6 +84,11 @@ export default class ActionPopover extends Component {
               }
 
               hasArtifactFilter = true;
+            } else if (filter.fieldName === 'namespace') {
+              let namespaces = filter.whitelist;
+              namespaces.splice(namespaces.indexOf(getCurrentNamespace()), 1);
+
+              payload.namespacesPick = namespaces;
             }
           });
         }

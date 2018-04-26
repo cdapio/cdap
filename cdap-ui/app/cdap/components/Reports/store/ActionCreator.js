@@ -19,6 +19,7 @@ import moment from 'moment';
 import {MyReportsApi} from 'api/reports';
 import orderBy from 'lodash/orderBy';
 import {GLOBALS} from 'services/global-constants';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 export const DefaultSelection = [
   'artifactName',
@@ -93,7 +94,13 @@ function getFilters() {
     whitelist: statusSelections
   });
 
-  // TODO: add namespace handler
+  // namespaces
+  let namespacesPick = ReportsStore.getState().namespaces.namespacesPick;
+
+  filters.push({
+    fieldName: 'namespace',
+    whitelist: [...namespacesPick, getCurrentNamespace()]
+  });
 
   return filters;
 }
@@ -157,4 +164,13 @@ export function listReports(id) {
         }, 3000);
       }
     });
+}
+
+export function setNamespacesPick(namespacesPick) {
+  ReportsStore.dispatch({
+    type: ReportsActions.setNamespaces,
+    payload: {
+      namespacesPick
+    }
+  });
 }
