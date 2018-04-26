@@ -237,14 +237,16 @@ public class IntegrationTestManager extends AbstractTestManager {
   @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest) throws Exception {
-    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
+    return addAppArtifact(artifactId, appClass, manifest, new File[0]);
+  }
 
-    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return appJar.getInputStream();
-      }
-    });
+  @Override
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
+                                        Manifest manifest, File... bundleEmbeddedJars) throws Exception {
+    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR,
+                                                             bundleEmbeddedJars);
+
+    artifactClient.add(artifactId, null, appJar::getInputStream);
     appJar.delete();
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }

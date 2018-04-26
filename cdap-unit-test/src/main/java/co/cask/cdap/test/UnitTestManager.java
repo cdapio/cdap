@@ -111,6 +111,7 @@ public class UnitTestManager extends AbstractTestManager {
       if (resourceName.startsWith("scala/")) {
         return true;
       }
+
       try {
         // allow developers to exclude spark-core module from their unit tests (it'll work if they don't use spark)
         getClass().getClassLoader().loadClass("co.cask.cdap.app.runtime.spark.SparkRuntimeUtils");
@@ -175,7 +176,7 @@ public class UnitTestManager extends AbstractTestManager {
 
     try {
       ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), applicationClz.getSimpleName(), "1.0-SNAPSHOT");
-      addAppArtifact(artifactId, applicationClz);
+      addAppArtifact(artifactId, applicationClz, new Manifest(), bundleEmbeddedJars);
 
       if (configObject == null) {
         configObject = (Config) TypeToken.of(configType).getRawType().newInstance();
@@ -229,7 +230,14 @@ public class UnitTestManager extends AbstractTestManager {
   @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest) throws Exception {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
+    return addAppArtifact(artifactId, appClass, manifest, new File[0]);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
+                                        Manifest manifest, File... bundleEmbeddedJars) throws Exception {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass,
+                                                       manifest, CLASS_ACCEPTOR, bundleEmbeddedJars);
     addArtifact(artifactId, appJar);
     return artifactManagerFactory.create(artifactId);
   }
