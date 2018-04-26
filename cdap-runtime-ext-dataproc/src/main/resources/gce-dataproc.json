@@ -7,6 +7,7 @@
           "widget-type": "textbox",
           "label": "Project ID",
           "name": "projectId",
+          "required": true,
           "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console.",
           "widget-attributes": {
             "placeholder": "Specify your GCP Project ID"
