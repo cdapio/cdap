@@ -24,7 +24,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -48,7 +47,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link WorkflowClient}
@@ -87,8 +85,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
       NamespaceId.DEFAULT.app(AppWithWorkflow.NAME).workflow(AppWithWorkflow.SampleWorkflow.NAME);
 
     programClient.start(workflowId, false, runtimeArgs);
-    programClient.waitForStatus(workflowId, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
-    assertProgramRuns(programClient, workflowId, ProgramRunStatus.COMPLETED, 1, 10);
+    assertProgramRuns(programClient, workflowId, ProgramRunStatus.COMPLETED, 1, 120);
 
     List<RunRecord> workflowRuns = programClient.getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name(), 0,
                                                                 Long.MAX_VALUE, 10);
