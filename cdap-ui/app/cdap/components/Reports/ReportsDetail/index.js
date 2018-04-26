@@ -19,6 +19,8 @@ import PropTypes from 'prop-types';
 import {MyReportsApi} from 'api/reports';
 import Summary from 'components/Reports/ReportsDetail/Summary';
 import Runs from 'components/Reports/ReportsDetail/Runs';
+import SaveButton from 'components/Reports/ReportsDetail/SaveButton';
+import Expiry from 'components/Reports/ReportsDetail/Expiry';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
 import { Link } from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -42,6 +44,12 @@ class ReportsDetailView extends Component {
     this.fetchStatus();
   }
 
+  componentWillUnmount() {
+    ReportsStore.dispatch({
+      type: ReportsActions.detailsReset
+    });
+  }
+
   fetchStatus = () => {
     let params = {
       reportId: this.props.match.params.reportId
@@ -52,7 +60,8 @@ class ReportsDetailView extends Component {
         ReportsStore.dispatch({
           type: ReportsActions.setInfoStatus,
           payload: {
-            info: res
+            info: res,
+            reportId: this.props.match.params.reportId
           }
         });
 
@@ -119,12 +128,12 @@ class ReportsDetailView extends Component {
         <div className="action-section clearfix">
           <div className="date-container float-xs-left">
             Report generated on {humanReadableDate(this.props.created)}
+            <span className="separator">-</span>
+            <Expiry />
           </div>
 
           <div className="action-button float-xs-right">
-            <button className="btn btn-primary">
-              Save Report
-            </button>
+            <SaveButton />
 
             <button className="btn btn-link">
               Export

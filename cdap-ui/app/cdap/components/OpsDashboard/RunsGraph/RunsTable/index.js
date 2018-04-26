@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import moment from 'moment';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import {humanReadableDuration} from 'services/helpers';
 
 require('./RunsTable.scss');
 
@@ -102,7 +103,7 @@ const renderBody = (data, onRowClick) => {
                 {row.running}
               </div>
               <div className="column-delay">
-                {row.delay}
+                {humanReadableDuration(row.delay)}
               </div>
             </div>
           );

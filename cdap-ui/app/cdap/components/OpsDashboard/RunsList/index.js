@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {connect} from 'react-redux';
+import {humanReadableDuration} from 'services/helpers';
 
 require('./RunsList.scss');
 
@@ -82,6 +83,7 @@ function RunsListView({bucketInfo, displayRunsList}) {
             {
               bucketInfo.runsList.map((run, i) => {
                 let duration = run.end ? run.end - run.start : '--';
+                duration = humanReadableDuration(duration);
                 return (
                   <tr key={`${run.application}${run.program}${run.start}${i}`}>
                     <td>{run.namespace}</td>

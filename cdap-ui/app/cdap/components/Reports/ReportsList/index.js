@@ -68,7 +68,7 @@ class ReportsListView extends Component {
   }
 
   renderExpiry(report) {
-    if (!report.expiry) { return '- -'; }
+    if (!report.expiry) { return '--'; }
 
     return (
       <Duration
