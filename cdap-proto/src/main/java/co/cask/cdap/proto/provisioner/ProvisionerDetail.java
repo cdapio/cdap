@@ -26,18 +26,24 @@ import java.util.Objects;
  */
 public class ProvisionerDetail {
   private final String name;
+  private final String label;
   private final String description;
   @SerializedName("configuration-groups")
   private final List<Object> configurationGroups;
 
-  public ProvisionerDetail(String name, String description, List<Object> configurationGroups) {
+  public ProvisionerDetail(String name, String label, String description, List<Object> configurationGroups) {
     this.name = name;
+    this.label = label;
     this.description = description;
     this.configurationGroups = configurationGroups;
   }
 
   public String getName() {
     return name;
+  }
+
+  public String getLabel() {
+    return label;
   }
 
   public String getDescription() {
@@ -59,12 +65,13 @@ public class ProvisionerDetail {
     ProvisionerDetail that = (ProvisionerDetail) o;
 
     return Objects.equals(name, that.name) &&
+      Objects.equals(label, that.label) &&
       Objects.equals(description, that.description) &&
       Objects.equals(configurationGroups, that.configurationGroups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, configurationGroups);
+    return Objects.hash(name, label, description, configurationGroups);
   }
 }

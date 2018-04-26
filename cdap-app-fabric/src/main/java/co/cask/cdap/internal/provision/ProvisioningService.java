@@ -242,7 +242,7 @@ public class ProvisioningService extends AbstractIdleService {
       String provisionerName = provisionerEntry.getKey();
       ProvisionerConfig config = provisionerConfigs.getOrDefault(provisionerName,
                                                                  new ProvisionerConfig(new ArrayList<>()));
-      details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getDescription(),
+      details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
                                                          config.getConfigurationGroups()));
     }
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
