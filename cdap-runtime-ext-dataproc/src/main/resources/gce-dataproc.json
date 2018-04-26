@@ -7,14 +7,17 @@
           "widget-type": "textbox",
           "label": "Project ID",
           "name": "projectId",
+          "required": true,
+          "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console.",
           "widget-attributes": {
-            "placeholder": "Specify the project id of your GCP project"
+            "placeholder": "Specify your GCP Project ID"
           }
         },
         {
           "widget-type": "json-editor",
           "label": "Service Account Key",
           "name": "accountKey",
+          "required": true,
           "widget-attributes": {
             "placeholder": "Specify the GCP service account to use to run pipelines using this profile"
           }
@@ -36,6 +39,7 @@
           "widget-type": "select",
           "label": "Region",
           "name": "region",
+          "description": "A region is a specific geographical location where you can host resources such as static IP addresses and subnets. E.g. us-west1, us-central1, europe-west1. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/",
           "widget-attributes": {
             "values": [
               "global",
@@ -63,6 +67,7 @@
           "widget-type": "select",
           "label": "Zone",
           "name": "zone",
+          "description": "A zone is an isolated location within a region. The fully-qualified name for a zone is made up of <region>-<zone>. For example, the fully-qualified name for zone a in region us-central1 is us-central1-a. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/",
           "widget-attributes": {
             "values": [
               "asia-east1-a",

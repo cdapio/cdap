@@ -42,8 +42,9 @@ export default class AbstractWidget extends Component {
 
   render() {
     let Comp = AbstractWidgetFactory[this.props.type];
+    let {size = 'large'} = this.props.widgetProps;
     return (
-      <div className="abstract-widget-wrapper">
+      <div className={`abstract-widget-wrapper ${size}`}>
         <StateWrapper
           comp={Comp}
           onChange={this.props.onChange}

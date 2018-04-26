@@ -14,22 +14,11 @@
  * the License.
 */
 
-import React from 'react';
-import SelectWithOptions from 'components/SelectWithOptions';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
-
-export default function SelectWidget({...props}) {
-  return (
-    <div className={`select-widget`}>
-      <SelectWithOptions
-        options={props.widgetProps.values}
-        value={props.value}
-        className="form-control"
-        onChange={props.onChange}
-      />
-    </div>
-  );
+.property-lock {
+  &.icon-lock_open,
+  &.icon-lock_close {
+    cursor: pointer;
+    margin-bottom: 4px;
+    font-size: 1.3rem;
+  }
 }
-
-SelectWidget.propTypes = WIDGET_PROPTYPES;
-SelectWidget.defaultProps = DEFAULT_WIDGET_PROPS;

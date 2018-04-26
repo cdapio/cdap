@@ -16,12 +16,11 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {Form, FormGroup, Col, Input} from 'reactstrap';
+import {Form, FormGroup, Col} from 'reactstrap';
 import AbstractWidget from 'components/AbstractWidget';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link, Redirect} from 'react-router-dom';
 import {MyCloudApi} from 'api/cloud';
-import BtnWithLoading from 'components/BtnWithLoading';
 import {objectQuery, preventPropagation} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {connect, Provider} from 'react-redux';
@@ -29,6 +28,17 @@ import ProvisionerInfoStore from 'components/Cloud/Store';
 import {fetchProvisionerSpec} from 'components/Cloud/Store/ActionCreator';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import EntityTopPanel from 'components/EntityTopPanel';
+import PropertyLock from 'components/Cloud/Profiles/CreateView/PropertyLock';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
+import {ConnectedProfileName, ConnectedProfileDescription} from 'components/Cloud/Profiles/CreateView/CreateProfileMetadata';
+import {
+  initializeProperties,
+  updateProperty,
+  resetCreateProfileStore
+} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
+import CreateProfileBtn from 'components/Cloud/Profiles/CreateView/CreateProfileBtn';
+import uuidV4 from 'uuid/v4';
+import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 
 require('./CreateView.scss');
 
@@ -45,41 +55,22 @@ class ProfileCreateView extends Component {
   };
 
   state = {
-    profileName: '',
-    profileDescription: '',
     redirectToNamespace: false,
     redirectToAdmin: false,
     creatingProfile: false,
     isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system'
   };
 
-  parseSpecAndGetInitialState = (provisionerJson = {}) => {
-    let configs = provisionerJson['configuration-groups'] || [];
-    let properties = {};
-    configs.forEach(config => {
-      config.properties.forEach(prop => {
-        let widgetAttributes = prop['widget-attributes'] || {};
-        properties[prop.name] = {
-          value: widgetAttributes.default,
-          editable: true
-        };
-      });
-    });
-    return properties;
-  };
-
   componentWillReceiveProps(nextProps) {
     let {selectedProvisioner} = nextProps;
-    this.properties = this.parseSpecAndGetInitialState(nextProps.provisionerJsonSpecMap[selectedProvisioner]);
+    initializeProperties(nextProps.provisionerJsonSpecMap[selectedProvisioner]);
   }
 
   componentDidMount() {
     let {selectedProvisioner} = this.props;
     // The name will probably come from the URL in the future when we add new provisioner types.
     fetchProvisionerSpec(selectedProvisioner);
-    if (this.profileNameInput) {
-      this.profileNameInput.focus();
-    }
+    // FIXME: Since we are already in admin we shouldn't have to do this explicitly from the create profile view.
     if (this.state.isSystem) {
       document.querySelector('#header-namespace-dropdown').style.display = 'none';
     }
@@ -87,31 +78,23 @@ class ProfileCreateView extends Component {
 
   componentWillUnmount() {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    resetCreateProfileStore();
   }
-
-  onValueChange = (property, value) => {
-    this.properties[property].value = value;
-  };
-
-  onMetadataChange = (metadata, e) => {
-    this.setState({
-      [metadata]: e.target.value
-    });
-  };
 
   createProfile = () => {
     this.setState({
       creatingProfile: true
     });
+    let {name, description, properties} = CreateProfileStore.getState();
     let jsonBody = {
-      description: this.state.profileDescription,
+      description,
       provisioner: {
         name: this.props.selectedProvisioner,
-        properties: Object.entries(this.properties).map(([property, propObj]) => {
+        properties: Object.entries(properties).map(([property, propObj]) => {
           return {
             name: property,
             value: propObj.value,
-            editable: propObj.editable
+            isEditable: propObj.isEditable
           };
         })
       }
@@ -119,7 +102,7 @@ class ProfileCreateView extends Component {
     MyCloudApi
       .create({
         namespace: this.state.isSystem ? 'system' : getCurrentNamespace(),
-        profile: this.state.profileName
+        profile: name
       }, jsonBody)
       .subscribe(
         () => {
@@ -152,15 +135,10 @@ class ProfileCreateView extends Component {
           >
             Profile Name
           </strong>
+          <span className="required-marker text-danger">*</span>
         </Col>
         <Col xs="5">
-          <Input
-            aria-labelledby="profile-name"
-            getRef={ref => this.profileNameInput = ref}
-            value={this.state.profileName}
-            onChange={this.onMetadataChange.bind(this, 'profileName')}
-            placeholder="Add a name for the Compute Profile"
-          />
+          <ConnectedProfileName />
         </Col>
       </FormGroup>
     );
@@ -176,21 +154,17 @@ class ProfileCreateView extends Component {
           >
             Description
           </strong>
+          <span className="required-marker text-danger">*</span>
         </Col>
         <Col xs="5">
-          <Input
-            type="textarea"
-            aria-labelledby="profile-description"
-            value={this.state.profileDescription}
-            onChange={this.onMetadataChange.bind(this, 'profileDescription')}
-            placeholder="Add a description for the profile"
-          />
+          <ConnectedProfileDescription />
         </Col>
       </FormGroup>
     );
   };
 
   renderGroup = (group) => {
+    let {properties} = CreateProfileStore.getState();
     return (
       <div className="group-container" key={group.label}>
         <strong className="group-title"> {group.label} </strong>
@@ -201,7 +175,7 @@ class ProfileCreateView extends Component {
         <div className="fields-container">
           {
             group.properties.map(property => {
-              let uniqueId = `${group.name}-${property.name}`;
+              let uniqueId = `provisioner-${uuidV4()}`;
               return (
                 <FormGroup key={uniqueId} row>
                   <Col xs="3">
@@ -211,16 +185,36 @@ class ProfileCreateView extends Component {
                     >
                       {property.label}
                     </strong>
+                    {
+                      property.required ?
+                        <span className="required-marker text-danger">*</span>
+                      :
+                        null
+                    }
+                    {
+                      property.description ?
+                        <UncontrolledTooltip
+                          placement="right"
+                          delay={0}
+                          target={uniqueId}
+                          className="provisioner-tooltip"
+                        >
+                          {property.description}
+                        </UncontrolledTooltip>
+                      :
+                        null
+                    }
                   </Col>
                   <Col xs="5">
                     {
                       <AbstractWidget
                         type={property['widget-type']}
-                        value=""
-                        onChange={this.onValueChange.bind(this, property.name)}
+                        value={objectQuery(properties, property.name, 'value')}
+                        onChange={updateProperty.bind(null, property.name)}
                         widgetProps={property['widget-attributes']}
                       />
                     }
+                    <PropertyLock propertyName={property.name} />
                   </Col>
                 </FormGroup>
               );
@@ -261,54 +255,60 @@ class ProfileCreateView extends Component {
     } : () => history.back();
 
     return (
-      <div className="profile-create-view">
-        <EntityTopPanel
-          title="Create a Google Dataproc Profile"
-          closeBtnAnchorLink={linkObj}
-        />
-        <div className="create-form-container">
-          <fieldset disabled={this.state.creatingProfile}>
-            <Form
-              className="form-horizontal"
-              onSubmit={(e) => {
-                preventPropagation(e);
-                return false;
-              }}
-            >
-              <div className="group-container">
-                {this.renderProfileName()}
-                {this.renderDescription()}
-              </div>
-              {
-                this.props.loading ?
-                  <LoadingSVGCentered />
-                :
-                  this.renderGroups()
-              }
-            </Form>
-          </fieldset>
-        </div>
-        {
-          this.state.error ?
-            <div className="error-section text-danger">
-              {this.state.error}
-            </div>
-          :
-            null
-        }
-        <div className="btns-section">
-          <BtnWithLoading
-            className="btn-primary"
-            onClick={this.createProfile}
-            loading={this.state.creatingProfile}
-            disabled={!this.state.profileName.length || !this.state.profileDescription.length}
-            label="Create Compute Profile"
+      <Provider store={CreateProfileStore}>
+        <div className="profile-create-view">
+          <EntityTopPanel
+            title="Create a Google Dataproc Profile"
+            closeBtnAnchorLink={linkObj}
           />
-          <Link to={linkObj}>
-            Close
-          </Link>
+          <div className="create-form-container">
+            <fieldset disabled={this.state.creatingProfile}>
+              <Form
+                className="form-horizontal"
+                onSubmit={(e) => {
+                  preventPropagation(e);
+                  return false;
+                }}
+              >
+                <div className="group-container">
+                  {this.renderProfileName()}
+                  {this.renderDescription()}
+                </div>
+                {this.renderGroups()}
+                {
+                  this.props.loading ?
+                    <LoadingSVGCentered />
+                  :
+                    null
+                }
+              </Form>
+            </fieldset>
+          </div>
+          {
+            this.state.error ?
+              <div className="error-section text-danger">
+                {this.state.error}
+              </div>
+            :
+              null
+          }
+          <div className="btns-section">
+            <CreateProfileBtn
+              className="btn-primary"
+              onClick={this.createProfile}
+              loading={this.state.creatingProfile}
+            />
+            {
+              typeof linkObj === 'function' ?
+                <button className="btn btn-link" onClick={linkObj}> Close </button>
+              :
+                <Link to={linkObj}>
+                  Close
+                </Link>
+            }
+          </div>
         </div>
-      </div>
+      </Provider>
     );
   }
 }

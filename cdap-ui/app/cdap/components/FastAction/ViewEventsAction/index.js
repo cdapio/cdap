@@ -55,7 +55,7 @@ export default class ViewEventsAccess extends Component {
   }
 
   render() {
-    const tooltipId = `${this.props.entity.uniqueId}-viewevents`;
+    const tooltipId = `viewevents-${this.props.entity.uniqueId}`;
 
     return (
       <span className="btn btn-secondary btn-sm">

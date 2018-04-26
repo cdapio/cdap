@@ -240,6 +240,10 @@ function isNilOrEmptyString(value) {
   return isNil(value) || value === '';
 }
 
+function isNilOrEmpty(value) {
+  return isNil(value) || isEmpty(value);
+}
+
 function isNumeric(value) {
   return !isNaN(parseFloat(value)) && isFinite(value);
 }
@@ -365,5 +369,6 @@ export {
   wholeArrayIsNumeric,
   reverseArrayWithoutMutating,
   convertMapToKeyValuePairs,
-  convertKeyValuePairsToMap
+  convertKeyValuePairsToMap,
+  isNilOrEmpty
 };

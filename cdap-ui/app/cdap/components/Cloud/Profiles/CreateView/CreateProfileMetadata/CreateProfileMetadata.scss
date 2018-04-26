@@ -14,22 +14,8 @@
  * the License.
 */
 
-import React from 'react';
-import SelectWithOptions from 'components/SelectWithOptions';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+// This is so lame. I wish we started using styled-components #sigh
 
-export default function SelectWidget({...props}) {
-  return (
-    <div className={`select-widget`}>
-      <SelectWithOptions
-        options={props.widgetProps.values}
-        value={props.value}
-        className="form-control"
-        onChange={props.onChange}
-      />
-    </div>
-  );
+.create-profile-description {
+  max-height: 120px;
 }
-
-SelectWidget.propTypes = WIDGET_PROPTYPES;
-SelectWidget.defaultProps = DEFAULT_WIDGET_PROPS;
