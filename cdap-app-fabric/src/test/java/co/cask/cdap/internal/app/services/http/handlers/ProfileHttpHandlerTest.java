@@ -20,8 +20,10 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.provision.MockProvisioner;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
+import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
@@ -32,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -100,6 +103,11 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // delete the profile
     deleteProfile(NamespaceId.DEFAULT, expected.getName(), 200);
     Assert.assertEquals(Collections.emptyList(), listProfiles(NamespaceId.DEFAULT, false, 200));
+
+    // if given some unrelated json, it should return a 400 instead of 500
+    ProvisionerSpecification spec = new MockProvisioner().getSpec();
+    ProvisionerDetail test = new ProvisionerDetail(spec.getName(), spec.getDescription(), new ArrayList<>());
+    putProfile(NamespaceId.DEFAULT, test.getName(), test, 400);
   }
 
   private List<Profile> listProfiles(NamespaceId namespace, boolean includeSystem, int expectedCode) throws Exception {
@@ -123,7 +131,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     return null;
   }
 
-  private void putProfile(NamespaceId namespace, String profileName, Profile profile,
+  private void putProfile(NamespaceId namespace, String profileName, Object profile,
                           int expectedCode) throws Exception {
     HttpResponse response = doPut(String.format("/v3/namespaces/%s/profiles/%s",
                                                 namespace.getNamespace(), profileName), GSON.toJson(profile));

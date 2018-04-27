@@ -45,6 +45,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +118,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);
       validateProvisionerProperties(profileCreateRequest);
     } catch (JsonSyntaxException e) {
-      throw new BadRequestException("Request body is invalid json: " + e.getMessage(), e);
+      throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
     }
     ProfileId profileId = new ProfileId(namespaceId, profileName);
     Profile profile =
@@ -171,9 +172,18 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
 
   private void validateProvisionerProperties(ProfileCreateRequest request) throws BadRequestException {
     ProvisionerInfo provisionerInfo = request.getProvisioner();
+    // this will only happen when the json file is valid, but contains no provisioner fields, GSON will serialize these
+    // fields with null, so accessing it will get a NullPointerException
+    if (provisionerInfo == null || provisionerInfo.getName() == null) {
+      throw new BadRequestException("Missing provisioner information in the json file. " +
+                                      "A profile must be associated with a provisioner.");
+    }
     Map<String, String> properties = new HashMap<>();
-    for (ProvisionerPropertyValue value : provisionerInfo.getProperties()) {
-      properties.put(value.getName(), value.getValue());
+    Collection<ProvisionerPropertyValue> provisionerProperties = provisionerInfo.getProperties();
+    if (provisionerProperties != null) {
+      for (ProvisionerPropertyValue value : provisionerProperties) {
+        properties.put(value.getName(), value.getValue());
+      }
     }
     try {
       provisioningService.validateProperties(provisionerInfo.getName(), properties);
