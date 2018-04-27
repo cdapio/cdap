@@ -17,6 +17,7 @@
 import React from 'react';
 import RuntimeArgsTab from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/RuntimeArgsTab';
 import StagePropertiesTab from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/StagePropertiesTab';
+import ComputeConfigTab from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/ComputeConfigTab';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs';
@@ -25,17 +26,30 @@ const TabConfig = {
   tabs: [
     {
       id: 1,
-      name: T.translate(`${PREFIX}.RuntimeArgs.title`),
-      content: (<RuntimeArgsTab />)
+      type: 'tab-group',
+      name: T.translate(`${PREFIX}.PayloadConfig.title`),
+      opened: true,
+      subtabs: [
+        {
+          id: 1.1,
+          name: T.translate(`${PREFIX}.RuntimeArgs.title`),
+          content: (<RuntimeArgsTab />),
+          default: true
+        },
+        {
+          id: 1.2,
+          name: T.translate(`${PREFIX}.StageProps.title`),
+          content: (<StagePropertiesTab />)
+        }
+      ]
     },
     {
       id: 2,
-      name: T.translate(`${PREFIX}.StageProps.title`),
-      content: (<StagePropertiesTab />)
+      name: T.translate(`${PREFIX}.ComputeConfig.tabTitle`),
+      content: (<ComputeConfigTab />)
     }
   ],
   layout: 'vertical',
-  defaultTab: 1,
-  defaultTabContent: (<RuntimeArgsTab />),
+  defaultTab: 1.1
 };
 export default TabConfig;

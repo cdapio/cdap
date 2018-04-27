@@ -20,16 +20,24 @@ $modal_gray: #cccccc;
 $tab_bg_color: #eeeeee;
 
 .schedule-runtime-args {
+  > fieldset {
+    height: 400px;
+  }
+  > .button-container {
+    padding: 10px;
+    border-top: 1px solid $modal_gray;
+  }
   hr {
     margin-left: -15px;
     margin-right: -15px;
   }
   .cask-configurable-tab {
     min-height: 300px;
-    margin: -15px -15px -18px;
+    max-height: inherit;
 
     .cask-tabs.vertical {
       min-height: inherit;
+      max-height: inherit;
 
       > div {
         &:nth-child(2) {
@@ -44,7 +52,6 @@ $tab_bg_color: #eeeeee;
 
         &.cask-tab-headers {
           .cask-tab-head {
-            padding: 10px 0;
             border-bottom: 1px solid $modal_gray;
             &.active-tab {
               color: $cdap-orange;

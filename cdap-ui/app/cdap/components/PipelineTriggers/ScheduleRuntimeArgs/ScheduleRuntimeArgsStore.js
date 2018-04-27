@@ -15,7 +15,7 @@
 */
 
 import {createStore, combineReducers} from 'redux';
-import {defaultAction} from 'services/helpers';
+import {defaultAction, composeEnhancers} from 'services/helpers';
 import difference from 'lodash/difference';
 import findIndex from 'lodash/findIndex';
 import T from 'i18n-react';
@@ -29,6 +29,7 @@ const SCHEDULERUNTIMEARGSACTIONS = {
   BULKSETARGSVALUE: 'BULKSETARGSVALUE',
   SETDISABLED: 'SETDISABLED',
   SETSTAGEWIDGETJSON: 'SETSTAGEWIDGETJSON',
+  SETSELECTEDPROFILE: 'DEFAULTSELECTEDPROFILE',
   RESET: 'RESET'
 };
 
@@ -43,6 +44,7 @@ const DEFAULTFIELDDELIMITER = ':';
 const DEFAULTMACROS = [];
 const DEFAULTCONFIGSTAGES = [];
 const DEFAULTARGSMAPPING = [];
+const DEFAULTSELECTEDPROFILE = {};
 const UNMAPPEDCONFIGSTAGEPROPERTIES = {};
 const DEFAULTARGS = {
   triggeringPipelineInfo: {
@@ -57,6 +59,7 @@ const DEFAULTARGS = {
     id: null
   },
   argsMapping: DEFAULTARGSMAPPING,
+  selectedProfile: DEFAULTSELECTEDPROFILE,
   stageWidgetJsonMap: {},
   disabled: false
 };
@@ -167,6 +170,13 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
           [action.payload.stageid]: action.payload.stageWidgetJson || {}
         }
       };
+    case SCHEDULERUNTIMEARGSACTIONS.SETSELECTEDPROFILE:
+      return {
+        ...state,
+        selectedProfile: {
+          name: action.payload.selectedProfile
+        }
+      };
     default:
       return state;
   }
@@ -179,7 +189,7 @@ let ScheduleRuntimeArgsStore = createStore(
   {
     args: DEFAULTARGS
   },
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('ScheduleRuntimeArgsStore')()
 );
 export default ScheduleRuntimeArgsStore;
 export {

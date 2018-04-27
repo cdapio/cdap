@@ -14,6 +14,7 @@
  * the License.
 */
 
+import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -23,21 +24,37 @@ import IconSVG from 'components/IconSVG';
 import {MyPreferenceApi} from 'api/preference';
 import {Observable} from 'rxjs/Observable';
 import PipelineDetailStore from 'components/PipelineDetails/store';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
-import findIndex from 'lodash/findIndex';
-import uuidV4 from 'uuid/v4';
 
 require('./ListViewInPipeline.scss');
 
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
 export default class ProfilesListViewInPipeline extends Component {
 
+  static propTypes = {
+    onProfileSelect: PropTypes.func,
+    selectedProfile: PropTypes.object,
+    tableTitle: PropTypes.string,
+    disabled: PropTypes.bool
+  };
+
+  static defaultProps = {
+    selectedProfile: {},
+    disabled: false
+  };
+
   state = {
     profiles: [],
     loading: true,
-    selectedProfile: null
+    selectedProfile: this.props.selectedProfile.name || null
   };
+
+  componentWillReceiveProps(nextProps) {
+    if (this.state.selectedProfile !== nextProps.selectedProfile.name) {
+      this.setState({
+        selectedProfile: nextProps.selectedProfile.name
+      });
+    }
+  }
 
   componentWillMount() {
     let appId = PipelineDetailStore.getState().name;
@@ -52,7 +69,7 @@ export default class ProfilesListViewInPipeline extends Component {
     )
       .subscribe(
         ([profiles = [], preferences = {}]) => {
-          let selectedProfile = preferences[PROFILE_NAME_PREFERENCE_PROPERTY];
+          let selectedProfile = preferences[PROFILE_NAME_PREFERENCE_PROPERTY] || this.state.selectedProfile;
           this.setState({
             loading: false,
             profiles,
@@ -66,27 +83,15 @@ export default class ProfilesListViewInPipeline extends Component {
   }
 
   onProfileSelect = (profileName) => {
+    if (this.props.disabled) {
+      return;
+    }
     this.setState({
       selectedProfile: profileName
     });
-    let {runtimeArgs} = PipelineConfigurationsStore.getState();
-    let pairs = [...runtimeArgs.pairs];
-    pairs = pairs.filter(pair => pair.key.length);
-    let existingProfile = findIndex(pairs, (pair) => pair.key === PROFILE_NAME_PREFERENCE_PROPERTY);
-    if (existingProfile === -1) {
-      pairs.push({
-        key: PROFILE_NAME_PREFERENCE_PROPERTY,
-        value: profileName,
-        uniqueId: 'id-' + uuidV4()
-      });
-    } else {
-      pairs[existingProfile].value = profileName;
+    if (this.props.onProfileSelect) {
+      this.props.onProfileSelect(profileName);
     }
-    PipelineConfigurationsStore.dispatch({
-      type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-      payload: { runtimeArgs: { pairs } }
-    });
-    updatePipelineEditStatus();
   };
 
   renderGridHeader = () => {
@@ -103,6 +108,34 @@ export default class ProfilesListViewInPipeline extends Component {
   };
 
   renderGridBody = () => {
+    if (this.props.disabled) {
+      let match = this.state.profiles.filter(profile => profile.name === this.state.selectedProfile);
+      if (match.length) {
+        return (
+          match.map(profile => {
+            return (
+              <div
+                className={classnames("grid-row grid-link", {
+                  "active": this.state.selectedProfile === profile.name
+                })}
+                onClick={this.onProfileSelect.bind(this, profile.name)}
+              >
+                <div>
+                  {
+                    this.state.selectedProfile === profile.name ? (
+                      <IconSVG name="icon-check" className="text-success" />
+                    ) : null
+                  }
+                </div>
+                <div>{profile.name}</div>
+                <div>{profile.provisioner.name}</div>
+                <div>{profile.scope}</div>
+              </div>
+            );
+          })
+        );
+      }
+    }
     return (
       <div className="grid-body">
         {
@@ -148,9 +181,16 @@ export default class ProfilesListViewInPipeline extends Component {
     }
     return (
       <div className="profiles-listview grid-wrapper">
-        <strong> Select the compute profile you want to use to run this pipeline</strong>
-        <div className="profiles-count text-right">{this.state.profiles.length} Compute Profiles</div>
-        <div className="grid grid-container">
+        <strong>{this.props.tableTitle}</strong>
+        {
+          this.props.disabled ?
+            null
+          :
+            <div className="profiles-count text-right">{this.state.profiles.length} Compute Profiles</div>
+        }
+        <div className={classnames('grid grid-container', {
+          disabled: this.props.disabled
+        })}>
           {this.renderGridHeader()}
           {this.renderGridBody()}
         </div>
@@ -165,6 +205,16 @@ export default class ProfilesListViewInPipeline extends Component {
           <LoadingSVG />
         </div>
       );
+    }
+    if (this.props.disabled) {
+      let match = this.state.profiles.filter(profile => profile.name === this.state.selectedProfile);
+      if (!match.length) {
+        return (
+          <div className="profiles-list-view-on-pipeline empty-container">
+            <h4>No Profile selected</h4>
+          </div>
+        );
+      }
     }
     return (
       <div className="profiles-list-view-on-pipeline">

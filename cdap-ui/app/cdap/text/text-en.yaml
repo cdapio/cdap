@@ -1767,6 +1767,11 @@ features:
         configPayloadBtn: Configure Payload
         configPayloadBtnDisabled: View Payload
       Tabs:
+        ComputeConfig:
+          title: Select a compute profile to use when the pipeline is triggered by "{triggeringPipelineId}"
+          tabTitle: Compute Config
+        PayloadConfig:
+          title: Payload Config
         RuntimeArgs:
           disabledNoRuntimeArgsMessage: No Runtime Arguments configured for "{triggeredPipelineid}"
           noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"

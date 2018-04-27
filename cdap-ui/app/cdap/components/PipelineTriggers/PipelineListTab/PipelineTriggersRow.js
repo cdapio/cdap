@@ -80,7 +80,7 @@ export default class PipelineTriggersRow extends Component {
     if key is triggering pipeline's plugin property then use this as map
       {"pluginName":"name1","propertyKey":"key1","type":"PLUGIN_PROPERTY","namespace":"ns1","pipelineName":"p1"}
   */
-  configureAndEnable = (mapping) => {
+  configureAndEnable = (mapping, propertiesConfig = {}) => {
     const generateRuntimeMapping = () => {
       let runArgsMapping = {
         arguments: [],
@@ -105,7 +105,8 @@ export default class PipelineTriggersRow extends Component {
     };
     let config = this.getConfig();
     config.properties = {
-      'triggering.properties.mapping': generateRuntimeMapping()
+      'triggering.properties.mapping': generateRuntimeMapping(),
+      ...propertiesConfig
     };
     enableSchedule(this.props.triggeringPipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
   };

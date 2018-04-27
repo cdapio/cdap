@@ -116,6 +116,15 @@ function setArgMapping(key, value, type, oldValue) {
   });
 }
 
+function setSelectedProfile(profileName) {
+  ScheduleRuntimeArgsStore.dispatch({
+    type: SCHEDULERUNTIMEARGSACTIONS.SETSELECTEDPROFILE,
+    payload: {
+      selectedProfile: profileName
+    }
+  });
+}
+
 function bulkSetArgMapping(argsArray) {
   ScheduleRuntimeArgsStore.dispatch({
     type: SCHEDULERUNTIMEARGSACTIONS.BULKSETARGSVALUE,
@@ -124,4 +133,10 @@ function bulkSetArgMapping(argsArray) {
     }
   });
 }
-export {fetchPipelineMacroDetails, setArgMapping, resetStore, bulkSetArgMapping};
+export {
+  fetchPipelineMacroDetails,
+  setArgMapping,
+  resetStore,
+  bulkSetArgMapping,
+  setSelectedProfile
+};
