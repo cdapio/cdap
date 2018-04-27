@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017 - 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,23 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
     'javascript-editor',
     'python-editor'
   ];
+
+  vm.containsMacro = false;
+
+  // This function will check if the entire value is a macro.
+  // If it is, then change to macro editor.
+  // If the value is only partially a macro, only show the background indicator.
+  function checkMacro(value) {
+    if (!value || !value.length) { return false; }
+
+    let beginChar = value.indexOf('${') === 0;
+    let endingChar = value.charAt(value.length - 1) === '}';
+
+    vm.containsMacro = HydratorPlusPlusHydratorService.containsMacro(value);
+
+    return beginChar && endingChar;
+  }
+
   vm.toggleMacro = () => {
     if (vm.disabled) { return; }
 
@@ -33,6 +50,7 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
 
     if (!newValue) {
       vm.node.plugin.properties[vm.field.name] = '';
+      vm.containsMacro = false;
     } else if (!HydratorPlusPlusHydratorService.containsMacro(propertyValue)) {
       vm.node.plugin.properties[vm.field.name] = '${}';
 
@@ -61,7 +79,7 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
     let isMacroSupported = myHelpers.objectQuery(vm, 'node', '_backendProperties', vm.field.name, 'macroSupported');
 
     if (isMacroSupported) {
-      vm.isMacro = HydratorPlusPlusHydratorService.containsMacro(propertyValue);
+      vm.isMacro = checkMacro(propertyValue);
     }
   }
 
