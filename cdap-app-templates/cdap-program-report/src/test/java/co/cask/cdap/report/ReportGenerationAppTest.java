@@ -122,9 +122,11 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   @Test
   public void testGenerateReportWithRealData() throws Exception {
     ApplicationManager schedApp = deployApplication(NoOpWorkflowApp.class);
-    schedApp.getWorkflowManager("TriggeredWorkflow").getSchedule("sched").resume();
-    WorkflowManager sleepWf = schedApp.getWorkflowManager("NoOpWorkflow").start();
-    sleepWf.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    WorkflowManager triggeredWf = schedApp.getWorkflowManager(NoOpWorkflowApp.TRIGGERED_WORKFLOW);
+    triggeredWf.getSchedule("sched").resume();
+    WorkflowManager noOpWorkflow = schedApp.getWorkflowManager(NoOpWorkflowApp.NO_OP_WORKFLOW).start();
+    noOpWorkflow.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    triggeredWf.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
     Assert.assertNotNull(reportGenerationSparkUrl);
     TimeUnit.SECONDS.sleep(10);
     URL reportURL = reportGenerationSparkUrl.toURI().resolve("reports/").toURL();
@@ -135,7 +137,8 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     ReportGenerationRequest request =
       new ReportGenerationRequest("report1", now - 3600, now, ImmutableList.of("namespace", "applicationName",
                                                                                "programType", "program", "run",
-                                                                               "status", "start", "runtimeArguments"),
+                                                                               "status", "start", "runtimeArguments",
+                                                                               "startMethod"),
                                   ImmutableList.of(
                                     new Sort("duration", Sort.Order.DESCENDING)),
                                   filters);

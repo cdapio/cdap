@@ -29,15 +29,18 @@ import org.slf4j.LoggerFactory;
  *  Simple workflow, that sleeps inside a CustomAction, This class is used for testing the workflow status.
  */
 public class NoOpWorkflowApp extends AbstractApplication {
+  public static final String NO_OP_WORKFLOW = "NoOpWorkflow";
+  public static final String TRIGGERED_WORKFLOW = "TriggeredWorkflow";
+
 
   @Override
   public void configure() {
-    setName("SleepWorkflowApp");
-    setDescription("SleepWorkflowApp");
+    setName("NoOpWorkflowApp");
+    setDescription("NoOpWorkflowApp");
     addWorkflow(new NoOpWorkflow());
     addWorkflow(new TriggeredWorkflow());
-    schedule(buildSchedule("sched", ProgramType.WORKFLOW, "TriggeredWorkflow")
-               .triggerOnProgramStatus(ProgramType.WORKFLOW, "SleepWorkflow", ProgramStatus.COMPLETED,
+    schedule(buildSchedule("sched", ProgramType.WORKFLOW, TRIGGERED_WORKFLOW)
+               .triggerOnProgramStatus(ProgramType.WORKFLOW, NO_OP_WORKFLOW, ProgramStatus.COMPLETED,
                                        ProgramStatus.FAILED, ProgramStatus.KILLED));
   }
 
@@ -48,9 +51,9 @@ public class NoOpWorkflowApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("SleepWorkflow");
+      setName(NO_OP_WORKFLOW);
       setDescription("FunWorkflow description");
-      addAction(new CustomAction("verify"));
+      addAction(new CustomAction(NO_OP_WORKFLOW));
     }
   }
 
@@ -61,9 +64,9 @@ public class NoOpWorkflowApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("TriggeredWorkflow");
+      setName(TRIGGERED_WORKFLOW);
       setDescription("FunWorkflow description");
-      addAction(new CustomAction("verify"));
+      addAction(new CustomAction(TRIGGERED_WORKFLOW));
     }
   }
 
