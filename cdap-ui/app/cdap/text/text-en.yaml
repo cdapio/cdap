@@ -1764,7 +1764,7 @@ features:
         choose_runtime_arg_map: Pick Runtime Argument
       PayloadConfigModal:
         title: Payload Configuration
-        configPayloadBtn: Configure Payload
+        configPayloadBtn: Trigger Config
         configPayloadBtnDisabled: View Payload
       Tabs:
         ComputeConfig:

@@ -234,11 +234,11 @@ class ProfilesListView extends Component {
           <div />
           <div />
           <div className="sub-title">Pipeline Usage</div>
-          <div/>
-          <div className="sub-title">Associations</div>
-          <div/>
-          <div/>
-          <div/>
+          <div />
+          <div />
+          <div />
+          <div />
+          <div />
         </div>
         <div className="grid-row">
           {

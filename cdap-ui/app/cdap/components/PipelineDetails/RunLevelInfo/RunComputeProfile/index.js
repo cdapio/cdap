@@ -47,7 +47,7 @@ class RunLevelComputeProfile extends Component {
           :
             <span>
               <IconSVG name="icon-cloud" />
-              {this.props.profileName}
+              {this.props.profileName.replace(/(user|system):/g, '')}
             </span>
           }
         </div>
@@ -70,7 +70,10 @@ class RunLevelComputeProfile extends Component {
               enableInteractionInPopover={true}
               injectOnToggle={true}
             >
-              <ProfilePreview profileName={this.props.profileName} />
+              <ProfilePreview
+                profileName={this.props.profileName.replace(/(user|system):/g, '')}
+                profileScope={this.props.profileName.indexOf('system:') !== -1 ? 'system' : 'user'}
+              />
             </Popover>
         }
       </div>
