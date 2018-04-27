@@ -19,6 +19,7 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const ACTIONS = {
   SET_JSON_SPEC: 'SET_JSON_SPEC',
+  SET_JSON_SPECS: 'SET_JSON_SPECS',
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR'
 };
@@ -26,8 +27,7 @@ const ACTIONS = {
 const DEFAULT_PROVISIONER_JSON_SPEC_MAP = {
   map: {},
   loading: true,
-  error: null,
-  selectedProvisioner: 'gce-dataproc'
+  error: null
 };
 
 const provisionerJsonSpecMap = (state = DEFAULT_PROVISIONER_JSON_SPEC_MAP, action = defaultAction) => {
@@ -42,6 +42,21 @@ const provisionerJsonSpecMap = (state = DEFAULT_PROVISIONER_JSON_SPEC_MAP, actio
         },
         loading: false
       };
+    case ACTIONS.SET_JSON_SPECS: {
+      let map = {};
+      action.payload.provisioners.forEach(provisioner => {
+        map[provisioner.name] = provisioner;
+      });
+      return {
+        ...state,
+        error: null,
+        map: {
+          ...state.map,
+          ...map
+        },
+        loading: false
+      };
+    }
     case ACTIONS.SET_LOADING:
       return {
         ...state,

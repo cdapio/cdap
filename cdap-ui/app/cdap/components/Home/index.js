@@ -70,6 +70,11 @@ const ProfileCreateView = Loadable({
   loading: LoadingSVGCentered
 });
 
+const ProfileCreateProvisionerSelection = Loadable({
+  loader: () => import(/* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'),
+  loading: LoadingSVGCentered
+});
+
 const ProfileDetailView = Loadable({
   loader: () => import(/* webpackChunkName: "ProfileDetailView" */ 'components/Cloud/Profiles/DetailView'),
   loading: LoadingSVGCentered
@@ -114,7 +119,8 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route path="/ns/:namespace/reports" component={Reports} />
-          <Route exact path="/ns/:namespace/profiles/create" component={ProfileCreateView} />
+          <Route exact path="/ns/:namespace/profiles/create" component={ProfileCreateProvisionerSelection} />
+          <Route exact path="/ns/:namespace/profiles/create/:provisionerId" component={ProfileCreateView} />
           <Route exact path="/ns/:namespace/profiles/details/:profileId" component={ProfileDetailView} />
           <Route component={Page404} />
         </Switch>
