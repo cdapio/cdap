@@ -111,9 +111,9 @@ public class ConcurrencyConstraintTest {
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
     // suspending/resuming the workflow doesn't reduce its concurrency count
-    store.setSuspend(pid3, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(pid3, AppFabricTestHelper.createSourceId(++sourceId), -1);
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
-    store.setResume(pid3, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setResume(pid3, AppFabricTestHelper.createSourceId(++sourceId), -1);
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
     // but the constraint will be satisfied with it completes, as there is only 1 remaining RUNNING

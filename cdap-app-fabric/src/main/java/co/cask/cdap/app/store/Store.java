@@ -152,8 +152,9 @@ public interface Store {
    * @param id run id of the program
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
+   * @param suspendTime time when the program is suspended
    */
-  void setSuspend(ProgramRunId id, byte[] sourceId);
+  void setSuspend(ProgramRunId id, byte[] sourceId, long suspendTime);
 
   /**
    * Logs resume of a program run and sets the run status to {@link ProgramRunStatus#RUNNING}.
@@ -161,8 +162,9 @@ public interface Store {
    * @param id run id of the program
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
+   * @param resumeTime time when the program is resumed from suspended state
    */
-  void setResume(ProgramRunId id, byte[] sourceId);
+  void setResume(ProgramRunId id, byte[] sourceId, long resumeTime);
 
   /**
    * Loads a given program.

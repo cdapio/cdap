@@ -296,16 +296,16 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setSuspend(ProgramRunId id, byte[] sourceId) {
+  public void setSuspend(ProgramRunId id, byte[] sourceId, long suspendTime) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramSuspend(id, sourceId);
+      getAppMetadataStore(context).recordProgramSuspend(id, sourceId, suspendTime);
     });
   }
 
   @Override
-  public void setResume(ProgramRunId id, byte[] sourceId) {
+  public void setResume(ProgramRunId id, byte[] sourceId, long resumeTime) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramResumed(id, sourceId);
+      getAppMetadataStore(context).recordProgramResumed(id, sourceId, resumeTime);
     });
   }
 

@@ -118,7 +118,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     store.setStart(flowId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
     store.setRunning(flowId, System.currentTimeMillis(),
                      null, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setSuspend(flowId, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setSuspend(flowId, Bytes.toBytes(sourceId.getAndIncrement()), -1);
     expectedStates.put(flowId, ProgramRunStatus.SUSPENDED);
 
     // Write two MR in starting state. One with workflow information, one without.
