@@ -86,6 +86,9 @@ $dropdown_border_bottom_color: #333333;
           display: flex;
           align-items: center;
           justify-content: center;
+          &.margin-top-offset {
+            height: calc(100% - 48px);
+          }
         }
       }
       &.active {

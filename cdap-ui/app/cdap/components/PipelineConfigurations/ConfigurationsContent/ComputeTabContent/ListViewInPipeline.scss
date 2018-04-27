@@ -38,7 +38,7 @@
   .grid.grid-container {
     max-height: calc(100% - 50px); // 100% - 17px (title) - 30px (profile count)
     .grid-row {
-      grid-template-columns: 30px 1fr 1fr 1fr;
+      grid-template-columns: 30px 1fr 1fr 1fr 100px;
     }
     .grid-header {
       .grid-row {

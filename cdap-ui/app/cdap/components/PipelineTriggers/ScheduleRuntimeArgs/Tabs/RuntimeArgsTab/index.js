@@ -19,6 +19,7 @@ import ScheduleRuntimeArgsStore, {DEFAULTFIELDDELIMITER} from 'components/Pipeli
 import {Row, Col} from 'reactstrap';
 import RuntimeArgRow from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/RuntimeArgsTab/RuntimeArgRow';
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs.RuntimeArgs';
 
@@ -94,7 +95,9 @@ export default class RuntimArgsTab extends Component {
       let emptyMessage = disabled ? `${PREFIX}.disabledNoRuntimeArgsMessage` : `${PREFIX}.noRuntimeArgsMessage`;
 
       return (
-        <div className="empty-message-container">
+        <div className={classnames("empty-message-container", {
+          'margin-top-offset': !disabled
+        })}>
           <h4>
             {
               T.translate(`${emptyMessage}`, {
@@ -120,7 +123,6 @@ export default class RuntimArgsTab extends Component {
 
   render() {
     let {triggeringPipelineInfo, triggeredPipelineInfo, disabled} = ScheduleRuntimeArgsStore.getState().args;
-
     return (
       <div className="run-time-args-tab">
         {

@@ -20,6 +20,7 @@ import StagePropertiesRow from 'components/PipelineTriggers/ScheduleRuntimeArgs/
 import {Row, Col} from 'reactstrap';
 import difference from 'lodash/difference';
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs.StageProps';
 
@@ -56,7 +57,9 @@ export default function StagePropertiesTab() {
       }
       {
         !list.length ?
-          <div className="empty-message-container">
+          <div className={classnames("empty-message-container", {
+            'margin-top-offset': !disabled
+          })}>
             <h4>
               {
                 T.translate(`${emptyMessage}`, {

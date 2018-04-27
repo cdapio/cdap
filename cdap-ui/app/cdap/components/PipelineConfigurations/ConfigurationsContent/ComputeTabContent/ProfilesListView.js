@@ -59,20 +59,20 @@ export default class ProfilesListViewInPipeline extends Component {
   componentWillMount() {
     let appId = PipelineDetailStore.getState().name;
     Observable.forkJoin(
-      MyCloudApi.list({
-        namespace: getCurrentNamespace()
-      }),
+      MyCloudApi.list({ namespace: getCurrentNamespace() }),
+      MyCloudApi.list({ namespace: 'system' }),
       MyPreferenceApi.getAppPreferences({
         namespace: getCurrentNamespace(),
         appId
       })
     )
       .subscribe(
-        ([profiles = [], preferences = {}]) => {
+        ([profiles = [], systemProfiles = [], preferences = {}]) => {
           let selectedProfile = preferences[PROFILE_NAME_PREFERENCE_PROPERTY] || this.state.selectedProfile;
+          let allProfiles = profiles.concat(systemProfiles);
           this.setState({
             loading: false,
-            profiles,
+            profiles: allProfiles,
             selectedProfile
           });
         },
@@ -100,8 +100,9 @@ export default class ProfilesListViewInPipeline extends Component {
         <div className="grid-row">
           <div></div>
           <strong>Profile Name</strong>
-          <strong>Provider</strong>
+          <strong>Provisioner</strong>
           <strong>Scope</strong>
+          <strong />
         </div>
       </div>
     );
@@ -113,23 +114,30 @@ export default class ProfilesListViewInPipeline extends Component {
       if (match.length) {
         return (
           match.map(profile => {
+            let profileNamespace = profile.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
+            let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
+            let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
             return (
               <div
                 className={classnames("grid-row grid-link", {
-                  "active": this.state.selectedProfile === profile.name
+                  "active": this.state.selectedProfile === profileName
                 })}
-                onClick={this.onProfileSelect.bind(this, profile.name)}
               >
-                <div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
                   {
-                    this.state.selectedProfile === profile.name ? (
+                    this.state.selectedProfile === profileName ? (
                       <IconSVG name="icon-check" className="text-success" />
                     ) : null
                   }
                 </div>
-                <div>{profile.name}</div>
-                <div>{profile.provisioner.name}</div>
-                <div>{profile.scope}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.name}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.provisioner.name}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.scope}</div>
+                <div>
+                  <a href={profileDetailsLink}>
+                    View
+                  </a>
+                </div>
               </div>
             );
           })
@@ -140,23 +148,34 @@ export default class ProfilesListViewInPipeline extends Component {
       <div className="grid-body">
         {
           this.state.profiles.map(profile => {
+            let profileNamespace = profile.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
+            let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
+            let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
             return (
               <div
                 className={classnames("grid-row grid-link", {
-                  "active": this.state.selectedProfile === profile.name
+                  "active": this.state.selectedProfile === profileName
                 })}
-                onClick={this.onProfileSelect.bind(this, profile.name)}
               >
-                <div>
+                {
+                  /*
+                    There is an onClick handler on each cell except the last one.
+                    This is to prevent the user from selecting a profile while trying to click on the details link
+                  */
+                }
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
                   {
-                    this.state.selectedProfile === profile.name ? (
+                    this.state.selectedProfile === profileName ? (
                       <IconSVG name="icon-check" className="text-success" />
                     ) : null
                   }
                 </div>
-                <div>{profile.name}</div>
-                <div>{profile.provisioner.name}</div>
-                <div>{profile.scope}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.name}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.provisioner.name}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.scope}</div>
+                <div>
+                  <a href={profileDetailsLink}> View </a>
+                </div>
               </div>
             );
           })

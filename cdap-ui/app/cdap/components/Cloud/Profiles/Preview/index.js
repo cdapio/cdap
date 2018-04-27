@@ -24,6 +24,7 @@ require('./Preview.scss');
 
 export default class ProfilePreview extends Component {
   static propTypes = {
+    profileScope: PropTypes.string,
     profileName: PropTypes.string,
     profileCustomProperties: PropTypes.object
   };
@@ -34,8 +35,12 @@ export default class ProfilePreview extends Component {
   };
 
   componentDidMount() {
+    let namespace = getCurrentNamespace();
+    if (this.props.profileScope === 'system') {
+      namespace = 'system';
+    }
     MyCloudApi.get({
-      namespace: getCurrentNamespace(),
+      namespace,
       profile: this.props.profileName
     })
     .subscribe(
@@ -62,6 +67,8 @@ export default class ProfilePreview extends Component {
         </div>
       );
     }
+    let profileNamespace = this.state.profileDetails.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
+    let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
     return (
       <div className="profile-preview text-xs-left">
         <strong>{this.props.profileName}</strong>
@@ -73,7 +80,7 @@ export default class ProfilePreview extends Component {
         <div className="grid grid-container">
           <div className="grid-header">
             <div className="grid-row">
-              <div>Provider</div>
+              <div>Provisioner</div>
               <div>Scope</div>
               <div>Last 24hr # runs</div>
               <div>Last 24hr node hr</div>
@@ -98,9 +105,11 @@ export default class ProfilePreview extends Component {
           </div>
         </div>
         <hr />
-        <a href="#">
-          View Details
-        </a>
+        <div>
+          <a href={profileDetailsLink}>
+            View Details
+          </a>
+        </div>
       </div>
     );
   }
