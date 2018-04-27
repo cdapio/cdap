@@ -85,10 +85,10 @@ function RunsListView({bucketInfo, displayRunsList}) {
                 let duration = run.end ? run.end - run.start : '--';
                 duration = humanReadableDuration(duration);
                 return (
-                  <tr key={`${run.application}${run.program}${run.start}${i}`}>
+                  <tr key={`${run.application.name}${run.program}${run.start}${i}`}>
                     <td>{run.namespace}</td>
-                    <td>{run.application}</td>
-                    <td>{run.artifact.name}</td>
+                    <td>{run.application.name}</td>
+                    <td>{run.type}</td>
                     <td>{duration}</td>
                     <td>{run.user || '--'}</td>
                     <td>{run.startMethod}</td>
