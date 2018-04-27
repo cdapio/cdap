@@ -29,7 +29,6 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.messaging.data.MessageId;
@@ -68,6 +67,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
   private final long emptyFetchDelayMillis;
   private final RetryStrategy retryStrategy;
   private final MetricsContext metricsContext;
+  private boolean messageIdInitialized;
   private String messageId;
   private int failureCount;
   private long nonFailureStartTime;
@@ -191,10 +191,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
   @Override
   protected final void startUp() throws Exception {
     doStartUp();
-
-    // Fetch the messageId. Retry on any exceptions thrown
-    messageId = Retries.supplyWithRetries(() -> Transactionals.execute(getTransactional(), this::loadMessageId),
-                                          retryStrategy, Retries.ALWAYS_TRUE);
   }
 
   @Override
@@ -244,6 +240,12 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
     try {
       if (nonFailureStartTime == 0L) {
         nonFailureStartTime = System.currentTimeMillis();
+      }
+
+      // Fetch the messageId if hasn't been fetched
+      if (!messageIdInitialized) {
+        messageId = Transactionals.execute(getTransactional(), this::loadMessageId);
+        messageIdInitialized = true;
       }
 
       // Collects batch of messages for processing.
