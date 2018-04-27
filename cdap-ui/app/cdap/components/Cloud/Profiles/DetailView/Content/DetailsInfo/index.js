@@ -74,7 +74,12 @@ export default class ProfileDetailViewDetailsInfo extends Component {
               return (
                 <div className="details-row">
                   <strong>{`${property.name}:`}</strong>
-                  <span>{property.value}</span>
+                  <span
+                    className="value-holder"
+                    title={property.value}
+                  >
+                    {property.value}
+                  </span>
                 </div>
               );
             })

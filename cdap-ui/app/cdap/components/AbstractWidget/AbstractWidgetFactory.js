@@ -14,15 +14,12 @@
  * the License.
 */
 
-import React from 'react';
-import {Input} from 'reactstrap';
 import SelectWidget from 'components/AbstractWidget/SelectWidget';
 import NumberTextbox from 'components/AbstractWidget/NumberTextbox';
 import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
 import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
 import DefaultInput from 'components/AbstractWidget/DefaultInput';
-
-const TextArea = ({...props}) => <Input type="textarea" {...props} />;
+import TextArea from 'components/AbstractWidget/TextArea';
 
 const WIDGET_FACTORY = {
   text: DefaultInput,
