@@ -28,7 +28,7 @@ public class ProgramStartInfo {
   private ArtifactId artifactId;
   private String principal;
 
-  ProgramStartInfo(Map<String, String> arguments, ArtifactId artifactId, String principal) {
+  public ProgramStartInfo(Map<String, String> arguments, ArtifactId artifactId, String principal) {
     this.runtimeArguments = arguments;
     this.artifactId = artifactId;
     this.principal = principal;

@@ -16,14 +16,19 @@
 
 package co.cask.cdap.report;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.report.main.ProgramRunInfo;
+import co.cask.cdap.report.main.ProgramRunInfoSerializer;
+import co.cask.cdap.report.main.ProgramStartInfo;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
@@ -32,7 +37,9 @@ import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.Sort;
 import co.cask.cdap.report.proto.ValueFilter;
-import co.cask.cdap.report.util.ProgramRunMetaFileUtil;
+import co.cask.cdap.report.util.Constants;
+import co.cask.cdap.report.util.ReportContentDeserializer;
+import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -46,8 +53,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
@@ -68,6 +77,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -79,10 +89,13 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   @ClassRule
-  public static final TestConfiguration CONF = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, "false");
+  public static final TestConfiguration CONF =
+    new TestConfiguration(co.cask.cdap.common.conf.Constants.Explore.EXPLORE_ENABLED, "false");
 
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
+    .create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
@@ -94,7 +107,8 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
     // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
     DataSetManager<FileSet> fileSet = getDataset(metaFileset);
-    populateMetaFiles(fileSet.get().getBaseLocation());
+    Long currentTime = System.currentTimeMillis();
+    populateMetaFiles(fileSet.get().getBaseLocation(), currentTime);
 
     // Trace the dependencies for the spark avro
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
@@ -130,14 +144,13 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     URL reportURL = url.toURI().resolve("reports/").toURL();
     List<Filter> filters =
       ImmutableList.of(
-        new ValueFilter<>("namespace", ImmutableSet.of("ns1", "ns2"), null),
-        new RangeFilter<>("duration", new RangeFilter.Range<>(500L, null)));
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
     ReportGenerationRequest request =
-      new ReportGenerationRequest(1520808000L, 1520808301L, ImmutableList.of("namespace", "duration"),
-                                  ImmutableList.of(
-                                    new Sort("duration",
-                                             Sort.Order.DESCENDING)),
-                                  filters);
+      new ReportGenerationRequest(TimeUnit.MILLISECONDS.toSeconds(currentTime),
+                                  TimeUnit.MILLISECONDS.toSeconds(currentTime) + 30,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
     HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
     urlConn.setDoOutput(true);
     urlConn.setRequestMethod("POST");
@@ -161,6 +174,13 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
     Assert.assertEquals(2, reportContent.getTotal());
+    // Assert that all the records in the report contain startMethod TRIGGERED
+    boolean startMethodIsCorrect =
+      reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
+    if (!startMethodIsCorrect) {
+      Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
+                    "but actual results do not meet this requirement: " + reportContent.getDetails());
+    }
   }
 
   private static <T> T getResponseObject(URLConnection urlConnection, Type typeOfT) throws IOException {
@@ -180,40 +200,61 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
    * when initializing report generation Spark program to add mock data
    *
    * @param metaBaseLocation the location to add files
+   * @param currentTime the current time in millis
    */
-  private static void populateMetaFiles(Location metaBaseLocation) throws Exception {
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunMetaFileUtil.SCHEMA);
+  private static void populateMetaFiles(Location metaBaseLocation, Long currentTime) throws Exception {
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunInfoSerializer.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
+    String appName = "Pipeline";
+    String version = "-SNAPSHOT";
+    String type = "WORKFLOW";
+    String program1 = "SmartWorkflow_1";
+    String program2 = "SmartWorkflow_2";
+    // add a schedule info with program status trigger
+    String scheduleInfo = "{\"name\": \"sched\",\"description\": \"desc\",\"triggerInfos\": [" +
+      "{\"namespace\": \"default\",\"application\": \"app\",\"version\": \"-SNAPSHOT\",\"programType\": \"WORKFLOW\"," +
+      "\"run\":\"randomRunId\",\"entity\": \"PROGRAM\",\"program\": \"wf\",\"programStatus\": \"KILLED\"," +
+      "\"type\": \"PROGRAM_STATUS\"}]}";
+    ProgramStartInfo startInfo =
+      new ProgramStartInfo(ImmutableMap.of(RecordBuilder.SCHEDULE_INFO_KEY(), scheduleInfo),
+                           new ArtifactId("Artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER), "alice");
+    long delay = TimeUnit.MINUTES.toMillis(5);
+    int mockMessageId = 0;
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
       Location nsLocation = metaBaseLocation.append(namespace);
       nsLocation.mkdirs();
       for (int i = 0; i < 5; i++) {
-        long time = 1520808000L + 1000 * i;
-        // expected format is <event-timestamp-millis>-<creation-timestamp-millis>.avro
-        Location reportLocation = nsLocation.append(String.format("%d-%d.avro",
-                                                                  TimeUnit.SECONDS.toMillis(time),
-                                                                  System.currentTimeMillis()));
+        long time = currentTime + TimeUnit.HOURS.toMillis(i);
+        //file name is of the format <event-time-millis>-<creation-time-millis>.avro
+        Location reportLocation = nsLocation.append(String.format("%d-%d.avro", time, System.currentTimeMillis()));
         reportLocation.createNew();
-        dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
-        String program = "SmartWorkflow";
+        dataFileWriter.create(ProgramRunInfoSerializer.SCHEMA, reportLocation.getOutputStream());
         String run1 = ReportIds.generate().toString();
         String run2 = ReportIds.generate().toString();
-        long delay = TimeUnit.MINUTES.toSeconds(5);
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1, "STARTING",
-                                                                  time, new StartInfo("user",
-                                                                                      ImmutableMap.of("k1", "v1",
-                                                                                                      "k2", "v2"))));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program, run1,
-                                                                  "FAILED", time + delay, null));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                  "STARTING", time + delay, null));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                  "RUNNING", time + 2 * delay, null));
-        dataFileWriter.append(ProgramRunMetaFileUtil.createRecord(namespace, program + "_1", run2,
-                                                                  "COMPLETED", time + 4 * delay, null));
+        dataFileWriter.append(createRecord(namespace, appName, version, type, program1, run1,
+                                           "STARTING", time, startInfo, Integer.toString(++mockMessageId)));
+        dataFileWriter.append(createRecord(namespace, appName, version, type, program1, run1,
+                                           "FAILED", time + delay, null, Integer.toString(++mockMessageId)));
+        dataFileWriter.append(createRecord(namespace, appName, version, type, program2, run2,
+                                           "STARTING", time + delay, startInfo, Integer.toString(++mockMessageId)));
+        dataFileWriter.append(createRecord(namespace, appName, version, type, program2, run2,
+                                           "RUNNING", time + 2 * delay, null, Integer.toString(++mockMessageId)));
+        dataFileWriter.append(createRecord(namespace, appName, version, type, program2, run2,
+                                           "COMPLETED", time + 4 * delay, null, Integer.toString(++mockMessageId)));
         dataFileWriter.close();
       }
       LOG.debug("nsLocation.list() = {}", nsLocation.list());
     }
+  }
+
+  private static GenericData.Record createRecord(String namespace, String application, String version,
+                                                String type, String program, String run, String status,
+                                                Long timestamp, ProgramStartInfo startInfo, String messageId) {
+    ProgramRunInfo runInfo = new ProgramRunInfo(namespace, application, version, type, program, run);
+    runInfo.setStatus(status);
+    runInfo.setTime(timestamp);
+    runInfo.setStartInfo(startInfo);
+    runInfo.setMessageId(messageId);
+    return ProgramRunInfoSerializer.createRecord(runInfo);
   }
 }

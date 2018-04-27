@@ -146,8 +146,8 @@ public class RunMetaFileManager {
   }
 
   private void appendAndFlushWithRetry(RunMetaFileOutputStream outputStream,
-                                       ProgramRunInfo runIdFields) throws InterruptedException {
-    retryWithCallable(() -> outputStream.append(runIdFields), "append");
+                                       ProgramRunInfo programRunInfo) throws InterruptedException {
+    retryWithCallable(() -> outputStream.append(programRunInfo), "append");
     retryWithCallable(() -> outputStream.flush(), "flush");
   }
 

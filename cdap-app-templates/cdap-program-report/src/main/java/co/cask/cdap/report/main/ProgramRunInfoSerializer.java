@@ -18,6 +18,7 @@ package co.cask.cdap.report.main;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.report.util.Constants;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.avro.generic.GenericData;
 
 /**
@@ -43,6 +44,7 @@ public class ProgramRunInfoSerializer {
     Schema.Field.of(Constants.NAMESPACE, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.APPLICATION_NAME, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.APPLICATION_VERSION, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.PROGRAM_TYPE, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.PROGRAM, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.RUN, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.STATUS, Schema.of(Schema.Type.STRING)),
@@ -58,30 +60,31 @@ public class ProgramRunInfoSerializer {
   public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(SCHEMA_STRING);
 
   /**
-   * convert {@link ProgramRunInfo} to a Generic record
+   * Converts {@link ProgramRunInfo} to a Generic record
    */
-  public static GenericData.Record createRecord(ProgramRunInfo runIdFields) {
+  public static GenericData.Record createRecord(ProgramRunInfo runInfo) {
     GenericData.Record startInfoRecord = null;
-    if (runIdFields.getProgramStatus().equals("STARTING")) {
+    if (runInfo.getProgramStatus().equals("STARTING")) {
       startInfoRecord = new GenericData.Record(STARTING_INFO_SCHEMA);
-      startInfoRecord.put(Constants.USER, runIdFields.getProgramSartInfo().getPrincipal());
-      startInfoRecord.put(Constants.RUNTIME_ARGUMENTS, runIdFields.getProgramSartInfo().getRuntimeArguments());
+      startInfoRecord.put(Constants.USER, runInfo.getProgramSartInfo().getPrincipal());
+      startInfoRecord.put(Constants.RUNTIME_ARGUMENTS, runInfo.getProgramSartInfo().getRuntimeArguments());
       GenericData.Record artifactRecord = new GenericData.Record(ARTIFACT_INFO_SCHEMA);
-      ArtifactId artifactId = runIdFields.getProgramSartInfo().getArtifactId();
+      ArtifactId artifactId = runInfo.getProgramSartInfo().getArtifactId();
       artifactRecord.put(Constants.ARTIFACT_NAME, artifactId.getName());
       artifactRecord.put(Constants.ARTIFACT_VERSION, artifactId.getVersion().toString());
       artifactRecord.put(Constants.ARTIFACT_SCOPE, artifactId.getScope().toString());
       startInfoRecord.put(Constants.ARTIFACT_ID, artifactRecord);
     }
     GenericData.Record record = new GenericData.Record(SCHEMA);
-    record.put(Constants.NAMESPACE, runIdFields.getNamespace());
-    record.put(Constants.APPLICATION_NAME, runIdFields.getApplication());
-    record.put(Constants.APPLICATION_VERSION, runIdFields.getApplicationVersion());
-    record.put(Constants.PROGRAM, runIdFields.getProgram());
-    record.put(Constants.RUN, runIdFields.getRun());
-    record.put(Constants.STATUS, runIdFields.getProgramStatus());
-    record.put(Constants.TIME, runIdFields.getTimestamp());
-    record.put(Constants.MESSAGE_ID, runIdFields.getMessageId());
+    record.put(Constants.NAMESPACE, runInfo.getNamespace());
+    record.put(Constants.APPLICATION_NAME, runInfo.getApplication());
+    record.put(Constants.APPLICATION_VERSION, runInfo.getApplicationVersion());
+    record.put(Constants.PROGRAM_TYPE, runInfo.getType());
+    record.put(Constants.PROGRAM, runInfo.getProgram());
+    record.put(Constants.RUN, runInfo.getRun());
+    record.put(Constants.STATUS, runInfo.getProgramStatus());
+    record.put(Constants.TIME, runInfo.getTimestamp());
+    record.put(Constants.MESSAGE_ID, runInfo.getMessageId());
     record.put(Constants.START_INFO, startInfoRecord);
     return record;
   }
