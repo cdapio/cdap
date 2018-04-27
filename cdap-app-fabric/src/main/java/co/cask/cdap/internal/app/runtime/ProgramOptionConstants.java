@@ -49,6 +49,10 @@ public final class ProgramOptionConstants {
 
   public static final String PROGRAM_DESCRIPTOR = "programDescriptor";
 
+  public static final String SUSPEND_TIME = "suspendTime";
+
+  public static final String RESUME_TIME = "resumeTime";
+
   public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 
   public static final String WORKFLOW_TOKEN = "workflowToken";

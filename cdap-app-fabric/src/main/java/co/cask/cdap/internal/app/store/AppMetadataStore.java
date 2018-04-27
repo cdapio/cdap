@@ -695,7 +695,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId, long timestamp) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -706,7 +706,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       // Skip recording suspend if the existing record is not valid
       return null;
     }
-    return recordProgramSuspendResume(programRunId, sourceId, existing, "suspend");
+    return recordProgramSuspendResume(programRunId, sourceId, existing, "suspend", timestamp);
   }
 
   /**
@@ -719,7 +719,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramResumed(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramResumed(ProgramRunId programRunId, byte[] sourceId, long timestamp) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -743,11 +743,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
                 programRunId.getParent(), programRunId.getRun());
       return null;
     }
-    return recordProgramSuspendResume(programRunId, sourceId, existing, "resume");
+    return recordProgramSuspendResume(programRunId, sourceId, existing, "resume", timestamp);
   }
 
   private RunRecordMeta recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
-                                                   RunRecordMeta existing, String action) {
+                                          RunRecordMeta existing, String action, long timestamp) {
     String toType = TYPE_RUN_RECORD_SUSPENDED;
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
 
@@ -758,7 +758,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // Delete the old run record
     delete(existing);
     MDSKey key = getProgramKeyBuilder(toType, programRunId).build();
-    RunRecordMeta meta = RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId).build();
+    RunRecordMeta.Builder builder = RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId);
+    if (timestamp != -1) {
+      if (action.equals("resume")) {
+        builder.setStartTime(timestamp);
+      } else {
+        builder.setStopTime(timestamp);
+      }
+    }
+    RunRecordMeta meta = builder.build();
     write(key, meta);
     LOG.trace("Recorded {} for program {}", toStatus, programRunId);
     return meta;

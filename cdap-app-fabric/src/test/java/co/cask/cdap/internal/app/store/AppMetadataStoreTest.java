@@ -225,9 +225,9 @@ public class AppMetadataStoreTest {
     final ProgramRunId programRunId2 = program.run(runId2);
     txnl.execute(() -> {
       metadataStoreDataset.recordProgramSuspend(programRunId2,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), -1);
       metadataStoreDataset.recordProgramResumed(programRunId2,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), -1);
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);
       // no run record is expected to be persisted without STARTING persisted
       Assert.assertNull(runRecordMeta);
@@ -279,16 +279,19 @@ public class AppMetadataStoreTest {
     });
     final RunId runId6 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId6 = program.run(runId6);
+    Long currentTime = System.currentTimeMillis();
     // STARTING status will be ignored if there's any existing record
     txnl.execute(() -> {
       recordProvisionAndStart(programRunId6, metadataStoreDataset);
       metadataStoreDataset.recordProgramSuspend(programRunId6,
-                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                currentTime);
       metadataStoreDataset.recordProgramStart(programRunId6, null, Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
       Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
+      Assert.assertEquals(currentTime, runRecordMeta.getStopTs());
     });
     final RunId runId7 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId7 = program.run(runId7);
