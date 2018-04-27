@@ -46,8 +46,7 @@ class ProfileCreateView extends Component {
   static propTypes = {
     match: PropTypes.object,
     provisionerJsonSpecMap: PropTypes.object,
-    loading: PropTypes.bool,
-    selectedProvisioner: PropTypes.string
+    loading: PropTypes.bool
   };
 
   static defaultProps = {
@@ -58,17 +57,17 @@ class ProfileCreateView extends Component {
     redirectToNamespace: false,
     redirectToAdmin: false,
     creatingProfile: false,
-    isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system'
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system',
+    selectedProvisioner: objectQuery(this.props.match, 'params', 'provisionerId')
   };
 
   componentWillReceiveProps(nextProps) {
-    let {selectedProvisioner} = nextProps;
+    let {selectedProvisioner} = this.state;
     initializeProperties(nextProps.provisionerJsonSpecMap[selectedProvisioner]);
   }
 
   componentDidMount() {
-    let {selectedProvisioner} = this.props;
-    // The name will probably come from the URL in the future when we add new provisioner types.
+    let {selectedProvisioner} = this.state;
     fetchProvisionerSpec(selectedProvisioner);
     // FIXME: Since we are already in admin we shouldn't have to do this explicitly from the create profile view.
     if (this.state.isSystem) {
@@ -89,7 +88,7 @@ class ProfileCreateView extends Component {
     let jsonBody = {
       description,
       provisioner: {
-        name: this.props.selectedProvisioner,
+        name: this.state.selectedProvisioner,
         properties: Object.entries(properties).map(([property, propObj]) => {
           return {
             name: property,
@@ -226,7 +225,7 @@ class ProfileCreateView extends Component {
   };
 
   renderGroups = () => {
-    let {selectedProvisioner} = this.props;
+    let {selectedProvisioner} = this.state;
     let configurationGroups = objectQuery(this.props, 'provisionerJsonSpecMap', selectedProvisioner, 'configuration-groups');
     if (!configurationGroups) {
       return null;
@@ -316,8 +315,7 @@ class ProfileCreateView extends Component {
 const mapStateToProps = (state) => {
   return {
     loading: state.loading,
-    provisionerJsonSpecMap: state.map,
-    selectedProvisioner: state.selectedProvisioner
+    provisionerJsonSpecMap: state.map
   };
 };
 const ConnectedProfileCreateView = connect(mapStateToProps)(ProfileCreateView);

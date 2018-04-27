@@ -50,4 +50,37 @@ const fetchProvisionerSpec = (provisionerName) => {
     );
 };
 
-export { fetchProvisionerSpec };
+const fetchProvisioners = () => {
+  ProvisionerInfoStore.dispatch({
+    type: ACTIONS.SET_LOADING,
+    payload: {
+      loading: true
+    }
+  });
+
+  MyCloudApi
+    .getProvisioners()
+    .subscribe(
+      (provisioners) => {
+        ProvisionerInfoStore.dispatch({
+          type: ACTIONS.SET_JSON_SPECS,
+          payload: {
+            provisioners
+          }
+        });
+      },
+      (error) => {
+        ProvisionerInfoStore.dispatch({
+          type: ACTIONS.SET_ERROR,
+          payload: {
+            error
+          }
+        });
+      }
+    );
+};
+
+export {
+  fetchProvisionerSpec,
+  fetchProvisioners
+};
