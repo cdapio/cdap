@@ -41,7 +41,8 @@ public class DataProcProvisioner implements Provisioner {
   private static final Logger LOG = LoggerFactory.getLogger(DataProcProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "gce-dataproc", "GCE DataProc Provisioner",
-    "Runs programs on the GCE DataProc clusters.",
+    "Google Cloud Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
+      "Hadoop clusters in a simpler, more cost-efficient way.",
     new HashMap<>());
   private static final String CLUSTER_PREFIX = "cdap-";
 
