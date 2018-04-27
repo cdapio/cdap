@@ -29,11 +29,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data.view.ViewAdminModules;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -42,7 +38,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -59,11 +54,9 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -429,29 +422,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   protected Module createModule(CConfiguration cConf, Configuration hConf, TwillContext context,
                                 ProgramId programId, String runId, String instanceId, @Nullable String principal) {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        install(DistributedProgramContainerModule
-                  .builder(cConf, hConf, programId.run(runId), instanceId)
-                  .setPrincipal(principal)
-                  .setServiceAnnouncer(context)
-                  .build());
-
-        // Add bindings for stream. It is being used by various TwillRunnable, hence add it here
-        // This also make the removal later easier since stream is deprecated
-        install(new ViewAdminModules().getDistributedModules());
-        install(new StreamAdminModules().getDistributedModules());
-        install(new NotificationFeedClientModule());
-        install(new AbstractModule() {
-          @Override
-          protected void configure() {
-            // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
-            bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
-          }
-        });
-      }
-    };
+    return DistributedProgramContainerModule
+      .builder(cConf, hConf, programId.run(runId), instanceId)
+      .setPrincipal(principal)
+      .setServiceAnnouncer(context)
+      .build();
   }
 
   /**

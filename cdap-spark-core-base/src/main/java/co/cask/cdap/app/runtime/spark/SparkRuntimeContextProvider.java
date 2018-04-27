@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
+import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
 import co.cask.cdap.app.guice.DistributedProgramContainerModule;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
@@ -52,6 +53,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
@@ -60,6 +62,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.tephra.TransactionSystemClient;
@@ -85,6 +88,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -304,16 +308,19 @@ public final class SparkRuntimeContextProvider {
     return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive));
   }
 
-  private static Injector createInjector(CConfiguration cConf, Configuration hConf,
+  @VisibleForTesting
+  public static Injector createInjector(CConfiguration cConf, Configuration hConf,
                                          ProgramId programId, ProgramOptions programOptions) {
     String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
     String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
-    return Guice.createInjector(
-      DistributedProgramContainerModule.builder(cConf, hConf, programId.run(runId), instanceId)
-        .setPrincipal(principal)
-        .build()
-    );
+
+    List<Module> modules = new ArrayList<>();
+    modules.add(DistributedProgramContainerModule.builder(cConf, hConf, programId.run(runId), instanceId)
+                  .setPrincipal(principal)
+                  .build());
+    modules.add(new DistributedArtifactManagerModule());
+    return Guice.createInjector(modules);
   }
 
   /**
