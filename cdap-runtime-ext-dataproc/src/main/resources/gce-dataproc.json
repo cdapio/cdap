@@ -14,10 +14,11 @@
           }
         },
         {
-          "widget-type": "json-editor",
+          "widget-type": "textarea",
           "label": "Service Account Key",
           "name": "accountKey",
           "required": true,
+          "description": "A service account is a special type of Google account that belongs to your application or a virtual machine (VM), instead of to an individual end user. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console.",
           "widget-attributes": {
             "placeholder": "Specify the GCP service account to use to run pipelines using this profile"
           }

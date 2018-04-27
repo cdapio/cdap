@@ -42,7 +42,7 @@ $details-row-border-color: $grey-05;
 
       .details-table {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, 33%);
         grid-auto-rows: 40px;
         grid-gap: 0px 20px;
 
@@ -56,6 +56,15 @@ $details-row-border-color: $grey-05;
           &:nth-child(2),
           &:nth-child(3) {
             border-top: 1px solid $details-row-border-color;
+          }
+          > .value-holder {
+            display: block;
+            width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            height: 100%;
+            padding: 10px;
+            white-space: nowrap;
           }
         }
       }
