@@ -26,7 +26,8 @@ import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import uuidV4 from 'uuid/v4';
 import Pagination from 'components/Pagination';
-import SpotlightModalHeader from './SpotlightModalHeader';
+import SpotlightModalHeader from 'components/SpotlightSearch/SpotlightModal/SpotlightModalHeader';
+import T from 'i18n-react';
 
 import {
   Col,
@@ -37,6 +38,7 @@ import {
 
 require('./SpotlightModal.scss');
 
+const PREFIX = 'features.SpotlightSearch.SpotlightModal';
 const PAGE_SIZE = 10;
 
 export default class SpotlightModal extends Component {
@@ -129,10 +131,16 @@ export default class SpotlightModal extends Component {
     });
   }
 
-  render() {
-    let bodyContent;
-    let currentNamespace = NamespaceStore.getState().selectedNamespace;
+  renderBodyContent() {
+    if (!this.state.searchResults.results.length) {
+      return (
+        <div className="text-xs-center no-search-results">
+          {T.translate(`${PREFIX}.noResults`, {tag: this.props.tag})}
+        </div>
+      );
+    }
 
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
     let searchResultsToBeRendered = (
         this.state.searchResults.results
         .map(parseMetadata)
@@ -196,19 +204,21 @@ export default class SpotlightModal extends Component {
         })
       );
 
-      bodyContent = (
-        <div>
-          {searchResultsToBeRendered}
-        </div>
-      );
+    return (
+      <div>
+        {searchResultsToBeRendered}
+      </div>
+    );
+  }
 
+  render() {
     return (
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.props.toggle}
         className='search-results-modal'
         size="lg"
-        backdrop={true}
+        backdrop="static"
       >
         <SpotlightModalHeader
           toggle={this.props.toggle}
@@ -225,7 +235,7 @@ export default class SpotlightModal extends Component {
               setCurrentPage={this.handleSearch.bind(this)}
               currentPage={this.state.currentPage}
             >
-              {bodyContent}
+              {this.renderBodyContent()}
             </Pagination>
           </div>
         </ModalBody>

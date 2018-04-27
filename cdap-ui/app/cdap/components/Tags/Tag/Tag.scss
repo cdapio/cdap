@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,26 +12,40 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-$system-tags-color: #979fbb;
-$user-tags-color: #bac1d8;
+@import '../../../styles/variables.scss';
 
 .tags-holder {
   .btn {
-    &.btn-secondary {
+    &.tag-btn {
       margin: 3px;
 
-      .fa.fa-times {
+      .icon-close {
+        font-size: 12px;
         margin-left: 5px;
       }
 
-      &.system-tags {
-        background-color: $system-tags-color;
+      &.user-tag {
+        background-color: $grey-07;
+        border: 1px solid $blue-grey06;
+        color: $grey-02;
+
+        &:hover {
+          background-color: $grey-06;
+          color: $grey-01;
+        }
       }
 
-      &.user-tags {
-        background-color: $user-tags-color;
+      &.system-tag {
+        background-color: white;
+        color: $blue-grey03;
+        border: 1px solid $blue-grey06;
+
+        &:hover {
+          border-color: $blue-grey03;
+          color: $blue-grey01;
+        }
       }
     }
   }

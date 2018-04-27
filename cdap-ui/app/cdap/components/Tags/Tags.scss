@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,9 +12,26 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
+
+@import '../../styles/variables.scss';
+$input-width: 120px;
 
 .tags-holder {
+  display: flex;
+  align-items: center;
+
+  > span {
+    display: inline-block;
+  }
+
+  .tags-list {
+    /* 120px width of input box + 10px padding + 50px width of All Tags label + 10px padding + 15px width of loading icon */
+    max-width: calc(100% - #{$input-width} - 10px - 50px - 10px - 15px);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
   .btn {
     padding: 3px 5px;
     font-size: 12px;
@@ -24,19 +41,60 @@
     line-height: 1;
 
     &.plus-button-container {
-      margin-left: 5px;
+      margin-left: 3px;
     }
   }
 
   .tag-input {
     height: 20px;
     line-height: 20px;
-    width: 120px;
+    width: $input-width;
     display: inline-block;
     padding: 0 5px;
     margin-left: 5px;
     margin-right: 3px;
     vertical-align: middle;
     font-size: 12px;
+  }
+
+  .plus-button-container {
+    background-color: $grey-04;
+    border: 2px solid white;
+    border-radius: 4px;
+  }
+
+  .tags-popover {
+    margin: 0 5px;
+
+    .all-tags-label {
+      color: $blue-03;
+      cursor: pointer;
+    }
+
+    .popper {
+      z-index: 1000;
+      padding: 10px;
+      text-align: left;
+      width: inherit;
+      max-height: 240px;
+      overflow-y: auto;
+
+      .tags-popover-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        .icon-close {
+          font-size: 13px;
+          margin-left: auto;
+          cursor: pointer;
+        }
+      }
+
+      .tag-btn {
+        display: table;
+        margin-left: 0;
+      }
+    }
   }
 }

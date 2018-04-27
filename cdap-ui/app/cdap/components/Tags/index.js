@@ -23,8 +23,13 @@ import Mousetrap from 'mousetrap';
 import NamespaceStore from 'services/NamespaceStore';
 import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
 import Tag from 'components/Tags/Tag';
+import Alert from 'components/Alert';
+import IconSVG from 'components/IconSVG';
+import Popover from 'components/Popover';
 require('./Tags.scss');
 import T from 'i18n-react';
+
+const PREFIX = 'features.Tags';
 
 export default class Tags extends Component {
   static defaultProps = {
@@ -44,6 +49,8 @@ export default class Tags extends Component {
     showInputField: false,
     loading: false,
     currentInputTag: '',
+    showAllTagsLabel: false,
+    showAllTagsPopover: false
   };
 
   params = {
@@ -73,7 +80,7 @@ export default class Tags extends Component {
           systemTags: res[0].sort(),
           userTags: res[1].sort(),
           loading: false
-        });
+        }, this.isTagsOverflowing);
       }, (err) => {
         this.setState({
           error: isObject(err) ? err.response : err
@@ -128,7 +135,7 @@ export default class Tags extends Component {
         this.setState({
           userTags: res.sort(),
           loading: false
-        });
+        }, this.isTagsOverflowing);
         if (this.state.showInputField) {
           this.toggleInputField();
         }
@@ -182,6 +189,29 @@ export default class Tags extends Component {
     this.subscriptions.push(deleteTagsSubscription);
   }
 
+  isTagsOverflowing = () => {
+    let tagsListElem = document.getElementsByClassName("tags-list")[0];
+    if (!tagsListElem) {
+      return;
+    }
+
+    let tagsAreOverflowing = tagsListElem.clientWidth < tagsListElem.scrollWidth;
+
+    if (tagsAreOverflowing && this.state.showAllTagsLabel || (!tagsAreOverflowing && !this.state.showAllTagsLabel)) {
+      return;
+    }
+
+    this.setState({
+      showAllTagsLabel: tagsAreOverflowing
+    });
+  };
+
+  toggleAllTagsPopover = () => {
+    this.setState({
+      showAllTagsPopover: !this.state.showAllTagsPopover
+    });
+  }
+
   renderSystemTags() {
     return (
       <span>
@@ -219,6 +249,41 @@ export default class Tags extends Component {
     );
   }
 
+  renderTagsPopover() {
+    const labelElem = () => {
+      return (
+        <span className="all-tags-label">
+          {T.translate(`${PREFIX}.allTags`)}
+        </span>
+      );
+    };
+
+    let tagsCount = this.state.systemTags.length + this.state.userTags.length;
+
+    return (
+      <Popover
+        target={labelElem}
+        className="tags-popover"
+        placement="bottom"
+        bubbleEvent={false}
+        enableInteractionInPopover={true}
+        showPopover={this.state.showAllTagsPopover}
+      >
+        <div className="tags-popover-header">
+          <strong>
+            {T.translate(`${PREFIX}.labelWithCount`, {count: tagsCount})}
+          </strong>
+          <IconSVG
+            name="icon-close"
+            onClick={this.toggleAllTagsPopover}
+          />
+        </div>
+        {this.renderSystemTags()}
+        {this.renderUserTags()}
+      </Popover>
+    );
+  }
+
   renderInputField() {
     return (
       <span>
@@ -231,12 +296,6 @@ export default class Tags extends Component {
           autoFocus={true}
           disabled={this.state.loading ? 'disabled' : null}
         />
-        {
-          this.state.loading ?
-            <span className="fa fa-lg fa-spinner fa-spin" />
-          :
-            null
-        }
       </span>
     );
   }
@@ -254,45 +313,56 @@ export default class Tags extends Component {
 
   render() {
     let tagsCount = this.state.systemTags.length + this.state.userTags.length;
+
     return (
       <div className="tags-holder">
         {
           this.props.showCountLabel ?
-            <strong> {T.translate('features.Tags.label')}({tagsCount}): </strong>
+            <strong>
+              {`${T.translate(`${PREFIX}.labelWithCount`, {count: tagsCount})}:`}
+            </strong>
           :
             null
         }
         {
           !tagsCount && !this.state.loading ?
-            <i>{T.translate('features.Tags.notags')}</i>
+            <i>{T.translate(`${PREFIX}.notags`)}</i>
+          :
+            null
+        }
+        <span className="tags-list">
+          {this.renderSystemTags()}
+          {this.renderUserTags()}
+        </span>
+        {
+          this.state.showAllTagsLabel ?
+            this.renderTagsPopover()
           :
             null
         }
         {
+          this.state.showInputField ?
+            this.renderInputField()
+          :
+            this.renderPlusButton()
+        }
+        {
           this.state.loading ?
-            <span className="fa fa-lg fa-spinner fa-spin" />
+            <IconSVG name="icon-spinner" className="fa-lg fa-spin" />
           :
             null
         }
-        <span>
-          {this.renderSystemTags()}
-          {this.renderUserTags()}
-          {
-            this.state.showInputField ?
-              this.renderInputField()
-            :
-              this.renderPlusButton()
-          }
-          {
-            this.state.error ?
-              <span className="text-danger">
-                <p>{this.state.error}</p>
-              </span>
-            :
-              null
-          }
-
-        </span>
+        {
+          this.state.error ?
+            <Alert
+              message={this.state.error}
+              type='error'
+              showAlert={true}
+              onClose={() => this.setState({ error: false })}
+            />
+          :
+            null
+        }
       </div>
     );
   }

@@ -42,7 +42,8 @@ export default class Popover extends Component {
       'auto'
     ]),
     enableInteractionInPopover: PropTypes.bool,
-    injectOnToggle: PropTypes.bool
+    injectOnToggle: PropTypes.bool,
+    showPopover: PropTypes.bool
   };
 
   eventEmitter = ee(ee);
@@ -70,6 +71,12 @@ export default class Popover extends Component {
 
   componentDidMount() {
     this.eventEmitter.on('POPOVER_OPEN', this.hidePopoverEventHandler);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.showPopover !== this.props.showPopover) {
+      this.togglePopover();
+    }
   }
 
   componentWillUnmount() {
