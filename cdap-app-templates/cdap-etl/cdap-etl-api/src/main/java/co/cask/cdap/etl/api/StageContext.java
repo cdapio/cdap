@@ -19,6 +19,8 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataWriterContext;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -30,7 +32,7 @@ import javax.annotation.Nullable;
  * Context for a pipeline stage, providing access to information about the stage, metrics, and plugins.
  */
 @Beta
-public interface StageContext extends ServiceDiscoverer {
+public interface StageContext extends ServiceDiscoverer, MetadataReaderContext, MetadataWriterContext {
 
   /**
    * Gets the unique stage name.
