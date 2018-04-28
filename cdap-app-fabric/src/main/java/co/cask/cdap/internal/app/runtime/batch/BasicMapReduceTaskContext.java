@@ -31,6 +31,9 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -55,6 +58,7 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.context.AbstractMessagePublisher;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.security.Principal;
@@ -135,11 +139,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
-                            MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader) {
+                            MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
+                            MetadataAdmin metadataAdmin) {
     super(program, programOptions, cConf, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(programOptions,
                                                             taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator);
+          secureStoreManager, messagingService, pluginInstantiator, metadataAdmin);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
@@ -196,6 +201,16 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     if (multipleOutputs != null) {
       multipleOutputs.close();
     }
+  }
+
+  @Override
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata is not supported at task level");
+  }
+
+  @Override
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata is not supported at task level");
   }
 
   public long getMetricsReportIntervalMillis() {

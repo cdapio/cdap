@@ -118,6 +118,30 @@ public abstract class EntityId {
     return versionIdPattern.matcher(datasetId).matches();
   }
 
+  @Nullable
+  public static <T extends NamespacedEntityId> T fromMetadataEntity(MetadataEntity metadataEntity) {
+    EntityType entityType = EntityType.valueOf(metadataEntity.getType().toUpperCase());
+    if ((entityType == EntityType.APPLICATION || entityType == EntityType.PROGRAM) &&
+      metadataEntity.getValue(MetadataEntity.VERSION) == null) {
+      if (entityType == EntityType.APPLICATION) {
+        metadataEntity = metadataEntity.append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION);
+      } else {
+        metadataEntity = MetadataEntity.ofNamespace(metadataEntity.getValue(MetadataEntity.NAMESPACE))
+          .append(MetadataEntity.APPLICATION, metadataEntity.getValue(MetadataEntity.APPLICATION))
+          .append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION)
+          .append(MetadataEntity.TYPE, metadataEntity.getValue(MetadataEntity.TYPE))
+          .append(MetadataEntity.PROGRAM, metadataEntity.getValue(MetadataEntity.PROGRAM));
+      }
+    }
+    T entityId;
+    try {
+      entityId  = entityType.fromIdParts(metadataEntity.getValues());
+    } catch (IllegalArgumentException e) {
+      entityId = null;
+    }
+    return entityId;
+  }
+
   private final EntityType entity;
   private Vector<EntityId> hierarchy;
 

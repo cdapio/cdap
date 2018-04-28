@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -68,11 +69,11 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
                      SecureStoreManager secureStoreManager,
-                     MessagingService messagingService) {
+                     MessagingService messagingService, MetadataAdmin metadataAdmin) {
     super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataAdmin);
 
     this.specification = spec;
     this.instanceId = instanceId;

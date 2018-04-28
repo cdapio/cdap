@@ -82,6 +82,7 @@ import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
@@ -147,6 +148,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messageService;
+  private final MetadataAdmin metadataAdmin;
 
   @Inject
   public FlowletProgramRunner(CConfiguration cConfiguration,
@@ -162,7 +164,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               UsageWriter usageWriter,
                               SecureStore secureStore,
                               SecureStoreManager secureStoreManager,
-                              MessagingService messagingService) {
+                              MessagingService messagingService, MetadataAdmin metadataAdmin) {
     this.cConf = cConfiguration;
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -177,6 +179,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messageService = messagingService;
+    this.metadataAdmin = metadataAdmin;
   }
 
   @SuppressWarnings("unchecked")
@@ -228,7 +231,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext = new BasicFlowletContext(program, options, flowletId, instanceId, instanceCount,
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
-                                               dsFramework, secureStore, secureStoreManager, messageService, cConf);
+                                               dsFramework, secureStore, secureStoreManager, messageService, cConf,
+                                               metadataAdmin);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

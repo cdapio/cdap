@@ -68,6 +68,7 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -137,6 +138,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final MetadataAdmin metadataAdmin;
 
   private volatile Thread runningThread;
   private boolean suspended;
@@ -149,7 +151,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  TransactionSystemClient txClient, WorkflowStateWriter workflowStateWriter, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
                  SecureStoreManager secureStoreManager, MessagingService messagingService,
-                 ProgramStateWriter programStateWriter) {
+                 ProgramStateWriter programStateWriter, MetadataAdmin metadataAdmin) {
     this.program = program;
     this.programOptions = options;
     this.workflowSpec = workflowSpec;
@@ -172,7 +174,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                     basicWorkflowToken, program, programOptions, cConf,
                                                     metricsCollectionService, this.datasetFramework, txClient,
                                                     discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                    secureStore, secureStoreManager, messagingService, null);
+                                                    secureStore, secureStoreManager, messagingService, null,
+                                                    metadataAdmin);
 
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(), workflowRunId.getRun());
@@ -180,6 +183,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.metadataAdmin = metadataAdmin;
   }
 
   @Override
@@ -399,7 +403,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     metricsCollectionService, datasetFramework,
                                                                     txClient, discoveryServiceClient,
                                                                     pluginInstantiator, secureStore,
-                                                                    secureStoreManager, messagingService);
+                                                                    secureStoreManager, messagingService,
+                                                                    metadataAdmin);
     customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
     workflowStateWriter.addWorkflowNodeState(workflowRunId,
@@ -455,7 +460,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                   cConf, metricsCollectionService, datasetFramework,
                                                                   txClient, discoveryServiceClient, nodeStates,
                                                                   pluginInstantiator, secureStore, secureStoreManager,
-                                                                  messagingService, node.getConditionSpecification());
+                                                                  messagingService, node.getConditionSpecification(),
+                                                                  metadataAdmin);
     final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(

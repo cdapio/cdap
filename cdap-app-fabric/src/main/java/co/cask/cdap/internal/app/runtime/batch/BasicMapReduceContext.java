@@ -52,6 +52,7 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -107,10 +108,10 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
                         SecureStoreManager secureStoreManager,
-                        MessagingService messagingService) {
+                        MessagingService messagingService, MetadataAdmin metadataAdmin) {
     super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          messagingService, pluginInstantiator);
+          messagingService, pluginInstantiator, metadataAdmin);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);

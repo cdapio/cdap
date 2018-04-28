@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.cache.CacheBuilder;
@@ -69,11 +70,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       SecureStore secureStore,
                       SecureStoreManager secureStoreManager,
                       MessagingService messagingService,
-                      CConfiguration cConf) {
+                      CConfiguration cConf, MetadataAdmin metadataAdmin) {
     super(program, programOptions, cConf, datasets, dsFramework, txClient, discoveryServiceClient, false,
           metricsService, ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet(),
                                           Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService, null);
+          secureStore, secureStoreManager, messagingService, null, metadataAdmin);
 
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId.getFlowlet());

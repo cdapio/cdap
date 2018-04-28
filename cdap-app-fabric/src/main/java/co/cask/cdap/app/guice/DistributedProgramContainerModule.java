@@ -39,6 +39,7 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
+import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -184,6 +185,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private void addOnPremiseModules(List<Module> modules) {
     modules.add(new KafkaClientModule());
+    modules.add(new MetadataServiceModule());
     modules.add(new LoggingModules().getDistributedModules());
   }
 

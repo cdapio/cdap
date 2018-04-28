@@ -36,6 +36,11 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataWriterContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -78,6 +83,8 @@ import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.BasicMessagingAdmin;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
+import co.cask.cdap.metadata.DelegatingMetadataReaderContext;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -120,7 +127,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, Closeable {
+  PluginContext, MessagingContext, Closeable, MetadataReaderContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -151,6 +158,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
+  protected final MetadataReaderContext metadataReaderContext;
 
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
@@ -161,7 +169,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator, MetadataAdmin metadataAdmin) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
@@ -215,7 +223,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
-
+    this.metadataReaderContext = new DelegatingMetadataReaderContext(metadataAdmin);
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -361,16 +369,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments,
                                           final AccessType accessType) throws DatasetInstantiationException {
-    return Retries.callWithRetries(new Retries.Callable<T, DatasetInstantiationException>() {
-      @Override
-      public T call() throws DatasetInstantiationException {
-        T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
-        if (dataset instanceof RuntimeProgramContextAware) {
-          DatasetId datasetId = new NamespaceId(namespace).dataset(name);
-          ((RuntimeProgramContextAware) dataset).setContext(createRuntimeProgramContext(datasetId));
-        }
-        return dataset;
+    return Retries.callWithRetries((Retries.Callable<T, DatasetInstantiationException>) () -> {
+      T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
+      if (dataset instanceof RuntimeProgramContextAware) {
+        DatasetId datasetId = new NamespaceId(namespace).dataset(name);
+        ((RuntimeProgramContextAware) dataset).setContext(createRuntimeProgramContext(datasetId));
       }
+      return dataset;
     }, retryStrategy);
   }
 
@@ -508,15 +513,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       Transactional txnl = retryOnConflict
         ? Transactions.createTransactionalWithRetry(transactional, RetryStrategies.retryOnConflict(20, 100))
         : transactional;
-      txnl.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
-          try {
-            runnable.run(context);
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
+      txnl.execute(context -> {
+        ClassLoader oldClassLoader1 = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
+        try {
+          runnable.run(context);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader1);
         }
       });
     } finally {
@@ -528,15 +530,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public void execute(int timeoutInSeconds, final TxRunnable runnable) throws TransactionFailureException {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
     try {
-      transactional.execute(timeoutInSeconds, new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
-          try {
-            runnable.run(context);
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
+      transactional.execute(timeoutInSeconds, context -> {
+        ClassLoader oldClassLoader1 = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
+        try {
+          runnable.run(context);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader1);
         }
       });
     } finally {
@@ -771,5 +770,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         return AbstractContext.this.getComponentId();
       }
     };
+  }
+
+  @Override
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+    return metadataReaderContext.getMetadata(metadataEntity);
+  }
+
+  @Override
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    return metadataReaderContext.getMetadata(scope, metadataEntity);
   }
 }

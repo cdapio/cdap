@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -92,6 +93,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
+  private final MetadataAdmin metadataAdmin;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -104,7 +106,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MessagingService messagingService) {
+                                MessagingService messagingService, MetadataAdmin metadataAdmin) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -120,6 +122,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
+    this.metadataAdmin = metadataAdmin;
   }
 
   @Override
@@ -169,7 +172,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, options, cConf, spec, workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
-                                  messagingService);
+                                  messagingService, metadataAdmin);
       closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

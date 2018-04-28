@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -102,6 +103,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MessagingService messagingService;
   private final ServiceAnnouncer serviceAnnouncer;
   private final PluginFinder pluginFinder;
+  private final MetadataAdmin metadataAdmin;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -111,7 +113,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
-                     PluginFinder pluginFinder) {
+                     PluginFinder pluginFinder, MetadataAdmin metadataAdmin) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -128,6 +130,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.messagingService = messagingService;
     this.serviceAnnouncer = serviceAnnouncer;
     this.pluginFinder = pluginFinder;
+    this.metadataAdmin = metadataAdmin;
   }
 
   @Override
@@ -177,7 +180,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    pluginInstantiator, secureStore, secureStoreManager,
                                                                    authorizationEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,
-                                                                   locationFactory);
+                                                                   locationFactory, metadataAdmin);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

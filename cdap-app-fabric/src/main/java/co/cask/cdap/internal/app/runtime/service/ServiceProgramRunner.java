@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -69,6 +70,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
   private final ArtifactManagerFactory artifactManagerFactory;
+  private final MetadataAdmin metadataAdmin;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -76,7 +78,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
                               SecureStore secureStore, SecureStoreManager secureStoreManager,
                               MessagingService messagingService,
-                              ArtifactManagerFactory artifactManagerFactory) {
+                              ArtifactManagerFactory artifactManagerFactory, MetadataAdmin metadataAdmin) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -87,6 +89,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
     this.artifactManagerFactory = artifactManagerFactory;
+    this.metadataAdmin = metadataAdmin;
   }
 
   @Override
@@ -127,7 +130,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           metricsCollectionService, datasetFramework,
                                                           txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
-                                                          messagingService, artifactManager);
+                                                          messagingService, artifactManager, metadataAdmin);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),

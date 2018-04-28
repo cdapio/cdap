@@ -33,6 +33,9 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
@@ -323,5 +326,15 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   public MessageFetcher getMessageFetcher() {
     // TODO: CDAP-7807
     throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata is not supported in MapReduce task-level context");
   }
 }

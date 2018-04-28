@@ -16,14 +16,17 @@
 package co.cask.cdap.api.metadata;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Entity representation for Metadata
  */
-public class MetadataEntity {
+public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
   public static final String NAMESPACE = "namespace";
   public static final String APPLICATION = "application";
@@ -35,10 +38,16 @@ public class MetadataEntity {
   public static final String TYPE = "type";
   public static final String PROGRAM = "program";
 
-  private final List<KeyValue> details;
+  private final LinkedHashMap<String, String> details;
+  private String type;
 
-  private MetadataEntity(List<KeyValue> details) {
-    this.details = Collections.unmodifiableList(new ArrayList<>(details));
+  private MetadataEntity() {
+    this.details = new LinkedHashMap<>();
+  }
+
+  private MetadataEntity(MetadataEntity metadataEntity) {
+    this.details = new LinkedHashMap<>(metadataEntity.details);
+    this.type = metadataEntity.type;
   }
 
   /**
@@ -49,7 +58,10 @@ public class MetadataEntity {
    * @return {@link MetadataEntity} representing the dataset name
    */
   public static MetadataEntity ofDataset(String datasetName) {
-    return new MetadataEntity(Collections.singletonList(new KeyValue(DATASET, datasetName)));
+    MetadataEntity metadataEntity = new MetadataEntity();
+    metadataEntity.details.put(MetadataEntity.DATASET, datasetName);
+    metadataEntity.type = MetadataEntity.DATASET;
+    return metadataEntity;
   }
 
   /**
@@ -60,18 +72,24 @@ public class MetadataEntity {
    * @return {@link MetadataEntity} representing the dataset name
    */
   public static MetadataEntity ofDataset(String namespace, String datasetName) {
-    return new MetadataEntity(Arrays.asList(new KeyValue(NAMESPACE, namespace),
-                                            new KeyValue(DATASET, datasetName)));
+    MetadataEntity metadataEntity = new MetadataEntity();
+    metadataEntity.details.put(MetadataEntity.NAMESPACE, namespace);
+    metadataEntity.details.put(MetadataEntity.DATASET, datasetName);
+    metadataEntity.type = MetadataEntity.DATASET;
+    return metadataEntity;
   }
 
   /**
    * Creates a {@link MetadataEntity} representing the given namespace.
    *
-   * @param ns the name of the namespace
+   * @param namespace the name of the namespace
    * @return {@link MetadataEntity} representing the namespace name
    */
-  public static MetadataEntity ofNamespace(String ns) {
-    return new MetadataEntity(Collections.singletonList(new KeyValue(NAMESPACE, ns)));
+  public static MetadataEntity ofNamespace(String namespace) {
+    MetadataEntity metadataEntity = new MetadataEntity();
+    metadataEntity.details.put(MetadataEntity.NAMESPACE, namespace);
+    metadataEntity.type = MetadataEntity.NAMESPACE;
+    return metadataEntity;
   }
 
   /**
@@ -84,16 +102,37 @@ public class MetadataEntity {
    * this {@link MetadataEntity}
    */
   public MetadataEntity append(String key, String value) {
-    List<KeyValue> existingParts = new ArrayList<>(getKeyValues());
-    existingParts.add(new KeyValue(key, value));
-    return new MetadataEntity(existingParts);
+    MetadataEntity metadataEntity = new MetadataEntity(this);
+    this.details.put(key, value);
+    this.type = key;
+    return metadataEntity;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  @Nullable
+  public String getValue(String key) {
+    return details.get(key);
+  }
+
+  public Iterable<String> getValues() {
+    return Collections.unmodifiableList(new ArrayList<>(details.values()));
+  }
+
+  public Iterable<String> getKeys() {
+    return Collections.unmodifiableList(new ArrayList<>(details.keySet()));
   }
 
   /**
    * @return A {@link List} of {@link KeyValue} representing the metadata entity
    */
-  public List<KeyValue> getKeyValues() {
-    return details;
+  @Override
+  public Iterator<KeyValue> iterator() {
+    List<KeyValue> result = new LinkedList<>();
+    details.forEach((s, s2) -> result.add(new KeyValue(s, s2)));
+    return result.stream().iterator();
   }
 
   /**

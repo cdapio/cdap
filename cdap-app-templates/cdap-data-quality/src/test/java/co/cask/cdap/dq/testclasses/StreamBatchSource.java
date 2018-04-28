@@ -30,6 +30,7 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import com.google.common.base.Objects;
@@ -93,6 +94,11 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     streamBatchConfig.validate();
     pipelineConfigurer.addStream(new Stream(streamBatchConfig.name));
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
   }
 
   @Override

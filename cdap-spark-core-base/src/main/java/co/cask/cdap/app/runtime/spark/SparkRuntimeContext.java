@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
@@ -92,10 +93,10 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       AuthorizationEnforcer authorizationEnforcer,
                       AuthenticationContext authenticationContext,
                       MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
-                      PluginFinder pluginFinder, LocationFactory locationFactory) {
+                      PluginFinder pluginFinder, LocationFactory locationFactory, MetadataAdmin metadataAdmin) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataAdmin);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;
