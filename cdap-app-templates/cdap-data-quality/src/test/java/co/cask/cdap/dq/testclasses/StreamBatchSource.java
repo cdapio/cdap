@@ -26,10 +26,15 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.GenericStreamEventData;
+import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import com.google.common.base.Objects;
@@ -113,6 +118,37 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
       stream = Input.ofStream(streamBatchConfig.name, startTime, endTime, formatSpec);
     }
     context.setInput(stream);
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    Arguments arguments = context.getArguments();
+    String sourceDsName = arguments.get("source");
+    String sinkDsName = arguments.get("sink");
+    MetadataEntity sourceEntity = MetadataEntity.ofDataset(sourceDsName);
+    MetadataEntity sinkEntity = MetadataEntity.ofDataset(sinkDsName);
+
+    // propagate all source metadata to sink
+    propogateMetadata(context, sourceEntity, sinkEntity);
+
+    // Propagate metadata of some fields
+    MetadataEntity sourceFieldEntity = sourceEntity.append("field", "empName");
+    MetadataEntity sinkFieldEntity = sinkEntity.append("field", "empName");
+    propogateMetadata(context, sourceFieldEntity, sinkFieldEntity);
+
+    for (Schema.Field field : context.getInputSchema().getFields()) {
+      sourceFieldEntity = sourceEntity.append("field", field.getName());
+      Metadata metadata = context.getMetadata(MetadataScope.USER, sourceFieldEntity);
+      if (metadata.getTags().contains("confidential")) {
+        // do some thing
+      }
+    }
+  }
+
+  private void propogateMetadata(BatchRuntimeContext context, MetadataEntity source, MetadataEntity destination) {
+    Metadata metadata = context.getMetadata(MetadataScope.USER, source);
+    context.addProperties(destination, metadata.getProperties());
+    context.addTags(destination, metadata.getTags());
   }
 
   @Override
