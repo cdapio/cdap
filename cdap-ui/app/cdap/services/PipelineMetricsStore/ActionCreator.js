@@ -14,14 +14,10 @@
  * the License.
 */
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import MetricsQueryHelper from 'services/MetricsQueryHelper';
 import {MyMetricApi} from 'api/metric';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineMetricsStore, {PipelineMetricsActions} from 'services/PipelineMetricsStore';
 import {Observable} from 'rxjs/Observable';
-
-let dataSrc = DataSourceConfigurer.getInstance();
 
 const pollForMetrics = (params) => {
   return Observable.interval(2000).subscribe(() => {
@@ -30,13 +26,16 @@ const pollForMetrics = (params) => {
 };
 
 function getMetrics(params) {
-  let metricParams = MetricsQueryHelper.tagsToParams(params);
-  let metricSearchPath = '/metrics/search?target=metric&' + metricParams;
-  let metricsSearchReqObj = {
-    _cdapPath: metricSearchPath,
-    method: 'POST'
+  let tags = Object.keys(params).map((key) => {
+    return `${key}:${params[key]}`;
+  });
+
+  let searchMetricParams = {
+    target: 'metric',
+    tag: tags
   };
-  dataSrc.request(metricsSearchReqObj)
+
+  MyMetricApi.search(searchMetricParams)
     .subscribe(res => {
       let config = PipelineDetailStore.getState().config;
       let stagesArray, source, sinks, transforms;
