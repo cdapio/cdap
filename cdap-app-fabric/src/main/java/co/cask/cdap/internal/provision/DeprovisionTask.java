@@ -77,9 +77,9 @@ public class DeprovisionTask extends ProvisioningTask {
         dataset.putClusterInfo(pollingInfo);
       });
 
-      ClusterStatus status = ClusterStatus.DELETING;
-      while (status == ClusterStatus.DELETING) {
-        status = provisioner.getClusterDetail(provisionerContext, cluster).getStatus();
+      ClusterStatus status;
+      while ((status = provisioner.getClusterDetail(provisionerContext,
+                                                    cluster).getStatus()) == ClusterStatus.DELETING) {
         TimeUnit.SECONDS.sleep(10);
       }
 
