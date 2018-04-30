@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.guice.DefaultProgramRunnerFactory;
+import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
@@ -48,7 +49,7 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
   protected Module createModule(CConfiguration cConf, Configuration hConf, TwillContext context,
                                 ProgramId programId, String runId, String instanceId, @Nullable String principal) {
     Module module = super.createModule(cConf, hConf, context, programId, runId, instanceId, principal);
-    return Modules.combine(module, new PrivateModule() {
+    return Modules.combine(module, new DistributedArtifactManagerModule(), new PrivateModule() {
       @Override
       protected void configure() {
         // Bind ProgramRunner for MR, which is used by Workflow.

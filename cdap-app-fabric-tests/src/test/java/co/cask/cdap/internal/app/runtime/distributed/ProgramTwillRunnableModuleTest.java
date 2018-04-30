@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.test.MockTwillContext;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
@@ -27,6 +28,7 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
@@ -78,6 +80,9 @@ public class ProgramTwillRunnableModuleTest {
     Module module = new WorkflowTwillRunnable("workflow").createModule(CConfiguration.create(), new Configuration(),
                                                                        new MockTwillContext(), programId,
                                                                        RunIds.generate().getId(), "0", "principal");
-    Guice.createInjector(module).getInstance(WorkflowProgramRunner.class);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(WorkflowProgramRunner.class);
+    // Workflow supports spark, which supports PluginFinder
+    injector.getInstance(PluginFinder.class);
   }
 }
