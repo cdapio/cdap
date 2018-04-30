@@ -21,5 +21,6 @@ let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = '/metrics/query';
 
 export const MyMetricApi = {
-  query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath )
+  query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath),
+  search: apiCreator(dataSrc, 'POST', 'REQUEST', '/metrics/search')
 };
