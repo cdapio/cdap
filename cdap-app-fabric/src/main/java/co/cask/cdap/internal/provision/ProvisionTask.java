@@ -88,6 +88,9 @@ public class ProvisionTask extends ProvisioningTask {
 
       while (cluster.getStatus() == ClusterStatus.CREATING) {
         cluster = provisioner.getClusterDetail(provisionerContext, cluster);
+        if (cluster.getStatus() != ClusterStatus.CREATING) {
+          break;
+        }
         TimeUnit.SECONDS.sleep(10);
       }
 
