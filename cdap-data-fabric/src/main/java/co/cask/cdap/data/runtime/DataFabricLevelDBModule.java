@@ -26,7 +26,8 @@ import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import org.apache.tephra.metrics.TxMetricsCollector;
+import com.google.inject.util.Modules;
+import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.runtime.TransactionModules;
 
 /**
@@ -42,9 +43,14 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);
 
     // bind transactions
-    bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-    install(new TransactionModules().getSingleNodeModules());
+    install(Modules.override(new TransactionModules().getSingleNodeModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
+        bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+      }
+    }));
     install(new TransactionExecutorModule());
   }
 }

@@ -30,13 +30,9 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.HDFSTransactionStateStorageProvider;
-import co.cask.cdap.data.runtime.TransactionManagerProvider;
 import co.cask.cdap.data.runtime.main.transaction.TransactionHttpService;
 import co.cask.cdap.data.runtime.main.transaction.TransactionPingHandler;
 import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -53,16 +49,11 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.tephra.TransactionManager;
 import org.apache.tephra.distributed.TransactionService;
-import org.apache.tephra.persist.TransactionStateStorage;
-import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +100,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new ZKClientModule(),
       new KafkaClientModule(),
       new MessagingClientModule(),
-      createDataFabricModule(txClientId),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
@@ -134,18 +125,5 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
         }
       }
     );
-  }
-
-  private static Module createDataFabricModule(String txClientId) {
-    return Modules.override(new DataFabricModules(txClientId).getDistributedModules()).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Bind to provider that create new instances of storage and tx manager every time.
-        bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
-          .toProvider(HDFSTransactionStateStorageProvider.class);
-        bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
-        bind(TransactionManager.class).toProvider(TransactionManagerProvider.class);
-      }
-    });
   }
 }

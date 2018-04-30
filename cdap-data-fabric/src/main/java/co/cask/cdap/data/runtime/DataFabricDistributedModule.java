@@ -29,12 +29,13 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.distributed.PooledClientProvider;
 import org.apache.tephra.distributed.ThreadLocalClientProvider;
 import org.apache.tephra.distributed.ThriftClientProvider;
-import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -57,9 +58,14 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
     // bind transactions
-    bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);
-    install(new TransactionModules(txClientId).getDistributedModules());
+    install(Modules.override(new TransactionModules(txClientId).getDistributedModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
+        bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+      }
+    }));
     install(new TransactionExecutorModule());
 
     // Bind the QueueAdmin, which is used in cdap master. This will be removed when Flow support is removed.

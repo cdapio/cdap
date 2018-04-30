@@ -25,7 +25,8 @@ import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import org.apache.tephra.metrics.TxMetricsCollector;
+import com.google.inject.util.Modules;
+import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.runtime.TransactionModules;
 
 /**
@@ -46,9 +47,14 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
 
     // bind transactions
-    bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-    install(new TransactionModules(txClientId).getInMemoryModules());
+    install(Modules.override(new TransactionModules(txClientId).getInMemoryModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
+        bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+      }
+    }));
     install(new TransactionExecutorModule());
   }
 }
