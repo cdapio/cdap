@@ -22,6 +22,7 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.queue.QueueSpecification;
@@ -32,7 +33,6 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -40,7 +40,6 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -51,7 +50,6 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TransactionExecutorFactory;
-import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
@@ -76,12 +74,11 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
   private final Impersonator impersonator;
 
   @Inject
-  DistributedFlowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf,
-                               CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                               TransactionExecutorFactory txExecutorFactory,
-                               TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                               Impersonator impersonator) {
-    super(twillRunner, hConf, cConfig, tokenSecureStoreRenewer, impersonator);
+  DistributedFlowProgramRunner(CConfiguration cConfig, YarnConfiguration hConf, QueueAdmin queueAdmin,
+                               StreamAdmin streamAdmin, TransactionExecutorFactory txExecutorFactory,
+                               Impersonator impersonator, ClusterMode clusterMode,
+                               @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+    super(cConfig, hConf, impersonator, clusterMode, twillRunner);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
@@ -111,7 +108,7 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) {
     // Add runnables
     Map<String, String> args = options.getUserArguments().asMap();
@@ -133,12 +130,6 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
   protected void beforeLaunch(Program program, ProgramOptions options) {
     LOG.info("Configuring flowlets queues");
     FlowUtils.configureQueue(program, getFlowSpecification(program), streamAdmin, queueAdmin, txExecutorFactory);
-  }
-
-  @Override
-  protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
-    return new TwillAppLifecycleEventHandler(
-      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true, options);
   }
 
   private FlowSpecification getFlowSpecification(Program program) {

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.guice.DefaultProgramRunnerFactory;
 import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
@@ -25,30 +26,35 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.TwillContext;
-
-import javax.annotation.Nullable;
+import org.apache.twill.api.TwillRunnable;
 
 /**
- *
+ * The {@link TwillRunnable} for running a workflow driver.
  */
-final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
+public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
-  WorkflowTwillRunnable(String name) {
+  /**
+   * Main method for the remote execution mode.
+   */
+  public static void main(String[] args) throws Exception {
+    new WorkflowTwillRunnable(getRunnableNameFromEnv()).doMain();
+  }
+
+  public WorkflowTwillRunnable(String name) {
     super(name);
   }
 
   @Override
-  protected Module createModule(CConfiguration cConf, Configuration hConf, TwillContext context,
-                                ProgramId programId, String runId, String instanceId, @Nullable String principal) {
-    Module module = super.createModule(cConf, hConf, context, programId, runId, instanceId, principal);
+  protected Module createModule(CConfiguration cConf, Configuration hConf,
+                                ProgramOptions programOptions, ProgramRunId programRunId) {
+    Module module = super.createModule(cConf, hConf, programOptions, programRunId);
     return Modules.combine(module, new DistributedArtifactManagerModule(), new PrivateModule() {
       @Override
       protected void configure() {

@@ -27,6 +27,7 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
@@ -35,10 +36,10 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -69,11 +70,11 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   private final ProgramRunnerFactory programRunnerFactory;
 
   @Inject
-  DistributedWorkflowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                   TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                                   ProgramRunnerFactory programRunnerFactory,
-                                   Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
+  DistributedWorkflowProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
+                                   Impersonator impersonator, ClusterMode clusterMode,
+                                   @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                   @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner);
     this.programRunnerFactory = programRunnerFactory;
   }
 
@@ -101,13 +102,13 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController,
-                                                   ProgramDescriptor programDescriptor, RunId runId) {
+  protected ProgramController createProgramController(TwillController twillController,
+                                                      ProgramDescriptor programDescriptor, RunId runId) {
     return new WorkflowTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
   }
 
   @Override
-  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
     WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());

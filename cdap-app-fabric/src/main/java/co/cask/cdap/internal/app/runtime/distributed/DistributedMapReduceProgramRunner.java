@@ -19,14 +19,15 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -40,6 +41,7 @@ import org.apache.twill.api.TwillRunner;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,16 +51,15 @@ import java.util.Map;
 public final class DistributedMapReduceProgramRunner extends DistributedProgramRunner {
 
   @Inject
-  DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                    TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                                    Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
+  DistributedMapReduceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
+                                    Impersonator impersonator, ClusterMode clusterMode,
+                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner);
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController,
-                                                   ProgramDescriptor programDescriptor, RunId runId) {
-
+  protected ProgramController createProgramController(TwillController twillController,
+                                                      ProgramDescriptor programDescriptor, RunId runId) {
     return new MapReduceTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
   }
 
@@ -79,7 +80,7 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
   }
 
   @Override
-  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
@@ -91,10 +92,17 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
     // Add runnable. Only one instance for the MR driver
     launchConfig
       .addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()),
-                   1, clientArgs, spec.getDriverResources(), 0)
-    // Add extra resources, classpath and dependencies
-      .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<String, LocalizeResource>()))
-      .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
-      .addExtraDependencies(YarnClientProtocolProvider.class);
+                   1, clientArgs, spec.getDriverResources(), 0);
+
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      // Add extra resources, classpath and dependencies
+      launchConfig
+        .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<>()))
+        .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<>()))
+        .addExtraDependencies(YarnClientProtocolProvider.class);
+    } else if (clusterMode == ClusterMode.ISOLATED) {
+      // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
+      launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
+    }
   }
 }

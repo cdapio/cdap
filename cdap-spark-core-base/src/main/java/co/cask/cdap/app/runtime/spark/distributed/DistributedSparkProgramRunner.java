@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
@@ -39,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.app.runtime.distributed.ProgramLaunchConfig;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.runtime.spi.SparkCompat;
@@ -80,16 +82,18 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
   private final LocationFactory locationFactory;
   private final SparkCompat sparkCompat;
+  private final TokenSecureStoreRenewer tokenSecureStoreRenewer;
 
   @Inject
   @VisibleForTesting
-  public DistributedSparkProgramRunner(SparkCompat sparkComat, TwillRunner twillRunner,
-                                       YarnConfiguration hConf, CConfiguration cConf,
-                                       TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                                       Impersonator impersonator, LocationFactory locationFactory) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
+  public DistributedSparkProgramRunner(SparkCompat sparkComat, CConfiguration cConf, YarnConfiguration hConf,
+                                       TokenSecureStoreRenewer tokenSecureStoreRenewer, Impersonator impersonator,
+                                       LocationFactory locationFactory, ClusterMode clusterMode,
+                                       @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner);
     this.sparkCompat = sparkComat;
     this.locationFactory = locationFactory;
+    this.tokenSecureStoreRenewer = tokenSecureStoreRenewer;
   }
 
   @Override
@@ -121,7 +125,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   }
 
   @Override
-  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
     // Update the container hConf
@@ -133,7 +137,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
       // If we don't offset it, it will look for the new credentials too soon
       // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
       hConf.setLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
-                    (long) ((secureStoreRenewer.getUpdateInterval() + 5000) / 0.8));
+                    (long) ((tokenSecureStoreRenewer.getUpdateInterval() + 5000) / 0.8));
     }
 
     // Setup the launch config

@@ -58,13 +58,13 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   private final String hostname;
 
   @Inject
-  public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
-                                       // for running a program, we only need EXECUTE on the program, there should be
-                                       // no privileges needed for artifacts
-                                       @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                         ArtifactRepository noAuthArtifactRepository,
-                                       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                                       ProgramStateWriter programStateWriter) {
+  InMemoryProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                // for running a program, we only need EXECUTE on the program, there should be
+                                // no privileges needed for artifacts
+                                @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
+                                  ArtifactRepository noAuthArtifactRepository,
+                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                                ProgramStateWriter programStateWriter) {
     super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
     this.hostname = hostname.getCanonicalHostName();
   }

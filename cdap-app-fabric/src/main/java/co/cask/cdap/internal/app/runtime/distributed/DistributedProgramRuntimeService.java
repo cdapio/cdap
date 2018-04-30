@@ -99,9 +99,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private final ProgramStateWriter programStateWriter;
 
   @Inject
-  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner, Store store,
+  DistributedProgramRuntimeService(CConfiguration cConf, Configuration hConf,
+                                   ProgramRunnerFactory programRunnerFactory,
+                                   TwillRunner twillRunner, Store store,
                                    MetricsCollectionService metricsCollectionService,
-                                   Configuration hConf, CConfiguration cConf,
                                    // for running a program, we only need EXECUTE on the program, there should be no
                                    // privileges needed for artifacts
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)

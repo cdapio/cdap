@@ -15,26 +15,64 @@
  */
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 
 /**
  *
  */
 public final class ProgramRunnerRuntimeModule extends RuntimeModule {
 
+  private final Class<? extends StreamWriter> streamWriterClass;
+
+  public ProgramRunnerRuntimeModule() {
+    this(DefaultStreamWriter.class);
+  }
+
+  @VisibleForTesting
+  public ProgramRunnerRuntimeModule(Class<? extends StreamWriter> streamWriterClass) {
+    this.streamWriterClass = streamWriterClass;
+  }
+
   @Override
   public Module getInMemoryModules() {
-    return new InMemoryProgramRunnerModule();
+    // No remote execution module in unit-test
+    return Modules.combine(new InMemoryProgramRunnerModule(streamWriterClass),
+                           new ProgramStateWriterModule());
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new InMemoryProgramRunnerModule();
+    // In standalone, we always use the DefaultStreamWriter
+    return Modules.combine(new InMemoryProgramRunnerModule(DefaultStreamWriter.class),
+                           new RemoteExecutionProgramRunnerModule(),
+                           new ProgramStateWriterModule());
   }
 
   @Override
   public Module getDistributedModules() {
-    return new DistributedProgramRunnerModule();
+    return Modules.combine(new DistributedProgramRunnerModule(),
+                           new RemoteExecutionProgramRunnerModule(),
+                           new ProgramStateWriterModule());
+  }
+
+  /**
+   * Guice module for exposing the {@link ProgramStateWriter}.
+   */
+  private static final class ProgramStateWriterModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+      // Bind ProgramStateWriter
+      bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
+    }
   }
 }

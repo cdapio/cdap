@@ -39,7 +39,6 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -189,12 +188,11 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(),
                                                     taskAttemptId != null ? taskAttemptId.getJobID() : null);
         FileSystem fs = txFile.getFileSystem(key.getConfiguration());
-        Preconditions.checkArgument(fs.exists(txFile));
-
-        Transaction tx;
-        try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
-          byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
-          tx = new TransactionCodec().decode(txByteArray);
+        Transaction transaction = null;
+        if (fs.exists(txFile)) {
+          try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
+            transaction = new TransactionCodec().decode(ByteStreams.toByteArray(txFileInputStream));
+          }
         }
 
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
@@ -247,7 +245,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         return new BasicMapReduceTaskContext(
           program, options, cConf, taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
-          tx, programDatasetFramework, classLoader.getPluginInstantiator(),
+          transaction, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
           authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader
         );

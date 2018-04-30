@@ -24,11 +24,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Twill program controller for MapReduce program
  */
-final class MapReduceTwillProgramController extends AbstractTwillProgramController {
+public final class MapReduceTwillProgramController extends AbstractTwillProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTwillProgramController.class);
 
-  MapReduceTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
+  public MapReduceTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
   }
 

@@ -22,12 +22,9 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.artifact.LocalArtifactManager;
@@ -61,25 +58,16 @@ import org.apache.twill.discovery.DiscoveryService;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import javax.annotation.Nullable;
 
 /**
- *
+ * Guice more for binding {@link ProgramRunner} that runs program in the same process.
  */
-public final class InMemoryProgramRunnerModule extends PrivateModule {
+final class InMemoryProgramRunnerModule extends PrivateModule {
 
   private final Class<? extends StreamWriter> streamWriterClass;
 
-  public InMemoryProgramRunnerModule() {
-    this(null);
-  }
-
-  public InMemoryProgramRunnerModule(@Nullable Class<? extends StreamWriter> streamWriterClass) {
-    if (streamWriterClass == null) {
-      this.streamWriterClass = DefaultStreamWriter.class;
-    } else {
-      this.streamWriterClass = streamWriterClass;
-    }
+  InMemoryProgramRunnerModule(Class<? extends StreamWriter> streamWriterClass) {
+    this.streamWriterClass = streamWriterClass;
   }
 
   /**
@@ -93,10 +81,6 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For Binding queue stuff
     bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
-
-    // Bind ProgramStateWriter
-    bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
-    expose(ProgramStateWriter.class);
 
     // Bind the ArtifactManager implementation and expose it.
     // It could used by ProgramRunner loaded through runtime extension.

@@ -179,11 +179,13 @@ public final class SparkRuntimeContextProvider {
 
       Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class),
                                                           contextConfig.getProgramOptions());
+
       ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
       KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-      StreamCoordinatorClient streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
       SparkServiceAnnouncer serviceAnnouncer = injector.getInstance(SparkServiceAnnouncer.class);
+
+      StreamCoordinatorClient streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
 
       // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
       // of the spark executor, hence there should be exactly one instance only.
@@ -310,7 +312,7 @@ public final class SparkRuntimeContextProvider {
 
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf, Configuration hConf,
-                                         ProgramId programId, ProgramOptions programOptions) {
+                                        ProgramId programId, ProgramOptions programOptions) {
     String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
     String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
@@ -318,6 +320,7 @@ public final class SparkRuntimeContextProvider {
     List<Module> modules = new ArrayList<>();
     modules.add(DistributedProgramContainerModule.builder(cConf, hConf, programId.run(runId), instanceId)
                   .setPrincipal(principal)
+                  .setClusterMode(ProgramRunners.getClusterMode(programOptions))
                   .build());
     modules.add(new DistributedArtifactManagerModule());
     return Guice.createInjector(modules);

@@ -18,14 +18,15 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -44,10 +45,10 @@ import java.io.IOException;
 public final class DistributedWebappProgramRunner extends DistributedProgramRunner {
 
   @Inject
-  DistributedWebappProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                 TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                                 Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
+  DistributedWebappProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
+                                 Impersonator impersonator, ClusterMode clusterMode,
+                                 @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner);
   }
 
   @Override
@@ -69,7 +70,7 @@ public final class DistributedWebappProgramRunner extends DistributedProgramRunn
   }
 
   @Override
-  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
     String serviceName = WebappProgramRunner.getServiceName(program.getId());
     launchConfig.addRunnable(serviceName, new WebappTwillRunnable(serviceName), 1,

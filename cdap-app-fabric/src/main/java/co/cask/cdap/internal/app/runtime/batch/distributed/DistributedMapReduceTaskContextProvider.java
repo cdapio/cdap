@@ -17,26 +17,27 @@
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.guice.DistributedProgramContainerModule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
-import java.util.List;
+import java.util.Deque;
+import java.util.LinkedList;
 
 /**
  * A {@link MapReduceTaskContextProvider} used in distributed mode. It creates a separate injector
@@ -45,9 +46,7 @@ import java.util.List;
  */
 public final class DistributedMapReduceTaskContextProvider extends MapReduceTaskContextProvider {
 
-  private final ZKClientService zkClientService;
-  private final KafkaClientService kafkaClientService;
-  private final MetricsCollectionService metricsCollectionService;
+  private final Deque<Service> coreServices;
   private final MapReduceContextConfig mapReduceContextConfig;
   private final LogAppenderInitializer logAppenderInitializer;
 
@@ -55,11 +54,19 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
                                                  MapReduceClassLoader mapReduceClassLoader) {
     super(createInjector(cConf, hConf), mapReduceClassLoader);
 
+    MapReduceContextConfig mapReduceContextConfig = new MapReduceContextConfig(hConf);
+
     Injector injector = getInjector();
 
-    this.zkClientService = injector.getInstance(ZKClientService.class);
-    this.kafkaClientService = injector.getInstance(KafkaClientService.class);
-    this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    Deque<Service> coreServices = new LinkedList<>();
+    coreServices.add(injector.getInstance(ZKClientService.class));
+    coreServices.add(injector.getInstance(MetricsCollectionService.class));
+
+    if (ProgramRunners.getClusterMode(mapReduceContextConfig.getProgramOptions()) == ClusterMode.ON_PREMISE) {
+      coreServices.add(injector.getInstance(KafkaClientService.class));
+    }
+
+    this.coreServices = coreServices;
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.mapReduceContextConfig = new MapReduceContextConfig(hConf);
   }
@@ -68,13 +75,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   protected void startUp() throws Exception {
     super.startUp();
     try {
-      List<ListenableFuture<State>> startFutures = Services.chainStart(zkClientService,
-                                                                       kafkaClientService,
-                                                                       metricsCollectionService).get();
-      // All services should be started
-      for (ListenableFuture<State> future : startFutures) {
-        Preconditions.checkState(future.get() == State.RUNNING, "Failed to start services: %s, %s, %s, %s",
-                                 zkClientService, kafkaClientService, metricsCollectionService);
+      for (Service service : coreServices) {
+        service.startAndWait();
       }
       logAppenderInitializer.initialize();
       ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
@@ -99,13 +101,15 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     } catch (Exception e) {
       failure = e;
     }
-    try {
-      Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService).get();
-    } catch (Exception e) {
-      if (failure != null) {
-        failure.addSuppressed(e);
-      } else {
-        failure = e;
+    for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
+      try {
+        service.stopAndWait();
+      } catch (Exception e) {
+        if (failure != null) {
+          failure.addSuppressed(e);
+        } else {
+          failure = e;
+        }
       }
     }
     if (failure != null) {
@@ -116,14 +120,16 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     MapReduceContextConfig mapReduceContextConfig = new MapReduceContextConfig(hConf);
     // principal will be null if running on a kerberos distributed cluster
-    Arguments arguments = mapReduceContextConfig.getProgramOptions().getArguments();
-    String principal = arguments.getOption(ProgramOptionConstants.PRINCIPAL);
-    String runId = arguments.getOption(ProgramOptionConstants.RUN_ID);
-    String instanceId = arguments.getOption(ProgramOptionConstants.INSTANCE_ID);
+    ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
+    Arguments systemArgs = programOptions.getArguments();
+    String principal = systemArgs.getOption(ProgramOptionConstants.PRINCIPAL);
+    String runId = systemArgs.getOption(ProgramOptionConstants.RUN_ID);
+    String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
     return Guice.createInjector(
       DistributedProgramContainerModule
         .builder(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), instanceId)
         .setPrincipal(principal)
+        .setClusterMode(ProgramRunners.getClusterMode(programOptions))
         .build()
     );
   }

@@ -24,11 +24,11 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-final class WorkflowTwillProgramController extends AbstractTwillProgramController {
+public final class WorkflowTwillProgramController extends AbstractTwillProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowTwillProgramController.class);
 
-  WorkflowTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
+  public WorkflowTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
   }
 

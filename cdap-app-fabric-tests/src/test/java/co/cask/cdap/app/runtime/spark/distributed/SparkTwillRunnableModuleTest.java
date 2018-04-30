@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark.distributed;
 
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
@@ -34,6 +35,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.ServiceAnnouncer;
 import org.junit.Test;
 
 /**
@@ -45,25 +47,32 @@ public class SparkTwillRunnableModuleTest {
   public void testSpark() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").spark("spark").run(RunIds.generate());
 
-    Module module = new SparkTwillRunnable("spark").createModule(CConfiguration.create(), new Configuration(),
-                                                                 new MockTwillContext(), programRunId.getParent(),
-                                                                 RunIds.generate().getId(), "0", "principal");
-    Guice.createInjector(module).getInstance(SparkProgramRunner.class);
+    for (ClusterMode mode : ClusterMode.values()) {
+      Module module = new SparkTwillRunnable("spark") {
+        @Override
+        protected ServiceAnnouncer getServiceAnnouncer() {
+          return new MockTwillContext();
+        }
+      }.createModule(CConfiguration.create(), new Configuration(),
+                     createProgramOptions(programRunId, mode), programRunId);
+      Guice.createInjector(module).getInstance(SparkProgramRunner.class);
 
-    Injector contextInjector = SparkRuntimeContextProvider.createInjector(CConfiguration.create(),
-                                                                          new Configuration(),
-                                                                          programRunId.getParent(),
-                                                                          createProgramOptions(programRunId));
-    contextInjector.getInstance(PluginFinder.class);
-    contextInjector.getInstance(StreamCoordinatorClient.class);
+      Injector contextInjector = SparkRuntimeContextProvider.createInjector(CConfiguration.create(),
+                                                                            new Configuration(),
+                                                                            programRunId.getParent(),
+                                                                            createProgramOptions(programRunId, mode));
+      contextInjector.getInstance(PluginFinder.class);
+      contextInjector.getInstance(StreamCoordinatorClient.class);
+    }
   }
 
-  private ProgramOptions createProgramOptions(ProgramRunId programRunId) {
+  private ProgramOptions createProgramOptions(ProgramRunId programRunId, ClusterMode clusterMode) {
     return new SimpleProgramOptions(programRunId.getParent(),
                                     new BasicArguments(ImmutableMap.of(
                                       ProgramOptionConstants.INSTANCE_ID, "0",
                                       ProgramOptionConstants.PRINCIPAL, "principal",
-                                      ProgramOptionConstants.RUN_ID, programRunId.getRun())),
+                                      ProgramOptionConstants.RUN_ID, programRunId.getRun(),
+                                      ProgramOptionConstants.CLUSTER_MODE, clusterMode.name())),
                                     new BasicArguments());
   }
 }

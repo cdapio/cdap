@@ -17,6 +17,7 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -54,14 +55,17 @@ public class TwillModule extends PrivateModule {
     private final YarnConfiguration yarnConf;
     private final LocationFactory locationFactory;
     private final Impersonator impersonator;
+    private final TokenSecureStoreRenewer secureStoreRenewer;
 
     @Inject
     TwillRunnerServiceProvider(CConfiguration cConf, YarnConfiguration yarnConf,
-                               LocationFactory locationFactory, Impersonator impersonator) {
+                               LocationFactory locationFactory, Impersonator impersonator,
+                               TokenSecureStoreRenewer secureStoreRenewer) {
       this.cConf = cConf;
       this.yarnConf = yarnConf;
       this.locationFactory = locationFactory;
       this.impersonator = impersonator;
+      this.secureStoreRenewer = secureStoreRenewer;
     }
 
     @Override
@@ -81,7 +85,7 @@ public class TwillModule extends PrivateModule {
       String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
       runner.setJVMOptions(jvmOpts);
 
-      return new ImpersonatedTwillRunnerService(runner, impersonator);
+      return new ImpersonatedTwillRunnerService(yarnConf, runner, impersonator, secureStoreRenewer);
     }
   }
 }

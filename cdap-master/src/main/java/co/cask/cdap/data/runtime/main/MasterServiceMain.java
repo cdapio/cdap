@@ -60,7 +60,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.master.startup.ServiceResourceKeys;
@@ -93,6 +92,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
@@ -117,7 +117,6 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -598,6 +597,7 @@ public class MasterServiceMain extends DaemonMain {
     private ScheduledExecutorService executor;
     private AuthorizerInstantiator authorizerInstantiator;
     private TwillRunnerService twillRunner;
+    private TwillRunnerService remoteExecutionTwillRunner;
     private ExploreClient exploreClient;
 
     private MasterLeaderElectionHandler(CConfiguration cConf, Configuration hConf, ZKClientService zkClient,
@@ -631,6 +631,10 @@ public class MasterServiceMain extends DaemonMain {
 
       twillRunner = injector.getInstance(TwillRunnerService.class);
       twillRunner.start();
+
+      remoteExecutionTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
+                                                                Constants.AppFabric.RemoteExecution.class));
+      remoteExecutionTwillRunner.start();
 
       TokenSecureStoreRenewer secureStoreRenewer = injector.getInstance(TokenSecureStoreRenewer.class);
 
@@ -696,6 +700,7 @@ public class MasterServiceMain extends DaemonMain {
       // Otherwise it will be stopped in the postStop() method
       if (!stopRequested) {
         controller.set(null);
+        stopQuietly(remoteExecutionTwillRunner);
         stopQuietly(twillRunner);
       }
       // Stop local services last since DatasetService is running locally
@@ -917,11 +922,6 @@ public class MasterServiceMain extends DaemonMain {
 
           // Add HBase dependencies
           preparer.withDependencies(injector.getInstance(HBaseTableUtil.class).getClass());
-
-          // Add secure tokens
-          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-            preparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
-          }
 
           // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.
           List<String> yarnAppClassPath = Arrays.asList(

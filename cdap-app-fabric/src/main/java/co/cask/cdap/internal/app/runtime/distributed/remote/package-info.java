@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.distributed;
-
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import org.apache.twill.api.Command;
 
 /**
- * The class carries {@link Command} that are used by the flow system.
+ * This package contains implementation for launch CDAP program on a hadoop cluster via SSH to the edge node.
  */
-public final class ProgramCommands {
-
-  public static final Command SUSPEND = Command.Builder.of("suspend").build();
-  public static final Command RESUME = Command.Builder.of("resume").build();
-
-  private ProgramCommands() {
-  }
-}
+package co.cask.cdap.internal.app.runtime.distributed.remote;

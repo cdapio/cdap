@@ -16,12 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -36,6 +34,7 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
@@ -81,22 +80,18 @@ public class DistributedProgramRunnerTxTimeoutTest {
     Application app = new AppWithAllProgramTypes();
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(
       Id.Namespace.DEFAULT, new Id.Artifact(Id.Namespace.DEFAULT, "artifact", new ArtifactVersion("0.1")), app);
-    app.configure(configurer, new ApplicationContext() {
-      @Override
-      public Config getConfig() {
-        return null;
-      }
-    });
+    app.configure(configurer, () -> null);
     appSpec = configurer.createSpecification("app", "1.0");
     // System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(appSpec));
 
     cConf.setInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 60);
-    flowRunner = new DistributedFlowProgramRunner(null, yConf, cConf, null, null, null, null, null);
-    serviceRunner = new DistributedServiceProgramRunner(null, yConf, cConf, null, null);
-    workerRunner = new DistributedWorkerProgramRunner(null, yConf, cConf, null, null);
-    mapreduceRunner = new DistributedMapReduceProgramRunner(null, yConf, cConf, null, null);
-    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, null, yConf, cConf, null, null, null);
-    workflowRunner = new DistributedWorkflowProgramRunner(null, yConf, cConf, null, null, null);
+    flowRunner = new DistributedFlowProgramRunner(cConf, yConf, null, null, null, null, ClusterMode.ON_PREMISE, null);
+    serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
+    workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
+    mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
+    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, cConf, yConf, null, null, null,
+                                                    ClusterMode.ON_PREMISE, null);
+    workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null, null);
   }
 
   @Test
