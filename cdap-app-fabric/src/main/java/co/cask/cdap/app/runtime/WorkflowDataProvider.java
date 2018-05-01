@@ -16,15 +16,23 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
+import java.util.Set;
+
 /**
- * An interface for classes that can provide {@link WorkflowToken} instance.
+ * An interface for classes that can provide data required for the execution of the workflow.
  */
-public interface WorkflowTokenProvider {
+public interface WorkflowDataProvider {
 
   /**
    * Returns a {@link WorkflowToken}.
    */
   WorkflowToken getWorkflowToken();
+
+  /**
+   * Returns field lineage operations.
+   */
+  Set<Operation> getFieldLineageOperations();
 }

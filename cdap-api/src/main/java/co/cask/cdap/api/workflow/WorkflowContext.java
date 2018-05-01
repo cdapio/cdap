@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.lineage.field.LineageRecorder;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -34,7 +35,7 @@ import java.util.Map;
  * available to {@link Condition}.
  */
 public interface WorkflowContext extends SchedulableProgramContext, RuntimeContext, Transactional, MessagingContext,
-  ServiceDiscoverer, DatasetContext, PluginContext, SecureStore {
+  ServiceDiscoverer, DatasetContext, PluginContext, SecureStore, LineageRecorder {
 
   WorkflowSpecification getWorkflowSpecification();
 
@@ -66,4 +67,14 @@ public interface WorkflowContext extends SchedulableProgramContext, RuntimeConte
    */
   @Beta
   ProgramState getState();
+
+  /**
+   * Call this method to disable emitting the field lineage operations from nodes running inside Workflow.
+   * Disabling should happen from {@link AbstractWorkflow#initialize} method at which point no node
+   * has been executed yet. Calling this method means Workflow is taking responsibility of emitting
+   * the field operation. Field operations will be available to workflow as {@link WorkflowNodeState}
+   * by calling {@link #getNodeStates} method.If workflow does not call {@link LineageRecorder#record}
+   * method, then no field lineage will be recorded.
+   */
+  void disableFieldLineageOperationsEmitFromNodes();
 }

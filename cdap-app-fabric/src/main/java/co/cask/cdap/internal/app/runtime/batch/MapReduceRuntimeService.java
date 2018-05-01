@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -41,6 +42,8 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -59,8 +62,10 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -166,6 +171,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ProgramLifecycle<MapReduceContext> programLifecycle;
+  private final FieldLineageWriter fieldLineageWriter;
+  private final ProgramRunId mapReduceRunId;
 
   private Job job;
   private Runnable cleanupTask;
@@ -176,7 +183,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           final MapReduce mapReduce, MapReduceSpecification specification,
                           final BasicMapReduceContext context, Location programJarLocation,
                           NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
-                          AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+                          AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                          FieldLineageWriter fieldLineageWriter) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -205,6 +213,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
       }
     };
+    this.mapReduceRunId = context.getProgram().getId().run(context.getRunId().getId());
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -601,6 +611,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       : defaultTxControl;
 
     context.destroyProgram(programLifecycle, txControl, false);
+
+    ProgramStatus status = context.getState().getStatus();
+    WorkflowProgramInfo workflowInfo = context.getWorkflowInfo();
+    if (workflowInfo == null || status != ProgramStatus.COMPLETED) {
+      return;
+    }
+
+    // MapReduce program ran as a part of Workflow
+    try {
+      Set<Operation> fieldLineageOperations = context.getFieldLineageOperations();
+      if (!workflowInfo.isDisableFieldLineageEmitFromNodes() && !fieldLineageOperations.isEmpty()) {
+        FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
+        fieldLineageWriter.write(mapReduceRunId, info);
+      }
+    } catch (Throwable t) {
+      LOG.warn("Failed to store the field lineage operations for MapReduce {}", mapReduceRunId, t);
+    }
   }
 
   private void assertConsistentTypes(Class<? extends Mapper> firstMapperClass,
@@ -699,8 +726,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     StreamId streamId = streamProvider.getStreamId();
     try {
       streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
-      streamAdmin.addAccess(context.getProgram().getId().run(context.getRunId().getId()),
-                            streamId, AccessType.READ);
+      streamAdmin.addAccess(mapReduceRunId, streamId, AccessType.READ);
     } catch (Exception e) {
       LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
     }

@@ -31,6 +31,8 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import co.cask.cdap.api.lineage.field.LineageRecorder;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
@@ -109,6 +111,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -120,7 +123,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, Closeable {
+  PluginContext, MessagingContext, LineageRecorder, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -148,6 +151,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final int defaultTxTimeout;
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
+  private final Set<Operation> fieldLineageOperations;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -215,7 +219,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
-
+    this.fieldLineageOperations = new HashSet<>();
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -771,5 +775,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         return AbstractContext.this.getComponentId();
       }
     };
+  }
+
+  /**
+   * @return the {@link Set} of field lineage operations
+   */
+  public Set<Operation> getFieldLineageOperations() {
+    return fieldLineageOperations;
+  }
+
+  @Override
+  public void record(Collection<? extends Operation> operations) {
+    fieldLineageOperations.addAll(operations);
   }
 }

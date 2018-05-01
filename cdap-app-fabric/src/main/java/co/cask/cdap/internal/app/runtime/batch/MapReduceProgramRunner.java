@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
@@ -92,6 +93,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
+  private final FieldLineageWriter fieldLineageWriter;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -104,7 +106,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MessagingService messagingService) {
+                                MessagingService messagingService, FieldLineageWriter fieldLineageWriter) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -120,6 +122,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -190,7 +193,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                     context, program.getJarLocation(), locationFactory,
                                                                     streamAdmin, authorizationEnforcer,
-                                                                    authenticationContext);
+                                                                    authenticationContext, fieldLineageWriter);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
       ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
