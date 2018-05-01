@@ -12,23 +12,27 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package co.cask.cdap.internal.provision;
+package co.cask.cdap.internal.provision.task;
 
-import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
+
+import java.util.Optional;
 
 /**
- * Doesn't do anything.
+ * An end state.
  */
-public class NoOpProvisioningTask extends ProvisioningTask {
+public class EndSubtask extends ProvisioningSubtask {
+  public static final EndSubtask INSTANCE = new EndSubtask();
 
-  public NoOpProvisioningTask(ProgramRunId programRunId) {
-    super(programRunId);
+  private EndSubtask() {
+    super(null, null, cluster -> Optional.empty());
   }
 
   @Override
-  public void run() {
-    // no-op
+  protected Cluster execute(Cluster cluster) throws Exception {
+    return cluster;
   }
 }

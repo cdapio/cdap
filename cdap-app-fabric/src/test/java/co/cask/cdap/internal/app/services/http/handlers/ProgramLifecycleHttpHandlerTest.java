@@ -514,7 +514,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
 
       historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
-
     } finally {
       Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
         .API_VERSION_3_TOKEN, TEST_NAMESPACE1)).getStatusLine().getStatusCode());

@@ -31,12 +31,7 @@ public final class RetryStrategies {
    * @return A {@link RetryStrategy} that doesn't do any retry.
    */
   public static RetryStrategy noRetry() {
-    return new RetryStrategy() {
-      @Override
-      public long nextRetry(int failureCount, long startTime) {
-        return -1L;
-      }
-    };
+    return (failureCount, startTime) -> -1L;
   }
 
   /**
@@ -48,12 +43,7 @@ public final class RetryStrategies {
    */
   public static RetryStrategy limit(final int limit, final RetryStrategy strategy) {
     Preconditions.checkArgument(limit >= 0, "limit must be >= 0");
-    return new RetryStrategy() {
-      @Override
-      public long nextRetry(int failureCount, long startTime) {
-        return (failureCount <= limit) ? strategy.nextRetry(failureCount, startTime) : -1L;
-      }
-    };
+    return (failureCount, startTime) -> failureCount <= limit ? strategy.nextRetry(failureCount, startTime) : -1L;
   }
 
   /**
@@ -64,12 +54,7 @@ public final class RetryStrategies {
    */
   public static RetryStrategy fixDelay(final long delay, final TimeUnit delayUnit) {
     Preconditions.checkArgument(delay >= 0, "delay must be >= 0");
-    return new RetryStrategy() {
-      @Override
-      public long nextRetry(int failureCount, long startTime) {
-        return TimeUnit.MILLISECONDS.convert(delay, delayUnit);
-      }
-    };
+    return (failureCount, startTime) -> TimeUnit.MILLISECONDS.convert(delay, delayUnit);
   }
 
   /**
@@ -82,14 +67,11 @@ public final class RetryStrategies {
   public static RetryStrategy exponentialDelay(final long baseDelay, final long maxDelay, final TimeUnit delayUnit) {
     Preconditions.checkArgument(baseDelay >= 0, "base delay must be >= 0");
     Preconditions.checkArgument(maxDelay >= 0, "max delay must be >= 0");
-    return new RetryStrategy() {
-      @Override
-      public long nextRetry(int failureCount, long startTime) {
-        long power = failureCount > Long.SIZE ? Long.MAX_VALUE : (1L << (failureCount - 1));
-        long delay = Math.min(baseDelay * power, maxDelay);
-        delay = delay < 0 ? maxDelay : delay;
-        return TimeUnit.MILLISECONDS.convert(delay, delayUnit);
-      }
+    return (failureCount, startTime) -> {
+      long power = failureCount > Long.SIZE ? Long.MAX_VALUE : (1L << (failureCount - 1));
+      long delay = Math.min(baseDelay * power, maxDelay);
+      delay = delay < 0 ? maxDelay : delay;
+      return TimeUnit.MILLISECONDS.convert(delay, delayUnit);
     };
   }
 
@@ -104,12 +86,31 @@ public final class RetryStrategies {
   public static RetryStrategy timeLimit(long maxElapseTime, TimeUnit timeUnit, final RetryStrategy strategy) {
     Preconditions.checkArgument(maxElapseTime >= 0, "max elapse time must be >= 0");
     final long maxElapseMs = TimeUnit.MILLISECONDS.convert(maxElapseTime, timeUnit);
-    return new RetryStrategy() {
-      @Override
-      public long nextRetry(int failureCount, long startTime) {
-        long elapseTime = System.currentTimeMillis() - startTime;
-        return elapseTime <= maxElapseMs ? strategy.nextRetry(failureCount, startTime) : -1L;
-      }
+    return (failureCount, startTime) -> {
+      long elapseTime = System.currentTimeMillis() - startTime;
+      return elapseTime <= maxElapseMs ? strategy.nextRetry(failureCount, startTime) : -1L;
+    };
+  }
+
+  /**
+   * Creates a {@link RetryStrategy} that will retry until maximum amount of time has been passed since the
+   * current time with the actual delay behavior delegated to another {@link RetryStrategy}. This is normally used
+   * instead of {@link #timeLimit(long, TimeUnit, RetryStrategy)} if the strategy is used across multiple operations,
+   * and there is a time bound for those multiple operations.
+   *
+   * @param maxElapseTime Maximum amount of time until giving up retry.
+   * @param timeUnit {@link TimeUnit} for the max elapse time.
+   * @param absoluteStartTime the start timestamp in millis.
+   * @param strategy When time elapsed is less than or equal to the limit, this strategy will be called.
+   * @return A {@link RetryStrategy}.
+   */
+  public static RetryStrategy statefulTimeLimit(long maxElapseTime, TimeUnit timeUnit, long absoluteStartTime,
+                                                final RetryStrategy strategy) {
+    Preconditions.checkArgument(maxElapseTime >= 0, "max elapse time must be >= 0");
+    final long maxElapseMs = TimeUnit.MILLISECONDS.convert(maxElapseTime, timeUnit);
+    return (failureCount, startTime) -> {
+      long elapseTime = System.currentTimeMillis() - absoluteStartTime;
+      return elapseTime <= maxElapseMs ? strategy.nextRetry(failureCount, startTime) : -1L;
     };
   }
 
