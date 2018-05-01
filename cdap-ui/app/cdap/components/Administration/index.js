@@ -18,7 +18,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
 import {MyServiceProviderApi} from 'api/serviceproviders';
-import {humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
+import {humanReadableNumber, objectQuery} from 'services/helpers';
 import AdminManagementTabContent from 'components/Administration/AdminManagementTabContent';
 import AdminConfigTabContent from 'components/Administration/AdminConfigTabContent';
 import AdminTabSwitch from 'components/Administration/AdminTabSwitch';
@@ -33,9 +33,7 @@ const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
 class Administration extends Component {
   state = {
     platformsDetails: {},
-    platforms: [],
     uptime: 0,
-    loading: true,
     accordionToExpand: typeof this.props.location.state === 'object' ? this.props.location.state.accordionToExpand : null
   };
 
@@ -44,7 +42,8 @@ class Administration extends Component {
   }
 
   componentDidMount() {
-    this.getPlatforms();
+    this.getUptime();
+    this.getPlatformDetails();
     document.querySelector('#header-namespace-dropdown').style.display = 'none';
   }
 
@@ -61,102 +60,52 @@ class Administration extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
-  getPlatforms() {
+  getUptime() {
     MyServiceProviderApi
       .pollList()
       .subscribe(
         (res) => {
-          let platformsDetails = {};
-          let uptime;
-          let platformNames = Object.keys(res);
-          platformNames.map(key => {
-            if (key !== 'cdap') {
-              platformsDetails[key] = {
-                name: T.translate(`features.Administration.Component-Overview.headers.${key}`),
-                version: res[key].Version,
-                url: res[key].WebURL,
-                logs: res[key].LogsURL
-              };
-            } else {
-              uptime = res[key].Uptime;
-              platformsDetails[key] = {
-                name: T.translate(`features.Administration.Component-Overview.headers.${key}`)
-              };
-            }
-          });
-          this.getPlatformDetails(platformNames);
+          let uptime = objectQuery(res, 'cdap', 'Uptime');
           this.setState({
-            platforms : platformNames,
-            platformsDetails,
-            loading: false,
             uptime
           });
         },
         () => {
           setTimeout(() => {
-            this.getPlatforms();
+            this.getUptime();
           }, WAITTIME_FOR_ALTERNATE_STATUS);
         }
       );
   }
 
-  prettifyPlatformDetails(name, details) {
-    switch (name) {
-      case 'hdfs':
-        return Object.assign({}, details, {
-          storage: {
-            ...details.storage,
-            UsedBytes: humanReadableNumber(details.storage.UsedBytes, HUMANREADABLESTORAGE),
-            RemainingBytes: humanReadableNumber(details.storage.RemainingBytes, HUMANREADABLESTORAGE),
-            TotalBytes: humanReadableNumber(details.storage.TotalBytes, HUMANREADABLESTORAGE),
-          }
-        });
-      case 'cdap':
-        delete details.transactions.WritePointer;
-        delete details.transactions.ReadPointer;
-        return Object.assign({}, details, {
-          lasthourload: {
-            ...details.lasthourload,
-            Successful: humanReadableNumber(details.lasthourload.Successful),
-            TotalRequests: humanReadableNumber(details.lasthourload.TotalRequests)
-          }
-        });
-      case 'hbase':
-        return Object.assign({}, details, {
-          load: {
-            ...details.load,
-            TotalRegions: humanReadableNumber(details.load.TotalRegions),
-            NumRequests: humanReadableNumber(details.load.NumRequests),
-            AverageRegionsPerServer: humanReadableNumber(details.load.AverageRegionsPerServer)
-          }
-        });
-      case 'yarn':
-        return Object.assign({}, details, {
-          resources: {
-            ...details.resources,
-            TotalMemory: humanReadableNumber(details.resources.TotalMemory, HUMANREADABLESTORAGE),
-            FreeMemory: humanReadableNumber(details.resources.FreeMemory, HUMANREADABLESTORAGE),
-            UsedMemory: humanReadableNumber(details.resources.UsedMemory, HUMANREADABLESTORAGE),
-          }
-        });
-      default:
-        return details;
-    }
+  prettifyPlatformDetails(details) {
+    delete details.transactions.WritePointer;
+    delete details.transactions.ReadPointer;
+    return Object.assign({}, details, {
+      lasthourload: {
+        ...details.lasthourload,
+        Successful: humanReadableNumber(details.lasthourload.Successful),
+        TotalRequests: humanReadableNumber(details.lasthourload.TotalRequests)
+      }
+    });
   }
 
-  getPlatformDetails(platforms) {
-    platforms.forEach((name) => {
-      MyServiceProviderApi.get({
-        serviceprovider : name
-      })
-      .subscribe( (res) => {
-        let platformDetail = Object.assign({}, this.state.platformsDetails[name], res);
-        let platformsDetails = Object.assign({}, this.state.platformsDetails, {
-          [name]: this.prettifyPlatformDetails(name, platformDetail)
-        });
+  getPlatformDetails() {
+    MyServiceProviderApi.get({
+      serviceprovider : 'cdap'
+    })
+    .subscribe(
+      (res) => {
+        let platformsDetails = {
+          ...this.prettifyPlatformDetails(res)
+        };
         this.setState({ platformsDetails });
+      },
+      () => {
+        setTimeout(() => {
+          this.getUptime();
+        }, WAITTIME_FOR_ALTERNATE_STATUS);
       });
-    });
   }
 
   render () {
@@ -171,7 +120,6 @@ class Administration extends Component {
             return (
               <AdminManagementTabContent
                 platformsDetails={this.state.platformsDetails}
-                loading={this.state.loading}
               />
             );
           }} />
