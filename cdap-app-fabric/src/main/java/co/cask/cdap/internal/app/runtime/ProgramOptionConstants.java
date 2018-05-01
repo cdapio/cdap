@@ -59,21 +59,13 @@ public final class ProgramOptionConstants {
 
   public static final String WORKFLOW_NAME = "workflowName";
 
+  public static final String DISABLE_FIELD_LINEAGE_EMIT = "disableFieldLineageEmit";
+
   public static final String SCHEDULE_ID = "scheduleId";
 
   public static final String SCHEDULE_NAME = "scheduleName";
 
   public static final String CRON_EXPRESSION = "cronExpression";
-
-  public static final String RUN_DATA_SIZE = "runDataSize";
-
-  public static final String LAST_SCHEDULED_RUN_DATA_SIZE = "lastScheduledRunDataSize";
-
-  public static final String LAST_SCHEDULED_RUN_LOGICAL_START_TIME = "lastScheduledRunLogicalStartTime";
-
-  public static final String RUN_BASE_COUNT_SIZE = "runBaseCountSize";
-
-  public static final String RUN_BASE_COUNT_TIME = "runBaseCountTime";
 
   public static final String SYSTEM_OVERRIDES = "systemOverrides";
 

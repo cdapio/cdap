@@ -26,6 +26,7 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -56,6 +57,8 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -74,9 +77,7 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -90,7 +91,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.Set;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -119,7 +120,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final WorkflowSpecification workflowSpec;
   private final CConfiguration cConf;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
-  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
   private final LoggingContext loggingContext;
   private final Lock lock;
   private final java.util.concurrent.locks.Condition condition;
@@ -137,6 +137,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final FieldLineageWriter fieldLineageWriter;
 
   private volatile Thread runningThread;
   private boolean suspended;
@@ -149,7 +150,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  TransactionSystemClient txClient, WorkflowStateWriter workflowStateWriter, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
                  SecureStoreManager secureStoreManager, MessagingService messagingService,
-                 ProgramStateWriter programStateWriter) {
+                 ProgramStateWriter programStateWriter, FieldLineageWriter fieldLineageWriter) {
     this.program = program;
     this.programOptions = options;
     this.workflowSpec = workflowSpec;
@@ -180,6 +181,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -287,36 +289,46 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     } catch (Throwable t) {
       LOG.error("Failed to store the final workflow token of Workflow {}", workflowRunId, t);
     }
+
+    if (ProgramStatus.COMPLETED != workflowContext.getState().getStatus()) {
+      return;
+    }
+
+    try {
+      Set<Operation> fieldLineageOperations = workflowContext.getFieldLineageOperations();
+      if (!fieldLineageOperations.isEmpty()) {
+        FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
+        fieldLineageWriter.write(workflowRunId, info);
+      }
+    } catch (Throwable t) {
+      LOG.error("Failed to store the field lineage operations for Workflow {}", workflowRunId, t);
+    }
   }
 
   private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
-    status.put(node.getNodeId(), node);
     CountDownLatch executorTerminateLatch = new CountDownLatch(1);
     ExecutorService executorService = createExecutor(1, executorTerminateLatch, "action-" + node.getNodeId() + "-%d");
 
     try {
       // Run the action in new thread
-      Future<?> future = executorService.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          SchedulableProgramType programType = node.getProgram().getProgramType();
-          String programName = node.getProgram().getProgramName();
-          String prettyProgramType = ProgramType.valueOf(programType.name()).getPrettyName();
-          ProgramWorkflowRunner programWorkflowRunner =
-            workflowProgramRunnerFactory.getProgramWorkflowRunner(programType, token, node.getNodeId(), nodeStates);
+      Future<?> future = executorService.submit(() -> {
+        SchedulableProgramType programType = node.getProgram().getProgramType();
+        String programName = node.getProgram().getProgramName();
+        String prettyProgramType = ProgramType.valueOf(programType.name()).getPrettyName();
+        ProgramWorkflowRunner programWorkflowRunner =
+          workflowProgramRunnerFactory.getProgramWorkflowRunner(programType, token, node.getNodeId(), nodeStates);
 
-          // this should not happen, since null is only passed in from WorkflowDriver, only when calling configure
-          if (programWorkflowRunner == null) {
-            throw new UnsupportedOperationException("Operation not allowed.");
-          }
-
-          Runnable programRunner = programWorkflowRunner.create(programName);
-          LOG.info("Starting {} Program '{}' in workflow", prettyProgramType, programName);
-          programRunner.run();
-
-          LOG.info("{} Program '{}' in workflow completed", prettyProgramType, programName);
-          return null;
+        // this should not happen, since null is only passed in from WorkflowDriver, only when calling configure
+        if (programWorkflowRunner == null) {
+          throw new UnsupportedOperationException("Operation not allowed.");
         }
+
+        Runnable programRunner = programWorkflowRunner.create(programName);
+        LOG.info("Starting {} Program '{}' in workflow", prettyProgramType, programName);
+        programRunner.run();
+
+        LOG.info("{} Program '{}' in workflow completed", prettyProgramType, programName);
+        return null;
       });
       future.get();
     } catch (Throwable t) {
@@ -325,7 +337,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     } finally {
       executorService.shutdownNow();
       executorTerminateLatch.await();
-      status.remove(node.getNodeId());
     }
     workflowStateWriter.setWorkflowToken(workflowRunId, token);
   }
@@ -342,13 +353,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     try {
       for (final List<WorkflowNode> branch : fork.getBranches()) {
-        completionService.submit(new Callable<Map.Entry<String, WorkflowToken>>() {
-          @Override
-          public Map.Entry<String, WorkflowToken> call() throws Exception {
-            WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy();
-            executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
-            return Maps.immutableEntry(branch.toString(), copiedToken);
-          }
+        completionService.submit(() -> {
+          WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy();
+          executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
+          return Maps.immutableEntry(branch.toString(), copiedToken);
         });
       }
 
@@ -387,7 +395,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     WorkflowProgramInfo info = new WorkflowProgramInfo(workflowSpec.getName(), node.getNodeId(),
                                                        workflowRunId.getRun(), node.getNodeId(),
-                                                       (BasicWorkflowToken) token);
+                                                       (BasicWorkflowToken) token,
+                                                       workflowContext.isFieldOperationsEmitDisabledFromNodes());
     ProgramOptions actionOptions =
       new SimpleProgramOptions(programOptions.getProgramId(),
                                programOptions.getArguments(),
@@ -401,7 +410,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     pluginInstantiator, secureStore,
                                                                     secureStoreManager, messagingService);
     customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
-    status.put(node.getNodeId(), node);
     workflowStateWriter.addWorkflowNodeState(workflowRunId,
                                              new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
@@ -411,7 +419,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       failureCause = t;
       throw t;
     } finally {
-      status.remove(node.getNodeId());
       workflowStateWriter.setWorkflowToken(workflowRunId, token);
       NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
@@ -532,19 +539,16 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
 
       try {
-        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-          @Override
-          public Void call() throws Exception {
-            DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties(),
-                                                                   keepLocal(entry.getKey()));
-            // we have to do this check since addInstance method can only be used when app impersonation is enabled
-            if (principalId != null) {
-              datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, principalId);
-            } else {
-              datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties);
-            }
-            return null;
+        Retries.callWithRetries(() -> {
+          DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties(),
+                                                                 keepLocal(entry.getKey()));
+          // we have to do this check since addInstance method can only be used when app impersonation is enabled
+          if (principalId != null) {
+            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, principalId);
+          } else {
+            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties);
           }
+          return null;
         }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
       } catch (IOException | DatasetManagementException e) {
         throw e;
@@ -566,12 +570,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
 
       try {
-        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-          @Override
-          public Void call() throws Exception {
-            datasetFramework.deleteInstance(instanceId);
-            return null;
-          }
+        Retries.callWithRetries(() -> {
+          datasetFramework.deleteInstance(instanceId);
+          return null;
         }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
       } catch (Exception e) {
         LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, e);
@@ -620,19 +621,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     t.interrupt();
   }
 
-  private Supplier<List<WorkflowActionNode>> createStatusSupplier() {
-    return new Supplier<List<WorkflowActionNode>>() {
-      @Override
-      public List<WorkflowActionNode> get() {
-        List<WorkflowActionNode> currentNodes = Lists.newArrayList();
-        for (Map.Entry<String, WorkflowActionNode> entry : status.entrySet()) {
-          currentNodes.add(entry.getValue());
-        }
-        return currentNodes;
-      }
-    };
-  }
-
   /**
    * Creates an {@link ExecutorService} that has the given number of threads.
    *
@@ -643,7 +631,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
    */
   private ExecutorService createExecutor(int threads, final CountDownLatch terminationLatch, String threadNameFormat) {
     return new ThreadPoolExecutor(
-      threads, threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+      threads, threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
       new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build()) {
       @Override
       protected void terminated() {

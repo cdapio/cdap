@@ -31,6 +31,7 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -65,6 +66,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MessagingService messagingService;
   private final CConfiguration cConf;
   private final ProgramStateWriter programStateWriter;
+  private final FieldLineageWriter fieldLineageWriter;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -72,7 +74,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
-                               ProgramStateWriter programStateWriter) {
+                               ProgramStateWriter programStateWriter, FieldLineageWriter fieldLineageWriter) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -85,6 +87,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.messagingService = messagingService;
     this.cConf = cConf;
     this.programStateWriter = programStateWriter;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -119,7 +122,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       WorkflowDriver driver = new WorkflowDriver(program, options, workflowSpec, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                  txClient, workflowStateWriter, cConf, pluginInstantiator,
-                                                 secureStore, secureStoreManager, messagingService, programStateWriter);
+                                                 secureStore, secureStoreManager, messagingService, programStateWriter,
+                                                 fieldLineageWriter);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -49,6 +50,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -323,5 +325,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   public MessageFetcher getMessageFetcher() {
     // TODO: CDAP-7807
     throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public void record(Collection<? extends Operation> operations) {
+    throw new UnsupportedOperationException("Recording field lineage operations is not supported in MapReduce " +
+                                              "task-level context.");
   }
 }

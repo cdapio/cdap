@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -29,7 +30,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.runtime.WorkflowTokenProvider;
+import co.cask.cdap.app.runtime.WorkflowDataProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -38,7 +39,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -49,10 +49,11 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -132,14 +133,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
                                                        workflowProgramOptions.getUserArguments().asMap()))
     );
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runAndWait(programRunner, program, options);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
+    return () -> {
+      try {
+        runAndWait(programRunner, program, options);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
     };
   }
@@ -165,8 +163,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     }
     blockForCompletion(closeable, controller);
 
-    if (controller instanceof WorkflowTokenProvider) {
-      updateWorkflowToken(((WorkflowTokenProvider) controller).getWorkflowToken());
+    if (controller instanceof WorkflowDataProvider) {
+      updateWorkflowToken(((WorkflowDataProvider) controller).getWorkflowToken());
     } else {
       // This shouldn't happen
       throw new IllegalStateException("No WorkflowToken available after program completed: " + program.getId());
@@ -183,6 +181,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private void blockForCompletion(final Closeable closeable, final ProgramController controller) throws Exception {
     // Execute the program.
     final SettableFuture<Void> completion = SettableFuture.create();
+    final Set<Operation> fieldLineageOperations = new HashSet<>();
+    if (controller instanceof WorkflowDataProvider) {
+      fieldLineageOperations.addAll(((WorkflowDataProvider) controller).getFieldLineageOperations());
+    }
+
     controller.addListener(new AbstractListener() {
 
       @Override
@@ -203,22 +206,24 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       @Override
       public void completed() {
         Closeables.closeQuietly(closeable);
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, controller.getRunId().getId(),
-                                                     null));
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, fieldLineageOperations,
+                                                     controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void killed() {
         Closeables.closeQuietly(closeable);
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.KILLED, fieldLineageOperations,
+                                                     controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void error(Throwable cause) {
         Closeables.closeQuietly(closeable);
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.FAILED, fieldLineageOperations,
+                                                     controller.getRunId().getId(), cause));
         completion.setException(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -251,12 +256,9 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    * Creates a {@link Closeable} that will close the given {@link ProgramRunner} and {@link Program}.
    */
   private Closeable createCloseable(final ProgramRunner programRunner, final Program program) {
-    return new Closeable() {
-      @Override
-      public void close() throws IOException {
-        Closeables.closeQuietly(program);
-        closeProgramRunner(programRunner);
-      }
+    return () -> {
+      Closeables.closeQuietly(program);
+      closeProgramRunner(programRunner);
     };
   }
 

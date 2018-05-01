@@ -15,8 +15,9 @@
  */
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.runtime.WorkflowTokenProvider;
+import co.cask.cdap.app.runtime.WorkflowDataProvider;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.common.base.Throwables;
@@ -24,12 +25,13 @@ import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.mapreduce.Job;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * A ProgramController for MapReduce. It mainly is an adapter for reflecting the state changes in
  * {@link MapReduceRuntimeService}.
  */
-final class MapReduceProgramController extends ProgramControllerServiceAdapter implements WorkflowTokenProvider {
+final class MapReduceProgramController extends ProgramControllerServiceAdapter implements WorkflowDataProvider {
 
   private final BasicMapReduceContext context;
 
@@ -53,5 +55,10 @@ final class MapReduceProgramController extends ProgramControllerServiceAdapter i
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public Set<Operation> getFieldLineageOperations() {
+    return context.getFieldLineageOperations();
   }
 }

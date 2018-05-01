@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,7 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
   private final String workflowRunId;
   private final String programNameInWorkflow;
   private final BasicWorkflowToken workflowToken;
+  private final boolean disableFieldLineageEmitFromNodes;
 
   /**
    * Optionally creates a {@link WorkflowProgramInfo} from the given arguments. If the arguments don't contain
@@ -53,23 +54,25 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
     String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
     String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
     String workflowToken = arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN);
-
+    boolean disableFieldLineageEmitFromNodes = Boolean.parseBoolean(ProgramOptionConstants.DISABLE_FIELD_LINEAGE_EMIT);
 
     if (workflowName == null || workflowNodeId == null || workflowRunId == null || workflowToken == null) {
       return null;
     }
 
-    return new WorkflowProgramInfo(workflowName, workflowNodeId, workflowRunId,
-                                   programNameInWorkflow, GSON.fromJson(workflowToken, BasicWorkflowToken.class));
+    return new WorkflowProgramInfo(workflowName, workflowNodeId, workflowRunId, programNameInWorkflow,
+                                   GSON.fromJson(workflowToken, BasicWorkflowToken.class),
+                                   disableFieldLineageEmitFromNodes);
   }
 
   WorkflowProgramInfo(String workflowName, String workflowNodeId, String workflowRunId, String programNameInWorkflow,
-                      BasicWorkflowToken workflowToken) {
+                      BasicWorkflowToken workflowToken, boolean disableFieldLineageEmitFromNodes) {
     this.workflowName = workflowName;
     this.workflowNodeId = workflowNodeId;
     this.workflowRunId = workflowRunId;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
+    this.disableFieldLineageEmitFromNodes = disableFieldLineageEmitFromNodes;
   }
 
   /**
@@ -108,6 +111,14 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
    */
   public BasicWorkflowToken getWorkflowToken() {
     return workflowToken;
+  }
+
+  /**
+   * Return {@code true} if the emit of field operations from the nodes within
+   * the Workflow should be disabled, otherwise {@code false} is returned.
+   */
+  public boolean isDisableFieldLineageEmitFromNodes() {
+    return disableFieldLineageEmitFromNodes;
   }
 
   /**
