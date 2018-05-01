@@ -48,12 +48,6 @@
     <dependency>
       <groupId>io.thekraken</groupId>
       <artifactId>grok</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.gson</groupId>
-          <artifactId>gson</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
