@@ -22,7 +22,7 @@ import NamespacesPopover from 'components/NamespacesPicker/NamespacesPopover';
 
 require('./NamespacesPicker.scss');
 
-function NamespacesPickerView({namespacesPick}) {
+function NamespacesPickerView({namespacesPick, setNamespacesPick}) {
   let monitorTitle;
 
   if (namespacesPick.length === 0) {
@@ -53,7 +53,7 @@ function NamespacesPickerView({namespacesPick}) {
 
       <div className="monitor-more text-xs-right">
         <div className="d-inline-block">
-          <NamespacesPopover />
+          <NamespacesPopover setNamespacesPick={setNamespacesPick} />
         </div>
       </div>
     </div>
@@ -61,12 +61,14 @@ function NamespacesPickerView({namespacesPick}) {
 }
 
 NamespacesPickerView.propTypes = {
-  namespacesPick: PropTypes.array
+  namespacesPick: PropTypes.array,
+  setNamespacesPick: PropTypes.func
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
   return {
-    namespacesPick: state.namespaces.namespacesPick
+    namespacesPick: state.namespaces.namespacesPick,
+    setNamespacesPick: ownProps.setNamespacesPick
   };
 };
 

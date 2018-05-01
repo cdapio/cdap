@@ -27,6 +27,8 @@ import {listReports} from 'components/Reports/store/ActionCreator';
 import {Observable} from 'rxjs/Observable';
 import classnames from 'classnames';
 import ActionPopover from 'components/Reports/ReportsList/ActionPopover';
+import NamespacesPicker from 'components/NamespacesPicker';
+import {setNamespacesPick} from 'components/Reports/store/ActionCreator';
 
 require('./ReportsList.scss');
 
@@ -181,9 +183,11 @@ class ReportsListView extends Component {
     return (
       <div className="reports-container">
         <div className="header">
-          <div className="reports-view-options">
+          <div className="reports-view-options float-xs-left">
             <span>Reports</span>
           </div>
+
+          <NamespacesPicker setNamespacesPick={setNamespacesPick} />
         </div>
         <div className="reports-list-container">
           <Customizer />

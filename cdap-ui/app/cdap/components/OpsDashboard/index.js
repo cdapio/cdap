@@ -21,6 +21,7 @@ import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/Da
 import RunsList from 'components/OpsDashboard/RunsList';
 import {getData} from 'components/OpsDashboard/store/ActionCreator';
 import NamespacesPicker from 'components/NamespacesPicker';
+import {setNamespacesPick} from 'components/OpsDashboard/store/ActionCreator';
 
 require('./OpsDashboard.scss');
 
@@ -44,7 +45,7 @@ export default class OpsDashboard extends Component {
               <span>Dashboard</span>
             </div>
 
-            <NamespacesPicker />
+            <NamespacesPicker setNamespacesPick={setNamespacesPick} />
           </div>
 
           <RunsGraph />
