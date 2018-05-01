@@ -21,11 +21,15 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -46,7 +50,10 @@ import javax.annotation.Nullable;
  * belong in a transaction.
  */
 public class ProvisionerDataset {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .create();
   private static final DatasetId TABLE_ID = NamespaceId.SYSTEM.dataset("app.meta");
   private static final byte[] STATE_PREFIX = Bytes.toBytes("pr.state");
   private final MetadataStoreDataset table;
@@ -65,24 +72,28 @@ public class ProvisionerDataset {
     this.table = new MetadataStoreDataset(table, GSON);
   }
 
-  public List<ClusterInfo> listClusterInfo() {
-    return table.list(new MDSKey.Builder().add(STATE_PREFIX).build(), ClusterInfo.class);
+  public List<ProvisioningTaskInfo> listTaskInfo() {
+    return table.list(new MDSKey.Builder().add(STATE_PREFIX).build(), ProvisioningTaskInfo.class);
   }
 
   @Nullable
-  public ClusterInfo getClusterInfo(ProgramRunId programRunId) {
-    return table.get(getStateRowKey(programRunId), ClusterInfo.class);
+  public ProvisioningTaskInfo getTaskInfo(ProvisioningTaskKey key) {
+    return table.get(getRowKey(key), ProvisioningTaskInfo.class);
   }
 
-  public void putClusterInfo(ClusterInfo provisionerOperation) {
-    table.write(getStateRowKey(provisionerOperation.getProgramRunId()), provisionerOperation);
+  public void putTaskInfo(ProvisioningTaskInfo taskInfo) {
+    ProvisioningTaskKey key = new ProvisioningTaskKey(taskInfo.getProgramRunId(),
+                                                      taskInfo.getProvisioningOp().getType());
+    table.write(getRowKey(key), taskInfo);
   }
 
-  public void deleteClusterInfo(ProgramRunId programRunId) {
-    table.delete(getStateRowKey(programRunId));
+  public void deleteTaskInfo(ProgramRunId programRunId) {
+    table.delete(getRowKey(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION)));
+    table.delete(getRowKey(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION)));
   }
 
-  private MDSKey getStateRowKey(ProgramRunId programRunId) {
+  private MDSKey getRowKey(ProvisioningTaskKey key) {
+    ProgramRunId programRunId = key.getProgramRunId();
     return new MDSKey.Builder().add(STATE_PREFIX)
       .add(programRunId.getNamespace())
       .add(programRunId.getApplication())
@@ -90,6 +101,7 @@ public class ProvisionerDataset {
       .add(programRunId.getType().name())
       .add(programRunId.getProgram())
       .add(programRunId.getRun())
+      .add(key.getType().name())
       .build();
   }
 }

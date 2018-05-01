@@ -34,6 +34,50 @@ public enum ProgramRunStatus {
   KILLED;
 
   /**
+   * Return whether this state can transition to the specified state.
+   *
+   * @param status the state to transition to
+   * @return whether this state can transition to the specified state
+   */
+  public boolean canTransitionTo(ProgramRunStatus status) {
+    if (this == status) {
+      return true;
+    }
+    switch (this) {
+      case PENDING:
+        // STARTING is the happy path
+        // KILLED happens if the run was manually stopped
+        // FAILED happens if the provisioning failed
+        return status == STARTING || status == KILLED || status == FAILED;
+      case STARTING:
+        // RUNNING is the happy path
+        // KILLED happens if the run was manually stopped
+        // FAILED happens if the run failed while starting
+        // COMPLETED happens somehow? Not sure when we expect this but we test that this transition can happen
+        // SUSPENDED happens if you suspend while starting. Not sure why this is allowed, seems wrong (CDAP-13551)
+        return status == RUNNING || status == SUSPENDED || status == COMPLETED || status == KILLED || status == FAILED;
+      case RUNNING:
+        // SUSPENDED happens if the run was suspended
+        // COMPLETED is the happy path
+        // KILLED happens if the run was manually stopped
+        // FAILED happens if the run failed
+        return status == SUSPENDED || status == COMPLETED || status == KILLED || status == FAILED;
+      case SUSPENDED:
+        // RUNNING happens if the run was resumed (there is no RESUMING state even though it is an enum value...)
+        // KILLED happens if the run was manually stopped
+        // FAILED happens if the run failed while suspended
+        return status == RUNNING || status == KILLED || status == FAILED;
+      case COMPLETED:
+      case FAILED:
+      case KILLED:
+        // these are end states
+        return false;
+    }
+    // these are not actually states, should never ask about transitioning
+    throw new IllegalStateException("Invalid transition from program run state " + this);
+  }
+
+  /**
    * @return whether the status is an end status for a program run.
    */
   public boolean isEndState() {

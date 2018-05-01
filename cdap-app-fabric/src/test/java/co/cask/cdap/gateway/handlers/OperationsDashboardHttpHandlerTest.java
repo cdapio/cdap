@@ -55,9 +55,10 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   private static final String BASE_PATH = Constants.Gateway.API_VERSION_3;
   private static final Type DASHBOARD_DETAIL_TYPE = new TypeToken<List<DashboardProgramRunRecord>>() { }.getType();
   private static Store store;
+  private static long sourceId;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setup() {
     store = getInjector().getInstance(DefaultStore.class);
   }
 
@@ -65,33 +66,24 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   public void testDashboardDetail() throws Exception {
     ProgramId programId1 = new ProgramId("ns1", "app", ProgramType.WORKFLOW, "program");
     ArtifactId artifactId = new ArtifactId("ns1", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
-    long sourceId = 0;
     // a path to get ops dashboard results between time 100 and 100 + 1440 = 1540 from namesapce "ns1" and "ns2"
     String opsDashboardQueryPath = BASE_PATH + "/dashboard?start=100&duration=1440&namespace=ns1&namespace=ns2";
     // run1 will not be included in the query results since it stops before the query start time 100
     ProgramRunId run1 = programId1.run(RunIds.generate(TimeUnit.SECONDS.toMillis(10)));
-    store.setProvisioning(run1, Collections.emptyMap(), Collections.emptyMap(),
-                          Bytes.toBytes(++sourceId), artifactId);
-    store.setStop(run1, 50, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
+    writeCompletedRunRecord(run1, artifactId, 50);
     // run2 will be included in the query results since it starts before query end time
     // and stops after query start time
     ProgramRunId run2 = programId1.run(RunIds.generate(TimeUnit.SECONDS.toMillis(60)));
-    store.setProvisioning(run2, Collections.emptyMap(), Collections.emptyMap(),
-                          Bytes.toBytes(++sourceId), artifactId);
-    store.setStop(run2, 110, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
+    writeCompletedRunRecord(run2, artifactId, 110);
     ProgramId programId2 = new ProgramId("ns2", "app", ProgramType.WORKFLOW, "program");
     // run3 will be included in the query results since it starts before query end time
     // and stops after query start time
     ProgramRunId run3 = programId2.run(RunIds.generate(TimeUnit.SECONDS.toMillis(120)));
-    store.setProvisioning(run3, Collections.emptyMap(), Collections.emptyMap(),
-                          Bytes.toBytes(++sourceId), artifactId);
-    store.setStop(run3, 200, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
+    writeCompletedRunRecord(run3, artifactId, 200);
     // run4 will be included in the query results since it starts before query end time
     // and stops after query start time
     ProgramRunId run4 = programId2.run(RunIds.generate(TimeUnit.SECONDS.toMillis(60)));
-    store.setProvisioning(run4, Collections.emptyMap(), Collections.emptyMap(),
-                          Bytes.toBytes(++sourceId), artifactId);
-    store.setStop(run4, 2200, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
+    writeCompletedRunRecord(run4, artifactId, 2200);
     // run5 will be included in the query results since it starts before query end time
     // and stops after query start time
     ProgramRunId run5 = programId2.run(RunIds.generate(TimeUnit.SECONDS.toMillis(60)));
@@ -100,16 +92,12 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     store.setStart(run5, "twillId", Collections.emptyMap(), Bytes.toBytes(++sourceId));
     // run6 will not be included in the query results since it starts after query end time
     ProgramRunId run6 = programId2.run(RunIds.generate(TimeUnit.SECONDS.toMillis(2000)));
-    store.setProvisioning(run6, Collections.emptyMap(), Collections.emptyMap(),
-                          Bytes.toBytes(++sourceId), artifactId);
-    store.setStop(run6, 2200, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
+    writeCompletedRunRecord(run6, artifactId, 2200);
 
     ProgramId programId3 = new ProgramId("ns3", "app", ProgramType.WORKFLOW, "program");
     // run7 will not be included in the query results since it does not belong the namespaces in the query
     ProgramRunId run7 = programId3.run(RunIds.generate(TimeUnit.SECONDS.toMillis(120)));
-    store.setProvisioning(run7, Collections.emptyMap(), Collections.emptyMap(),
-                          Bytes.toBytes(++sourceId), artifactId);
-    store.setStop(run7, 200, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
+    writeCompletedRunRecord(run7, artifactId, 200);
     // get ops dashboard query results
     HttpResponse response = doGet(opsDashboardQueryPath);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -119,5 +107,14 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(4, dashboardDetail.size());
     Set<String> runs = dashboardDetail.stream().map(DashboardProgramRunRecord::getRun).collect(Collectors.toSet());
     Assert.assertEquals(ImmutableSet.of(run2.getRun(), run3.getRun(), run4.getRun(), run5.getRun()), runs);
+  }
+
+  private void writeCompletedRunRecord(ProgramRunId runId, ArtifactId artifactId, long endTime) {
+    store.setProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+                          Bytes.toBytes(++sourceId), artifactId);
+    store.setProvisioned(runId, 0, Bytes.toBytes(++sourceId));
+    store.setStart(runId, null, Collections.emptyMap(), Bytes.toBytes(++sourceId));
+    store.setRunning(runId, endTime - 1, null, Bytes.toBytes(++sourceId));
+    store.setStop(runId, endTime, ProgramRunStatus.COMPLETED, Bytes.toBytes(++sourceId));
   }
 }

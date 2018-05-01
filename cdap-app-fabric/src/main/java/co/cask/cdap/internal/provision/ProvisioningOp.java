@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.provision;
 
 /**
- * Cluster operations.
+ * Provisioning operations.
  */
-public class ClusterOp {
+public class ProvisioningOp {
   private final Type type;
   private final Status status;
 
-  public ClusterOp(Type type, Status status) {
+  public ProvisioningOp(Type type, Status status) {
     this.type = type;
     this.status = status;
   }
@@ -42,9 +42,11 @@ public class ClusterOp {
   public enum Status {
     REQUESTING_CREATE,
     POLLING_CREATE,
+    INITIALIZING,
     CREATED,
     REQUESTING_DELETE,
     POLLING_DELETE,
+    DELETED,
     FAILED,
     ORPHANED
   }

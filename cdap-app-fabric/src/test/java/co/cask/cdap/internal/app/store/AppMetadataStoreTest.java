@@ -167,6 +167,28 @@ public class AppMetadataStoreTest {
   }
 
   @Test
+  public void testPendingToCompletedIsIgnored() throws Exception {
+    AppMetadataStore metadataStoreDataset = getMetadataStore("testPendingToCompletedIgnored");
+
+    TransactionExecutor txnl = getTxExecutor(metadataStoreDataset);
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    RunId runId1 = RunIds.generate();
+    ProgramRunId programRunId = program.run(runId1);
+
+    txnl.execute(() -> {
+      metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), Collections.emptyMap(),
+                                                     AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                     ARTIFACT_ID);
+      metadataStoreDataset.recordProgramStop(programRunId, 0, ProgramRunStatus.COMPLETED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId);
+      Assert.assertEquals(ProgramRunStatus.PENDING, runRecordMeta.getStatus());
+    });
+  }
+
+  @Test
   public void testProvisioningFailure() throws Exception {
     AppMetadataStore metadataStoreDataset = getMetadataStore("testProvisioningFailure");
 
@@ -288,6 +310,7 @@ public class AppMetadataStoreTest {
     // STARTING status will be ignored if there's any existing record
     txnl.execute(() -> {
       recordProvisionAndStart(programRunId6, metadataStoreDataset);
+      // CDAP-13551 - seems like the program should not be allowed to suspend when in starting state
       metadataStoreDataset.recordProgramSuspend(programRunId6,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                 currentTime);

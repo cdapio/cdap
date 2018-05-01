@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
 import co.cask.cdap.api.schedule.TriggerInfo;
