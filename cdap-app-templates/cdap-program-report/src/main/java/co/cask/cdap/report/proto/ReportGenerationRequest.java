@@ -17,11 +17,10 @@
 package co.cask.cdap.report.proto;
 
 import co.cask.cdap.report.util.ReportField;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -29,13 +28,14 @@ import javax.annotation.Nullable;
  * Represents a request to generate a program run report in an HTTP request.
  */
 public class ReportGenerationRequest {
-  private final Long start;
-  private final Long end;
   private final List<String> fields;
   @Nullable
   private final List<Sort> sort;
   @Nullable
   private final List<Filter> filters;
+
+  private Long start;
+  private Long end;
 
   public ReportGenerationRequest(Long start, Long end, List<String> fields, @Nullable List<Sort> sort,
                                  @Nullable List<Filter> filters) {
