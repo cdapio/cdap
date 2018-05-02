@@ -58,7 +58,7 @@ a prefix can be added to limit the scope of the arguments.
 **Workflow**
 
 - Prefix with ``mapreduce.<workflowNodeName>.`` to set resources for a particular MapReduce node in a workflow
-- Prefix with ``spark.<workflowNodeName>.`` to set resources for a particular MapReduce node in a workflow
+- Prefix with ``spark.<workflowNodeName>.`` to set resources for a particular Spark node in a workflow
 
 Examples
 ========
