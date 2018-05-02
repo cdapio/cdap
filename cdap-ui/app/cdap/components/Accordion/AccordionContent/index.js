@@ -14,8 +14,25 @@
  * the License.
 */
 
-.text-area-widget {
-  min-height: 50px;
-  max-height: 120px;
-  max-width: 100%;
+import PropTypes from 'prop-types';
+import React, {PureComponent} from 'react';
+require('./AccordionContent.scss');
+
+export default class AccordionContent extends PureComponent {
+  static propTypes = {
+    size: PropTypes.oneOf(["small", "medium", "large"]),
+    children: PropTypes.node
+  };
+
+  static defaultProps = {
+    size: "medium"
+  };
+
+  render() {
+    return (
+      <div className={`accordion-content ${this.props.size}`}>
+        {this.props.children}
+      </div>
+    );
+  }
 }

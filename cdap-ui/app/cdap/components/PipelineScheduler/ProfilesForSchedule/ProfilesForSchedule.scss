@@ -35,26 +35,19 @@
     }
     z-index: 1000;
     .dropdown-menu {
-      width: 400px;
+      width: 500px;
       padding-bottom: 0;
       outline: none;
-
-      .grid-wrapper {
-        max-height: 250px;
-      }
-      .grid.grid-container {
-        max-height: inherit;
-        .grid-body {
-          .grid-row {
-            &:hover,
-            &.active {
-              background: $yellow-02-lighter;
-            }
-            padding: 5px;
+      height: 300px;
+      padding-top: 0;
+      .profiles-list-view-on-pipeline {
+        height: 100%;
+        .grid-wrapper {
+          height: 100%;
+          overflow: auto;
+          .grid.grid-container {
+            max-height: 100%;
           }
-        }
-        .grid-row {
-          grid-template-columns: 20px 1fr 1fr 1fr;
         }
       }
     }

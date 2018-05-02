@@ -18,7 +18,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import {objectQuery} from 'services/helpers';
-import {PROFILE_NAME_PREFERENCE_PROPERTY} from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, extractProfileName} from  'components/PipelineDetails/ProfilesListView';
 import IconSVG from 'components/IconSVG';
 import ProfilePreview from 'components/Cloud/Profiles/Preview';
 import Popover from 'components/Popover';
@@ -47,7 +47,7 @@ class RunLevelComputeProfile extends Component {
           :
             <span>
               <IconSVG name="icon-cloud" />
-              {this.props.profileName.replace(/(user|system):/g, '')}
+              {extractProfileName(this.props.profileName)}
             </span>
           }
         </div>
@@ -71,7 +71,7 @@ class RunLevelComputeProfile extends Component {
               injectOnToggle={true}
             >
               <ProfilePreview
-                profileName={this.props.profileName.replace(/(user|system):/g, '')}
+                profileName={extractProfileName(this.props.profileName)}
                 profileScope={this.props.profileName.indexOf('system:') !== -1 ? 'system' : 'user'}
               />
             </Popover>

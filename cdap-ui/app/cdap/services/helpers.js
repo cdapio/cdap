@@ -323,14 +323,13 @@ const convertMapToKeyValuePairs = (map, addUniqueId = true) => {
   });
 };
 
-const convertKeyValuePairsToMap = (keyValuePairs) => {
+const convertKeyValuePairsToMap = (keyValuePairs, ignoreNonNilValues = false) => {
   let map = {};
   keyValuePairs.forEach((currentPair) => {
+    let isValidValue = ignoreNonNilValues || !isNilOrEmpty(currentPair.value);
     if (
-      currentPair.key &&
-      currentPair.key.length > 0 &&
-      currentPair.value &&
-      currentPair.value.length > 0
+      !isNilOrEmpty(currentPair.key) &&
+      isValidValue
     ) {
       map[currentPair.key] = currentPair.value;
     }

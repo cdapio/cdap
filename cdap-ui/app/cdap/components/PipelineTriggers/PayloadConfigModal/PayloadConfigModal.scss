@@ -25,6 +25,10 @@ body.theme-cdap {
         margin-top: 25vh;
       }
       .modal-body {
+        // We anways don't allow the entire body to scroll.
+        // We have a fixed header, a footer if need be and the 
+        // content in the middle scrolls.
+        overflow: inherit;
         padding: 0px;
       }
       .modal-dialog .modal-content .modal-header {

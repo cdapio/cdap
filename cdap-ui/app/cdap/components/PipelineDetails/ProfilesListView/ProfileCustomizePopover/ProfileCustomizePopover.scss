@@ -14,8 +14,15 @@
  * the License.
 */
 
-.text-area-widget {
-  min-height: 50px;
-  max-height: 120px;
-  max-width: 100%;
+.profile-customize-popover {
+  .popper {
+    min-width: 350px;
+    min-height: 300px;
+    z-index: 1;
+    padding: 20px;
+    text-align: left;
+    &[data-x-out-of-boundaries] {
+      visibility: hidden;
+    }
+  }
 }
