@@ -14,8 +14,8 @@
  * the License.
 */
 
-@import "../../../../styles/mixins.scss";
-@import "../../../../styles/variables.scss";
+@import "../../../styles/mixins.scss";
+@import "../../../styles/variables.scss";
 
 .compute-tab-content {
   height: 100%;
@@ -36,9 +36,17 @@
     overflow: auto;
   }
   .grid.grid-container {
+    // This will be the case when we show profiles list view in payload config
+    // When it is disabled we show only the selected profile (if any).
+    // which will have only one row. So when we set height to 100% grid
+    // rows expand vertically to fill in the gap. Hence the grid-auto-rows.
+
+    // TODO: Check how the fallback works in this case.
+    height: 100%;
+    grid-auto-rows: 40px;
     max-height: calc(100% - 50px); // 100% - 17px (title) - 30px (profile count)
     .grid-row {
-      grid-template-columns: 30px 1fr 1fr 1fr 100px;
+      grid-template-columns: 30px 1fr 1fr 1fr 50px 1fr;
     }
     .grid-header {
       .grid-row {
