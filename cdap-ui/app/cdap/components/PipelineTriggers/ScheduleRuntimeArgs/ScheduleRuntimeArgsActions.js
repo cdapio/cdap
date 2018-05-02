@@ -116,11 +116,12 @@ function setArgMapping(key, value, type, oldValue) {
   });
 }
 
-function setSelectedProfile(profileName) {
+function setSelectedProfile(profileName, customizations = {}) {
   ScheduleRuntimeArgsStore.dispatch({
     type: SCHEDULERUNTIMEARGSACTIONS.SETSELECTEDPROFILE,
     payload: {
-      selectedProfile: profileName
+      selectedProfile: profileName,
+      customizations
     }
   });
 }

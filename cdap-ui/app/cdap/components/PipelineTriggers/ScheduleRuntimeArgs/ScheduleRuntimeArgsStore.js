@@ -174,7 +174,8 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
       return {
         ...state,
         selectedProfile: {
-          name: action.payload.selectedProfile
+          name: action.payload.selectedProfile,
+          profileCustomizations: action.payload.customizations
         }
       };
     default:
