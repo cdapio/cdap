@@ -23,6 +23,7 @@ import {getMacrosResolvedByPrefs} from 'components/PipelineConfigurations/Store/
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import uuidV4 from 'uuid/v4';
 import uniqBy from 'lodash/uniqBy';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 
 const init = (pipeline) => {
   PipelineDetailStore.dispatch({
@@ -286,6 +287,21 @@ const fetchAndUpdateRuntimeArgs = () => {
     let currentAppPrefs = res[1];
     let currentAppResolvedPrefs = res[2];
     let resolvedMacros = getMacrosResolvedByPrefs(currentAppResolvedPrefs, macrosMap);
+    // When a pipeline is published there won't be any profile related information
+    // at app level preference. However the pipeline, when run will be run with the 'default'
+    // profile that is set at the namespace level. So we populate in UI the default
+    // profile for a pipeline until the user choose something else. This is populated from
+    // resolved app level preference which will provide preferences from namespace.
+    const isProfileProperty = (property) => (
+      [PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE]
+        .filter(profilePrefix => property.indexOf(profilePrefix) !== -1)
+        .length
+    );
+    Object.keys(currentAppResolvedPrefs).forEach(resolvePref => {
+      if (isProfileProperty(resolvePref) !== 0) {
+        currentAppPrefs[resolvePref] = currentAppResolvedPrefs[resolvePref];
+      }
+    });
 
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,

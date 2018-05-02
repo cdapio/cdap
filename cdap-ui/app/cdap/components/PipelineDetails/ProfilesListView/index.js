@@ -68,7 +68,7 @@ export default class ProfilesListViewInPipeline extends Component {
     Observable.forkJoin(
       MyCloudApi.list({ namespace: getCurrentNamespace() }),
       MyCloudApi.list({ namespace: 'system' }),
-      MyPreferenceApi.getAppPreferences({
+      MyPreferenceApi.getAppPreferencesResolved({
         namespace: getCurrentNamespace(),
         appId
       })
