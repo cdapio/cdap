@@ -229,10 +229,12 @@ footer {
   }
 }
 
+// The modeless-container doesn't have an overflow property defined here
+// In all our usecases we don't have the entire modeless scrolling since we have
+// a static header and a footer and only the content scrolls.
 .modeless-container {
   background: @grey-06;
   position: absolute;
-  overflow: auto;
   z-index: 999;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
   color: @grey-01;
