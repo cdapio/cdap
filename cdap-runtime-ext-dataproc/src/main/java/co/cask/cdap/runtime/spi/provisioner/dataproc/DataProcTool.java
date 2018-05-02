@@ -45,6 +45,7 @@ public class DataProcTool {
       .addOption(new Option("k", "serviceAccountKey", true, "Google cloud service account key (json format)."))
       .addOption(new Option("p", "project", true, "Google cloud project id."))
       .addOption(new Option("c", "configFile", true, "File all provisioner settings as a json object."))
+      .addOption(new Option("i", "imageVersion", true, "The image version for the cluster. Defaults to 1.2."))
       .addOption(new Option("n", "name", true, "Name of the cluster."));
 
     CommandLineParser parser = new BasicParser();
@@ -94,10 +95,12 @@ public class DataProcTool {
       conf = DataProcConf.fromProperties(properties);
     }
 
+    String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "1.2";
+
     String name = commandLine.getOptionValue('n');
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
       if ("provision".equals(command)) {
-        client.createCluster(name);
+        client.createCluster(name, imageVersion);
       } else if ("details".equals(command)) {
         Optional<Cluster> cluster = client.getCluster(name);
         if (cluster.isPresent()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,25 +18,18 @@ package co.cask.cdap.internal.app.spark;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.runtime.spi.SparkCompat;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Spark compat versions
+ * Determines the SparkCompat version.
  */
-public enum SparkCompat {
-  SPARK1_2_10("spark1_2.10"),
-  SPARK2_2_11("spark2_2.11");
+public class SparkCompatReader {
 
-  private final String compat;
-
-  SparkCompat(String compat) {
-    this.compat = compat;
-  }
-
-  public String getCompat() {
-    return compat;
+  private SparkCompatReader() {
+    // no-op for helper class
   }
 
   /**
@@ -50,14 +43,14 @@ public enum SparkCompat {
     compatStr = compatStr == null ? System.getenv(Constants.SPARK_COMPAT_ENV) : compatStr;
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
-    for (SparkCompat sparkCompat : values()) {
+    for (SparkCompat sparkCompat : SparkCompat.values()) {
       if (sparkCompat.getCompat().equals(compatStr)) {
         return sparkCompat;
       }
     }
 
     List<String> allowedCompatStrings = new ArrayList<>();
-    for (SparkCompat sparkCompat : values()) {
+    for (SparkCompat sparkCompat : SparkCompat.values()) {
       allowedCompatStrings.add(sparkCompat.getCompat());
     }
 

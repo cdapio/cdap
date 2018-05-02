@@ -22,7 +22,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
-import co.cask.cdap.internal.app.spark.SparkCompat;
+import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
@@ -50,7 +50,7 @@ final class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunne
     // The actual execution mode of the job is governed by the framework configuration,
     // which is in the hConf we shipped from DistributedSparkProgramRunner
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    return new SparkProgramRuntimeProvider(SparkCompat.get(cConf)) { }
+    return new SparkProgramRuntimeProvider(SparkCompatReader.get(cConf)) { }
       .createProgramRunner(ProgramType.SPARK, ProgramRuntimeProvider.Mode.LOCAL, injector);
   }
 

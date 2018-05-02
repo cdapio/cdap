@@ -16,6 +16,7 @@
 
 package co.cask.cdap.runtime.spi.provisioner;
 
+import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 
 import java.util.Map;
@@ -45,4 +46,6 @@ public interface ProvisionerContext {
    * Returns the {@link SSHContext} for performing ssh operations.
    */
   SSHContext getSSHContext();
+
+  SparkCompat getSparkCompat();
 }

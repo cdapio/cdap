@@ -17,8 +17,8 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.internal.app.spark.SparkCompat;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.runtime.spi.SparkCompat;
 
 /**
  * Spark1 program runtime provider.

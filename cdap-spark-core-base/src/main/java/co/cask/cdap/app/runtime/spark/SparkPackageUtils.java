@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.internal.app.spark.SparkCompat;
+import co.cask.cdap.runtime.spi.SparkCompat;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;

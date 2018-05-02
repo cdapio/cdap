@@ -24,8 +24,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.internal.app.spark.SparkCompat;
+import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.runtime.spi.SparkCompat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -128,7 +129,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   @Override
   public boolean isSupported(ProgramType programType, CConfiguration cConf) {
     // TODO: Need to check if it actually has the corresponding spark version available
-    SparkCompat runtimeSparkCompat = SparkCompat.get(cConf);
+    SparkCompat runtimeSparkCompat = SparkCompatReader.get(cConf);
     if (runtimeSparkCompat == providerSparkCompat) {
       LOG.debug("using sparkCompat {}", providerSparkCompat);
       return true;
