@@ -30,6 +30,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +44,8 @@ import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.tephra.TransactionSystemClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -54,6 +57,9 @@ import java.util.List;
  * Hive 14 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
  */
 public class Hive14ExploreService extends BaseHiveExploreService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Hive14ExploreService.class);
+  private static final Gson GSON = new Gson();
 
   // Used to store the getOperationStatus from Hive's CLIService class. The number of arguments for this method
   // varies between versions, so we get this method on startup using reflection and then call the correct version
@@ -126,10 +132,21 @@ public class Hive14ExploreService extends BaseHiveExploreService {
 
     // Call the getOperationStatus method based on the number of arguments it expects.
     try {
-      if (getOperationStatus.getParameterTypes().length == 2) {
-        operationStatus = (OperationStatus) getOperationStatus.invoke(cliService, operationHandle, true);
-      } else {
-        operationStatus = (OperationStatus) getOperationStatus.invoke(cliService, operationHandle);
+      try {
+        if (getOperationStatus.getParameterTypes().length == 2) {
+          LOG.trace("Calling CLIService.getOperationStatus({}, true)...", operationHandle);
+          operationStatus = (OperationStatus) getOperationStatus.invoke(cliService, operationHandle, true);
+          LOG.trace("CLIService.getOperationStatus({}, true) returned {}",
+                    operationHandle, GSON.toJson(operationStatus));
+        } else {
+          LOG.trace("Calling CLIService.getOperationStatus({})...", operationHandle);
+          operationStatus = (OperationStatus) getOperationStatus.invoke(cliService, operationHandle);
+          LOG.trace("CLIService.getOperationStatus({}) returned {}",
+                    operationHandle, GSON.toJson(operationStatus));
+        }
+      } catch (Throwable t) {
+        LOG.error("CLIService.getOperationStatus({}) threw exception", operationHandle, t);
+        throw t;
       }
     } catch (IndexOutOfBoundsException | IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException("Failed to get the status of the operation.", e);
@@ -147,12 +164,20 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   @Override
   protected OperationHandle executeSync(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
-    return getCliService().executeStatement(sessionHandle, statement, new HashMap<String, String>());
+    LOG.trace("Calling CLIService.executeStatement() for statement '{}'", statement);
+    OperationHandle handle =
+      getCliService().executeStatement(sessionHandle, statement, new HashMap<String, String>());
+    LOG.trace("CLIService.executeStatement() for statement '{}' returned handle {}", statement, handle);
+    return handle;
   }
 
   @Override
   protected OperationHandle executeAsync(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
-    return getCliService().executeStatementAsync(sessionHandle, statement, new HashMap<String, String>());
+    LOG.trace("Calling CLIService.executeStatementAsync() for statement '{}'", statement);
+    OperationHandle handle =
+      getCliService().executeStatementAsync(sessionHandle, statement, new HashMap<String, String>());
+    LOG.trace("CLIService.executeStatementAsync() for statement '{}' returned handle {}", statement, handle);
+    return handle;
   }
 }
