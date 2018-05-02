@@ -53,7 +53,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -245,7 +244,7 @@ public abstract class IntegrationTestBase {
 
   private void checkServicesWithRetry(Callable<Boolean> callable,
                                       String exceptionMessage) throws TimeoutException, InterruptedException {
-    Stopwatch sw = new Stopwatch().start();
+    long startTime = System.currentTimeMillis();
     do {
       try {
         if (callable.call()) {
@@ -262,7 +261,7 @@ public abstract class IntegrationTestBase {
         }
       }
       TimeUnit.SECONDS.sleep(1);
-    } while (sw.elapsedTime(TimeUnit.SECONDS) <= SERVICE_CHECK_TIMEOUT_SECONDS);
+    } while (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) <= SERVICE_CHECK_TIMEOUT_SECONDS);
 
     // when we have passed the timeout and the check for services is not successful
     throw new TimeoutException(exceptionMessage);

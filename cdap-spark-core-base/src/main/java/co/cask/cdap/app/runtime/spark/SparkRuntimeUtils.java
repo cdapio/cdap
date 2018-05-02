@@ -19,14 +19,8 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import co.cask.cdap.app.runtime.spark.distributed.SparkDriverService;
-import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.ClassPathResources;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.io.OutputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
@@ -36,7 +30,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import org.apache.spark.SparkConf;
 import org.apache.spark.streaming.DStreamGraph;
-import org.apache.spark.streaming.StreamingContext;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
@@ -73,116 +66,6 @@ public final class SparkRuntimeUtils {
   private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeUtils.class);
   private static final Gson GSON = new Gson();
-
-  // ClassLoader filter
-  @VisibleForTesting
-  public static final FilterClassLoader.Filter SPARK_PROGRAM_CLASS_LOADER_FILTER = new FilterClassLoader.Filter() {
-
-    final FilterClassLoader.Filter defaultFilter = FilterClassLoader.defaultFilter();
-    volatile Set<ClassPath.ResourceInfo> sparkStreamingResources;
-
-    @Override
-    public boolean acceptResource(final String resource) {
-      // All Spark API, Spark, Scala, Akka and Kryo classes should come from parent.
-      if (resource.startsWith("co/cask/cdap/api/spark/")) {
-        return true;
-      }
-      if (resource.startsWith("scala/")) {
-        return true;
-      }
-      if (resource.startsWith("akka/")) {
-        return true;
-      }
-      if (resource.startsWith("com/esotericsoftware/kryo/")) {
-        return true;
-      }
-      if (resource.startsWith("org/apache/spark/")) {
-        // Only allows the core Spark Streaming classes, but not any streaming extensions (like Kafka).
-        // cdh 5.5+ package streaming kafka and flume into their spark assembly jar, but they don't package their
-        // dependencies. For example, streaming kafka is packaged, but kafka is not.
-        if (resource.startsWith("org/apache/spark/streaming/kafka") ||
-          resource.startsWith("org/apache/spark/streaming/flume")) {
-          return false;
-        }
-        if (resource.startsWith("org/apache/spark/streaming")) {
-          return Iterables.any(getSparkStreamingResources(), new Predicate<ClassPath.ResourceInfo>() {
-            @Override
-            public boolean apply(ClassPath.ResourceInfo input) {
-              return input.getResourceName().equals(resource);
-            }
-          });
-        }
-        return true;
-      }
-      if (resource.startsWith("com/google/common/base/Optional")) {
-        return true;
-      }
-      return defaultFilter.acceptResource(resource);
-    }
-
-    @Override
-    public boolean acceptPackage(final String packageName) {
-      if (packageName.equals("co.cask.cdap.api.spark") || packageName.startsWith("co.cask.cdap.api.spark.")) {
-        return true;
-      }
-      if (packageName.equals("scala") || packageName.startsWith("scala.")) {
-        return true;
-      }
-      if (packageName.equals("akka") || packageName.startsWith("akka.")) {
-        return true;
-      }
-      if (packageName.equals("com.esotericsoftware.kryo") || packageName.startsWith("com.esotericsoftware.kryo.")) {
-        return true;
-      }
-      // cdh 5.5 and on package kafka and flume streaming in their assembly jar
-      if (packageName.equals("org.apache.spark") || packageName.startsWith("org.apache.spark.")) {
-        // Only allows the core Spark Streaming classes, but not any streaming extensions (like Kafka).
-        if (packageName.startsWith("org.apache.spark.streaming.kafka") ||
-          packageName.startsWith("org.apache.spark.streaming.flume")) {
-          return false;
-        }
-        if (packageName.equals("org.apache.spark.streaming") || packageName.startsWith("org.apache.spark.streaming.")) {
-          return Iterables.any(
-            Iterables.filter(getSparkStreamingResources(), ClassPath.ClassInfo.class),
-            new Predicate<ClassPath.ClassInfo>() {
-              @Override
-              public boolean apply(ClassPath.ClassInfo input) {
-                return input.getPackageName().equals(packageName);
-              }
-            });
-        }
-        return true;
-      }
-      return defaultFilter.acceptResource(packageName);
-    }
-
-    /**
-     * Gets the set of resources information that are from the Spark Streaming Core. It excludes any
-     * Spark streaming extensions, such as Kafka or Flume. They need to be excluded since they are not
-     * part of Spark distribution and it should be loaded from the user program ClassLoader. This filtering
-     * is needed for unit-testing because in unit-test, those extension classes are loadable from the system
-     * classloader, causing same classes being loaded through different classloader.
-     */
-    private Set<ClassPath.ResourceInfo> getSparkStreamingResources() {
-      if (sparkStreamingResources != null) {
-        return sparkStreamingResources;
-      }
-      synchronized (this) {
-        if (sparkStreamingResources != null) {
-          return sparkStreamingResources;
-        }
-
-        try {
-          sparkStreamingResources = ClassPathResources.getClassPathResources(getClass().getClassLoader(),
-                                                                             StreamingContext.class);
-        } catch (IOException e) {
-          LOG.warn("Failed to find resources for Spark StreamingContext.", e);
-          sparkStreamingResources = Collections.emptySet();
-        }
-        return sparkStreamingResources;
-      }
-    }
-  };
 
   /**
    * Creates a zip file which contains a serialized {@link Properties} with a given zip entry name, together with

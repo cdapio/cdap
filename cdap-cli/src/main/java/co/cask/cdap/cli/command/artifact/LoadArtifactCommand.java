@@ -27,10 +27,10 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
-import com.google.common.io.Files;
 import com.google.inject.Inject;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.util.Map;
 
@@ -72,12 +72,12 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
     NamespaceId namespace = artifactId.getParent();
     if (configPath == null) {
       artifactClient.add(namespace, artifactId.getEntityName(),
-                         Files.newInputStreamSupplier(artifactFile), artifactId.getVersion());
+                         () -> new FileInputStream(artifactFile), artifactId.getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
       ArtifactConfig artifactConfig = configReader.read(Id.Namespace.fromEntityId(namespace), configFile);
       artifactClient.add(namespace, artifactId.getEntityName(),
-                         Files.newInputStreamSupplier(artifactFile), artifactId.getVersion(),
+                         () -> new FileInputStream(artifactFile), artifactId.getVersion(),
                          artifactConfig.getParents(), artifactConfig.getPlugins());
 
       Map<String, String> properties = artifactConfig.getProperties();

@@ -40,7 +40,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -171,10 +171,10 @@ public class ApplicationClientTestRun extends ClientTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("ProgramsApp");
 
     artifactClient.add(NamespaceId.DEFAULT, artifactName,
-      Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
-      "1.0.0");
+                       () -> Files.newInputStream(createAppJarFile(ConfigurableProgramsApp.class).toPath()),
+                       "1.0.0");
     artifactClient.add(NamespaceId.DEFAULT, artifactName,
-      Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp2.class)),
+                       () -> Files.newInputStream(createAppJarFile(ConfigurableProgramsApp2.class).toPath()),
       "2.0.0");
 
     try {

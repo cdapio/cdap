@@ -22,7 +22,6 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -43,6 +42,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +50,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -136,7 +137,10 @@ public final class ClassPath {
    * @since 16.0
    */
   public ImmutableSet<ClassInfo> getAllClasses() {
-    return FluentIterable.from(resources).filter(ClassInfo.class).toImmutableSet();
+    return resources.stream()
+      .filter(ClassInfo.class::isInstance)
+      .map(ClassInfo.class::cast)
+      .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), ImmutableSet::copyOf));
   }
 
   /**
@@ -160,7 +164,11 @@ public final class ClassPath {
 
   /** Returns all top level classes loadable from the current class path. */
   public ImmutableSet<ClassInfo> getTopLevelClasses() {
-    return FluentIterable.from(resources).filter(ClassInfo.class).filter(IS_TOP_LEVEL).toImmutableSet();
+    return resources.stream()
+      .filter(ClassInfo.class::isInstance)
+      .map(ClassInfo.class::cast)
+      .filter(IS_TOP_LEVEL::apply)
+      .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), ImmutableSet::copyOf));
   }
 
   /** Returns all top level classes whose package name is {@code packageName}. */

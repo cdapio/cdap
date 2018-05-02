@@ -250,7 +250,7 @@ class DatasetServiceClient {
 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT, "modules/" + moduleName)
       .addHeader("X-Class-Name", className)
-      .withBody(Locations.newInputSupplier(jarLocation));
+      .withBody(jarLocation::getInputStream);
     HttpResponse response = doRequest(requestBuilder);
 
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {

@@ -44,11 +44,11 @@ import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.ContentProvider;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.InputSupplier;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -57,7 +57,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -70,7 +69,7 @@ import java.util.jar.Manifest;
  */
 @Category(XSlowTests.class)
 public class ArtifactClientTestRun extends ClientTestBase {
-  private static final InputSupplier<InputStream> DUMMY_SUPPLIER = () -> new ByteArrayInputStream(new byte[]{});
+  private static final ContentProvider<InputStream> DUMMY_SUPPLIER = () -> new ByteArrayInputStream(new byte[]{});
 
   private ArtifactClient artifactClient;
 
@@ -183,20 +182,15 @@ public class ArtifactClientTestRun extends ClientTestBase {
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "2.0.0");
     final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class, manifest);
 
-    InputSupplier<InputStream> inputSupplier = new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return appJarLoc.getInputStream();
-      }
-    };
+    ContentProvider<InputStream> contentProvider = appJarLoc::getInputStream;
     artifactClient.add(myapp1Id.getParent(), myapp1Id.getArtifact(),
-                       inputSupplier, myapp1Id.getVersion());
+                       contentProvider, myapp1Id.getVersion());
     // add some properties
     Map<String, String> myapp1Properties = ImmutableMap.of("k1", "v1");
     artifactClient.writeProperties(myapp1Id, myapp1Properties);
 
     // let it derive version from jar manifest, which has bundle-version at 2.0.0
-    artifactClient.add(myapp2Id.getParent(), myapp2Id.getArtifact(), inputSupplier, null, null);
+    artifactClient.add(myapp2Id.getParent(), myapp2Id.getArtifact(), contentProvider, null, null);
     // add some properties
     Map<String, String> myapp2Properties = ImmutableMap.of("k1", "v1", "k2", "v2");
     artifactClient.writeProperties(myapp2Id, myapp2Properties);
@@ -206,18 +200,13 @@ public class ArtifactClientTestRun extends ClientTestBase {
     manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     final Location pluginJarLoc = PluginJarHelper.createPluginJar(locationFactory, manifest, Plugin1.class);
-    inputSupplier = new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return pluginJarLoc.getInputStream();
-      }
-    };
+    contentProvider = pluginJarLoc::getInputStream;
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       myapp2Id.getParent().getNamespace(), myapp2Id.getArtifact(),
       new ArtifactVersion(myapp2Id.getVersion()), new ArtifactVersion("3.0.0")));
     Set<PluginClass> additionalPlugins = Sets.newHashSet(new PluginClass(
       "jdbc", "mysql", "", "com.mysql.jdbc.Driver", null, Collections.<String, PluginPropertyField>emptyMap()));
-    artifactClient.add(pluginId.getParent(), pluginId.getArtifact(), inputSupplier,
+    artifactClient.add(pluginId.getParent(), pluginId.getArtifact(), contentProvider,
                        pluginId.getVersion(), parents, additionalPlugins);
 
     ArtifactSummary myapp1Summary = new ArtifactSummary(myapp1Id.getArtifact(), myapp1Id.getVersion());
@@ -321,7 +310,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get plugin details for plugin1 for myapp-2.0.0
     PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", "p1 description", Plugin1.class.getName(), "conf",
-      pluginArtifactSummary, props, new HashSet<String>());
+      pluginArtifactSummary, props, new HashSet<>());
     Assert.assertEquals(Sets.newHashSet(pluginInfo),
                         Sets.newHashSet(artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1")));
   }

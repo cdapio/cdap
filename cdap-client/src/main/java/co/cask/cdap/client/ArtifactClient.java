@@ -39,12 +39,12 @@ import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Joiner;
-import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -436,7 +436,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(ArtifactId artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
-                  InputSupplier<? extends InputStream> artifactContents)
+                  ContentProvider<? extends InputStream> artifactContents)
     throws UnauthenticatedException, BadRequestException, ArtifactRangeNotFoundException,
     ArtifactAlreadyExistsException, IOException, UnauthorizedException {
 
@@ -449,7 +449,7 @@ public class ArtifactClient {
    *
    * @param namespace the namespace to add the artifact to
    * @param artifactName the name of the artifact to add
-   * @param artifactContents an input supplier for the contents of the artifact
+   * @param artifactContents a provider for the contents of the artifact
    * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
    *                        manifest of the artifact.
    * @throws ArtifactAlreadyExistsException if the artifact already exists
@@ -459,7 +459,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(NamespaceId namespace, String artifactName,
-                  InputSupplier<? extends InputStream> artifactContents,
+                  ContentProvider<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
     UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
@@ -472,7 +472,7 @@ public class ArtifactClient {
    *
    * @param namespace the namespace to add the artifact to
    * @param artifactName the name of the artifact to add
-   * @param artifactContents an input supplier for the contents of the artifact
+   * @param artifactContents a provider for the contents of the artifact
    * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
    *                        manifest of the artifact
    * @param parentArtifacts the set of artifacts this artifact extends
@@ -482,7 +482,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void add(NamespaceId namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
+  public void add(NamespaceId namespace, String artifactName, ContentProvider<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion, @Nullable Set<ArtifactRange> parentArtifacts)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
     UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
@@ -495,7 +495,7 @@ public class ArtifactClient {
    *
    * @param namespace the namespace to add the artifact to
    * @param artifactName the name of the artifact to add
-   * @param artifactContents an input supplier for the contents of the artifact
+   * @param artifactContents a provider for the contents of the artifact
    * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
    *                        manifest of the artifact
    * @param parentArtifacts the set of artifacts this artifact extends
@@ -510,7 +510,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(NamespaceId namespace, String artifactName,
-                  InputSupplier<? extends InputStream> artifactContents,
+                  ContentProvider<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion,
                   @Nullable Set<ArtifactRange> parentArtifacts,
                   @Nullable Set<PluginClass> additionalPlugins)
