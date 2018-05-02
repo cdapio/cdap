@@ -73,42 +73,7 @@ $btn-border-color: $grey-03;
 
       .pipeline-version {
         align-self: flex-end;
-      }
-    }
-
-    .pipeline-tags {
-      overflow: hidden;
-      max-width: 100%;
-      white-space: nowrap;
-
-      .tags-holder {
-        .btn.btn-secondary {
-          &.user-tags {
-            background-color: $grey-07;
-            border: 2px solid white;
-            color: $grey-02;
-
-            &:hover {
-              background-color: $grey-06;
-              color: $grey-01;
-            }
-          }
-
-          &.system-tags {
-            background-color: white;
-            color: $blue-grey03;
-            border: 1px solid $blue-grey06;
-
-            &:hover {
-              border-color: $blue-grey03;
-              color: $blue-grey01;
-            }
-          }
-        }
-
-        .plus-button-container {
-          background-color: $grey-03;
-        }
+        display: none; /* hiding this until we implement pipeline versioning */
       }
     }
   }

@@ -14,17 +14,23 @@
  * the License.
 */
 
+@import "../../../../../styles/variables.scss";
+
 .pipeline-actions-container {
   .popper {
     z-index: 999;
-    min-width: 120px;
-    width: 120px;
+    min-width: 100px;
+    width: 100px;
 
     ul {
       padding: 10px;
 
       li {
         padding: 8px 4px 8px 0;
+
+        &.delete-action {
+          color: $red-02;
+        }
       }
 
       hr {

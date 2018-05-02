@@ -112,4 +112,10 @@
       color: rgba(102, 102, 102, 1);
     }
   }
+  .tags-holder {
+    .tags-list {
+      /* 120px width of input box + 10px padding + 50px width of All Tags label + 10px padding + 60px width of Tags label + 15px width of loading icon */
+      max-width: calc(100% - 120px - 10px - 50px - 10px - 65px - 15px);
+    }
+  }
 }

@@ -168,7 +168,7 @@ export default class PipelineDetailsActionsButton extends Component {
 
     return (
       <ConfirmationModal
-        headerTitle={T.translate(`${PREFIX}.delete`)}
+        headerTitle={T.translate(`${PREFIX}.deleteConfirmation.title`)}
         toggleModal={this.toggleDeleteConfirmationModal}
         confirmationElem={this.getDeleteConfirmationElem()}
         confirmButtonText={T.translate(`${PREFIX}.deleteConfirmation.confirm`)}
@@ -212,8 +212,11 @@ export default class PipelineDetailsActionsButton extends Component {
               {T.translate(`${PREFIX}.export`)}
             </li>
             <hr />
-            <li onClick={this.toggleDeleteConfirmationModal}>
-              {T.translate(`${PREFIX}.delete`)}
+            <li
+              onClick={this.toggleDeleteConfirmationModal}
+              className="delete-action"
+            >
+              {T.translate('commons.delete')}
             </li>
           </ul>
         </Popover>

@@ -1532,12 +1532,12 @@ features:
     TopPanel:
       actions: Actions
       configure: Configure
-      delete: Delete Pipeline
       deleteConfirmation:
         confirm: Delete
         confirmPrompt: 'Are you sure you want to delete the pipeline '
         pipeline: 'Pipeline '
         proceedPrompt: ' is deleted. Are you sure you want to proceed?'
+        title: Delete Pipeline
         trigger: ' is configured to trigger '
         triggerDelete: '. Triggers will be deleted if pipeline '
         triggerPluralCheck:
@@ -1998,8 +1998,9 @@ features:
   SpotlightSearch:
     SpotlightModal:
       headerTagResults: Entities with the tag "{tag}"
-      numResults: "{total} results"
+      noResults: There are no entities with the tag "{tag}"
       numResult: "{total} result"
+      numResults: "{total} results"
 
   StatusAlertMessage:
     message: 'Services are back online'
@@ -2007,7 +2008,8 @@ features:
     Title: CDAP | Stream | {streamId}
 
   Tags:
-    label: Tags
+    allTags: All Tags
+    labelWithCount: Tags ({count})
     notags: No tags found. Click to add a new business tag.
 
   TriggeredPipelines:
