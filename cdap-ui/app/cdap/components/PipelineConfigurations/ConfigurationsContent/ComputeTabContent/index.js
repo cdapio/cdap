@@ -16,13 +16,11 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import ProfilesListViewInPipeline, {PROFILE_NAME_PREFERENCE_PROPERTY} from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
+import ProfilesListViewInPipeline, {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import findIndex from 'lodash/findIndex';
-import uuidV4 from 'uuid/v4';
 import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {connect} from 'react-redux';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, convertKeyValuePairsToMap, convertMapToKeyValuePairs} from 'services/helpers';
 
 class ComputeTabContent extends Component {
 
@@ -30,19 +28,34 @@ class ComputeTabContent extends Component {
     selectedProfile: PropTypes.object
   };
 
-  onProfileSelect = (profileName) => {
+  onProfileSelect = (profileName, customizations = {}) => {
     let {runtimeArgs} = PipelineConfigurationsStore.getState();
     let pairs = [...runtimeArgs.pairs];
-    let existingProfile = findIndex(pairs, (pair) => pair.key === PROFILE_NAME_PREFERENCE_PROPERTY);
-    if (existingProfile === -1) {
-      pairs.push({
-        key: PROFILE_NAME_PREFERENCE_PROPERTY,
-        value: profileName,
-        uniqueId: 'id-' + uuidV4()
+    let runtimeObj = convertKeyValuePairsToMap(pairs, true);
+    let existingProfile = runtimeObj[PROFILE_NAME_PREFERENCE_PROPERTY];
+    if (!existingProfile) {
+      runtimeObj[PROFILE_NAME_PREFERENCE_PROPERTY] = profileName;
+      Object.keys(customizations).forEach(profileProp => {
+        let key = `${PROFILE_PROPERTIES_PREFERENCE}.${profileProp}`;
+        runtimeObj[key] = customizations[profileProp];
       });
     } else {
-      pairs[existingProfile].value = profileName;
+      if (existingProfile !== profileName) {
+        // If the profile is not the same remove any
+        // customizations applied to the previous profile.
+        Object.keys(runtimeObj).forEach(runtimearg => {
+          if (runtimearg.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1) {
+            delete runtimeObj[runtimearg];
+          }
+        });
+      }
+      runtimeObj[PROFILE_NAME_PREFERENCE_PROPERTY] = profileName;
+      Object.keys(customizations).forEach(profileProperty => {
+        let key = `${PROFILE_PROPERTIES_PREFERENCE}.${profileProperty}`;
+        runtimeObj[key] = customizations[profileProperty];
+      });
     }
+    pairs = convertMapToKeyValuePairs(runtimeObj);
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
       payload: { runtimeArgs: { pairs } }
@@ -63,9 +76,16 @@ class ComputeTabContent extends Component {
 }
 
 const mapStateToProps = (state) => {
-  let selectedProfile = state.runtimeArgs.pairs.find(pair => pair.key === 'system.profile.name');
+  let selectedProfile = state.runtimeArgs.pairs.find(pair => pair.key === PROFILE_NAME_PREFERENCE_PROPERTY);
+  let profileCustomizations = state.runtimeArgs.pairs.filter(pair => pair.key.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1);
+  let customizationsMap = {};
+  profileCustomizations.forEach(customProp => {
+    let propName = customProp.key.replace(`${PROFILE_PROPERTIES_PREFERENCE}.`, '');
+    customizationsMap[propName] = customProp.value;
+  });
   let selectedProfileObj = {
-    name: objectQuery(selectedProfile, 'value') || null
+    name: objectQuery(selectedProfile, 'value') || null,
+    profileCustomizations: customizationsMap
   };
   return {
     selectedProfile: selectedProfileObj

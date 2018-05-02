@@ -26,11 +26,13 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import cloneDeep from 'lodash/cloneDeep';
 import { MyPreferenceApi } from 'api/preference';
 import {Observable} from 'rxjs/Observable';
-import difference from 'lodash/difference';
-import {PROFILE_NAME_PREFERENCE_PROPERTY} from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from  'components/PipelineDetails/ProfilesListView';
+import {convertKeyValuePairsToMap} from 'services/helpers';
+import isEqual from 'lodash/isEqual';
 
 const RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY = [
   PROFILE_NAME_PREFERENCE_PROPERTY,
+  PROFILE_PROPERTIES_PREFERENCE,
   'logical.start.time'
 ];
 
@@ -48,8 +50,12 @@ const getFilteredRuntimeArgs = (hideProvided) => {
   let {runtimeArgs, resolvedMacros} = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let pairs = [...runtimeArgs.pairs];
+  const checkPropertyMatchToSkip = (prop) => {
+    let isMatch = RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY.filter(skipProp => prop.indexOf(skipProp) !== -1);
+    return isMatch.length ? true : false;
+  };
   pairs = pairs
-    .filter(pair => (RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY.indexOf(pair.key) === -1))
+    .filter(pair => !checkPropertyMatchToSkip(pair.key))
     .map(pair => {
       if (pair.key in resolvedMacros) {
         return {
@@ -76,8 +82,9 @@ const updateRunTimeArgs = (rtArgs) => {
   let {runtimeArgs} = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let excludedPairs = [...runtimeArgs.pairs];
-  const preferencesToFilter = [PROFILE_NAME_PREFERENCE_PROPERTY];
-  excludedPairs = excludedPairs.filter(pair => preferencesToFilter.indexOf(pair.key) !== -1);
+  const preferencesToFilter = [PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE];
+  const shouldExcludeProperty = (property) => preferencesToFilter.filter(prefProp => property.indexOf(prefProp) !== -1).length;
+  excludedPairs = excludedPairs.filter(pair => shouldExcludeProperty(pair.key));
   modifiedRuntimeArgs.pairs = rtArgs.pairs.concat(excludedPairs);
   updatePipelineEditStatus();
   PipelineConfigurationsStore.dispatch({
@@ -147,6 +154,12 @@ const updatePipelineEditStatus = () => {
     return oldvalue.memoryMB === newvalue.memoryMB && oldvalue.virtualCores === newvalue.virtualCores;
   };
 
+  const getRunTimeArgsModified = (savedRunTime = [], newRunTime = []) => {
+    let savedRunTimeObj = convertKeyValuePairsToMap(savedRunTime);
+    let newRunTimeObj = convertKeyValuePairsToMap(newRunTime);
+    return !isEqual(savedRunTimeObj, newRunTimeObj);
+  };
+
   let oldConfig = PipelineDetailStore.getState().config;
   let updatedConfig = PipelineConfigurationsStore.getState();
 
@@ -156,7 +169,7 @@ const updatePipelineEditStatus = () => {
   let isInstrumentationModified = oldConfig.processTimingEnabled !== updatedConfig.processTimingEnabled;
   let isStageLoggingModified = oldConfig.stageLoggingEnabled !== updatedConfig.stageLoggingEnabled;
   let isCustomEngineConfigModified = oldConfig.properties !== updatedConfig.properties;
-  let isRunTimeArgsModified = difference(updatedConfig.runtimeArgs, updatedConfig.savedRuntimeArgs);
+  let isRunTimeArgsModified = getRunTimeArgsModified(updatedConfig.runtimeArgs.pairs, updatedConfig.savedRuntimeArgs.pairs);
 
   let isModified = (
     isResourcesModified ||
