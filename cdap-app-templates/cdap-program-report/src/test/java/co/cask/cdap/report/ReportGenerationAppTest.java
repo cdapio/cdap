@@ -56,7 +56,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -88,7 +87,6 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
 
-  @Ignore
   @Test
   public void testGenerateReport() throws Exception {
     DatasetId metaFileset = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
@@ -191,7 +189,10 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       nsLocation.mkdirs();
       for (int i = 0; i < 5; i++) {
         long time = 1520808000L + 1000 * i;
-        Location reportLocation = nsLocation.append(String.format("%d.avro", time));
+        // expected format is <event-timestamp-millis>-<creation-timestamp-millis>.avro
+        Location reportLocation = nsLocation.append(String.format("%d-%d.avro",
+                                                                  TimeUnit.SECONDS.toMillis(time),
+                                                                  System.currentTimeMillis()));
         reportLocation.createNew();
         dataFileWriter.create(ProgramRunMetaFileUtil.SCHEMA, reportLocation.getOutputStream());
         String program = "SmartWorkflow";
