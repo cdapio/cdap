@@ -29,31 +29,23 @@ import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 
-import java.io.IOException;
 import java.util.Map;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 
 /**
  * App that filters based on a threshold.
  * To test runtimeArgs.
  */
 public class FilterAppWithNewFlowAPI extends AbstractApplication {
-  private static final byte[] highPass = Bytes.toBytes("h");
+  static final byte[] HIGH_PASS = Bytes.toBytes("h");
 
   @Override
   public void configure() {
     setName("FilterApp");
     setDescription("Application for filtering numbers. Test runtimeargs.");
     addFlow(new FilterFlow());
-    addService(new BasicService("CountService", new CountHandler()));
   }
 
   /**
@@ -108,7 +100,7 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
       //highpass filter.
       String value = Bytes.toString(event.getBody());
       if (Long.parseLong(value) > threshold) {
-        counters.increment(highPass, 1L);
+        counters.increment(HIGH_PASS, 1L);
       }
     }
 
@@ -132,26 +124,5 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
       Assert.assertEquals("value", context.getSpecification().getProperties().get("key"));
     }
   }
-
-
-  /**
-   * return counts.
-   */
-  public static class CountHandler extends AbstractHttpServiceHandler {
-    @UseDataSet("count")
-    private KeyValueTable counters;
-
-    @GET
-    @Path("result")
-    public void handle(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
-      byte[] result = counters.read(highPass);
-      if (result == null) {
-        responder.sendStatus(404);
-      } else {
-        responder.sendJson(Bytes.toLong(result));
-      }
-    }
-  }
-
 }
 

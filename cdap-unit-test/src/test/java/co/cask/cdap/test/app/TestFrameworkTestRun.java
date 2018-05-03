@@ -77,7 +77,6 @@ import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -85,6 +84,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -125,6 +125,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -188,17 +189,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
     Map<String, String> args = Maps.newHashMap();
     args.put("threshold", "10");
-    applicationManager.getFlowManager("FilterFlow").start(args);
+    FlowManager flowManager = applicationManager.getFlowManager("FilterFlow").start(args);
 
     StreamManager input = getStreamManager("input");
     input.send("2");
     input.send("21");
 
-    ServiceManager serviceManager = applicationManager.getServiceManager("CountService").start();
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    DataSetManager<KeyValueTable> countTable = getDataset("count");
+    Tasks.waitFor(1L, () -> {
+      countTable.flush();
+      byte[] value = countTable.get().read(FilterAppWithNewFlowAPI.HIGH_PASS);
+      return value == null ? 0L : Bytes.toLong(value);
+    }, 30, TimeUnit.SECONDS);
 
-    Assert.assertEquals("1", new Gson().fromJson(
-      callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
+    flowManager.stop();
+    flowManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -243,36 +248,36 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testServiceManager() throws Exception {
-    ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
-    final ServiceManager countService = applicationManager.getServiceManager("CountService");
-    countService.setInstances(2);
-    Assert.assertEquals(0, countService.getProvisionedInstances());
-    Assert.assertEquals(2, countService.getRequestedInstances());
-    Assert.assertFalse(countService.isRunning());
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    final ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME);
+    serviceManager.setInstances(2);
+    Assert.assertEquals(0, serviceManager.getProvisionedInstances());
+    Assert.assertEquals(2, serviceManager.getRequestedInstances());
+    Assert.assertFalse(serviceManager.isRunning());
 
-    List<RunRecord> history = countService.getHistory();
+    List<RunRecord> history = serviceManager.getHistory();
     Assert.assertEquals(0, history.size());
 
-    countService.start();
-    countService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
-    Assert.assertEquals(2, countService.getProvisionedInstances());
+    serviceManager.start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    Assert.assertEquals(2, serviceManager.getProvisionedInstances());
 
     // requesting with ProgramRunStatus.KILLED returns empty list
-    history = countService.getHistory(ProgramRunStatus.KILLED);
+    history = serviceManager.getHistory(ProgramRunStatus.KILLED);
     Assert.assertEquals(0, history.size());
 
     // requesting with either RUNNING or ALL will return one record
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return countService.getHistory(ProgramRunStatus.RUNNING).size();
+        return serviceManager.getHistory(ProgramRunStatus.RUNNING).size();
       }
     }, 5, TimeUnit.SECONDS);
 
-    history = countService.getHistory(ProgramRunStatus.RUNNING);
+    history = serviceManager.getHistory(ProgramRunStatus.RUNNING);
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
 
-    history = countService.getHistory(ProgramRunStatus.ALL);
+    history = serviceManager.getHistory(ProgramRunStatus.ALL);
     Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
   }
@@ -1106,24 +1111,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Verify that the service was able to hit the CentralService and retrieve the answer.
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
+    // Wait for the worker completed to make sure a value has been written to the dataset
+    pingingWorker.waitForStopped(30, TimeUnit.SECONDS);
+
+    // Validate the value in the dataset by reading it via the service
     result = callServiceGet(serviceManager.getServiceURL(), "read/" + AppUsingGetServiceURL.DATASET_KEY);
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
     serviceManager.stop();
-
-    // Program manager is not notified when worker stops on its own, hence suppressing the exception.
-    // JIRA - CDAP-3656
-    try {
-      pingingWorker.stop();
-    } catch (Throwable e) {
-      LOG.error("Got exception while stopping pinging worker", e);
-    }
-    pingingWorker.waitForStopped(10, TimeUnit.SECONDS);
-
     centralServiceManager.stop();
+
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
-    centralServiceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
   /**
@@ -1644,18 +1644,34 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ServiceManager noopManager = applicationManager.getServiceManager("NoOpService").start();
     noopManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
-    String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY);
-    String decodedResult = new Gson().fromJson(result, String.class);
-    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
+    // We don't know when the datasetWorker run() method executed, hence need to retry on the service call
+    // until it can get a value from a dataset, which was written out by the datasetWorker.
+    AtomicInteger called = new AtomicInteger(0);
+    AtomicInteger failed = new AtomicInteger(0);
+    Tasks.waitFor(AppWithServices.DATASET_TEST_VALUE, new Callable<String>() {
+      @Override
+      public String call() throws Exception {
+        URL url = noopManager.getServiceURL();
+        String path = "ping/" + AppWithServices.DATASET_TEST_KEY;
+        try {
+          called.incrementAndGet();
+          return new Gson().fromJson(callServiceGet(url, path), String.class);
+        } catch (IOException e) {
+          failed.incrementAndGet();
+          LOG.debug("Exception when reading from service {}/{}", url, path, e);
+        }
+        return null;
+      }
+    }, 30, TimeUnit.SECONDS);
 
+    // Validates the metrics emitted by the service call.
     handlerMetrics = getMetricsManager().getServiceHandlerMetrics(NamespaceId.DEFAULT.getNamespace(),
                                                                   AppWithServices.APP_NAME,
                                                                   "NoOpService",
                                                                   "NoOpHandler");
-    handlerMetrics.waitForinput(1, 5, TimeUnit.SECONDS);
-    Assert.assertEquals(1, handlerMetrics.getInput());
-    Assert.assertEquals(1, handlerMetrics.getProcessed());
-    Assert.assertEquals(0, handlerMetrics.getException());
+    handlerMetrics.waitForinput(called.get(), 5, TimeUnit.SECONDS);
+    handlerMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+    handlerMetrics.waitForException(failed.get(), 5, TimeUnit.SECONDS);
 
     // Test that a service can discover another service
     String path = String.format("discover/%s/%s",
@@ -1673,8 +1689,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     LOG.info("ServerService Stopped");
 
-    result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP);
-    decodedResult = new Gson().fromJson(result, String.class);
+    // Since all worker are stopped, we can just hit the service to read the dataset. No retry needed.
+    String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP);
+    String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
 
     result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP_2);
@@ -2174,16 +2191,22 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    try (
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
-    ) {
-      Assert.assertEquals(200, connection.getResponseCode());
-      return reader.readLine();
+    int responseCode = connection.getResponseCode();
+
+    if (responseCode != 200) {
+      try (InputStream errStream = connection.getErrorStream()) {
+        String error = CharStreams.toString(new InputStreamReader(errStream, StandardCharsets.UTF_8));
+        throw new IOException("Error response " + responseCode + " from " + serviceURL + ": " + error);
+      }
+    }
+
+    try (InputStream in = connection.getInputStream()) {
+      return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
     }
   }
 
   private String callServicePut(URL serviceURL, String path, String body) throws IOException {
-    return callServicePut(serviceURL, path, body, null);
+    return callServicePut(serviceURL, path, body, 200);
   }
 
   @Nullable
@@ -2199,10 +2222,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     if (expectedStatus != null) {
       return null;
     }
-    try (
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
-    ) {
-      return reader.readLine();
+    try (InputStream in = connection.getInputStream()) {
+      return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
     }
   }
 }
