@@ -28,8 +28,9 @@ import InvalidPageView from 'components/Experiments/ListView/InvalidPageView';
 import EmptyListView from 'components/Experiments/ListView/EmptyListView';
 import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link } from 'react-router-dom';
-import {handlePageChange, handleExperimentsSort} from 'components/Experiments/store/ActionCreator';
+import {handlePageChange, handleExperimentsSort, setExperimentsListError} from 'components/Experiments/store/ExperimentsListActionCreator';
 import IconSVG from 'components/IconSVG';
+import Alert from 'components/Alert';
 
 require('./ListView.scss');
 
@@ -188,7 +189,30 @@ const getDataForGroupedChart = (experiments) => {
   return data;
 };
 
-function ExperimentsListView({
+function ExperimentsListView({...props}) {
+  return (
+    <div>
+      {ExperimentsListViewContent(props)}
+      {
+        props.error ?
+          <Alert
+            message={props.error}
+            type='error'
+            showAlert={true}
+            onClose={setExperimentsListError}
+          />
+        :
+          null
+      }
+    </div>
+  );
+}
+
+ExperimentsListView.propTypes = {
+  error: PropTypes.any
+};
+
+function ExperimentsListViewContent({
   loading,
   list,
   totalPages,
@@ -246,7 +270,7 @@ function ExperimentsListView({
   );
 }
 
-ExperimentsListView.propTypes = {
+ExperimentsListViewContent.propTypes = {
   loading: PropTypes.bool,
   list: PropTypes.arrayOf(PropTypes.object),
   totalPages: PropTypes.number,
@@ -264,7 +288,8 @@ const mapStateToProps = (state) => {
     currentPage: state.experiments.offset === 0 ? 1 : Math.ceil((state.experiments.offset + 1) / state.experiments.limit),
     totalCount: state.experiments.totalCount,
     sortMethod: state.experiments.sortMethod,
-    sortColumn: state.experiments.sortColumn
+    sortColumn: state.experiments.sortColumn,
+    error: state.experiments.error
   };
 };
 

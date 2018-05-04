@@ -25,6 +25,7 @@ const ACTIONS = {
   SET_CREATE_EXPERIMENT_LOADING: 'SET_CREATE_EXPERIMENT_LOADING',
   SET_EXPERIMENT_METADATA_FOR_EDIT: 'SET_EXPERIMENT_METADATA_FOR_EDIT',
   SET_VISIBLE_POPOVER: 'SET_VISIBLE_POPOVER',
+  SET_EXPERIMENT_ERROR: 'SET_EXPERIMENT_ERROR',
 
   SET_SPLIT_INFO: 'SET_SPLIT_INFO',
   SET_SCHEMA: 'SET_SCHEMA',
@@ -41,6 +42,7 @@ const ACTIONS = {
   SET_SPLIT_FINALIZED: 'SET_SPLIT_FINALIZED',
   UPDATE_HYPER_PARAM: 'UPDATE_HYPER_PARAM',
   SET_MODEL_TRAINED: 'SET_MODEL_TRAINED',
+  SET_MODEL_ERROR: 'SET_MODEL_ERROR',
   RESET: 'RESET'
 };
 
@@ -57,7 +59,8 @@ const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
   loading: false,
   popover: POPOVER_TYPES.EXPERIMENT,
   isEdit: false,
-  workspaceId: null
+  workspaceId: null,
+  error: null
 };
 
 const DEFAULT_MODEL_CREATE_VALUE = {
@@ -78,7 +81,8 @@ const DEFAULT_MODEL_CREATE_VALUE = {
 
   validAlgorithmsList: [],
   algorithmsList: [],
-  isModelTrained: false
+  isModelTrained: false,
+  error: null
 };
 
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
@@ -128,6 +132,11 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
       return {
         ...state,
         popover: action.payload.popover
+      };
+    case ACTIONS.SET_EXPERIMENT_ERROR:
+      return {
+        ...state,
+        error: action.payload.error
       };
     case ACTIONS.RESET:
       return DEFAULT_EXPERIMENTS_CREATE_VALUE;
@@ -225,6 +234,11 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
       return {
         ...state,
         isModelTrained: true
+      };
+    case ACTIONS.SET_MODEL_ERROR:
+      return {
+        ...state,
+        error: action.payload.error
       };
     case ACTIONS.RESET:
       return DEFAULT_MODEL_CREATE_VALUE;

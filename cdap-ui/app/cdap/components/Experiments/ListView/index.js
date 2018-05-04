@@ -19,14 +19,14 @@ import Helmet from 'react-helmet';
 import ExperimentsListViewWrapper from 'components/Experiments/ListView/ListViewWrapper';
 import { Provider } from 'react-redux';
 import experimentsStore, { DEFAULT_EXPERIMENTS, MMDS_SORT_METHODS, MMDS_SORT_COLUMN } from 'components/Experiments/store';
-import { getExperimentsList, setAlgorithmsList, updateQueryParameters, handlePageChange } from 'components/Experiments/store/ActionCreator';
+import { getExperimentsList, setAlgorithmsListForListView, updateQueryParameters, handlePageChange } from 'components/Experiments/store/ExperimentsListActionCreator';
 import queryString from 'query-string';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
 
 export default class ExperimentsList extends Component {
   componentWillMount() {
-    setAlgorithmsList();
+    setAlgorithmsListForListView();
     Mousetrap.bind('right', this.goToNextPage);
     Mousetrap.bind('left', this.goToPreviousPage);
     this.parseUrlAndUpdateStore();

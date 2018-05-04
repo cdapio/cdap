@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import React from 'react';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {setExperimentDetailError} from 'components/Experiments/store/ExperimentDetailActionCreator';
 
 const deleteExperiment = (experimentId, callback, errCallback) => {
   let namespace = getCurrentNamespace();
@@ -30,20 +31,20 @@ const deleteExperiment = (experimentId, callback, errCallback) => {
     .subscribe(
       () => window.location.href =`${window.location.origin}/cdap/ns/${namespace}/experiments`,
       err => {
-        let error = typeof err.response === 'string' ? err.response : JSON.stringify(err);
+        let error = `Failed to delete the experiment '${experimentId}' - ${err.response || err}`;
         errCallback(error);
       }
     );
 };
 
-const deleteConfirmElement = (experimentId) => <div>Are you sure you want to delete <b>{experimentId}</b> experiment </div>;
+const deleteConfirmElement = (experimentId) => <div>Are you sure you want to delete the experiment <b>{experimentId}</b>?</div>;
 
 export default function DeleteExperimentBtn({experimentId}) {
   return (
     <DeleteEntityBtn
-      confirmFn={deleteExperiment.bind(null, experimentId)}
+      confirmFn={deleteExperiment.bind(null, experimentId, null, setExperimentDetailError)}
       className="btn btn-link"
-      headerTitle={"Delete Model"}
+      headerTitle={"Delete Experiment"}
       confirmationElem={deleteConfirmElement(experimentId)}
       btnLabel={"Delete Experiment"}
     />
