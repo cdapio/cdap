@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2017 Cask Data, Inc.
+# Copyright © 2017-2018 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ if [ -f /tmp/mavenrepo.tar.bz2 ]; then
 fi
 
 chown -R cdap ${__tmpdir} ~cdap
-su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx4096m -XX:MaxPermSize=256m' mvn package -DskipTests" || exit 1
+su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx4096m' mvn package -DskipTests" || exit 1
 rm -rf ${__tmpdir}
 
 exit 0

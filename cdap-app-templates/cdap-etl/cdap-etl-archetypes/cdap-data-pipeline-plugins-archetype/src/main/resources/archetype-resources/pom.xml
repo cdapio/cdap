@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright © 2016 Cask Data, Inc.
+  ~ Copyright © 2016-2018 Cask Data, Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License"); you may not
   ~ use this file except in compliance with the License. You may obtain a copy of
@@ -242,7 +242,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
         <configuration>
-          <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=1024m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -Djava.net.preferIPv4Stack=true</argLine>
+          <argLine>-Xmx5000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -Djava.net.preferIPv4Stack=true</argLine>
           <reuseForks>false</reuseForks>
           <reportFormat>plain</reportFormat>
           <systemPropertyVariables>

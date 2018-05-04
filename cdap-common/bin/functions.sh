@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2016-2017 Cask Data, Inc.
+# Copyright © 2016-2018 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -348,8 +348,8 @@ cdap_set_java () {
   __java_version=$("${__java}" -version 2>&1 | grep version | awk '{print $3}' | awk -F '.' '{print $2}')
   if [[ -z ${__java_version} ]]; then
     die "Could not detect Java version. Aborting..."
-  elif [[ ${__java_version} -ne 7 ]] && [[ ${__java_version} -ne 8 ]]; then
-    die "Java version not supported. Please install Java 7 or 8 - other versions of Java are not supported."
+  elif [[ ${__java_version} -lt 8 ]]; then
+    die "Java version not supported. Please install Java 8 - other versions of Java are not supported."
   fi
   export JAVA=${__java}
   return 0
@@ -1455,7 +1455,7 @@ export IDENT_STRING=${USER}
 # Below are what we set by default.  May only work with SUN JVM.
 # For more on why as well as other possible settings,
 # see http://wiki.apache.org/hadoop/PerformanceTuning
-export OPTS="-XX:+UseConcMarkSweepGC -XX:MaxPermSize=256m"
+export OPTS="-XX:+UseG1GC"
 
 # The directory where PID files are stored. Default: /var/cdap/run
 export PID_DIR=${CDAP_PID_DIR:-/var/cdap/run}

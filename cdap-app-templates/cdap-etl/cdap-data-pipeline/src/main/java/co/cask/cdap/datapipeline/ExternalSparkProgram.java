@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,9 +29,6 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.gson.Gson;
-import org.apache.spark.SparkConf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,8 +39,6 @@ import java.util.UUID;
  * spark program.
  */
 public class ExternalSparkProgram extends AbstractSpark {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ExternalSparkProgram.class);
 
   public static final String STAGE_NAME = "stage.name";
   private static final Gson GSON = new Gson();
@@ -94,13 +89,6 @@ public class ExternalSparkProgram extends AbstractSpark {
   @Override
   protected void initialize() throws Exception {
     SparkClientContext context = getContext();
-
-    SparkConf sparkConf = new SparkConf();
-    sparkConf.set("spark.driver.extraJavaOptions",
-                  "-XX:MaxPermSize=256m " + sparkConf.get("spark.driver.extraJavaOptions", ""));
-    sparkConf.set("spark.executor.extraJavaOptions",
-                  "-XX:MaxPermSize=256m " + sparkConf.get("spark.executor.extraJavaOptions", ""));
-    context.setSparkConf(sparkConf);
 
     String stageName = context.getSpecification().getProperty(STAGE_NAME);
     Class<?> externalProgramClass = context.loadPluginClass(stageName);

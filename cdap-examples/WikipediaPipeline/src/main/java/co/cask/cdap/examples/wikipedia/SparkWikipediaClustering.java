@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,10 +48,5 @@ public class SparkWikipediaClustering extends AbstractSpark {
     setName(NAME + "-" + appConfig.clusteringAlgorithm.toUpperCase());
     setDriverResources(new Resources(1024));
     setExecutorResources(new Resources(1024));
-  }
-
-  @Override
-  protected void initialize() throws Exception {
-    getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
   }
 }

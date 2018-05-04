@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,12 @@ import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import com.google.common.base.Strings
 import kafka.serializer.{DefaultDecoder, StringDecoder}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.classification.NaiveBayes
 import org.apache.spark.mllib.feature.HashingTF
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
@@ -46,11 +46,6 @@ class SpamClassifierProgram(name: String) extends AbstractSpark with SparkMain {
     setDescription("Spark Streaming Based Kaka Message Classifier");
     setDriverResources(new Resources(2048))
     setExecutorResources(new Resources(1024))
-  }
-
-
-  override def initialize(): Unit = {
-    getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"))
   }
 
   override def run(implicit sec: SparkExecutionContext) {

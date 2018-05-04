@@ -1,6 +1,6 @@
 :: ##############################################################################
 :: ##
-:: ## Copyright (c) 2014-2017 Cask Data, Inc.
+:: ## Copyright (c) 2014-2018 Cask Data, Inc.
 :: ##
 :: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 :: ## use this file except in compliance with the License. You may obtain a copy
@@ -38,7 +38,7 @@ REM As JAVACMD can include a space, any use of it needs to be surrounded in doub
 SET "JAVACMD=%JAVA_HOME%\bin\java.exe"
 
 SET DEFAULT_DEBUG_PORT=5005
-SET "DEFAULT_JVM_OPTS=-Xmx3096m -XX:MaxPermSize=256m"
+SET "DEFAULT_JVM_OPTS=-Xmx3096m"
 REM These double-quotes are included in string
 SET HADOOP_HOME_OPTS=-Dhadoop.home.dir="%CDAP_HOME%\libexec"
 SET HIVE_SCRATCH_DIR="%CDAP_HOME%\data\explore\tmp"

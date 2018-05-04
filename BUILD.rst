@@ -5,7 +5,7 @@ Cask Data Application Platform - CDAP
 Prerequisites
 =============
 
-- Java 7+ SDK
+- Java 8+ SDK
 - Maven 3.1+
 - Git
 
@@ -20,10 +20,10 @@ CDAP Sandbox and Distributed CDAP
 
 - Run all tests, fail at the end::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae
+    MAVEN_OPTS="-Xmx1024m" mvn test -fae
 
 - Run tests skipping repeated compat module tests::
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -Pskip-hbase-compat-tests -fae
+    MAVEN_OPTS="-Xmx1024m" mvn test -Pskip-hbase-compat-tests -fae
 
 - Build all modules::
 
@@ -39,28 +39,28 @@ CDAP Sandbox and Distributed CDAP
 
 - Run selected test::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName \
+    MAVEN_OPTS="-Xmx1024m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName \
     -DfailIfNoTests=false test
 
 - Run App-Template tests::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae -am -amd -P templates -pl cdap-app-templates/cdap-etl
+    MAVEN_OPTS="-Xmx1024m" mvn test -fae -am -amd -P templates -pl cdap-app-templates/cdap-etl
 
   See `Surefire doc <http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html>`__ for details
 
 - Build all examples::
 
-    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
+    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
 
 - Build CDAP Sandbox distribution ZIP::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
+    MAVEN_OPTS="-Xmx1024m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-app-templates/cdap-program-report,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
 - Build CDAP Sandbox distribution ZIP with additional system artifacts::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
+    MAVEN_OPTS="-Xmx1024m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-app-templates/cdap-program-report,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>
@@ -73,22 +73,22 @@ CDAP Sandbox and Distributed CDAP
 
 - Build the limited set of Javadocs, including the ETL Application Templates, included in the CDAP documentation::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests \
+    MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests \
     -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 
 - Build the complete set of Javadocs, for all modules and examples::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests \
+    MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests \
     -Dgpg.skip=true && mvn clean javadoc:aggregate -DskipTests -P examples,templates -DisOffline=false
 
 - Build distributions (rpm, deb, tgz)::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests \
+    MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests \
     -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests \
+    MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests \
     -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 - Show dependency tree::
