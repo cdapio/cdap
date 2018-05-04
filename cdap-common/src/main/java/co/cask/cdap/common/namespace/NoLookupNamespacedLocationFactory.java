@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -27,17 +28,15 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 
 /**
- * Implementation of {@link NamespacedLocationFactory} to be only used in unit tests. This implementation does not
- * perform lookup for {@link NamespaceMeta} like {@link DefaultNamespacedLocationFactory} does and hence allow unit
- * tests to use it without creating namespace meta for the namespace.
+ * Implementation of {@link NamespacedLocationFactory} that does not perform lookup for {@link NamespaceMeta}.
  */
-public class NamespacedLocationFactoryTestClient implements NamespacedLocationFactory {
+public class NoLookupNamespacedLocationFactory implements NamespacedLocationFactory {
 
   private final LocationFactory locationFactory;
   private final String namespaceDir;
 
   @Inject
-  public NamespacedLocationFactoryTestClient(CConfiguration cConf, LocationFactory locationFactory) {
+  public NoLookupNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
   }
@@ -49,10 +48,11 @@ public class NamespacedLocationFactoryTestClient implements NamespacedLocationFa
 
   @Override
   public Location get(NamespaceMeta namespaceMeta) throws IOException {
-    if (namespaceMeta.getConfig().getRootDirectory() != null) {
-      return locationFactory.create(namespaceMeta.getConfig().getRootDirectory());
+    String rootDirectory = namespaceMeta.getConfig().getRootDirectory();
+    if (Strings.isNullOrEmpty(rootDirectory)) {
+      // if no custom mapping was specified, then use the default namespaces location
+      return get(namespaceMeta.getNamespaceId());
     }
-    return get(namespaceMeta.getNamespaceId());
+    return locationFactory.create(namespaceMeta.getConfig().getRootDirectory());
   }
-
 }

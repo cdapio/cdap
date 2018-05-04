@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -100,14 +101,16 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     this.txClient = new RetryingLongTransactionSystemClient(injector.getInstance(TransactionSystemClient.class),
                                                             retryStrategy);
 
-    // We start long-running tx to be used by mapreduce job tasks.
-    this.transaction = txClient.startLong();
+    // We start long-running tx to be used by mapreduce job tasks when running on premise
+    if (ProgramRunners.getClusterMode(contextConfig.getProgramOptions()) == ClusterMode.ON_PREMISE) {
+      this.transaction = txClient.startLong();
 
-    // Write the tx somewhere, so that we can re-use it in mapreduce tasks
-    Path txFile = getTxFile(configuration, jobContext.getJobID());
-    FileSystem fs = txFile.getFileSystem(configuration);
-    try (FSDataOutputStream fsDataOutputStream = fs.create(txFile, false)) {
-      fsDataOutputStream.write(new TransactionCodec().encode(transaction));
+      // Write the tx somewhere, so that we can re-use it in mapreduce tasks
+      Path txFile = getTxFile(configuration, jobContext.getJobID());
+      FileSystem fs = txFile.getFileSystem(configuration);
+      try (FSDataOutputStream fsDataOutputStream = fs.create(txFile, false)) {
+        fsDataOutputStream.write(new TransactionCodec().encode(transaction));
+      }
     }
 
     // we can instantiate the TaskContext after we set the tx above. It's used by the operations below
@@ -131,10 +134,12 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     super.commitJob(jobContext);
 
     onFinish(jobContext, true);
-    commitTx();
+    if (transaction != null) {
+      commitTx(transaction);
+    }
   }
 
-  private void commitTx() throws IOException {
+  private void commitTx(Transaction transaction) throws IOException {
     try {
       LOG.debug("Committing MapReduce Job transaction: {}", transaction.getWritePointer());
 

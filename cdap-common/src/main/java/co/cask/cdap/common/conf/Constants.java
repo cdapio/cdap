@@ -268,6 +268,24 @@ public final class Constants {
      * Topic name for publishing program status recording events to the messaging system
      */
     public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
+
+    /**
+     * Annotation for binding remote execution twill service
+     */
+    @Retention(RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+    @BindingAnnotation
+    public @interface RemoteExecution { }
+
+    /**
+     * A special annotation used in Guice bindings for ProgramRunner implementations.
+     * It is needed so that we can have different bindings in different private modules,
+     * without affecting/affected by unannotated bindings in the public space.
+     */
+    @Retention(RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+    @BindingAnnotation
+    public @interface ProgramRunner { }
   }
 
   /**

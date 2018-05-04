@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2018 Cask Data, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  ~ use this file except in compliance with the License. You may obtain a copy of
+  ~ the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  ~ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  ~ License for the specific language governing permissions and limitations under
+  ~ the License.
+  -->
+
+<!--
+  Logback used by containers that run in YARN, such as Explore, Flows, MapReduce, Spark
+-->
+<configuration>
+
+  <!-- Quieting some chatty loggers -->
+  <logger name="org.apache.commons.beanutils" level="ERROR"/>
+  <logger name="org.apache.zookeeper.server" level="ERROR"/>
+  <logger name="org.apache.zookeeper" level="ERROR"/>
+  <logger name="com.ning" level="WARN"/>
+  <logger name="org.apache.spark" level="WARN"/>
+  <logger name="org.spark-project" level="WARN"/>
+  <logger name="org.apache.hadoop" level="WARN"/>
+  <logger name="org.apache.hive" level="WARN"/>
+  <logger name="org.apache.tephra.distributed.AbstractClientProvider" level="WARN"/>
+  <logger name="org.mortbay.log" level="WARN"/>
+  <logger name="SecurityLogger.org.apache.hadoop.security.authorize.ServiceAuthorizationManager" level="WARN"/>
+  <logger name="SecurityLogger.org.apache.hadoop.ipc.Server" level="WARN"/>
+  <!-- Because of HADOOP-11180 move this to Error -->
+  <logger name="org.apache.hadoop.security.token.Token" level="ERROR"/>
+  <logger name="org.apache.hadoop.metrics2" level="ERROR"/>
+  <logger name="akka" level="WARN"/>
+  <logger name="Remoting" level="WARN"/>
+  <logger name="com.sun.jersey" level="WARN"/>
+  <logger name="org.quartz.core" level="WARN"/>
+  <logger name="org.eclipse.jetty" level="WARN"/>
+  <logger name="io.netty.util.internal" level="WARN"/>
+  <logger name="WriteAheadLogManager " level="WARN"/>
+  <logger name="org.apache.kafka.common.config.AbstractConfig" level="WARN"/>
+  <logger name="org.apache.twill" level="INFO"/>
+  <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
+  <logger name="co.cask.cdap" level="INFO"/>
+  <!--
+    The netty http library logs an ERROR always if it is raised
+    not from user handler, which usually is due to network error.
+    Disabling the log to avoid flooding.
+  -->
+  <logger name="co.cask.http.HttpDispatcher" level="OFF"/>
+
+  <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
+  <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>
+
+  <!-- Redirected stdout and stderr of Hive operations -->
+  <logger name="Explore.stdout" level="INFO"/>
+  <logger name="Explore.stderr" level="INFO"/>
+
+  <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- CDAP_LOG_DIR is the environment variable set by CDAP for logs -->
+    <file>${CDAP_LOG_DIR}/program.log</file>
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%logger{1}@%L] - %m%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- Daily rollover at midnight -->
+      <fileNamePattern>${CDAP_LOG_DIR}/program.%d.log</fileNamePattern>
+
+      <!-- Keep 2 weeks of history -->
+      <maxHistory>14</maxHistory>
+    </rollingPolicy>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="Rolling"/>
+  </root>
+
+</configuration>

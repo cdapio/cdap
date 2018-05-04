@@ -20,10 +20,12 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -45,12 +47,17 @@ import java.util.concurrent.TimeUnit;
  */
 final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
+  private final Configuration hConf;
   private final TwillRunnerService delegate;
   private final Impersonator impersonator;
+  private final TokenSecureStoreRenewer secureStoreRenewer;
 
-  ImpersonatedTwillRunnerService(TwillRunnerService delegate, Impersonator impersonator) {
+  ImpersonatedTwillRunnerService(Configuration hConf, TwillRunnerService delegate, Impersonator impersonator,
+                                 TokenSecureStoreRenewer secureStoreRenewer) {
+    this.hConf = hConf;
     this.delegate = delegate;
     this.impersonator = impersonator;
+    this.secureStoreRenewer = secureStoreRenewer;
   }
 
   @Override
@@ -78,8 +85,9 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
   @Override
   public TwillPreparer prepare(TwillApplication application) {
     if (application instanceof ProgramTwillApplication) {
-      ProgramId programId = ((ProgramTwillApplication) application).getProgramId();
-      return new ImpersonatedTwillPreparer(delegate.prepare(application), impersonator, programId);
+      ProgramId programId = ((ProgramTwillApplication) application).getProgramRunId().getParent();
+      return new ImpersonatedTwillPreparer(hConf, delegate.prepare(application), impersonator,
+                                           secureStoreRenewer, programId);
     }
     return delegate.prepare(application);
   }

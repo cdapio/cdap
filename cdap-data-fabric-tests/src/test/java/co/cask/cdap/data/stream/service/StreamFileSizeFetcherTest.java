@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
+import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
 import co.cask.cdap.data.stream.StreamFileTestUtils;
@@ -53,7 +53,7 @@ public class StreamFileSizeFetcherTest {
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new NamespacedLocationFactoryTestClient(cConf, locationFactory);
+    namespacedLocationFactory = new NoLookupNamespacedLocationFactory(cConf, locationFactory);
   }
 
   @Test

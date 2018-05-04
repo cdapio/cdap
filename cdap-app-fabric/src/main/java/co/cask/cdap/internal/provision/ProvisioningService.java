@@ -37,13 +37,13 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -106,8 +106,7 @@ public class ProvisioningService extends AbstractIdleService {
     reloadProvisioners();
     // TODO: CDAP-13246 check ProvisionerDataset to find any operations that are supposed to be in progress and
     // pick up where they left off
-    this.executorService = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("provisioning-service").build());
+    this.executorService = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("provisioning-service-%d"));
   }
 
   @Override
@@ -115,25 +114,14 @@ public class ProvisioningService extends AbstractIdleService {
     LOG.info("Stopping {}", getClass().getSimpleName());
     try {
       // Shutdown the executor, which will issue an interrupt to the running thread.
+      // Wait for a moment for threads to complete. Even if they don't, however, it also ok since we have
+      // the state persisted and the threads are daemon threads.
       executorService.shutdownNow();
       executorService.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException ie) {
       // Ignore it.
-    } finally {
-      if (!executorService.isTerminated()) {
-        executorService.shutdownNow();
-      }
     }
     LOG.info("Stopped {}", getClass().getSimpleName());
-  }
-
-  /**
-   * Execute a provisioning runnable.
-   *
-   * @param runnable the runnable to execute
-   */
-  public void execute(ProvisioningTask runnable) {
-    executorService.execute(runnable);
   }
 
   /**
@@ -148,8 +136,7 @@ public class ProvisioningService extends AbstractIdleService {
   /**
    * Record that a cluster will be provisioned for a program run, returning a Runnable that will actually perform
    * the cluster provisioning. This method must be run within a transaction.
-   * The task returned should be run using the {@link #execute(ProvisioningTask)} method, and should only be executed
-   * after the transaction that ran this method has completed.
+   * The task returned should only be executed after the transaction that ran this method has completed.
    *
    * @param provisionRequest the provision request
    * @param datasetContext dataset context for the transaction
@@ -191,15 +178,20 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
     provisionerDataset.putClusterInfo(clusterInfo);
 
-    return new ProvisionTask(provisionRequest, provisioner, context, provisionerNotifier,
-                             transactional, datasetFramework, sshKeyInfo);
+    ProvisionTask task = new ProvisionTask(provisionRequest, provisioner, context, provisionerNotifier,
+                                           transactional, datasetFramework, sshKeyInfo);
+    return new ProvisioningTask(programRunId) {
+      @Override
+      public void run() {
+        executorService.execute(task);
+      }
+    };
   }
 
   /**
    * Record that a cluster will be deprovisioned for a program run, returning a task that will actually perform
    * the cluster deprovisioning. This method must be run within a transaction.
-   * The task returned should be run using the {@link #execute(ProvisioningTask)} method, and should only be executed
-   * after the transaction that ran this method has completed.
+   * The task returned should only be executed after the transaction that ran this method has completed.
    *
    * @param programRunId the program run to deprovision
    * @param datasetContext dataset context for the transaction
@@ -230,8 +222,14 @@ public class ProvisioningService extends AbstractIdleService {
     ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getCluster());
     provisionerDataset.putClusterInfo(clusterInfo);
 
-    return new DeprovisionTask(programRunId, provisioner, context, provisionerNotifier,
-                               locationFactory, transactional, datasetFramework);
+    DeprovisionTask task = new DeprovisionTask(programRunId, provisioner, context, provisionerNotifier,
+                                               locationFactory, transactional, datasetFramework);
+    return new ProvisioningTask(programRunId) {
+      @Override
+      public void run() {
+        executorService.execute(task);
+      }
+    };
   }
 
   /**

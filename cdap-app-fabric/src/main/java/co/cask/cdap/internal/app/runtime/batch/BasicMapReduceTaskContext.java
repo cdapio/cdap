@@ -127,7 +127,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             DiscoveryServiceClient discoveryServiceClient,
                             MetricsCollectionService metricsCollectionService,
                             TransactionSystemClient txClient,
-                            Transaction transaction,
+                            @Nullable Transaction transaction,
                             DatasetFramework dsFramework,
                             @Nullable PluginInstantiator pluginInstantiator,
                             Map<String, File> localizedResources,
@@ -273,10 +273,16 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
             if (!allowedTopic.equals(topicId)) {
               throw new UnsupportedOperationException("Publish to topic '" + topicId.getTopic() + "' is not supported");
             }
-            // Use storePayload
-            getMessagingService().storePayload(StoreRequestBuilder.of(topicId)
-                                                 .setTransaction(transaction.getWritePointer())
-                                                 .addPayloads(payloads).build());
+
+            // Use MessagingService directly so that we can publish to system namespace
+            // If there is transaction, use storePayload. Otherwise publish without transaction
+            if (transaction == null) {
+              getMessagingService().publish(StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
+            } else {
+              getMessagingService().storePayload(StoreRequestBuilder.of(topicId)
+                                                   .setTransaction(transaction.getWritePointer())
+                                                   .addPayloads(payloads).build());
+            }
           }
         };
       }
@@ -325,6 +331,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Initializes the transaction-awares.
    */
   private void initializeTransactionAwares() {
+    if (transaction == null) {
+      return;
+    }
     Iterable<TransactionAware> txAwares = Iterables.concat(getDatasetCache().getStaticTransactionAwares(),
                                                            getDatasetCache().getExtraTransactionAwares());
     for (TransactionAware txAware : txAwares) {
@@ -367,6 +376,13 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private <T extends Dataset> void startDatasetTransaction(T dataset) {
     if (dataset instanceof TransactionAware) {
       TransactionAware txAware = (TransactionAware) dataset;
+
+      if (transaction == null) {
+        throw new IllegalStateException(
+          "Transaction is not supported in the current runtime. Cannot set transaction on dataset "
+            + txAware.getTransactionAwareName());
+      }
+
       if (txAwares.add(txAware)) {
         txAware.startTx(transaction);
       }
@@ -397,6 +413,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * If any Throwable is encountered, it is suppressed and logged.
    */
   public void postTxCommit() throws Exception {
+    if (transaction == null) {
+      return;
+    }
+
     for (TransactionAware txAware : txAwares) {
       try {
         txAware.postTxCommit();

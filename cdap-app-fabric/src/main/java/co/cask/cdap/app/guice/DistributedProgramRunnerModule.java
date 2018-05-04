@@ -19,8 +19,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
@@ -32,6 +31,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
+import org.apache.twill.api.TwillRunner;
 
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
@@ -40,9 +40,27 @@ final class DistributedProgramRunnerModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    // Bind ProgramStateWriter
-    bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
-    expose(ProgramStateWriter.class);
+
+    // Bind ProgramRunnerFactory and expose it
+    // ProgramRunnerFactory should be in distributed mode
+    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+    // Bind and expose ProgramRunnerFactory. It is used in both program deployment and program execution.
+    // Should get refactory by CDAP-5506
+    bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    expose(ProgramRunnerFactory.class);
+
+
+    // The following are bindings are for ProgramRunners. They are private to this module and only
+    // available to the remote exeuction ProgramRunnerFactory exposed.
+
+    // This set of program runners are for on_premise mode
+    bind(ClusterMode.class).toInstance(ClusterMode.ON_PREMISE);
+    // TwillRunner used by the ProgramRunner is the remote execution one
+    bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(TwillRunner.class);
+    // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
+    bind(ProgramRunnerFactory.class)
+      .annotatedWith(Constants.AppFabric.ProgramRunner.class)
+      .to(ProgramRunnerFactory.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =
@@ -53,13 +71,6 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     defaultProgramRunnerBinder.addBinding(ProgramType.WEBAPP).to(DistributedWebappProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.SERVICE).to(DistributedServiceProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
-
-    // ProgramRunnerFactory should be in distributed mode
-    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
-    // Bind and expose ProgramRunnerFactory. It is used in both program deployment and program execution.
-    // Should get refactory by CDAP-5506
-    bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-    expose(ProgramRunnerFactory.class);
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);

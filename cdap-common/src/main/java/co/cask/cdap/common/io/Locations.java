@@ -399,6 +399,13 @@ public final class Locations {
   }
 
   /**
+   * Converts the given file into a local {@link Location}.
+   */
+  public static Location toLocation(java.nio.file.Path path) {
+    return toLocation(path.toFile());
+  }
+
+  /**
    * Creates a {@link StreamSizeProvider} for determining the size of the given {@link FSDataInputStream}.
    */
   private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs, final boolean ownFileSystem,

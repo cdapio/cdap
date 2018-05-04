@@ -65,6 +65,7 @@ import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
+import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -85,10 +86,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
+import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +132,8 @@ public class StandaloneMain {
   private final AuthorizerInstantiator authorizerInstantiator;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
+  private final TwillRunnerService remoteExecutionTwillRunnerService;
+  private final MetadataSubscriberService metadataSubscriberService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -160,6 +165,9 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
     operationalStatsService = injector.getInstance(OperationalStatsService.class);
+    remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
+                                                                     Constants.AppFabric.RemoteExecution.class));
+    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
 
     if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -221,6 +229,9 @@ public class StandaloneMain {
     }
     // TODO: CDAP-7688, remove next line after the issue is resolved
     injector.getInstance(MessagingHttpService.class).startAndWait();
+
+    metadataSubscriberService.startAndWait();
+    remoteExecutionTwillRunnerService.start();
 
     txService.startAndWait();
     metricsCollectionService.startAndWait();
@@ -313,6 +324,9 @@ public class StandaloneMain {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
       }
+
+      remoteExecutionTwillRunnerService.stop();
+      metadataSubscriberService.stopAndWait();
 
       // TODO: CDAP-7688, remove next line after the issue is resolved
       injector.getInstance(MessagingHttpService.class).startAndWait();

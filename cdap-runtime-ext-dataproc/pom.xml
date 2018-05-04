@@ -35,6 +35,7 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-runtime-spi</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

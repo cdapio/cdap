@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
+import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
@@ -35,7 +35,7 @@ public class LocalConcurrentStreamWriterTest extends ConcurrentStreamWriterTestB
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new NamespacedLocationFactoryTestClient(CConfiguration.create(), locationFactory);
+    namespacedLocationFactory = new NoLookupNamespacedLocationFactory(CConfiguration.create(), locationFactory);
   }
 
   @Override

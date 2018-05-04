@@ -22,9 +22,9 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.TwillContext;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +42,7 @@ final class ProgramRunnableResourceReporter extends AbstractResourceReporter {
 
   @Override
   public void reportResources() {
-    sendMetrics(new HashMap<String, String>(), 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores());
+    sendMetrics(Collections.emptyMap(), 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores());
   }
 
   /**
@@ -51,18 +51,16 @@ final class ProgramRunnableResourceReporter extends AbstractResourceReporter {
    * appX.f.flowY.flowletZ. For mapreduce jobs, appX.b.mapredY.{optional m|r}.
    */
   private static Map<String, String> getMetricContext(ProgramId programId, TwillContext context) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace())
-      .put(Constants.Metrics.Tag.RUN_ID, context.getRunId().getId())
-      .put(Constants.Metrics.Tag.APP, programId.getApplication());
+    Map<String, String> tags = new HashMap<>();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace());
+    tags.put(Constants.Metrics.Tag.RUN_ID, context.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.APP, programId.getApplication());
 
+    tags.put(ProgramTypeMetricTag.getTagName(programId.getType()), programId.getProgram());
     if (programId.getType() == ProgramType.FLOW) {
-      builder.put(Constants.Metrics.Tag.FLOW, programId.getProgram());
-      builder.put(Constants.Metrics.Tag.FLOWLET, context.getSpecification().getName());
-    } else {
-      builder.put(ProgramTypeMetricTag.getTagName(programId.getType()), context.getSpecification().getName());
+      tags.put(Constants.Metrics.Tag.FLOWLET, context.getSpecification().getName());
     }
 
-    return builder.build();
+    return tags;
   }
 }

@@ -15,8 +15,6 @@
  */
 package co.cask.cdap.common.twill;
 
-import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -24,7 +22,6 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
@@ -63,29 +60,17 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private ContainerFailure lastContainerFailure;
 
   /**
-   * Constructs an instance of TwillAppLifecycleEventHandler that abort the application if some runnable has no
-   * containers and a program state writer to respond to Twill application lifecycle events
-   *
-   * @param abortTime Time in milliseconds to pass before aborting the application if no container is given to
-   *                  a runnable.
-   * @param options the program options, if the event handler was attached to monitor program states
-   */
-  public TwillAppLifecycleEventHandler(long abortTime, ProgramOptions options) {
-    this(abortTime, false, options);
-  }
-
-  /**
    * Constructs an instance of TwillAppLifecycleEventHandler that abort the application if some runnable has not enough
    * containers.
    * @param abortTime Time in milliseconds to pass before aborting the application if no container is given to
    *                  a runnable.
    * @param abortIfNotFull If {@code true}, it will abort the application if any runnable doesn't meet the expected
    *                       number of instances.
-   * @param options the program options, if the event handler was attached to monitor program states
+   * @param programRunId the program run id that this event handler is handling
    */
-  public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull, ProgramOptions options) {
+  public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull, ProgramRunId programRunId) {
     super(abortTime, abortIfNotFull);
-    this.programRunId = options.getProgramId().run(ProgramRunners.getRunId(options));
+    this.programRunId = programRunId;
   }
 
   @Override
@@ -107,43 +92,45 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     File cConfFile = new File("resources.jar/resources/" + CDAP_CONF_FILE_NAME);
     File hConfFile = new File("resources.jar/resources/" + HADOOP_CONF_FILE_NAME);
 
-    if (cConfFile.exists() && hConfFile.exists()) {
+    if (!cConfFile.exists()) {
+      // This shouldn't happen, unless CDAP is misconfigured
+      throw new IllegalArgumentException("Missing cConf file " + cConfFile.getAbsolutePath());
+    }
+
+    try {
+      // Load the configuration from the XML files serialized from the cdap master.
       CConfiguration cConf = CConfiguration.create();
       cConf.clear();
+      cConf.addResource(cConfFile.toURI().toURL());
 
       Configuration hConf = new Configuration();
-      hConf.clear();
-
-      try {
-        cConf.addResource(cConfFile.toURI().toURL());
+      if (hConfFile.exists()) {
+        hConf.clear();
         hConf.addResource(hConfFile.toURI().toURL());
-
-        // Create the injector to inject a program state writer
-        Injector injector = Guice.createInjector(
-          new ConfigModule(cConf, hConf),
-          new ZKClientModule(),
-          new KafkaClientModule(),
-          new DiscoveryRuntimeModule().getDistributedModules(),
-          new MessagingClientModule(),
-          new AbstractModule() {
-            @Override
-            protected void configure() {
-              bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
-            }
-          }
-        );
-
-        zkClientService = injector.getInstance(ZKClientService.class);
-        zkClientService.startAndWait();
-
-        this.programStateWriter = injector.getInstance(ProgramStateWriter.class);
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
       }
-    } else {
-      LOG.warn("{} and {} were not found in the resources.jar. Not recording program states",
-               CDAP_CONF_FILE_NAME, HADOOP_CONF_FILE_NAME);
-      this.programStateWriter = new NoOpProgramStateWriter();
+
+      // Create the injector to create a program state writer
+      Injector injector = Guice.createInjector(
+        new ConfigModule(cConf, hConf),
+        new ZKClientModule(),
+        new KafkaClientModule(),
+        new DiscoveryRuntimeModule().getDistributedModules(),
+        new MessagingClientModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+          }
+        }
+      );
+
+      zkClientService = injector.getInstance(ZKClientService.class);
+      zkClientService.startAndWait();
+
+      programStateWriter = injector.getInstance(ProgramStateWriter.class);
+
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 

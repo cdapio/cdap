@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.util.ConfigurationWatchListUtil;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -173,6 +174,16 @@ public final class ProgramRunners {
     String id = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_ID);
     Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.ARTIFACT_ID + " in program options");
     return ArtifactId.fromIdParts(Splitter.on(':').split(id));
+  }
+
+  /**
+   * Returns the {@link ClusterMode} stored inside the given {@link ProgramOptions#getArguments()}.
+   */
+  public static ClusterMode getClusterMode(ProgramOptions programOptions) {
+    String clusterMode = programOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER_MODE);
+
+    // Default to ON_PREMISE for backward compatibility.
+    return clusterMode == null ? ClusterMode.ON_PREMISE : ClusterMode.valueOf(clusterMode);
   }
 
   private ProgramRunners() {

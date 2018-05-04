@@ -18,12 +18,16 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.internal.app.runtime.distributed.ForwardingTwillPreparer;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.yarn.YarnSecureStore;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,14 +35,19 @@ import java.util.concurrent.TimeUnit;
  */
 final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
 
+  private final Configuration hConf;
   private final TwillPreparer delegate;
   private final Impersonator impersonator;
   private final ProgramId programId;
+  private final TokenSecureStoreRenewer secureStoreRenewer;
 
-  ImpersonatedTwillPreparer(TwillPreparer delegate, Impersonator impersonator, ProgramId programId) {
+  ImpersonatedTwillPreparer(Configuration hConf, TwillPreparer delegate, Impersonator impersonator,
+                            TokenSecureStoreRenewer secureStoreRenewer, ProgramId programId) {
+    this.hConf = hConf;
     this.delegate = delegate;
     this.impersonator = impersonator;
     this.programId = programId;
+    this.secureStoreRenewer = secureStoreRenewer;
   }
 
   @Override
@@ -47,27 +56,15 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
   }
 
   @Override
-  public TwillController start() {
-    try {
-      return impersonator.doAs(programId, new Callable<TwillController>() {
-        @Override
-        public TwillController call() throws Exception {
-          return new ImpersonatedTwillController(delegate.start(), impersonator, programId);
-        }
-      });
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public TwillController start(final long timeout, final TimeUnit timeoutUnit) {
     try {
-      return impersonator.doAs(programId, new Callable<TwillController>() {
-        @Override
-        public TwillController call() throws Exception {
-          return new ImpersonatedTwillController(delegate.start(timeout, timeoutUnit), impersonator, programId);
+      return impersonator.doAs(programId, () -> {
+        // Add secure tokens
+        if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
+          addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
         }
+        return new ImpersonatedTwillController(delegate.start(timeout, timeoutUnit),
+                                               impersonator, programId);
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);

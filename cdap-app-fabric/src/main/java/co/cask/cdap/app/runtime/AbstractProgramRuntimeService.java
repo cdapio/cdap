@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
@@ -31,6 +32,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -51,6 +53,7 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -68,6 +71,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -91,6 +95,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ProgramRunnerFactory programRunnerFactory;
   private final ProgramStateWriter programStateWriter;
   private final ArtifactRepository noAuthArtifactRepository;
+  private ProgramRunnerFactory remoteProgramRunnerFactory;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
@@ -104,6 +109,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     this.noAuthArtifactRepository = noAuthArtifactRepository;
   }
 
+  /**
+   * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is optional because
+   * in unit-test we don't have need for that.
+   */
+  @Inject(optional = true)
+  void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
+    this.remoteProgramRunnerFactory = runnerFactory;
+  }
+
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
     ProgramId programId = programDescriptor.getProgramId();
@@ -111,7 +125,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
     programStateWriter.start(programId.run(runId), options, null, programDescriptor);
 
-    ProgramRunner runner = programRunnerFactory.create(programId.getType());
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
+
+    // Creates the ProgramRunner based on the cluster mode
+    ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE
+      ? programRunnerFactory
+      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
+    ).create(programId.getType());
+
+
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {

@@ -26,16 +26,16 @@ import javax.annotation.Nullable;
 /**
  * Container class for holding {@link TwillRunnable} and extra configurations associated with it.
  */
-final class RunnableDefinition {
+public final class RunnableDefinition {
   private final TwillRunnable runnable;
   private final ResourceSpecification resources;
   private final Map<String, String> twillRunnableConfigs;
   private final Map<String, Level> logLevels;
   private final Integer maxRetries;
 
-  RunnableDefinition(TwillRunnable runnable, ResourceSpecification resources,
-                     Map<String, String> twillRunnableConfigs, Map<String, Level> logLevels,
-                     @Nullable Integer maxRetries) {
+  public RunnableDefinition(TwillRunnable runnable, ResourceSpecification resources,
+                            Map<String, String> twillRunnableConfigs, Map<String, Level> logLevels,
+                            @Nullable Integer maxRetries) {
     this.runnable = runnable;
     this.resources = resources;
     this.twillRunnableConfigs = twillRunnableConfigs;
@@ -43,24 +43,24 @@ final class RunnableDefinition {
     this.maxRetries = maxRetries;
   }
 
-  TwillRunnable getRunnable() {
+  public TwillRunnable getRunnable() {
     return runnable;
   }
 
-  ResourceSpecification getResources() {
+  public ResourceSpecification getResources() {
     return resources;
   }
 
   @Nullable
-  Integer getMaxRetries() {
+  public Integer getMaxRetries() {
     return maxRetries;
   }
 
-  Map<String, String> getTwillRunnableConfigs() {
+  public Map<String, String> getTwillRunnableConfigs() {
     return twillRunnableConfigs;
   }
 
-  Map<String, Level> getLogLevels() {
+  public Map<String, Level> getLogLevels() {
     return logLevels;
   }
 }

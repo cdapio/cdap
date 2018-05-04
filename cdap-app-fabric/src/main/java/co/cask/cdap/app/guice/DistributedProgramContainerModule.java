@@ -24,14 +24,22 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageWriter;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
@@ -40,12 +48,16 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
+import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -55,6 +67,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -163,6 +176,20 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addIsolatedModules(List<Module> modules) {
+    modules.add(new DataSetsModules().getStandaloneModules());
+    modules.add(new DataSetServiceModules().getStandaloneModules());
+    // Use the in memory transaction module, as we don't need to recover from tx problem as the tx is only local
+    // to this run.
+    modules.add(new DataFabricModules().getInMemoryModules());
+
+    // In isolated mode, ignore the namespace mapping
+    modules.add(Modules.override(new LocationRuntimeModule().getDistributedModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NamespacedLocationFactory.class).to(NoLookupNamespacedLocationFactory.class);
+      }
+    }));
+
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -171,6 +198,30 @@ public class DistributedProgramContainerModule extends AbstractModule {
           @Override
           protected void appendEvent(LogMessage logMessage) {
             // no-op
+          }
+        });
+
+        // Bind to unsupported/no-op class implementations for features that are not supported in isolated cluster mode
+        bind(StreamAdmin.class).to(UnsupportedStreamAdmin.class);
+        bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class);
+        bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+        bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+
+        // This is just for Dataset Service to check if a namespace exists
+        bind(NamespaceQueryAdmin.class).toInstance(new NamespaceQueryAdmin() {
+          @Override
+          public List<NamespaceMeta> list() throws Exception {
+            return Collections.singletonList(get(programRunId.getNamespaceId()));
+          }
+
+          @Override
+          public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
+            return new NamespaceMeta.Builder().setName(namespaceId).build();
+          }
+
+          @Override
+          public boolean exists(NamespaceId namespaceId) throws Exception {
+            return programRunId.getNamespaceId().equals(namespaceId);
           }
         });
       }

@@ -22,6 +22,7 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
+import org.apache.twill.internal.Constants;
 
 import java.net.URI;
 import java.util.Map;
@@ -227,7 +228,7 @@ public abstract class ForwardingTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillController start() {
-    return getDelegate().start();
+    return start(Constants.APPLICATION_MAX_START_SECONDS, TimeUnit.SECONDS);
   }
 
   @Override

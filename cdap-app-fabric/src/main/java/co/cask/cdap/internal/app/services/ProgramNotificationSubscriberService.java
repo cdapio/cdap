@@ -34,7 +34,6 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.provision.ProvisionRequest;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.internal.provision.ProvisioningTask;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
@@ -51,17 +50,20 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -82,7 +84,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProgramLifecycleService programLifecycleService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
-  private final Collection<ProvisioningTask> provisionerTasks;
+  private final Queue<Runnable> tasks;
+  private ExecutorService taskExecutor;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -103,7 +106,25 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.programLifecycleService = programLifecycleService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
-    this.provisionerTasks = new ArrayList<>();
+    this.tasks = new LinkedList<>();
+  }
+
+  @Override
+  protected void doStartUp() {
+    taskExecutor = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("program-execution-%d"));
+  }
+
+  @Override
+  protected void doShutdown() {
+    taskExecutor.shutdownNow();
+    try {
+      // Wait for it to shutdown for short while. It's ok if the task executor is not completely shutdown as
+      // tasks should have their own states maintained in persisted store. Also, threads created are daemon threads
+      // hence won't block the process exit.
+      taskExecutor.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      // Ignore interrupt.
+    }
   }
 
   @Nullable
@@ -130,10 +151,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   @Override
   protected void postProcess() {
-    for (ProvisioningTask provisionerTask : provisionerTasks) {
-      provisioningService.execute(provisionerTask);
+    Runnable task = tasks.poll();
+    while (task != null) {
+      taskExecutor.execute(task);
+      task = tasks.poll();
     }
-    provisionerTasks.clear();
   }
 
   private void processNotification(DatasetContext datasetContext, AppMetadataStore appMetadataStore,
@@ -291,28 +313,40 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
         ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
                                                                  userId);
-        provisionerTasks.add(provisioningService.provision(provisionRequest, datasetContext));
+        tasks.add(provisioningService.provision(provisionRequest, datasetContext));
         break;
       case PROVISIONED:
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
         appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
 
-        // start the program run
-        String oldUser = SecurityRequestContext.getUserId();
-        try {
-          SecurityRequestContext.setUserId(userId);
-          try {
-            programLifecycleService.startInternal(programDescriptor, programOptions, programRunId);
-          } catch (Exception e) {
-            programStateWriter.error(programRunId, e);
-          }
-        } finally {
-          SecurityRequestContext.setUserId(oldUser);
+        // Update the ProgramOptions system arguments to include the cluster information
+        Map<String, String> systemArgs = new HashMap<>(programOptions.getArguments().asMap());
+        systemArgs.put(ProgramOptionConstants.CLUSTER, properties.get(ProgramOptionConstants.CLUSTER));
+        if (properties.containsKey(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
+          systemArgs.put(ProgramOptionConstants.CLUSTER_KEY_INFO,
+                         properties.get(ProgramOptionConstants.CLUSTER_KEY_INFO));
         }
+        ProgramOptions newProgramOptions = new SimpleProgramOptions(programOptions.getProgramId(),
+                                                                    new BasicArguments(systemArgs),
+                                                                    programOptions.getUserArguments());
+        // start the program run
+        tasks.add(() -> {
+          String oldUser = SecurityRequestContext.getUserId();
+          try {
+            SecurityRequestContext.setUserId(userId);
+            try {
+              programLifecycleService.startInternal(programDescriptor, newProgramOptions, programRunId);
+            } catch (Exception e) {
+              programStateWriter.error(programRunId, e);
+            }
+          } finally {
+            SecurityRequestContext.setUserId(oldUser);
+          }
+        });
         break;
       case DEPROVISIONING:
         appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
-        provisionerTasks.add(provisioningService.deprovision(programRunId, datasetContext));
+        tasks.add(provisioningService.deprovision(programRunId, datasetContext));
         break;
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);

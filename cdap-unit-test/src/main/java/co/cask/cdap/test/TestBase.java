@@ -32,7 +32,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewManager;
@@ -252,7 +252,7 @@ public class TestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
-      new InMemoryProgramRunnerModule(LocalStreamWriter.class),
+      new ProgramRunnerRuntimeModule(LocalStreamWriter.class).getInMemoryModules(),
       new SecureStoreModules().getInMemoryModules(),
       new AbstractModule() {
         @Override

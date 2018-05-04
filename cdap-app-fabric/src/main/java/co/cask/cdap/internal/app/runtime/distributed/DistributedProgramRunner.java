@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.Arguments;
@@ -34,7 +36,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggerLogHandler;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -48,37 +49,31 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
-import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,26 +115,21 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   private static final String APP_SPEC_FILE_NAME = "appSpec.json";
   private static final String LOGBACK_FILE_NAME = "logback.xml";
+  private static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
 
-  protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
-  protected final TokenSecureStoreRenewer secureStoreRenewer;
+  protected final Configuration hConf;
+  protected final ClusterMode clusterMode;
   private final TwillRunner twillRunner;
   private final Impersonator impersonator;
 
-  protected DistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                     TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                                     Impersonator impersonator) {
+  protected DistributedProgramRunner(CConfiguration cConf, Configuration hConf, Impersonator impersonator,
+                                     ClusterMode clusterMode, TwillRunner twillRunner) {
     this.twillRunner = twillRunner;
     this.hConf = hConf;
     this.cConf = cConf;
-    this.secureStoreRenewer = tokenSecureStoreRenewer;
     this.impersonator = impersonator;
-  }
-
-  protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
-    return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
-                                             options);
+    this.clusterMode = clusterMode;
   }
 
   /**
@@ -166,7 +156,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   /**
    * Provides the configuration for launching an program container.
    *
-   * @param launchConfig the {@link LaunchConfig} to setup
+   * @param launchConfig the {@link ProgramLaunchConfig} to setup
    * @param program the program to launch
    * @param options the program options
    * @param cConf the configuration for this launch
@@ -174,7 +164,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
    * @param tempDir a temporary directory for creating temp file. The content will be cleanup automatically
    *                once the program is launch.
    */
-  protected abstract void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected abstract void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                             CConfiguration cConf, Configuration hConf, File tempDir) throws IOException;
 
   /**
@@ -198,23 +188,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      final LaunchConfig launchConfig = new LaunchConfig();
+      final ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
       setupLaunchConfig(launchConfig, program, oldOptions, cConf, hConf, tempDir);
 
       // Add extra localize resources needed by the program runner
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
-
-      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
-                                                            DirUtils.createTempDir(tempDir));
-
       final List<String> additionalClassPaths = new ArrayList<>();
       addContainerJars(cConf, localizeResources, additionalClassPaths);
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
-      // Save the configuration to files
-      final File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
-      final File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
+      List<URI> configResources = localizeConfigs(cConf, hConf, tempDir, localizeResources);
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -227,8 +211,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
-                            new LocalizeResource(saveAppSpec(program,
-                                                             File.createTempFile("appSpec", ".json", tempDir))));
+                            new LocalizeResource(saveJsonFile(program.getApplicationSpecification(),
+                                                              ApplicationSpecification.class,
+                                                              File.createTempFile("appSpec", ".json", tempDir))));
 
       final URI logbackURI = getLogBackURI(program, tempDir);
       if (logbackURI != null) {
@@ -236,18 +221,37 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
       }
 
+      // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
+      // and runs it in the remote container
+      ProgramOptions options = updateProgramOptions(
+        oldOptions, localizeResources, DirUtils.createTempDir(tempDir),
+        ProgramOptionConstants.PROGRAM_JAR, programJarName,
+        ProgramOptionConstants.EXPANDED_PROGRAM_JAR, expandedProgramJarName,
+        ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
+        ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
+        ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME
+      );
+
+      // Localize the serialized program options
+      localizeResources.put(PROGRAM_OPTIONS_FILE_NAME,
+                            new LocalizeResource(saveJsonFile(
+                              options, ProgramOptions.class,
+                              File.createTempFile("program.options", ".json", tempDir))));
+
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
         public ProgramController call() throws Exception {
-          ProgramTwillApplication twillApplication = new ProgramTwillApplication(program.getId(),
-                                                                                 launchConfig.getRunnables(),
-                                                                                 launchConfig.getLaunchOrder(),
-                                                                                 localizeResources,
-                                                                                 createEventHandler(cConf, options));
+          ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
+          ProgramTwillApplication twillApplication = new ProgramTwillApplication(
+            programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
+            localizeResources, createEventHandler(cConf, programRunId));
+
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
-          // Add the configuration to container classpath
-          twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());
+          // Also add the configuration files to container classpath so that the
+          // TwillAppLifecycleEventHandler can get it. This can be removed when TWILL-246 is fixed.
+          // Only ON_PREMISE mode will be using EventHandler
+          twillPreparer.withResources(configResources);
 
           Map<String, String> userArgs = options.getUserArguments().asMap();
 
@@ -281,9 +285,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
           logProgramStart(program, options);
 
-          String serializedOptions = GSON.toJson(options, ProgramOptions.class);
-          LOG.info("Starting {} with debugging enabled: {}, programOptions: {}, and logback: {}",
-                   program.getId(), options.isDebug(), serializedOptions, logbackURI);
+          LOG.info("Starting {} with debugging enabled: {}, logback: {}",
+                   program.getId(), options.isDebug(), logbackURI);
 
           // Add scheduler queue name if defined
           String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
@@ -296,37 +299,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
             twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
           }
 
-          String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
-          if ("OFF".equals(logLevelConf)) {
-            twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
-          } else {
-            LogEntry.Level logLevel = LogEntry.Level.ERROR;
-            if ("ALL".equals(logLevelConf)) {
-              logLevel = LogEntry.Level.TRACE;
-            } else {
-              try {
-                logLevel = LogEntry.Level.valueOf(logLevelConf.toUpperCase());
-              } catch (Exception e) {
-                LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
-              }
-            }
-            twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
-          }
-
-          // Add secure tokens
-          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-            twillPreparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
-          }
+          addLogHandler(twillPreparer, cConf);
 
           // Setup the environment for the container logback.xml
           twillPreparer.withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
 
           // Add dependencies
-          Set<Class<?>> extraDependencies = new HashSet<>(launchConfig.getExtraDependencies());
-          extraDependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
-          if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
-            extraDependencies.add(SecureStoreUtils.getKMSSecureStore());
-          }
+          Set<Class<?>> extraDependencies = addExtraDependencies(cConf,
+                                                                 new HashSet<>(launchConfig.getExtraDependencies()));
           twillPreparer.withDependencies(extraDependencies);
 
           // Add the additional classes to the classpath that comes from the container jar setting
@@ -343,15 +323,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
             .withApplicationClassPaths(yarnAppClassPath)
             .withClassPaths(yarnAppClassPath)
             .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
-            .withApplicationArguments(
-              "--" + RunnableOptions.JAR, programJarName,
-              "--" + RunnableOptions.EXPANDED_JAR, expandedProgramJarName,
-              "--" + RunnableOptions.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
-              "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
-              "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
-              "--" + RunnableOptions.PROGRAM_OPTIONS, serializedOptions,
-              "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId())
-            )
+            .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
             // Use the MainClassLoader for class rewriting
             .setClassLoader(MainClassLoader.class.getName());
 
@@ -363,12 +335,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           // all the classloaders of the dependencies classes so that Twill can trace classes.
           ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
             DistributedProgramRunner.this.getClass().getClassLoader(),
-            Iterables.transform(extraDependencies, new Function<Class<?>, ClassLoader>() {
-              @Override
-              public ClassLoader apply(Class<?> input) {
-                return input.getClassLoader();
-              }
-            })));
+            extraDependencies.stream().map(Class::getClassLoader)::iterator));
           try {
             twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                   TimeUnit.SECONDS);
@@ -410,6 +377,32 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     // Set the CFG_LOCAL_DATA_DIR to a relative path as the data directory for the container should be relative to the
     // container directory
     result.set(Constants.CFG_LOCAL_DATA_DIR, "data");
+
+    // Setup the configurations for isolated mode
+    if (clusterMode == ClusterMode.ISOLATED) {
+      // Disable implicit transaction
+      result.set(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL, TransactionControl.EXPLICIT.name());
+
+      // Disable explore
+      result.set(Constants.Explore.EXPLORE_ENABLED, Boolean.FALSE.toString());
+
+      // Bind the runtime monitor server to all interfaces
+      result.set(Constants.RuntimeMonitor.SERVER_HOST, "::");
+
+      // The following services will be running in the edge node host.
+      // Set the bind addresses for all of them to "${master.services.bind.address}"
+      // Which the value of `"master.services.bind.address" will be set in the AbstractProgramTwillRunnable when it
+      // starts in the remote machine
+      String masterBindAddrConf = "${" + Constants.Service.MASTER_SERVICES_BIND_ADDRESS + "}";
+
+      result.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, masterBindAddrConf);
+      result.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, masterBindAddrConf);
+      result.set(Constants.Dataset.Executor.ADDRESS, masterBindAddrConf);
+      result.set(Constants.Metadata.SERVICE_BIND_ADDRESS, masterBindAddrConf);
+
+      // TODO (CDAP-13410): Ideally we don't need ZK in isolated runtime cluster
+      result.set(Constants.Zookeeper.QUORUM, masterBindAddrConf + ":2181/cdap");
+    }
 
     return result;
   }
@@ -467,24 +460,45 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     saveContextCancellable.cancel();
   }
 
-  private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
-                                                File tempDir) throws IOException {
-    Arguments systemArgs = options.getArguments();
-    if (!systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
-      return options;
+  /**
+   * Creates a new instance of {@link ProgramOptions} with artifact localization information and with
+   * extra system arguments, while maintaining other fields of the given {@link ProgramOptions}.
+   *
+   * @param options the original {@link ProgramOptions}.
+   * @param localizeResources a {@link Map} of {@link LocalizeResource} to be localized to the remote container
+   * @param tempDir a local temporary directory for creating files for artifact localization.
+   * @param extraSystemArgs a set of extra system arguments to be added/updated
+   * @return a new instance of {@link ProgramOptions}
+   * @throws IOException if failed to create local copy of artifact files
+   */
+  private ProgramOptions updateProgramOptions(ProgramOptions options,
+                                              Map<String, LocalizeResource> localizeResources,
+                                              File tempDir, String...extraSystemArgs) throws IOException {
+    if (extraSystemArgs.length % 2 != 0) {
+      // This shouldn't happen.
+      throw new IllegalArgumentException("Number of extra system arguments must be even in the form of k1,v1,k2,v2...");
     }
 
-    File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
-    File archiveFile = new File(tempDir, "artifacts.jar");
-    BundleJarUtil.createJar(localDir, archiveFile);
+    Arguments systemArgs = options.getArguments();
 
-    // Localize plugins to two files, one expanded into a directory, one not.
-    localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
-    localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+    Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
+    for (int i = 0; i < extraSystemArgs.length; i += 2) {
+      newSystemArgs.put(extraSystemArgs[i], extraSystemArgs[i + 1]);
+    }
 
-    Map<String, String> newSystemArgs = Maps.newHashMap(systemArgs.asMap());
-    newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
-    newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
+    if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+      File archiveFile = new File(tempDir, "artifacts.jar");
+      BundleJarUtil.createJar(localDir, archiveFile);
+
+      // Localize plugins to two files, one expanded into a directory, one not.
+      localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+      localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
+
+    }
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
   }
@@ -541,9 +555,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     return file;
   }
 
-  private File saveAppSpec(Program program, File file) throws IOException {
+  private <T> File saveJsonFile(T obj, Class<T> type, File file) throws IOException {
     try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-      GSON.toJson(program.getApplicationSpecification(), writer);
+      GSON.toJson(obj, type, writer);
     }
     return file;
   }
@@ -570,134 +584,16 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                              final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
-    Runnable cleanup = new Runnable() {
-
-      @Override
-      public void run() {
-        if (!deleted.compareAndSet(false, true)) {
-          return;
-        }
-        LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
-        deleteDirectory(tempDir);
-      }};
+    Runnable cleanup = () -> {
+      if (!deleted.compareAndSet(false, true)) {
+        return;
+      }
+      LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
+      deleteDirectory(tempDir);
+    };
     controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
     controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
-  }
-
-  /**
-   * Configuration for launching Twill container for a program.
-   */
-  protected static final class LaunchConfig {
-
-    private final Map<String, LocalizeResource> extraResources = new HashMap<>();
-    private final List<String> extraClasspath = new ArrayList<>();
-    private final Map<String, String> extraEnv = new HashMap<>();
-    private final Map<String, RunnableDefinition> runnables = new HashMap<>();
-    private final List<Set<String>> launchOrder = new ArrayList<>();
-    private final Set<Class<?>> extraDependencies = new HashSet<>();
-    private ClassAcceptor classAcceptor = new HadoopClassExcluder();
-
-    public LaunchConfig addExtraResources(Map<String, LocalizeResource> resources) {
-      extraResources.putAll(resources);
-      return this;
-    }
-
-    public LaunchConfig addExtraClasspath(String...classpath) {
-      return addExtraClasspath(Arrays.asList(classpath));
-    }
-
-    public LaunchConfig addExtraClasspath(Iterable<String> classpath) {
-      Iterables.addAll(extraClasspath, classpath);
-      return this;
-    }
-
-    public LaunchConfig addExtraEnv(Map<String, String> env) {
-      extraEnv.putAll(env);
-      return this;
-    }
-
-    public LaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
-                                    Map<String, String> args, Resources defaultResource) {
-      return addRunnable(name, runnable, instances, args, defaultResource, null);
-    }
-
-    public LaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
-                                    Map<String, String> args, Resources defaultResources,
-                                    @Nullable Integer maxRetries) {
-      ResourceSpecification resourceSpec = createResourceSpec(SystemArguments.getResources(args, defaultResources),
-                                                              instances);
-
-      Map<String, String> configs = SystemArguments.getTwillContainerConfigs(args, resourceSpec.getMemorySize());
-      Map<String, Level> logLevels = SystemArguments.getLogLevels(args);
-
-      runnables.put(name, new RunnableDefinition(runnable, resourceSpec, configs, logLevels, maxRetries));
-      return this;
-    }
-
-    public LaunchConfig setLaunchOrder(Iterable<? extends Set<String>> order) {
-      launchOrder.clear();
-      Iterables.addAll(launchOrder, order);
-      return this;
-    }
-
-    public LaunchConfig setClassAcceptor(ClassAcceptor classAcceptor) {
-      this.classAcceptor = classAcceptor;
-      return this;
-    }
-
-    public LaunchConfig addExtraDependencies(Class<?>...classes) {
-      return addExtraDependencies(Arrays.asList(classes));
-    }
-
-    public LaunchConfig addExtraDependencies(Iterable<? extends Class<?>> classes) {
-      Iterables.addAll(extraDependencies, classes);
-      return this;
-    }
-
-    public Map<String, LocalizeResource> getExtraResources() {
-      return extraResources;
-    }
-
-    public List<String> getExtraClasspath() {
-      return extraClasspath;
-    }
-
-    public Map<String, String> getExtraEnv() {
-      return extraEnv;
-    }
-
-    public ClassAcceptor getClassAcceptor() {
-      return classAcceptor;
-    }
-
-    public Map<String, RunnableDefinition> getRunnables() {
-      return runnables;
-    }
-
-    public List<Set<String>> getLaunchOrder() {
-      return launchOrder;
-    }
-
-    public Set<Class<?>> getExtraDependencies() {
-      return extraDependencies;
-    }
-
-    public LaunchConfig clearRunnables() {
-      runnables.clear();
-      return this;
-    }
-
-    /**
-     * Returns a {@link ResourceSpecification} created from the given {@link Resources} and number of instances.
-     */
-    private ResourceSpecification createResourceSpec(Resources resources, int instances) {
-      return ResourceSpecification.Builder.with()
-        .setVirtualCores(resources.getVirtualCores())
-        .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-        .setInstances(instances)
-        .build();
-    }
   }
 
   /**
@@ -706,7 +602,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
                                                 Map<String, LocalizeResource> localizeResources) throws IOException {
     String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
-    if (ddlExecutorExtensionDir == null) {
+
+    // Only support HBase when running on premise
+    if (ddlExecutorExtensionDir == null || clusterMode != ClusterMode.ON_PREMISE) {
       // Nothing to localize
       return;
     }
@@ -715,5 +613,78 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
     localizeResources.put(target.getName(), new LocalizeResource(target, true));
     cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
+  }
+
+  /**
+   * Creates the {@link EventHandler} for handling the application events.
+   */
+  @Nullable
+  private EventHandler createEventHandler(CConfiguration cConf, ProgramRunId programRunId) {
+    if (clusterMode != ClusterMode.ON_PREMISE) {
+      return null;
+    }
+    return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
+                                          this instanceof LongRunningDistributedProgramRunner, programRunId);
+  }
+
+  /**
+   * Localizes the configuration files.
+   *
+   * @param cConf the CDAP configuration to localize
+   * @param hConf the hadoop configuration to localize
+   * @param tempDir a temporary directory for local file creation
+   * @param localizeResources the {@link LocalizeResource} map to update
+   * @return a list of {@link URI} that should be added as twill program resources.
+   */
+  private List<URI> localizeConfigs(CConfiguration cConf, Configuration hConf, File tempDir,
+                                    Map<String, LocalizeResource> localizeResources) throws IOException {
+    List<URI> resources = new ArrayList<>();
+
+    File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
+    localizeResources.put(CDAP_CONF_FILE_NAME, new LocalizeResource(cConfFile));
+    resources.add(cConfFile.toURI());
+
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      // Save the configuration to files
+      File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
+      localizeResources.put(HADOOP_CONF_FILE_NAME, new LocalizeResource(hConfFile));
+      resources.add(hConfFile.toURI());
+    }
+
+    return resources;
+  }
+
+  /**
+   * Adds a {@link LogHandler} to the {@link TwillPreparer} based on the configuration.
+   */
+  private void addLogHandler(TwillPreparer twillPreparer, CConfiguration cConf) {
+    String confLevel = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+    if ("OFF".equals(confLevel)) {
+      twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
+      return;
+    }
+
+    LogEntry.Level logLevel = LogEntry.Level.ERROR;
+    try {
+      logLevel = "ALL".equals(confLevel) ? LogEntry.Level.TRACE : LogEntry.Level.valueOf(confLevel.toUpperCase());
+    } catch (Exception e) {
+      LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", confLevel);
+    }
+    twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
+  }
+
+  /**
+   * Adds extra dependency classes based on the given configuration.
+   */
+  private Set<Class<?>> addExtraDependencies(CConfiguration cConf, Set<Class<?>> dependencies) {
+    // Only support HBase and KMS when running on premise
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      dependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
+      if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+        dependencies.add(SecureStoreUtils.getKMSSecureStore());
+      }
+    }
+
+    return dependencies;
   }
 }

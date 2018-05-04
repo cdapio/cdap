@@ -18,21 +18,19 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
@@ -46,10 +44,10 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
                                              implements LongRunningDistributedProgramRunner {
 
   @Inject
-  DistributedServiceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                  TokenSecureStoreRenewer tokenSecureStoreRenewer,
-                                  Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
+  DistributedServiceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
+                                  Impersonator impersonator, ClusterMode clusterMode,
+                                  @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner);
   }
 
   @Override
@@ -75,7 +73,7 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) {
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
@@ -85,11 +83,5 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
     launchConfig.addRunnable(serviceSpec.getName(), new ServiceTwillRunnable(serviceSpec.getName()),
                              serviceSpec.getInstances(), options.getUserArguments().asMap(),
                              serviceSpec.getResources());
-  }
-
-  @Override
-  protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
-    return new TwillAppLifecycleEventHandler(
-      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true, options);
   }
 }
