@@ -16,6 +16,7 @@
 
 import experimentsStore, {ACTIONS, MMDS_SORT_METHODS} from 'components/Experiments/store';
 import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
+import {setExperimentCreateError} from 'components/Experiments/store/CreateExperimentActionCreator';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import AlgorithmsListStore, {ACTIONS as AlgorithmsStoreActions} from 'components/Experiments/store/AlgorithmsListStore';
@@ -23,6 +24,24 @@ import AlgorithmsListStore, {ACTIONS as AlgorithmsStoreActions} from 'components
 function setExperimentsLoading() {
   experimentsStore.dispatch({
     type: ACTIONS.SET_EXPERIMENTS_LOADING
+  });
+}
+
+function setExperimentsListError(error) {
+  experimentsStore.dispatch({
+    type: ACTIONS.SET_ERROR,
+    payload: {
+      error
+    }
+  });
+}
+
+function setExperimentDetailError(error) {
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_ERROR,
+    payload: {
+      error
+    }
   });
 }
 
@@ -53,7 +72,7 @@ function getExperimentsList() {
         }
       });
     }, (err) => {
-      console.log(err);
+      setExperimentsListError(`Failed to get experiments: ${err.response || err}`);
     });
 }
 
@@ -74,6 +93,8 @@ function getModelsListInExperiment(experimentId) {
           modelsCount
         }
       });
+    }, (err) => {
+      setExperimentsListError(`Failed to get model count for experiment '${experimentId}': ${err.response || err}`);
     });
 }
 
@@ -100,6 +121,8 @@ function getExperimentDetails(experimentId) {
           }
         }
       });
+    }, (err) => {
+      setExperimentDetailError(`Failed to get details for experiment '${experimentId}': ${err.response || err}`);
     });
 }
 
@@ -131,6 +154,8 @@ function getModelsInExperiment(experimentId) {
       }
     });
     getSplitsInExperiment(experimentId);
+  }, (err) => {
+    setExperimentDetailError(`Failed to get models in experiment '${experimentId}': ${err.response || err}`);
   });
   return ModelsObservable$;
 }
@@ -207,6 +232,8 @@ function getSplitsInExperiment(experimentId) {
           splits
         }
       });
+    }, (err) => {
+      setExperimentDetailError(`Failed to get splits in experiment '${experimentId}': ${err.response || err}`);
     });
 }
 
@@ -225,6 +252,8 @@ function getModelStatus(experimentId, modelId) {
           modelStatus
         }
       });
+    }, (err) => {
+      console.log('Error getting status of model', err); // TODO: Change this by adding exclamation mark next to the model with error
     });
 }
 
@@ -279,6 +308,13 @@ const setAlgorithmsList = () => {
         type: AlgorithmsStoreActions.SET_ALGORITHMS_LIST,
         payload: {algorithmsList}
       });
+    }, (err) => {
+      let errorToShow = `Failed to get list of algorithms: ${err.response || err}`;
+      /* Need to do this since this function can be called from either the create view,
+      list view or error view, but we don't know in advance which view is calling it */
+      setExperimentCreateError(errorToShow);
+      setExperimentsListError(errorToShow);
+      setExperimentDetailError(errorToShow);
     });
 };
 
@@ -348,6 +384,8 @@ function resetNewlyTrainingModel() {
 }
 export {
   setExperimentsLoading,
+  setExperimentsListError,
+  setExperimentDetailError,
   getExperimentsList,
   getModelsListInExperiment,
   deleteExperiment,

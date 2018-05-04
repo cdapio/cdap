@@ -23,7 +23,8 @@ import {
   handleModelsPageChange,
   handleModelsSorting,
   getAlgorithmLabel,
-  setActiveModel
+  setActiveModel,
+  setExperimentDetailError
 } from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
@@ -43,6 +44,7 @@ import uuidV4 from 'uuid/v4';
 import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
+import Alert from 'components/Alert';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = ['PREPARING', 'SPLITTING', 'DATA_READY'];
@@ -381,7 +383,7 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, model
   );
 }
 
-function ModelsTable({
+function ModelsTableContent({
   experimentId,
   modelsList,
   loading,
@@ -425,7 +427,7 @@ function ModelsTable({
   );
 }
 
-ModelsTable.propTypes = {
+ModelsTableContent.propTypes = {
   modelsList: PropTypes.array,
   loading: PropTypes.bool,
   experimentId: PropTypes.string,
@@ -449,8 +451,32 @@ const mapStateToProps = (state) => {
     modelsTotalCount: state.modelsTotalCount,
     newlyTrainingModel: state.newlyTrainingModel,
     modelsSortMethod: state.modelsSortMethod,
-    modelsSortColumn: state.modelsSortColumn
+    modelsSortColumn: state.modelsSortColumn,
+    error: state.error
   };
+};
+
+function ModelsTable({...props}) {
+  return (
+    <div>
+      {ModelsTableContent(props)}
+      {
+        props.error ?
+          <Alert
+            message={props.error}
+            type='error'
+            showAlert={true}
+            onClose={setExperimentDetailError.bind(null, null)}
+          />
+        :
+          null
+      }
+    </div>
+  );
+}
+
+ModelsTable.propTypes = {
+  error: PropTypes.any
 };
 
 const ModelsTableWrapper = connect(mapStateToProps)(ModelsTable);

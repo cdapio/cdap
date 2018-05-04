@@ -22,7 +22,8 @@ import {
   setModelAlgorithm,
   trainModel,
   setAlgorithmList,
-  updateHyperParam
+  updateHyperParam,
+  setModelCreateError
 } from 'components/Experiments/store/CreateExperimentActionCreator';
 import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
 import {Label} from 'reactstrap';
@@ -31,10 +32,11 @@ import HyperParamWidget from 'components/Experiments/CreateView/MLAlgorithmSelec
 import { getHyperParamLabel } from 'components/Experiments/store/ActionCreator';
 import startCase from 'lodash/startCase';
 import classnames from 'classnames';
+import Alert from 'components/Alert';
 
 require('./MLAlgorithmSelection.scss');
 
-const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm}) => {
+const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm, error}) => {
   if (!objectQuery(algorithmsList, 'length')) {
     return null;
   }
@@ -76,13 +78,25 @@ const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm}
         })
       }
       <ConnectedAddModelBtn />
+      {
+        error ?
+          <Alert
+            message={error}
+            type='error'
+            showAlert={true}
+            onClose={setModelCreateError.bind(null, null)}
+          />
+        :
+          null
+      }
     </div>
   );
 };
 MLAlgorithmsList.propTypes = {
   algorithmsList: PropTypes.arrayOf(PropTypes.object),
   setModelAlgorithm: PropTypes.func,
-  selectedAlgorithm: PropTypes.object
+  selectedAlgorithm: PropTypes.object,
+  error: PropTypes.any
 };
 const getComponent = (hyperParam) => {
   /*
@@ -216,7 +230,8 @@ const mapStateToAddModelBtnProps = (state) => ({ algorithm: state.model_create.a
 const mapDispatchToAddModelBtnProps = () => ({trainModel});
 const mapStateToMLAlgorithmsListProps = (state) => ({
   algorithmsList: state.model_create.validAlgorithmsList,
-  selectedAlgorithm: state.model_create.algorithm
+  selectedAlgorithm: state.model_create.algorithm,
+  error: state.model_create.error
 });
 const mapDispatchToMLAlgorithmsListProps = () => ({setModelAlgorithm});
 const mapStateToMLAlgorithmDetailsProps = (state) => ({
@@ -227,7 +242,6 @@ const mapStateToMLAlgorithmDetailsProps = (state) => ({
 const ConnectedMLAlgorithmsList = connect(mapStateToMLAlgorithmsListProps, mapDispatchToMLAlgorithmsListProps)(MLAlgorithmsList);
 const ConnectedMLAlgorithmDetails = connect(mapStateToMLAlgorithmDetailsProps)(MLAlgorithmDetails);
 const ConnectedAddModelBtn = connect(mapStateToAddModelBtnProps, mapDispatchToAddModelBtnProps)(AddModelBtn);
-
 
 export default function MLAlgorithmSelection() {
   setAlgorithmList();

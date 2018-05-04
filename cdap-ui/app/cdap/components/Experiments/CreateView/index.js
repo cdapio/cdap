@@ -34,7 +34,8 @@ import {
   getExperimentForEdit,
   getExperimentModelSplitForCreate,
   resetCreateExperimentsStore,
-  fetchAlgorithmsList
+  fetchAlgorithmsList,
+  setExperimentCreateError
 } from 'components/Experiments/store/CreateExperimentActionCreator';
 import {setAlgorithmsList} from 'components/Experiments/store/ActionCreator';
 import MLAlgorithmSelection from 'components/Experiments/CreateView/MLAlgorithmSelection';
@@ -45,6 +46,7 @@ import queryString from 'query-string';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
+import Alert from 'components/Alert';
 
 require('./CreateView.scss');
 
@@ -79,7 +81,7 @@ export default class ExperimentCreateView extends Component {
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
       let {model_create, experiments_create} = createExperimentStore.getState();
       let {modelId, isSplitFinalized, isModelTrained} = model_create;
-      let {workspaceId, loading, name: experimentId} = experiments_create;
+      let {workspaceId, loading, name: experimentId, error: experimentError} = experiments_create;
       let newState = {};
       if (this.state.experimentId !== experimentId) {
         newState = {experimentId};
@@ -98,6 +100,9 @@ export default class ExperimentCreateView extends Component {
       }
       if (isModelTrained) {
         newState = {...newState, redirectToExperimentDetail: true};
+      }
+      if (experimentError) {
+        newState = {...newState, experimentError};
       }
       if (Object.keys(newState).length > 0) {
         this.setState(newState);
@@ -187,6 +192,17 @@ export default class ExperimentCreateView extends Component {
           enableRouting={false}
           workspaceId={this.state.workspaceId}
         />
+        {
+          this.state.experimentError ?
+            <Alert
+              message={this.state.experimentError}
+              type='error'
+              showAlert={true}
+              onClose={setExperimentCreateError.bind(null, null)}
+            />
+          :
+            null
+        }
       </span>
     );
   }

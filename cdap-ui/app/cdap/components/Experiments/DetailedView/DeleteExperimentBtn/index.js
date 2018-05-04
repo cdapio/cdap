@@ -19,18 +19,19 @@ import React from 'react';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {setExperimentDetailError} from 'components/Experiments/store/ActionCreator';
 
 const deleteExperiment = (experimentId, callback, errCallback) => {
   let namespace = getCurrentNamespace();
   myExperimentsApi
     .deleteExperiment({
       namespace,
-      experimentId
+      experimentId: 'asdfsfq'
     })
     .subscribe(
       () => window.location.href =`${window.location.origin}/cdap/ns/${namespace}/experiments`,
       err => {
-        let error = typeof err.response === 'string' ? err.response : JSON.stringify(err);
+        let error = `Failed to delete experiment '${experimentId}': ${err.response || err}`;
         errCallback(error);
       }
     );
@@ -41,7 +42,7 @@ const deleteConfirmElement = (experimentId) => <div>Are you sure you want to del
 export default function DeleteExperimentBtn({experimentId}) {
   return (
     <DeleteEntityBtn
-      confirmFn={deleteExperiment.bind(null, experimentId)}
+      confirmFn={deleteExperiment.bind(null, experimentId, null, setExperimentDetailError)}
       className="btn btn-link"
       headerTitle={"Delete Model"}
       confirmationElem={deleteConfirmElement(experimentId)}

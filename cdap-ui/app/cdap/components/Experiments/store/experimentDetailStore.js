@@ -32,6 +32,7 @@ const ACTIONS = {
   SET_NEWLY_TRAINING_MODEL: 'SET_NEWLY_TRAINING_MODEL',
   RESET_NEWLY_TRAINING_MODEL: 'RESET_NEWLY_TRAINING_MODEL',
   SET_MODELS_SORT: 'SET_MODELS_SORT',
+  SET_ERROR: 'SET_ERROR',
   RESET: 'RESET'
 };
 
@@ -52,7 +53,8 @@ export const DEFAULT_EXPERIMENT_DETAILS = {
   modelsTotalPages: 0,
   modelsSortMethod: MMDS_SORT_METHODS.ASC,
   modelsSortColumn: MMDS_SORT_COLUMN,
-  loading: false
+  loading: false,
+  error: null
 };
 
 const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultAction) => {
@@ -171,6 +173,11 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
           ...state,
           modelsSortMethod: action.payload.modelsSortMethod,
           modelsSortColumn: action.payload.modelsSortColumn
+        };
+      case ACTIONS.SET_ERROR:
+        return {
+          ...state,
+          error: action.payload.error
         };
     default:
       return state;

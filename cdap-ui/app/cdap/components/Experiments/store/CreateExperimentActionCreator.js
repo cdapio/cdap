@@ -161,6 +161,8 @@ function setSplitDetails(experimentId, splitId) {
         type: CREATEEXPERIMENTACTIONS.SET_SPLIT_INFO,
         payload: {splitInfo}
       });
+    }, (err) => {
+      setModelCreateError(`Failed to get split details: ${err.response || err}`);
     });
 }
 
@@ -174,7 +176,7 @@ function createExperiment() {
     description,
     outcome,
     srcpath,
-    directives
+    directives,
   };
   MyDataPrepApi
     .getSchema({
@@ -195,7 +197,10 @@ function createExperiment() {
         experimentId: experiment.name
       }, experiment);
     })
-    .subscribe(setExperimentCreated.bind(null, experiments_create.name));
+    .subscribe(
+      setExperimentCreated.bind(null, experiments_create.name),
+      (err) => setExperimentCreateError(`Failed to create experiment: ${err.response || err}`)
+    );
 }
 
 function pollForSplitStatus(experimentId, modelId) {
@@ -205,7 +210,7 @@ function pollForSplitStatus(experimentId, modelId) {
       experimentId,
       modelId
     };
-    let splitStautsPoll = myExperimentsApi
+    let splitStatusPoll = myExperimentsApi
       .pollModel(params)
       .subscribe(modelDetails => {
         let {status, split} = modelDetails;
@@ -213,7 +218,7 @@ function pollForSplitStatus(experimentId, modelId) {
           return;
         }
         if (status === 'Data Ready' || status === 'Split Failed') {
-          splitStautsPoll.unsubscribe();
+          splitStatusPoll.unsubscribe();
           return callback(split);
         }
         // TODO: Should this be called on split failed?
@@ -270,7 +275,7 @@ function createSplitAndUpdateStatus() {
     })
     .subscribe(
       setSplitDetails.bind(null, experiments_create.name),
-      (err) => console.log('Splitting Failed: ', err),
+      (err) => setModelCreateError(`Failed to split: ${err.response || err}`),
       () => console.log('Split Task complete ', arguments)
     );
 }
@@ -302,7 +307,7 @@ function createModel() {
           url
         );
       }, (err) => {
-        console.log('ERROR: ', err); // FIXME: We should surface the errors. There will be errors
+        setModelCreateError(`Failed to create model: ${err.response || err}`);
         setExperimentLoading(false);
       });
 }
@@ -329,6 +334,8 @@ function trainModel() {
       createExperimentStore.dispatch({
         type: CREATEEXPERIMENTACTIONS.SET_MODEL_TRAINED
       });
+    }, (err) => {
+      setModelCreateError(`Failed to train model: ${err.response || err}`);
     });
 }
 
@@ -418,6 +425,8 @@ const getExperimentForEdit = (experimentId) => {
           schema
         }
       });
+    }, (err) => {
+      setExperimentCreateError(`Failed to retrieve experiment: ${err.response || err}`);
     });
 };
 
@@ -508,7 +517,7 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
         }
       },
       (err) => {
-        console.log('Failed to retrieve experiment and model: ', err);
+        setExperimentCreateError(`Failed to retrieve experiment and model: ${err.response || err}`);
       }
     );
 };
@@ -540,6 +549,8 @@ function setAlgorithmList() {
             algorithmsList.filter(algo => algo.type === 'CLASSIFICATION')
         }
       });
+    }, (err) => {
+      setExperimentCreateError(`Failed to find algorithms for outcome: ${err.response || err}`);
     });
 }
 
@@ -574,9 +585,28 @@ function fetchAlgorithmsList() {
           algorithmsList
         }
       });
+    }, (err) => {
+      setExperimentCreateError(`Failed to fetch algorithms: ${err.response || err}`);
     });
 }
 
+function setExperimentCreateError(error) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_ERROR,
+    payload: {
+      error
+    }
+  });
+}
+
+function setModelCreateError(error) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_MODEL_ERROR,
+    payload: {
+      error
+    }
+  });
+}
 
 export {
   onExperimentNameChange,
@@ -605,5 +635,7 @@ export {
   setSplitFinalized,
   resetCreateExperimentsStore,
   fetchAlgorithmsList,
-  updateHyperParam
+  updateHyperParam,
+  setExperimentCreateError,
+  setModelCreateError
 };
