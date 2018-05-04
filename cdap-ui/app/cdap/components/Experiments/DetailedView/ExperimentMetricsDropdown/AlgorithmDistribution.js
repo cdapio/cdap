@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import * as d3Lib from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
-import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
+import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 const HEIGHT_OF_PIE_CHART = 190;

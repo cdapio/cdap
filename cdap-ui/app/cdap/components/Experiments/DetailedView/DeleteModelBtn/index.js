@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,17 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
-import {getModelsInExperiment} from 'components/Experiments/store/ActionCreator';
+import {getModelsInExperiment, setExperimentDetailError} from 'components/Experiments/store/ExperimentDetailActionCreator';
 import NamespaceStore from 'services/NamespaceStore';
 import {myExperimentsApi} from 'api/experiments';
 
-const deleteModel = (experimentId, modelId, callback, errCallback) => {
+const deleteModel = (experimentId, model, callback, errCallback) => {
   let {selectedNamespace: namespace} = NamespaceStore.getState();
   myExperimentsApi
     .deleteModelInExperiment({
       namespace,
       experimentId,
-      modelId
+      modelId: model.id
     })
     .subscribe(
       () => {
@@ -35,19 +35,20 @@ const deleteModel = (experimentId, modelId, callback, errCallback) => {
         callback();
       },
       err => {
-        let error = typeof err.response === 'string' ? err.response : JSON.stringify(err);
+        let error = `Failed to delete the model '${model.name}' - ${err.response || err}`;
         errCallback(error);
       }
     );
 };
-const deleteConfimElement = (model) => <div>Are you sure you want to delete <b>{model.name}</b> model </div>;
+
+const deleteConfirmElement = (model) => <div>Are you sure you want to delete the model <b>{model.name}</b>?</div>;
 
 export default function DeleteModelBtn({experimentId, model}) {
   return (
     <DeleteEntityBtn
-      confirmFn={deleteModel.bind(null, experimentId, model.id)}
+      confirmFn={deleteModel.bind(null, experimentId, model, null, setExperimentDetailError)}
       headerTitle={"Delete Model"}
-      confirmationElem={deleteConfimElement(model)}
+      confirmationElem={deleteConfirmElement(model)}
     />
   );
 }

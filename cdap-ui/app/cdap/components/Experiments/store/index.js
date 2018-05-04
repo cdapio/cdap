@@ -23,7 +23,8 @@ const ACTIONS = {
   SET_MODELS_IN_EXPERIMENT: 'SET_MODELS_IN_EXPERIMENT',
   SET_EXPERIMENTS_SORT: 'SET_EXPERIMENTS_SORT',
   SET_QUERY_PARAMS: 'SET_QUERY_PARAMS',
-  SET_PAGINATION: 'SET_PAGINATION'
+  SET_PAGINATION: 'SET_PAGINATION',
+  SET_ERROR: 'SET_ERROR'
 };
 
 export const MMDS_SORT_METHODS = {
@@ -42,7 +43,8 @@ export const DEFAULT_EXPERIMENTS = {
   totalCount: 0,
   limit: 10,
   loading: false,
-  modelsCount: 0
+  modelsCount: 0,
+  error: null
 };
 
 const experiments = (state = DEFAULT_EXPERIMENTS, action = defaultAction) => {
@@ -91,6 +93,11 @@ const experiments = (state = DEFAULT_EXPERIMENTS, action = defaultAction) => {
         sortMethod: action.payload.sortMethod,
         sortColumn: action.payload.sortColumn,
         offset: action.payload.offset
+      };
+    case ACTIONS.SET_ERROR:
+      return {
+        ...state,
+        error: action.payload.error
       };
     default:
       return state;
