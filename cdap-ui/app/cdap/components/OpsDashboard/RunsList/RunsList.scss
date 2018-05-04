@@ -28,4 +28,29 @@
       }
     }
   }
+
+  .grid-wrapper {
+    $global-header: 50px;
+    $header: 70px;
+    $graph-container: 384px;
+    $data-top-panel: 60px;
+    $footer: 54px;
+
+    height: calc(100vh - #{$global-header} - #{$header} - #{$graph-container} - #{$data-top-panel} - #{$footer});
+    min-height: 300px;
+
+    .grid.grid-container {
+      max-height: 100%;
+
+      .grid-header { font-weight: bold; }
+
+      .grid-body {
+        .grid-row {
+          padding: 0;
+
+          > div { padding: 10px; }
+        }
+      }
+    }
+  }
 }
