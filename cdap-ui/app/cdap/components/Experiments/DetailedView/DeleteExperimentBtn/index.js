@@ -26,7 +26,7 @@ const deleteExperiment = (experimentId, callback, errCallback) => {
   myExperimentsApi
     .deleteExperiment({
       namespace,
-      experimentId: 'asdfsfq'
+      experimentId
     })
     .subscribe(
       () => window.location.href =`${window.location.origin}/cdap/ns/${namespace}/experiments`,

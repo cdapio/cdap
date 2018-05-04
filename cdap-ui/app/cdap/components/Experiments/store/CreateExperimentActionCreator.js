@@ -176,7 +176,7 @@ function createExperiment() {
     description,
     outcome,
     srcpath,
-    directives,
+    directives
   };
   MyDataPrepApi
     .getSchema({
