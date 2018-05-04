@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package co.cask.cdap.runtime.spi;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.runtime.spi.SparkCompat;
 
 /**
- * Spark2 program runtime provider.
+ * Spark compat versions.
  */
-@ProgramRuntimeProvider.SupportedProgramType(ProgramType.SPARK)
-public class Spark2ProgramRuntimeProvider extends SparkProgramRuntimeProvider {
+public enum SparkCompat {
+  SPARK1_2_10("spark1_2.10"),
+  SPARK2_2_11("spark2_2.11");
 
-  public Spark2ProgramRuntimeProvider() {
-    super(SparkCompat.SPARK2_2_11);
+  private final String compat;
+
+  SparkCompat(String compat) {
+    this.compat = compat;
+  }
+
+  public String getCompat() {
+    return compat;
   }
 }

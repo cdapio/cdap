@@ -18,7 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.TestRunner;
-import co.cask.cdap.internal.app.spark.SparkCompat;
+import co.cask.cdap.runtime.spi.SparkCompat;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 

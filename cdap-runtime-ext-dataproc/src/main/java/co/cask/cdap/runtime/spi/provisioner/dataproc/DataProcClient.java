@@ -38,6 +38,7 @@ import com.google.cloud.dataproc.v1.DiskConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1.SoftwareConfig;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -79,12 +80,14 @@ public class DataProcClient implements AutoCloseable {
    * At this point, the cluster is likely not yet running, but in a provisioning state.
    *
    * @param name the name of the cluster to create
+   * @param imageVersion the image version for the cluster
    * @return the response for issuing the create
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws AlreadyExistsException if the cluster already exists
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public OperationSnapshot createCluster(String name) throws RetryableProvisionException, InterruptedException {
+  public OperationSnapshot createCluster(String name,
+                                         String imageVersion) throws RetryableProvisionException, InterruptedException {
 
     // TODO: figure out how to set labels
     try {
@@ -120,6 +123,7 @@ public class DataProcClient implements AutoCloseable {
                                             .addTags("https-server")
                                             .putAllMetadata(metadata)
                                             .build())
+                     .setSoftwareConfig(SoftwareConfig.newBuilder().setImageVersion(imageVersion))
                      .build())
         .build();
 

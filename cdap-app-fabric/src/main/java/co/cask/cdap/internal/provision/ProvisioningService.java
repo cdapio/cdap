@@ -20,15 +20,18 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
+import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
@@ -73,11 +76,13 @@ public class ProvisioningService extends AbstractIdleService {
   private final LocationFactory locationFactory;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
+  private final SparkCompat sparkCompat;
   private ExecutorService executorService;
 
   @Inject
-  ProvisioningService(ProvisionerProvider provisionerProvider, ProvisionerConfigProvider provisionerConfigProvider,
-                      ProvisionerNotifier provisionerNotifier,  LocationFactory locationFactory,
+  ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
+                      ProvisionerConfigProvider provisionerConfigProvider,
+                      ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
                       DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
@@ -92,6 +97,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                                    Collections.emptyMap(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.sparkCompat = SparkCompatReader.get(cConf);
   }
 
   @Override
@@ -175,7 +181,8 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     Map<String, String> properties = SystemArguments.getProfileProperties(args);
-    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties, createSSHContext(sshKeyInfo));
+    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties, sparkCompat,
+                                                               createSSHContext(sshKeyInfo));
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.REQUESTING_CREATE);
     ClusterInfo clusterInfo =
@@ -216,7 +223,7 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     Map<String, String> properties = existing.getProvisionerProperties();
-    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties,
+    ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties, sparkCompat,
                                                                createSSHContext(existing.getSshKeyInfo()));
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.REQUESTING_DELETE);

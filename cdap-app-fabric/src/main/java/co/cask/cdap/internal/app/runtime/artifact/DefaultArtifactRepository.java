@@ -40,7 +40,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.app.spark.SparkCompat;
+import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
@@ -102,7 +102,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.systemArtifactDirs = new HashSet<>();
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
-      String sparkDirStr = SparkCompat.get(cConf).getCompat();
+      String sparkDirStr = SparkCompatReader.get(cConf).getCompat();
 
       for (String dir : systemArtifactsDir.split(";")) {
         File file = new File(dir);

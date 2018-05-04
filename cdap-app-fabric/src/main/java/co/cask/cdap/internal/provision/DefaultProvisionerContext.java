@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -33,13 +34,15 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final ProgramRun programRun;
   private final Map<String, String> properties;
   private final SSHContext sshContext;
+  private final SparkCompat sparkCompat;
 
   public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
-                                   @Nullable SSHContext sshContext) {
+                                   SparkCompat sparkCompat, @Nullable SSHContext sshContext) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.properties = Collections.unmodifiableMap(properties);
     this.sshContext = sshContext;
+    this.sparkCompat = sparkCompat;
   }
 
   @Override
@@ -50,6 +53,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public SparkCompat getSparkCompat() {
+    return sparkCompat;
   }
 
   @Override
