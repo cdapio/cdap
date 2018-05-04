@@ -71,6 +71,7 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -107,6 +108,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -326,7 +328,7 @@ public abstract class DatasetServiceTestBase {
     urlPath = force ? urlPath + "?force=true" : urlPath;
     HttpRequest request = HttpRequest.put(getUrl(module.getNamespace(), urlPath))
       .addHeader("X-Class-Name", moduleClass.getName())
-      .withBody(moduleJar::getInputStream).build();
+      .withBody((ContentProvider<? extends InputStream>) moduleJar::getInputStream).build();
     return HttpRequests.execute(request);
   }
 
@@ -337,7 +339,7 @@ public abstract class DatasetServiceTestBase {
     Location moduleJar = createModuleJar(moduleClass, bundleEmbeddedJars);
     HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
       .addHeader("X-Class-Name", moduleClassName)
-      .withBody(moduleJar::getInputStream).build();
+      .withBody((ContentProvider<? extends InputStream>) moduleJar::getInputStream).build();
     return HttpRequests.execute(request).getResponseCode();
   }
 
