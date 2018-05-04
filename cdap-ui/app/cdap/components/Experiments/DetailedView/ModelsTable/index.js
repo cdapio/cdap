@@ -24,7 +24,8 @@ import {
   handleModelsSorting,
   getAlgorithmLabel,
   setActiveModel,
-  setExperimentDetailError
+  setExperimentDetailError,
+  getModelStatus
 } from 'components/Experiments/store/ActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
@@ -45,6 +46,8 @@ import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
 import Alert from 'components/Alert';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import {preventPropagation} from 'services/helpers';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = ['PREPARING', 'SPLITTING', 'DATA_READY'];
@@ -300,7 +303,31 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
     >
       {wrapContentWithTitleAttr(<IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
       {wrapContentWithTitleAttr(model.name)}
-      {wrapContentWithTitleAttr(<ModelStatusIndicator status={model.status || '--'} />)}
+      {wrapContentWithTitleAttr((
+        model.status !== 'error' ?
+          <ModelStatusIndicator status={model.status || '--'} />
+        :
+          (
+            <span>
+              <IconSVG
+                name="icon-exclamation-circle"
+                className="text-danger"
+                id={`error-${model.id}`}
+                onClick={(e) => {
+                  preventPropagation(e);
+                  getModelStatus(experimentId, model.id);
+                }}
+              />
+              <UncontrolledTooltip
+                placement="right"
+                delay={0}
+                target={`error-${model.id}`}
+              >
+                {`Failed to get status of model '${model.name}'. Click to try fetching model status again`}
+              </UncontrolledTooltip>
+            </span>
+          )
+      ))}
       {wrapContentWithTitleAttr((
         !inSplitStep ? (
           <span className="algorithm-cell" title={model.algorithmLabel}>

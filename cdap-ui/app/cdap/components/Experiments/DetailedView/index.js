@@ -21,7 +21,7 @@ import experimentDetailStore, {DEFAULT_EXPERIMENT_DETAILS} from 'components/Expe
 import {
   getExperimentDetails,
   getModelsInExperiment,
-  getModelStatus,
+  pollModelStatus,
   updateQueryParametersForModels,
   handleModelsPageChange,
   resetExperimentDetailStore,
@@ -65,7 +65,7 @@ export default class ExperimentDetails extends Component {
     });
     getExperimentDetails(experimentId);
     getModelsInExperiment(experimentId).subscribe(({models}) => {
-      models.forEach(model => this.modelStatusObservables.push(getModelStatus(experimentId, model.id)));
+      models.forEach(model => this.modelStatusObservables.push(pollModelStatus(experimentId, model.id)));
     });
   }
 

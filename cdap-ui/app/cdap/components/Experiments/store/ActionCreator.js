@@ -237,7 +237,7 @@ function getSplitsInExperiment(experimentId) {
     });
 }
 
-function getModelStatus(experimentId, modelId) {
+function pollModelStatus(experimentId, modelId) {
   return myExperimentsApi
     .pollModelStatus({
       namespace: getCurrentNamespace(),
@@ -252,8 +252,47 @@ function getModelStatus(experimentId, modelId) {
           modelStatus
         }
       });
-    }, (err) => {
-      console.log('Error getting status of model', err); // TODO: Change this by adding exclamation mark next to the model with error
+    }, () => {
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+        payload: {
+          modelId,
+          modelStatus: 'error'
+        }
+      });
+    });
+}
+
+function getModelStatus(experimentId, modelId) {
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+    payload: {
+      modelId,
+      modelStatus: 'loading'
+    }
+  });
+  myExperimentsApi
+    .getModelStatus({
+      namespace: getCurrentNamespace(),
+      experimentId,
+      modelId
+    })
+    .subscribe(modelStatus => {
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+        payload: {
+          modelId,
+          modelStatus
+        }
+      });
+    }, () => {
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+        payload: {
+          modelId,
+          modelStatus: 'error'
+        }
+      });
     });
 }
 
@@ -393,6 +432,7 @@ export {
   getModelsInExperiment,
   getSplitsInExperiment,
   getModelStatus,
+  pollModelStatus,
   setActiveModel,
   getAlgorithmLabel,
   getHyperParamLabel,
