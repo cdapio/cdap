@@ -14,3 +14,6 @@ target/
 cdap-config.json
 cdap-security-config.json
 coverage/
+.classpath
+.project
+.settings/

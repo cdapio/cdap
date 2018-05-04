@@ -32,6 +32,7 @@
           "widget-type": "textbox",
           "label": "Network",
           "name": "network",
+          "description": "Select a VPC network in the specified project to use for creating clusters with this profile.",
           "widget-attributes": {
             "default": "default"
           }
@@ -130,6 +131,7 @@
           "widget-type": "select",
           "label": "Number of Masters",
           "name": "masterNumNodes",
+          "description": "Master nodes contain the YARN Resource Manager, HDFS NameNode, and all job drivers",
           "widget-attributes": {
             "values": [
               1,
@@ -143,6 +145,7 @@
           "widget-type": "select",
           "label": "Cores",
           "name": "masterCPUs",
+          "description": "The number of virtual cores to allocate for master nodes",
           "widget-attributes": {
             "values": [
               1,
@@ -162,6 +165,7 @@
           "widget-type": "memory-textbox",
           "label": "Memory (GB)",
           "name": "masterMemoryMB",
+          "description": "The amount of memory in GB to allocate for master nodes",
           "widget-attributes": {
             "default": 15360,
             "min": 256,
@@ -177,6 +181,7 @@
           "widget-type": "number",
           "label": "Number of Workers",
           "name": "workerNumNodes",
+          "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
           "widget-attributes": {
             "default": 2,
             "min": 1,
@@ -187,6 +192,7 @@
           "widget-type": "select",
           "label": "Cores",
           "name": "workerCPUs",
+          "description": "The number of virtual cores to allocate for worker nodes",
           "widget-attributes": {
             "values": [
               1,
@@ -206,6 +212,7 @@
           "widget-type": "memory-textbox",
           "label": "Memory (GB)",
           "name": "workerMemoryMB",
+          "description": "The amount of memory in GB to allocate for worker nodes",
           "widget-attributes": {
             "default": 15360,
             "min": 256,
