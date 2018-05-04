@@ -16,10 +16,8 @@
 
 package co.cask.cdap.data2.transaction;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
-import com.google.common.base.Supplier;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
@@ -31,6 +29,8 @@ import org.apache.thrift.TException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Base class that helps in retrying certain calls to the transaction system.
@@ -44,7 +44,7 @@ import java.util.Set;
 public abstract class RetryingTransactionSystemClient implements TransactionSystemClient {
   private static final Predicate<Throwable> IS_RETRYABLE = new Predicate<Throwable>() {
     @Override
-    public boolean apply(Throwable input) {
+    public boolean test(Throwable input) {
       return input instanceof RuntimeException && input.getCause() != null && input.getCause() instanceof TException;
     }
   };

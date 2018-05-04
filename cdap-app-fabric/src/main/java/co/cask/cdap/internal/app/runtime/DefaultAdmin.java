@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,13 +79,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
     }
 
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws TopicAlreadyExistsException, IOException {
-          messagingAdmin.createTopic(topic);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> messagingAdmin.createTopic(topic), retryStrategy);
     } catch (TopicAlreadyExistsException | IOException | RuntimeException | Error e) {
       throw e;
     } catch (Exception e) {
@@ -102,13 +96,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
     }
 
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws TopicAlreadyExistsException, IOException {
-          messagingAdmin.createTopic(topic, properties);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> messagingAdmin.createTopic(topic, properties), retryStrategy);
     } catch (TopicAlreadyExistsException | IOException | RuntimeException | Error e) {
       throw e;
     } catch (Exception e) {
@@ -146,13 +134,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
     }
 
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws TopicNotFoundException, IOException {
-          messagingAdmin.updateTopic(topic, properties);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> messagingAdmin.updateTopic(topic, properties), retryStrategy);
     } catch (TopicNotFoundException | IOException | RuntimeException | Error e) {
       throw e;
     } catch (Exception e) {
@@ -168,13 +150,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
     }
 
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws TopicNotFoundException, IOException {
-          messagingAdmin.deleteTopic(topic);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> messagingAdmin.deleteTopic(topic), retryStrategy);
     } catch (TopicNotFoundException | IOException | RuntimeException | Error e) {
       throw e;
     } catch (Exception e) {

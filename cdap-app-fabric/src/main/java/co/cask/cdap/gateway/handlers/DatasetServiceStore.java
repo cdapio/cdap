@@ -31,7 +31,6 @@ import co.cask.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.collect.DiscreteDomains;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ranges;
@@ -75,20 +74,17 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   protected void startUp() throws Exception {
     final DatasetId serviceStoreDatasetInstanceId =
       NamespaceId.SYSTEM.dataset(Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
-    table = Retries.supplyWithRetries(new Supplier<NoTxKeyValueTable>() {
-      @Override
-      public NoTxKeyValueTable get() {
-        try {
-          return DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
-                                                 NoTxKeyValueTable.class.getName(),
-                                                 DatasetProperties.EMPTY, null);
-        } catch (Exception e) {
-          // Throwing RetryableException here is just to make it retry getting the dataset
-          // an exception here usually means there is an hbase problem
-          LOG.warn("Error getting service store dataset {}. Will retry after some time: {}",
-                   serviceStoreDatasetInstanceId, e.getMessage());
-          throw new RetryableException(e);
-        }
+    table = Retries.supplyWithRetries(() -> {
+      try {
+        return DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
+                                               NoTxKeyValueTable.class.getName(),
+                                               DatasetProperties.EMPTY, null);
+      } catch (Exception e) {
+        // Throwing RetryableException here is just to make it retry getting the dataset
+        // an exception here usually means there is an hbase problem
+        LOG.warn("Error getting service store dataset {}. Will retry after some time: {}",
+                 serviceStoreDatasetInstanceId, e.getMessage());
+        throw new RetryableException(e);
       }
     }, RetryStrategies.exponentialDelay(1, 30, TimeUnit.SECONDS));
   }
@@ -118,7 +114,8 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
     Preconditions.checkNotNull(serviceName, "Service name should not be null.");
 
     RestartStatus status = isSuccess ? RestartStatus.SUCCESS : RestartStatus.FAILURE;
-    int instanceCount = (this.getServiceInstance(serviceName) == null) ? 0 : this.getServiceInstance(serviceName);
+    Integer serviceInstance = getServiceInstance(serviceName);
+    int instanceCount = (serviceInstance == null) ? 0 : serviceInstance;
     Set<Integer> instancesToRestart = Ranges.closedOpen(0, instanceCount).asSet(DiscreteDomains.integers());
 
     RestartServiceInstancesStatus restartStatus =

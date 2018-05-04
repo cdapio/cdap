@@ -18,13 +18,13 @@ package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
-import com.google.common.base.Supplier;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * Retries methods used during long transactions.
@@ -37,23 +37,15 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
 
   @Override
   public Transaction startLong() {
-    return supplyWithRetries(new Supplier<Transaction>() {
-      @Override
-      public Transaction get() {
-        return delegate.startLong();
-      }
-    });
+    return supplyWithRetries(delegate::startLong);
   }
 
   @Override
   public boolean canCommit(final Transaction tx,
                            final Collection<byte[]> changeIds) throws TransactionNotInProgressException {
-    return callWithRetries(new Retries.Callable<Boolean, TransactionNotInProgressException>() {
-      @Override
-      public Boolean call() throws TransactionNotInProgressException {
-        //noinspection deprecation
-        return delegate.canCommit(tx, changeIds);
-      }
+    return callWithRetries(() -> {
+      //noinspection deprecation
+      return delegate.canCommit(tx, changeIds);
     });
   }
 
@@ -71,12 +63,9 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
 
   @Override
   public boolean commit(final Transaction tx) throws TransactionNotInProgressException {
-    return callWithRetries(new Retries.Callable<Boolean, TransactionNotInProgressException>() {
-      @Override
-      public Boolean call() throws TransactionNotInProgressException {
-        //noinspection deprecation
-        return delegate.commit(tx);
-      }
+    return callWithRetries(() -> {
+      //noinspection deprecation
+      return delegate.commit(tx);
     });
   }
 
@@ -104,11 +93,6 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
 
   @Override
   public boolean invalidate(final long tx) {
-    return supplyWithRetries(new Supplier<Boolean>() {
-      @Override
-      public Boolean get() {
-        return delegate.invalidate(tx);
-      }
-    });
+    return supplyWithRetries(() -> delegate.invalidate(tx));
   }
 }

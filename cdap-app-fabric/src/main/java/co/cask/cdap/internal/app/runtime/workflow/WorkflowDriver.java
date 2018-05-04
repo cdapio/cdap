@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -566,13 +566,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
 
       try {
-        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-          @Override
-          public Void call() throws Exception {
-            datasetFramework.deleteInstance(instanceId);
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
+        Retries.runWithRetries(() -> datasetFramework.deleteInstance(instanceId),
+                               RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS,
+                                                        TimeUnit.SECONDS));
       } catch (Exception e) {
         LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, e);
       }
