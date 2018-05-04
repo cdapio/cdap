@@ -25,6 +25,7 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
+import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -35,6 +36,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +62,8 @@ public class DecisionTreeRegressionAppTest extends TestBaseWithSpark2 {
     URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     URL addDataURL = new URL(serviceURL, "labels");
     HttpRequest request = HttpRequest.builder(HttpMethod.PUT, addDataURL)
-      .withBody(() -> getClass().getClassLoader().getResourceAsStream("sample_libsvm_data.txt"))
+      .withBody((ContentProvider<? extends InputStream>) () ->
+        getClass().getClassLoader().getResourceAsStream("sample_libsvm_data.txt"))
       .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());

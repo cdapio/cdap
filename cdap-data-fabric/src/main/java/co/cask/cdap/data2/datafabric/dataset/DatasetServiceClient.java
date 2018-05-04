@@ -38,6 +38,7 @@ import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -53,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.util.Collection;
@@ -250,7 +252,7 @@ class DatasetServiceClient {
 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT, "modules/" + moduleName)
       .addHeader("X-Class-Name", className)
-      .withBody(jarLocation::getInputStream);
+      .withBody((ContentProvider<? extends InputStream>) jarLocation::getInputStream);
     HttpResponse response = doRequest(requestBuilder);
 
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
