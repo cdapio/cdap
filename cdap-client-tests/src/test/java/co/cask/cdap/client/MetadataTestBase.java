@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.client.app.ConfigurableProgramsApp2;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.id.Id;
@@ -36,11 +37,11 @@ import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import com.google.common.collect.Iterators;
-import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -78,12 +79,12 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addAppArtifact(ArtifactId artifactId, Class<?> cls) throws Exception {
-    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(createAppJarFile(cls)));
+      artifactClient.add(artifactId, null, () -> Files.newInputStream(createAppJarFile(cls).toPath()));
   }
 
   protected void addPluginArtifact(ArtifactId artifactId, Class<?> cls, Manifest manifest,
                                    @Nullable Set<ArtifactRange> parents) throws Exception {
-    artifactClient.add(artifactId, parents, Files.newInputStreamSupplier(createArtifactJarFile(cls, manifest)));
+    artifactClient.add(artifactId, parents, () -> Files.newInputStream(createArtifactJarFile(cls, manifest).toPath()));
   }
 
   protected void addProperties(ApplicationId app, @Nullable Map<String, String> properties) throws Exception {

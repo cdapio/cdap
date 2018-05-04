@@ -33,6 +33,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -40,10 +41,9 @@ import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,6 +51,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -231,7 +232,8 @@ public class StreamClient {
    */
   public void sendFile(StreamId stream, String contentType,
                        File file) throws IOException, StreamNotFoundException, UnauthenticatedException {
-    sendBatch(stream, contentType, Files.newInputStreamSupplier(file));
+    Preconditions.checkNotNull(file);
+    sendBatch(stream, contentType, () -> new FileInputStream(file));
   }
 
   /**
@@ -244,7 +246,7 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void sendBatch(StreamId stream, String contentType,
-                        InputSupplier<? extends InputStream> inputSupplier)
+                        ContentProvider<? extends InputStream> inputSupplier)
     throws IOException, StreamNotFoundException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(stream.getParent(),

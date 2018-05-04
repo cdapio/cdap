@@ -239,13 +239,8 @@ public class ServiceClientTestRun extends ClientTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "1.0.0");
     final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, AppReturnsArgs.class, manifest);
-    InputSupplier<InputStream> inputSupplier = new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return appJarLoc.getInputStream();
-      }
-    };
-    artifactClient.add(NamespaceId.DEFAULT, artifactId.getArtifact(), inputSupplier, artifactId.getVersion());
+    artifactClient.add(NamespaceId.DEFAULT, artifactId.getArtifact(),
+                       appJarLoc::getInputStream, artifactId.getVersion());
     appJarLoc.delete();
   }
 

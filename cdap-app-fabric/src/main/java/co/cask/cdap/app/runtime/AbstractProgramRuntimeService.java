@@ -50,7 +50,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -61,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -161,7 +161,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     try {
       File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
       // Unpack the JAR file
-      BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
+      BundleJarUtil.unJar(() -> Files.newInputStream(programJar.toPath()), unpackedDir);
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {

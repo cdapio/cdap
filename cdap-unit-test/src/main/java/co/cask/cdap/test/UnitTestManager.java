@@ -28,7 +28,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
+import co.cask.cdap.app.runtime.spark.SparkResourceFilters;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
@@ -116,7 +116,7 @@ public class UnitTestManager extends AbstractTestManager {
         // allow developers to exclude spark-core module from their unit tests (it'll work if they don't use spark)
         getClass().getClassLoader().loadClass("co.cask.cdap.app.runtime.spark.SparkRuntimeUtils");
         // If it is loading by spark framework, don't include it in the app JAR
-        return !SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
+        return !SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
       } catch (ClassNotFoundException e) {
         if (logWarnOnce.compareAndSet(false, true)) {
           LOG.warn("Spark will not be available for unit tests.");

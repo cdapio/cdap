@@ -29,15 +29,12 @@ import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -63,12 +60,7 @@ public class DecisionTreeRegressionAppTest extends TestBaseWithSpark2 {
     URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     URL addDataURL = new URL(serviceURL, "labels");
     HttpRequest request = HttpRequest.builder(HttpMethod.PUT, addDataURL)
-      .withBody(new InputSupplier<InputStream>() {
-        @Override
-        public InputStream getInput() throws IOException {
-          return getClass().getClassLoader().getResourceAsStream("sample_libsvm_data.txt");
-        }
-      })
+      .withBody(() -> getClass().getClassLoader().getResourceAsStream("sample_libsvm_data.txt"))
       .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());

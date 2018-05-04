@@ -326,7 +326,7 @@ public abstract class DatasetServiceTestBase {
     urlPath = force ? urlPath + "?force=true" : urlPath;
     HttpRequest request = HttpRequest.put(getUrl(module.getNamespace(), urlPath))
       .addHeader("X-Class-Name", moduleClass.getName())
-      .withBody(Locations.newInputSupplier(moduleJar)).build();
+      .withBody(moduleJar::getInputStream).build();
     return HttpRequests.execute(request);
   }
 
@@ -337,7 +337,7 @@ public abstract class DatasetServiceTestBase {
     Location moduleJar = createModuleJar(moduleClass, bundleEmbeddedJars);
     HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
       .addHeader("X-Class-Name", moduleClassName)
-      .withBody(Locations.newInputSupplier(moduleJar)).build();
+      .withBody(moduleJar::getInputStream).build();
     return HttpRequests.execute(request).getResponseCode();
   }
 

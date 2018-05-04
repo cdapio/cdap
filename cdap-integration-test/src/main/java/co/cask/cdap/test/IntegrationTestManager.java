@@ -27,6 +27,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.runtime.spark.SparkResourceFilters;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ArtifactClient;
@@ -39,7 +40,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
@@ -66,9 +66,6 @@ import co.cask.cdap.test.remote.RemoteStreamManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.Resources;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.api.ClassAcceptor;
@@ -85,6 +82,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -115,7 +113,7 @@ public class IntegrationTestManager extends AbstractTestManager {
         return true;
       }
       // If it is loading by spark framework, don't include it in the app JAR
-      return !SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
+      return !SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
     }
   };
 
@@ -177,7 +175,10 @@ public class IntegrationTestManager extends AbstractTestManager {
         } else {
           Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, new Manifest(),
                                                              CLASS_ACCEPTOR, bundleEmbeddedJars);
-          Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+
+          try (InputStream input = appJar.getInputStream()) {
+            Files.copy(input, appJarFile.toPath());
+          }
         }
         applicationClient.deploy(namespace, appJarFile, appConfig);
       } finally {
@@ -210,12 +211,7 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile) throws Exception {
-    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return new FileInputStream(artifactFile);
-      }
-    });
+    artifactClient.add(artifactId, null, () -> new FileInputStream(artifactFile));
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
@@ -267,12 +263,7 @@ public class IntegrationTestManager extends AbstractTestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    artifactClient.add(artifactId, parents, new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return appJar.getInputStream();
-      }
-    });
+    artifactClient.add(artifactId, parents, appJar::getInputStream);
     appJar.delete();
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
@@ -298,12 +289,7 @@ public class IntegrationTestManager extends AbstractTestManager {
     artifactClient.add(
       Ids.namespace(artifactId.getNamespace()),
       artifactId.getArtifact(),
-      new InputSupplier<InputStream>() {
-        @Override
-        public InputStream getInput() throws IOException {
-          return appJar.getInputStream();
-        }
-      },
+      appJar::getInputStream,
       artifactId.getVersion(),
       parents,
       additionalPlugins
@@ -332,7 +318,9 @@ public class IntegrationTestManager extends AbstractTestManager {
     String version = String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis());
     File moduleJarFile = new File(tmpFolder, String.format("%s-%s.jar", cls.getSimpleName(), version));
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest(), CLASS_ACCEPTOR);
-    Files.copy(Locations.newInputSupplier(deploymentJar), moduleJarFile);
+    try (InputStream input = deploymentJar.getInputStream()) {
+      Files.copy(input, moduleJarFile.toPath());
+    }
     return moduleJarFile;
   }
 
@@ -415,8 +403,8 @@ public class IntegrationTestManager extends AbstractTestManager {
   private void copyJarFile(URL jarURL, File file) {
     try {
       JarURLConnection jarConn = (JarURLConnection) jarURL.openConnection();
-      try {
-        Files.copy(Resources.newInputStreamSupplier(jarConn.getJarFileURL()), file);
+      try (InputStream is = jarConn.getJarFileURL().openStream()) {
+        Files.copy(is, file.toPath());
       } finally {
         jarConn.getJarFile().close();
       }
