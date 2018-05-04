@@ -27,6 +27,8 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.AccessConfig;
+import com.google.api.services.compute.model.Firewall;
+import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.cloud.dataproc.v1.Cluster;
@@ -41,12 +43,14 @@ import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -84,18 +88,26 @@ public class DataProcClient implements AutoCloseable {
    * @return the response for issuing the create
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws AlreadyExistsException if the cluster already exists
+   * @throws IOException if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public OperationSnapshot createCluster(String name,
-                                         String imageVersion) throws RetryableProvisionException, InterruptedException {
+  public OperationSnapshot createCluster(String name, String imageVersion)
+    throws RetryableProvisionException, InterruptedException, IOException {
 
-    // TODO: figure out how to set labels
     try {
       Map<String, String> metadata = new HashMap<>();
       SSHPublicKey publicKey = conf.getPublicKey();
       if (publicKey != null) {
         // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
         metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
+      }
+
+      GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
+        .setNetworkUri(conf.getNetwork())
+        .setZoneUri(conf.getZone())
+        .putAllMetadata(metadata);
+      for (String targetTag : getFirewallTargetTags()) {
+        clusterConfig.addTags(targetTag);
       }
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
@@ -117,12 +129,7 @@ public class DataProcClient implements AutoCloseable {
                                                          .setNumLocalSsds(0)
                                                          .build())
                                         .build())
-                     .setGceClusterConfig(GceClusterConfig.newBuilder()
-                                            .setNetworkUri(conf.getNetwork())
-                                            .setZoneUri(conf.getZone())
-                                            .addTags("https-server")
-                                            .putAllMetadata(metadata)
-                                            .build())
+                     .setGceClusterConfig(clusterConfig.build())
                      .setSoftwareConfig(SoftwareConfig.newBuilder().setImageVersion(imageVersion))
                      .build())
         .build();
@@ -207,6 +214,67 @@ public class DataProcClient implements AutoCloseable {
     }
     return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
       cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
+  }
+
+  // finds ingress firewalls for the configured network that open ports 22 and 443,
+  // returning target tags for those rules
+  private Collection<String> getFirewallTargetTags() throws IOException {
+    // figure out the tag to open port 443
+    FirewallList firewalls = compute.firewalls().list(conf.getProjectId()).execute();
+    List<String> tags = new ArrayList<>();
+    boolean found22 = false;
+    boolean found443 = false;
+    for (Firewall firewall : firewalls.getItems()) {
+      // network is a url like https://www.googleapis.com/compute/v1/projects/<project>/<region>/networks/<name>
+      // we want to get the last section of the path and compare to the configured network name
+      String networkName = Paths.get(URI.create(firewall.getNetwork()).getPath()).getFileName().toString();
+      if (!networkName.equals(conf.getNetwork())) {
+        continue;
+      }
+
+      String direction = firewall.getDirection();
+      if (!"INGRESS".equals(direction)) {
+        continue;
+      }
+
+      for (Firewall.Allowed allowed : firewall.getAllowed()) {
+        String protocol = allowed.getIPProtocol();
+        boolean addTag = false;
+        if ("ALL".equals(protocol)) {
+          found443 = true;
+          found22 = true;
+          addTag = true;
+        } else if ("tcp".equals(protocol)) {
+          if (allowed.getPorts().contains("443")) {
+            found443 = true;
+            addTag = true;
+          }
+          if (allowed.getPorts().contains("22")) {
+            found22 = true;
+            addTag = true;
+          }
+        }
+        if (addTag && firewall.getTargetTags() != null && !firewall.getTargetTags().isEmpty()) {
+          tags.add(firewall.getTargetTags().iterator().next());
+        }
+      }
+    }
+
+    if (!found443 && !found22) {
+      throw new IllegalArgumentException(String.format(
+        "Could not find an ingress firewall rule for network '%s' for port 443 and port 22. " +
+          "Please create a rule to allow incoming traffic on ports 443 and 22 for your IP range",
+        conf.getNetwork()));
+    } else if (!found443) {
+      throw new IllegalArgumentException(String.format(
+        "Could not find an ingress firewall rule for network '%s' for port 443. " +
+          "Please create a rule to allow incoming traffic on port 443 for your IP range", conf.getNetwork()));
+    } else if (!found22) {
+      throw new IllegalArgumentException(String.format(
+        "Could not find an ingress firewall rule for network '%s' for port 22. " +
+          "Please create a rule to allow incoming traffic on port 22 for your IP range", conf.getNetwork()));
+    }
+    return tags;
   }
 
   private Node getNode(Compute compute, String type, String nodeName) throws IOException {
