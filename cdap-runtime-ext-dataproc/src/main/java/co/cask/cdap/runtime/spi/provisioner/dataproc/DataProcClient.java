@@ -43,7 +43,6 @@ import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -52,11 +51,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
@@ -222,12 +224,12 @@ public class DataProcClient implements AutoCloseable {
     // figure out the tag to open port 443
     FirewallList firewalls = compute.firewalls().list(conf.getProjectId()).execute();
     List<String> tags = new ArrayList<>();
-    boolean found22 = false;
-    boolean found443 = false;
+    Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
     for (Firewall firewall : firewalls.getItems()) {
       // network is a url like https://www.googleapis.com/compute/v1/projects/<project>/<region>/networks/<name>
       // we want to get the last section of the path and compare to the configured network name
-      String networkName = Paths.get(URI.create(firewall.getNetwork()).getPath()).getFileName().toString();
+      int idx = firewall.getNetwork().lastIndexOf('/');
+      String networkName = firewall.getNetwork().substring(idx + 1);
       if (!networkName.equals(conf.getNetwork())) {
         continue;
       }
@@ -241,16 +243,15 @@ public class DataProcClient implements AutoCloseable {
         String protocol = allowed.getIPProtocol();
         boolean addTag = false;
         if ("ALL".equals(protocol)) {
-          found443 = true;
-          found22 = true;
+          requiredPorts.clear();
           addTag = true;
         } else if ("tcp".equals(protocol)) {
-          if (allowed.getPorts().contains("443")) {
-            found443 = true;
+          if (allowed.getPorts().contains(String.valueOf(FirewallPort.HTTPS.port))) {
+            requiredPorts.remove(FirewallPort.HTTPS);
             addTag = true;
           }
-          if (allowed.getPorts().contains("22")) {
-            found22 = true;
+          if (allowed.getPorts().contains(String.valueOf(FirewallPort.SSH.port))) {
+            requiredPorts.remove(FirewallPort.SSH);
             addTag = true;
           }
         }
@@ -260,19 +261,12 @@ public class DataProcClient implements AutoCloseable {
       }
     }
 
-    if (!found443 && !found22) {
+    if (!requiredPorts.isEmpty()) {
+      String portList = requiredPorts.stream().map(p -> String.valueOf(p.port)).collect(Collectors.joining(","));
       throw new IllegalArgumentException(String.format(
-        "Could not find an ingress firewall rule for network '%s' for port 443 and port 22. " +
-          "Please create a rule to allow incoming traffic on ports 443 and 22 for your IP range",
-        conf.getNetwork()));
-    } else if (!found443) {
-      throw new IllegalArgumentException(String.format(
-        "Could not find an ingress firewall rule for network '%s' for port 443. " +
-          "Please create a rule to allow incoming traffic on port 443 for your IP range", conf.getNetwork()));
-    } else if (!found22) {
-      throw new IllegalArgumentException(String.format(
-        "Could not find an ingress firewall rule for network '%s' for port 22. " +
-          "Please create a rule to allow incoming traffic on port 22 for your IP range", conf.getNetwork()));
+        "Could not find an ingress firewall rule for network '%s' for ports '%s'. " +
+          "Please create a rule to allow incoming traffic on those ports for your IP range.",
+        conf.getNetwork(), portList));
     }
     return tags;
   }
@@ -342,5 +336,18 @@ public class DataProcClient implements AutoCloseable {
       throw new RetryableProvisionException(e);
     }
     throw e;
+  }
+
+  /**
+   * Firewall ports that we're concerned about.
+   */
+  private enum FirewallPort {
+    SSH(22),
+    HTTPS(443);
+    private final int port;
+
+    FirewallPort(int port) {
+      this.port = port;
+    }
   }
 }
