@@ -322,13 +322,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     final WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
     workerManager.start();
-    workerManager.waitForStopped(5, TimeUnit.SECONDS);
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.COMPLETED).isEmpty();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 10, TimeUnit.SECONDS);
 
     final ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
     serviceManager.start();
@@ -337,12 +331,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     callServiceGet(serviceURL, "dummy");
     serviceManager.stop();
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return serviceManager.getHistory(ProgramRunStatus.KILLED).isEmpty();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(AppWithPlugin.WORKFLOW);
     workflowManager.start();
@@ -1112,7 +1100,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
     // Wait for the worker completed to make sure a value has been written to the dataset
-    pingingWorker.waitForStopped(30, TimeUnit.SECONDS);
+    pingingWorker.waitForRun(ProgramRunStatus.COMPLETED, 30, TimeUnit.SECONDS);
 
     // Validate the value in the dataset by reading it via the service
     result = callServiceGet(serviceManager.getServiceURL(), "read/" + AppUsingGetServiceURL.DATASET_KEY);
@@ -1639,7 +1627,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       .getServiceManager(AppWithServices.DATASET_WORKER_SERVICE_NAME).start(args);
     WorkerManager datasetWorker =
       applicationManager.getWorkerManager(AppWithServices.DATASET_UPDATE_WORKER).start(args);
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    datasetWorker.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    datasetWorkerServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     ServiceManager noopManager = applicationManager.getServiceManager("NoOpService").start();
     noopManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
@@ -1682,6 +1672,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(200, response.getResponseCode());
 
     datasetWorker.stop();
+    datasetWorker.waitForStopped(10, TimeUnit.SECONDS);
+
     datasetWorkerServiceManager.stop();
     datasetWorkerServiceManager.waitForStopped(10, TimeUnit.SECONDS);
     LOG.info("DatasetUpdateService Stopped");

@@ -329,6 +329,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         ProgramOptions newProgramOptions = new SimpleProgramOptions(programOptions.getProgramId(),
                                                                     new BasicArguments(systemArgs),
                                                                     programOptions.getUserArguments());
+
+        // Publish the program STARTING state before starting the program
+        programStateWriter.start(programRunId, newProgramOptions, null, programDescriptor);
+
         // start the program run
         tasks.add(() -> {
           String oldUser = SecurityRequestContext.getUserId();

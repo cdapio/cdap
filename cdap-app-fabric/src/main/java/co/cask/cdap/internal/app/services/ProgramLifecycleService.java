@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
@@ -112,14 +113,15 @@ public class ProgramLifecycleService {
   private final AuthenticationContext authenticationContext;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
   ProgramLifecycleService(Store store, ProfileStore profileStore, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
-                          ProvisionerNotifier provisionerNotifier,
-                          ProvisioningService provisioningService) {
+                          ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
+                          ProgramStateWriter programStateWriter) {
     this.store = store;
     this.profileStore = profileStore;
     this.runtimeService = runtimeService;
@@ -129,6 +131,7 @@ public class ProgramLifecycleService {
     this.authenticationContext = authenticationContext;
     this.provisionerNotifier = provisionerNotifier;
     this.provisioningService = provisioningService;
+    this.programStateWriter = programStateWriter;
   }
 
   /**
@@ -318,6 +321,7 @@ public class ProgramLifecycleService {
 
   /**
    * Starts a Program with the specified argument overrides, skipping cluster lifecycle steps in the run.
+   * NOTE: This method should only be called from preview runner.
    *
    * @param programId the {@link ProgramId} to start/stop
    * @param overrides the arguments to override in the program's configured user arguments before starting
@@ -352,8 +356,10 @@ public class ProgramLifecycleService {
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramOptions options = new SimpleProgramOptions(programId, systemArguments, userArguments, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
-    RunId runId = RunIds.generate();
-    return startInternal(programDescriptor, options, programId.run(runId));
+    ProgramRunId programRunId = programId.run(RunIds.generate());
+
+    programStateWriter.start(programRunId, options, null, programDescriptor);
+    return startInternal(programDescriptor, options, programRunId);
   }
 
   /**
@@ -366,9 +372,9 @@ public class ProgramLifecycleService {
    * @return controller for the program
    * @throws IOException
    */
-  public synchronized ProgramController startInternal(ProgramDescriptor programDescriptor,
-                                                      ProgramOptions programOptions,
-                                                      ProgramRunId programRunId) throws IOException {
+  synchronized ProgramController startInternal(ProgramDescriptor programDescriptor,
+                                               ProgramOptions programOptions,
+                                               ProgramRunId programRunId) throws IOException {
     RunId runId = RunIds.fromString(programRunId.getRun());
     RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
     if (runtimeInfo != null) {

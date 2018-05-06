@@ -121,10 +121,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
     ProgramId programId = programDescriptor.getProgramId();
-
-    // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
-    programStateWriter.start(programId.run(runId), options, null, programDescriptor);
-
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
 
     // Creates the ProgramRunner based on the cluster mode
