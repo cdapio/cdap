@@ -88,7 +88,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     return false;
   }
 
-  private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
+  private RouteDestination getV3RoutingService(String[] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO(Rohit) find a better way to handle that - this looks hackish
       // This needs to now changed especially metadata since now it can have custom parts
@@ -111,39 +111,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return METRICS;
-    } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, null, null, null, null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, null, null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata") ||
-
-      matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, null, null, null, null, "metadata",
-              "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, null, null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "properties") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata", "properties") ||
-
-      matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, null, null, null, null, "metadata",
-              "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, null, null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata", "tags") ||
-
-      matches(uriParts, "v3", "namespaces", null, "metadata", "search") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "runs", null, "metadata")) {
+    } else if (endsWith(uriParts, "metadata") ||
+      endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", "*") ||
+      endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", "*") ||
+      endsWith(uriParts, "metadata", "search") || endsWith(uriParts, "lineage")) {
       return METADATA_SERVICE;
     } else if (matches(uriParts, "v3", "security", "authorization") ||
       matches(uriParts, "v3", "namespaces", null, "securekeys")) {
@@ -240,6 +211,16 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         continue;
       }
       if (!expected[i].equals(actual[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean endsWith(String[] actual, String... expectedEnd) {
+    for (int i = expectedEnd.length - 1; i >= 0; i--) {
+      if (!expectedEnd[i].equalsIgnoreCase("*") &&
+        !actual[actual.length - (expectedEnd.length - i)].equalsIgnoreCase(expectedEnd[i])) {
         return false;
       }
     }
