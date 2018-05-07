@@ -33,6 +33,7 @@ import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Binding;
+import com.google.inject.BindingAnnotation;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -43,14 +44,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A {@link ProgramRuntimeProvider} that provides runtime system support for {@link ProgramType#SPARK} program.
@@ -187,7 +191,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     try {
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
       try {
-        return createInstance(injector, classLoader.loadClass(programRunnerClassName), classLoader);
+        return createInstance(injector, Key.get(classLoader.loadClass(programRunnerClassName)), classLoader);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -203,39 +207,57 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
    * hence the ClassLoader of that type
    *
    * @param injector The Guice Injector for acquiring CDAP system instances
-   * @param type the {@link Class} of the instance to create
+   * @param key the guice binding {@link Key} for acquiring an instance that binded to the given key.
    * @return a new instance of the given {@link Type}
    */
-  private <T> T createInstance(Injector injector, Type type, ClassLoader sparkClassLoader) throws Exception {
-    Key<?> typeKey = Key.get(type);
-
+  private <T> T createInstance(Injector injector, Key<?> key, ClassLoader sparkClassLoader) throws Exception {
     // If there is an explicit instance binding, return the binded instance directly
-    Binding<?> binding = injector.getExistingBinding(typeKey);
+    Binding<?> binding = injector.getExistingBinding(key);
     if (binding != null && binding instanceof InstanceBinding) {
       return (T) ((InstanceBinding) binding).getInstance();
     }
 
     @SuppressWarnings("unchecked")
-    Class<T> rawType = (Class<T>) typeKey.getTypeLiteral().getRawType();
+    Class<T> rawType = (Class<T>) key.getTypeLiteral().getRawType();
 
     Constructor<T> constructor = findInjectableConstructor(rawType);
     constructor.setAccessible(true);
 
     // Acquire the instances for each parameter for the constructor
     Type[] paramTypes = constructor.getGenericParameterTypes();
+    Annotation[][] paramAnnotations = constructor.getParameterAnnotations();
     Object[] args = new Object[paramTypes.length];
-    int i = 0;
-    for (Type paramType : paramTypes) {
-      Key<?> paramTypeKey = Key.get(paramType);
+
+    for (int i = 0; i < paramTypes.length; i++) {
+      Type paramType = paramTypes[i];
+
+      // Find if there is an annotation which itself is annotated with @BindingAnnotation.
+      // If there is one, and it can only have one according to Guice,
+      // use it to construct the binding key for the parmater.
+      // Otherwise, just use the parameter type.
+      Optional<Annotation> bindingAnnotation = Arrays.stream(paramAnnotations[i])
+        .filter(paramAnnotation ->
+                  Arrays.stream(paramAnnotation.annotationType().getAnnotations())
+                    .map(Annotation::annotationType)
+                    .anyMatch(BindingAnnotation.class::equals))
+        .findFirst();
+
+      Key<?> paramTypeKey;
+      if (bindingAnnotation.isPresent()) {
+        paramTypeKey = Key.get(paramType, bindingAnnotation.get());
+      } else {
+        paramTypeKey = Key.get(paramType);
+      }
 
       // If the classloader of the parameter is the same as the Spark ClassLoader, we need to create the
       // instance manually instead of getting through the Guice Injector to avoid ClassLoader leakage
       if (paramTypeKey.getTypeLiteral().getRawType().getClassLoader() == sparkClassLoader) {
-        args[i++] = createInstance(injector, paramType, sparkClassLoader);
+        args[i] = createInstance(injector, paramTypeKey, sparkClassLoader);
       } else {
-        args[i++] = injector.getInstance(paramTypeKey);
+        args[i] = injector.getInstance(paramTypeKey);
       }
     }
+
     return constructor.newInstance(args);
   }
 
@@ -336,6 +358,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
         urls.add(file.toURI().toURL());
       }
     }
+
     return urls.toArray(new URL[urls.size()]);
   }
 

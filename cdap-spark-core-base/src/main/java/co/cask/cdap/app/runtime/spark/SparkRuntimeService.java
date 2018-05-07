@@ -138,6 +138,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final AtomicReference<ListenableFuture<RunId>> completion;
   private final BasicSparkClientContext context;
+  private final boolean isLocal;
   private final ProgramLifecycle<SparkRuntimeContext> programLifecycle;
 
   private Callable<ListenableFuture<RunId>> submitSpark;
@@ -145,7 +146,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
-                      LocationFactory locationFactory) {
+                      LocationFactory locationFactory, boolean isLocal) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
@@ -154,6 +155,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.locationFactory = locationFactory;
     this.completion = new AtomicReference<>();
     this.context = new BasicSparkClientContext(runtimeContext);
+    this.isLocal = isLocal;
     this.programLifecycle = new ProgramLifecycle<SparkRuntimeContext>() {
       @Override
       public void initialize(SparkRuntimeContext runtimeContext) throws Exception {
@@ -215,7 +217,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         SparkRuntimeEnv.setProperty(key, sparkDefaultConf.getProperty(key));
       }
 
-      if (contextConfig.isLocal()) {
+      if (isLocal) {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
 
@@ -297,9 +299,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
 
       final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, classpath,
-                                                              context.getLocalizeResources(),
-                                                              contextConfig.isLocal(),
-                                                              pyFiles);
+                                                              context.getLocalizeResources(), isLocal, pyFiles);
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
         public ListenableFuture<RunId> call() throws Exception {
@@ -539,7 +539,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       // In local mode, since SPARK_HOME is not set, we need to set this property such that it will get pickup
       // in PythonWorkerFactory (via SparkClassRewriter) so that the pyspark library is available.
-      if (SparkRuntimeContextConfig.isLocal(runtimeContext.getConfiguration())) {
+      if (isLocal) {
         SparkRuntimeEnv.setProperty("cdap.spark.pyFiles", Joiner.on(File.pathSeparator).join(pyFilePaths));
       }
     }
@@ -729,7 +729,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // In local mode, Spark Streaming with checkpointing will expect the same job jar to exist
     // in all runs of the program. This means it can't be created in the temporary directory for the run,
     // but must persist between runs
-    File targetDir = SparkRuntimeContextConfig.isLocal(runtimeContext.getConfiguration())
+    File targetDir = isLocal
       ? new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "runtime"), "spark")
       : tempDir;
 

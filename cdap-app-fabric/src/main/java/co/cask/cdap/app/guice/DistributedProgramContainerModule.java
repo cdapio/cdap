@@ -64,6 +64,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 
 import java.util.ArrayList;
@@ -178,9 +179,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private void addIsolatedModules(List<Module> modules) {
     modules.add(new DataSetsModules().getStandaloneModules());
     modules.add(new DataSetServiceModules().getStandaloneModules());
-    // Use the in memory transaction module, as we don't need to recover from tx problem as the tx is only local
-    // to this run.
-    modules.add(new DataFabricModules().getInMemoryModules());
+    modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
+        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
+      }
+    }));
 
     // In isolated mode, ignore the namespace mapping
     modules.add(Modules.override(new LocationRuntimeModule().getDistributedModules()).with(new AbstractModule() {

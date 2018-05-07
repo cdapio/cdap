@@ -138,44 +138,42 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     }
   }
 
-  /**
-   * Since Hive classes are not in MasterServiceMain's classpath, create an instance of HiveConf using reflection.
-   * Call this method only if explore is enabled.
-   */
-  private Configuration getHiveConf() {
-    ClassLoader hiveClassloader = ExploreUtils.getExploreClassloader();
-    ClassLoader contextClassloader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(hiveClassloader);
-
-    try {
-      Class<?> clz = hiveClassloader.loadClass("org.apache.hadoop.hive.conf.HiveConf");
-      return (Configuration) clz.newInstance();
-    } catch (Exception e) {
-      LOG.error("Could not create an instance of HiveConf. Using default values.", e);
-      return null;
-    } finally {
-      Thread.currentThread().setContextClassLoader(contextClassloader);
-    }
+  private long calculateUpdateInterval() {
+    return calculateUpdateInterval(yarnConf, secureExplore);
   }
 
-  private long calculateUpdateInterval() {
+  /**
+   * Calculates the secure token update interval based on the given configurations.
+   *
+   * @param cConf the CDAP configuration
+   * @param hConf the YARN configuration
+   * @return time in millisecond that the secure token should be updated
+   */
+  public static long calculateUpdateInterval(CConfiguration cConf, Configuration hConf) {
+    boolean secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
+      && UserGroupInformation.isSecurityEnabled();
+
+    return calculateUpdateInterval(hConf, secureExplore);
+  }
+
+  private static long calculateUpdateInterval(Configuration hConf, boolean secureExplore) {
     List<Long> renewalTimes = Lists.newArrayList();
 
-    renewalTimes.add(yarnConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+    renewalTimes.add(hConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
                                       DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
 
     // The value contains in hbase-default.xml, so it should always there. If it is really missing, default it to 1 day.
-    renewalTimes.add(yarnConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
+    renewalTimes.add(hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
                                       TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
 
-    if (yarnConf.getBoolean(Constants.Explore.TIMELINE_SERVICE_ENABLED, false)) {
-      renewalTimes.add(yarnConf.getLong(Constants.Explore.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL,
+    if (hConf.getBoolean(Constants.Explore.TIMELINE_SERVICE_ENABLED, false)) {
+      renewalTimes.add(hConf.getLong(Constants.Explore.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL,
                                         TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
     }
 
     if (secureExplore) {
       // Renewal interval for YARN
-      renewalTimes.add(yarnConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+      renewalTimes.add(hConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
                                         YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
 
       // Renewal interval for Hive. Also see: https://issues.apache.org/jira/browse/HIVE-9214
@@ -188,7 +186,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       }
 
       // Renewal interval for JHS
-      renewalTimes.add(yarnConf.getLong(MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+      renewalTimes.add(hConf.getLong(MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
                                         MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
     }
 
@@ -202,5 +200,25 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     }
     LOG.info("Setting token renewal time to: {} ms", delay);
     return delay;
+  }
+
+  /**
+   * Since Hive classes are not in MasterServiceMain's classpath, create an instance of HiveConf using reflection.
+   * Call this method only if explore is enabled.
+   */
+  private static Configuration getHiveConf() {
+    ClassLoader hiveClassloader = ExploreUtils.getExploreClassloader();
+    ClassLoader contextClassloader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(hiveClassloader);
+
+    try {
+      Class<?> clz = hiveClassloader.loadClass("org.apache.hadoop.hive.conf.HiveConf");
+      return (Configuration) clz.newInstance();
+    } catch (Exception e) {
+      LOG.error("Could not create an instance of HiveConf. Using default values.", e);
+      return null;
+    } finally {
+      Thread.currentThread().setContextClassLoader(contextClassloader);
+    }
   }
 }

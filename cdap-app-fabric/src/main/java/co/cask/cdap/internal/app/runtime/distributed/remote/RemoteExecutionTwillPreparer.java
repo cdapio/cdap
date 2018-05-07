@@ -114,7 +114,11 @@ import javax.annotation.Nullable;
  * A {@link TwillPreparer} implementation that uses ssh to launch a single {@link TwillRunnable}.
  */
 public class RemoteExecutionTwillPreparer implements TwillPreparer {
+
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillPreparer.class);
+  private static final String SETUP_SPARK_SH = "setupSpark.sh";
+  private static final String SETUP_SPARK_PY = "setupSpark.py";
+  private static final String SPARK_ENV_SH = "sparkEnv.sh";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -166,6 +170,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.locationCache = locationCache;
     this.locationFactory = locationFactory;
     this.messagingService = messagingService;
+    this.extraOptions = cConf.get(co.cask.cdap.common.conf.Constants.AppFabric.PROGRAM_JVM_OPTS);
   }
 
   private void confirmRunnableName(String runnableName) {
@@ -401,6 +406,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
           saveLogback(runtimeConfigDir.resolve(Constants.Files.LOGBACK_TEMPLATE));
           saveClassPaths(runtimeConfigDir);
           saveArguments(new Arguments(arguments, runnableArgs), runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
+          saveResource(runtimeConfigDir, SETUP_SPARK_SH);
+          saveResource(runtimeConfigDir, SETUP_SPARK_PY);
           createRuntimeConfigJar(runtimeConfigDir, localFiles, stagingDir);
         } finally {
           Paths.deleteRecursively(runtimeConfigDir);
@@ -412,8 +419,6 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
         try (SSHSession session = new DefaultSSHSession(sshConfig)) {
           String targetPath = session.executeAndWait("mkdir -p ./" + runId.getId(),
                                                      "echo `pwd`/" + runId.getId()).trim();
-          String logsDir = targetPath + "/logs";
-
           // Upload files
           localizeFiles(session, localFiles, targetPath, runtimeSpec);
 
@@ -423,35 +428,15 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
                                                     twillRuntimeSpec.getReservedMemory(runnableName),
                                                     twillRuntimeSpec.getMinHeapRatio(runnableName));
 
+          // Spark env setup script
+          session.executeAndWait(String.format("bash %s/%s/%s %s/%s/%s > %s/%s",
+                                               targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
+                                               targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
+                                               targetPath, SPARK_ENV_SH));
           // Generates the launch script
-          StringWriter writer = new StringWriter();
-          PrintWriter scriptWriter = new PrintWriter(writer, true);
-
-          scriptWriter.println("#!/bin/bash");
-          scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
-          Map<String, String> runnableEnv = environments.getOrDefault(runnableName, Collections.emptyMap());
-          for (Map.Entry<String, String> env : runnableEnv.entrySet()) {
-            String value = env.getValue();
-            if (ApplicationConstants.LOG_DIR_EXPANSION_VAR.equals(value)) {
-              value = logsDir;
-            }
-            scriptWriter.printf("export %s=\"%s\"\n", env.getKey(), value);
-          }
-          scriptWriter.printf("export %s=\"%s\"\n", EnvKeys.TWILL_RUNNABLE_NAME, runnableName);
-          scriptWriter.printf("mkdir -p %s/tmp\n", targetPath);
-          scriptWriter.printf("mkdir -p %s\n", logsDir);
-          scriptWriter.printf("cd %s\n", targetPath);
-          scriptWriter.printf(
-            "nohup java -Djava.io.tmpdir=tmp -cp %s/%s -Xmx%dm %s %s '%s' true >%s/stdout 2>%s/stderr &\n",
-            targetPath, Constants.Files.LAUNCHER_JAR, memory,
-            getJvmOptions().getRunnableExtraOptions(runnableName),
-            RemoteLauncher.class.getName(),
-            runtimeSpec.getRunnableSpecification().getClassName(),
-            logsDir, logsDir);
-
-          scriptWriter.flush();
-
-          byte[] scriptContent = writer.toString().getBytes(StandardCharsets.UTF_8);
+          byte[] scriptContent = generateLaunchScript(runtimeSpec, targetPath,
+                                                      runnableName, memory).getBytes(StandardCharsets.UTF_8);
+          //noinspection OctalInteger
           session.copy(new ByteArrayInputStream(scriptContent),
                        targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
@@ -819,7 +804,22 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
                 Joiner.on(':').join(classPaths).getBytes(StandardCharsets.UTF_8));
   }
 
-  private JvmOptions getJvmOptions() throws IOException {
+  /**
+   * Finds a resource from the current {@link ClassLoader} and copy the content to the given directory.
+   */
+  private void saveResource(Path targetDir, String resourceName) throws IOException {
+    URL url = getClassLoader().getResource(resourceName);
+    if (url == null) {
+      // This shouldn't happen.
+      throw new IOException("Failed to find script " + resourceName + " in classpath");
+    }
+
+    try (InputStream is = url.openStream()) {
+      Files.copy(is, targetDir.resolve(resourceName));
+    }
+  }
+
+  private JvmOptions getJvmOptions() {
     // Append runnable specific extra options.
     Map<String, String> runnableExtraOptions = this.runnableExtraOptions.entrySet()
       .stream()
@@ -873,5 +873,47 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
     String path = uri.getPath();
     int idx = path.lastIndexOf('/');
     return idx >= 0 ? path.substring(idx + 1) : path;
+  }
+
+  /**
+   * Generates the shell script for launching the JVM process of the runnable that will run on the remote host.
+   */
+  private String generateLaunchScript(RuntimeSpecification runtimeSpec, String targetPath,
+                                      String runnableName, int memory) {
+    String logsDir = targetPath + "/logs";
+
+    StringWriter writer = new StringWriter();
+    PrintWriter scriptWriter = new PrintWriter(writer, true);
+
+    scriptWriter.println("#!/bin/bash");
+    Map<String, String> runnableEnv = environments.getOrDefault(runnableName, Collections.emptyMap());
+
+    for (Map.Entry<String, String> env : runnableEnv.entrySet()) {
+      scriptWriter.printf("export %s=\"%s\"\n", env.getKey(), env.getValue());
+    }
+
+    scriptWriter.printf("export %s=\"%s\"\n", EnvKeys.TWILL_RUNNABLE_NAME, runnableName);
+    scriptWriter.printf("mkdir -p %s/tmp\n", targetPath);
+    scriptWriter.printf("mkdir -p %s\n", logsDir);
+    scriptWriter.printf("cd %s\n", targetPath);
+
+    scriptWriter.printf("if [ -e %s/%s ]; then\n", targetPath, SPARK_ENV_SH);
+    scriptWriter.printf("  source %s/%s\n", targetPath, SPARK_ENV_SH);
+    scriptWriter.printf("fi\n");
+
+    scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
+
+    scriptWriter.printf(
+      "nohup java -Djava.io.tmpdir=tmp -cp %s/%s -Xmx%dm %s %s '%s' true >%s/stdout 2>%s/stderr &\n",
+      targetPath, Constants.Files.LAUNCHER_JAR, memory,
+      getJvmOptions().getRunnableExtraOptions(runnableName),
+      RemoteLauncher.class.getName(),
+      runtimeSpec.getRunnableSpecification().getClassName(),
+      logsDir, logsDir);
+
+    scriptWriter.flush();
+
+    // Expands the <LOG_DIR> placement holder to the log directory
+    return writer.toString().replace(ApplicationConstants.LOG_DIR_EXPANSION_VAR, logsDir);
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark.distributed;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.spark.Spark;
@@ -36,7 +35,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -65,6 +63,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -82,18 +81,16 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
   private final LocationFactory locationFactory;
   private final SparkCompat sparkCompat;
-  private final TokenSecureStoreRenewer tokenSecureStoreRenewer;
 
   @Inject
   @VisibleForTesting
   public DistributedSparkProgramRunner(SparkCompat sparkComat, CConfiguration cConf, YarnConfiguration hConf,
-                                       TokenSecureStoreRenewer tokenSecureStoreRenewer, Impersonator impersonator,
-                                       LocationFactory locationFactory, ClusterMode clusterMode,
+                                       Impersonator impersonator, LocationFactory locationFactory,
+                                       ClusterMode clusterMode,
                                        @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
     this.sparkCompat = sparkComat;
     this.locationFactory = locationFactory;
-    this.tokenSecureStoreRenewer = tokenSecureStoreRenewer;
   }
 
   @Override
@@ -129,15 +126,18 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
     // Update the container hConf
-    hConf.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
-    hConf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      // Kerberos is only supported in on premise mode
+      hConf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
 
-    if (SecurityUtil.isKerberosEnabled(cConf)) {
-      // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
-      // If we don't offset it, it will look for the new credentials too soon
-      // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
-      hConf.setLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
-                    (long) ((tokenSecureStoreRenewer.getUpdateInterval() + 5000) / 0.8));
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
+        // If we don't offset it, it will look for the new credentials too soon
+        // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
+        long interval = (long) ((TokenSecureStoreRenewer.calculateUpdateInterval(cConf, hConf) + 5000) / 0.8);
+        launchConfig.addExtraSystemArgument(SparkRuntimeContextConfig.CREDENTIALS_UPDATE_INTERVAL_MS,
+                                            Long.toString(interval));
+      }
     }
 
     // Setup the launch config
@@ -146,27 +146,40 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
                                                                    options.getUserArguments().asMap());
-    Resources resources = SystemArguments.getResources(clientArgs, spec.getClientResources());
-
     // Add runnable. Only one instance for the spark client
     launchConfig.addRunnable(spec.getName(), new SparkTwillRunnable(spec.getName()), 1,
                              clientArgs, spec.getClientResources(), 0);
 
-    // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
-    Map<String, LocalizeResource> localizeResources = new HashMap<>();
-    Map<String, String> extraEnv = new HashMap<>(SparkPackageUtils.getSparkClientEnv());
-    SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
-
-    // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
-    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
-
+    Map<String, String> extraEnv = new HashMap<>();
     extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
 
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      extraEnv.putAll(SparkPackageUtils.getSparkClientEnv());
+
+      // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
+      Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
+
+      // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
+      MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+
+      launchConfig
+        .addExtraResources(localizeResources)
+        .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()));
+    } else {
+      // No need to rewrite YARN client
+      cConf.setBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE, false);
+
+      // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
+      launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
+
+      extraEnv.put(SparkPackageUtils.SPARK_YARN_MODE, "true");
+    }
+
     launchConfig
-      .addExtraResources(localizeResources)
-      .addExtraDependencies(SparkProgramRuntimeProvider.class)
       .addExtraEnv(extraEnv)
-      .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
+      .addExtraDependencies(SparkProgramRuntimeProvider.class)
+      .addExtraSystemArgument(SparkRuntimeContextConfig.DISTRIBUTED_MODE, Boolean.TRUE.toString())
       .setClassAcceptor(createBundlerClassAcceptor());
   }
 

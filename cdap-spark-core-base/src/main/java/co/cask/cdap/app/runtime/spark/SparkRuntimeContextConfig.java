@@ -44,11 +44,16 @@ public class SparkRuntimeContextConfig {
     .create();
 
   /**
-   * Configuration key for boolean value to tell whether Spark program is executed on a cluster or not.
+   * Program option key for boolean value to tell whether Spark program is executed on in distributed mode or not.
    */
-  public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
-  public static final String HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS = "cdap.spark.credentials.update.interval.ms";
+  public static final String DISTRIBUTED_MODE = "cdap.spark.distributed.mode";
 
+  /**
+   * Program option key for delegation token update interval in milliseconds.
+   */
+  public static final String CREDENTIALS_UPDATE_INTERVAL_MS = "cdap.spark.credentials.update.interval.ms";
+
+  // Following are keys in the hConf for serializing program related information
   private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.spark.program.options";
@@ -59,8 +64,8 @@ public class SparkRuntimeContextConfig {
   /**
    * Returns {@code true} if running in local mode.
    */
-  static boolean isLocal(Configuration hConf) {
-    return !hConf.getBoolean(HCONF_ATTR_CLUSTER_MODE, false);
+  static boolean isLocal(ProgramOptions programOptions) {
+    return !Boolean.parseBoolean(programOptions.getArguments().getOption(DISTRIBUTED_MODE));
   }
 
   /**
@@ -75,13 +80,6 @@ public class SparkRuntimeContextConfig {
    */
   public Configuration getConfiguration() {
     return hConf;
-  }
-
-  /**
-   * Returns true if in local mode.
-   */
-  public boolean isLocal() {
-    return isLocal(hConf);
   }
 
   /**
