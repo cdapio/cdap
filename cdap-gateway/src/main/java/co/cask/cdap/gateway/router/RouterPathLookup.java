@@ -90,7 +90,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
 
   private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
-      // TODO find a better way to handle that - this looks hackish
+      // TODO(Rohit) find a better way to handle that - this looks hackish
+      // This needs to now changed especially metadata since now it can have custom parts
       return null;
     } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(uriParts[7])
       && "methods".equals(uriParts[9])) {
@@ -112,22 +113,30 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return METRICS;
     } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, null, null, null, null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, null, null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata") ||
 
       matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, null, null, null, null, "metadata",
+              "properties") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, null, null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata", "properties") ||
 
       matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, null, null, null, null, "metadata",
+              "tags") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, null, null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "views", null, "metadata", "tags") ||
 

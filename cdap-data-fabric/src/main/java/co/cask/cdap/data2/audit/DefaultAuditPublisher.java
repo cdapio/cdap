@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.audit;
 
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
@@ -38,7 +39,6 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,8 +64,14 @@ public final class DefaultAuditPublisher implements AuditPublisher {
 
   @Override
   public void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload) {
+    publish(entityId.toMetadataEntity(), auditType, auditPayload);
+  }
+
+  @Override
+  public void publish(MetadataEntity metadataEntity, AuditType auditType, AuditPayload auditPayload) {
     String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
-    AuditMessage auditMessage = new AuditMessage(System.currentTimeMillis(), entityId, userId, auditType, auditPayload);
+    AuditMessage auditMessage = new AuditMessage(System.currentTimeMillis(), metadataEntity, userId,
+                                                 auditType, auditPayload);
     LOG.trace("Publishing audit message {}", auditMessage);
 
     StoreRequest storeRequest = StoreRequestBuilder.of(auditTopic).addPayloads(GSON.toJson(auditMessage)).build();

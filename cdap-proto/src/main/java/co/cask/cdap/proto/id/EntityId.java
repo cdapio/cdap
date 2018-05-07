@@ -142,15 +142,21 @@ public abstract class EntityId {
     throw new UnsupportedOperationException("Metadata is not supported");
   }
 
-  @Nullable
-  public static <T extends NamespacedEntityId> T fromMetadataEntity(MetadataEntity metadataEntity) {
-    EntityType targetType = findTargetType(metadataEntity);
-    if (targetType == null) {
-      return  null;
-    }
-    if ((targetType == EntityType.APPLICATION || targetType == EntityType.PROGRAM) &&
+  /**
+   * Returns the EntityId represented by the given MetadataEntity. Note: Custom MetadataEntity cannot be converted
+   * into EntityId hence this call is only safe to be called if the MetadataEntity does represent an EntityId and can
+   * actually be converted to an EntityId.
+   * @param metadataEntity the MetadataEntity which needs to be converted to EntityId
+   * @return the EntityId
+   * @throws IllegalArgumentException if the metadataEntity does not represent an EntityId and is a custom
+   * metadataEntity.
+   */
+  public static <T extends EntityId> T fromMetadataEntity(MetadataEntity metadataEntity) {
+    EntityType entityType = EntityType.valueOf(metadataEntity.getType().toUpperCase());
+    if ((entityType == EntityType.APPLICATION || entityType == EntityType.PROGRAM) &&
       metadataEntity.getValue(MetadataEntity.VERSION) == null) {
-      if (targetType == EntityType.APPLICATION) {
+      // if the EntityType is application or program and a version is not specified in the MetadataEntity then add it
+      if (entityType == EntityType.APPLICATION) {
         metadataEntity = metadataEntity.append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION);
       } else {
         metadataEntity = MetadataEntity.ofNamespace(metadataEntity.getValue(MetadataEntity.NAMESPACE))
@@ -160,31 +166,7 @@ public abstract class EntityId {
           .append(MetadataEntity.PROGRAM, metadataEntity.getValue(MetadataEntity.PROGRAM));
       }
     }
-    T entityId;
-    try {
-      entityId  = targetType.fromIdParts(metadataEntity.getValues());
-    } catch (IllegalArgumentException e) {
-      entityId = null;
-    }
-    return entityId;
-  }
-
-  @Nullable
-  private static EntityType findTargetType(MetadataEntity metadataEntity) {
-    List<MetadataEntity.KeyValue> keyValues = metadataEntity.getKeyValues();
-
-    EntityType entityType = null;
-    // we want to identify the target type from child walking up to parent
-    int curIndex = keyValues.size() - 1;
-    while (curIndex >= 0) {
-      try {
-        entityType = EntityType.valueOf(keyValues.get(curIndex--).getKey().toUpperCase());
-        break;
-      } catch (IllegalArgumentException e) {
-        // ignore and walk up hierarchy
-      }
-    }
-    return entityType;
+    return entityType.fromIdParts(metadataEntity.getValues());
   }
 
   public final EntityType getEntityType() {

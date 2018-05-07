@@ -644,10 +644,15 @@ public class MetadataDataset extends AbstractDataset {
     // if the entity starts with _ then skip it unless the caller choose to showHidden.
     // This is done to hide entities from Tracker. See: CDAP-7910
 
-    NamespacedEntityId namespacedEntityId = EntityId.fromMetadataEntity(metadataEntity);
-    if (!showHidden && namespacedEntityId != null && namespacedEntityId.getEntityName().startsWith("_")) {
-      return Optional.absent();
+    try {
+      NamespacedEntityId namespacedEntityId = EntityId.fromMetadataEntity(metadataEntity);
+      if (!showHidden && namespacedEntityId != null && namespacedEntityId.getEntityName().startsWith("_")) {
+        return Optional.absent();
+      }
+    } catch (IllegalArgumentException e) {
+      // ignore. For custom entities we don't really want to hide them if they start with _
     }
+
     String key = MetadataKey.extractMetadataKey(rowKey);
     MetadataEntry entry = getMetadata(metadataEntity, key);
     return Optional.fromNullable(entry);
@@ -803,18 +808,17 @@ public class MetadataDataset extends AbstractDataset {
     try (Scanner scanner = indexedTable.scan(startRowKey, stopRowKey)) {
       while ((limit > 0) && (row = scanner.next()) != null) {
         byte[] rowKey = row.getRow();
-        String targetType = MetadataKey.extractTargetType(rowKey);
-        MetadataEntity namespacedEntityId = MetadataKey.extractMetadataEntityFromKey(rowKey);
+        MetadataEntity metadataEntity = MetadataKey.extractMetadataEntityFromKey(rowKey);
         String metadataKey = MetadataKey.extractMetadataKey(rowKey);
         Set<Indexer> indexers = getIndexersForKey(metadataKey);
-        MetadataEntry metadataEntry = getMetadata(namespacedEntityId, metadataKey);
+        MetadataEntry metadataEntry = getMetadata(metadataEntity, metadataKey);
         if (metadataEntry == null) {
           LOG.warn("Found null metadata entry for a known metadata key {} for entity {} which has an index stored. " +
-                     "Ignoring.", metadataKey, namespacedEntityId);
+                     "Ignoring.", metadataKey, metadataEntity);
           continue;
         }
         // storeIndexes deletes old indexes
-        storeIndexes(namespacedEntityId, metadataKey, indexers, metadataEntry);
+        storeIndexes(metadataEntity, metadataKey, indexers, metadataEntry);
         limit--;
       }
       Row startRowForNextBatch = scanner.next();

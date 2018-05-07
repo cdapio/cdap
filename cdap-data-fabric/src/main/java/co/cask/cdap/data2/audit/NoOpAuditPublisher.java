@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.audit;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
@@ -27,6 +28,11 @@ public class NoOpAuditPublisher implements AuditPublisher {
 
   @Override
   public void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload) {
+
+  }
+
+  @Override
+  public void publish(MetadataEntity metadataEntity, AuditType auditType, AuditPayload auditPayload) {
 
   }
 }

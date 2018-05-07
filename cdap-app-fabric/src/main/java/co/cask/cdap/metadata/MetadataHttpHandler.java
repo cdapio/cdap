@@ -18,8 +18,8 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.security.AuditDetail;
@@ -52,7 +52,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,23 +81,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
     input -> EntityTypeSimpleName.valueOf(input.toUpperCase());
 
-  private static final Map<String, String> API_PART_TO_ENTITY_TYPE;
-
-  // TODO(Rohit): Is there a better way to standardize this conversion of api parts to entities. Why do we have so many
-  // different representation? ex EntityTypeSimpleName. Investigate and refactor.
-  static {
-    Map<String, String> map = new HashMap<>();
-    map.put("namespaces", MetadataEntity.NAMESPACE);
-    map.put("apps", MetadataEntity.APPLICATION);
-    map.put("streams", MetadataEntity.STREAM);
-    map.put("datasets", MetadataEntity.DATASET);
-    map.put("versions", MetadataEntity.VERSION);
-    map.put("artifacts", MetadataEntity.ARTIFACT);
-    map.put("programs", MetadataEntity.PROGRAM);
-    map.put("views", MetadataEntity.VIEW);
-    API_PART_TO_ENTITY_TYPE = Collections.unmodifiableMap(map);
-  }
-
   private final MetadataAdmin metadataAdmin;
 
   @Inject
@@ -108,41 +90,45 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/**/metadata/subparts")
-  public void getSubparts(HttpRequest request, HttpResponder responder) throws NotFoundException, BadRequestException {
+  public void getSubparts(HttpRequest request, HttpResponder responder) throws BadRequestException {
     //TODO(Rohit): Get the sub keys here and return that. This is the new API which we will support for browsing
   }
 
   @GET
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
-                          @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata");
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getMetadata(metadataEntity, scope),
+                          @QueryParam("scope") String scope, @QueryParam("type") @DefaultValue("") String type)
+    throws BadRequestException {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
+    Set<MetadataRecord> metadata = getMetadata(metadataEntity, scope);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata,
                                                           SET_METADATA_RECORD_TYPE));
   }
 
   @GET
   @Path("/**/metadata/properties")
   public void getProperties(HttpRequest request, HttpResponder responder,
-                            @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/properties");
+                            @QueryParam("scope") String scope, @QueryParam("type") @DefaultValue("") String type)
+    throws BadRequestException {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(metadataEntity, scope)));
   }
 
   @GET
   @Path("/**/metadata/tags")
   public void getTags(HttpRequest request, HttpResponder responder,
-                      @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/tags");
+                      @QueryParam("scope") String scope, @QueryParam("type") @DefaultValue("") String type)
+    throws BadRequestException {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(metadataEntity, scope)));
   }
 
   @POST
   @Path("/**/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addProperties(FullHttpRequest request, HttpResponder responder) throws BadRequestException,
-    NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/properties");
+  public void addProperties(FullHttpRequest request, HttpResponder responder,
+                            @QueryParam("type") @DefaultValue("") String type) throws BadRequestException {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.addProperties(metadataEntity, readProperties(request));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata properties for %s added successfully.", metadataEntity));
@@ -151,17 +137,20 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/**/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void addTags(FullHttpRequest request, HttpResponder responder) throws BadRequestException, NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/tags");
+  public void addTags(FullHttpRequest request, HttpResponder responder,
+                      @QueryParam("type") @DefaultValue("") String type) throws BadRequestException {
+     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.addTags(metadataEntity, readArray(request));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tags for %s added successfully.", metadataEntity));
   }
 
+
   @DELETE
   @Path("/**/metadata")
-  public void removeMetadata(HttpRequest request, HttpResponder responder) throws NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata");
+  public void removeMetadata(HttpRequest request, HttpResponder responder,
+                             @QueryParam("type") @DefaultValue("") String type) {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     metadataAdmin.removeMetadata(metadataEntity);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata for %s deleted successfully.", metadataEntity));
@@ -169,8 +158,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/**/metadata/properties")
-  public void removeProperties(HttpRequest request, HttpResponder responder) throws NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/properties");
+  public void removeProperties(HttpRequest request, HttpResponder responder,
+                               @QueryParam("type") @DefaultValue("") String type) {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.removeProperties(metadataEntity);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata properties for %s deleted successfully.", metadataEntity));
@@ -179,8 +169,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/**/properties/{property}")
   public void removeProperty(HttpRequest request, HttpResponder responder,
-                             @PathParam("property") String property) throws NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/properties");
+                             @PathParam("property") String property,
+                             @QueryParam("type") @DefaultValue("") String type) {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.removeProperties(metadataEntity, property);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata property %s for %s deleted successfully.", property, metadataEntity));
@@ -188,8 +179,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/**/metadata/tags")
-  public void removeTags(HttpRequest request, HttpResponder responder) throws NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/tags");
+  public void removeTags(HttpRequest request, HttpResponder responder,
+                         @QueryParam("type") @DefaultValue("") String type) {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.removeTags(metadataEntity);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tags for %s deleted successfully.", metadataEntity));
@@ -198,8 +190,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/**/metadata/tags/{tag}")
   public void removeTag(HttpRequest request, HttpResponder responder,
-                        @PathParam("tag") String tag) throws NotFoundException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), "/metadata/tags");
+                        @PathParam("tag") String tag,
+                        @QueryParam("type") @DefaultValue("") String type) {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.removeTags(metadataEntity, tag);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tag %s for %s deleted successfully.", tag, metadataEntity));
@@ -224,7 +217,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
     Set<EntityTypeSimpleName> types = Collections.emptySet();
     if (targets != null) {
-      types.addAll(targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toSet()));
+      types = targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toSet());
     }
     SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, "UTF-8"));
     if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -246,25 +239,31 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private MetadataEntity getMetadataEntityFromPath(String uri, String suffix) {
+  private MetadataEntity getMetadataEntityFromPath(String uri, String entityType, String suffix) {
     String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3) +
       Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
     MetadataEntity metadataEntity = new MetadataEntity();
 
     int curIndex = 0;
     while (curIndex < parts.length - 1) {
-      // the api part which we get for program does not have type keyword as part of the uri. It goes like
+      // the api part which we get for program does not have 'type' keyword as part of the uri. It goes like
       // ../apps/appName/programType/ProgramName so handle that correctly
-      if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps")) {
+      if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps") && !parts[curIndex].equalsIgnoreCase
+        ("versions")) {
         metadataEntity = metadataEntity.append(MetadataEntity.TYPE,
                                                ProgramType.valueOfCategoryName(parts[curIndex]).name());
         metadataEntity = metadataEntity.append(MetadataEntity.PROGRAM, parts[curIndex + 1]);
       } else {
-        metadataEntity = metadataEntity.append(API_PART_TO_ENTITY_TYPE.get(parts[curIndex]), parts[curIndex + 1]);
+        if (MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().containsKey(parts[curIndex])) {
+          metadataEntity = metadataEntity.append(MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().get(parts[curIndex]),
+                                                 parts[curIndex + 1]);
+        } else {
+          metadataEntity = metadataEntity.append(parts[curIndex], parts[curIndex + 1]);
+        }
       }
       curIndex += 2;
     }
-    return metadataEntity;
+    return entityType.equalsIgnoreCase("") ? metadataEntity : metadataEntity.changeType(entityType);
   }
 
   private Map<String, String> readProperties(FullHttpRequest request) throws BadRequestException {
@@ -306,21 +305,21 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity,
-                                          @Nullable String scope) throws NotFoundException, BadRequestException {
+                                          @Nullable String scope) throws BadRequestException {
     return (scope == null) ?
       metadataAdmin.getMetadata(metadataEntity) :
       metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
   }
 
   private Map<String, String> getProperties(MetadataEntity metadataEntity,
-                                            @Nullable String scope) throws NotFoundException, BadRequestException {
+                                            @Nullable String scope) throws BadRequestException {
     return (scope == null) ?
       metadataAdmin.getProperties(metadataEntity) :
       metadataAdmin.getProperties(validateScope(scope), metadataEntity);
   }
 
   private Set<String> getTags(MetadataEntity metadataEntity,
-                              @Nullable String scope) throws NotFoundException, BadRequestException {
+                              @Nullable String scope) throws BadRequestException {
     return (scope == null) ?
       metadataAdmin.getTags(metadataEntity) :
       metadataAdmin.getTags(validateScope(scope), metadataEntity);

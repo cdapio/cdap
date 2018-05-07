@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.AllProgramsApp;
@@ -99,6 +100,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   private final DatasetId myds = NamespaceId.DEFAULT.dataset("myds");
   private final StreamId mystream = NamespaceId.DEFAULT.stream("mystream");
   private final StreamViewId myview = mystream.view("myview");
+  private final MetadataEntity fieldEntity = MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "myds")
+    .append("field", "empname");
 
   @Before
   public void before() throws Exception {
@@ -234,10 +237,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Should get empty
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "sKey:s");
-    Assert.assertTrue(searchProperties.size() == 0);
+    Assert.assertEquals(0, searchProperties.size());
 
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "s");
-    Assert.assertTrue(searchProperties.size() == 0);
+    Assert.assertEquals(0, searchProperties.size());
 
     // search non-existent property should return empty set
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "NullKey:s*");
@@ -278,6 +281,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testTags() throws Exception {
     // should fail because we haven't provided any metadata in the request
+    addTags(myds, null, BadRequestException.class);
+    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
+    addTags(myds, datasetTags);
     addTags(application, null, BadRequestException.class);
     Set<String> appTags = ImmutableSet.of("aTag", "aT", "Wow-WOW1", "WOW_WOW2");
     addTags(application, appTags);
@@ -285,9 +291,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(pingService, null, BadRequestException.class);
     Set<String> serviceTags = ImmutableSet.of("sTag", "sT");
     addTags(pingService, serviceTags);
-    addTags(myds, null, BadRequestException.class);
-    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
-    addTags(myds, datasetTags);
     addTags(mystream, null, BadRequestException.class);
     Set<String> streamTags = ImmutableSet.of("stTag", "stT", "Wow-WOW1", "WOW_WOW2");
     addTags(mystream, streamTags);
@@ -296,6 +299,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(myview, viewTags);
     Set<String> artifactTags = ImmutableSet.of("rTag", "rT");
     addTags(artifactId, artifactTags);
+    Set<String> fieldTags = ImmutableSet.of("fTag", "fT");
+    addTags(fieldEntity, fieldTags);
+
     // retrieve tags and verify
     Set<String> tags = getTags(application, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(appTags));
@@ -315,6 +321,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     tags = getTags(artifactId, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(artifactTags));
     Assert.assertTrue(artifactTags.containsAll(tags));
+    tags = getTags(fieldEntity, MetadataScope.USER);
+    Assert.assertTrue(tags.containsAll(fieldTags));
+    Assert.assertTrue(fieldTags.containsAll(tags));
     // test search for stream
     Set<MetadataSearchResultRecord> searchTags =
       searchMetadata(NamespaceId.DEFAULT, "stT", EntityTypeSimpleName.STREAM);

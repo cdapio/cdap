@@ -39,7 +39,6 @@ import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
@@ -226,11 +225,12 @@ public class MetadataStoreTest {
 
     // Audit messages for metadata changes
     List<AuditMessage> actualAuditMessages = new ArrayList<>();
+    String systemNs = NamespaceId.SYSTEM.getNamespace();
     for (AuditMessage auditMessage : auditPublisher.popMessages()) {
       // Ignore system audit messages
-      if (auditMessage.getEntityId() instanceof NamespacedEntityId) {
-        String systemNs = NamespaceId.SYSTEM.getNamespace();
-        if (!((NamespacedEntityId) auditMessage.getEntityId()).getNamespace().equals(systemNs)) {
+      if (auditMessage.getType() == AuditType.METADATA_CHANGE) {
+        if (!auditMessage.getEntity().containsKey(MetadataEntity.NAMESPACE) || !auditMessage.getEntity().getValue
+          (MetadataEntity.NAMESPACE).equalsIgnoreCase(systemNs)) {
           actualAuditMessages.add(auditMessage);
         }
       }

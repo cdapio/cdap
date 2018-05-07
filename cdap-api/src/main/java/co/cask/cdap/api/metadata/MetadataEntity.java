@@ -15,13 +15,15 @@
  */
 package co.cask.cdap.api.metadata;
 
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Entity representation for Metadata
@@ -38,13 +40,16 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   public static final String TYPE = "type";
   public static final String PROGRAM = "program";
 
-  private final List<KeyValue> details;
+  private final LinkedHashMap<String, String> details;
+  private String type;
 
-  /**
-   * Creates a empty {@link MetadataEntity}
-   */
   public MetadataEntity() {
-    this.details = Collections.emptyList();
+    this.details = new LinkedHashMap<>();
+  }
+
+  private MetadataEntity(MetadataEntity metadataEntity) {
+    this.details = new LinkedHashMap<>(metadataEntity.details);
+    this.type = metadataEntity.type;
   }
 
   /**
@@ -55,11 +60,10 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
    * @return {@link MetadataEntity} representing the dataset name
    */
   public static MetadataEntity ofDataset(String datasetName) {
-    return new MetadataEntity(Collections.singletonList(new KeyValue(DATASET, datasetName)));
-  }
-
-  private MetadataEntity(List<KeyValue> details) {
-    this.details = Collections.unmodifiableList(new ArrayList<>(details));
+    MetadataEntity metadataEntity = new MetadataEntity();
+    metadataEntity.details.put(MetadataEntity.DATASET, datasetName);
+    metadataEntity.type = MetadataEntity.DATASET;
+    return metadataEntity;
   }
 
   /**
@@ -70,23 +74,29 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
    * @return {@link MetadataEntity} representing the dataset name
    */
   public static MetadataEntity ofDataset(String namespace, String datasetName) {
-    return new MetadataEntity(Arrays.asList(new KeyValue(NAMESPACE, namespace),
-                                            new KeyValue(DATASET, datasetName)));
+    MetadataEntity metadataEntity = new MetadataEntity();
+    metadataEntity.details.put(MetadataEntity.NAMESPACE, namespace);
+    metadataEntity.details.put(MetadataEntity.DATASET, datasetName);
+    metadataEntity.type = MetadataEntity.DATASET;
+    return metadataEntity;
   }
 
   /**
    * Creates a {@link MetadataEntity} representing the given namespace.
    *
-   * @param ns the name of the namespace
+   * @param namespace the name of the namespace
    * @return {@link MetadataEntity} representing the namespace name
    */
-  public static MetadataEntity ofNamespace(String ns) {
-    return new MetadataEntity(Collections.singletonList(new KeyValue(NAMESPACE, ns)));
+  public static MetadataEntity ofNamespace(String namespace) {
+    MetadataEntity metadataEntity = new MetadataEntity();
+    metadataEntity.details.put(MetadataEntity.NAMESPACE, namespace);
+    metadataEntity.type = MetadataEntity.NAMESPACE;
+    return metadataEntity;
   }
 
   /**
    * Creates a new {@link MetadataEntity} which consists of the given key and values following the key and values of
-   * this {@link MetadataEntity}
+   * this {@link MetadataEntity} and is of type of the given key.
    *
    * @param key the key to be added
    * @param value the value to be added
@@ -94,9 +104,79 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
    * this {@link MetadataEntity}
    */
   public MetadataEntity append(String key, String value) {
-    List<KeyValue> existingParts = new ArrayList<>(getKeyValues());
-    existingParts.add(new KeyValue(key, value));
-    return new MetadataEntity(existingParts);
+    MetadataEntity metadataEntity = new MetadataEntity(this);
+    metadataEntity.details.put(key, value);
+    metadataEntity.type = key;
+    return metadataEntity;
+  }
+
+  /**
+   * Creates a new MetadataEntity with the given type and exists {@link KeyValue} pairs
+   *
+   * @param newType the new type
+   * @return the MetadataEntity which is of the specified type
+   */
+  public MetadataEntity changeType(String newType) {
+    if (newType == null || newType.isEmpty()) {
+      throw new IllegalArgumentException("A valid type must be specified.");
+    }
+    MetadataEntity metadataEntity = new MetadataEntity(this);
+    metadataEntity.type = newType;
+    return metadataEntity;
+  }
+
+  /**
+   * @return the type of the MetadataEntity
+   */
+  public String getType() {
+    return type;
+  }
+
+  /**
+   * @return the value for the given key; if the key does not exists returns null;
+   */
+  @Nullable
+  public String getValue(String key) {
+    return details.get(key);
+  }
+
+  /**
+   * @return true if there is an entry for the key in the MetadataEntity else false
+   */
+  public boolean containsKey(String key) {
+    return details.containsKey(key);
+  }
+
+  /**
+   * @return all the values in the MetadataEntity
+   */
+  public Iterable<String> getValues() {
+    return Collections.unmodifiableList(new ArrayList<>(details.values()));
+  }
+
+  /**
+   * @return all the keys in the MetadataEntity
+   */
+  public Iterable<String> getKeys() {
+    return Collections.unmodifiableList(new ArrayList<>(details.keySet()));
+  }
+
+  /**
+   * @return A {@link List} of {@link KeyValue} representing the metadata entity
+   */
+  @Override
+  public Iterator<KeyValue> iterator() {
+    List<KeyValue> result = new LinkedList<>();
+    details.forEach((key, value) -> result.add(new KeyValue(key, value)));
+    return result.stream().iterator();
+  }
+
+  @Override
+  public String toString() {
+    return "MetadataEntity{" +
+      "details=" + details +
+      ", type='" + type + '\'' +
+      '}';
   }
 
   @Override
@@ -108,61 +188,13 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
       return false;
     }
     MetadataEntity that = (MetadataEntity) o;
-    return Objects.equals(details, that.details);
+    return Objects.equals(details, that.details) &&
+      Objects.equals(type, that.type);
   }
 
   @Override
   public int hashCode() {
-    return details.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return "MetadataEntity{" +
-      "details=" + details +
-      '}';
-  }
-
-  /**
-   * @return A {@link List} of {@link KeyValue} representing the metadata entity
-   */
-  public List<KeyValue> getKeyValues() {
-    return details;
-  }
-
-  /**
-   * @return the value for the key if the key is found else null
-   */
-  public String getValue(String key) {
-    if (key == null) {
-      throw new NullPointerException("Key cannot be null");
-    }
-    for (KeyValue detail : details) {
-      if (detail.getKey().equals(key)) {
-        return detail.getValue();
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @return A {@link Iterator} over the keys in this {@link MetadataEntity}
-   */
-  public Iterable<String> getKeys() {
-    return details.stream().map(KeyValue::getKey)::iterator;
-  }
-
-  /**
-   * @return A {@link Iterator} over the values in this {@link MetadataEntity}
-   */
-  public Iterable<String> getValues() {
-    return details.stream().map(KeyValue::getValue)::iterator;
-  }
-
-  @Override
-  @Nonnull
-  public Iterator<KeyValue> iterator() {
-    return details.stream().iterator();
+    return Objects.hash(details, type);
   }
 
   /**
@@ -172,35 +204,9 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     private final String key;
     private final String value;
 
-    public KeyValue(String key, String value) {
+    KeyValue(String key, String value) {
       this.key = key;
       this.value = value;
-    }
-
-    @Override
-    public String toString() {
-      return "KeyValue{" +
-        "key='" + key + '\'' +
-        ", value='" + value + '\'' +
-        '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      KeyValue keyValue = (KeyValue) o;
-      return Objects.equals(key, keyValue.key) &&
-        Objects.equals(value, keyValue.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(key, value);
     }
 
     public String getKey() {

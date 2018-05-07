@@ -92,8 +92,10 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
 
   @Override
   public MetadataEntity toMetadataEntity() {
-    return MetadataEntity.ofNamespace(namespace).append(MetadataEntity.ARTIFACT, artifact)
+    MetadataEntity metadataEntity = MetadataEntity.ofNamespace(namespace).append(MetadataEntity.ARTIFACT, artifact)
       .append(MetadataEntity.VERSION, version);
+    metadataEntity = metadataEntity.changeType(MetadataEntity.ARTIFACT);
+    return metadataEntity;
   }
 
   public String getVersion() {

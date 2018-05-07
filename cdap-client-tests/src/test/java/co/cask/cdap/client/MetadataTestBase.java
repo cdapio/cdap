@@ -17,25 +17,22 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.artifact.ArtifactRange;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
-import com.google.common.collect.Iterators;
 import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.Before;
@@ -86,340 +83,111 @@ public abstract class MetadataTestBase extends ClientTestBase {
     artifactClient.add(artifactId, parents, Files.newInputStreamSupplier(createArtifactJarFile(cls, manifest)));
   }
 
-  protected void addProperties(ApplicationId app, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(Id.Application.fromEntityId(app), properties);
-  }
-
-  protected void addProperties(final ApplicationId app, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addProperties(app, properties);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addProperties(ArtifactId artifact, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(Id.Artifact.fromEntityId(artifact), properties);
-  }
-
-  protected void addProperties(final ArtifactId artifact, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addProperties(artifact, properties);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addProperties(ProgramId program, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(Id.Program.fromEntityId(program), properties);
-  }
-
-  protected void addProperties(final ProgramId program, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addProperties(program, properties);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addProperties(DatasetId dataset, @Nullable Map<String, String> properties) throws Exception {
-    metadataClient.addProperties(Id.DatasetInstance.fromEntityId(dataset), properties);
-  }
-
-  protected void addProperties(final DatasetId dataset, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addProperties(dataset, properties);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addProperties(StreamId stream, @Nullable Map<String, String> properties)
+  protected void addProperties(MetadataEntity metadataEntity, @Nullable Map<String, String> properties)
     throws Exception {
-    metadataClient.addProperties(Id.Stream.fromEntityId(stream), properties);
+    metadataClient.addProperties(metadataEntity, properties);
+  }
+  protected void addProperties(EntityId entityId, @Nullable Map<String, String> properties) throws Exception {
+    addProperties(entityId.toMetadataEntity(), properties);
   }
 
-  protected void addProperties(StreamViewId view, @Nullable Map<String, String> properties)
+  protected void addProperties(final EntityId entityId, @Nullable final Map<String, String> properties,
+                               Class<? extends Exception> expectedExceptionClass) {
+    expectException((Callable<Void>) () -> {
+      addProperties(entityId, properties);
+      return null;
+    }, expectedExceptionClass);
+  }
+
+  protected void addProperties(final MetadataEntity metadataEntity, @Nullable final Map<String, String> properties,
+                               Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException((Callable<Void>) () -> {
+      addProperties(metadataEntity, properties);
+      return null;
+    }, expectedExceptionClass);
+  }
+
+  protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) throws Exception {
+    return getMetadata(metadataEntity, null);
+  }
+
+  protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws Exception {
-    metadataClient.addProperties(Id.Stream.View.fromEntityId(view), properties);
+    return metadataClient.getMetadata(metadataEntity, scope);
   }
 
-  protected void addProperties(final StreamId stream, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addProperties(stream, properties);
-        return null;
-      }
-    }, expectedExceptionClass);
+  protected Set<MetadataRecord> getMetadata(EntityId entityId) throws Exception {
+    return getMetadata(entityId, null);
   }
 
-  protected void addProperties(final StreamViewId view, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addProperties(view, properties);
-        return null;
-      }
-    }, expectedExceptionClass);
+  protected Set<MetadataRecord> getMetadata(EntityId entityId, @Nullable MetadataScope scope) throws Exception {
+    return getMetadata(entityId.toMetadataEntity(), scope);
   }
 
-  protected Set<MetadataRecord> getMetadata(ApplicationId app) throws Exception {
-    return getMetadata(app, null);
+  protected Map<String, String> getProperties(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
+    return metadataClient.getProperties(metadataEntity, scope);
   }
 
-  protected Set<MetadataRecord> getMetadata(ArtifactId artifact) throws Exception {
-    return getMetadata(artifact, null);
+  protected Map<String, String> getProperties(EntityId entityId, MetadataScope scope) throws Exception {
+    return getProperties(entityId.toMetadataEntity(), scope);
   }
 
-  protected Set<MetadataRecord> getMetadata(ProgramId program) throws Exception {
-    return getMetadata(program, null);
-  }
-
-  protected Set<MetadataRecord> getMetadata(DatasetId dataset) throws Exception {
-    return getMetadata(dataset, null);
-  }
-
-  protected Set<MetadataRecord> getMetadata(StreamId stream) throws Exception {
-    return getMetadata(stream, null);
-  }
-
-  protected Set<MetadataRecord> getMetadata(StreamViewId view) throws Exception {
-    return getMetadata(view, null);
-  }
-
-  protected Set<MetadataRecord> getMetadata(ApplicationId app, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(Id.Application.fromEntityId(app), scope);
-  }
-
-  protected Set<MetadataRecord> getMetadata(ArtifactId artifact, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(Id.Artifact.fromEntityId(artifact), scope);
-  }
-
-  protected Set<MetadataRecord> getMetadata(ProgramId program, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(Id.Program.fromEntityId(program), scope);
-  }
-
-  protected Set<MetadataRecord> getMetadata(DatasetId dataset,
-                                            @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(Id.DatasetInstance.fromEntityId(dataset), scope);
-  }
-
-  protected Set<MetadataRecord> getMetadata(StreamId stream, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(Id.Stream.fromEntityId(stream), scope);
-  }
-
-  protected Set<MetadataRecord> getMetadata(StreamViewId view, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(Id.Stream.View.fromEntityId(view), scope);
-  }
-
-  protected Map<String, String> getProperties(ApplicationId app, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(app, scope).iterator()).getProperties();
-  }
-
-  protected Map<String, String> getProperties(ArtifactId artifact, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(artifact, scope).iterator()).getProperties();
-  }
-
-  protected Map<String, String> getProperties(ProgramId program, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(program, scope).iterator()).getProperties();
-  }
-
-  protected Map<String, String> getProperties(DatasetId dataset, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(dataset, scope).iterator()).getProperties();
-  }
-
-  protected Map<String, String> getProperties(StreamId stream, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(stream, scope).iterator()).getProperties();
-  }
-
-  protected Map<String, String> getProperties(StreamViewId view, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(view, scope).iterator()).getProperties();
-  }
-
-  protected void getPropertiesFromInvalidEntity(ApplicationId app) throws Exception {
+  protected void getPropertiesFromInvalidEntity(EntityId entityId) throws Exception {
     try {
-      getProperties(app, MetadataScope.USER);
-      Assert.fail("Expected not to be able to get properties from invalid entity: " + app);
+      getProperties(entityId, MetadataScope.USER);
+      Assert.fail("Expected not to be able to get properties from invalid entity: " + entityId);
     } catch (NotFoundException expected) {
       // expected
     }
   }
 
-  protected void removeMetadata(ApplicationId app) throws Exception {
-    metadataClient.removeMetadata(Id.Application.fromEntityId(app));
+  protected void removeMetadata(MetadataEntity metadataEntity) throws Exception {
+    metadataClient.removeMetadata(metadataEntity);
   }
 
-  protected void removeMetadata(ArtifactId artifact) throws Exception {
-    metadataClient.removeMetadata(Id.Artifact.fromEntityId(artifact));
+  protected void removeMetadata(EntityId entityId) throws Exception {
+    removeMetadata(entityId.toMetadataEntity());
   }
 
-  protected void removeMetadata(ProgramId program) throws Exception {
-    metadataClient.removeMetadata(Id.Program.fromEntityId(program));
+  protected void removeProperties(MetadataEntity metadataEntity) throws Exception {
+    metadataClient.removeProperties(metadataEntity);
   }
 
-  protected void removeMetadata(DatasetId dataset) throws Exception {
-    metadataClient.removeMetadata(Id.DatasetInstance.fromEntityId(dataset));
+  protected void removeProperties(EntityId entityId) throws Exception {
+    removeProperties(entityId.toMetadataEntity());
   }
 
-  protected void removeMetadata(StreamId stream) throws Exception {
-    metadataClient.removeMetadata(Id.Stream.fromEntityId(stream));
+  public void removeProperty(EntityId entityId, String propertyToRemove) throws Exception {
+    removeProperty(entityId.toMetadataEntity(), propertyToRemove);
   }
 
-  protected void removeMetadata(StreamViewId view) throws Exception {
-    metadataClient.removeMetadata(Id.Stream.View.fromEntityId(view));
+  private void removeProperty(MetadataEntity metadataEntity, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(metadataEntity, propertyToRemove);
   }
 
-  protected void removeProperties(ApplicationId app) throws Exception {
-    metadataClient.removeProperties(Id.Application.fromEntityId(app));
-  }
-
-  private void removeProperty(ApplicationId app, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(Id.Application.fromEntityId(app), propertyToRemove);
-  }
-
-  protected void removeProperties(ArtifactId artifact) throws Exception {
-    metadataClient.removeProperties(Id.Artifact.fromEntityId(artifact));
-  }
-
-  private void removeProperty(ArtifactId artifact, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(Id.Artifact.fromEntityId(artifact), propertyToRemove);
-  }
-
-  protected void removeProperties(ProgramId program) throws Exception {
-    metadataClient.removeProperties(Id.Program.fromEntityId(program));
-  }
-
-  protected void removeProperty(ProgramId program, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(Id.Program.fromEntityId(program), propertyToRemove);
-  }
-
-  protected void removeProperties(DatasetId dataset) throws Exception {
-    metadataClient.removeProperties(Id.DatasetInstance.fromEntityId(dataset));
-  }
-
-  protected void removeProperty(DatasetId dataset, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(Id.DatasetInstance.fromEntityId(dataset), propertyToRemove);
-  }
-
-  protected void removeProperties(StreamId stream) throws Exception {
-    metadataClient.removeProperties(Id.Stream.fromEntityId(stream));
-  }
-
-  protected void removeProperties(StreamViewId view) throws Exception {
-    metadataClient.removeProperties(Id.Stream.View.fromEntityId(view));
-  }
-
-  protected void removeProperty(StreamId stream, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(Id.Stream.fromEntityId(stream), propertyToRemove);
-  }
-
-  protected void removeProperty(StreamViewId view, String propertyToRemove) throws Exception {
-    metadataClient.removeProperty(Id.Stream.View.fromEntityId(view), propertyToRemove);
-  }
-
-  protected void addTags(ApplicationId app, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(Id.Application.fromEntityId(app), tags);
-  }
-
-  protected void addTags(final ApplicationId app, @Nullable final Set<String> tags,
+  protected void addTags(final MetadataEntity metadataEntity, @Nullable final Set<String> tags,
                          Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addTags(app, tags);
-        return null;
-      }
+    expectException((Callable<Void>) () -> {
+      addTags(metadataEntity, tags);
+      return null;
     }, expectedExceptionClass);
   }
 
-  protected void addTags(ArtifactId artifact, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(Id.Artifact.fromEntityId(artifact), tags);
-  }
-
-  protected void addTags(final ArtifactId artifact, @Nullable final Set<String> tags,
-                         Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addTags(artifact, tags);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addTags(ProgramId program, @Nullable Set<String> tags)
+  protected void addTags(MetadataEntity metadataEntity, @Nullable Set<String> tags)
     throws Exception {
-    metadataClient.addTags(Id.Program.fromEntityId(program), tags);
+    metadataClient.addTags(metadataEntity, tags);
   }
 
-  protected void addTags(final ProgramId program, @Nullable final Set<String> tags,
-                         Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addTags(program, tags);
-        return null;
-      }
-    }, expectedExceptionClass);
+  protected void addTags(EntityId entityId, @Nullable Set<String> tags)
+    throws Exception {
+    addTags(entityId.toMetadataEntity(), tags);
   }
 
-  protected void addTags(DatasetId dataset, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(Id.DatasetInstance.fromEntityId(dataset), tags);
-  }
-
-  protected void addTags(final DatasetId dataset, @Nullable final Set<String> tags,
-                         Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addTags(dataset, tags);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addTags(StreamId stream, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(Id.Stream.fromEntityId(stream), tags);
-  }
-
-  protected void addTags(StreamViewId view, @Nullable Set<String> tags) throws Exception {
-    metadataClient.addTags(Id.Stream.View.fromEntityId(view), tags);
-  }
-
-  protected void addTags(final StreamId stream, @Nullable final Set<String> tags,
-                         Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addTags(stream, tags);
-        return null;
-      }
-    }, expectedExceptionClass);
-  }
-
-  protected void addTags(final StreamViewId view, @Nullable final Set<String> tags,
-                         Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        addTags(view, tags);
-        return null;
-      }
+  protected void addTags(final EntityId entityId, @Nullable final Set<String> tags,
+                         Class<? extends Exception> expectedExceptionClass) {
+    expectException((Callable<Void>) () -> {
+      addTags(entityId, tags);
+      return null;
     }, expectedExceptionClass);
   }
 
@@ -445,76 +213,27 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                          cursor, showHiddden);
   }
 
-  protected Set<String> getTags(ApplicationId app, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(app, scope).iterator()).getTags();
+  protected Set<String> getTags(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
+    return metadataClient.getTags(metadataEntity, scope);
+  }
+  protected Set<String> getTags(EntityId entityId, MetadataScope scope) throws Exception {
+    return getTags(entityId.toMetadataEntity(), scope);
   }
 
-  protected Set<String> getTags(ArtifactId artifact, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(artifact, scope).iterator()).getTags();
+  protected void removeTag(MetadataEntity metadataEntity, String tagToRemove) throws Exception {
+    metadataClient.removeTag(metadataEntity, tagToRemove);
   }
 
-  protected Set<String> getTags(ProgramId program, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(program, scope).iterator()).getTags();
+  protected void removeTags(MetadataEntity metadataEntity) throws Exception {
+    metadataClient.removeTags(metadataEntity);
   }
 
-  protected Set<String> getTags(DatasetId dataset, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(dataset, scope).iterator()).getTags();
+  protected void removeTag(EntityId entityId, String tagToRemove) throws Exception {
+    removeTag(entityId.toMetadataEntity(), tagToRemove);
   }
 
-  protected Set<String> getTags(StreamId stream, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(stream, scope).iterator()).getTags();
-  }
-
-  protected Set<String> getTags(StreamViewId view, MetadataScope scope) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(view, scope).iterator()).getTags();
-  }
-
-  protected void removeTags(ApplicationId app) throws Exception {
-    metadataClient.removeTags(Id.Application.fromEntityId(app));
-  }
-
-  protected void removeTag(ApplicationId app, String tagToRemove) throws Exception {
-    metadataClient.removeTag(Id.Application.fromEntityId(app), tagToRemove);
-  }
-
-  protected void removeTags(ArtifactId artifact) throws Exception {
-    metadataClient.removeTags(Id.Artifact.fromEntityId(artifact));
-  }
-
-  protected void removeTag(ArtifactId artifact, String tagToRemove) throws Exception {
-    metadataClient.removeTag(Id.Artifact.fromEntityId(artifact), tagToRemove);
-  }
-
-  protected void removeTags(ProgramId program) throws Exception {
-    metadataClient.removeTags(Id.Program.fromEntityId(program));
-  }
-
-  private void removeTag(ProgramId program, String tagToRemove) throws Exception {
-    metadataClient.removeTag(Id.Program.fromEntityId(program), tagToRemove);
-  }
-
-  protected void removeTags(DatasetId dataset) throws Exception {
-    metadataClient.removeTags(Id.DatasetInstance.fromEntityId(dataset));
-  }
-
-  protected void removeTag(DatasetId dataset, String tagToRemove) throws Exception {
-    metadataClient.removeTag(Id.DatasetInstance.fromEntityId(dataset), tagToRemove);
-  }
-
-  protected void removeTags(StreamId stream) throws Exception {
-    metadataClient.removeTags(Id.Stream.fromEntityId(stream));
-  }
-
-  protected void removeTags(StreamViewId view) throws Exception {
-    metadataClient.removeTags(Id.Stream.View.fromEntityId(view));
-  }
-
-  protected void removeTag(StreamId stream, String tagToRemove) throws Exception {
-    metadataClient.removeTag(Id.Stream.fromEntityId(stream), tagToRemove);
-  }
-
-  protected void removeTag(StreamViewId view, String tagToRemove) throws Exception {
-    metadataClient.removeTag(Id.Stream.View.fromEntityId(view), tagToRemove);
+  protected void removeTags(EntityId entityId) throws Exception {
+    removeTags(entityId.toMetadataEntity());
   }
 
   // expect an exception during fetching of lineage

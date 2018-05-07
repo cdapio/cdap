@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.audit;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
@@ -33,4 +34,13 @@ public interface AuditPublisher {
    * @param auditPayload information on the change
    */
   void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload);
+
+  /**
+   * Publish audit log for a change.
+   *
+   * @param metadataEntity metadataEntity affected by the change
+   * @param auditType type of change
+   * @param auditPayload information on the change
+   */
+  void publish(MetadataEntity metadataEntity, AuditType auditType, AuditPayload auditPayload);
 }

@@ -16,10 +16,7 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import javax.annotation.Nullable;
 
@@ -103,13 +100,14 @@ class MetadataKey {
     // The rowkey is
     // [rowPrefix][targetType][targetId][key] for value rows and
     // [rowPrefix][targetType][targetId][key][index] for value index rows
-    // so skip the first two.
+    // so skip the first
     keySplitter.skipBytes();
-    keySplitter.skipString();
     return getTargetIdIdFromKey(keySplitter);
   }
 
   private static MetadataEntity getTargetIdIdFromKey(MDSKey.Splitter keySplitter) {
+    // get the type
+    String targetType = keySplitter.getString();
     MetadataEntity metadataEntity = new MetadataEntity();
     String key = keySplitter.getString();
     String value = keySplitter.getString();
@@ -124,7 +122,7 @@ class MetadataKey {
         break;
       }
     }
-    return metadataEntity;
+    return metadataEntity.changeType(targetType);
   }
 
   static byte[] getValueRowPrefix() {
@@ -138,20 +136,7 @@ class MetadataKey {
   private static MDSKey.Builder getMDSKeyPrefix(MetadataEntity metadataEntity, byte[] rowPrefix) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(rowPrefix);
-    // Determine targetType for the known entities. For custom entities the type will be custom for now.
-    String targetType;
-    // Specifically convert and update because for some metadata entity we will not have all entity id parts and
-    // this will ensure that during this phase we end up with all information. For example a MetadataEntity
-    // containing application information might only have namespace and application and a missing version but the
-    // EntityId representation of that include -SNAPSHOT as default version
-    NamespacedEntityId namespacedEntityId = EntityId.fromMetadataEntity(metadataEntity);
-    if (namespacedEntityId != null) {
-      metadataEntity = namespacedEntityId.toMetadataEntity();
-      targetType = EntityIdKeyHelper.getTargetType(namespacedEntityId);
-    } else {
-      targetType = CUSTOM_TARGET_TYPE;
-    }
-    builder.add(targetType);
+    builder.add(metadataEntity.getType());
     // add all the key value pairs from the metadata entity this is the targetId
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
       builder.add(keyValue.getKey());
@@ -159,7 +144,6 @@ class MetadataKey {
     }
     return builder;
   }
-
   private MetadataKey() {
   }
 }

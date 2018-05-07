@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.audit;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -104,12 +105,25 @@ public final class AuditPublishers {
    */
   public static void publishAudit(@Nullable AuditPublisher publisher, EntityId entityId,
                                   AuditType auditType, AuditPayload auditPayload) {
+    publishAudit(publisher, entityId.toMetadataEntity(), auditType, auditPayload);
+  }
+
+  /**
+   * Publish audit information using {@link AuditPublisher}.
+   *
+   * @param publisher audit publisher, if null no audit information is published
+   * @param metadataEntity MetadataEntity for which audit information is being published
+   * @param auditType audit type
+   * @param auditPayload audit payload
+   */
+  public static void publishAudit(@Nullable AuditPublisher publisher, MetadataEntity metadataEntity,
+                                  AuditType auditType, AuditPayload auditPayload) {
     if (publisher == null) {
       logWarning();
       return;
     }
 
-    publisher.publish(entityId, auditType, auditPayload);
+    publisher.publish(metadataEntity, auditType, auditPayload);
   }
 
   /**

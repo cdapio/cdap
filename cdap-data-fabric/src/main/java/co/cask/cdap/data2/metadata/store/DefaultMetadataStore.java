@@ -580,7 +580,8 @@ public class DefaultMetadataStore implements MetadataStore {
     builder.addPrevious(previous);
     builder.addAdditions(additions);
     builder.addDeletions(deletions);
-    AuditPublishers.publishAudit(auditPublisher, previous.getEntityId(), AuditType.METADATA_CHANGE, builder.build());
+    AuditPublishers.publishAudit(auditPublisher, previous.getMetadataEntity(), AuditType.METADATA_CHANGE,
+                                 builder.build());
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {

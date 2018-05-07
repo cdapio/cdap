@@ -266,15 +266,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     deleteArtifact(wordcountId1, false, null, 200);
     Assert.assertEquals(ImmutableMap.of(), getArtifactProperties(wordcountId1));
 
-    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(Id.Artifact.fromEntityId(wordcountId1),
-                                                                     MetadataScope.USER);
+    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     Assert.assertEquals(new MetadataRecord(wordcountId1, MetadataScope.USER),
                         metadataRecords.iterator().next());
     // delete artifact
     deleteArtifact(wordcountId1, true, null, 200);
     try {
-      metadataClient.getMetadata(Id.Artifact.fromEntityId(wordcountId1), MetadataScope.USER);
+      metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
       Assert.fail("Should not reach here");
     } catch (NotFoundException e) {
       // no-op
