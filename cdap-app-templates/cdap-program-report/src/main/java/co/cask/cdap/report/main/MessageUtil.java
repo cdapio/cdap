@@ -187,7 +187,15 @@ public final class MessageUtil {
         DataFileReader<GenericRecord> dataFileReader =
           new DataFileReader<>(new File(latestLocation.toURI()),
                                new GenericDatumReader<>(ProgramRunInfoSerializer.SCHEMA));
-        //TODO - efficiently skip using sync points CDAP-13400
+        long skipLen = latestLocation.length() / 10;
+        long skipPoint = 0;
+        while (dataFileReader.hasNext()) {
+          skipPoint += skipLen;
+          dataFileReader.sync(skipPoint);
+        }
+        if (skipPoint > 0) {
+          dataFileReader.sync(skipPoint - skipLen);
+        }
         while (dataFileReader.hasNext()) {
           GenericRecord record = dataFileReader.next();
           messageId = record.get(Constants.MESSAGE_ID).toString();
