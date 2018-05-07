@@ -1,6 +1,6 @@
 /*
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,13 +90,7 @@ public class MetadataUpgrader {
   private void saveUpgradeState(final MetadataScope scope) throws Exception {
     LOG.info("Save Metadata Dataset Upgrade status for scope {}", scope);
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws Exception {
-          metadataStore.markUpgradeComplete(scope);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> metadataStore.markUpgradeComplete(scope), retryStrategy);
     } catch (Exception e) {
       LOG.error("Failed to save upgrade state for scope {}.", scope, e);
       throw e;
@@ -111,13 +105,7 @@ public class MetadataUpgrader {
 
     LOG.info("Writing system metadata for existing entities.");
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws Exception {
-          existingEntitySystemMetadataWriter.write(datasetFramework);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> existingEntitySystemMetadataWriter.write(datasetFramework), retryStrategy);
     } catch (Exception e) {
       LOG.error("Failed write Existing System Metadata.", e);
       throw e;
@@ -141,13 +129,7 @@ public class MetadataUpgrader {
   private void upgradeMetadataDatasetSpecs(final MetadataScope scope) {
     LOG.debug("Upgrading the Metadata Dataset Specs now");
     try {
-      Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
-        @Override
-        public Void call() throws Exception {
-          metadataStore.createOrUpgrade(scope);
-          return null;
-        }
-      }, retryStrategy);
+      Retries.runWithRetries(() -> metadataStore.createOrUpgrade(scope), retryStrategy);
     } catch (Exception e) {
       LOG.error("Metadata Dataset createOrUpgrade Failed for scope {}", scope, e);
       throw new RuntimeException(e);

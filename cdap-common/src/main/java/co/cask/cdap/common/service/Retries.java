@@ -16,14 +16,14 @@
 
 package co.cask.cdap.common.service;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.retry.RetriesExhaustedException;
 import co.cask.cdap.api.retry.RetryableException;
-import com.google.common.base.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Utilities to perform logic with retries.
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public final class Retries {
   private static final Logger LOG = LoggerFactory.getLogger(Retries.class);
   public static final Predicate<Throwable> ALWAYS_TRUE = t -> true;
-  private static final Predicate<Throwable> DEFAULT_PREDICATE = t -> t instanceof RetryableException;
+  private static final Predicate<Throwable> DEFAULT_PREDICATE = RetryableException.class::isInstance;
 
   private Retries() {
 
@@ -46,6 +46,16 @@ public final class Retries {
    */
   public interface Callable<V, T extends Throwable> {
     V call() throws T;
+  }
+
+  /**
+   * A Runnable whose throwable is generic. This is used so that
+   * {@link #runWithRetries(Runnable, RetryStrategy, Predicate)} does not have to wrap any exceptions.
+   *
+   * @param <T> the type of throwable
+   */
+  public interface Runnable<T extends Throwable> {
+    void run() throws T;
   }
 
   /**
@@ -83,11 +93,42 @@ public final class Retries {
    */
   public static <V> V supplyWithRetries(final Supplier<V> supplier, RetryStrategy retryStrategy,
                                         Predicate<Throwable> isRetryable) {
-    return callWithRetries(new Callable<V, RuntimeException>() {
-      @Override
-      public V call() throws RuntimeException {
-        return supplier.get();
-      }
+    return callWithRetries(supplier::get, retryStrategy, isRetryable);
+  }
+
+  /**
+   * The same as calling {@link #runWithRetries(Runnable, RetryStrategy, Predicate)} where a retryable failure
+   * is defined as a {@link RetryableException}.
+   *
+   * @param runnable the callable to run
+   * @param retryStrategy the retry strategy to use if the supplier fails in a retryable way
+   * @param <T> the type of throwable
+   * @throws T if the runnable failed in a way that is not retryable, or the retries were exhausted.
+   *   If retries were exhausted, a {@link RetriesExhaustedException} will be added as a suppressed exception.
+   *   If the call was interrupted while waiting between retries, the {@link InterruptedException} will be added
+   *   as a suppressed exception
+   */
+  public static <T extends Throwable> void runWithRetries(Runnable<T> runnable, RetryStrategy retryStrategy) throws T {
+    runWithRetries(runnable, retryStrategy, DEFAULT_PREDICATE);
+  }
+
+  /**
+   * Executes {@link Runnable#run()}, retrying the call if it throws something retryable.
+   *
+   * @param runnable the callable to run
+   * @param retryStrategy the retry strategy to use if the supplier fails in a retryable way
+   * @param isRetryable predicate to determine whether the supplier failure is retryable or not
+   * @param <T> the type of throwable
+   * @throws T if the runnable failed in a way that is not retryable, or the retries were exhausted.
+   *   If retries were exhausted, a {@link RetriesExhaustedException} will be added as a suppressed exception.
+   *   If the call was interrupted while waiting between retries, the {@link InterruptedException} will be added
+   *   as a suppressed exception
+   */
+  public static <T extends Throwable> void runWithRetries(Runnable<T> runnable, RetryStrategy retryStrategy,
+                                                          Predicate<Throwable> isRetryable) throws T {
+    callWithRetries((Callable<Void, T>) () -> {
+      runnable.run();
+      return null;
     }, retryStrategy, isRetryable);
   }
 
@@ -138,7 +179,7 @@ public final class Retries {
         }
         return v;
       } catch (Throwable t) {
-        if (!isRetryable.apply(t)) {
+        if (!isRetryable.test(t)) {
           throw t;
         }
 

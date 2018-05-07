@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -101,73 +101,57 @@ public class DefaultDatasetManager implements DatasetManager {
   @Override
   public void createDataset(final String name, final String type,
                             final DatasetProperties properties) throws DatasetManagementException {
-    Retries.callWithRetries(new Retries.Callable<Void, DatasetManagementException>() {
-      @Override
-      public Void call() throws DatasetManagementException {
-        try {
-          // we have to do this check since addInstance method can only be used when app impersonation is enabled
-          if (principalId != null) {
-            datasetFramework.addInstance(type, createInstanceId(name), properties, principalId);
-          } else {
-            datasetFramework.addInstance(type, createInstanceId(name), properties);
-          }
-        } catch (IOException ioe) {
-          // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-          throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                             name, ioe.getMessage()), ioe);
+    Retries.runWithRetries(() -> {
+      try {
+        // we have to do this check since addInstance method can only be used when app impersonation is enabled
+        if (principalId != null) {
+          datasetFramework.addInstance(type, createInstanceId(name), properties, principalId);
+        } else {
+          datasetFramework.addInstance(type, createInstanceId(name), properties);
         }
-        return null;
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }
 
   @Override
   public void updateDataset(final String name, final DatasetProperties properties) throws DatasetManagementException {
-    Retries.callWithRetries(new Retries.Callable<Void, DatasetManagementException>() {
-      @Override
-      public Void call() throws DatasetManagementException {
-        try {
-          datasetFramework.updateInstance(createInstanceId(name), properties);
-        } catch (IOException ioe) {
-          // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-          throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
-                                                             name, ioe.getMessage()), ioe);
-        }
-        return null;
+    Retries.runWithRetries(() -> {
+      try {
+        datasetFramework.updateInstance(createInstanceId(name), properties);
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }
 
   @Override
   public void dropDataset(final String name) throws DatasetManagementException {
-    Retries.callWithRetries(new Retries.Callable<Void, DatasetManagementException>() {
-      @Override
-      public Void call() throws DatasetManagementException {
-        try {
-          datasetFramework.deleteInstance(createInstanceId(name));
-        } catch (IOException ioe) {
-          // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-          throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
-                                                             name, ioe.getMessage()), ioe);
-        }
-        return null;
+    Retries.runWithRetries(() -> {
+      try {
+        datasetFramework.deleteInstance(createInstanceId(name));
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }
 
   @Override
   public void truncateDataset(final String name) throws DatasetManagementException {
-    Retries.callWithRetries(new Retries.Callable<Void, DatasetManagementException>() {
-      @Override
-      public Void call() throws DatasetManagementException {
-        try {
-          datasetFramework.truncateInstance(createInstanceId(name));
-        } catch (IOException ioe) {
-          // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-          throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
-                                                             name, ioe.getMessage()), ioe);
-        }
-        return null;
+    Retries.runWithRetries(() -> {
+      try {
+        datasetFramework.truncateInstance(createInstanceId(name));
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }

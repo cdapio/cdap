@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.service.RetryStrategy;
-import com.google.common.base.Supplier;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 
@@ -32,21 +31,11 @@ public class RetryingShortTransactionSystemClient extends RetryingTransactionSys
 
   @Override
   public Transaction startShort() {
-    return supplyWithRetries(new Supplier<Transaction>() {
-      @Override
-      public Transaction get() {
-        return delegate.startShort();
-      }
-    });
+    return supplyWithRetries(delegate::startShort);
   }
 
   @Override
   public Transaction startShort(final int timeout) {
-    return supplyWithRetries(new Supplier<Transaction>() {
-      @Override
-      public Transaction get() {
-        return delegate.startShort(timeout);
-      }
-    });
+    return supplyWithRetries(() -> delegate.startShort(timeout));
   }
 }

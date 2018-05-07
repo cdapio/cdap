@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -202,15 +202,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   @Nullable
   private DatasetSpecification getDatasetSpecWithRetry(final DatasetFramework datasetFramework,
                                                final DatasetId datasetId) throws DatasetManagementException {
-    return Retries.callWithRetries(new Retries.Callable<DatasetSpecification, DatasetManagementException>() {
-      @Override
-      public DatasetSpecification call() throws DatasetManagementException {
-        if (!stopping) {
-          return datasetFramework.getDatasetSpec(datasetId);
-        }
-        return null;
-      }
-    }, RetryStrategies.fixDelay(1, TimeUnit.SECONDS));
+    return Retries.callWithRetries(() -> stopping ? null : datasetFramework.getDatasetSpec(datasetId),
+                                   RetryStrategies.fixDelay(1, TimeUnit.SECONDS));
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
