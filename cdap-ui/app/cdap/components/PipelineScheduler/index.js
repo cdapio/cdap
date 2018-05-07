@@ -39,7 +39,7 @@ import {Observable} from 'rxjs/Observable';
 import {PROFILES_DROPDOWN_DOM_CLASS} from 'components/PipelineScheduler/ProfilesForSchedule';
 import {MyScheduleApi} from 'api/schedule';
 import T from 'i18n-react';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from  'components/PipelineDetails/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import {GLOBALS} from 'services/global-constants';
 import isEmpty from 'lodash/isEmpty';
 
