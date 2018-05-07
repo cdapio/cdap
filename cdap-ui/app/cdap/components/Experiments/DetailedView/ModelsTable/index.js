@@ -22,11 +22,11 @@ import {connect} from 'react-redux';
 import {
   handleModelsPageChange,
   handleModelsSorting,
-  getAlgorithmLabel,
   setActiveModel,
   setExperimentDetailError,
   getModelStatus
-} from 'components/Experiments/store/ActionCreator';
+} from 'components/Experiments/store/ExperimentDetailActionCreator';
+import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';

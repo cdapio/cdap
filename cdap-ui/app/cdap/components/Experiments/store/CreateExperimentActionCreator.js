@@ -16,6 +16,7 @@
 
 import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS, POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
 import experimentDetailStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
+import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -608,6 +609,20 @@ function setModelCreateError(error) {
   });
 }
 
+function setAlgorithmsListForCreateView() {
+  if (!setAlgorithmsList) {
+    return;
+  }
+
+  setAlgorithmsList()
+    .subscribe(
+      () => {},
+      (err) => {
+        setExperimentCreateError(`Failed to get list of algorithms: ${err.response || err}`);
+      }
+    );
+}
+
 export {
   onExperimentNameChange,
   onExperimentDescriptionChange,
@@ -637,5 +652,6 @@ export {
   fetchAlgorithmsList,
   updateHyperParam,
   setExperimentCreateError,
-  setModelCreateError
+  setModelCreateError,
+  setAlgorithmsListForCreateView
 };

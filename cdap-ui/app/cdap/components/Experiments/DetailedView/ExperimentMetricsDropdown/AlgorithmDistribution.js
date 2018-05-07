@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import * as d3Lib from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
-import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
+import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 const HEIGHT_OF_PIE_CHART = 190;

@@ -26,8 +26,8 @@ import {
   handleModelsPageChange,
   resetExperimentDetailStore,
   resetNewlyTrainingModel,
-  setAlgorithmsList
-} from 'components/Experiments/store/ActionCreator';
+  setAlgorithmsListForDetailedView
+} from 'components/Experiments/store/ExperimentDetailActionCreator';
 import {MMDS_SORT_METHODS, MMDS_SORT_COLUMN} from 'components/Experiments/store';
 import ConnectedTopPanel from 'components/Experiments/DetailedView/TopPanel';
 import ModelsTableWrapper from 'components/Experiments/DetailedView/ModelsTable';
@@ -49,7 +49,7 @@ export default class ExperimentDetails extends Component {
   componentWillMount() {
     Mousetrap.bind('right', this.goToNextPage);
     Mousetrap.bind('left', this.goToPreviousPage);
-    setAlgorithmsList();
+    setAlgorithmsListForDetailedView();
     let { experimentId } = this.props.match.params;
     let {
       offset: modelsOffset,

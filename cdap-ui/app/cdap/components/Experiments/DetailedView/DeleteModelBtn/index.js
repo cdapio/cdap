@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
-import {getModelsInExperiment, setExperimentDetailError} from 'components/Experiments/store/ActionCreator';
+import {getModelsInExperiment, setExperimentDetailError} from 'components/Experiments/store/ExperimentDetailActionCreator';
 import NamespaceStore from 'services/NamespaceStore';
 import {myExperimentsApi} from 'api/experiments';
 

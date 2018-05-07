@@ -19,7 +19,7 @@ import React from 'react';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {setExperimentDetailError} from 'components/Experiments/store/ActionCreator';
+import {setExperimentDetailError} from 'components/Experiments/store/ExperimentDetailActionCreator';
 
 const deleteExperiment = (experimentId, callback, errCallback) => {
   let namespace = getCurrentNamespace();

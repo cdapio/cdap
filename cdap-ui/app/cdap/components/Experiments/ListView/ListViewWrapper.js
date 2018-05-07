@@ -28,7 +28,7 @@ import InvalidPageView from 'components/Experiments/ListView/InvalidPageView';
 import EmptyListView from 'components/Experiments/ListView/EmptyListView';
 import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link } from 'react-router-dom';
-import {handlePageChange, handleExperimentsSort, setExperimentsListError} from 'components/Experiments/store/ActionCreator';
+import {handlePageChange, handleExperimentsSort, setExperimentsListError} from 'components/Experiments/store/ExperimentsListActionCreator';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 

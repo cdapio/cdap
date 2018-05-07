@@ -25,11 +25,10 @@ import {
   updateHyperParam,
   setModelCreateError
 } from 'components/Experiments/store/CreateExperimentActionCreator';
-import {getAlgorithmLabel} from 'components/Experiments/store/ActionCreator';
+import {getAlgorithmLabel, getHyperParamLabel} from 'components/Experiments/store/SharedActionCreator';
 import {Label} from 'reactstrap';
 import {objectQuery} from 'services/helpers';
 import HyperParamWidget from 'components/Experiments/CreateView/MLAlgorithmSelection/HyperParamWidget';
-import { getHyperParamLabel } from 'components/Experiments/store/ActionCreator';
 import startCase from 'lodash/startCase';
 import classnames from 'classnames';
 import Alert from 'components/Alert';

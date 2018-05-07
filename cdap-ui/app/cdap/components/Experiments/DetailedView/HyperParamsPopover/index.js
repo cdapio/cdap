@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
-import {getHyperParamLabel} from 'components/Experiments/store/ActionCreator';
+import {getHyperParamLabel} from 'components/Experiments/store/SharedActionCreator';
 
 require('./HyperParamsPopover.scss');
 

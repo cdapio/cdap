@@ -14,27 +14,11 @@
  * the License.
 */
 
-import experimentsStore, {ACTIONS, MMDS_SORT_METHODS} from 'components/Experiments/store';
+import {MMDS_SORT_METHODS} from 'components/Experiments/store';
 import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
-import {setExperimentCreateError} from 'components/Experiments/store/CreateExperimentActionCreator';
+import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import AlgorithmsListStore, {ACTIONS as AlgorithmsStoreActions} from 'components/Experiments/store/AlgorithmsListStore';
-
-function setExperimentsLoading() {
-  experimentsStore.dispatch({
-    type: ACTIONS.SET_EXPERIMENTS_LOADING
-  });
-}
-
-function setExperimentsListError(error) {
-  experimentsStore.dispatch({
-    type: ACTIONS.SET_ERROR,
-    payload: {
-      error
-    }
-  });
-}
 
 function setExperimentDetailError(error) {
   experimentDetailsStore.dispatch({
@@ -43,67 +27,6 @@ function setExperimentDetailError(error) {
       error
     }
   });
-}
-
-function getExperimentsList() {
-  setExperimentsLoading();
-  let {
-    offset,
-    limit,
-    sortMethod,
-    sortColumn
-  } = experimentsStore.getState().experiments;
-  myExperimentsApi
-    .list({
-      namespace: getCurrentNamespace(),
-      offset,
-      limit,
-      sort: `${sortColumn} ${sortMethod}`
-    })
-    .subscribe(res => {
-      let experiments = res.experiments;
-      let totalCount = res.totalRowCount;
-      experiments.forEach(experiment => getModelsListInExperiment(experiment.name));
-      experimentsStore.dispatch({
-        type: ACTIONS.SET_EXPERIMENTS_LIST,
-        payload: {
-          experiments,
-          totalCount
-        }
-      });
-    }, (err) => {
-      setExperimentsListError(`Failed to get experiments: ${err.response || err}`);
-    });
-}
-
-function getModelsListInExperiment(experimentId) {
-  myExperimentsApi
-    .getModelsInExperiment({
-      experimentId,
-      namespace: getCurrentNamespace()
-    })
-    .subscribe(res => {
-      let models = res.models;
-      let modelsCount = res.totalRowCount;
-      experimentsStore.dispatch({
-        type: ACTIONS.SET_MODELS_IN_EXPERIMENT,
-        payload: {
-          experimentId,
-          models,
-          modelsCount
-        }
-      });
-    }, (err) => {
-      setExperimentsListError(`Failed to get model count for experiment '${experimentId}': ${err.response || err}`);
-    });
-}
-
-function deleteExperiment(experimentId) {
-  return myExperimentsApi
-    .deleteExperiment({
-      namespace: getCurrentNamespace(),
-      experimentId
-    });
 }
 
 function getExperimentDetails(experimentId) {
@@ -310,106 +233,20 @@ function setActiveModel(activeModelId) {
   });
 }
 
-const getAlgorithmLabel = (algorithm) => {
-  let algorithmsList = AlgorithmsListStore.getState();
-  let match = algorithmsList.find(algo => algo.name === algorithm);
-  if (match) {
-    return match.label;
-  }
-  return algorithm;
-};
-
-const getHyperParamLabel = (algorithm, hyperparam) => {
-  let algorithmsList = AlgorithmsListStore.getState();
-  let match = algorithmsList.find(algo => algo.name === algorithm);
-  if (match) {
-    let matchingHyperParameter = match.hyperparameters.find(hp => hp.name === hyperparam);
-    if (matchingHyperParameter) {
-      return matchingHyperParameter.label;
-    }
-    return hyperparam;
-  }
-  return hyperparam;
-};
-
-const setAlgorithmsList = () => {
-  let algoList = AlgorithmsListStore.getState();
-  if (algoList.length) {
+const setAlgorithmsListForDetailedView = () => {
+  if (!setAlgorithmsList) {
     return;
   }
-  myExperimentsApi
-    .getAlgorithms({
-      namespace: getCurrentNamespace()
-    })
-    .subscribe(algorithmsList => {
-      algorithmsList = algorithmsList.map(algo => ({...algo, name: algo.algorithm}));
-      AlgorithmsListStore.dispatch({
-        type: AlgorithmsStoreActions.SET_ALGORITHMS_LIST,
-        payload: {algorithmsList}
-      });
-    }, (err) => {
-      let errorToShow = `Failed to get list of algorithms: ${err.response || err}`;
-      /* Need to do this since this function can be called from either the create view,
-      list view or error view, but we don't know in advance which view is calling it */
-      setExperimentCreateError(errorToShow);
-      setExperimentsListError(errorToShow);
-      setExperimentDetailError(errorToShow);
-    });
+
+  setAlgorithmsList()
+    .subscribe(
+      () => {},
+      (err) => {
+        setExperimentDetailError(`Failed to get list of algorithms: ${err.response || err}`);
+      }
+    );
 };
 
-function updateQueryParameters({ limit, offset, sortMethod, sortColumn }) {
-  experimentsStore.dispatch({
-    type: ACTIONS.SET_QUERY_PARAMS,
-    payload: {
-      limit,
-      offset,
-      sortMethod,
-      sortColumn
-    }
-  });
-}
-
-function updateQueryString() {
-  let {
-    offset,
-    limit,
-    sortMethod,
-    sortColumn
-  } = experimentsStore.getState().experiments;
-  let newQuery = `offset=${offset}&limit=${limit}&sort=${sortColumn} ${sortMethod}`;
-  let obj = {
-    title: document.title,
-    url: `${location.pathname}?${newQuery}`
-  };
-  history.pushState(obj, obj.title, obj.url);
-}
-
-function handlePageChange({selected}) {
-  let {limit} = experimentsStore.getState().experiments;
-  experimentsStore.dispatch({
-    type: ACTIONS.SET_PAGINATION,
-    payload: {
-      offset: selected * limit
-    }
-  });
-  updateQueryString();
-  getExperimentsList();
-}
-
-function handleExperimentsSort(field) {
-  let { sortColumn, sortMethod } = experimentsStore.getState().experiments;
-  let newSortField = (field !== sortColumn) ? field : sortColumn;
-  let newSortMethod = MMDS_SORT_METHODS.ASC === sortMethod ? MMDS_SORT_METHODS.DESC : MMDS_SORT_METHODS.ASC;
-  experimentsStore.dispatch({
-    type: ACTIONS.SET_EXPERIMENTS_SORT,
-    payload: {
-      sortMethod: newSortMethod,
-      sortColumn: newSortField
-    }
-  });
-  updateQueryString();
-  getExperimentsList();
-}
 function resetExperimentDetailStore() {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.RESET
@@ -421,28 +258,19 @@ function resetNewlyTrainingModel() {
     type: EXPERIMENTDETAILACTIONS.RESET_NEWLY_TRAINING_MODEL
   });
 }
+
 export {
-  setExperimentsLoading,
-  setExperimentsListError,
   setExperimentDetailError,
-  getExperimentsList,
-  getModelsListInExperiment,
-  deleteExperiment,
   getExperimentDetails,
   getModelsInExperiment,
+  handleModelsPageChange,
+  handleModelsSorting,
+  updateQueryParametersForModels,
   getSplitsInExperiment,
   getModelStatus,
   pollModelStatus,
   setActiveModel,
-  getAlgorithmLabel,
-  getHyperParamLabel,
-  setAlgorithmsList,
-  updateQueryParametersForModels,
-  handleModelsPageChange,
-  handleModelsSorting,
-  handlePageChange,
-  handleExperimentsSort,
-  updateQueryParameters,
+  setAlgorithmsListForDetailedView,
   resetExperimentDetailStore,
   resetNewlyTrainingModel
 };
