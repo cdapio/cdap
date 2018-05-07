@@ -229,7 +229,7 @@ public class DataProcClient implements AutoCloseable {
       // network is a url like https://www.googleapis.com/compute/v1/projects/<project>/<region>/networks/<name>
       // we want to get the last section of the path and compare to the configured network name
       int idx = firewall.getNetwork().lastIndexOf('/');
-      String networkName = firewall.getNetwork().substring(idx + 1);
+      String networkName = idx >= 0 ? firewall.getNetwork().substring(idx + 1) : firewall.getNetwork();
       if (!networkName.equals(conf.getNetwork())) {
         continue;
       }
