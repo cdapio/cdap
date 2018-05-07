@@ -74,11 +74,7 @@ export default class Popover extends PureComponent {
     if (this.id !== popoverId) {
       this.setState({
         showPopover: false
-      }, () => {
-        if (this.props.onTogglePopover) {
-          this.props.onTogglePopover(this.state.showPopover);
-        }
-      });
+      }, this.updateParentOnToggle);
     }
   };
 
@@ -96,6 +92,12 @@ export default class Popover extends PureComponent {
     this.eventEmitter.off('POPOVER_OPEN', this.hidePopoverEventHandler);
   }
 
+  updateParentOnToggle = () => {
+    if (this.props.onTogglePopover) {
+      this.props.onTogglePopover(this.state.showPopover);
+    }
+  };
+
   cleanUpDocumentClickEventHandler = () => {
     if (this.documentClick$) {
       this.documentClick$.unsubscribe();
@@ -107,11 +109,8 @@ export default class Popover extends PureComponent {
 
     this.setState({
       showPopover: newState
-    }, () => {
-      if (this.props.onTogglePopover) {
-        this.props.onTogglePopover(this.state.showPopover);
-      }
-    });
+    }, this.updateParentOnToggle);
+
     if (newState) {
       this.eventEmitter.emit('POPOVER_OPEN', this.id);
       this.documentClick$ = Observable.fromEvent(document, 'click')
@@ -125,7 +124,7 @@ export default class Popover extends PureComponent {
           this.cleanUpDocumentClickEventHandler();
           this.setState({
             showPopover: false
-          });
+          }, this.updateParentOnToggle);
         });
 
       Mousetrap.bind('esc', this.togglePopover);
