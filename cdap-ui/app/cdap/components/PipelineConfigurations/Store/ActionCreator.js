@@ -316,6 +316,17 @@ const scheduleOrSuspendPipeline = (scheduleApi) => {
   });
 };
 
+const getCustomizationMap = (properties) => {
+  let profileCustomizations = {};
+  Object.keys(properties).forEach(prop => {
+    if (prop.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1) {
+      let propName = prop.replace(`${PROFILE_PROPERTIES_PREFERENCE}.`, '');
+      profileCustomizations[propName] = properties[prop];
+    }
+  });
+  return profileCustomizations;
+};
+
 const reset = () => {
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.RESET
@@ -335,5 +346,6 @@ export {
   runPipeline,
   schedulePipeline,
   suspendSchedule,
+  getCustomizationMap,
   reset
 };

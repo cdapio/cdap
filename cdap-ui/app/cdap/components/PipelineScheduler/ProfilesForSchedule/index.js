@@ -20,9 +20,7 @@ import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
-import classnames from 'classnames';
 import {connect} from 'react-redux';
-import {preventPropagation} from 'services/helpers';
 import StatusMapper from 'services/StatusMapper';
 import ProfilesListView, {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
 
@@ -56,58 +54,6 @@ class ProfilesForSchedule extends Component {
     }
   }
 
-  selectProfile = (profileName, e) => {
-    setSelectedProfile(profileName);
-    preventPropagation(e);
-  };
-
-  selectProfileWithCustomizations = (profileName, profileCustomizations = {}) => {
-    setSelectedProfile(profileName, profileCustomizations);
-  };
-
-  _renderProfilesTable = () => {
-    return (
-      <div className="grid-wrapper">
-        <div className="grid grid-container">
-          <div className="grid-header">
-            <div className="grid-row">
-              <div />
-              <strong>Profile Name</strong>
-              <strong>Provisioner</strong>
-              <strong>Scope</strong>
-              <strong />
-            </div>
-          </div>
-          <div className="grid-body">
-            {
-              this.state.profiles.map(profile => {
-                let isSelected = this.state.selectedProfile === profile.name;
-                return (
-                  <div
-                    className={classnames("grid-row grid-link", {
-                      'active': isSelected
-                    })}
-                    onClick={this.selectProfile.bind(this, profile.name)}
-                  >
-                    {
-                      isSelected ?
-                        <IconSVG name="icon-check" className="text-success" />
-                      :
-                        <div />
-                    }
-                    <div>{profile.name}</div>
-                    <div>{profile.provisioner.name}</div>
-                    <div>{profile.scope}</div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   renderProfilesTable = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let selectedProfile = {
@@ -117,7 +63,7 @@ class ProfilesForSchedule extends Component {
     return (
       <ProfilesListView
         showProfilesCount={false}
-        onProfileSelect={this.selectProfileWithCustomizations}
+        onProfileSelect={setSelectedProfile}
         disabled={isScheduled}
         selectedProfile={selectedProfile}
       />

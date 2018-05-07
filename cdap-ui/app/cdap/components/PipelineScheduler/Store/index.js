@@ -33,7 +33,8 @@ import {
 import {createStore} from 'redux';
 import range from 'lodash/range';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from  'components/PipelineDetails/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY} from  'components/PipelineDetails/ProfilesListView';
+import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const INTERVAL_OPTIONS = {
   '5MIN': 'Every 5 min',
@@ -217,18 +218,8 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
       };
     case ACTIONS.SET_CURRENT_BACKEND_SCHEDULE: {
       let {currentBackendSchedule} = action.payload;
-      const getProfileCustomizations = (scheduleProperties = {}) => {
-        let customizations = {};
-        Object.keys(scheduleProperties).forEach(scheduleProp => {
-          if (scheduleProp.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1) {
-            let key = scheduleProp.replace(`${PROFILE_PROPERTIES_PREFERENCE}.`, '');
-            customizations[key] = scheduleProperties[scheduleProp];
-          }
-        });
-        return customizations;
-      };
       let profileFromBackend = objectQuery(currentBackendSchedule, 'properties', PROFILE_NAME_PREFERENCE_PROPERTY);
-      let profileCustomizations = getProfileCustomizations(objectQuery(currentBackendSchedule, 'properties'));
+      let profileCustomizations = getCustomizationMap(objectQuery(currentBackendSchedule, 'properties') || {});
       let constraintFromBackend = (currentBackendSchedule.constraints || []).find(constraint => {
         return constraint.type === 'CONCURRENCY';
       });

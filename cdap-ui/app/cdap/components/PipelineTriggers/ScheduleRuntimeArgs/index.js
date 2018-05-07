@@ -32,6 +32,7 @@ import {objectQuery} from 'services/helpers';
 import {Provider} from 'react-redux';
 import isNil from 'lodash/isNil';
 import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from  'components/PipelineDetails/ProfilesListView';
+import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 require('./ScheduleRuntimeArgs.scss');
 require('./Tabs/ScheduleRuntimeTabStyling.scss');
@@ -108,13 +109,7 @@ export default class ScheduleRuntimeArgs extends Component {
         });
       }
 
-      let profileCustomizations = {};
-      Object.keys(scheduleInfo.properties).forEach(prop => {
-        if (prop.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1) {
-          let propName = prop.replace(`${PROFILE_PROPERTIES_PREFERENCE}.`, '');
-          profileCustomizations[propName] = scheduleInfo.properties[prop];
-        }
-      });
+      let profileCustomizations = getCustomizationMap(scheduleInfo.properties);
 
       setSelectedProfile(scheduleInfo.properties[PROFILE_NAME_PREFERENCE_PROPERTY], profileCustomizations);
       bulkSetArgMapping(argsArray);

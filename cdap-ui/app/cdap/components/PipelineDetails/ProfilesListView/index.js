@@ -27,6 +27,7 @@ import PipelineDetailStore from 'components/PipelineDetails/store';
 import ProfileCustomizePopover from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover';
 import {isNilOrEmpty} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
+import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 require('./ProfilesListViewInPipeline.scss');
 
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
@@ -80,18 +81,8 @@ export default class ProfilesListViewInPipeline extends Component {
       .subscribe(
         ([profiles = [], systemProfiles = [], preferences = {}]) => {
           let selectedProfile = this.state.selectedProfile || preferences[PROFILE_NAME_PREFERENCE_PROPERTY];
-          const getProfileCustomizationFromAppPreferences = () => {
-            let profileCustomizations = {};
-            Object.keys(preferences).forEach(pref => {
-              if (pref.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1) {
-                let profilePropertyName = pref.replace(`${PROFILE_PROPERTIES_PREFERENCE}.`, '');
-                profileCustomizations[profilePropertyName] = preferences[pref];
-              }
-            });
-            return profileCustomizations;
-          };
           let profileCustomizations = isNilOrEmpty(this.state.profileCustomizations) ?
-            getProfileCustomizationFromAppPreferences()
+            getCustomizationMap(preferences)
           :
             this.state.profileCustomizations;
 
