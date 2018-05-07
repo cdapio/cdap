@@ -26,6 +26,7 @@ import {Observable} from 'rxjs/Observable';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import ProfileCustomizePopover from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover';
 import {isNilOrEmpty} from 'services/helpers';
+import isEqual from 'lodash/isEqual';
 require('./ProfilesListViewInPipeline.scss');
 
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
@@ -55,7 +56,10 @@ export default class ProfilesListViewInPipeline extends Component {
   };
 
   componentWillReceiveProps(nextProps) {
-    if (this.state.selectedProfile !== nextProps.selectedProfile.name) {
+    if (
+      this.state.selectedProfile !== nextProps.selectedProfile.name ||
+      !isEqual(nextProps.selectedProfile.profileCustomizations, this.state.customizations)
+    ) {
       this.setState({
         selectedProfile: nextProps.selectedProfile.name,
         profileCustomizations: nextProps.selectedProfile.profileCustomizations

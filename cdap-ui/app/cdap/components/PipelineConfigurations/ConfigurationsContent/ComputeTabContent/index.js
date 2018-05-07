@@ -55,10 +55,18 @@ class ComputeTabContent extends Component {
         runtimeObj[key] = customizations[profileProperty];
       });
     }
-    pairs = convertMapToKeyValuePairs(runtimeObj);
+    // This is required to not override macros that are marked as provided and nonDeletable.
+    let newRunTimePairs = convertMapToKeyValuePairs(runtimeObj);
+    newRunTimePairs = newRunTimePairs.map(newRunTimeArg => {
+      let existingPair = pairs.find(p => p.key === newRunTimeArg.key && p.value === newRunTimeArg.value) || {};
+      return {
+        ...existingPair,
+        ...newRunTimeArg,
+      };
+    });
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-      payload: { runtimeArgs: { pairs } }
+      payload: { runtimeArgs: { pairs: newRunTimePairs } }
     });
     updatePipelineEditStatus();
   };

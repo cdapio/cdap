@@ -23,6 +23,7 @@ import AbstractWidget from 'components/AbstractWidget';
 import uuidV4 from 'uuid/v4';
 import {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
 import IconSVG from 'components/IconSVG';
+import cloneDeep from 'lodash/cloneDeep';
 
 require('./ProfileCustomizeContent.scss');
 
@@ -45,7 +46,7 @@ export default class ProfileCustomizeContent extends PureComponent {
     provisionerspec: null
   };
 
-  customization = this.props.customizations;
+  customization = cloneDeep(this.props.customizations);
 
   componentDidMount() {
     MyCloudApi.getProvisionerDetailSpec({
@@ -65,6 +66,9 @@ export default class ProfileCustomizeContent extends PureComponent {
         console.log('Failed to fetch provisioner spec ', err);
       }
     );
+  }
+  componentWillUnmount() {
+    this.customization = {};
   }
 
   onPropertyUpdate = (propertyName, value) => {

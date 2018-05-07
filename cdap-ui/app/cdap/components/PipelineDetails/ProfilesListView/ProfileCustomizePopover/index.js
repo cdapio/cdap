@@ -28,6 +28,10 @@ export default class ProfileCustomizePopover extends PureComponent {
     disabled: PropTypes.bool
   };
 
+  static defaultProps = {
+    customizations: {}
+  };
+
   state = {
     showPopover: false
   };
