@@ -40,6 +40,12 @@ export default class Accordion extends PureComponent {
   };
 
   onTabPaneClick = (tabPaneId) => {
+    if (this.state.activePane === tabPaneId) {
+      this.setState({
+        activePane: null
+      });
+      return;
+    }
     this.setState({
       activePane: tabPaneId
     });

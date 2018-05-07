@@ -29,21 +29,22 @@ export default class AccordionPane extends PureComponent {
   };
 
   render() {
+    let {
+      onTabPaneClick,
+      activePane,
+      size,
+      id
+    } = this.props;
     return (
       <div className={classnames("accordion-pane", {
         active: this.props.activePane === this.props.id
       })}>
         {
           React.Children.map(this.props.children, child => {
-            let {
-              onTabPaneClick,
-              activePane,
-              size,
-              id
-            } = this.props;
             if (
               child.type.displayName === 'AccordionTitle' ||
-              child.type.name === 'AccordionTitle'
+              child.type.name === 'AccordionTitle' ||
+              this.props.activePane === this.props.id
             ) {
               return React.cloneElement(child, {
                 ...child.props,
@@ -54,17 +55,7 @@ export default class AccordionPane extends PureComponent {
                 key: this.props.id
               });
             }
-            return this.props.activePane === this.props.id ?
-              React.cloneElement(child, {
-                ...child.props,
-                onTabPaneClick,
-                activePane,
-                size,
-                id,
-                key: this.props.id
-              })
-            :
-              null;
+            return null;
           })
         }
       </div>

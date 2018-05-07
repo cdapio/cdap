@@ -16,15 +16,18 @@
 
 @import "../../../styles/variables.scss";
 
+$accordion-border-color: $grey-03;
+$accordion-background-color: $grey-08;
+
 .accordion-pane {
   &.active {
-    border-bottom: 2px solid $grey-03;
-    border-top: 3px solid $grey-03;
-    background: $grey-08;
+    border-bottom: 2px solid $accordion-border-color;
+    border-top: 3px solid $accordion-border-color;
+    background: $accordion-background-color;
     &:last-of-type {
-      border-bottom: 3px solid $grey-03;
+      border-bottom: 3px solid $accordion-border-color;
     }
   }
 
-  border-top: 1px solid $grey-03;
+  border-top: 1px solid $accordion-border-color;
 }
