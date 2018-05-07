@@ -60,7 +60,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -140,13 +142,20 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   @Override
   protected void processMessages(DatasetContext datasetContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages)  throws Exception {
+                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     AppMetadataStore appMetadataStore = getAppMetadataStore(datasetContext);
+    List<Runnable> tasks = new LinkedList<>();
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
-      processNotification(datasetContext, appMetadataStore, messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
-                          messagePair.getSecond());
+      Optional<Runnable> task = processNotification(datasetContext, appMetadataStore,
+                                                    messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
+                                                    messagePair.getSecond());
+      task.ifPresent(tasks::add);
     }
+
+    // Only add post processing tasks if all messages are processed. If there is exception in the processNotifiation,
+    // messages will be replayed.
+    this.tasks.addAll(tasks);
   }
 
   @Override
@@ -158,8 +167,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
   }
 
-  private void processNotification(DatasetContext datasetContext, AppMetadataStore appMetadataStore,
-                                   byte[] messageIdBytes, Notification notification) throws Exception {
+  /**
+   * Process a {@link Notification} received from TMS.
+   *
+   * @param datasetContext the {@link DatasetContext} for getting access to dataset instances
+   * @param appMetadataStore the {@link AppMetadataStore} for updating app metadata
+   * @param messageIdBytes the raw message id in the TMS for the notification
+   * @param notification the {@link Notification} to process
+   * @return an {@link Optional} {@link Runnable} task to run after the transactional processing of the whole
+   *         messages batch is completed
+   * @throws Exception if failed to process the given notification
+   */
+  private Optional<Runnable> processNotification(DatasetContext datasetContext, AppMetadataStore appMetadataStore,
+                                                 byte[] messageIdBytes, Notification notification) throws Exception {
     Map<String, String> properties = notification.getProperties();
     // Required parameters
     String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
@@ -169,7 +189,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     // Ignore notifications which specify an invalid ProgramRunId, which shouldn't happen
     if (programRun == null) {
       LOG.warn("Ignore notification that misses program run state information, {}", notification);
-      return;
+      return Optional.empty();
     }
     ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
 
@@ -180,7 +200,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       } catch (IllegalArgumentException e) {
         LOG.warn("Ignore notification with invalid program run status {} for program {}, {}",
                  programStatusStr, programRun, notification);
-        return;
+        return Optional.empty();
       }
     }
 
@@ -191,22 +211,26 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       } catch (IllegalArgumentException e) {
         LOG.warn("Ignore notification with invalid program run cluster status {} for program {}",
                  clusterStatusStr, programRun);
-        return;
+        return Optional.empty();
       }
     }
 
     if (programRunStatus != null) {
       handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
-                         datasetContext, appMetadataStore);
+                         appMetadataStore);
     }
-    if (clusterStatus != null) {
-      handleClusterEvent(programRunId, clusterStatus, notification, messageIdBytes, datasetContext, appMetadataStore);
+
+    if (clusterStatus == null) {
+      return Optional.empty();
     }
+
+    return handleClusterEvent(programRunId, clusterStatus, notification,
+                              messageIdBytes, datasetContext, appMetadataStore);
   }
 
   private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  DatasetContext datasetContext, AppMetadataStore appMetadataStore) throws Exception {
+                                  AppMetadataStore appMetadataStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
@@ -295,9 +319,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
   }
 
-  private void handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
-                                  Notification notification, byte[] messageIdBytes,
-                                  DatasetContext datasetContext, AppMetadataStore appMetadataStore) {
+  private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
+                                                Notification notification, byte[] messageIdBytes,
+                                                DatasetContext datasetContext, AppMetadataStore appMetadataStore) {
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
@@ -313,8 +337,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
         ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
                                                                  userId);
-        tasks.add(provisioningService.provision(provisionRequest, datasetContext));
-        break;
+        return Optional.of(provisioningService.provision(provisionRequest, datasetContext));
       case PROVISIONED:
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
         appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
@@ -334,7 +357,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         programStateWriter.start(programRunId, newProgramOptions, null, programDescriptor);
 
         // start the program run
-        tasks.add(() -> {
+        return Optional.of(() -> {
           String oldUser = SecurityRequestContext.getUserId();
           try {
             SecurityRequestContext.setUserId(userId);
@@ -347,15 +370,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             SecurityRequestContext.setUserId(oldUser);
           }
         });
-        break;
       case DEPROVISIONING:
         appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
-        tasks.add(provisioningService.deprovision(programRunId, datasetContext));
-        break;
+        return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
         break;
     }
+
+    return Optional.empty();
   }
 
   private ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> properties) {
