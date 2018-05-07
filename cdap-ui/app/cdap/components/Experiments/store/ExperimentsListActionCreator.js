@@ -25,7 +25,7 @@ function setExperimentsLoading() {
   });
 }
 
-function setExperimentsListError(error) {
+function setExperimentsListError(error = null) {
   experimentsStore.dispatch({
     type: ACTIONS.SET_ERROR,
     payload: {

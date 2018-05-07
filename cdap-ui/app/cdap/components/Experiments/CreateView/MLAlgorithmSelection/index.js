@@ -83,7 +83,7 @@ const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm,
             message={error}
             type='error'
             showAlert={true}
-            onClose={setModelCreateError.bind(null, null)}
+            onClose={setModelCreateError}
           />
         :
           null

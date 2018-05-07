@@ -199,7 +199,7 @@ function ExperimentsListView({...props}) {
             message={props.error}
             type='error'
             showAlert={true}
-            onClose={setExperimentsListError.bind(null, null)}
+            onClose={setExperimentsListError}
           />
         :
           null

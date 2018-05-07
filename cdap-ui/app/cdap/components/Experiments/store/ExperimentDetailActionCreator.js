@@ -20,7 +20,7 @@ import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreato
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 
-function setExperimentDetailError(error) {
+function setExperimentDetailError(error = null) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_ERROR,
     payload: {

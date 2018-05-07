@@ -198,7 +198,7 @@ export default class ExperimentCreateView extends Component {
               message={this.state.experimentError}
               type='error'
               showAlert={true}
-              onClose={setExperimentCreateError.bind(null, null)}
+              onClose={setExperimentCreateError}
             />
           :
             null

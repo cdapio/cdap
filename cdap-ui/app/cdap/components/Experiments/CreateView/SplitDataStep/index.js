@@ -107,7 +107,7 @@ function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFina
             message={error}
             type='error'
             showAlert={true}
-            onClose={setModelCreateError.bind(null, null)}
+            onClose={setModelCreateError}
           />
         :
           null

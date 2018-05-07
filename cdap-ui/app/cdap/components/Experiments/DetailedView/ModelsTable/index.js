@@ -493,7 +493,7 @@ function ModelsTable({...props}) {
             message={props.error}
             type='error'
             showAlert={true}
-            onClose={setExperimentDetailError.bind(null, null)}
+            onClose={setExperimentDetailError}
           />
         :
           null

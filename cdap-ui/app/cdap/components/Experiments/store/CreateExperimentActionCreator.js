@@ -591,7 +591,7 @@ function fetchAlgorithmsList() {
     });
 }
 
-function setExperimentCreateError(error) {
+function setExperimentCreateError(error = null) {
   createExperimentStore.dispatch({
     type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_ERROR,
     payload: {
@@ -600,7 +600,7 @@ function setExperimentCreateError(error) {
   });
 }
 
-function setModelCreateError(error) {
+function setModelCreateError(error = null) {
   createExperimentStore.dispatch({
     type: CREATEEXPERIMENTACTIONS.SET_MODEL_ERROR,
     payload: {
