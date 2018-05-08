@@ -16,6 +16,7 @@
 
 @import "../../../../../../styles/variables.scss";
 $details-row-border-color: $grey-05;
+$label-width: 150px;
 
 .profile-detail-view {
   .detail-view-content {
@@ -57,14 +58,21 @@ $details-row-border-color: $grey-05;
           &:nth-child(3) {
             border-top: 1px solid $details-row-border-color;
           }
-          > .value-holder {
-            display: block;
-            width: 100%;
+
+          > .label-holder {
+            width: $label-width;
             text-overflow: ellipsis;
             overflow: hidden;
-            height: 100%;
-            padding: 10px;
             white-space: nowrap;
+          }
+
+          > .value-holder {
+            display: block;
+            width: calc(100% - #{$label-width});
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            padding-left: 10px;
           }
         }
       }

@@ -32,6 +32,7 @@ import Alert from 'components/Alert';
 import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
+import {MyCloudApi} from 'api/cloud';
 
 require('./ListView.scss');
 
@@ -46,7 +47,7 @@ const PROFILES_TABLE_HEADERS = [
     label: T.translate(`${PREFIX}.ListView.profileName`)
   },
   {
-    property: (profile) => (profile.provisioner.name),
+    property: (profile) => (profile.provisioner.label),
     label: T.translate(`${PREFIX}.common.provisioner`)
   },
   {
@@ -95,6 +96,7 @@ const NUM_PROFILES_TO_SHOW = 5;
 class ProfilesListView extends Component {
   state = {
     profiles: this.props.profiles,
+    provisionersMap: {},
     viewAll: false,
     sortMethod: SORT_METHODS.asc,
     sortColumn: PROFILES_TABLE_HEADERS[1].property,
@@ -112,6 +114,7 @@ class ProfilesListView extends Component {
 
   componentDidMount() {
     getProfiles(this.props.namespace);
+    this.getProvisionersMap();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -120,6 +123,25 @@ class ProfilesListView extends Component {
         profiles: orderBy(nextProps.profiles, this.state.sortColumn, this.state.sortMethod)
       });
     }
+  }
+
+  getProvisionersMap() {
+    MyCloudApi
+      .getProvisioners()
+      .subscribe(
+        (provisioners) => {
+          let provisionersMap = {};
+          provisioners.forEach(provisioner => {
+            provisionersMap[provisioner.name] = provisioner.label;
+          });
+          this.setState({
+            provisionersMap
+          });
+        },
+        (error) => {
+          setError(error.response || error);
+        }
+      );
   }
 
   toggleViewAll = () => {
@@ -281,6 +303,8 @@ class ProfilesListView extends Component {
         {
           profiles.map((profile) => {
             let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+            let provisionerName = profile.provisioner.name;
+            profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
 
             return (
               <Link
@@ -292,7 +316,7 @@ class ProfilesListView extends Component {
                 <div title={profile.name}>
                   {profile.name}
                 </div>
-                <div>{profile.provisioner.name}</div>
+                <div>{profile.provisioner.label}</div>
                 <div>{profile.scope}</div>
                 <div />
                 <div />

@@ -29,7 +29,8 @@ export default class ProfileDetailViewDetailsInfo extends Component {
   };
 
   static propTypes = {
-    profile: PropTypes.object
+    profile: PropTypes.object,
+    provisioners: PropTypes.object
   };
 
   toggleViewDetails = () => {
@@ -64,6 +65,17 @@ export default class ProfileDetailViewDetailsInfo extends Component {
       );
     }
 
+    const propertyToLabelMap = {};
+    this.props.provisioners.forEach(provisioner => {
+      if (provisioner.name === this.props.profile.provisioner.name) {
+        provisioner['configuration-groups'].forEach(provisionerGroup => {
+          provisionerGroup.properties.forEach(prop => {
+            propertyToLabelMap[prop.name] = prop.label;
+          });
+        });
+      }
+    });
+
     return (
       <div className="details-table">
         {
@@ -71,9 +83,15 @@ export default class ProfileDetailViewDetailsInfo extends Component {
             .provisioner
             .properties
             .map(property => {
+              let propertyLabel = propertyToLabelMap[property.name];
               return (
                 <div className="details-row">
-                  <strong>{`${property.name}:`}</strong>
+                  <strong
+                    className="label-holder"
+                    title={propertyLabel}
+                  >
+                    {`${propertyLabel}:`}
+                  </strong>
                   <span
                     className="value-holder"
                     title={property.value}

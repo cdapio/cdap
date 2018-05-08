@@ -45,7 +45,8 @@ export default class ProfilesListViewInPipeline extends Component {
     selectedProfile: PropTypes.object,
     tableTitle: PropTypes.string,
     showProfilesCount: PropTypes.bool,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
+    provisionersMap: PropTypes.object
   };
 
   static defaultProps = {
@@ -56,6 +57,7 @@ export default class ProfilesListViewInPipeline extends Component {
 
   state = {
     profiles: [],
+    provisionersMap: {},
     loading: true,
     selectedProfile: this.props.selectedProfile.name || '',
     profileCustomizations: this.props.selectedProfile.profileCustomizations || {}
@@ -116,6 +118,29 @@ export default class ProfilesListViewInPipeline extends Component {
       );
   }
 
+  componentDidMount() {
+    this.getProvisionersMap();
+  }
+
+  getProvisionersMap() {
+    MyCloudApi
+      .getProvisioners()
+      .subscribe(
+        (provisioners) => {
+          let provisionersMap = {};
+          provisioners.forEach(provisioner => {
+            provisionersMap[provisioner.name] = provisioner.label;
+          });
+          this.setState({
+            provisionersMap
+          });
+        },
+        (err) => {
+          console.log('ERROR in fetching provisioners from backend: ', err);
+        }
+      );
+  }
+
   onProfileSelect = (profileName, customizations = {}) => {
     if (this.props.disabled) {
       return;
@@ -153,6 +178,8 @@ export default class ProfilesListViewInPipeline extends Component {
     let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);
+    let provisionerName = profile.provisioner.name;
+    let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
     return (
       <div
         key={profileName}
@@ -174,8 +201,7 @@ export default class ProfilesListViewInPipeline extends Component {
           }
         </div>
         <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.name}</div>
-
-        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.provisioner.name}</div>
+        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{provisionerLabel}</div>
         <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.scope}</div>
         <div>
           <a href={profileDetailsLink}> View </a>

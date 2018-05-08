@@ -141,3 +141,15 @@ export const resetProfiles = () => {
     type: PROFILES_ACTIONS.RESET
   });
 };
+
+export const getProvisionerLabel = (profile, provisioners) => {
+  if (provisioners.length) {
+    let matchingProvisioner = provisioners.find((prov) => {
+      return prov.name === profile.provisioner.name;
+    });
+    if (matchingProvisioner) {
+      return matchingProvisioner.label;
+    }
+  }
+  return profile.provisioner.name;
+};
