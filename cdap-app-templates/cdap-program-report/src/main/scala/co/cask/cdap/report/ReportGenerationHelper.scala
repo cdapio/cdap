@@ -92,7 +92,8 @@ object ReportGenerationHelper {
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
     // Create an aggregator that aggregates grouped data into a column with data type Record.
-    val aggCol = new RecordAggregator().toColumn.alias(RECORD_COL).as[Record]
+    val aggCol =
+    new RecordAggregator().toColumn.alias(RECORD_COL).as[Record]
     // TODO: configure partitions. The default number of partitions is 200
     // Group the program run meta records by program run Id's and aggregate the grouped data with aggCol.
     // The initial aggregated DataFrame will have two columns:

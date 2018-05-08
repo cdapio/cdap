@@ -27,6 +27,7 @@ public final class Constants {
   public static final String ARTIFACT_VERSION = "artifactVersion";
   public static final String APPLICATION_NAME = "applicationName";
   public static final String APPLICATION_VERSION = "applicationVersion";
+  public static final String PROGRAM_TYPE = "programType";
   public static final String PROGRAM = "program";
   public static final String RUN = "run";
   public static final String STATUS = "status";
@@ -36,7 +37,7 @@ public final class Constants {
   public static final String DURATION = "duration";
   public static final String USER = "user";
   public static final String START_METHOD = "startMethod";
-  public static final String RUNTIME_ARGUMENTS = "runtimeArguments";
+  public static final String RUNTIME_ARGUMENTS = "runtimeArgs";
   public static final String NUM_LOG_WARNINGS = "numLogWarnings";
   public static final String NUM_LOG_ERRORS = "numLogErrors";
   public static final String NUM_RECORDS_OUT = "numRecordsOut";

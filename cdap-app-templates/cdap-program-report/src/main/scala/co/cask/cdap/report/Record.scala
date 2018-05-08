@@ -17,10 +17,14 @@ package co.cask.cdap.report
 
 /**
   * Represents the full content of a report record.
-  * TODO: [CDAP-13294] add artifact and app information
   */
-case class Record(namespace: String, program: String, run: String, start: Option[Long], running: Option[Long],
-                  end: Option[Long], duration: Option[Long], user: Option[String],
+case class Record(namespace: String, artifactName: Option[String],
+                  artifactVersion: Option[String], artifactScope: Option[String],
+                  applicationName: String, applicationVersion: String,
+                  programType: String, program: String, run: String, status: String,
+                  start: Option[Long], running: Option[Long], end: Option[Long],
+                  duration: Option[Long], user: Option[String], startMethod: String,
                   // use scala.collection.Map[String,String]] instead of Map[String, String] to avoid compilation error
                   // in Janino generated code
-                  runtimeArguments: Option[scala.collection.Map[String, String]])
+                  runtimeArgs: Option[scala.collection.Map[String, String]],
+                  numLogWarnings: Int, numLogErrors: Int, numRecordsOut: Int)

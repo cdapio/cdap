@@ -22,12 +22,12 @@ import javax.annotation.Nullable;
  * Program run fields
  */
 public class ProgramRunInfo {
+  private final String namespace;
   private final String application;
   private final String version;
   private final String type;
   private final String program;
   private final String run;
-  private final String namespace;
 
   private Long timestamp;
   private String messageId;
@@ -36,14 +36,13 @@ public class ProgramRunInfo {
   @Nullable
   private ProgramStartInfo startInfo;
 
-  public ProgramRunInfo(String application, String version, String type, String program, String run,
-                        String namespace) {
+  public ProgramRunInfo(String namespace, String application, String version, String type, String program, String run) {
+    this.namespace = namespace;
     this.application = application;
     this.version = version;
     this.type = type;
     this.program = program;
     this.run = run;
-    this.namespace = namespace;
   }
 
   public void setTime(long timestamp) {

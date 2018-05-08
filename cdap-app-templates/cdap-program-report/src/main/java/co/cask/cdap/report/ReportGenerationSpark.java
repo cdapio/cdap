@@ -229,7 +229,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       String total =
         new String(ByteStreams.toByteArray(reportIdDir.append(Constants.LocationName.COUNT_FILE).getInputStream()),
                    StandardCharsets.UTF_8);
-      responder.sendJson(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords));
+      // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
+      // without stringifying them
+      responder.sendString(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords).toJson(),
+                           StandardCharsets.UTF_8);
     }
 
     @POST
@@ -346,7 +349,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       List<String> metaFilePaths = metaFiles.filter(metaFile -> {
         String fileName = metaFile.getName();
         return fileName.endsWith(".avro")
-          //file name is of the format <event-ts>-<creation-ts>.avro
+          //file name is of the format <event-time-millis>-<creation-time-millis>.avro
           && TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(fileName.substring(0, fileName.indexOf("-")))) <
           reportRequest.getEnd();
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
