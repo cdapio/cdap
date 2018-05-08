@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'compon
 import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {Observable} from 'rxjs/Observable';
 
 function setExperimentDetailError(error = null) {
   experimentDetailsStore.dispatch({
@@ -168,6 +169,7 @@ function pollModelStatus(experimentId, modelId) {
       modelId
     })
     .subscribe(modelStatus => {
+      removeModelsWithError(modelId);
       experimentDetailsStore.dispatch({
         type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
         payload: {
@@ -176,24 +178,12 @@ function pollModelStatus(experimentId, modelId) {
         }
       });
     }, () => {
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
-        payload: {
-          modelId,
-          modelStatus: 'error'
-        }
-      });
+      addModelsWithError(modelId);
     });
 }
 
 function getModelStatus(experimentId, modelId) {
-  experimentDetailsStore.dispatch({
-    type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
-    payload: {
-      modelId,
-      modelStatus: 'loading'
-    }
-  });
+  addModelsLoading(modelId);
   myExperimentsApi
     .getModelStatus({
       namespace: getCurrentNamespace(),
@@ -201,6 +191,7 @@ function getModelStatus(experimentId, modelId) {
       modelId
     })
     .subscribe(modelStatus => {
+      removeModelsWithError(modelId);
       experimentDetailsStore.dispatch({
         type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
         payload: {
@@ -209,14 +200,64 @@ function getModelStatus(experimentId, modelId) {
         }
       });
     }, () => {
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
-        payload: {
-          modelId,
-          modelStatus: 'error'
-        }
-      });
+      addModelsWithError(modelId);
+    }, () => {
+      removeModelsLoading(modelId);
     });
+}
+
+function addModelsLoading(modelId) {
+  let modelsLoading = [...experimentDetailsStore.getState().modelsLoading];
+  if (modelsLoading.indexOf(modelId) === -1) {
+    modelsLoading.push(modelId);
+  }
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODELS_LOADING,
+    payload: {
+      modelsLoading
+    }
+  });
+}
+
+function removeModelsLoading(modelId) {
+  let modelsLoading = [...experimentDetailsStore.getState().modelsLoading];
+  let modelIndex = modelsLoading.indexOf(modelId);
+  if (modelIndex !== -1) {
+    modelsLoading.splice(modelIndex, 1);
+  }
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODELS_LOADING,
+    payload: {
+      modelsLoading
+    }
+  });
+}
+
+function addModelsWithError(modelId) {
+  let modelsWithError = [...experimentDetailsStore.getState().modelsWithError];
+  if (modelsWithError.indexOf(modelId) === -1) {
+    modelsWithError.push(modelId);
+  }
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODELS_WITH_ERROR,
+    payload: {
+      modelsWithError
+    }
+  });
+}
+
+function removeModelsWithError(modelId) {
+  let modelsWithError = [...experimentDetailsStore.getState().modelsWithError];
+  let modelIndex = modelsWithError.indexOf(modelId);
+  if (modelIndex !== -1) {
+    modelsWithError.splice(modelIndex, 1);
+  }
+  experimentDetailsStore.dispatch({
+    type: EXPERIMENTDETAILACTIONS.SET_MODELS_WITH_ERROR,
+    payload: {
+      modelsWithError
+    }
+  });
 }
 
 function setActiveModel(activeModelId) {

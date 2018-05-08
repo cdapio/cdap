@@ -42,10 +42,6 @@ const STATUS_ICON_MAP = {
   TRAINING_FAILED: {
     className: 'text-danger',
     icon: 'icon-circle-o'
-  },
-  loading: { // difference casing to distinguish this from backend statues
-    className: 'spin fa-spin',
-    icon: 'icon-spinner'
   }
 };
 const getIconMap = (status) => status in STATUS_ICON_MAP ? STATUS_ICON_MAP[status] : DEFAULT_STATUS_MAP;
@@ -55,12 +51,7 @@ export default function ModelStatusIndicator({status}) {
   return (
     <span className="model-status-indicator" title={status}>
       <IconSVG name={iconMap.icon} className={iconMap.className} />
-      {
-        status !== 'loading' ?
-          <span>{capitalize(status)}</span>
-        :
-          null
-      }
+      <span>{capitalize(status)}</span>
     </span>
   );
 }
