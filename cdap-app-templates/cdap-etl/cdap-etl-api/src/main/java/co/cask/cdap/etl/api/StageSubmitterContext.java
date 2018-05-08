@@ -27,5 +27,4 @@ public interface StageSubmitterContext extends MessagingContext, MessagingAdmin,
 
   @Override
   SettableArguments getArguments();
-
 }

@@ -143,6 +143,13 @@ public interface StageContext extends ServiceDiscoverer {
   Schema getOutputSchema();
 
   /**
+   * Sets the output schema per run level of the pipeline if its not constant.
+   *
+   * @param outputSchema output schema for this stage
+   */
+  void setOutputSchema(Schema outputSchema);
+
+  /**
    * Return the output port schemas for the stage. The map key is the port name and the map value is the schema for
    * that port. This map is the same map that was set at configure time by {@link MultiOutputPipelineConfigurable}.
    * Stages that do not implement {@link MultiOutputPipelineConfigurable} should not use this method. If they do,

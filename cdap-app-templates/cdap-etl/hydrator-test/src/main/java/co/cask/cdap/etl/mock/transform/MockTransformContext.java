@@ -125,6 +125,11 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
+  public void setOutputSchema(Schema outputSchema) {
+    // no-op
+  }
+
+  @Override
   public Map<String, Schema> getOutputPortSchemas() {
     return Collections.emptyMap();
   }

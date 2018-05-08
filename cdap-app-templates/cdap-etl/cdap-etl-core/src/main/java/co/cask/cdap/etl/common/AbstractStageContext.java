@@ -18,7 +18,6 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.plugin.Caller;
@@ -30,7 +29,6 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -44,7 +42,8 @@ public abstract class AbstractStageContext implements StageContext {
   private final PipelineRuntime pipelineRuntime;
   private final StageSpec stageSpec;
   private final StageMetrics stageMetrics;
-  private final Schema inputSchema;
+  private Schema inputSchema;
+  private Schema outputSchema;
   private final Map<String, Schema> outputPortSchemas;
   protected final BasicArguments arguments;
 
@@ -82,23 +81,13 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public final PluginProperties getPluginProperties(final String pluginId) {
-    return CALLER.callUnchecked(new Callable<PluginProperties>() {
-      @Override
-      public PluginProperties call() throws Exception {
-        return pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId));
-      }
-    });
+    return CALLER.callUnchecked(() -> pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId)));
   }
 
   @Override
   public final <T> T newPluginInstance(final String pluginId) throws InstantiationException {
     try {
-      return CALLER.call(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return pipelineRuntime.getPluginContext().newPluginInstance(scopePluginId(pluginId));
-        }
-      });
+      return CALLER.call(() -> pipelineRuntime.getPluginContext().newPluginInstance(scopePluginId(pluginId)));
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, InstantiationException.class);
       throw Throwables.propagate(e);
@@ -107,22 +96,12 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public final <T> Class<T> loadPluginClass(final String pluginId) {
-    return CALLER.callUnchecked(new Callable<Class<T>>() {
-      @Override
-      public Class<T> call() throws Exception {
-        return pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId));
-      }
-    });
+    return CALLER.callUnchecked(() -> pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId)));
   }
 
   @Override
   public final PluginProperties getPluginProperties() {
-    return CALLER.callUnchecked(new Callable<PluginProperties>() {
-      @Override
-      public PluginProperties call() throws Exception {
-        return pipelineRuntime.getPluginContext().getPluginProperties(stageSpec.getName());
-      }
-    });
+    return CALLER.callUnchecked(() -> pipelineRuntime.getPluginContext().getPluginProperties(stageSpec.getName()));
   }
 
   @Override
@@ -149,7 +128,7 @@ public abstract class AbstractStageContext implements StageContext {
   @Nullable
   @Override
   public Schema getOutputSchema() {
-    return stageSpec.getOutputSchema();
+    return outputSchema == null ? stageSpec.getOutputSchema() : outputSchema;
   }
 
   @Override
@@ -169,22 +148,17 @@ public abstract class AbstractStageContext implements StageContext {
   @Nullable
   @Override
   public URL getServiceURL(final String applicationId, final String serviceId) {
-    return CALLER.callUnchecked(new Callable<URL>() {
-      @Override
-      public URL call() {
-        return pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId);
-      }
-    });
+    return CALLER.callUnchecked(() -> pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId));
   }
 
   @Nullable
   @Override
   public URL getServiceURL(final String serviceId) {
-    return CALLER.callUnchecked(new Callable<URL>() {
-      @Override
-      public URL call() {
-        return pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId);
-      }
-    });
+    return CALLER.callUnchecked(() -> pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId));
+  }
+
+  @Override
+  public void setOutputSchema(Schema outputSchema) {
+    this.outputSchema = outputSchema;
   }
 }
