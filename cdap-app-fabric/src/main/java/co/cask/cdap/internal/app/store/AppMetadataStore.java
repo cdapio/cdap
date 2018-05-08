@@ -747,7 +747,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private RunRecordMeta recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
-                                          RunRecordMeta existing, String action, long timestamp) {
+                                                   RunRecordMeta existing, String action, long timestamp) {
     String toType = TYPE_RUN_RECORD_SUSPENDED;
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
 
@@ -761,9 +761,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     RunRecordMeta.Builder builder = RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId);
     if (timestamp != -1) {
       if (action.equals("resume")) {
-        builder.setStartTime(timestamp);
+        builder.setResumeTime(timestamp);
       } else {
-        builder.setStopTime(timestamp);
+        builder.setSuspendTime(timestamp);
       }
     }
     RunRecordMeta meta = builder.build();

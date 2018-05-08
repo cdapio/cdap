@@ -291,7 +291,7 @@ public class AppMetadataStoreTest {
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
       Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
-      Assert.assertEquals(currentTime, runRecordMeta.getStopTs());
+      Assert.assertEquals(currentTime, runRecordMeta.getSuspendTs());
     });
     final RunId runId7 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId7 = program.run(runId7);
