@@ -610,10 +610,6 @@ function setModelCreateError(error = null) {
 }
 
 function setAlgorithmsListForCreateView() {
-  if (!setAlgorithmsList) {
-    return;
-  }
-
   setAlgorithmsList()
     .subscribe(
       () => {},

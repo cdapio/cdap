@@ -234,10 +234,6 @@ function setActiveModel(activeModelId) {
 }
 
 const setAlgorithmsListForDetailedView = () => {
-  if (!setAlgorithmsList) {
-    return;
-  }
-
   setAlgorithmsList()
     .subscribe(
       () => {},

@@ -17,6 +17,7 @@
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import AlgorithmsListStore, {ACTIONS as AlgorithmsStoreActions} from 'components/Experiments/store/AlgorithmsListStore';
+import {Observable} from 'rxjs/Observable';
 
 const getAlgorithmLabel = (algorithm) => {
   let algorithmsList = AlgorithmsListStore.getState();
@@ -43,7 +44,7 @@ const getHyperParamLabel = (algorithm, hyperparam) => {
 const setAlgorithmsList = () => {
   let algoList = AlgorithmsListStore.getState();
   if (algoList.length) {
-    return;
+    return Observable.of();
   }
 
   const getAlgorithmsApi = myExperimentsApi.getAlgorithms({

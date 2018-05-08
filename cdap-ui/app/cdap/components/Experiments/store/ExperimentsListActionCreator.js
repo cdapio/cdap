@@ -115,10 +115,6 @@ function handleExperimentsSort(field) {
 }
 
 const setAlgorithmsListForListView = () => {
-  if (!setAlgorithmsList) {
-    return;
-  }
-
   setAlgorithmsList()
     .subscribe(
       () => {},
