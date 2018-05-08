@@ -69,6 +69,7 @@ export default class ProfilePreview extends Component {
     }
     let profileNamespace = this.state.profileDetails.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
+    let profileProvisionerLabel = this.state.profileDetails.provisioner.label || this.state.profileDetails.provisioner.name;
     return (
       <div className="profile-preview text-xs-left">
         <strong>{this.props.profileName}</strong>
@@ -92,7 +93,7 @@ export default class ProfilePreview extends Component {
               <div>
                 <IconSVG name="icon-cloud" />
                 <span className="provisioner-name truncate-text">
-                  {this.state.profileDetails.provisioner.name}
+                  {profileProvisionerLabel}
                 </span>
               </div>
               <div className="truncate-text">

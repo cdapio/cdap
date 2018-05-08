@@ -130,9 +130,15 @@ export default class ProfilesListViewInPipeline extends Component {
                     ) : null
                   }
                 </div>
-                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.name}</div>
-                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.provisioner.name}</div>
-                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.scope}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
+                  {profile.name}
+                </div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
+                  {profile.provisioner.label || profile.provisioner.name}
+                </div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
+                  {profile.scope}
+                </div>
                 <div>
                   <a href={profileDetailsLink}>
                     View
@@ -170,9 +176,15 @@ export default class ProfilesListViewInPipeline extends Component {
                     ) : null
                   }
                 </div>
-                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.name}</div>
-                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.provisioner.name}</div>
-                <div onClick={this.onProfileSelect.bind(this, profileName)}>{profile.scope}</div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
+                  {profile.name}
+                </div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
+                  {profile.provisioner.label || profile.provisioner.name}
+                </div>
+                <div onClick={this.onProfileSelect.bind(this, profileName)}>
+                  {profile.scope}
+                </div>
                 <div>
                   <a href={profileDetailsLink}> View </a>
                 </div>

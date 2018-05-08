@@ -121,7 +121,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
             <div className="grid-row">
               <div>
                 <IconSVG name="icon-cloud" />
-                <span>{profile.provisioner.name}</span>
+                <span>{profile.provisioner.label || profile.provisioner.name}</span>
               </div>
               <div>{profile.scope}</div>
               <div />

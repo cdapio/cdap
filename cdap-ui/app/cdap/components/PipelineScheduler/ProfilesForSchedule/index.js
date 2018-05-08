@@ -24,7 +24,7 @@ import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import classnames from 'classnames';
 import {connect} from 'react-redux';
-import {preventPropagation} from 'services/helpers';
+import {preventPropagation, objectQuery} from 'services/helpers';
 import StatusMapper from 'services/StatusMapper';
 require('./ProfilesForSchedule.scss');
 
@@ -102,7 +102,7 @@ class ProfilesForSchedule extends Component {
                         <div />
                     }
                     <div>{profile.name}</div>
-                    <div>{profile.provisioner.name}</div>
+                    <div>{profile.provisioner.label || profile.provisioner.name}</div>
                     <div>{profile.scope}</div>
                   </div>
                 );
@@ -120,6 +120,7 @@ class ProfilesForSchedule extends Component {
     }
     let selectedProfile = this.state.profiles.find(profile => profile.name === this.state.selectedProfile);
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
+    let provisionerLabel = objectQuery(selectedProfile, 'provisioner', 'label') || objectQuery(selectedProfile, 'provisioner', 'name')
     return (
       <UncontrolledDropdown
         className={PROFILES_DROPDOWN_DOM_CLASS}
@@ -132,7 +133,7 @@ class ProfilesForSchedule extends Component {
         >
           {
             this.state.selectedProfile ?
-              <span> {`${this.state.selectedProfile} (${selectedProfile.provisioner.name})`}</span>
+              <span> {`${this.state.selectedProfile} (${provisionerLabel})`}</span>
             :
               <span>Select a Profile</span>
           }
