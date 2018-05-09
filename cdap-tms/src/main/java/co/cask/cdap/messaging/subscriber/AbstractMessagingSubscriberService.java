@@ -147,7 +147,8 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
 
   /**
    * Processes the give list of messages. This method will be called from the same transaction as the
-   * {@link #storeMessageId(DatasetContext, String)} call.
+   * {@link #storeMessageId(DatasetContext, String)} call. If {@link Exception} is raised from this method,
+   * the messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
    * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
