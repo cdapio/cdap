@@ -120,7 +120,7 @@ class ProfilesForSchedule extends Component {
     }
     let selectedProfile = this.state.profiles.find(profile => profile.name === this.state.selectedProfile);
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
-    let provisionerLabel = objectQuery(selectedProfile, 'provisioner', 'label') || objectQuery(selectedProfile, 'provisioner', 'name')
+    let provisionerLabel = objectQuery(selectedProfile, 'provisioner', 'label') || objectQuery(selectedProfile, 'provisioner', 'name');
     return (
       <UncontrolledDropdown
         className={PROFILES_DROPDOWN_DOM_CLASS}
