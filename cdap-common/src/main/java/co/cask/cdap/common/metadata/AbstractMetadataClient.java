@@ -215,7 +215,7 @@ public abstract class AbstractMetadataClient {
    * @return The metadata for the entity.
    */
   public Set<MetadataRecord> getMetadata(EntityId id, @Nullable MetadataScope scope)
-    throws NotFoundException, BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
+    throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
     return getMetadata(id.toMetadataEntity(), scope);
   }
 
@@ -226,7 +226,17 @@ public abstract class AbstractMetadataClient {
    */
   public Map<String, String> getProperties(EntityId id)
     throws UnauthenticatedException, BadRequestException, IOException, UnauthorizedException {
-    return getProperties(id, null);
+    return getProperties(id.toMetadataEntity());
+  }
+
+  /**
+   * @param metadataEntity the metadataEntity for which to retrieve metadata properties across
+   * {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
+   * @return The metadata properties for the entity.
+   */
+  public Map<String, String> getProperties(MetadataEntity metadataEntity)
+    throws UnauthenticatedException, BadRequestException, IOException, UnauthorizedException {
+    return getProperties(metadataEntity, null);
   }
 
   /**

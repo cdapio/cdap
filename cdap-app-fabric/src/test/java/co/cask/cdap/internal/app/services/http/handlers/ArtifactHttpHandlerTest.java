@@ -272,12 +272,6 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                         metadataRecords.iterator().next());
     // delete artifact
     deleteArtifact(wordcountId1, true, null, 200);
-    try {
-      metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
-      Assert.fail("Should not reach here");
-    } catch (NotFoundException e) {
-      // no-op
-    }
     actualArtifacts = getArtifacts(NamespaceId.DEFAULT);
     Assert.assertTrue(actualArtifacts.isEmpty());
   }

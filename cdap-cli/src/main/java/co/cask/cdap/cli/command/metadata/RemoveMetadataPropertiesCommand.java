@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -41,8 +42,13 @@ public class RemoveMetadataPropertiesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
-    client.removeProperties(entity);
+    MetadataEntity metadataEntity;
+    try {
+      metadataEntity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString())).toMetadataEntity();
+    } catch (IllegalArgumentException e) {
+      metadataEntity = MetadataCommandHelper.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    }
+    client.removeProperties(metadataEntity);
     output.println("Successfully removed metadata properties");
   }
 

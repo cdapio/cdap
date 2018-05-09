@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -31,7 +32,7 @@ import java.util.Set;
 /**
  * Adds metadata tags for an entity.
  */
-public class AddMetadataTagsCommand extends AbstractCommand {
+public class  AddMetadataTagsCommand extends AbstractCommand {
 
   private final MetadataClient client;
 
@@ -43,9 +44,16 @@ public class AddMetadataTagsCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    MetadataEntity metadataEntity;
+    try {
+      metadataEntity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString())).toMetadataEntity();
+    } catch (IllegalArgumentException e) {
+      // try to use metadataEntity
+      metadataEntity = MetadataCommandHelper.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    }
+
     Set<String> tags = ImmutableSet.copyOf(parseList(arguments.get("tags")));
-    client.addTags(entity, tags);
+    client.addTags(metadataEntity, tags);
     output.println("Successfully added metadata tags");
   }
 

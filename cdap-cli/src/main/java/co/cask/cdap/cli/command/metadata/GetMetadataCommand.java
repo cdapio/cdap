@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
@@ -51,10 +52,15 @@ public class GetMetadataCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    MetadataEntity metadataEntity;
+    try {
+      metadataEntity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString())).toMetadataEntity();
+    } catch (IllegalArgumentException e) {
+      metadataEntity = MetadataCommandHelper.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    }
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Set<MetadataRecord> metadata = scope == null ? client.getMetadata(entity) :
-      client.getMetadata(entity, MetadataScope.valueOf(scope.toUpperCase()));
+    Set<MetadataRecord> metadata = scope == null ? client.getMetadata(metadataEntity) :
+      client.getMetadata(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("entity", "tags", "properties", "scope")
