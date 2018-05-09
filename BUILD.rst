@@ -55,13 +55,13 @@ CDAP Sandbox and Distributed CDAP
 - Build CDAP Sandbox distribution ZIP::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-app-templates/cdap-program-report,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
 - Build CDAP Sandbox distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-app-templates/cdap-program-report,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>
 
