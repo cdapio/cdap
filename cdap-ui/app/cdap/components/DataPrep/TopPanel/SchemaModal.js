@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 import PropTypes from 'prop-types';
 
@@ -21,7 +21,7 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Loadable from 'react-loadable';
-import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
+import {getParsedSchemaForDataPrep, getSchemaObjFromFieldsArray} from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import fileDownload from 'js-file-download';
@@ -155,7 +155,10 @@ export default class SchemaModal extends Component {
     let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
     let filename = `${workspaceId}-schema.json`;
 
-    let data = JSON.stringify(this.state.schema, null, 4);
+    let fields = this.state.schema;
+
+    // TODO: Change this when we make UI schema consistent with backend schema (JIRA: CDAP-13010)
+    let data = JSON.stringify([getSchemaObjFromFieldsArray(fields)], null, 4);
 
     fileDownload(data, filename);
   }
