@@ -163,7 +163,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
         new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
     long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime);
     ReportGenerationRequest request =
-      new ReportGenerationRequest(startSecs, startSecs + 30,
+      new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
                                   ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
     HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
