@@ -31,6 +31,7 @@ import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportList;
+import co.cask.cdap.report.proto.ReportMetaInfo;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ValueFilter;
@@ -128,18 +129,24 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       int idx = offset;
       // TODO: [CDAP-13292] use cache store reportIdDirs
       List<Location> reportIdDirs = new ArrayList<>(reportFilesetLocation.list());
-      // sort reportIdDirs directories by the creation time of report ID
-      reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS),
-                                                     ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS)));
+      // sort reportIdDirs directories by the creation time of report ID in DESCENDING order
+      reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS),
+                                                     ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS)));
 
       // Keep adding report status information to the list until the index is no longer smaller than
       // the number of report directories or the list is reaching the given limit
       while (idx < reportIdDirs.size() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirs.get(idx++);
         String reportId = reportIdDir.getName();
-        // Report ID is time based UUID. Get the creation time from the report ID.
-        long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-        reportStatuses.add(new ReportStatusInfo(reportId, creationTime, getReportStatus(reportIdDir)));
+        try {
+          ReportGenerationRequest reportRequest = getReportRequest(reportId, reportIdDir);
+          reportStatuses.add(new ReportStatusInfo(reportId, getReportMetaInfo(reportId, reportIdDir, reportRequest)));
+        } catch (Exception e) {
+          LOG.error("Failed to get the status for report with id {}", reportId, e);
+          responder.sendError(500, String.format("Failed to get the status for report with id %s" +
+                                                   " because of error: %s", reportId, e.getMessage()));
+          return;
+        }
       }
       responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
     }
@@ -192,7 +199,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      */
     private static ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
       throws IOException {
-      long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
+      ReportGenerationRequest reportRequest = getReportRequest(reportId, reportIdDir);
+      ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, reportRequest);
       ReportStatus status = getReportStatus(reportIdDir);
       ReportSummary summary = null;
       // if the report generation completed, read the summary from _SUMMARY file and include the summary
@@ -207,11 +215,40 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
           new String(ByteStreams.toByteArray(summaryFile.getInputStream()), StandardCharsets.UTF_8);
         summary = GSON.fromJson(summaryJson, ReportSummary.class);
       }
+      String error = null;
+      // if the report generation failed, read the error from _FAILURE file and include it in the response
+      if (ReportStatus.FAILED.equals(metaInfo.getStatus())) {
+        Location failureFile = reportIdDir.append(FAILURE_FILE);
+        if (!failureFile.exists()) {
+          LOG.error("Failed to read failure reason for report with id {} since file {} does not exist.",
+                    reportId, failureFile.toURI().toString());
+        }
+        error = new String(ByteStreams.toByteArray(reportIdDir.append(FAILURE_FILE).getInputStream()),
+                           StandardCharsets.UTF_8);
+      }
+      return new ReportGenerationInfo(metaInfo, error, reportRequest, summary);
+    }
+
+    /**
+     * Gets the report request from _START file, which was written at the beginning of report generation
+     */
+    private static ReportGenerationRequest getReportRequest(String reportId, Location reportIdDir) throws IOException {
+      Location startFile = reportIdDir.append(START_FILE);
+      if (!startFile.exists()) {
+        throw new NotFoundException(String.format("Failed to get the status of the report with id %s since file %s" +
+                                                    " does not exist.", reportId, startFile.toURI().toString()));
+      }
       // read the report request from _START file, which was written at the beginning of report generation
       String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
-      ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
-      return new ReportGenerationInfo(creationTime, status, reportRequest, summary);
+      return GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+    }
+
+    private static ReportMetaInfo getReportMetaInfo(String reportId, Location reportIdDir,
+                                                    ReportGenerationRequest reportRequest) throws IOException {
+      // Get the creation time from the report ID, which is time based UUID
+      return new ReportMetaInfo(reportRequest.getName(), null, ReportIds.getTime(reportId, TimeUnit.SECONDS),
+                                null, getReportStatus(reportIdDir));
     }
 
     @GET

@@ -16,18 +16,23 @@
 
 package co.cask.cdap.report.proto;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents the status information of a report.
  */
-public class ReportStatusInfo {
+public class ReportStatusInfo extends ReportMetaInfo {
   private final String id;
-  private final long created;
-  private final ReportStatus status;
 
-  public ReportStatusInfo(String id, long created, ReportStatus status) {
+  public ReportStatusInfo(String id, String name, @Nullable String description,
+                          long created, @Nullable Long expiry, ReportStatus status) {
+    super(name, description, created, expiry, status);
     this.id = id;
-    this.created = created;
-    this.status = status;
+  }
+
+  public ReportStatusInfo(String id, ReportMetaInfo metaInfo) {
+    this(id, metaInfo.getName(), metaInfo.getDescription(), metaInfo.getCreated(), metaInfo.getExpiry(),
+         metaInfo.getStatus());
   }
 
   /**
@@ -35,19 +40,5 @@ public class ReportStatusInfo {
    */
   public String getId() {
     return id;
-  }
-
-  /**
-   * @return the creation time of this report in seconds
-   */
-  public long getCreated() {
-    return created;
-  }
-
-  /**
-   * @return the report generation status
-   */
-  public ReportStatus getStatus() {
-    return status;
   }
 }
