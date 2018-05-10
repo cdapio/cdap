@@ -16,18 +16,25 @@
 
 package co.cask.cdap.report.proto;
 
+import co.cask.cdap.report.proto.summary.ReportSummary;
+
+import javax.annotation.Nullable;
+
 /**
  * Represents the information of a report generation in an HTTP response.
  */
 public class ReportGenerationInfo {
   private final long created;
   private final ReportStatus status;
-  private final String request;
+  private final ReportGenerationRequest request;
+  private final ReportSummary summary;
 
-  public ReportGenerationInfo(long created, ReportStatus status, String request) {
+  public ReportGenerationInfo(long created, ReportStatus status, ReportGenerationRequest request,
+                              @Nullable ReportSummary summary) {
     this.created = created;
     this.status = status;
     this.request = request;
+    this.summary = summary;
   }
 
   /**
@@ -47,7 +54,16 @@ public class ReportGenerationInfo {
   /**
    * @return the request for generating this report
    */
-  public String getRequest() {
+  public ReportGenerationRequest getRequest() {
     return request;
+  }
+
+  /**
+   * @return the summary of the report if the status of the report is {@link ReportStatus#COMPLETED},
+   *         or {@code null} if the report status is not {@link ReportStatus#COMPLETED}
+   */
+  @Nullable
+  public ReportSummary getSummary() {
+    return summary;
   }
 }

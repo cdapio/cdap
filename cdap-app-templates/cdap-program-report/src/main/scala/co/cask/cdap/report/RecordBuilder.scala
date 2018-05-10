@@ -16,6 +16,7 @@
 package co.cask.cdap.report
 
 import co.cask.cdap.api.schedule.{TriggerInfo, TriggeringScheduleInfo}
+import co.cask.cdap.report.proto.ProgramRunStartMethod
 import co.cask.cdap.report.util.TriggeringScheduleInfoAdapter
 import com.google.gson.{Gson, GsonBuilder}
 import org.slf4j.LoggerFactory
@@ -75,7 +76,7 @@ case class RecordBuilder(namespace: String, applicationName: String, application
       .reduceOption(Math.min(_, _)) // avoid compilation error with Math.min(_, _) instead of Math.min
     val duration = end.flatMap(e => start.map(e - _))
     val runtimeArgs = startInfo.map(_.runtimeArgs)
-    val startMethod = getStartMethod(runtimeArgs)
+    val startMethod = getStartMethod(runtimeArgs).name()
     val r = Record(namespace,
       startInfo.map(_.artifactName), startInfo.map(_.artifactVersion), startInfo.map(_.artifactScope),
       applicationName, applicationVersion,
@@ -86,16 +87,16 @@ case class RecordBuilder(namespace: String, applicationName: String, application
     r
   }
 
-  private def getStartMethod(runtimeArgs: Option[scala.collection.Map[String, String]]): String = {
-    if (runtimeArgs.isEmpty) return MANUAL
+  private def getStartMethod(runtimeArgs: Option[scala.collection.Map[String, String]]): ProgramRunStartMethod = {
+    if (runtimeArgs.isEmpty) return ProgramRunStartMethod.MANUAL
     val scheduleInfoJson = runtimeArgs.get.get(SCHEDULE_INFO_KEY)
-    if (scheduleInfoJson.isEmpty) return MANUAL
+    if (scheduleInfoJson.isEmpty) return ProgramRunStartMethod.MANUAL
     val scheduleInfo: TriggeringScheduleInfo = GSON.fromJson(scheduleInfoJson.get, classOf[TriggeringScheduleInfo])
     val triggers = scheduleInfo.getTriggerInfos
-    if (Option(triggers).isEmpty || triggers.isEmpty) return MANUAL
+    if (Option(triggers).isEmpty || triggers.isEmpty) return ProgramRunStartMethod.MANUAL
     triggers.get(0).getType match {
-      case TriggerInfo.Type.TIME => SCHEDULED
-      case _ => TRIGGERED
+      case TriggerInfo.Type.TIME => ProgramRunStartMethod.SCHEDULED
+      case _ => ProgramRunStartMethod.TRIGGERED
     }
   }
 }
@@ -120,9 +121,6 @@ case class StartInfo(user: String,
 object RecordBuilder {
   val LOG = LoggerFactory.getLogger(RecordBuilder.getClass)
   val END_STATUSES = Set("COMPLETED", "KILLED", "FAILED")
-  val MANUAL = "MANUAL"
-  val SCHEDULED = "SCHEDULED"
-  val TRIGGERED = "TRIGGERED"
   val SCHEDULE_INFO_KEY = "triggeringScheduleInfo"
   val GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder).create()
 }
