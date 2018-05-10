@@ -15,20 +15,25 @@
  */
 package co.cask.cdap.report
 
-import java.io.{IOException, PrintWriter}
+import java.io.{IOException, OutputStreamWriter, PrintWriter}
+import java.nio.charset.StandardCharsets
 import java.util.stream.Collectors
 
 import co.cask.cdap.report.proto.Sort.Order
+import co.cask.cdap.report.proto.summary._
 import co.cask.cdap.report.proto.{Sort, _}
 import co.cask.cdap.report.util.Constants
 import com.databricks.spark._
 import com.google.gson._
 import org.apache.avro.mapred._
+import org.apache.spark.sql.functions.{avg, max, min}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.twill.filesystem.Location
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * A helper class for report generation.
@@ -40,8 +45,12 @@ object ReportGenerationHelper {
   val RECORD_COL = "record"
   val REQUIRED_FIELDS = Set(Constants.PROGRAM)
   val REQUIRED_FILTER_FIELDS = Set(Constants.START, Constants.END)
+  val REQUIRED_SUMMARY_FIELDS = Set(Constants.NAMESPACE, Constants.ARTIFACT_NAME, Constants.ARTIFACT_VERSION,
+    Constants.ARTIFACT_SCOPE, Constants.DURATION, Constants.START, Constants.USER, Constants.START_METHOD)
   val AVRO_READER = avro.AvroDataFrameReader(_)
   val FS_INPUT = classOf[FsInput]
+  // the default name of the column created by calling aggregate function count
+  val COUNT_COL = "count"
 
   /**
     * Generates a report file according to the given request from the given program run meta files.
@@ -92,8 +101,7 @@ object ReportGenerationHelper {
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
     // Create an aggregator that aggregates grouped data into a column with data type Record.
-    val aggCol =
-    new RecordAggregator().toColumn.alias(RECORD_COL).as[Record]
+    val aggCol = new RecordAggregator().toColumn.alias(RECORD_COL).as[Record]
     // TODO: configure partitions. The default number of partitions is 200
     // Group the program run meta records by program run Id's and aggregate the grouped data with aggCol.
     // The initial aggregated DataFrame will have two columns:
@@ -117,9 +125,10 @@ object ReportGenerationHelper {
         }
       }
     }))
+    resultDf.persist()
+    writeSummary(request, resultDf, reportIdDir)
     // drop the columns which should not be included in the report
     resultDf.columns.foreach(col => if (!reportFields.contains(col)) resultDf = resultDf.drop(col))
-    resultDf.persist()
     // Writing the DataFrame to JSON files requires a non-existing directory to write report files.
     // Create a non-existing directory location with name ReportSparkHandler.REPORT_DIR
     val reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR).toURI.toString
@@ -144,19 +153,75 @@ object ReportGenerationHelper {
   }
 
   /**
+    * Generates a summary of the report with the information from the report generation request and the DataFrame
+    * containing the report details, then writes the summary to the given location.
+    *
+    * @param request the report generation request
+    * @param df the DataFrame containing report details
+    * @param reportIdDir the location to write the summary to
+    */
+  private def writeSummary(request: ReportGenerationRequest, df: DataFrame, reportIdDir: Location): Unit = {
+    val namespaces = ArrayBuffer[NamespaceAggregate]()
+    // group the report details by namespace, and then collect the count and the corresponding unique namespaces
+    df.groupBy(Constants.NAMESPACE).count.collect.foreach(r => namespaces +=
+      new NamespaceAggregate(r.getAs[String](Constants.NAMESPACE), r.getAs[Long](COUNT_COL)))
+    // group the report details by artifact information including artifact name, version and scope,
+    // and then collect the count and the corresponding unique artifact information
+    val artifacts =  ArrayBuffer[ArtifactAggregate]()
+    df.groupBy(Constants.ARTIFACT_NAME, Constants.ARTIFACT_VERSION, Constants.ARTIFACT_SCOPE).count.collect
+      .foreach(r => artifacts += new ArtifactAggregate(r.getAs[String](Constants.ARTIFACT_NAME),
+        r.getAs[String](Constants.ARTIFACT_VERSION), r.getAs[String](Constants.ARTIFACT_SCOPE),
+        r.getAs[Long](COUNT_COL)))
+    // aggregate the report details into a row with the min, max, and average of duration,
+    // and with the min and max of start
+    val aggRow = df.agg(min(df(Constants.DURATION)).as("minDuration"), max(df(Constants.DURATION)).as("maxDuration"),
+      avg(df(Constants.DURATION)).as("avgDuration"), min(df(Constants.START)).as("minStart"),
+      max(df(Constants.START)).as("maxStart")).first
+    // get the min, max, and average of duration
+    val durations = new DurationStats(aggRow.getAs[Long]("minDuration"),
+      aggRow.getAs[Long]("maxDuration"), aggRow.getAs[Double]("avgDuration"))
+    // get the min and max of start
+    val starts = new StartStats(aggRow.getAs[Long]("minStart"), aggRow.getAs[Long]("maxStart"))
+    // group the report details by the user who starts the program run, and then collect the count and
+    // the corresponding unique users
+    val owners = ArrayBuffer[UserAggregate]()
+    df.groupBy(Constants.USER).count.collect
+      .foreach(r => owners += new UserAggregate(r.getAs[String](Constants.USER), r.getAs[Long](COUNT_COL)))
+    // group the report details by the start method of the program run, and then collect the count and
+    // the corresponding unique start methods
+    val startMethods = ArrayBuffer[StartMethodAggregate]()
+    df.groupBy(Constants.START_METHOD).count.collect
+      .foreach(r => startMethods +=
+        new StartMethodAggregate(r.getAs[String](Constants.START_METHOD), r.getAs[Long](COUNT_COL)))
+    // create the summary
+    val summary = new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
+      durations, starts, owners, startMethods)
+    // Save the report summary request in the _SUMMARY file in the given directory
+    var writer: PrintWriter = null
+    try {
+      writer = new PrintWriter(
+        new OutputStreamWriter(reportIdDir.append(Constants.LocationName.SUMMARY).getOutputStream,
+          StandardCharsets.UTF_8), true)
+      writer.write(GSON.toJson(summary))
+    } finally {
+      if (writer != null) writer.close()
+    }
+  }
+
+  /**
     * Gets the fields to be included in the final report and additional fields required for filtering and sorting
     *
     * @param request the report generation request
     * @return a tuple containing the set of fields to be included in the final report and
     *         the set of additional fields for filtering and sorting
     */
-  def getReportAndAdditionalFields(request: ReportGenerationRequest): (Set[String], Set[String]) = {
+  private def getReportAndAdditionalFields(request: ReportGenerationRequest): (Set[String], Set[String]) = {
     // Construct a set of fields to be included in the final report with required fields and fields from the request
     val reportFields: Set[String] = REQUIRED_FIELDS ++ Option(request.getFields).map(_.toSet).getOrElse(Nil)
     LOG.debug("Fields to be included in the report: {}", reportFields)
     // Initialize the set with "start" and "end" for filtering records according to the time range [start, end)
-    // specified in the request.
-    val additionalFields: Set[String] = REQUIRED_FILTER_FIELDS ++
+    // specified in the request, and also fields requried for generating the summary
+    val additionalFields: Set[String] = REQUIRED_FILTER_FIELDS ++ REQUIRED_SUMMARY_FIELDS ++
       // Add field names for filtering
       Option(request.getFilters).map(_.toSet[Filter[_]].map(_.getFieldName)).getOrElse(Nil) ++
       // Add field names for sorting
@@ -172,7 +237,7 @@ object ReportGenerationHelper {
     * @param df the DateFrame to apply filter on
     * @return the filter
     */
-  def getFilter(request: ReportGenerationRequest, df: DataFrame): Column = {
+  private def getFilter(request: ReportGenerationRequest, df: DataFrame): Column = {
     // Construct the filter column starting with condition:
     // aggDf("start") not null AND aggDf("start") < request.getEnd
     //   AND (aggDf("end") is null OR aggDf("end") >= request.getStart)
