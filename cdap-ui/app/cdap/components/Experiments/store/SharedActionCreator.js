@@ -36,7 +36,6 @@ const getHyperParamLabel = (algorithm, hyperparam) => {
     if (matchingHyperParameter) {
       return matchingHyperParameter.label;
     }
-    return hyperparam;
   }
   return hyperparam;
 };
