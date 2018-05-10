@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
@@ -49,10 +50,15 @@ public class GetMetadataTagsCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    MetadataEntity metadataEntity;
+    try {
+      metadataEntity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString())).toMetadataEntity();
+    } catch (IllegalArgumentException e) {
+      metadataEntity = MetadataCommandHelper.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    }
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Set<String> tags = scope == null ? client.getTags(entity) :
-      client.getTags(entity, MetadataScope.valueOf(scope.toUpperCase()));
+    Set<String> tags = scope == null ? client.getTags(metadataEntity) :
+      client.getTags(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("tags")

@@ -18,7 +18,9 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.cli.command.NamespaceCommandUtils;
+import co.cask.cdap.cli.command.metadata.MetadataCommandHelper;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetTypeClient;
@@ -827,6 +829,7 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testMetadata() throws Exception {
+    MetadataEntity fieldEntity = FAKE_DS_ID.toMetadataEntity().append("field", "empName");
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
     // verify system metadata
     testCommandOutputContains(cli, String.format("get metadata %s scope system", FAKE_APP_ID),
@@ -857,6 +860,17 @@ public class CLIMainTest extends CLITestBase {
     output = getCommandOutput(cli, String.format("get metadata-tags %s", FAKE_STREAM_ID));
     lines = Arrays.asList(output.split("\\r?\\n"));
     Assert.assertTrue(lines.contains("streamTag1") && lines.contains("streamTag2"));
+    testCommandOutputContains(cli, String.format("add metadata-tags %s 'fieldTag1 fieldTag2 fieldTag3'",
+                                                 MetadataCommandHelper.toString(fieldEntity)),
+                              "Successfully added metadata tags");
+    output = getCommandOutput(cli, String.format("get metadata-tags %s", MetadataCommandHelper.toString(fieldEntity)));
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    Assert.assertTrue(lines.contains("fieldTag1") && lines.contains("fieldTag2") && lines.contains("fieldTag3"));
+    testCommandOutputContains(cli, String.format("add metadata-properties %s fieldKey=fieldValue",
+                                                 MetadataCommandHelper.toString(fieldEntity)),
+                              "Successfully added metadata properties");
+    testCommandOutputContains(cli, String.format("get metadata-properties %s",
+                                                 MetadataCommandHelper.toString(fieldEntity)), "fieldKey,fieldValue");
     // test search
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
                                                  FakeApp.class.getSimpleName()), FAKE_ARTIFACT_ID.toString());
@@ -904,6 +918,33 @@ public class CLIMainTest extends CLITestBase {
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
+
+    // test remove
+    testCommandOutputContains(cli, String.format("remove metadata-tag %s 'fieldTag3'",
+                                                 MetadataCommandHelper.toString(fieldEntity)),
+                              "Successfully removed metadata tag");
+    output = getCommandOutput(cli, String.format("get metadata-tags %s", MetadataCommandHelper.toString(fieldEntity)));
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    // should not contain the removed tag
+    Assert.assertTrue(lines.contains("fieldTag1") && lines.contains("fieldTag2") && !lines.contains("fieldTag3"));
+    testCommandOutputContains(cli, String.format("remove metadata-tags %s",
+                                                 MetadataCommandHelper.toString(fieldEntity)),
+                              "Successfully removed metadata tags");
+    output = getCommandOutput(cli, String.format("get metadata-tags %s", MetadataCommandHelper.toString(fieldEntity)));
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    // should not contain any tags except the header added by cli
+    Assert.assertTrue(lines.size() == 1 && lines.contains("tags"));
+
+    testCommandOutputContains(cli, String.format("remove metadata-properties %s",
+                                                 MetadataCommandHelper.toString(fieldEntity)),
+                              "Successfully removed metadata properties");
+
+    // test remove properties
+    output = getCommandOutput(cli, String.format("get metadata-properties %s",
+                                                 MetadataCommandHelper.toString(fieldEntity)));
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    // should not contain any properties except the header added by cli
+    Assert.assertTrue(lines.size() == 1 && lines.contains("key,value"));
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {
