@@ -387,6 +387,26 @@
                   </resources>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-rg</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
+                      </directory>
+                      <includes>
+                        <include>cdap-program-report-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
 
               <!-- Copy cdap-kms. -->
               <execution>

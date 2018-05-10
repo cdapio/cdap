@@ -702,6 +702,26 @@
                   </resources>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-rg</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
+                      </directory>
+                      <includes>
+                        <include>cdap-program-report-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
               <!-- Copy CLI scripts -->
               <execution>
                 <id>copy-cli-scripts</id>
