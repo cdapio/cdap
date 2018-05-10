@@ -36,6 +36,7 @@ import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
+import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.Sort;
 import co.cask.cdap.report.proto.ValueFilter;
@@ -177,16 +178,16 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
     String reportId = reportIdMap.get("id");
     Assert.assertNotNull(reportId);
-    URL reportStatusURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
     Tasks.waitFor(ReportStatus.COMPLETED, () -> {
-      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
                                                                     REPORT_GEN_INFO_TYPE);
       if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
         Assert.fail("Report generation failed");
       }
       return reportGenerationInfo.getStatus();
     }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
-    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
                                                                   REPORT_GEN_INFO_TYPE);
     // assert the summary content is expected
     ReportSummary summary = reportGenerationInfo.getSummary();
@@ -205,7 +206,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
                         new HashSet<>(summary.getStartMethods()));
     // assert the number of report details is correct
-    URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
+    URL reportRunsURL = reportIdURL.toURI().resolve("details").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
     Assert.assertEquals(2, reportContent.getTotal());
     // Assert that all the records in the report contain startMethod TRIGGERED
@@ -215,6 +216,42 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
                     "but actual results do not meet this requirement: " + reportContent.getDetails());
     }
+    // save the report with a new name and description
+    URL reportSaveURL = reportURL.toURI().resolve(reportId + "/" + "save").toURL();
+    urlConn = (HttpURLConnection) reportSaveURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(new ReportSaveRequest("newName", "newDescription"))
+                                      .getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    // verify that the name and description of the report have been updated, and the expiry time is null
+    reportGenerationInfo = getResponseObject(reportIdURL.openConnection(), REPORT_GEN_INFO_TYPE);
+    Assert.assertEquals("newName", reportGenerationInfo.getName());
+    Assert.assertEquals("newDescription", reportGenerationInfo.getDescription());
+    Assert.assertNull(reportGenerationInfo.getExpiry());
+    // save the report again should fail
+    urlConn = (HttpURLConnection) reportSaveURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(new ReportSaveRequest("anotherNewName", "anotherNewDescription"))
+                                      .getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(403, urlConn.getResponseCode());
+    // delete the report
+    urlConn = (HttpURLConnection) reportIdURL.openConnection();
+    urlConn.setRequestMethod("DELETE");
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    // getting status of a deleted report will get 404
+    Assert.assertEquals(404, ((HttpURLConnection) reportIdURL.openConnection()).getResponseCode());
+    // deleting a deleted report again will get 404
+    urlConn = (HttpURLConnection) reportIdURL.openConnection();
+    urlConn.setRequestMethod("DELETE");
+    Assert.assertEquals(404, urlConn.getResponseCode());
   }
 
   private static <T> T getResponseObject(URLConnection urlConnection, Type typeOfT) throws IOException {

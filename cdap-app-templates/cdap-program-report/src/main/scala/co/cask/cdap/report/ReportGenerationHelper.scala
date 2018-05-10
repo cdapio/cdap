@@ -136,20 +136,35 @@ object ReportGenerationHelper {
     // TODO: [CDAP-13291] improve how the number of partitions is configured
     resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
     val count = resultDf.count
-    // Write the total number of records in _SUCCESS file generated after successful report generation
+    // Create a _COUNT file and write the total number of report records in it
+    writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
+    // Create a _SUCCESS file and write the current time in millis in it
+    writeToFile(System.currentTimeMillis().toString, Constants.LocationName.SUCCESS_FILE, reportIdDir)
+  }
+
+  /**
+    * Create a file with given filename in the given directory and write the given content in the file
+    *
+    * @param content the content to write
+    * @param fileName the name of the file
+    * @param baseLocation the location of the directory
+    */
+  private def writeToFile(content: String, fileName: String, baseLocation: Location): Unit = {
     var writer: Option[PrintWriter] = None
     try {
-      val countFile = reportIdDir.append(Constants.LocationName.COUNT_FILE)
-      countFile.createNew
-      writer = Some(new PrintWriter(countFile.getOutputStream))
-      writer.get.write(count.toString)
+      val outputFile = baseLocation.append(fileName)
+      if (!outputFile.createNew) {
+        // use String.format to avoid log4j overloading issue in scala with 3 String arguments
+        LOG.error(String.format("Failed to create file %s for in %s", fileName, baseLocation.toURI.toString))
+      }
+      writer = Some(new PrintWriter(outputFile.getOutputStream))
+      writer.get.write(content)
     } catch {
       case e: IOException => {
-        LOG.error("Failed to write to {} in {}", Constants.LocationName.COUNT_FILE, reportIdDir.toURI.toString, e)
+        LOG.error("Failed to write to {} in {}", fileName, baseLocation.toURI.toString, e)
         throw e
       }
     } finally if (writer.isDefined) writer.get.close()
-    reportIdDir.append(Constants.LocationName.SUCCESS_FILE).createNew()
   }
 
   /**

@@ -32,11 +32,11 @@ import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportList;
 import co.cask.cdap.report.proto.ReportMetaInfo;
+import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ValueFilter;
 import co.cask.cdap.report.proto.summary.ReportSummary;
-import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
 import com.google.common.collect.ImmutableMap;
@@ -60,6 +60,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -69,12 +70,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+
+import static co.cask.cdap.report.util.Constants.LocationName;
 
 /**
  * A Spark program for generating reports, querying for report statuses, and reading reports.
@@ -100,10 +104,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
+    private static final Type REPORT_SAVE_REQUEST_TYPE = new TypeToken<ReportSaveRequest>() { }.getType();
     private static final String DEFAULT_LIMIT = "10000";
     private static final String READ_LIMIT = "readLimit";
     private static final String START_FILE = "_START";
     private static final String FAILURE_FILE = "_FAILURE";
+    private static final String SAVED_FILE = "_SAVED";
+    // report files will expire after 48 hours after they are generated
+    private static final long VALID_DURATION_MILLIS = TimeUnit.DAYS.toMillis(2);
 
     private int readLimit;
     private SparkSession sparkSession;
@@ -122,32 +130,51 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                            @QueryParam("offset") @DefaultValue("0") int offset,
                            @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit)
       throws IOException {
+      ReportList reportList;
+      try {
+        reportList = getReportList(offset, limit);
+      } catch (Exception e) {
+        LOG.error("Failed to list reports.", e);
+        responder.sendError(500, String.format("Failed to list reports because of error: %s", e.getMessage()));
+        return;
+      }
+      responder.sendJson(200, reportList);
+    }
+
+    /**
+     * Gets a list of report statuses from all the unexpired reports starting from the given offset position,
+     * with at most the limit number of report statuses in the list returned.
+     *
+     * @param offset the starting index position in the unexpired report directories
+     * @param limit the maximum number of report statuses returned in the result
+     * @return a list of report statuses of unexpired reports
+     * @throws Exception if getting status of a report fails
+     */
+    private ReportList getReportList(int offset, int limit) throws Exception {
       Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       List<ReportStatusInfo> reportStatuses = new ArrayList<>();
-      // The index of the report directory to start reading from, initialized to the given offset
-      int idx = offset;
-      // TODO: [CDAP-13292] use cache store reportIdDirs
+      // TODO: [CDAP-13292] use cache to store reportIdDirs
       List<Location> reportIdDirs = new ArrayList<>(reportFilesetLocation.list());
       // sort reportIdDirs directories by the creation time of report ID in DESCENDING order
       reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS),
                                                      ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS)));
-
+      // the index of current report directory among the unexpired report directories
+      int existingReportDirIdx = 0;
+      Iterator<Location> reportIdDirIter = reportIdDirs.iterator();
       // Keep adding report status information to the list until the index is no longer smaller than
       // the number of report directories or the list is reaching the given limit
-      while (idx < reportIdDirs.size() && reportStatuses.size() < limit) {
-        Location reportIdDir = reportIdDirs.get(idx++);
+      while (reportIdDirIter.hasNext() && reportStatuses.size() < limit) {
+        Location reportIdDir = reportIdDirIter.next();
         String reportId = reportIdDir.getName();
-        try {
-          reportStatuses.add(new ReportStatusInfo(reportId, getReportMetaInfo(reportId, reportIdDir,
-                                                                              getReportRequest(reportIdDir))));
-        } catch (Exception e) {
-          LOG.error("Failed to get the status for report with id {}", reportId, e);
-          responder.sendError(500, String.format("Failed to get the status for report with id %s" +
-                                                   " because of error: %s", reportId, e.getMessage()));
-          return;
+        ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, getReportRequest(reportIdDir));
+        // skip adding reports that are expired, or the index of the current directory among existing directories
+        // is smaller than the given offset
+        if (ReportStatus.EXPIRED.equals(metaInfo.getStatus()) || existingReportDirIdx++ < offset) {
+          continue;
         }
+        reportStatuses.add(new ReportStatusInfo(reportId, metaInfo));
       }
-      responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
+      return new ReportList(offset, limit, reportIdDirs.size(), reportStatuses);
     }
 
     @GET
@@ -179,9 +206,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       try {
         reportGenerationInfo = getReportGenerationInfo(reportId, reportIdDir);
       } catch (Exception e) {
-        LOG.error("Failed to get report generation info for report with id {}.", reportId, e);
-        responder.sendError(500, String.format("Failed to get report generation info for report with id %s" +
+        LOG.error("Failed to get the status for report with id {}.", reportId, e);
+        responder.sendError(500, String.format("Failed to get the status for report with id %s" +
                                                  " because of error: %s", reportId, e.getMessage()));
+        return;
+      }
+      // expired report is considered as deleted
+      if (ReportStatus.EXPIRED.equals(reportGenerationInfo.getStatus())) {
+        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
         return;
       }
       responder.sendJson(200, reportGenerationInfo);
@@ -203,7 +235,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // if the report generation completed, read the summary from _SUMMARY file and include the summary
       // in the response
       if (ReportStatus.COMPLETED.equals(metaInfo.getStatus())) {
-        ReportSummary summary = GSON.fromJson(readStringFromFile(reportIdDir, Constants.LocationName.SUMMARY),
+        ReportSummary summary = GSON.fromJson(readStringFromFile(reportIdDir, LocationName.SUMMARY),
                                               ReportSummary.class);
         return new ReportGenerationInfo(metaInfo, null, reportRequest, summary);
       }
@@ -240,11 +272,186 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       return GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
     }
 
+    /**
+     * Gets the meta information of a report including the creation time parsed from the report ID, the report name and
+     * the report description from the report save request if the report is saved, or the report name from report
+     * generation request if the report is not saved, and also the status of the report.
+     *
+     * @param reportId the id of the report
+     * @param reportIdDir the location of the directory containing files with the report meta information
+     * @param generationRequest the report generation request
+     * @return the meta information of the report
+     * @throws Exception if fails to get the status of the report or fails to access the file with report save request
+     */
     private static ReportMetaInfo getReportMetaInfo(String reportId, Location reportIdDir,
-                                                    ReportGenerationRequest reportRequest) throws IOException {
+                                                    ReportGenerationRequest generationRequest) throws Exception {
       // Get the creation time from the report ID, which is time based UUID
-      return new ReportMetaInfo(reportRequest.getName(), null, ReportIds.getTime(reportId, TimeUnit.SECONDS),
-                                null, getReportStatus(reportIdDir));
+      long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
+      ReportStatus status = getReportStatus(reportIdDir);
+      Location savedFile = reportIdDir.append(SAVED_FILE);
+      // if the report is not saved, get the name of the report from the report generation request and include the
+      // expiry time in the response if the report is COMPLETED
+      if (!savedFile.exists()) {
+        Long expiryTimeSecs = null;
+        if (ReportStatus.COMPLETED.equals(status)) {
+          expiryTimeSecs = TimeUnit.MILLISECONDS.toSeconds(getExpiryTimeMillis(reportIdDir));
+        }
+        return new ReportMetaInfo(generationRequest.getName(), null, creationTime, expiryTimeSecs, status);
+      }
+      // read the report save request from the file
+      String reportSaveRequestString =
+        new String(ByteStreams.toByteArray(savedFile.getInputStream()), StandardCharsets.UTF_8);
+      ReportSaveRequest saveRequest = GSON.fromJson(reportSaveRequestString, REPORT_SAVE_REQUEST_TYPE);
+      // the report is saved, get the name and the description from the report save request
+      // and return null as expiry time
+      return new ReportMetaInfo(saveRequest.getName(), saveRequest.getDescription(), creationTime, null, status);
+    }
+
+    @DELETE
+    @Path("/reports/{report-id}")
+    public void deleteReport(HttpServiceRequest request, HttpServiceResponder responder,
+                             @PathParam("report-id") String reportId) {
+      Location reportIdDir;
+      try {
+        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+        if (!reportIdDir.exists()) {
+          responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+          return;
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to access the directory of the report with id {}", reportId, e);
+        responder.sendError(500, String.format("Failed to access the directory of the report with id %s " +
+                                                 "because of error: %s", reportId, e.getMessage()));
+        return;
+      }
+      ReportStatus status;
+      try {
+        status = getReportStatus(reportIdDir);
+      } catch (Exception e) {
+        LOG.error("Failed to get the status of the report {}", reportId, e);
+        responder.sendError(500, String.format("Failed to get the status of the report %s becasue of error: %s",
+                                               reportId, e.getMessage()));
+        return;
+      }
+      // if the report is already expired, deleting the report is not allowed to avoid conflict
+      if (ReportStatus.EXPIRED.equals(status)) {
+        responder.sendError(404, String.format("Report with id %s has already been deleted", reportId));
+        return;
+      }
+      try {
+        if (!reportIdDir.delete(true)) {
+          // this should never happen since the directory is asserted to exist with valid path before reaching here
+          responder.sendError(500, String.format("Failed to delete report with id %s because the directory %s " +
+                                                   "does not exist or the path is invalid", reportId,
+                                                 reportIdDir.toURI().toString()));
+          return;
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to delete report with id {}", reportId, e);
+        responder.sendError(500, String.format("Failed to delete report with id %s because of error: %s",
+                                               reportId, e.getMessage()));
+        return;
+      }
+      responder.sendStatus(200);
+    }
+
+    @POST
+    @Path("/reports/{report-id}/save")
+    public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
+                                @PathParam("report-id") String reportId) {
+      Location reportIdDir;
+      try {
+        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+        if (!reportIdDir.exists()) {
+          responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+          return;
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to access the directory of the report with id {}", reportId, e);
+        responder.sendError(500, String.format("Failed to access the directory of the report with id %s " +
+                                                 "because of error: %s", reportId, e.getMessage()));
+        return;
+      }
+      ReportStatus status;
+      try {
+        status = getReportStatus(reportIdDir);
+      } catch (Exception e) {
+        LOG.error("Failed to get the status of the report {}", reportId, e);
+        responder.sendError(500, String.format("Failed to get the status of the report %s because of error: %s",
+                                               reportId, e.getMessage()));
+        return;
+      }
+      // only allow saving the report when its status is COMPLETED
+      switch (status) {
+        case COMPLETED:
+          break;
+        // expired report is considered as deleted
+        case EXPIRED:
+          responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+          return;
+        default:
+          responder.sendError(403, "Cannot save the report with status " + status);
+          return;
+      }
+      Location savedFile;
+      try {
+        // if the report is already saved, saving the report again is not allowed
+        savedFile = reportIdDir.append(SAVED_FILE);
+        if (savedFile.exists()) {
+          try {
+            ReportSaveRequest saveRequest =
+              GSON.fromJson(readStringFromFile(reportIdDir, SAVED_FILE), REPORT_SAVE_REQUEST_TYPE);
+            responder.sendError(403, String.format("Report with id %s is already saved with name '%s' " +
+                                                     "and description '%s'. Updating the saved report is not allowed.",
+                                                   reportId, saveRequest.getName(), saveRequest.getDescription()));
+            return;
+          } catch (Exception e) {
+            LOG.warn("Failed to parse the content of the existing report saving request in {}. " +
+                       "Will overwrite with the new saving request.", savedFile.toURI().toString(), e);
+          }
+        }
+      } catch (Exception e) {
+        LOG.error("Failed to save the report {}", reportId, e);
+        responder.sendError(500, String.format("Failed to save the report %s because of error: %s",
+                                               reportId, e.getMessage()));
+        return;
+      }
+      String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      ReportSaveRequest saveRequest;
+      try {
+        saveRequest = GSON.fromJson(requestJson, REPORT_SAVE_REQUEST_TYPE);
+      } catch (JsonSyntaxException e) {
+        responder.sendError(400, "Failed to parse the report saving request: " + e);
+        return;
+      }
+      try {
+        if (!savedFile.createNew()) {
+          responder.sendError(500, String.format("Failed to create a file %s for saving the report with id %s " +
+                                                   "since it already exists", savedFile.toURI().toString(), reportId));
+          return;
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to save the report {} when creating the file {}", reportId, savedFile.toURI().toString(), e);
+        responder.sendError(500, String.format("Failed to save the report %s because of error in " +
+                                                 "creating the file %s: %s",
+                                               reportId, savedFile.toURI().toString(), e.getMessage()));
+        return;
+      }
+      // save the report save request in the _SAVED file
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(savedFile.getOutputStream(),
+                                                                       StandardCharsets.UTF_8), true)) {
+        writer.write(requestJson);
+      } catch (IOException e) {
+        LOG.error("Failed to save the report {} when writing to the file", reportId, savedFile.toURI().toString(), e);
+        responder.sendError(500, String.format("Failed to save the report %s because of error " +
+                                                 "in writing to the file %s: %s",
+                                               reportId, savedFile.toURI().toString(), e.getMessage()));
+        return;
+      }
+      responder.sendString(200, String.format("Report with id %s is saved successfully with the name: '%s' " +
+                                                "and description: '%s' ", reportId, saveRequest.getName(),
+                                              saveRequest.getDescription()),
+                           StandardCharsets.UTF_8);
     }
 
     @GET
@@ -272,7 +479,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         return;
       }
       // Get the status of the report and only COMPLETED report can be read
-      ReportStatus status = getReportStatus(reportIdDir);
+      ReportStatus status;
+      try {
+        status = getReportStatus(reportIdDir);
+      } catch (Exception e) {
+        LOG.error("Failed to get the status of the report {}", reportId, e);
+        responder.sendError(500, String.format("Failed to get the status of the report %s because of error: %s",
+                                               reportId, e.getMessage()));
+        return;
+      }
       switch (status) {
         case RUNNING:
           responder.sendError(202, String.format("Report %s is still being generated, please retry later.", reportId));
@@ -280,6 +495,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         case FAILED:
           responder.sendError(400, String.format("Reading details of the report %s with failed status is not allowed.",
                                                  reportId));
+          return;
+        // expired report is considered as deleted
+        case EXPIRED:
+          responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
           return;
         case COMPLETED:
           break;
@@ -289,7 +508,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       List<String> reportRecords = new ArrayList<>();
       long lineCount = 0;
-      Location reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR);
+      Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
       // TODO: [CDAP-13290] reports should be in avro format instead of json text;
       // TODO: [CDAP-13291] need to support reading multiple report files
       Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".json")).findFirst();
@@ -314,7 +533,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       // Get the total number of records from the COUNT file
       String total =
-        new String(ByteStreams.toByteArray(reportIdDir.append(Constants.LocationName.COUNT_FILE).getInputStream()),
+        new String(ByteStreams.toByteArray(reportIdDir.append(LocationName.COUNT_FILE).getInputStream()),
                    StandardCharsets.UTF_8);
       // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
       // without stringifying them
@@ -466,8 +685,23 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Returns the status of the report generation by checking the presence of the success file or the failure file.
-     * If neither of these files exists, the report generation is still running.
+     * Gets the expiry time in milliseconds of a report by adding the VALID_DURATION_MILLIS
+     * to the report generation completed time read from the _SUCCESS file.
+     *
+     * @param reportIdDir the base directory with report ID as directory name
+     * @return the expiry time in milliseconds or {@code null} if the expiry time cannot be determined
+     * @throws Exception _SUCCESS doesn't exist or reading the report generation completed time from it failed
+     */
+    private static Long getExpiryTimeMillis(Location reportIdDir) throws Exception {
+      // Get the report generation completed time from the _SUCCESS file
+      String completedTime = readStringFromFile(reportIdDir, LocationName.SUCCESS_FILE);
+      // the report file will be expired after VALID_DURATION_MILLIS since report generation completed time
+      return Long.parseLong(completedTime) + VALID_DURATION_MILLIS;
+    }
+
+    /**
+     * Returns the status of the report generation by checking the presence of the _TO_BE_DELETED file,
+     * _FAILURE file, or the _SUCCESS file. If none of these files exists, the report generation is still running.
      *
      * TODO: [CDAP-13215] failure file may not be written if the Spark program is killed. Status of killed
      * report generation job might be returned as RUNNING
@@ -475,12 +709,17 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @param reportIdDir the base directory with report ID as directory name
      * @return status of the report generation
      */
-    private static ReportStatus getReportStatus(Location reportIdDir) throws IOException {
-      if (reportIdDir.append(Constants.LocationName.SUCCESS_FILE).exists()) {
-        return ReportStatus.COMPLETED;
+    private static ReportStatus getReportStatus(Location reportIdDir) throws Exception {
+      // if the report is completed but has expired, return EXPIRED as its status too
+      if (reportIdDir.append(LocationName.SUCCESS_FILE).exists() &&
+        getExpiryTimeMillis(reportIdDir) < System.currentTimeMillis()) {
+        return ReportStatus.EXPIRED;
       }
       if (reportIdDir.append(FAILURE_FILE).exists()) {
         return ReportStatus.FAILED;
+      }
+      if (reportIdDir.append(LocationName.SUCCESS_FILE).exists()) {
+        return ReportStatus.COMPLETED;
       }
       return ReportStatus.RUNNING;
     }
