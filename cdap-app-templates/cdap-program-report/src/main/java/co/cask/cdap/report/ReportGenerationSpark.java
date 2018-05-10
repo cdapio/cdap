@@ -164,8 +164,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
       ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
-      ReportGenerationInfo reportGenerationInfo = new ReportGenerationInfo(reportRequest.getName(), creationTime,
-                                                                           status, reportRequest);
+      ReportGenerationInfo reportGenerationInfo = new ReportGenerationInfo(reportRequest.getName(), null, creationTime,
+                                                                           null, status, null, reportRequest);
       responder.sendJson(reportGenerationInfo);
     }
 

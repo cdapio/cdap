@@ -16,20 +16,31 @@
 
 package co.cask.cdap.report.proto;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents the information of a report generation in an HTTP response.
  */
 public class ReportGenerationInfo {
   private final String name;
+  @Nullable
+  private final String description;
   private final long created;
+  @Nullable
+  private final Long expiry;
   private final ReportStatus status;
+  @Nullable
+  private final String error;
   private final ReportGenerationRequest request;
 
-  public ReportGenerationInfo(String name, long created,
-                              ReportStatus status, ReportGenerationRequest request) {
+  public ReportGenerationInfo(String name, @Nullable String description, long created, @Nullable Long expiry,
+                              ReportStatus status, @Nullable String error, ReportGenerationRequest request) {
     this.name = name;
+    this.description = description;
     this.created = created;
+    this.expiry = expiry;
     this.status = status;
+    this.error = error;
     this.request = request;
   }
 
@@ -42,10 +53,35 @@ public class ReportGenerationInfo {
   }
 
   /**
+   * @return the description of the report, or {@code null} if not set
+   */
+  @Nullable
+  public String getDescription() {
+    return description;
+  }
+
+  /**
    * @return the creation time of the report in seconds
    */
   public long getCreated() {
     return created;
+  }
+
+  /**
+   * @return the expiry time of the report in seconds or {@code null} if the report is saved and will never expire
+   */
+  @Nullable
+  public Long getExpiry() {
+    return expiry;
+  }
+
+  /**
+   * @return the error of the report generation if the status of the report is {@link ReportStatus#FAILED},
+   *         or {@code null} if the report status is not {@link ReportStatus#FAILED}
+   */
+  @Nullable
+  public String getError() {
+    return error;
   }
 
   /**
