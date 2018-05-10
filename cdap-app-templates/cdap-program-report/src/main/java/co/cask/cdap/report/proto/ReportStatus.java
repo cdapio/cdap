@@ -22,5 +22,6 @@ package co.cask.cdap.report.proto;
 public enum ReportStatus {
   RUNNING,
   COMPLETED,
-  FAILED
+  FAILED,
+  DELETED // only for internal use, will not be returned in the REST response as report generation status
 }

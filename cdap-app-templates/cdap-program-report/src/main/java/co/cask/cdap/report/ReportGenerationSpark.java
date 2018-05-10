@@ -31,8 +31,10 @@ import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportList;
+import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
+import co.cask.cdap.report.proto.ReportSummary;
 import co.cask.cdap.report.proto.ValueFilter;
 import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportField;
@@ -67,12 +69,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+
+import static co.cask.cdap.report.util.Constants.LocationName.SUCCESS_FILE;
 
 /**
  * A Spark program for generating reports, querying for report statuses, and reading reports.
@@ -98,10 +103,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
     private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
+    private static final Type REPORT_SAVED_REQUEST_TYPE = new TypeToken<ReportSaveRequest>() { }.getType();
     private static final String DEFAULT_LIMIT = "10000";
     private static final String READ_LIMIT = "readLimit";
     private static final String START_FILE = "_START";
     private static final String FAILURE_FILE = "_FAILURE";
+    private static final String SAVED_FILE = "_SAVED";
+    private static final String TO_BE_DELETED_FILE = "_TO_BE_DELETED";
+    // report files will expire after 48 hours after they are generated
+    private static final long VALID_DURATION_MILLIS = TimeUnit.DAYS.toMillis(2);
 
     private int readLimit;
     private SparkSession sparkSession;
@@ -129,15 +139,36 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // sort reportIdDirs directories by the creation time of report ID
       reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS),
                                                      ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS)));
-
       // Keep adding report status information to the list until the index is no longer smaller than
       // the number of report directories or the list is reaching the given limit
       while (idx < reportIdDirs.size() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirs.get(idx++);
+        ReportStatus status = getReportStatus(reportIdDir);
+        // skip adding reports that are to be deleted
+        if (ReportStatus.DELETED.equals(status)) {
+          continue;
+        }
         String reportId = reportIdDir.getName();
         // Report ID is time based UUID. Get the creation time from the report ID.
         long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-        reportStatuses.add(new ReportStatusInfo(reportId, creationTime, getReportStatus(reportIdDir)));
+        // Read the report request from _START file, which was written at the beginning of report generation
+        String reportRequestString =
+          new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
+        ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+        ReportSaveRequest reportSavedInfo = getReportSavedInfo(reportIdDir);
+        if (reportSavedInfo != null) {
+          reportStatuses.add(new ReportStatusInfo(reportId, reportSavedInfo.getName(), reportSavedInfo.getDescription(),
+                                                  creationTime, null, status));
+        } else {
+          Long expiryTime = getExpiryTime(reportIdDir);
+          if (ReportStatus.COMPLETED.equals(status) && expiryTime == null) {
+            // report with COMPLETED status must have a _SUCCESS file
+            LOG.error("Cannot get expiry time for report with id {}, since the file {} does not exist in directory {}.",
+                      reportIdDir.getName(), SUCCESS_FILE, reportIdDir.toURI().toString());
+          }
+          reportStatuses.add(new ReportStatusInfo(reportId, reportRequest.getName(), null,
+                                                  creationTime, expiryTime, status));
+        }
       }
       responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
     }
@@ -154,10 +185,130 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         return;
       }
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-      // Read the report request from _START file, which was written at the beginning of report generation
-      String reportRequest =
+      ReportStatus status = getReportStatus(reportIdDir);
+      // if the report is marked as DELETED, return 404 not found
+      if (ReportStatus.DELETED.equals(status)) {
+        responder.sendError(403, String.format("Report with id %s is deleted.", reportId));
+        return;
+      }
+      String error = null;
+      ReportSummary summary = null;
+      // if the report generation failed, read the error from _FAILURE file and include it in the response
+      if (ReportStatus.FAILED.equals(status)) {
+        error = new String(ByteStreams.toByteArray(reportIdDir.append(FAILURE_FILE).getInputStream()),
+                           StandardCharsets.UTF_8);
+        // if the report generation completed, read the summary from _SUMMARY file and include the summary
+        // in the response
+      } else if (status.equals(ReportStatus.COMPLETED)) {
+        String summaryJson =
+          new String(ByteStreams.toByteArray(reportIdDir.append(Constants.LocationName.SUMMARY).getInputStream()),
+                     StandardCharsets.UTF_8);
+        summary = GSON.fromJson(summaryJson, ReportSummary.class);
+      }
+      // read the report request from _START file, which was written at the beginning of report generation
+      String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
-      responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportIdDir), reportRequest));
+      ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+      // get the report saved info from file if it exists
+      ReportSaveRequest reportSavedInfo = getReportSavedInfo(reportIdDir);
+      ReportGenerationInfo reportGenerationInfo;
+      // if the report is saved, get the name and description from the report saved info and return them,
+      // with expiry time as null
+      if (reportSavedInfo != null) {
+        reportGenerationInfo = new ReportGenerationInfo(reportSavedInfo.getName(), reportSavedInfo.getDescription(),
+                                                        creationTime, null, status, error, reportRequest, summary);
+      } else {
+        // if the report is not saved, get the name of the report from the report generation request and include the
+        // expiry time in the response
+        Long expiryTime = getExpiryTime(reportIdDir);
+        if (ReportStatus.COMPLETED.equals(status) && expiryTime == null) {
+          // report with COMPLETED status must have a _SUCCESS file
+          LOG.error("Cannot get expiry time for report with id {}, since the file {} does not exist in directory {}.",
+                    reportIdDir.getName(), SUCCESS_FILE, reportIdDir.toURI().toString());
+        }
+        reportGenerationInfo = new ReportGenerationInfo(reportRequest.getName(), null, creationTime,
+                                                        expiryTime, status, error,
+                                                        reportRequest, summary);
+      }
+      responder.sendJson(reportGenerationInfo);
+    }
+
+    @DELETE
+    @Path("/reports/{report-id}")
+    public void deleteReport(HttpServiceRequest request, HttpServiceResponder responder,
+                             @PathParam("report-id") String reportId) throws IOException {
+      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      if (!reportIdDir.exists()) {
+        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+        return;
+      }
+      // if the report is already deleted, deleting the report again is not allowed
+      if (ReportStatus.DELETED.equals(getReportStatus(reportIdDir))) {
+        responder.sendError(403, String.format("Report with id %s has already been deleted", reportId));
+        return;
+      }
+      Location deletedFile = reportIdDir.append(TO_BE_DELETED_FILE);
+      if (!deletedFile.createNew()) {
+        reportIdDir.delete();
+        responder.sendError(500, "Failed to delete " + reportId);
+        return;
+      }
+      // Save the time of when this report is marked as to-be-deleted in the _TO_BE_DELETED_FILE file
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(deletedFile.getOutputStream(),
+                                                                       StandardCharsets.UTF_8), true)) {
+        writer.write(Long.toString(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
+      }
+      responder.sendStatus(200);
+    }
+
+    @POST
+    @Path("/reports/{report-id}/save")
+    public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
+                                @PathParam("report-id") String reportId) throws IOException {
+      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      if (!reportIdDir.exists()) {
+        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+        return;
+      }
+      ReportStatus status = getReportStatus(reportIdDir);
+      // only allow saving the report when its status is COMPLETED
+      switch (status) {
+        case COMPLETED:
+          break;
+        default:
+          responder.sendError(403, "Cannot save the report with status " + status);
+          return;
+      }
+      // if the report is already saved, saving the report again is not allowed
+      Location savedFile = reportIdDir.append(SAVED_FILE);
+      if (savedFile.exists()) {
+        responder.sendError(403, String.format("Report with id %s is already saved and cannot be saved again.",
+                                               reportId));
+        return;
+      }
+      if (!savedFile.createNew()) {
+        reportIdDir.delete();
+        responder.sendError(500, "Failed to create a file for saving the report " + reportId);
+        return;
+      }
+      String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      ReportSaveRequest saveRequest;
+      try {
+        saveRequest = GSON.fromJson(requestJson, REPORT_SAVED_REQUEST_TYPE);
+      } catch (JsonSyntaxException e) {
+        responder.sendError(400, "Failed to parse the report saving request: " + e);
+        return;
+      }
+
+      // Save the report save request in the _SAVED file
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(savedFile.getOutputStream(),
+                                                                       StandardCharsets.UTF_8), true)) {
+        writer.write(requestJson);
+      }
+      responder.sendString(200, String.format("Report with id %s is saved successfully with the name: '%s' " +
+                                                "and description: '%s' ", reportId, saveRequest.getName(),
+                                              saveRequest.getDescription()),
+                           StandardCharsets.UTF_8);
     }
 
     @GET
@@ -193,6 +344,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         case FAILED:
           responder.sendError(400, String.format("Reading details of the report %s with failed status is not allowed.",
                                                  reportId));
+          return;
+        case DELETED:
+          responder.sendError(403, String.format("Report with id %s is deleted.", reportId));
           return;
         case COMPLETED:
           break;
@@ -231,7 +385,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                    StandardCharsets.UTF_8);
       // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
       // without stringifying them
-      responder.sendString(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords).toJson(),
+      responder.sendString(200, new ReportContent(offset, limit, Long.parseLong(total), reportRecords).toJson(),
                            StandardCharsets.UTF_8);
     }
 
@@ -379,8 +533,48 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Returns the status of the report generation by checking the presence of the success file or the failure file.
-     * If neither of these files exists, the report generation is still running.
+     * Gets the expiry time of a report.
+     *
+     * @param reportIdDir the base directory with report ID as directory name
+     * @return the expiry time or {@code null} if the expiry time cannot be determined
+     * @throws IOException
+     */
+    @Nullable
+    private static Long getExpiryTime(Location reportIdDir) throws IOException {
+      Location successFile = reportIdDir.append(SUCCESS_FILE);
+      if (!successFile.exists()) {
+        return null;
+      }
+      // Get the report generation completed time from the _SUCCESS file
+      String completedTime = new String(ByteStreams.toByteArray(successFile.getInputStream()), StandardCharsets.UTF_8);
+      // the report file will be expired after VALID_DURATION_MILLIS since report generation completed time
+      return TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(completedTime) + VALID_DURATION_MILLIS);
+    }
+
+    /**
+     * Gets the save request of a report
+     *
+     * @param reportIdDir the base directory with report ID as directory name
+     * @return the save request or {@code null} if the save request does not exist
+     * @throws IOException
+     */
+    @Nullable
+    private static ReportSaveRequest getReportSavedInfo(Location reportIdDir) throws IOException {
+      Location savedFile = reportIdDir.append(SAVED_FILE);
+      if (!savedFile.exists()) {
+       return null;
+      }
+      String reportSavedRequestString =
+        new String(ByteStreams.toByteArray(savedFile.getInputStream()), StandardCharsets.UTF_8);
+      if (reportSavedRequestString.isEmpty()) {
+        return null;
+      }
+      return GSON.fromJson(reportSavedRequestString, REPORT_SAVED_REQUEST_TYPE);
+    }
+
+    /**
+     * Returns the status of the report generation by checking the presence of the _TO_BE_DELETED file,
+     * _FAILURE file, or the _SUCCESS file. If none of these files exists, the report generation is still running.
      *
      * TODO: [CDAP-13215] failure file may not be written if the Spark program is killed. Status of killed
      * report generation job might be returned as RUNNING
@@ -389,11 +583,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @return status of the report generation
      */
     private static ReportStatus getReportStatus(Location reportIdDir) throws IOException {
-      if (reportIdDir.append(Constants.LocationName.SUCCESS_FILE).exists()) {
-        return ReportStatus.COMPLETED;
+      if (reportIdDir.append(TO_BE_DELETED_FILE).exists()) {
+        return ReportStatus.DELETED;
       }
       if (reportIdDir.append(FAILURE_FILE).exists()) {
         return ReportStatus.FAILED;
+      }
+      if (reportIdDir.append(SUCCESS_FILE).exists()) {
+        return ReportStatus.COMPLETED;
       }
       return ReportStatus.RUNNING;
     }

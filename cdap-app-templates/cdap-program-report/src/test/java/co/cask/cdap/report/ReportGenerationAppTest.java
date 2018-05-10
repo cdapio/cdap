@@ -30,10 +30,12 @@ import co.cask.cdap.report.main.ProgramRunInfo;
 import co.cask.cdap.report.main.ProgramRunInfoSerializer;
 import co.cask.cdap.report.main.ProgramStartInfo;
 import co.cask.cdap.report.proto.Filter;
+import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
+import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.Sort;
 import co.cask.cdap.report.proto.ValueFilter;
@@ -64,6 +66,7 @@ import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -78,6 +81,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -96,19 +100,30 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
     .create();
+  // have a separate Gson for deserializing Filter to avoid error when serializing Filter to JSON
+  private static final Gson DES_GSON = new GsonBuilder()
+    .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
+  private static final long REPORT_START_TIME = System.currentTimeMillis();
+  private static URL reportGenerationSparkUrl;
 
-  @Test
-  public void testGenerateReport() throws Exception {
+  @Before
+  public void setup() throws Exception {
+    // to ensure this method is only called once for all tests. This method is meant to be a static @BeforeClass method,
+    // but since methods such as addDatasetInstance and getDataset are not static, this method cannot be static
+    if (reportGenerationSparkUrl != null) {
+      return;
+    }
     DatasetId metaFileset = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
     addDatasetInstance(metaFileset, FileSet.class.getName());
     // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
     // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
     DataSetManager<FileSet> fileSet = getDataset(metaFileset);
-    Long currentTime = System.currentTimeMillis();
-    populateMetaFiles(fileSet.get().getBaseLocation(), currentTime);
+    populateMetaFiles(fileSet.get().getBaseLocation(), REPORT_START_TIME);
 
     // Trace the dependencies for the spark avro
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
@@ -139,16 +154,20 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
 
     ApplicationManager app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
-    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
-    Assert.assertNotNull(url);
-    URL reportURL = url.toURI().resolve("reports/").toURL();
+    reportGenerationSparkUrl = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
+  }
+
+  @Test
+  public void testGenerateReport() throws Exception {
+    Assert.assertNotNull(reportGenerationSparkUrl);
+    URL reportURL = reportGenerationSparkUrl.toURI().resolve("reports/").toURL();
     List<Filter> filters =
       ImmutableList.of(
         new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
         new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
     ReportGenerationRequest request =
-      new ReportGenerationRequest(TimeUnit.MILLISECONDS.toSeconds(currentTime),
-                                  TimeUnit.MILLISECONDS.toSeconds(currentTime) + 30,
+      new ReportGenerationRequest("ns1_ns2_report", TimeUnit.MILLISECONDS.toSeconds(REPORT_START_TIME),
+                                  TimeUnit.MILLISECONDS.toSeconds(REPORT_START_TIME) + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
                                   ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
     HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
@@ -162,16 +181,16 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
     Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
     String reportId = reportIdMap.get("id");
     Assert.assertNotNull(reportId);
-    URL reportStatusURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
     Tasks.waitFor(ReportStatus.COMPLETED, () -> {
-      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
                                                                     REPORT_GEN_INFO_TYPE);
       if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
         Assert.fail("Report generation failed");
       }
       return reportGenerationInfo.getStatus();
     }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
-    URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
+    URL reportRunsURL = reportIdURL.toURI().resolve("details").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
     Assert.assertEquals(2, reportContent.getTotal());
     // Assert that all the records in the report contain startMethod TRIGGERED
@@ -181,6 +200,43 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
                     "but actual results do not meet this requirement: " + reportContent.getDetails());
     }
+    // save the report with a new name and description
+    URL reportSaveURL = reportURL.toURI().resolve(reportId + "/" + "save").toURL();
+    urlConn = (HttpURLConnection) reportSaveURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(new ReportSaveRequest("newName", "newDescription"))
+                                      .getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    // verify that the name and description of the report have been updated, and the expiry time is null
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    Assert.assertEquals("newName", reportGenerationInfo.getName());
+    Assert.assertEquals("newDescription", reportGenerationInfo.getDescription());
+    Assert.assertNull(reportGenerationInfo.getExpiry());
+    // save the report again should fail
+    urlConn = (HttpURLConnection) reportSaveURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(new ReportSaveRequest("anotherNewName", "anotherNewDescription"))
+                                      .getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(403, urlConn.getResponseCode());
+    // delete the report
+    urlConn = (HttpURLConnection) reportIdURL.openConnection();
+    urlConn.setRequestMethod("DELETE");
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    // getting status of a deleted report will get 403
+    Assert.assertEquals(403, ((HttpURLConnection) reportIdURL.openConnection()).getResponseCode());
+    // deleting a deleted report again will get 403
+    urlConn = (HttpURLConnection) reportIdURL.openConnection();
+    urlConn.setRequestMethod("DELETE");
+    Assert.assertEquals(403, urlConn.getResponseCode());
   }
 
   private static <T> T getResponseObject(URLConnection urlConnection, Type typeOfT) throws IOException {
@@ -191,7 +247,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       ((HttpURLConnection) urlConnection).disconnect();
     }
     LOG.info(response);
-    return GSON.fromJson(response, typeOfT);
+    return DES_GSON.fromJson(response, typeOfT);
   }
 
   /**
