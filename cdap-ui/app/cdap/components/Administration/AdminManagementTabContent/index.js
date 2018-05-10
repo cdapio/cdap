@@ -16,7 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import AdminOverviewPane from 'components/AdminOverviewPane';
 import T from 'i18n-react';
 import PlatformsDetails from 'components/Administration/AdminManagementTabContent/PlatformsDetails';
 import ServicesTable from 'components/Administration/AdminManagementTabContent/ServicesTable';
@@ -33,20 +32,13 @@ export default function AdminManagementTabContent(props) {
           <ServicesTable />
         </div>
         <div className="platform-section">
-          <PlatformsDetails platforms={props.platformsDetails} />
+          <PlatformsDetails platformDetails={props.platformsDetails} />
         </div>
-      </div>
-      <div className="admin-bottom-panel">
-        <AdminOverviewPane
-          isLoading={props.loading}
-          platforms={props.platformsDetails}
-        />
       </div>
     </div>
   );
 }
 
 AdminManagementTabContent.propTypes = {
-  platformsDetails: PropTypes.object,
-  loading: PropTypes.bool
+  platformsDetails: PropTypes.object
 };

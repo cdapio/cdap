@@ -79,6 +79,17 @@ $table_row_hover_bg_color: $grey-08;
     .table,
     .table-sm {
       width: 100%;
+
+      thead,
+      tbody {
+        tr th,
+        tr td {
+          &:nth-child(2) {
+            padding-left: 10px;
+          }
+        }
+      }
+
       tbody {
         tr {
           cursor: pointer;

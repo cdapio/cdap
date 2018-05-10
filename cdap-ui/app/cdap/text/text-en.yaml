@@ -148,18 +148,6 @@ features:
         label: "System Compute Profiles "
         labelWithCount: "System Compute Profiles ({count})"
         import: Import
-    Component-Overview:
-      emptyMessage: Available only in Distributed mode
-      headers:
-        cdap: CDAP
-        cdh: CDH
-        hbase: HBASE
-        hdfs: HDFS
-        kafka: Kafka
-        spark: Spark
-        yarn: YARN
-        zookeeper: ZooKeeper
-      label: Component Overview
     Configure:
       title: Configure
       buttons:
@@ -204,6 +192,7 @@ features:
       streams: Streams
       transaction: Transaction
       viewlogs: View Logs
+    systemMetrics: System Metrics
     Tabs:
       config: Configuration
       management: Management

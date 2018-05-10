@@ -17,45 +17,33 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
-import classnames from 'classnames';
 import T from 'i18n-react';
 import GenericDetails from 'components/Administration/AdminManagementTabContent/PlatformsDetails/Genericdetails';
 import LoadingSVG from 'components/LoadingSVG';
 
-const ADMINPREFIX = 'features.Administration.Component-Overview.headers';
 require('./PlatformDetails.scss');
 
 export default class PlatformsDetails extends Component {
   static propTypes = {
-    platforms: PropTypes.arrayOf(PropTypes.object)
+    platformDetails: PropTypes.object
   };
 
   static defaultProps = {
-    platforms: {}
+    platformDetails: {}
   };
 
   state = {
-    activeTab: Object.keys(this.props.platforms)[0],
-    platforms: this.props.platforms
+    platformDetails: this.props.platformDetails
   };
 
   componentWillReceiveProps(nextProps) {
-    let activeTab = Object.keys(nextProps.platforms)[0];
     this.setState({
-      platforms: nextProps.platforms,
-      activeTab
+      platformDetails: nextProps.platformDetails
     });
   }
 
-  toggleTab = (activeTab) => {
-    this.setState({
-      activeTab
-    });
-  };
-
   render() {
-    if (!Object.keys(this.state.platforms).length) {
+    if (!Object.keys(this.state.platformDetails).length) {
       return (
         <div className="platform-details loading">
           <LoadingSVG />
@@ -65,41 +53,16 @@ export default class PlatformsDetails extends Component {
 
     return (
       <div className="platform-details">
-        <Nav tabs>
-          {
-            Object
-              .keys(this.state.platforms)
-              .map((platform, i) => {
-                return (
-                  <NavItem key={i}>
-                    <NavLink
-                      className={classnames({ active: this.state.activeTab === platform })}
-                      onClick={this.toggleTab.bind(null, platform)}
-                    >
-                      {T.translate(`${ADMINPREFIX}.${platform}`)}
-                    </NavLink>
-                  </NavItem>
-                );
-              })
-            }
-        </Nav>
-        <TabContent activeTab={this.state.activeTab}>
-          {
-            Object
-              .keys(this.state.platforms)
-              .map((platform, i) => {
-                return (
-                  <TabPane tabId={platform} key={i}>
-                    <GenericDetails
-                      details={this.state.platforms[platform]}
-                      className={platform}
-                    />
-                  </TabPane>
-                );
-              })
-          }
-        </TabContent>
+        <div className="platform-header">
+          <strong>{T.translate('features.Administration.systemMetrics')}</strong>
+        </div>
+        <div className="platform-content">
+          <GenericDetails
+            details={this.state.platformDetails}
+          />
+        </div>
       </div>
+
     );
   }
 }

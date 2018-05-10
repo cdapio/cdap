@@ -32,15 +32,8 @@ $grey-theme-color: $grey-08;
       strong {
         font-size: 18px;
         display: block;
+        color: $grey-01;
       }
     }
-  }
-
-  .admin-bottom-panel {
-    display: flex;
-    padding: 0 10px;
-    background: $grey-theme-color;
-    padding-bottom: 40px;
-    justify-content: flex-end;
   }
 }

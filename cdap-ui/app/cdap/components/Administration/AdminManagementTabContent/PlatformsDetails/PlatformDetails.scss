@@ -33,59 +33,18 @@ $loading_container_bg_color: $grey-07;
     margin-top: 27px;
   }
 
-  .generic-details {
-    &.hbase {
-      > div {
-        &:nth-child(2) {
-          height: 50%;
-        }
-      }
-    }
-    &.hdfs {
-      flex-direction: row;
-    }
-  }
-
-  .nav.nav-tabs {
-    border-bottom: 0;
+  .platform-header {
+    font-size: 18px;
     width: 100%;
-
-    .nav-item {
-      margin-bottom: 0;
-      height: 100%;
-      .nav-link {
-        font-size: 15px;
-        padding-top: 0;
-        cursor: pointer;
-        padding-bottom: 0;
-
-        &.active {
-          border: 0;
-          font-weight: bold;
-          border-bottom: 4px solid $cdap_orange;
-          height: 100%;
-          background: transparent;
-        }
-        &:hover {
-          border: 0;
-          font-weight: bold;
-          &.active {
-            border-bottom: 4px solid $cdap_orange;
-          }
-        }
-      }
-    }
+    color: $grey-01;
   }
-  .tab-content {
+
+  .platform-content {
     background: $cdap-white;
     padding: 25px;
     width: 100%;
     height: $height_of_conent;
     border: 1px solid $platform_section_border_color;
-
-    .tab-pane {
-      height: 100%;
-      overflow: auto;
-    }
+    overflow: auto;
   }
 }
