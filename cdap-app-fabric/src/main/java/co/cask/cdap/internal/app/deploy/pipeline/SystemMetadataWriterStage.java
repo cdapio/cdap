@@ -19,13 +19,17 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
@@ -35,12 +39,13 @@ import java.util.Map;
  * Stage to write system metadata for an application.
  */
 public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
-
   private final MetadataStore metadataStore;
+  private final PropertiesResolver propertiesResolver;
 
-  public SystemMetadataWriterStage(MetadataStore metadataStore) {
+  public SystemMetadataWriterStage(MetadataStore metadataStore, PropertiesResolver propertiesResolver) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.metadataStore = metadataStore;
+    this.propertiesResolver = propertiesResolver;
   }
 
   @Override
@@ -71,8 +76,11 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
       Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, programId);
+      String scopedProfile =
+        propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId)).get(SystemArguments.PROFILE_NAME);
+      String scopedName = scopedProfile == null ? ProfileId.DEFAULT_SCOPED_NAME : scopedProfile;
       ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec,
-                                                                           !properties.isEmpty());
+                                                                           !properties.isEmpty(), scopedName);
       writer.write();
     }
   }

@@ -29,6 +29,7 @@ import java.util.Objects;
  */
 public class ProfileId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   public static final ProfileId DEFAULT = NamespaceId.SYSTEM.profile("default");
+  public static final String DEFAULT_SCOPED_NAME = "SYSTEM:default";
   private final String profileName;
   private transient Integer hashCode;
 
