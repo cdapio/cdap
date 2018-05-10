@@ -30,6 +30,7 @@ import co.cask.cdap.report.main.ProgramRunInfo;
 import co.cask.cdap.report.main.ProgramRunInfoSerializer;
 import co.cask.cdap.report.main.ProgramStartInfo;
 import co.cask.cdap.report.proto.Filter;
+import co.cask.cdap.report.proto.FilterDeserializer;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
@@ -96,6 +97,11 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
     .create();
+  // have a separate Gson for deserializing Filter to avoid error when serializing Filter to JSON
+  private static final Gson DES_GSON = new GsonBuilder()
+    .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
@@ -147,7 +153,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
         new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
         new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
     ReportGenerationRequest request =
-      new ReportGenerationRequest(TimeUnit.MILLISECONDS.toSeconds(currentTime),
+      new ReportGenerationRequest("ns1_ns2_report", TimeUnit.MILLISECONDS.toSeconds(currentTime),
                                   TimeUnit.MILLISECONDS.toSeconds(currentTime) + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
                                   ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
@@ -191,7 +197,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       ((HttpURLConnection) urlConnection).disconnect();
     }
     LOG.info(response);
-    return GSON.fromJson(response, typeOfT);
+    return DES_GSON.fromJson(response, typeOfT);
   }
 
   /**

@@ -134,10 +134,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // the number of report directories or the list is reaching the given limit
       while (idx < reportIdDirs.size() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirs.get(idx++);
+        ReportStatus status = getReportStatus(reportIdDir);
         String reportId = reportIdDir.getName();
         // Report ID is time based UUID. Get the creation time from the report ID.
         long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-        reportStatuses.add(new ReportStatusInfo(reportId, creationTime, getReportStatus(reportIdDir)));
+        // Read the report request from _START file, which was written at the beginning of report generation
+        String reportRequestString =
+          new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
+        ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+        reportStatuses.add(new ReportStatusInfo(reportId, reportRequest.getName(), null, creationTime, null, status));
       }
       responder.sendJson(200, new ReportList(offset, limit, reportIdDirs.size(), reportStatuses));
     }
@@ -154,10 +159,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         return;
       }
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-      // Read the report request from _START file, which was written at the beginning of report generation
-      String reportRequest =
+      ReportStatus status = getReportStatus(reportIdDir);
+      // read the report request from _START file, which was written at the beginning of report generation
+      String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
-      responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportIdDir), reportRequest));
+      ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+      ReportGenerationInfo reportGenerationInfo = new ReportGenerationInfo(reportRequest.getName(), creationTime,
+                                                                           status, reportRequest);
+      responder.sendJson(reportGenerationInfo);
     }
 
     @GET
@@ -231,7 +240,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                    StandardCharsets.UTF_8);
       // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
       // without stringifying them
-      responder.sendString(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords).toJson(),
+      responder.sendString(200, new ReportContent(offset, limit, Long.parseLong(total), reportRecords).toJson(),
                            StandardCharsets.UTF_8);
     }
 

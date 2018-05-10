@@ -20,18 +20,29 @@ package co.cask.cdap.report.proto;
  * Represents the information of a report generation in an HTTP response.
  */
 public class ReportGenerationInfo {
+  private final String name;
   private final long created;
   private final ReportStatus status;
-  private final String request;
+  private final ReportGenerationRequest request;
 
-  public ReportGenerationInfo(long created, ReportStatus status, String request) {
+  public ReportGenerationInfo(String name, long created,
+                              ReportStatus status, ReportGenerationRequest request) {
+    this.name = name;
     this.created = created;
     this.status = status;
     this.request = request;
   }
 
+
   /**
-   * @return the creation time of this report in seconds
+   * @return the name of the report
+   */
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * @return the creation time of the report in seconds
    */
   public long getCreated() {
     return created;
@@ -47,7 +58,7 @@ public class ReportGenerationInfo {
   /**
    * @return the request for generating this report
    */
-  public String getRequest() {
+  public ReportGenerationRequest getRequest() {
     return request;
   }
 }
