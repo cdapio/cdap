@@ -44,6 +44,7 @@ export default class ProfilesListViewInPipeline extends Component {
 
   state = {
     profiles: [],
+    provisionersMap: {},
     loading: true,
     selectedProfile: this.props.selectedProfile.name || null
   };
@@ -57,6 +58,11 @@ export default class ProfilesListViewInPipeline extends Component {
   }
 
   componentWillMount() {
+    this.getProfiles();
+    this.getProvisionersMap();
+  }
+
+  getProfiles() {
     let appId = PipelineDetailStore.getState().name;
     Observable.forkJoin(
       MyCloudApi.list({ namespace: getCurrentNamespace() }),
@@ -77,7 +83,32 @@ export default class ProfilesListViewInPipeline extends Component {
           });
         },
         (err) => {
+          this.setState({
+            error: err.response || err
+          });
           console.log('ERROR in fetching profiles from backend: ', err);
+        }
+      );
+  }
+
+  getProvisionersMap() {
+    MyCloudApi
+      .getProvisioners()
+      .subscribe(
+        (provisioners) => {
+          let provisionersMap = {};
+          provisioners.forEach(provisioner => {
+            provisionersMap[provisioner.name] = provisioner.label;
+          });
+          this.setState({
+            provisionersMap
+          });
+        },
+        (err) => {
+          this.setState({
+            error: err.response || err
+          });
+          console.log('ERROR in fetching provisioners from backend: ', err);
         }
       );
   }
@@ -117,6 +148,9 @@ export default class ProfilesListViewInPipeline extends Component {
             let profileNamespace = profile.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
             let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
             let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
+            let provisionerName = profile.provisioner.name;
+            let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
+
             return (
               <div
                 className={classnames("grid-row grid-link", {
@@ -134,7 +168,7 @@ export default class ProfilesListViewInPipeline extends Component {
                   {profile.name}
                 </div>
                 <div onClick={this.onProfileSelect.bind(this, profileName)}>
-                  {profile.provisioner.label || profile.provisioner.name}
+                  {provisionerLabel}
                 </div>
                 <div onClick={this.onProfileSelect.bind(this, profileName)}>
                   {profile.scope}
@@ -157,6 +191,9 @@ export default class ProfilesListViewInPipeline extends Component {
             let profileNamespace = profile.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
             let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
             let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
+            let provisionerName = profile.provisioner.name;
+            let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
+
             return (
               <div
                 className={classnames("grid-row grid-link", {
@@ -180,7 +217,7 @@ export default class ProfilesListViewInPipeline extends Component {
                   {profile.name}
                 </div>
                 <div onClick={this.onProfileSelect.bind(this, profileName)}>
-                  {profile.provisioner.label || profile.provisioner.name}
+                  {provisionerLabel}
                 </div>
                 <div onClick={this.onProfileSelect.bind(this, profileName)}>
                   {profile.scope}

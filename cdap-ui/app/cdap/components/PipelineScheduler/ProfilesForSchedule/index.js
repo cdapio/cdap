@@ -24,7 +24,7 @@ import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import classnames from 'classnames';
 import {connect} from 'react-redux';
-import {preventPropagation, objectQuery} from 'services/helpers';
+import {preventPropagation} from 'services/helpers';
 import StatusMapper from 'services/StatusMapper';
 require('./ProfilesForSchedule.scss');
 
@@ -38,6 +38,7 @@ class ProfilesForSchedule extends Component {
 
   state = {
     profiles: null,
+    provisionersMap: {},
     scheduleDetails: null,
     selectedProfile: this.props.selectedProfile
   };
@@ -52,6 +53,7 @@ class ProfilesForSchedule extends Component {
 
   componentDidMount() {
     this.getProfiles();
+    this.getProvisionersMap();
   }
 
   getProfiles = () => {
@@ -59,13 +61,39 @@ class ProfilesForSchedule extends Component {
       namespace: getCurrentNamespace()
     })
     .subscribe(
-      profiles => {
+      (profiles) => {
         this.setState({
           profiles
+        });
+      },
+      (error) => {
+        this.setState({
+          error: error.response || error
         });
       }
     );
   };
+
+  getProvisionersMap() {
+    MyCloudApi
+      .getProvisioners()
+      .subscribe(
+        (provisioners) => {
+          let provisionersMap = {};
+          provisioners.forEach(provisioner => {
+            provisionersMap[provisioner.name] = provisioner.label;
+          });
+          this.setState({
+            provisionersMap
+          });
+        },
+        (error) => {
+          this.setState({
+            error: error.response || error
+          });
+        }
+      );
+  }
 
   selectProfile = (profileName, e) => {
     setSelectedProfile(profileName);
@@ -88,6 +116,9 @@ class ProfilesForSchedule extends Component {
             {
               this.state.profiles.map(profile => {
                 let isSelected = this.state.selectedProfile === profile.name;
+                let provisionerName = profile.provisioner.name;
+                let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
+
                 return (
                   <div
                     className={classnames("grid-row grid-link", {
@@ -102,7 +133,7 @@ class ProfilesForSchedule extends Component {
                         <div />
                     }
                     <div>{profile.name}</div>
-                    <div>{profile.provisioner.label || profile.provisioner.name}</div>
+                    <div>{provisionerLabel}</div>
                     <div>{profile.scope}</div>
                   </div>
                 );
@@ -120,7 +151,12 @@ class ProfilesForSchedule extends Component {
     }
     let selectedProfile = this.state.profiles.find(profile => profile.name === this.state.selectedProfile);
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
-    let provisionerLabel = objectQuery(selectedProfile, 'provisioner', 'label') || objectQuery(selectedProfile, 'provisioner', 'name');
+    let provisionerLabel;
+    if (this.state.selectedProfile) {
+      let provisionerName = selectedProfile.provisioner.name;
+      provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
+    }
+
     return (
       <UncontrolledDropdown
         className={PROFILES_DROPDOWN_DOM_CLASS}
