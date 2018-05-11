@@ -30,6 +30,8 @@ import co.cask.cdap.report.main.ProgramRunInfo;
 import co.cask.cdap.report.main.ProgramRunInfoSerializer;
 import co.cask.cdap.report.main.ProgramStartInfo;
 import co.cask.cdap.report.proto.Filter;
+import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.ProgramRunStartMethod;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
@@ -37,6 +39,13 @@ import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.Sort;
 import co.cask.cdap.report.proto.ValueFilter;
+import co.cask.cdap.report.proto.summary.ArtifactAggregate;
+import co.cask.cdap.report.proto.summary.DurationStats;
+import co.cask.cdap.report.proto.summary.NamespaceAggregate;
+import co.cask.cdap.report.proto.summary.ReportSummary;
+import co.cask.cdap.report.proto.summary.StartMethodAggregate;
+import co.cask.cdap.report.proto.summary.StartStats;
+import co.cask.cdap.report.proto.summary.UserAggregate;
 import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportContentDeserializer;
 import co.cask.cdap.report.util.ReportField;
@@ -78,6 +87,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -95,6 +105,11 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
+    .create();
+  // have a separate Gson for deserializing Filter to avoid error when serializing Filter to JSON
+  private static final Gson DES_GSON = new GsonBuilder()
+    .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterDeserializer())
     .create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
@@ -146,9 +161,9 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       ImmutableList.of(
         new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
         new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
+    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime);
     ReportGenerationRequest request =
-      new ReportGenerationRequest(TimeUnit.MILLISECONDS.toSeconds(currentTime),
-                                  TimeUnit.MILLISECONDS.toSeconds(currentTime) + 30,
+      new ReportGenerationRequest(startSecs, startSecs + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
                                   ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
     HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
@@ -171,6 +186,25 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       }
       return reportGenerationInfo.getStatus();
     }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportStatusURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    // assert the summary content is expected
+    ReportSummary summary = reportGenerationInfo.getSummary();
+    Assert.assertNotNull(summary);
+    Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 1), new NamespaceAggregate("ns2" , 1)),
+                        new HashSet<>(summary.getNamespaces()));
+    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate("Artifact", "1.0.0", "USER", 2)),
+                        new HashSet<>(summary.getArtifacts()));
+    DurationStats durationStats = summary.getDurations();
+    Assert.assertEquals(300L, durationStats.getMin());
+    Assert.assertEquals(300L, durationStats.getMax());
+    // averages with difference smaller than 0.01 are considered equal
+    Assert.assertTrue(Math.abs(300.0 - durationStats.getAverage()) < 0.01);
+    Assert.assertEquals(new StartStats(startSecs, startSecs), summary.getStarts());
+    Assert.assertEquals(ImmutableSet.of(new UserAggregate("alice", 2)), new HashSet<>(summary.getOwners()));
+    Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
+                        new HashSet<>(summary.getStartMethods()));
+    // assert the number of report details is correct
     URL reportRunsURL = reportStatusURL.toURI().resolve("details").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
     Assert.assertEquals(2, reportContent.getTotal());
@@ -191,7 +225,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       ((HttpURLConnection) urlConnection).disconnect();
     }
     LOG.info(response);
-    return GSON.fromJson(response, typeOfT);
+    return DES_GSON.fromJson(response, typeOfT);
   }
 
   /**

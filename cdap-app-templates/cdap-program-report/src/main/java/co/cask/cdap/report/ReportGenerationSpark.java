@@ -34,6 +34,7 @@ import co.cask.cdap.report.proto.ReportList;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ReportStatusInfo;
 import co.cask.cdap.report.proto.ValueFilter;
+import co.cask.cdap.report.proto.summary.ReportSummary;
 import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
@@ -146,18 +147,70 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @Path("/reports/{report-id}")
     public void getReportStatus(HttpServiceRequest request, HttpServiceResponder responder,
                                 @PathParam("report-id") String reportId,
-                                @QueryParam("share-id") String shareId)
-      throws IOException {
-      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
-      if (!reportIdDir.exists()) {
-        responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+                                @QueryParam("share-id") String shareId) {
+      Location reportIdDir;
+      try {
+        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      } catch (IOException e) {
+        LOG.error("Failed to get location for report with id {}", reportId, e);
+        responder.sendError(500, String.format("Failed to get location for report with id %s because of error: %s",
+                                               reportId, e.getMessage()));
         return;
       }
+      try {
+        if (!reportIdDir.exists()) {
+          responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+          return;
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to check whether the location of report with id {} exists", reportId, e);
+        responder.sendError(500, String.format("Failed to check whether the location of report with id %s exists" +
+                                                 " because of error: %s", reportId, e.getMessage()));
+        return;
+      }
+      ReportGenerationInfo reportGenerationInfo;
+      try {
+        reportGenerationInfo = getReportGenerationInfo(reportId, reportIdDir);
+      } catch (Exception e) {
+        LOG.error("Failed to get report generation info for report with id {}.", reportId, e);
+        responder.sendError(500, String.format("Failed to get report generation info for report with id %s" +
+                                                 " because of error: %s", reportId, e.getMessage()));
+        return;
+      }
+      responder.sendJson(200, reportGenerationInfo);
+    }
+
+    /**
+     * Gets the report generation information of the given report id with the information stored in files
+     * under the given directory
+     *
+     * @param reportId the id of the report
+     * @param reportIdDir the location of the directory containing files with the report generation information
+     * @return the report generation information of the given report id
+     * @throws Exception
+     */
+    private static ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
+      throws Exception {
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-      // Read the report request from _START file, which was written at the beginning of report generation
-      String reportRequest =
+      ReportStatus status = getReportStatus(reportIdDir);
+      ReportSummary summary = null;
+      // if the report generation completed, read the summary from _SUMMARY file and include the summary
+      // in the response
+      if (status.equals(ReportStatus.COMPLETED)) {
+        Location summaryFile = reportIdDir.append(Constants.LocationName.SUMMARY);
+        if (!summaryFile.exists()) {
+          throw new Exception(String.format("Failed to read summary for report with id %s since file %s " +
+                                              "does not exist.", reportId, summaryFile.toURI().toString()));
+        }
+        String summaryJson =
+          new String(ByteStreams.toByteArray(summaryFile.getInputStream()), StandardCharsets.UTF_8);
+        summary = GSON.fromJson(summaryJson, ReportSummary.class);
+      }
+      // read the report request from _START file, which was written at the beginning of report generation
+      String reportRequestString =
         new String(ByteStreams.toByteArray(reportIdDir.append(START_FILE).getInputStream()), StandardCharsets.UTF_8);
-      responder.sendJson(new ReportGenerationInfo(creationTime, getReportStatus(reportIdDir), reportRequest));
+      ReportGenerationRequest reportRequest = GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+      return new ReportGenerationInfo(creationTime, status, reportRequest, summary);
     }
 
     @GET
@@ -231,7 +284,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                    StandardCharsets.UTF_8);
       // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
       // without stringifying them
-      responder.sendString(200, new ReportContent(offset, limit, Integer.parseInt(total), reportRecords).toJson(),
+      responder.sendString(200, new ReportContent(offset, limit, Long.parseLong(total), reportRecords).toJson(),
                            StandardCharsets.UTF_8);
     }
 
