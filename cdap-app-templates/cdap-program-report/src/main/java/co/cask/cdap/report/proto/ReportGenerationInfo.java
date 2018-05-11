@@ -23,32 +23,34 @@ import javax.annotation.Nullable;
 /**
  * Represents the information of a report generation in an HTTP response.
  */
-public class ReportGenerationInfo {
-  private final long created;
-  private final ReportStatus status;
+public class ReportGenerationInfo extends ReportMetaInfo {
+  @Nullable
+  private final String error;
   private final ReportGenerationRequest request;
   private final ReportSummary summary;
 
-  public ReportGenerationInfo(long created, ReportStatus status, ReportGenerationRequest request,
+  public ReportGenerationInfo(String name, @Nullable String description, long created, @Nullable Long expiry,
+                              ReportStatus status, @Nullable String error, ReportGenerationRequest request,
                               @Nullable ReportSummary summary) {
-    this.created = created;
-    this.status = status;
+    super(name, description, created, expiry, status);
+    this.error = error;
     this.request = request;
     this.summary = summary;
   }
 
-  /**
-   * @return the creation time of this report in seconds
-   */
-  public long getCreated() {
-    return created;
+  public ReportGenerationInfo(ReportMetaInfo metaInfo, @Nullable String error, ReportGenerationRequest request,
+                              @Nullable ReportSummary summary) {
+    this(metaInfo.getName(), metaInfo.getDescription(), metaInfo.getCreated(), metaInfo.getExpiry(),
+         metaInfo.getStatus(), error, request, summary);
   }
 
   /**
-   * @return the report generation status
+   * @return the error of the report generation if the status of the report is {@link ReportStatus#FAILED},
+   *         or {@code null} if the report status is not {@link ReportStatus#FAILED}
    */
-  public ReportStatus getStatus() {
-    return status;
+  @Nullable
+  public String getError() {
+    return error;
   }
 
   /**
