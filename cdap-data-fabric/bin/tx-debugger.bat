@@ -1,6 +1,6 @@
 :: ##############################################################################
 :: ##
-:: ## Copyright (c) 2014-2017 Cask Data, Inc.
+:: ## Copyright (c) 2014-2018 Cask Data, Inc.
 :: ##
 :: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 :: ## use this file except in compliance with the License. You may obtain a copy
@@ -27,7 +27,7 @@ IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
 )
 
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
-SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=128m
+SET DEFAULT_JVM_OPTS=-Xmx2048m
 SET HADOOP_HOME_OPTS=-Dhadoop.home.dir=%CDAP_HOME%\libexec
 
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\

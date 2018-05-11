@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 .. _test-cdap:
 
@@ -69,7 +69,7 @@ When running tests from an IDE such IntelliJ or Eclipse, set the memory setting 
 ``JUnit`` tests that are run from the IDE to an increased amount of memory. We suggest
 starting with::
 
-  -Xmx1024m -XX:MaxPermSize=128m
+  -Xmx1024m
 
 .. _test-framework-strategies-flow:
 

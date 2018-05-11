@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -122,8 +122,6 @@ public class ETLSpark extends AbstractSpark {
     List<Finisher> finishers = new ArrayList<>();
 
     SparkConf sparkConf = new SparkConf();
-    sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
-    sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
     sparkConf.set("spark.speculation", "false");
     context.setSparkConf(sparkConf);
 

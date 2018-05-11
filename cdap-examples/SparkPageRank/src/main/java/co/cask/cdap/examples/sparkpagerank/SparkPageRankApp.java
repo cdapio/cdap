@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.spark.SparkConf;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -118,11 +117,6 @@ public class SparkPageRankApp extends AbstractApplication {
       setMainClass(SparkPageRankProgram.class);
       setDriverResources(new Resources(1024));
       setExecutorResources(new Resources(1024));
-    }
-
-    @Override
-    public void initialize() throws Exception {
-      getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
     }
   }
 

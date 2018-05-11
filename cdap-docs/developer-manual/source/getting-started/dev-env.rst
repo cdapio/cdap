@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 .. _dev-env:
 
@@ -133,7 +133,7 @@ To do so, follow these steps:
    1. Select ``Run > Edit`` Configurations...
    #. Add a new "Application" run configuration.
    #. Set "Main class" to be ``co.cask.cdap.StandaloneMain``.
-   #. Set "VM options" to ``-Xmx1024m -XX:MaxPermSize=128m`` (for in-memory MapReduce jobs).
+   #. Set "VM options" to ``-Xmx1024m`` (for in-memory MapReduce jobs).
    #. Click "OK".
    #. You can now use this run configuration to start an instance of CDAP Sandbox.
 

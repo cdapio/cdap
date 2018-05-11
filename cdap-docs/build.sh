@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2016-2017 Cask Data, Inc.
+# Copyright © 2016-2018 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -241,7 +241,7 @@ function build_javadocs() {
   fi
   local start=`date`
   cd ${PROJECT_PATH}
-  MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
+  MAVEN_OPTS="-Xmx4g" # match other CDAP builds
   local temp_repo="${TARGET_PATH}/temp-repo"
   echo "Building temp_repo ${temp_repo}"
   mkdir -p ${temp_repo}
