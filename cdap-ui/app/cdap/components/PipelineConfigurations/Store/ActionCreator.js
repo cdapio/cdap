@@ -26,15 +26,9 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import cloneDeep from 'lodash/cloneDeep';
 import { MyPreferenceApi } from 'api/preference';
 import {Observable} from 'rxjs/Observable';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from  'components/PipelineDetails/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import {convertKeyValuePairsToMap} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
-
-const RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY = [
-  PROFILE_NAME_PREFERENCE_PROPERTY,
-  PROFILE_PROPERTIES_PREFERENCE,
-  'logical.start.time'
-];
 
 const applyRuntimeArgs = () => {
   let runtimeArgs = PipelineConfigurationsStore.getState().runtimeArgs;
@@ -47,15 +41,20 @@ const applyRuntimeArgs = () => {
 // Filter certain preferences from being shown in the run time arguments 
 // They are being represented in other places (like selected compute profile).
 const getFilteredRuntimeArgs = (hideProvided) => {
+  const RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY = [
+    PROFILE_NAME_PREFERENCE_PROPERTY,
+    PROFILE_PROPERTIES_PREFERENCE,
+    'logical.start.time'
+  ];
   let {runtimeArgs, resolvedMacros} = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let pairs = [...runtimeArgs.pairs];
-  const checkPropertyMatchToSkip = (prop) => {
+  const skipIfProfilePropMatch = (prop) => {
     let isMatch = RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY.filter(skipProp => prop.indexOf(skipProp) !== -1);
     return isMatch.length ? true : false;
   };
   pairs = pairs
-    .filter(pair => !checkPropertyMatchToSkip(pair.key))
+    .filter(pair => !skipIfProfilePropMatch(pair.key))
     .map(pair => {
       if (pair.key in resolvedMacros) {
         return {
