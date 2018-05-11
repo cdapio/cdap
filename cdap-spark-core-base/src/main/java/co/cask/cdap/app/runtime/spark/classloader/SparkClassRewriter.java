@@ -584,7 +584,14 @@ public class SparkClassRewriter implements ClassRewriter {
    */
   private byte[] rewritePythonRunner(InputStream byteCodeStream) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
-    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
+      // Must sub-class it. It is for COMPUTE_FRAMES to work (CDAP-12888).
+      // With COMPUTE_FRAMES, the ASM library uses getClass().getClassLoader() in the
+      // getCommonSuperClass() method. Without sub-classing, the ClassWriter class would be coming
+      // from the system classloader, which doesn't have Scala classes inside.
+      // By sub-classing, the getClass().getClassLoader() would return the classloader of the sub-class,
+      // which is the spark extension classloader, hence containing all Spark and Scala classes.
+    };
 
     // Intercept the static void main(String[] args) method.
     final Method mainMethod = new Method("main", Type.VOID_TYPE, new Type[] { Type.getType(String[].class) });
@@ -597,57 +604,84 @@ public class SparkClassRewriter implements ClassRewriter {
         }
 
         // Wrap the original main method with
-        // Cancellable cancel = SparkRuntimeUtils.initSparkMain();
+        // SparkProgramCompletion completion = SparkRuntimeUtils.initSparkMain();
         // try {
         //   // original main() body
-        // } catch (SparkUserAppException e) {
-        //   throw new RuntimeException(e);
-        // } finally {
-        //   cancel.cancel();
+        //   completion.completed();
+        // } catch (Throwable t) {
+        //   completion.completedWithException(t);
+        //   // Wrap it with RuntimeException to prevent SparkSubmit calling System.exit in local mode
+        //   [local_mode] throw (t instance of SparkUserAppException) ? new RuntimeException(t) : t;
+        //   [distributed_mode] throw t;
         // }
         return new AdviceAdapter(Opcodes.ASM5, mv, access, name, desc) {
 
           final Type sparkUserAppExceptionType = Type.getObjectType("org/apache/spark/SparkUserAppException");
-          final Type cancellableType = Type.getObjectType("org/apache/twill/common/Cancellable");
+          final Type throwableType = Type.getType(Throwable.class);
+          final Type completionType = Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkProgramCompletion");
           final Label tryLabel = newLabel();
           final Label tryEndLabel = newLabel();
           final Label catchLabel = newLabel();
-          final Label finallyLabel = newLabel();
-          int cancellable;
+          final Label endLabel = newLabel();
+          int completion;
 
           @Override
           protected void onMethodEnter() {
-            cancellable = newLocal(cancellableType);
-            invokeStatic(SPARK_RUNTIME_UTILS_TYPE, new Method("initSparkMain", cancellableType, EMPTY_ARGS));
-            storeLocal(cancellable);
+            completion = newLocal(completionType);
+            invokeStatic(SPARK_RUNTIME_UTILS_TYPE, new Method("initSparkMain", completionType, EMPTY_ARGS));
+            storeLocal(completion);
 
             // try {
-            visitTryCatchBlock(tryLabel, tryEndLabel, catchLabel, sparkUserAppExceptionType.getInternalName());
+            visitTryCatchBlock(tryLabel, tryEndLabel, catchLabel, throwableType.getInternalName());
             visitLabel(tryLabel);
           }
 
           @Override
           protected void onMethodExit(int opcode) {
-            // } catch (SparkUserAppException e) {
-            //   throw new RuntimeException(e);
+            // completion.completed();
+            loadLocal(completion);
+            invokeInterface(completionType, new Method("completed", Type.VOID_TYPE, EMPTY_ARGS));
             visitLabel(tryEndLabel);
-            goTo(finallyLabel);
-            visitLabel(catchLabel);
-            int exception = newLocal(sparkUserAppExceptionType);
-            storeLocal(exception);
-            newInstance(Type.getType(RuntimeException.class));
-            dup();
-            loadLocal(exception);
-            invokeConstructor(Type.getType(RuntimeException.class),
-                              Methods.getMethod(void.class, "<init>", Throwable.class));
-            throwException();
+            goTo(endLabel);
 
-            // } finally {
-            //   cancellable.cancel()
-            // }
-            visitLabel(finallyLabel);
-            loadLocal(cancellable);
-            invokeInterface(cancellableType, new Method("cancel", Type.VOID_TYPE, EMPTY_ARGS));
+            // catch (Throwable t)
+            visitLabel(catchLabel);
+            int throwable = newLocal(throwableType);
+            storeLocal(throwable);
+
+            // completion.completedWithException(t);
+            loadLocal(completion);
+            loadLocal(throwable);
+            invokeInterface(completionType, new Method("completedWithException",
+                                                       Type.VOID_TYPE, new Type[] { throwableType }));
+
+            // load the Throwable. If it is local mode, generate the wrapping logic. Otherwise we can just throw it
+            loadLocal(throwable);
+            Label throwLabel = newLabel();
+
+            if (!distributed) {
+              // Make
+              // (t instance of SparkUserAppException) ? new RuntimeException(t) : t
+              // in the top of the stack
+              Label nonSparkUserAppException = newLabel();
+              instanceOf(sparkUserAppExceptionType);
+              ifZCmp(EQ, nonSparkUserAppException);
+              // If the type is a SparkUserAppException, wrap it with RuntimeException
+              newInstance(Type.getType(RuntimeException.class));
+              dup();
+              loadLocal(throwable);
+              invokeConstructor(Type.getType(RuntimeException.class),
+                                Methods.getMethod(void.class, "<init>", Throwable.class));
+              goTo(throwLabel);
+
+              // Otherwise, no need to wrap
+              visitLabel(nonSparkUserAppException);
+              loadLocal(throwable);
+            }
+
+            visitLabel(throwLabel);
+            throwException();
+            visitLabel(endLabel);
           }
         };
       }

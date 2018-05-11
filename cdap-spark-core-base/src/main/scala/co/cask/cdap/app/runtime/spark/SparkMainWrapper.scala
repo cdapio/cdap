@@ -19,11 +19,11 @@ package co.cask.cdap.app.runtime.spark
 import co.cask.cdap.api.common.RuntimeArguments
 import co.cask.cdap.api.spark.JavaSparkMain
 import co.cask.cdap.api.spark.SparkMain
-import org.apache.twill.common.Cancellable
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.util.concurrent.CountDownLatch
 
 /**
   * The main class that get submitted to Spark for execution of Spark program in CDAP.
@@ -34,13 +34,18 @@ object SparkMainWrapper {
   private val LOG = LoggerFactory.getLogger(SparkMainWrapper.getClass)
 
   @volatile
-  private var stopped = false
-
+  private var completion : SparkProgramCompletion = null
   @volatile
-  var cancellable = new Cancellable {
-    override def cancel(): Unit = {
-      stopped = true
-    }
+  private var stopped = false
+  private val readyLatch = new CountDownLatch(1)
+
+  /**
+    * Stops the execution directly. This method is only used by the LocalSparkSubmitter.
+    */
+  def stop(): Unit = {
+    stopped = true
+    readyLatch.await()
+    Option(completion).foreach(_.completed())
   }
 
   def main(args: Array[String]): Unit = {
@@ -48,14 +53,11 @@ object SparkMainWrapper {
       return
     }
 
-    // Initialize the Spark runtime and update the Cancellable.
-    cancellable = new Cancellable() {
-      val delegate = SparkRuntimeUtils.initSparkMain()
-
-      override def cancel(): Unit = {
-        stopped = true
-        delegate.cancel()
-      }
+    // Initialize the Spark runtime.
+    try {
+      completion = SparkRuntimeUtils.initSparkMain()
+    } finally {
+      readyLatch.countDown()
     }
 
     try {
@@ -64,7 +66,7 @@ object SparkMainWrapper {
       val executionContext = sparkClassLoader.getSparkExecutionContext(false)
       val serializableExecutionContext = new SerializableSparkExecutionContext(executionContext)
 
-      // Check one more time before calling user main
+      // Check one more time before calling user main, as the user might already stopped the program.
       if (stopped) {
         return
       }
@@ -72,6 +74,8 @@ object SparkMainWrapper {
       // Load the user Spark class
       val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(
         runtimeContext.getSparkSpecification.getMainClassName)
+      LOG.info("Launching user spark class {}", userSparkClass)
+
       userSparkClass match {
         // SparkMain
         case cls if classOf[SparkMain].isAssignableFrom(cls) =>
@@ -87,12 +91,17 @@ object SparkMainWrapper {
           getMainMethod(cls).invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
       }
       executionContext.waitForSparkHttpService()
+
+      completion.completed()
     } catch {
-      // If it is stopped, ok to ignore the InterruptedException, as system issues interrupt to the main thread
-      // to unblock the main method.
-      case e: InterruptedException => if (!SparkRuntimeEnv.isStopped) throw e
-    } finally {
-      cancellable.cancel
+      case e : Throwable => {
+        completion.completedWithException(e)
+        // If it is stopped, ok to ignore the InterruptedException, as system issues interrupt to the main thread
+        // to unblock the main method.
+        if (!(SparkRuntimeEnv.isStopped && e.isInstanceOf[InterruptedException])) {
+          throw e
+        }
+      }
     }
   }
 

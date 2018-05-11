@@ -30,7 +30,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import org.apache.spark.SparkConf;
 import org.apache.spark.streaming.DStreamGraph;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
@@ -151,9 +150,12 @@ public final class SparkRuntimeUtils {
    * Initialize a Spark main() method. This is the first method to be called from the main() method of any
    * spark program.
    *
-   * @return a {@link Cancellable} for releasing resources.
+   * @return a {@link SparkProgramCompletion} to be called when user spark program completed.
+   * The {@link SparkProgramCompletion#completed()} must be called when the user program returned normally,
+   * while the {@link SparkProgramCompletion#completedWithException(Throwable)} must be called when the user program
+   * raised exception.
    */
-  public static Cancellable initSparkMain() {
+  public static SparkProgramCompletion initSparkMain() {
     final Thread mainThread = Thread.currentThread();
     SparkClassLoader sparkClassLoader;
     try {
@@ -166,26 +168,7 @@ public final class SparkRuntimeUtils {
       sparkClassLoader.getRuntimeContext().getProgramInvocationClassLoader());
     final SparkExecutionContext sec = sparkClassLoader.getSparkExecutionContext(true);
     final SparkRuntimeContext runtimeContext = sparkClassLoader.getRuntimeContext();
-
-    String executorServiceURI = System.getenv(CDAP_SPARK_EXECUTION_SERVICE_URI);
-    final Service driverService;
-    if (executorServiceURI != null) {
-      // Creates the SparkDriverService in distributed mode for heartbeating and tokens update
-      driverService = new SparkDriverService(URI.create(executorServiceURI), runtimeContext);
-    } else {
-      // In local mode, just create a no-op service for state transition.
-      driverService = new AbstractService() {
-        @Override
-        protected void doStart() {
-          notifyStarted();
-        }
-
-        @Override
-        protected void doStop() {
-          notifyStopped();
-        }
-      };
-    }
+    final Service driverService = createSparkDriverService(runtimeContext);
 
     // Watch for stopping of the driver service.
     // It can happen when a user program finished such that the Cancellable.cancel() returned by this method is called,
@@ -230,16 +213,55 @@ public final class SparkRuntimeUtils {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     driverService.startAndWait();
-    return new Cancellable() {
+    return new SparkProgramCompletion() {
       @Override
-      public void cancel() {
+      public void completed() {
+        handleCompleted(false);
+      }
+
+      @Override
+      public void completedWithException(Throwable t) {
+        handleCompleted(true);
+      }
+
+      private void handleCompleted(boolean failure) {
         // If the cancel call is from the main thread, it means the calling to user class has been returned,
         // since it's the last thing that Spark main methhod would do.
         if (Thread.currentThread() == mainThread) {
           mainThreadCallLatch.countDown();
           mainThread.setContextClassLoader(oldClassLoader);
         }
-        driverService.stopAndWait();
+
+        if (failure && driverService instanceof SparkDriverService) {
+          ((SparkDriverService) driverService).stopWithoutComplete();
+        } else {
+          driverService.stopAndWait();
+        }
+      }
+    };
+  }
+
+  /**
+   * Creates a {@link Service} that runs in the Spark driver process for lifecycle management. In distributed mode,
+   * it will be the {@link SparkDriverService} that also responsible for heartbeating and delegation token updates.
+   */
+  private static Service createSparkDriverService(SparkRuntimeContext runtimeContext) {
+    String executorServiceURI = System.getenv(CDAP_SPARK_EXECUTION_SERVICE_URI);
+    if (executorServiceURI != null) {
+      // Creates the SparkDriverService in distributed mode for heartbeating and tokens update
+      return new SparkDriverService(URI.create(executorServiceURI), runtimeContext);
+    }
+
+    // In local mode, just create a no-op service for state transition.
+    return new AbstractService() {
+      @Override
+      protected void doStart() {
+        notifyStarted();
+      }
+
+      @Override
+      protected void doStop() {
+        notifyStopped();
       }
     };
   }
