@@ -71,7 +71,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -100,7 +99,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   public static final class ReportSparkHandler extends AbstractSparkHttpServiceHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
-    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
+    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
+    }.getType();
     private static final String DEFAULT_LIMIT = "10000";
     private static final String READ_LIMIT = "readLimit";
     private static final String START_FILE = "_START";
@@ -121,7 +121,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @Path("/reports")
     public void getReports(HttpServiceRequest request, HttpServiceResponder responder,
                            @QueryParam("offset") @DefaultValue("0") int offset,
-                           @QueryParam("limit")  @DefaultValue(DEFAULT_LIMIT) int limit)
+                           @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit)
       throws IOException {
       Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       List<ReportStatusInfo> reportStatuses = new ArrayList<>();
@@ -179,7 +179,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       ReportGenerationInfo reportGenerationInfo;
       try {
         reportGenerationInfo = getReportGenerationInfo(reportId, reportIdDir);
-      } catch (IOException e) {
+      } catch (Exception e) {
         LOG.error("Failed to get report generation info for report with id {}.", reportId, e);
         responder.sendError(500, String.format("Failed to get report generation info for report with id %s" +
                                                  " because of error: %s", reportId, e.getMessage()));
@@ -192,13 +192,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * Gets the report generation information of the given report id with the information stored in files
      * under the given directory
      *
-     * @param reportId the id of the report
+     * @param reportId    the id of the report
      * @param reportIdDir the location of the directory containing files with the report generation information
      * @return the report generation information of the given report id
      * @throws IOException
      */
     private static ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
-      throws IOException {
+      throws Exception {
       ReportGenerationRequest reportRequest = getReportRequest(reportId, reportIdDir);
       ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, reportRequest);
       ReportStatus status = getReportStatus(reportIdDir);
@@ -208,8 +208,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       if (status.equals(ReportStatus.COMPLETED)) {
         Location summaryFile = reportIdDir.append(Constants.LocationName.SUMMARY);
         if (!summaryFile.exists()) {
-          throw new NotFoundException(String.format("Failed to read summary for report with id %s since file %s " +
-                                                      "does not exist.", reportId, summaryFile.toURI().toString()));
+          throw new Exception(String.format("Failed to read summary for report with id %s since file %s " +
+                                              "does not exist.", reportId, summaryFile.toURI().toString()));
         }
         String summaryJson =
           new String(ByteStreams.toByteArray(summaryFile.getInputStream()), StandardCharsets.UTF_8);
@@ -232,11 +232,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     /**
      * Gets the report request from _START file, which was written at the beginning of report generation
      */
-    private static ReportGenerationRequest getReportRequest(String reportId, Location reportIdDir) throws IOException {
+    private static ReportGenerationRequest getReportRequest(String reportId, Location reportIdDir) throws Exception {
       Location startFile = reportIdDir.append(START_FILE);
       if (!startFile.exists()) {
-        throw new NotFoundException(String.format("Failed to get the status of the report with id %s since file %s" +
-                                                    " does not exist.", reportId, startFile.toURI().toString()));
+        throw new Exception(String.format("Failed to get the status of the report with id %s since file %s" +
+                                            " does not exist.", reportId, startFile.toURI().toString()));
       }
       // read the report request from _START file, which was written at the beginning of report generation
       String reportRequestString =
@@ -373,9 +373,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * errors caught during report generation to a _FAILURE file.
      *
      * @param reportRequest the request to generate report
-     * @param reportIdDir the location of the directory which will be the parent directory of _FAILURE file
-     *                    and will be passed to {@link #generateReport(ReportGenerationRequest, Location)}
-     * @param reportId the ID of the report being generated
+     * @param reportIdDir   the location of the directory which will be the parent directory of _FAILURE file
+     *                      and will be passed to {@link #generateReport(ReportGenerationRequest, Location)}
+     * @param reportId      the ID of the report being generated
      */
     private void tryGenerateReport(ReportGenerationRequest reportRequest, Location reportIdDir, String reportId) {
       try {
@@ -410,8 +410,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * that actually launches a Spark job to generate reports.
      *
      * @param reportRequest the request to generate report
-     * @param reportIdDir the location of the directory where the report files directory, COUNT file,
-     *                    and _SUCCESS file will be created.
+     * @param reportIdDir   the location of the directory where the report files directory, COUNT file,
+     *                      and _SUCCESS file will be created.
      */
     private void generateReport(ReportGenerationRequest reportRequest, Location reportIdDir) throws IOException {
       Location baseLocation = getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET);
@@ -472,7 +472,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     /**
      * Returns the status of the report generation by checking the presence of the success file or the failure file.
      * If neither of these files exists, the report generation is still running.
-     *
+     * <p>
      * TODO: [CDAP-13215] failure file may not be written if the Spark program is killed. Status of killed
      * report generation job might be returned as RUNNING
      *
