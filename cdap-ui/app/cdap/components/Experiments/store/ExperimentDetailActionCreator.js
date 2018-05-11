@@ -19,7 +19,6 @@ import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'compon
 import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {Observable} from 'rxjs/Observable';
 
 function setExperimentDetailError(error = null) {
   experimentDetailsStore.dispatch({
