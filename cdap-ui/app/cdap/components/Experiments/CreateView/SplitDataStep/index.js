@@ -45,8 +45,8 @@ const renderSplitBtn = (experimentId, splitInfo, onClick) => {
   let isSplitFailed = splitStatus === 'Failed';
   const splitError = () => {
     return (
-      <span className="split-error-container text-danger">
-        Current Split Failed. Please check {" "}
+      <span className="split-error-container">
+        Failed to split: Please check {" "}
         <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank"> Logs </a>{" "}
         for more information
       </span>
@@ -61,7 +61,17 @@ const renderSplitBtn = (experimentId, splitInfo, onClick) => {
         >
           Split data Randomly and verify sample
         </button>
-        {splitStatus === 'Failed' ? splitError() : null}
+        {
+          splitStatus === 'Failed' ?
+            <Alert
+              element={splitError()}
+              type='error'
+              showAlert={true}
+              onClose={setModelCreateError}
+            />
+          :
+            null
+          }
       </div>
     );
   }
