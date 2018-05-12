@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -320,13 +319,12 @@ public class ProvisioningService extends AbstractIdleService {
       os.write(privateKey);
     }
 
-    return new SSHKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(),
-                          new String(publicKey, StandardCharsets.UTF_8), privateKey, "cdap");
+    return new SSHKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(), "cdap");
   }
 
   @Nullable
   private SSHContext createSSHContext(@Nullable SSHKeyInfo keyInfo) {
-    return keyInfo == null ? null : new DefaultSSHContext(keyInfo);
+    return keyInfo == null ? null : new DefaultSSHContext(locationFactory, keyInfo);
   }
 
   /**

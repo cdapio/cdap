@@ -26,17 +26,12 @@ public final class SSHKeyInfo {
   private final URI keyDirectory;
   private final String publicKeyFile;
   private final String privateKeyFile;
-  private final String publicKey;
-  private final byte[] privateKey;
   private final String username;
 
-  SSHKeyInfo(URI keyDirectory, String publicKeyFile, String privateKeyFile,
-             String publicKey, byte[] privateKey, String username) {
+  SSHKeyInfo(URI keyDirectory, String publicKeyFile, String privateKeyFile, String username) {
     this.keyDirectory = keyDirectory;
     this.publicKeyFile = publicKeyFile;
     this.privateKeyFile = privateKeyFile;
-    this.publicKey = publicKey;
-    this.privateKey = privateKey;
     this.username = username;
   }
 
@@ -50,14 +45,6 @@ public final class SSHKeyInfo {
 
   public String getPrivateKeyFile() {
     return privateKeyFile;
-  }
-
-  public String getPublicKey() {
-    return publicKey;
-  }
-
-  public byte[] getPrivateKey() {
-    return privateKey;
   }
 
   public String getUsername() {
