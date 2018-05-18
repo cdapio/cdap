@@ -279,7 +279,7 @@ public class AppMetadataStoreTest {
     });
     final RunId runId6 = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId6 = program.run(runId6);
-    Long currentTime = System.currentTimeMillis();
+    Long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // STARTING status will be ignored if there's any existing record
     txnl.execute(() -> {
       recordProvisionAndStart(programRunId6, metadataStoreDataset);
