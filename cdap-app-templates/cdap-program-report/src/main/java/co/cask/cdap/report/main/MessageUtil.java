@@ -189,7 +189,7 @@ public final class MessageUtil {
                                new GenericDatumReader<>(ProgramRunInfoSerializer.SCHEMA));
         long skipLen = latestLocation.length() / 10;
         long skipPoint = 0;
-        while (dataFileReader.hasNext()) {
+        while (skipLen > 0 && dataFileReader.hasNext()) {
           skipPoint += skipLen;
           dataFileReader.sync(skipPoint);
         }
