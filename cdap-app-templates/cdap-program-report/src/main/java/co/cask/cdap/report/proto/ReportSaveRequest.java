@@ -17,12 +17,28 @@
 package co.cask.cdap.report.proto;
 
 /**
- * Represents the status of a report generation job.
+ * Represents a request to save a program run report in an HTTP request.
  */
-public enum ReportStatus {
-  RUNNING,
-  COMPLETED,
-  FAILED,
-  // only for internal use, will not be returned in the REST response as report generation status
-  EXPIRED
+public class ReportSaveRequest {
+  private final String name;
+  private final String description;
+
+  public ReportSaveRequest(String name, String description) {
+    this.name = name;
+    this.description = description;
+  }
+
+  /**
+   * @return the name of the report
+   */
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * @return the description of the report
+   */
+  public String getDescription() {
+    return description;
+  }
 }
