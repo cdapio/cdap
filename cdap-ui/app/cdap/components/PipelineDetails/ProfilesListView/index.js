@@ -40,7 +40,8 @@ export default class ProfilesListViewInPipeline extends Component {
     selectedProfile: PropTypes.object,
     tableTitle: PropTypes.string,
     showProfilesCount: PropTypes.bool,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
+    provisionersMap: PropTypes.object
   };
 
   static defaultProps = {
@@ -149,7 +150,7 @@ export default class ProfilesListViewInPipeline extends Component {
     let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);
-    let provisionerLabel = this.props.provisionersMap[provisionerName] || profile.provisioner.name;
+    let provisionerLabel = this.props.provisionersMap[profile.provisioner.name] || profile.provisioner.name;
     return (
       <div
         key={profileName}

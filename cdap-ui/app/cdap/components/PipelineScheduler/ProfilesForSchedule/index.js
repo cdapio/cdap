@@ -22,7 +22,10 @@ import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
-import ProfilesListView, {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
+import ProfilesListView from 'components/PipelineDetails/ProfilesListView';
+import {MyCloudApi} from 'api/cloud';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import {preventPropagation} from 'services/helpers';
 
 require('./ProfilesForSchedule.scss');
 
@@ -40,11 +43,8 @@ class ProfilesForSchedule extends Component {
     profileCustomizations: {}
   }
   state = {
-<<<<<<< HEAD
-=======
     profiles: null,
     provisionersMap: {},
->>>>>>> 9a3a03f9abab0418bf08248e4f4dc1da7a04162a
     scheduleDetails: null,
     selectedProfile: this.props.selectedProfile,
     profileCustomizations: this.props.profileCustomizations
@@ -59,8 +59,6 @@ class ProfilesForSchedule extends Component {
     }
   }
 
-<<<<<<< HEAD
-=======
   componentDidMount() {
     this.getProfiles();
     this.getProvisionersMap();
@@ -110,7 +108,6 @@ class ProfilesForSchedule extends Component {
     preventPropagation(e);
   };
 
->>>>>>> 9a3a03f9abab0418bf08248e4f4dc1da7a04162a
   renderProfilesTable = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let selectedProfile = {
@@ -118,55 +115,13 @@ class ProfilesForSchedule extends Component {
       profileCustomizations: this.state.profileCustomizations
     };
     return (
-<<<<<<< HEAD
       <ProfilesListView
         showProfilesCount={false}
         onProfileSelect={setSelectedProfile}
         disabled={isScheduled}
         selectedProfile={selectedProfile}
+        provisionersMap={this.state.provisionersMap}
       />
-=======
-      <div className="grid-wrapper">
-        <div className="grid grid-container">
-          <div className="grid-header">
-            <div className="grid-row">
-              <div />
-              <strong>Profile Name</strong>
-              <strong>Provisioner</strong>
-              <strong>Scope</strong>
-            </div>
-          </div>
-          <div className="grid-body">
-            {
-              this.state.profiles.map(profile => {
-                let isSelected = this.state.selectedProfile === profile.name;
-                let provisionerName = profile.provisioner.name;
-                let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
-
-                return (
-                  <div
-                    className={classnames("grid-row grid-link", {
-                      'active': isSelected
-                    })}
-                    onClick={this.selectProfile.bind(this, profile.name)}
-                  >
-                    {
-                      isSelected ?
-                        <IconSVG name="icon-check" className="text-success" />
-                      :
-                        <div />
-                    }
-                    <div>{profile.name}</div>
-                    <div>{provisionerLabel}</div>
-                    <div>{profile.scope}</div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
->>>>>>> 9a3a03f9abab0418bf08248e4f4dc1da7a04162a
     );
   }
 
@@ -174,7 +129,7 @@ class ProfilesForSchedule extends Component {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let provisionerLabel;
     if (this.state.selectedProfile) {
-      let provisionerName = selectedProfile.provisioner.name;
+      let provisionerName = this.state.selectedProfile.provisioner.name;
       provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
     }
 
@@ -190,11 +145,7 @@ class ProfilesForSchedule extends Component {
         >
           {
             this.state.selectedProfile ?
-<<<<<<< HEAD
-              <span> {`${extractProfileName(this.state.selectedProfile)}`}</span>
-=======
               <span> {`${this.state.selectedProfile} (${provisionerLabel})`}</span>
->>>>>>> 9a3a03f9abab0418bf08248e4f4dc1da7a04162a
             :
               <span>Select a Profile</span>
           }
