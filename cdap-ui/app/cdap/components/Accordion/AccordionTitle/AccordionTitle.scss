@@ -14,8 +14,14 @@
  * the License.
 */
 
-.text-area-widget {
-  min-height: 50px;
-  max-height: 120px;
-  max-width: 100%;
+.accordion-title {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  &.small {
+    padding: 5px 0;
+  }
+  &.large {
+    padding: 15px 0;
+  }
 }

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import T from 'i18n-react';
 import {connect} from 'react-redux';
-import ProfilesListViewInPipeline from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
+import ProfilesListViewInPipeline from  'components/PipelineDetails/ProfilesListView';
 import {setSelectedProfile} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
 
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs.ComputeConfig';
