@@ -29,6 +29,7 @@ require('./DetailView.scss');
 export default class ProfileDetailView extends Component {
   state = {
     profile: {},
+    provisioners: [],
     loading: true,
     error: null,
     isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system'
@@ -40,6 +41,19 @@ export default class ProfileDetailView extends Component {
   };
 
   componentDidMount() {
+    this.getProfile();
+    this.getProvisioners();
+
+    if (this.state.isSystem) {
+      document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    }
+  }
+
+  componentWillUnmount() {
+    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+  }
+
+  getProfile() {
     let {namespace, profileId} = this.props.match.params;
     MyCloudApi
       .get({
@@ -55,32 +69,33 @@ export default class ProfileDetailView extends Component {
         },
         (error) => {
           this.setState({
-            error,
+            error: error.response || error,
             loading: false
           });
         }
       );
-
-    if (this.state.isSystem) {
-      document.querySelector('#header-namespace-dropdown').style.display = 'none';
-    }
   }
 
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+  getProvisioners() {
+    MyCloudApi
+      .getProvisioners()
+      .subscribe(
+        (provisioners) => {
+          this.setState({
+            provisioners
+          });
+        },
+        (error) => {
+          this.setState({
+            error: error.response || error
+          });
+        }
+      );
   }
 
   render() {
     if (this.state.loading) {
       return <LoadingSVGCentered />;
-    }
-
-    if (this.state.error) {
-      return (
-        <div className="text-danger text-xs-center">
-          {JSON.stringify(this.state.error, null, 2)}
-        </div>
-      );
     }
 
     let closeBtnlinkObj = this.state.isSystem ? {
@@ -104,12 +119,13 @@ export default class ProfileDetailView extends Component {
           this.state.error ?
             (
               <div className="text-danger text-xs-center">
-                {JSON.stringify(this.state.error, null, 2)}
+                {this.state.error}
               </div>
             )
           :
             <ProfileDetailViewContent
               profile={this.state.profile}
+              provisioners={this.state.provisioners}
               isSystem={this.state.isSystem}
             />
         }

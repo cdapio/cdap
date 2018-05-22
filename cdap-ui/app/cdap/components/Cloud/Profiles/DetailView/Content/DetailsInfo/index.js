@@ -64,6 +64,17 @@ export default class ProfileDetailViewDetailsInfo extends Component {
       );
     }
 
+    const propertyToLabelMap = {};
+    this.props.provisioners.forEach(provisioner => {
+      if (provisioner.name === this.props.profile.provisioner.name) {
+        provisioner['configuration-groups'].forEach(provisionerGroup => {
+          provisionerGroup.properties.forEach(prop => {
+            propertyToLabelMap[prop.name] = prop.label;
+          });
+        });
+      }
+    });
+
     return (
       <div className="details-table">
         {
@@ -73,7 +84,7 @@ export default class ProfileDetailViewDetailsInfo extends Component {
             .map(property => {
               return (
                 <div className="details-row">
-                  <strong>{`${property.name}:`}</strong>
+                  <strong>{`${propertyToLabelMap[property.name]}:`}</strong>
                   <span
                     className="value-holder"
                     title={property.value}

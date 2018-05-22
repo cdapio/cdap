@@ -20,6 +20,7 @@ import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import IconSVG from 'components/IconSVG';
+import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
 require('./Preview.scss');
 
 export default class ProfilePreview extends Component {
@@ -31,10 +32,16 @@ export default class ProfilePreview extends Component {
   state = {
     profileDetails: null,
     loading: true,
-    error: null
+    error: null,
+    provisioners: []
   };
 
   componentDidMount() {
+    this.getProfileDetails();
+    this.getProvisioners();
+  }
+
+  getProfileDetails() {
     let namespace = getCurrentNamespace();
     if (this.props.profileScope === 'system') {
       namespace = 'system';
@@ -59,6 +66,23 @@ export default class ProfilePreview extends Component {
     );
   }
 
+  getProvisioners() {
+    MyCloudApi
+      .getProvisioners()
+      .subscribe(
+        (provisioners) => {
+          this.setState({
+            provisioners
+          });
+        },
+        (error) => {
+          this.setState({
+            error: error.response || error
+          });
+        }
+      );
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -69,6 +93,8 @@ export default class ProfilePreview extends Component {
     }
     let profileNamespace = this.state.profileDetails.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
+    let profileProvisionerLabel = getProvisionerLabel(this.state.profileDetails, this.state.provisioners);
+
     return (
       <div className="profile-preview text-xs-left">
         <strong>{this.props.profileName}</strong>
@@ -92,7 +118,7 @@ export default class ProfilePreview extends Component {
               <div>
                 <IconSVG name="icon-cloud" />
                 <span className="provisioner-name truncate-text">
-                  {this.state.profileDetails.provisioner.name}
+                  {profileProvisionerLabel}
                 </span>
               </div>
               <div className="truncate-text">

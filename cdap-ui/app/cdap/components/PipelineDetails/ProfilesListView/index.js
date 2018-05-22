@@ -149,6 +149,7 @@ export default class ProfilesListViewInPipeline extends Component {
     let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);
+    let provisionerLabel = this.props.provisionersMap[provisionerName] || profile.provisioner.name;
     return (
       <div
         key={profileName}
@@ -171,7 +172,7 @@ export default class ProfilesListViewInPipeline extends Component {
         </div>
         <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.name}</div>
 
-        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.provisioner.name}</div>
+        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{provisionerLabel}</div>
         <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.scope}</div>
         <div>
           <a href={profileDetailsLink}> View </a>
