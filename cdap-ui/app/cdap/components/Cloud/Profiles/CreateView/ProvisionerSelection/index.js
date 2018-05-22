@@ -95,12 +95,12 @@ class ProfileCreateProvisionerSelection extends Component {
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
-          title="Create a Compute Profile"
+          title="Create a compute profile"
           closeBtnAnchorLink={linkObj}
         />
         <div className="provisioner-selection-container">
           <h3 className="selection-container-label">
-            Select a Provisioner for your Compute Profile
+            Select a provisioner for your compute profile
           </h3>
           <div className="provisioner-selections">
             {

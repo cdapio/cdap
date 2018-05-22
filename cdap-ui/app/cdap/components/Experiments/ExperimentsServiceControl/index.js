@@ -141,8 +141,8 @@ export default class ExperimentsServiceControl extends Component {
     return (
       <div className="experiments-service-control">
         <div className="image-containers">
-          <img className="img-thumbnail" src="/cdap_assets/img/RulesEngine_preview_1.png" />
-          <img className="img-thumbnail" src="/cdap_assets/img/RulesEngine_preview_2.png" />
+          <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview1.png" />
+          <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview2.png" />
         </div>
         <div className="text-container">
           <h2> {T.translate(`${PREFIX}.title`)} </h2>
