@@ -150,7 +150,7 @@ export default class ProfilesListViewInPipeline extends Component {
     let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);
-    let provisionerLabel = this.props.provisionersMap[profile.provisioner.name] || profile.provisioner.name;
+    let provisionerLabel = profile.provisioner.name;
     return (
       <div
         key={profileName}
