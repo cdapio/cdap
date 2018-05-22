@@ -20,16 +20,32 @@ import IconSVG from 'components/IconSVG';
 import {togglePropertyLock} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
 import {objectQuery} from 'services/helpers';
 import {connect} from 'react-redux';
+import Popover from 'components/Popover';
 require('./PropertyLock.scss');
 
 function PropertyLock({isEditable, propertyName}) {
   let iconName = !isEditable ? 'icon-lock_close' : 'icon-lock_open';
-  return (
+  const getIconTooltip = (locked) => `Property is ${locked} while customizing profile in pipelines`;
+  let title = !isEditable ? getIconTooltip('locked'): getIconTooltip('un-locked');
+  const target = (
     <IconSVG
       className="property-lock"
       name={iconName}
       onClick={togglePropertyLock.bind(null, propertyName)}
     />
+  );
+  return (
+    <Popover
+      target={() => target}
+      targetDimension={{
+        width: 16,
+        height: 21
+      }}
+      placement="right"
+      showOn="Hover"
+    >
+      {title}
+    </Popover>
   );
 }
 
