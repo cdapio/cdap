@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,9 +22,11 @@ import {connect} from 'react-redux';
 import {
   handleModelsPageChange,
   handleModelsSorting,
-  getAlgorithmLabel,
-  setActiveModel
-} from 'components/Experiments/store/ActionCreator';
+  setActiveModel,
+  setExperimentDetailError,
+  getModelStatus
+} from 'components/Experiments/store/ExperimentDetailActionCreator';
+import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
 import {humanReadableDate} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';
@@ -43,6 +45,9 @@ import uuidV4 from 'uuid/v4';
 import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
+import Alert from 'components/Alert';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import {preventPropagation} from 'services/helpers';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = ['PREPARING', 'SPLITTING', 'DATA_READY'];
@@ -274,7 +279,7 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   );
 };
 
-const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
+const renderModel = (model, outcomeType, experimentId, newlyTrainingModel, statusIsLoading, statusIsError) => {
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let Component = 'div';
@@ -291,6 +296,41 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
     Component = Link;
     props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${model.id}`;
   }
+
+  const modelStatusComp = () => {
+    if (statusIsLoading) {
+      return <IconSVG name="icon-spinner" className="fa-spin" />;
+    }
+    if (statusIsError) {
+      return (
+        <span>
+          <span
+            className="model-status-error text-danger"
+            id={`error-${model.id}`}
+            onClick={(e) => {
+              preventPropagation(e);
+              getModelStatus(experimentId, model.id);
+            }}
+          >
+            <IconSVG
+              className="text-danger"
+              name="icon-exclamation-circle"
+            />
+            Error
+          </span>
+          <UncontrolledTooltip
+            placement="right"
+            delay={0}
+            target={`error-${model.id}`}
+          >
+            {`Failed to get status of model '${model.name}'. Click to try fetching model status again`}
+          </UncontrolledTooltip>
+        </span>
+      );
+    }
+    return <ModelStatusIndicator status={model.status || '--'} />;
+  };
+
   return (
     <Component
       {...props}
@@ -298,7 +338,7 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
     >
       {wrapContentWithTitleAttr(<IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
       {wrapContentWithTitleAttr(model.name)}
-      {wrapContentWithTitleAttr(<ModelStatusIndicator status={model.status || '--'} />)}
+      {wrapContentWithTitleAttr(modelStatusComp())}
       {wrapContentWithTitleAttr((
         !inSplitStep ? (
           <span className="algorithm-cell" title={model.algorithmLabel}>
@@ -323,7 +363,7 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel) => {
   );
 };
 
-function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel) {
+function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel, modelsLoading, modelsWithError) {
   let list = addDetailedModelObject([...models]);
   return list.map((model) => {
     let {name, algorithm, hyperparameters} = model;
@@ -333,14 +373,17 @@ function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel) {
       algorithmLabel: getAlgorithmLabel(algorithm),
       hyperparameters
     };
+    let statusIsLoading = modelsLoading.indexOf(model.id) !== -1;
+    let statusIsError = modelsWithError.indexOf(model.id) !== -1;
+
     if (model.detailedView) {
       return renderModelDetails(model, newlyTrainingModel, experimentId);
     }
-    return renderModel(model, outcomeType, experimentId, newlyTrainingModel);
+    return renderModel(model, outcomeType, experimentId, newlyTrainingModel, statusIsLoading, statusIsError);
  });
 }
 
-function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod) {
+function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod, modelsLoading, modelsWithError) {
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   const renderSortIcon = (sortMethod) =>
     sortMethod === 'asc' ? <IconSVG name="icon-caret-down" /> : <IconSVG name="icon-caret-up" />;
@@ -375,13 +418,13 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, model
         </div>
       </div>
       <div className="grid-body">
-        {renderGridBody(models, outcomeType, experimentId, newlyTrainingModel)}
+        {renderGridBody(models, outcomeType, experimentId, newlyTrainingModel, modelsLoading, modelsWithError)}
       </div>
     </div>
   );
 }
 
-function ModelsTable({
+function ModelsTableContent({
   experimentId,
   modelsList,
   loading,
@@ -391,7 +434,9 @@ function ModelsTable({
   modelsTotalCount,
   newlyTrainingModel,
   modelsSortColumn,
-  modelsSortMethod
+  modelsSortMethod,
+  modelsLoading,
+  modelsWithError
 }) {
   if (loading || isEmpty(experimentId)) {
     return (
@@ -419,13 +464,13 @@ function ModelsTable({
         />
       </div>
       <div className="grid-wrapper">
-        {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod)}
+        {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod, modelsLoading, modelsWithError)}
       </div>
     </div>
   );
 }
 
-ModelsTable.propTypes = {
+ModelsTableContent.propTypes = {
   modelsList: PropTypes.array,
   loading: PropTypes.bool,
   experimentId: PropTypes.string,
@@ -435,7 +480,9 @@ ModelsTable.propTypes = {
   modelsTotalCount: PropTypes.number,
   modelsSortMethod: PropTypes.string,
   modelsSortColumn: PropTypes.string,
-  newlyTrainingModel: PropTypes.bool
+  newlyTrainingModel: PropTypes.bool,
+  modelsLoading: PropTypes.array,
+  modelsWithError: PropTypes.array
 };
 
 const mapStateToProps = (state) => {
@@ -449,8 +496,34 @@ const mapStateToProps = (state) => {
     modelsTotalCount: state.modelsTotalCount,
     newlyTrainingModel: state.newlyTrainingModel,
     modelsSortMethod: state.modelsSortMethod,
-    modelsSortColumn: state.modelsSortColumn
+    modelsSortColumn: state.modelsSortColumn,
+    modelsLoading: state.modelsLoading,
+    modelsWithError: state.modelsWithError,
+    error: state.error
   };
+};
+
+function ModelsTable({...props}) {
+  return (
+    <div>
+      {ModelsTableContent(props)}
+      {
+        props.error ?
+          <Alert
+            message={props.error}
+            type='error'
+            showAlert={true}
+            onClose={setExperimentDetailError}
+          />
+        :
+          null
+      }
+    </div>
+  );
+}
+
+ModelsTable.propTypes = {
+  error: PropTypes.any
 };
 
 const ModelsTableWrapper = connect(mapStateToProps)(ModelsTable);

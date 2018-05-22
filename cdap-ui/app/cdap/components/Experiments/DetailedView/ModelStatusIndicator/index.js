@@ -42,7 +42,7 @@ const STATUS_ICON_MAP = {
   TRAINING_FAILED: {
     className: 'text-danger',
     icon: 'icon-circle-o'
-  },
+  }
 };
 const getIconMap = (status) => status in STATUS_ICON_MAP ? STATUS_ICON_MAP[status] : DEFAULT_STATUS_MAP;
 

@@ -18,10 +18,11 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
-import {createSplitAndUpdateStatus, setSplitFinalized} from 'components/Experiments/store/CreateExperimentActionCreator';
+import {createSplitAndUpdateStatus, setSplitFinalized, setModelCreateError} from 'components/Experiments/store/CreateExperimentActionCreator';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo';
 import IconSVG from 'components/IconSVG';
+import Alert from 'components/Alert';
 
 require('./SplitDataStep.scss');
 const getSplitLogsUrl = (experimentId, splitInfo) => {
@@ -44,8 +45,8 @@ const renderSplitBtn = (experimentId, splitInfo, onClick) => {
   let isSplitFailed = splitStatus === 'Failed';
   const splitError = () => {
     return (
-      <span className="split-error-container text-danger">
-        Current Split Failed. Please check {" "}
+      <span className="split-error-container">
+        Failed to split: Please check {" "}
         <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank"> Logs </a>{" "}
         for more information
       </span>
@@ -60,7 +61,17 @@ const renderSplitBtn = (experimentId, splitInfo, onClick) => {
         >
           Split data Randomly and verify sample
         </button>
-        {splitStatus === 'Failed' ? splitError() : null}
+        {
+          splitStatus === 'Failed' ?
+            <Alert
+              element={splitError()}
+              type='error'
+              showAlert={true}
+              onClose={setModelCreateError}
+            />
+          :
+            null
+          }
       </div>
     );
   }
@@ -77,7 +88,7 @@ const renderSplitBtn = (experimentId, splitInfo, onClick) => {
   );
 };
 
-function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFinalized, experimentId}) {
+function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFinalized, experimentId, error}) {
   let splitStatus = splitInfo.status || 'Complete';
   return (
     <div className="split-data-step">
@@ -100,6 +111,17 @@ function SplitDataStep({splitInfo = {}, createSplitAndUpdateStatus, setSplitFina
           </div>
         ) : null
       }
+      {
+        error ?
+          <Alert
+            message={error}
+            type='error'
+            showAlert={true}
+            onClose={setModelCreateError}
+          />
+        :
+          null
+      }
     </div>
   );
 }
@@ -109,16 +131,18 @@ SplitDataStep.propTypes = {
   schema: PropTypes.object,
   createSplitAndUpdateStatus: PropTypes.func,
   setSplitFinalized: PropTypes.func,
-  experimentId: PropTypes.string
+  experimentId: PropTypes.string,
+  error: PropTypes.string
 };
 
 const mapStateToSplitDataStepProps = (state) => {
   let {model_create, experiments_create} = state;
-  let {splitInfo = {}} = model_create;
+  let {splitInfo = {}, error} = model_create;
   return {
     splitInfo: splitInfo,
     schema: splitInfo.schema,
-    experimentId: experiments_create.name
+    experimentId: experiments_create.name,
+    error: error
   };
 };
 const mapDispatchToSplitDataStepProps = () => {
