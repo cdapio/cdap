@@ -29,7 +29,8 @@ export default class ProfileDetailViewDetailsInfo extends Component {
   };
 
   static propTypes = {
-    profile: PropTypes.object
+    profile: PropTypes.object,
+    provisioners: PropTypes.object
   };
 
   toggleViewDetails = () => {
