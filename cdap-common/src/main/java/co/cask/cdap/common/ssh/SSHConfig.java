@@ -19,6 +19,7 @@ package co.cask.cdap.common.ssh;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Configurations for creating a {@link DefaultSSHSession}.
@@ -29,13 +30,14 @@ public final class SSHConfig {
   private final int port;
 
   private final String user;
-  private final byte[] privateKey;
+  private final Supplier<byte[]> privateKeySupplier;
   private final Map<String, String> configs;
 
-  private SSHConfig(String host, int port, String user, byte[] privateKey, Map<String, String> configs) {
+  private SSHConfig(String host, int port, String user,
+                    Supplier<byte[]> privateKeySupplier, Map<String, String> configs) {
     this.host = host;
     this.user = user;
-    this.privateKey = privateKey;
+    this.privateKeySupplier = privateKeySupplier;
     this.port = port;
     this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
   }
@@ -64,8 +66,8 @@ public final class SSHConfig {
   /**
    * Returns the private key for login.
    */
-  public byte[] getPrivateKey() {
-    return privateKey;
+  byte[] getPrivateKey() {
+    return privateKeySupplier.get();
   }
 
   /**
@@ -94,7 +96,7 @@ public final class SSHConfig {
     private final Map<String, String> configs = new HashMap<>();
     private int port = 22;
     private String user;
-    private byte[] privateKey;
+    private Supplier<byte[]> privateKeySupplier;
 
     private Builder(String host) {
       this.host = host;
@@ -110,8 +112,8 @@ public final class SSHConfig {
       return this;
     }
 
-    public Builder setPrivateKey(byte[] privateKey) {
-      this.privateKey = privateKey;
+    public Builder setPrivateKeySupplier(Supplier<byte[]> privateKeySupplier) {
+      this.privateKeySupplier = privateKeySupplier;
       return this;
     }
 
@@ -126,7 +128,7 @@ public final class SSHConfig {
     }
 
     public SSHConfig build() {
-      return new SSHConfig(host, port, user, privateKey, configs);
+      return new SSHConfig(host, port, user, privateKeySupplier, configs);
     }
   }
 }

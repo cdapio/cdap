@@ -59,22 +59,19 @@ public class DefaultSSHContext implements SSHContext {
 
   @Override
   public SSHSession createSSHSession(String host, int port, Map<String, String> configs) throws IOException {
-    byte[] privateKey;
-    try {
-      Location location = locationFactory.create(sshKeyInfo.getKeyDirectory()).append(sshKeyInfo.getPrivateKeyFile());
-      try (InputStream is = location.getInputStream()) {
-        privateKey = ByteStreams.toByteArray(is);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to read private key from "
-                                   + sshKeyInfo.getKeyDirectory() + "/" + sshKeyInfo.getPrivateKeyFile(), e);
-    }
+    Location location = locationFactory.create(sshKeyInfo.getKeyDirectory()).append(sshKeyInfo.getPrivateKeyFile());
 
     SSHConfig config = SSHConfig.builder(host)
       .setPort(port)
       .addConfigs(configs)
       .setUser(sshKeyInfo.getUsername())
-      .setPrivateKey(privateKey)
+      .setPrivateKeySupplier(() -> {
+        try {
+          return ByteStreams.toByteArray(location::getInputStream);
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to read private key from " + location, e);
+        }
+      })
       .build();
 
     return new DefaultSSHSession(config);

@@ -170,13 +170,14 @@ public class SSHSessionTest {
   }
 
   private SSHConfig getSSHConfig() {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    keyPair.writePrivateKey(bos, null);
-
     return SSHConfig.builder(sshd.getHost())
       .setUser("cdap")
       .setPort(sshd.getPort())
-      .setPrivateKey(bos.toByteArray())
+      .setPrivateKeySupplier(() -> {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        keyPair.writePrivateKey(bos, null);
+        return bos.toByteArray();
+      })
       .build();
   }
 }
