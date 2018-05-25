@@ -159,7 +159,13 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
           return model;
         })
       };
-    case ACTIONS.SET_MODEL_STATUS:
+    case ACTIONS.SET_MODEL_STATUS: {
+      let modelsWithError = [...state.modelsWithError];
+      let modelIndex = modelsWithError.indexOf(action.payload.modelId);
+      if (modelIndex !== -1) {
+        modelsWithError.splice(modelIndex, 1);
+      }
+
       return {
         ...state,
         models: state.models.map(model => {
@@ -170,29 +176,31 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
             };
           }
           return model;
-        })
+        }),
+        modelsWithError
       };
-      case ACTIONS.SET_MODELS_SORT:
-        return {
-          ...state,
-          modelsSortMethod: action.payload.modelsSortMethod,
-          modelsSortColumn: action.payload.modelsSortColumn
-        };
-      case ACTIONS.SET_ERROR:
-        return {
-          ...state,
-          error: action.payload.error
-        };
-      case ACTIONS.SET_MODELS_LOADING:
-        return {
-          ...state,
-          modelsLoading: action.payload.modelsLoading
-        };
-      case ACTIONS.SET_MODELS_WITH_ERROR:
-        return {
-          ...state,
-          modelsWithError: action.payload.modelsWithError
-        };
+    }
+    case ACTIONS.SET_MODELS_SORT:
+      return {
+        ...state,
+        modelsSortMethod: action.payload.modelsSortMethod,
+        modelsSortColumn: action.payload.modelsSortColumn
+      };
+    case ACTIONS.SET_ERROR:
+      return {
+        ...state,
+        error: action.payload.error
+      };
+    case ACTIONS.SET_MODELS_LOADING:
+      return {
+        ...state,
+        modelsLoading: action.payload.modelsLoading
+      };
+    case ACTIONS.SET_MODELS_WITH_ERROR:
+      return {
+        ...state,
+        modelsWithError: action.payload.modelsWithError
+      };
     default:
       return state;
   }

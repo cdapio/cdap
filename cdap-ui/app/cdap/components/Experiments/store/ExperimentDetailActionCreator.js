@@ -189,7 +189,6 @@ function getModelStatus(experimentId, modelId) {
       modelId
     })
     .subscribe(modelStatus => {
-      removeModelsWithError(modelId);
       experimentDetailsStore.dispatch({
         type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
         payload: {
@@ -235,20 +234,6 @@ function addModelsWithError(modelId) {
   let modelsWithError = [...experimentDetailsStore.getState().modelsWithError];
   if (modelsWithError.indexOf(modelId) === -1) {
     modelsWithError.push(modelId);
-  }
-  experimentDetailsStore.dispatch({
-    type: EXPERIMENTDETAILACTIONS.SET_MODELS_WITH_ERROR,
-    payload: {
-      modelsWithError
-    }
-  });
-}
-
-function removeModelsWithError(modelId) {
-  let modelsWithError = [...experimentDetailsStore.getState().modelsWithError];
-  let modelIndex = modelsWithError.indexOf(modelId);
-  if (modelIndex !== -1) {
-    modelsWithError.splice(modelIndex, 1);
   }
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODELS_WITH_ERROR,
