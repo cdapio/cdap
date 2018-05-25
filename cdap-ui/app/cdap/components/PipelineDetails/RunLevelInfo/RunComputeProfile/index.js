@@ -18,7 +18,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import {objectQuery} from 'services/helpers';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, extractProfileName} from  'components/PipelineDetails/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, extractProfileName, DEFAULT_PROFILE_NAME} from  'components/PipelineDetails/ProfilesListView';
 import IconSVG from 'components/IconSVG';
 import ProfilePreview from 'components/Cloud/Profiles/Preview';
 import Popover from 'components/Popover';
@@ -92,7 +92,7 @@ const getProfileName = (runProperties) => {
 };
 const mapStateToProps = (state) => {
   return {
-    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs'))
+    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs')) || DEFAULT_PROFILE_NAME
   };
 };
 
