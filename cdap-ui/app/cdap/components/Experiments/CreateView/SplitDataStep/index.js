@@ -139,10 +139,10 @@ const mapStateToSplitDataStepProps = (state) => {
   let {model_create, experiments_create} = state;
   let {splitInfo = {}, error} = model_create;
   return {
-    splitInfo: splitInfo,
+    splitInfo,
     schema: splitInfo.schema,
     experimentId: experiments_create.name,
-    error: error
+    error
   };
 };
 const mapDispatchToSplitDataStepProps = () => {

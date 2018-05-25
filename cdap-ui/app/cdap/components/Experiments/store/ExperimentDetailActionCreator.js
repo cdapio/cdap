@@ -168,7 +168,6 @@ function pollModelStatus(experimentId, modelId) {
       modelId
     })
     .subscribe(modelStatus => {
-      removeModelsWithError(modelId);
       experimentDetailsStore.dispatch({
         type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
         payload: {
@@ -261,7 +260,7 @@ function removeModelsWithError(modelId) {
 
 function setActiveModel(activeModelId) {
   let state = experimentDetailsStore.getState();
-  let {splitDetails} = state.models.find(model => model.id === activeModelId);
+  let {splitDetails} = state.models.find(model => model.id === activeModelId) || {};
   if (!splitDetails) {
     getSplitsInExperiment(state.name);
   }

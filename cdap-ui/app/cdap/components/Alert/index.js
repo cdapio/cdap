@@ -33,7 +33,7 @@ export default class Alert extends Component {
   static propTypes = {
     showAlert: PropTypes.bool,
     message: PropTypes.string,
-    element: PropTypes.element,
+    element: PropTypes.node,
     onClose: PropTypes.func,
     type: PropTypes.oneOf([
       'success',
@@ -56,8 +56,7 @@ export default class Alert extends Component {
     if (
       showAlert !== this.state.showAlert ||
       type !== this.state.type ||
-      message !== this.state.message ||
-      element !== this.state.element
+      message !== this.state.message
     ) {
       this.setState({
         showAlert,

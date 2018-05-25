@@ -50,8 +50,7 @@ function getExperimentsList() {
       sort: `${sortColumn} ${sortMethod}`
     })
     .subscribe(res => {
-      let experiments = res.experiments;
-      let totalCount = res.totalRowCount;
+      let {experiments, totalRowCount: totalCount} = res;
       experiments.forEach(experiment => getModelsListInExperiment(experiment.name));
       experimentsStore.dispatch({
         type: ACTIONS.SET_EXPERIMENTS_LIST,
@@ -72,8 +71,7 @@ function getModelsListInExperiment(experimentId) {
       namespace: getCurrentNamespace()
     })
     .subscribe(res => {
-      let models = res.models;
-      let modelsCount = res.totalRowCount;
+      let {models, totalRowCount: modelsCount} = res;
       experimentsStore.dispatch({
         type: ACTIONS.SET_MODELS_IN_EXPERIMENT,
         payload: {
