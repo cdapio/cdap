@@ -16,16 +16,14 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {MyCloudApi} from 'api/cloud';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
-import classnames from 'classnames';
 import {connect} from 'react-redux';
-import {preventPropagation} from 'services/helpers';
 import StatusMapper from 'services/StatusMapper';
+import ProfilesListView, {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
+
 require('./ProfilesForSchedule.scss');
 
 export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';
@@ -33,92 +31,44 @@ export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';
 class ProfilesForSchedule extends Component {
   static propTypes = {
     selectedProfile: PropTypes.string,
-    scheduleStatus: PropTypes.string
+    scheduleStatus: PropTypes.string,
+    profileCustomizations: PropTypes.object
   };
 
+  static defaultProps = {
+    selectedProfile: null,
+    profileCustomizations: {}
+  }
   state = {
-    profiles: null,
     scheduleDetails: null,
-    selectedProfile: this.props.selectedProfile
+    selectedProfile: this.props.selectedProfile,
+    profileCustomizations: this.props.profileCustomizations
   };
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.selectedProfile !== this.state.selectedProfile) {
-      this.setState({
-        selectedProfile: nextProps.selectedProfile
-      });
-    }
+    this.setState({
+      selectedProfile: nextProps.selectedProfile,
+      profileCustomizations: nextProps.profileCustomizations
+    });
   }
-
-  componentDidMount() {
-    this.getProfiles();
-  }
-
-  getProfiles = () => {
-    MyCloudApi.list({
-      namespace: getCurrentNamespace()
-    })
-    .subscribe(
-      profiles => {
-        this.setState({
-          profiles
-        });
-      }
-    );
-  };
-
-  selectProfile = (profileName, e) => {
-    setSelectedProfile(profileName);
-    preventPropagation(e);
-  };
 
   renderProfilesTable = () => {
+    let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
+    let selectedProfile = {
+      name: this.state.selectedProfile,
+      profileCustomizations: this.state.profileCustomizations
+    };
     return (
-      <div className="grid-wrapper">
-        <div className="grid grid-container">
-          <div className="grid-header">
-            <div className="grid-row">
-              <div />
-              <strong>Profile Name</strong>
-              <strong>Provisioner</strong>
-              <strong>Scope</strong>
-            </div>
-          </div>
-          <div className="grid-body">
-            {
-              this.state.profiles.map(profile => {
-                let isSelected = this.state.selectedProfile === profile.name;
-                return (
-                  <div
-                    className={classnames("grid-row grid-link", {
-                      'active': isSelected
-                    })}
-                    onClick={this.selectProfile.bind(this, profile.name)}
-                  >
-                    {
-                      isSelected ?
-                        <IconSVG name="icon-check" className="text-success" />
-                      :
-                        <div />
-                    }
-                    <div>{profile.name}</div>
-                    <div>{profile.provisioner.name}</div>
-                    <div>{profile.scope}</div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
+      <ProfilesListView
+        showProfilesCount={false}
+        onProfileSelect={setSelectedProfile}
+        disabled={isScheduled}
+        selectedProfile={selectedProfile}
+      />
     );
-  };
+  }
 
   renderProfilesDropdown = () => {
-    if (!this.state.profiles) {
-      return null;
-    }
-    let selectedProfile = this.state.profiles.find(profile => profile.name === this.state.selectedProfile);
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     return (
       <UncontrolledDropdown
@@ -132,7 +82,7 @@ class ProfilesForSchedule extends Component {
         >
           {
             this.state.selectedProfile ?
-              <span> {`${this.state.selectedProfile} (${selectedProfile.provisioner.name})`}</span>
+              <span> {`${extractProfileName(this.state.selectedProfile)}`}</span>
             :
               <span>Select a Profile</span>
           }
@@ -162,6 +112,7 @@ class ProfilesForSchedule extends Component {
 const mapStateToProps = (state) => {
   return {
     selectedProfile: state.profiles.selectedProfile,
+    profileCustomizations: state.profiles.profileCustomizations,
     scheduleStatus: state.scheduleStatus
   };
 };

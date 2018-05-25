@@ -33,7 +33,8 @@ import {
 import {createStore} from 'redux';
 import range from 'lodash/range';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
-import {PROFILE_NAME_PREFERENCE_PROPERTY} from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY} from  'components/PipelineDetails/ProfilesListView';
+import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const INTERVAL_OPTIONS = {
   '5MIN': 'Every 5 min',
@@ -99,7 +100,8 @@ const DEFAULT_SCHEDULE_OPTIONS = {
   maxConcurrentRuns: MAX_CONCURRENT_RUNS_OPTIONS[0],
   scheduleView: Object.values(SCHEDULE_VIEWS)[0],
   profiles: {
-    selectedProfile: null
+    selectedProfile: null,
+    profileCustomizations: {}
   },
   currentBackendSchedule: null,
   scheduleStatus: null
@@ -205,7 +207,8 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
       return {
         ...state,
         profiles: {
-          selectedProfile: action.payload.selectedProfile
+          selectedProfile: action.payload.selectedProfile,
+          profileCustomizations: action.payload.profileCustomizations
         }
       };
     case ACTIONS.SET_SCHEDULE_VIEW:
@@ -216,6 +219,7 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
     case ACTIONS.SET_CURRENT_BACKEND_SCHEDULE: {
       let {currentBackendSchedule} = action.payload;
       let profileFromBackend = objectQuery(currentBackendSchedule, 'properties', PROFILE_NAME_PREFERENCE_PROPERTY);
+      let profileCustomizations = getCustomizationMap(objectQuery(currentBackendSchedule, 'properties') || {});
       let constraintFromBackend = (currentBackendSchedule.constraints || []).find(constraint => {
         return constraint.type === 'CONCURRENCY';
       });
@@ -227,7 +231,8 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
         cron: cronFromBackend,
         maxConcurrentRuns: maxConcurrencyFromBackend,
         profiles: {
-          selectedProfile: profileFromBackend
+          selectedProfile: profileFromBackend,
+          profileCustomizations
         }
       };
     }

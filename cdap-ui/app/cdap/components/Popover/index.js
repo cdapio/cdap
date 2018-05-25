@@ -15,7 +15,7 @@
  */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import { Manager, Target, Popper, Arrow } from 'react-popper';
 import {Observable} from 'rxjs/Observable';
 import Mousetrap from 'mousetrap';
@@ -25,7 +25,7 @@ import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 require('./Popover.scss');
 
-export default class Popover extends Component {
+export default class Popover extends PureComponent {
 
   static propTypes = {
     children: PropTypes.element,
@@ -43,7 +43,9 @@ export default class Popover extends Component {
     ]),
     enableInteractionInPopover: PropTypes.bool,
     injectOnToggle: PropTypes.bool,
-    showPopover: PropTypes.bool
+    showPopover: PropTypes.bool,
+    onTogglePopover: PropTypes.func,
+    modifiers: PropTypes.object
   };
 
   eventEmitter = ee(ee);
@@ -52,11 +54,18 @@ export default class Popover extends Component {
     showOn: 'Click',
     bubbleEvent: true,
     enableInteractionInPopover: false,
-    injectOnToggle: false
+    injectOnToggle: false,
+    showPopover: false,
+    modifiers: {
+      preventOverflow: {
+        enabled: true,
+        boundariesElement: 'scrollParent'
+      }
+    }
   };
 
   state = {
-    showPopover: false
+    showPopover: this.props.showPopover
   };
 
   id = `popover-${uuidV4()}`;
@@ -65,7 +74,7 @@ export default class Popover extends Component {
     if (this.id !== popoverId) {
       this.setState({
         showPopover: false
-      });
+      }, this.updateParentOnToggle);
     }
   };
 
@@ -74,7 +83,7 @@ export default class Popover extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.showPopover !== this.props.showPopover) {
+    if (nextProps.showPopover !== this.state.showPopover) {
       this.togglePopover();
     }
   }
@@ -82,6 +91,12 @@ export default class Popover extends Component {
   componentWillUnmount() {
     this.eventEmitter.off('POPOVER_OPEN', this.hidePopoverEventHandler);
   }
+
+  updateParentOnToggle = () => {
+    if (this.props.onTogglePopover) {
+      this.props.onTogglePopover(this.state.showPopover);
+    }
+  };
 
   cleanUpDocumentClickEventHandler = () => {
     if (this.documentClick$) {
@@ -94,7 +109,8 @@ export default class Popover extends Component {
 
     this.setState({
       showPopover: newState
-    });
+    }, this.updateParentOnToggle);
+
     if (newState) {
       this.eventEmitter.emit('POPOVER_OPEN', this.id);
       this.documentClick$ = Observable.fromEvent(document, 'click')
@@ -108,7 +124,7 @@ export default class Popover extends Component {
           this.cleanUpDocumentClickEventHandler();
           this.setState({
             showPopover: false
-          });
+          }, this.updateParentOnToggle);
         });
 
       Mousetrap.bind('esc', this.togglePopover);
@@ -147,6 +163,7 @@ export default class Popover extends Component {
           'hide': !this.state.showPopover,
           'tooltip': this.props.showOn === 'Hover'
           })}
+          modifiers={this.props.modifiers}
           onClick={this.handleBubbleEvent}
         >
           {

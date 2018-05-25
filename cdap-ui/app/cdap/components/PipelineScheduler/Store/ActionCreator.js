@@ -171,11 +171,12 @@ function updateCron() {
   });
 }
 
-function setSelectedProfile(selectedProfile) {
+function setSelectedProfile(selectedProfile, profileCustomizations = {}) {
   PipelineSchedulerStore.dispatch({
     type: PipelineSchedulerActions.SET_SELECTED_PROFILE,
     payload: {
-      selectedProfile
+      selectedProfile,
+      profileCustomizations
     }
   });
 }
