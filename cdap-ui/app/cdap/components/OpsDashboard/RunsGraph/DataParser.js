@@ -93,6 +93,7 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
 
       if (buckets[time]) {
         buckets[time].running++;
+        buckets[time].runsList.push(runInfo);
       }
     }
   });

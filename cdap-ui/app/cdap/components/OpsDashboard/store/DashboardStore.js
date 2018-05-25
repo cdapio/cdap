@@ -74,6 +74,8 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         customAppCount: action.payload.customAppCount,
         startTime: action.payload.startTime,
         duration: action.payload.duration,
+        displayRunsList: true,
+        displayBucketInfo: action.payload.data[0],
         loading: false
       };
     case DashboardActions.setDisplayBucket:

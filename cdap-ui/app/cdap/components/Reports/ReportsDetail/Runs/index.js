@@ -105,6 +105,16 @@ function renderBody(runs, headers) {
                     value = humanReadableDuration(value);
                   }
 
+                  if (head === 'runtimeArgs') {
+                    value = JSON.stringify(value, null, 2);
+
+                    return (
+                      <div>
+                        <pre>{value}</pre>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div>
                       {value || '--'}

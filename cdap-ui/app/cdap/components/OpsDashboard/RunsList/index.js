@@ -22,6 +22,69 @@ import {humanReadableDuration} from 'services/helpers';
 
 require('./RunsList.scss');
 
+function renderHeader() {
+  return (
+    <div className="grid-header">
+      <div className="grid-row">
+        <div>Namespace</div>
+        <div>Name</div>
+        <div>Type</div>
+        <div>Duration</div>
+        <div>User</div>
+        <div>Start Method</div>
+        <div>Status</div>
+      </div>
+    </div>
+  );
+}
+
+function renderBody(data) {
+  return (
+    <div className="grid-body">
+      {
+        data.map((run, i) => {
+          let duration = run.end ? run.end - run.start : '--';
+          duration = humanReadableDuration(duration);
+          return (
+            <div
+              className="grid-row"
+              key={`${run.application.name}${run.program}${run.start}${i}`}
+            >
+              <div>{run.namespace}</div>
+              <div>{run.application.name}</div>
+              <div>{run.type}</div>
+              <div>{duration}</div>
+              <div>{run.user || '--'}</div>
+              <div>{run.startMethod}</div>
+              <div>{run.status}</div>
+            </div>
+          );
+        })
+      }
+    </div>
+  );
+}
+
+function renderGrid(data) {
+  if (data.length === 0) {
+    return (
+      <div className="list-view">
+        <h3 className="text-xs-center">No runs</h3>
+      </div>
+    );
+  }
+
+  return (
+    <div className="list-view grid-wrapper">
+      <div className="grid grid-container">
+        {renderHeader()}
+        {renderBody(data)}
+      </div>
+    </div>
+  );
+}
+
+
 function RunsListView({bucketInfo, displayRunsList}) {
   if (!displayRunsList) { return null; }
 
@@ -67,39 +130,8 @@ function RunsListView({bucketInfo, displayRunsList}) {
         </div>
       </div>
 
-      <div className="list-view">
-        <table className="table">
-          <thead>
-            <th>Namespace</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Duration</th>
-            <th>User</th>
-            <th>Start Method</th>
-            <th>Status</th>
-          </thead>
+      {renderGrid(bucketInfo.runsList)}
 
-          <tbody>
-            {
-              bucketInfo.runsList.map((run, i) => {
-                let duration = run.end ? run.end - run.start : '--';
-                duration = humanReadableDuration(duration);
-                return (
-                  <tr key={`${run.application.name}${run.program}${run.start}${i}`}>
-                    <td>{run.namespace}</td>
-                    <td>{run.application.name}</td>
-                    <td>{run.type}</td>
-                    <td>{duration}</td>
-                    <td>{run.user || '--'}</td>
-                    <td>{run.startMethod}</td>
-                    <td>{run.status}</td>
-                  </tr>
-                );
-              })
-            }
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
