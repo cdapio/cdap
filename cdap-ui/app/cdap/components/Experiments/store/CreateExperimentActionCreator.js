@@ -427,7 +427,8 @@ const getExperimentForEdit = (experimentId) => {
         }
       });
     }, (err) => {
-      setExperimentCreateError(`Failed to retrieve experiment: ${err.response || err}`);
+      // The error message returned from backend for this request is at err.response.message instead of just err.response
+      setExperimentCreateError(`Failed to retrieve experiment: ${err.response.message || err.response || err}`);
     });
 };
 

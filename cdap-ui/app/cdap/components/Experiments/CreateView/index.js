@@ -192,17 +192,6 @@ export default class ExperimentCreateView extends Component {
           enableRouting={false}
           workspaceId={this.state.workspaceId}
         />
-        {
-          this.state.experimentError ?
-            <Alert
-              message={this.state.experimentError}
-              type='error'
-              showAlert={true}
-              onClose={setExperimentCreateError}
-            />
-          :
-            null
-        }
       </span>
     );
   }
@@ -255,11 +244,26 @@ export default class ExperimentCreateView extends Component {
 
     return null;
   }
+  renderError() {
+    if (!this.state.experimentError) {
+      return null;
+    }
+
+    return (
+      <Alert
+        message={this.state.experimentError}
+        type='error'
+        showAlert={true}
+        onClose={setExperimentCreateError}
+      />
+    );
+  }
   render() {
     return (
       <div className="experiments-create-view">
         <Helmet title="CDAP | Create Experiment" />
         {this.renderSteps()}
+        {this.renderError()}
         <Prompt
           when={!this.state.experimentId || !this.state.modelId}
           message={"Are you sure you want to navigate away?"}
