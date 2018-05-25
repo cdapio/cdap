@@ -21,6 +21,7 @@ import IconSVG from 'components/IconSVG';
 import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
+import {preventPropagation} from 'services/helpers';
 import StatusMapper from 'services/StatusMapper';
 import ProfilesListView, {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
 
@@ -52,6 +53,11 @@ class ProfilesForSchedule extends Component {
     });
   }
 
+  selectProfile = (profileName, e) => {
+    setSelectedProfile(profileName);
+    preventPropagation(e);
+  };
+
   renderProfilesTable = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let selectedProfile = {
@@ -70,6 +76,12 @@ class ProfilesForSchedule extends Component {
 
   renderProfilesDropdown = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
+    let provisionerLabel;
+    if (this.state.selectedProfile) {
+      let provisionerName = this.state.selectedProfile.provisioner.name;
+      provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
+    }
+
     return (
       <UncontrolledDropdown
         className={PROFILES_DROPDOWN_DOM_CLASS}
@@ -82,7 +94,7 @@ class ProfilesForSchedule extends Component {
         >
           {
             this.state.selectedProfile ?
-              <span> {`${extractProfileName(this.state.selectedProfile)}`}</span>
+              <span> {`${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`}</span>
             :
               <span>Select a Profile</span>
           }

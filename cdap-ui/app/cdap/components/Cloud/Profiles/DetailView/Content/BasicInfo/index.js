@@ -24,6 +24,8 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
+import isEqual from 'lodash/isEqual';
+import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
 
 require('./BasicInfo.scss');
 
@@ -36,12 +38,22 @@ export default class ProfileDetailViewBasicInfo extends Component {
     extendedDeleteErrMsg: '',
     deleteLoading: false,
     redirectToListView: false,
+    provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners)
   };
 
   static propTypes = {
     profile: PropTypes.object,
+    provisioners: PropTypes.array,
     isSystem: PropTypes.bool
   };
+
+  componentWillReceiveProps(nextProps) {
+    if (!isEqual(nextProps.provisioners, this.props.provisioners)) {
+      this.setState({
+        provisionerLabel: getProvisionerLabel(nextProps.profile, nextProps.provisioners)
+      });
+    }
+  }
 
   toggleDeleteModal = () => {
     this.setState({
@@ -121,7 +133,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
             <div className="grid-row">
               <div>
                 <IconSVG name="icon-cloud" />
-                <span>{profile.provisioner.name}</span>
+                <span>{this.state.provisionerLabel}</span>
               </div>
               <div>{profile.scope}</div>
               <div />
