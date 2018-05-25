@@ -1,7 +1,7 @@
 {
   "configuration-groups": [
     {
-      "label": "Account Settings",
+      "label": "GCP Account Information",
       "properties": [
         {
           "widget-type": "textbox",
