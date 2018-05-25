@@ -157,11 +157,17 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
       Location privateKeyLocation = locationFactory.create(keyInfo.getKeyDirectory())
                                                    .append(keyInfo.getPrivateKeyFile());
-      byte[] privateKey = ByteStreams.toByteArray(Locations.newInputSupplier(privateKeyLocation));
 
       SSHConfig sshConfig = SSHConfig.builder(masterNode.getProperties().get("ip.external"))
         .setUser(keyInfo.getUsername())
-        .setPrivateKey(privateKey).build();
+        .setPrivateKeySupplier(() -> {
+          try {
+            return ByteStreams.toByteArray(privateKeyLocation::getInputStream);
+          } catch (IOException e) {
+            throw new RuntimeException("Failed to read private key from " + privateKeyLocation, e);
+          }
+        })
+        .build();
 
       return new RemoteExecutionTwillPreparer(cConf, config, sshConfig, programRunId,
                                               application.configure(), RunIds.generate(),
