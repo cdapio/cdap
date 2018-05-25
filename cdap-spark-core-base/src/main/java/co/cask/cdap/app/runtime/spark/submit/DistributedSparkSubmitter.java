@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark.submit;
 
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
@@ -28,6 +29,8 @@ import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,9 +43,12 @@ import javax.annotation.Nullable;
  */
 public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkSubmitter.class);
+
   private final Configuration hConf;
   private final String schedulerQueueName;
   private final SparkExecutionService sparkExecutionService;
+  private final long tokenRenewalInterval;
 
   public DistributedSparkSubmitter(Configuration hConf, LocationFactory locationFactory,
                                    String hostname, SparkRuntimeContext runtimeContext,
@@ -53,6 +59,11 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
+
+    Arguments systemArgs = runtimeContext.getProgramOptions().getArguments();
+    this.tokenRenewalInterval = systemArgs.hasOption(SparkRuntimeContextConfig.CREDENTIALS_UPDATE_INTERVAL_MS)
+      ? Long.parseLong(systemArgs.getOption(SparkRuntimeContextConfig.CREDENTIALS_UPDATE_INTERVAL_MS))
+      : -1L;
   }
 
   @Override
@@ -61,9 +72,8 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
       config.put("spark.yarn.queue", schedulerQueueName);
     }
-    long updateInterval = hConf.getLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS, -1L);
-    if (updateInterval > 0) {
-      config.put("spark.yarn.token.renewal.interval", Long.toString(updateInterval));
+    if (tokenRenewalInterval > 0) {
+      config.put("spark.yarn.token.renewal.interval", Long.toString(tokenRenewalInterval));
     }
     config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);

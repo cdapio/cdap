@@ -102,6 +102,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
@@ -131,6 +132,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private ProgramRunId programRunId;
   private TwillContext context;
   private CompletableFuture<ProgramController> controllerFuture;
+  private CompletableFuture<ProgramController.State> programCompletion;
+  private long maxStopSeconds;
 
   /**
    * Helper method to get the name of the runnable from the environment.
@@ -209,6 +212,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   private void doInitialize(File programOptionFile) throws Exception {
     controllerFuture = new CompletableFuture<>();
+    programCompletion = new CompletableFuture<>();
 
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -233,6 +237,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
     cConf.addResource(new File(systemArgs.getOption(ProgramOptionConstants.CDAP_CONF_FILE)).toURI().toURL());
+
+    maxStopSeconds = cConf.getLong(co.cask.cdap.common.conf.Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
 
     if (clusterMode == ClusterMode.ISOLATED) {
       String hostName = context.getHost().getCanonicalHostName();
@@ -266,7 +272,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     try {
       LOG.info("Starting program run {}", programRunId);
-      CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
 
       // Start the program.
       ProgramController controller = programRunner.run(program, programOptions);
@@ -355,8 +360,23 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void stop() {
     try {
+      // If the program is not completed, get the controller and call stop
+      CompletableFuture<ProgramController.State> programCompletion = this.programCompletion;
+
+      // If there is no program completion future or it is already done, simply return as there is nothing to stop.
+      if (programCompletion == null || programCompletion.isDone()) {
+        return;
+      }
+
+      // Don't block forever to get the controller. The controller future might be empty if there is
+      // systematic failure such that program runner is not reacting correctly
+      ProgramController controller = controllerFuture.get(5, TimeUnit.SECONDS);
+
       LOG.info("Stopping runnable: {}.", name);
-      controllerFuture.get().stop().get();
+
+      // Give some time for the program to stop
+      controller.stop().get(maxStopSeconds == 0L ? Constants.APPLICATION_MAX_STOP_SECONDS : maxStopSeconds,
+                            TimeUnit.SECONDS);
     } catch (Exception e) {
       LOG.error("Failed to stop runnable: {}.", name, e);
       throw Throwables.propagate(e);

@@ -16,16 +16,21 @@
 
 package co.cask.cdap.app.runtime.spark.distributed;
 
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
+import co.cask.cdap.app.guice.UnsupportedPluginFinder;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
 import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramRunId;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
@@ -61,7 +66,17 @@ public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunn
   @Override
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
+
     Module module = super.createModule(cConf, hConf, programOptions, programRunId);
-    return Modules.combine(module, new DistributedArtifactManagerModule());
+
+    // Only supports dynamic artifacts fetching when running on-prem
+    return ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE
+      ? Modules.combine(module, new DistributedArtifactManagerModule())
+      : Modules.combine(module, new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+      }
+    });
   }
 }

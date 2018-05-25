@@ -21,8 +21,10 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
 import co.cask.cdap.app.guice.DistributedProgramContainerModule;
+import co.cask.cdap.app.guice.UnsupportedPluginFinder;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -56,9 +58,10 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -72,7 +75,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -89,9 +91,9 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -167,49 +169,56 @@ public final class SparkRuntimeContextProvider {
       Configuration hConf = createHConf();
 
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(hConf);
+      ProgramOptions programOptions = contextConfig.getProgramOptions();
 
       // Should be yarn only and only for executor node, not the driver node.
-      Preconditions.checkState(!contextConfig.isLocal() && Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE")),
+      Preconditions.checkState(!contextConfig.isLocal(programOptions)
+                                 && Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE")),
                                "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
 
       // Create the program
       Program program = createProgram(cConf, contextConfig);
 
-      Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), contextConfig.getProgramOptions());
+      Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
 
-      Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class),
-                                                          contextConfig.getProgramOptions());
-
-      ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-      KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       SparkServiceAnnouncer serviceAnnouncer = injector.getInstance(SparkServiceAnnouncer.class);
 
-      StreamCoordinatorClient streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+      Deque<Service> coreServices = new LinkedList<>();
+      coreServices.add(new LogAppenderService(injector.getInstance(LogAppenderInitializer.class), programOptions));
+      coreServices.add(injector.getInstance(ZKClientService.class));
+      coreServices.add(metricsCollectionService);
+      coreServices.add(serviceAnnouncer);
+
+      if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE) {
+        // Add the Kafka client for logs collection
+        coreServices.add(injector.getInstance(KafkaClientService.class));
+        // Stream is only supported on premise
+        coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
+      }
 
       // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
       // of the spark executor, hence there should be exactly one instance only.
       // The problem with not shutting down nicely is that some logs/metrics might be lost
-      Services.chainStart(logAppenderService, zkClientService,
-                          kafkaClientService, metricsCollectionService, streamCoordinatorClient);
+      for (Service coreService : coreServices) {
+        coreService.startAndWait();
+      }
+
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
           // The logger may already been shutdown. Use System.out/err instead
-          System.out.println("Shutting SparkClassLoader services");
-          serviceAnnouncer.close();
-          Future<List<ListenableFuture<Service.State>>> future = Services.chainStop(logAppenderService,
-                                                                                    streamCoordinatorClient,
-                                                                                    metricsCollectionService,
-                                                                                    kafkaClientService,
-                                                                                    zkClientService);
-          try {
-            List<ListenableFuture<Service.State>> futures = future.get(5, TimeUnit.SECONDS);
-            System.out.println("SparkClassLoader services shutdown completed: " + futures);
-          } catch (Exception e) {
-            System.err.println("Exception when shutting down services");
-            e.printStackTrace(System.err);
+          System.out.println("Shutting down Spark runtime services");
+
+          // Stop all services. Reverse the order.
+          for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
+            try {
+              service.stopAndWait();
+            } catch (Exception e) {
+              LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
+            }
           }
+          System.out.println("Spark runtime services shutdown completed");
         }
       });
 
@@ -222,8 +231,7 @@ public final class SparkRuntimeContextProvider {
                                                                  contextConfig.getApplicationSpecification());
       // Setup dataset framework context, if required
       if (programDatasetFramework instanceof ProgramContextAware) {
-        ProgramRunId programRunId = program.getId()
-          .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+        ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
         ((ProgramContextAware) programDatasetFramework).setContext(new BasicProgramContext(programRunId));
       }
 
@@ -232,7 +240,7 @@ public final class SparkRuntimeContextProvider {
       // Create the context object
       sparkRuntimeContext = new SparkRuntimeContext(
         contextConfig.getConfiguration(),
-        program, contextConfig.getProgramOptions(),
+        program, programOptions,
         cConf,
         getHostname(),
         injector.getInstance(TransactionSystemClient.class),
@@ -318,11 +326,19 @@ public final class SparkRuntimeContextProvider {
     String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
 
     List<Module> modules = new ArrayList<>();
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
+
     modules.add(DistributedProgramContainerModule.builder(cConf, hConf, programId.run(runId), instanceId)
                   .setPrincipal(principal)
-                  .setClusterMode(ProgramRunners.getClusterMode(programOptions))
+                  .setClusterMode(clusterMode)
                   .build());
-    modules.add(new DistributedArtifactManagerModule());
+
+    modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+      }
+    });
     return Guice.createInjector(modules);
   }
 
@@ -364,16 +380,17 @@ public final class SparkRuntimeContextProvider {
   /**
    * The {@link ServiceAnnouncer} for announcing user Spark http service.
    */
-  private static final class SparkServiceAnnouncer implements ServiceAnnouncer, AutoCloseable {
+  private static final class SparkServiceAnnouncer extends AbstractIdleService implements ServiceAnnouncer {
 
-    private final ZKDiscoveryService discoveryService;
+    private final ZKClient zkClient;
+    private ZKDiscoveryService discoveryService;
 
     @Inject
-    SparkServiceAnnouncer(CConfiguration cConf, ZKClient zKclient, ProgramId programId) {
+    SparkServiceAnnouncer(CConfiguration cConf, ZKClient zKClient, ProgramId programId) {
       // Use the ZK path that points to the Twill application of the Spark client.
       String ns = String.format("%s/%s", cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE),
                                 ServiceDiscoverable.getName(programId));
-      this.discoveryService = new ZKDiscoveryService(ZKClients.namespace(zKclient, ns));
+      this.zkClient = ZKClients.namespace(zKClient, ns);
     }
 
     @Override
@@ -388,8 +405,15 @@ public final class SparkRuntimeContextProvider {
     }
 
     @Override
-    public void close() {
-      discoveryService.close();
+    protected void startUp() throws Exception {
+      discoveryService = new ZKDiscoveryService(zkClient);
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      if (discoveryService != null) {
+        discoveryService.close();
+      }
     }
   }
 

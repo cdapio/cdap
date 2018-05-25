@@ -18,7 +18,6 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import com.google.common.collect.ImmutableList;
-import org.apache.twill.common.Cancellable;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -51,6 +50,6 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
   protected void triggerShutdown() {
     // We just stop the SparkMainWrapper directly. Through the SparkClassLoader, we make sure that Spark
     // sees the same SparkMainWrapper class as this one
-    SparkMainWrapper.cancellable().cancel();
+    SparkMainWrapper.stop();
   }
 }

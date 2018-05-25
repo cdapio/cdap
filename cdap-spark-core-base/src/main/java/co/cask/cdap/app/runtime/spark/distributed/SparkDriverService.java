@@ -63,13 +63,24 @@ public class SparkDriverService extends AbstractExecutionThreadService {
   private final BasicWorkflowToken workflowToken;
 
   private Thread runThread;
+  private volatile boolean stopWithoutComplete;
 
   public SparkDriverService(URI baseURI, SparkRuntimeContext runtimeContext) {
     this.client = new SparkExecutionClient(baseURI, runtimeContext.getProgramRunId());
     this.credentialsUpdater = createCredentialsUpdater(runtimeContext.getConfiguration(), client);
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     this.workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
+  }
 
+  /**
+   * Stops this driver service without sending the "completed" signal. This method is used
+   * when there is exception raise from calling user spark program so that we can still release resources
+   * but without signaling the program is completed, hence allowing the program to have another attempt, based
+   * on the max attempts setting on the spark application.
+   */
+  public void stopWithoutComplete() {
+    stopWithoutComplete = true;
+    stopAndWait();
   }
 
   @Override
@@ -127,7 +138,9 @@ public class SparkDriverService extends AbstractExecutionThreadService {
         credentialsUpdater.stopAndWait();
       }
     } finally {
-      client.completed(workflowToken);
+      if (!stopWithoutComplete) {
+        client.completed(workflowToken);
+      }
     }
     LOG.info("SparkDriverService stopped.");
   }

@@ -188,19 +188,20 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         throw Throwables.propagate(e);
       }
 
-      SparkSubmitter submitter = SparkRuntimeContextConfig.isLocal(hConf)
+      boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
+      SparkSubmitter submitter = isLocal
         ? new LocalSparkSubmitter()
         : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter, locationFactory);
+                                                            runtimeContext, submitter, locationFactory, isLocal);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
-      if (SparkRuntimeContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
+      if (isLocal || UserGroupInformation.isSecurityEnabled()) {
         sparkRuntimeService.start();
       } else {
         ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), sparkRuntimeService);

@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -132,19 +133,29 @@ public final class SparkPackageUtils {
     // In future, we could have SPARK1 and SPARK2 home.
     String sparkHome = System.getenv(SPARK_HOME);
     if (sparkLibrary == null && sparkHome == null) {
-      throw new IllegalStateException("Spark not found. Please set environment variable " + SPARK_HOME);
-    }
+      // If both SPARK_LIBRARY and SPARK_HOME are not set, it should be in standalone mode, in which
+      // Spark classes are in the classloader of this class, which is loaded via the program runtime provider extension.
+      // This class shouldn't have dependency on Spark itself, hence using the resource name
+      URL sparkContextURL = SparkPackageUtils.class.getClassLoader().getResource("org/apache/spark/SparkContext.class");
+      if (sparkContextURL == null) {
+        // This error message is for user to read. Usage of SPARK_LIBRARY / classloader is internal, hence not showing.
+        throw new IllegalStateException("Spark not found. Please set environment variable " + SPARK_HOME);
+      }
 
-    switch (sparkCompat) {
-      case SPARK1_2_10:
-        LOCAL_SPARK_LIBRARIES.put(sparkCompat, Collections.singleton(getSpark1AssemblyJar(sparkLibrary, sparkHome)));
-        break;
-      case SPARK2_2_11:
-        LOCAL_SPARK_LIBRARIES.put(sparkCompat, getSpark2LibraryJars(sparkLibrary, sparkHome));
-        break;
-      default:
-        // This shouldn't happen
-        throw new IllegalStateException("Unsupported Spark version " + sparkCompat);
+      URL sparkURL = ClassLoaders.getClassPathURL("org.apache.spark.SparkContext", sparkContextURL);
+      LOCAL_SPARK_LIBRARIES.put(sparkCompat, Collections.singleton(new File(sparkURL.getPath())));
+    } else {
+      switch (sparkCompat) {
+        case SPARK1_2_10:
+          LOCAL_SPARK_LIBRARIES.put(sparkCompat, Collections.singleton(getSpark1AssemblyJar(sparkLibrary, sparkHome)));
+          break;
+        case SPARK2_2_11:
+          LOCAL_SPARK_LIBRARIES.put(sparkCompat, getSpark2LibraryJars(sparkLibrary, sparkHome));
+          break;
+        default:
+          // This shouldn't happen
+          throw new IllegalStateException("Unsupported Spark version " + sparkCompat);
+      }
     }
 
     return LOCAL_SPARK_LIBRARIES.get(sparkCompat);

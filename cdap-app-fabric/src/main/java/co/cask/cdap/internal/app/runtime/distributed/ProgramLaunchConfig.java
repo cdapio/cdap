@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import com.google.common.collect.Iterables;
@@ -46,7 +47,22 @@ public final class ProgramLaunchConfig {
   private final Map<String, RunnableDefinition> runnables = new HashMap<>();
   private final List<Set<String>> launchOrder = new ArrayList<>();
   private final Set<Class<?>> extraDependencies = new HashSet<>();
+  private final Map<String, String> extraSystemArguments = new HashMap<>();
   private ClassAcceptor classAcceptor = new HadoopClassExcluder();
+
+  /**
+   * Adds extra system arguments that will be available through the {@link ProgramOptions#getArguments()}
+   * in the program container.
+   */
+  public ProgramLaunchConfig addExtraSystemArguments(Map<String, String> args) {
+    extraSystemArguments.putAll(args);
+    return this;
+  }
+
+  public ProgramLaunchConfig addExtraSystemArgument(String key, String value) {
+    extraSystemArguments.put(key, value);
+    return this;
+  }
 
   public ProgramLaunchConfig addExtraResources(Map<String, LocalizeResource> resources) {
     extraResources.putAll(resources);
@@ -99,6 +115,13 @@ public final class ProgramLaunchConfig {
   public ProgramLaunchConfig addExtraDependencies(Iterable<? extends Class<?>> classes) {
     Iterables.addAll(extraDependencies, classes);
     return this;
+  }
+
+  /**
+   * Returns the set of extra system arguments.
+   */
+  public Map<String, String> getExtraSystemArguments() {
+    return extraSystemArguments;
   }
 
   public Map<String, LocalizeResource> getExtraResources() {
