@@ -60,6 +60,7 @@ public final class MessageUtil {
   private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
   // Multiplier to convert millisecond into 100ns
   private static final long HUNDRED_NANO_MULTIPLIER = 10000;
+  private static final String CDAP_VERSION = "cdap.version";
 
   private MessageUtil() {
 
@@ -94,13 +95,33 @@ public final class MessageUtil {
   }
 
   /**
+   * Deserialize TMS message into {@link Notification}
+   * @param message
+   * @return Notification
+   */
+  public static Notification messageToNotification(Message message) {
+   return GSON.fromJson(message.getPayloadAsString(), Notification.class);
+  }
+
+  /**
+   * CDAP_VERSION key was added only on CDAP 5.0 and Reporting app only works after CDAP 5.0 and we want
+   * to skip pre 5.0 records. This method checks and return true if the key is present.
+   * @param notification
+   * @return true if CDAP_VERSION key is present in Notification properties
+   */
+  public static boolean isCDAPVersionCompatible(Notification notification) {
+    return notification.getProperties().containsKey(CDAP_VERSION);
+  }
+
+  /**
    * Based on the {@link Message} and its ProgramStatus,
    * construct by setting the fields of {@link ProgramRunInfo} and return that.
    * @param message TMS message
+   * @param notification
    * @return {@link ProgramRunInfo}
    */
-  public static ProgramRunInfo constructAndGetProgramRunInfo(Message message) throws IOException {
-    Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
+  public static ProgramRunInfo constructAndGetProgramRunInfo(Message message,
+                                                             Notification notification) throws IOException {
     ProgramRunInfo programRunInfo =
       GSON.fromJson(notification.getProperties().get(Constants.Notification.PROGRAM_RUN_ID), ProgramRunInfo.class);
     programRunInfo.setMessageId(message.getId());
