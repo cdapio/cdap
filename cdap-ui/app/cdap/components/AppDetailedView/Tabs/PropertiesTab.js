@@ -25,7 +25,7 @@ export default function PropertiesTab({entity}) {
     <div className="properties-container">
       <div className="message-section">
         <strong>
-          {T.translate('features.DetailView.PropertiesTab.title', { entityType: 'Application', entityId: entity.name })}
+          {T.translate('features.DetailView.PropertiesTab.title', { entityType: 'application', entityId: entity.name })}
         </strong>
       </div>
 

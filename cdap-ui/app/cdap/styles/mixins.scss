@@ -20,6 +20,7 @@
     color: $color;
     font-weight: $font-weight;
 }
+
 @mixin appearance($value: none) {
   appearance: $value;
   -webkit-appearance: $value;

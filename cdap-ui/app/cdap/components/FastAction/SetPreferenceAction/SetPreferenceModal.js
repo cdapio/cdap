@@ -18,7 +18,6 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import isObject from 'lodash/isObject';
-import upperFirst from 'lodash/upperFirst';
 import orderBy from 'lodash/orderBy';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
@@ -37,6 +36,8 @@ export const PREFERENCES_LEVEL = {
   SYSTEM: 'SYSTEM',
   NAMESPACE: 'NAMESPACE'
 };
+
+const PREFIX = 'features.FastAction.SetPreferences';
 
 export default class SetPreferenceModal extends Component {
   constructor(props) {
@@ -274,31 +275,31 @@ export default class SetPreferenceModal extends Component {
   }
 
   renderSpecifyPreferences() {
-    const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
+    const actionLabel = T.translate(`${PREFIX}.actionLabel`);
     let entity, entityWithType, description, tooltipID;
     if (this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM) {
       entityWithType = 'CDAP';
-      description = T.translate('features.FastAction.setPreferencesDescriptionLabel.system');
+      description = T.translate(`${PREFIX}.DescriptionLabel.system`);
       tooltipID = `${entityWithType}-title`;
     } else {
       entity = this.params.namespace;
-      entityWithType = `Namespace "${entity}"`;
-      description = T.translate('features.FastAction.setPreferencesDescriptionLabel.namespace');
+      entityWithType = `namespace "${entity}"`;
+      description = T.translate(`${PREFIX}.DescriptionLabel.namespace`);
       tooltipID = `${entity}-title`;
       if (this.props.entity) {
         entity = this.props.entity.id;
-        entityWithType = `${upperFirst(this.props.entity.type)} "${entity}"`;
+        entityWithType = `${this.props.entity.type} "${entity}"`;
         tooltipID = `${this.props.entity.uniqueId}-title`;
         if (this.props.entity.type === 'application') {
-          description = T.translate('features.FastAction.setPreferencesDescriptionLabel.app');
+          description = T.translate(`${PREFIX}.DescriptionLabel.app`);
         } else {
-          description = T.translate('features.FastAction.setPreferencesDescriptionLabel.program');
+          description = T.translate(`${PREFIX}.DescriptionLabel.program`);
         }
       }
     }
     const title = `${actionLabel} for ${entityWithType}`;
-    const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
-    const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
+    const keyLabel = T.translate(`${PREFIX}.ColumnLabel.key`);
+    const valueLabel = T.translate(`${PREFIX}.ColumnLabel.value`);
     return (
       <div>
         {
@@ -380,9 +381,9 @@ export default class SetPreferenceModal extends Component {
     if (!this.getInheritedPreferencesApi) {
       return null;
     }
-    const titleLabel = T.translate('features.FastAction.setPreferencesInheritedPrefsLabel');
-    const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
-    const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
+    const titleLabel = T.translate(`${PREFIX}.inheritedPrefsLabel`);
+    const keyLabel = T.translate(`${PREFIX}.ColumnLabel.key`);
+    const valueLabel = T.translate(`${PREFIX}.ColumnLabel.value`);
     let numInheritedPreferences = this.state.inheritedPreferences.length;
     return (
       <div>
@@ -418,7 +419,7 @@ export default class SetPreferenceModal extends Component {
             </div>
           :
             <div className="text-xs-center">
-              No Inherited Preferences
+              {T.translate(`${PREFIX}.noInheritedPrefs`)}
             </div>
         }
         </div>
@@ -427,10 +428,10 @@ export default class SetPreferenceModal extends Component {
   }
 
   render() {
-    const modalLabel = T.translate('features.FastAction.setPreferencesModalLabel');
-    const savingLabel = T.translate('features.FastAction.setPreferencesButtonLabel.saving');
-    const saveAndCloseLabel = T.translate('features.FastAction.setPreferencesButtonLabel.saveAndClose');
-    const resetLink = T.translate('features.FastAction.setPreferencesReset');
+    const modalLabel = T.translate(`${PREFIX}.modalLabel`);
+    const savingLabel = T.translate(`${PREFIX}.ButtonLabel.saving`);
+    const saveAndCloseLabel = T.translate(`${PREFIX}.ButtonLabel.saveAndClose`);
+    const resetLink = T.translate(`${PREFIX}.reset`);
     return (
       <Modal
         isOpen={this.props.isOpen}

@@ -29,7 +29,7 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 export default class PipelineSummaryButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string,
+    pipelineName: PropTypes.string
   };
 
   state = {
