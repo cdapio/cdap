@@ -25,6 +25,15 @@
       cursor: pointer;
       color: $blue-03;
       user-select: none;
+      display: flex;
+      justify-content: center;
+      height: 18px;
+
+      > div {
+        display: flex;
+        align-items: center;
+      }
+
       .btn.btn-link[disabled] {
         padding: 0;
         color: inherit;
@@ -36,6 +45,7 @@
       .icon-svg {
         margin-right: 5px;
         vertical-align: top;
+        height: 100%;
       }
     }
     .profile-preview-popover {

@@ -136,7 +136,7 @@ export default class PipelineScheduleButton extends Component {
     return (
       <div
         onClick={this.toggleScheduler}
-        className={classnames("btn pipeline-action-btn pipeline-scheduler-btn", {"btn-select" : this.state.showScheduler})}
+        className={classnames("btn pipeline-action-btn pipeline-scheduler-btn", {"btn-select" : this.state.showScheduler || this.state.showConfigModeless})}
         disabled={this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULING']}
       >
         <div className="btn-container">
@@ -166,7 +166,7 @@ export default class PipelineScheduleButton extends Component {
     }
 
     return (
-      <div className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler})}>
+      <div className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler || this.state.showConfigModeless})}>
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
         {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,8 @@ import classnames from 'classnames';
 import SetPreferenceModal, {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import NamespaceStore from 'services/NamespaceStore';
 require('./SetPreferenceAction.scss');
+
+const PREFIX = 'features.FastAction.SetPreferences';
 
 export default class SetPreferenceAction extends Component {
   constructor(props) {
@@ -75,7 +77,7 @@ export default class SetPreferenceAction extends Component {
   }
 
   render() {
-    const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
+    const actionLabel = T.translate(`${PREFIX}.actionLabel`);
     let iconClasses = classnames(
       {'fa-lg': this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE},
       {'text-success': this.state.preferencesSaved}

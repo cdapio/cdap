@@ -26,15 +26,6 @@ import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
 
-const mapStateToProps = (state) => {
-  return {
-    currentRun: state.currentRun,
-    runs: state.runs,
-    appId: state.name,
-    artifactName: state.artifact.name
-  };
-};
-
 const RunLogs = ({currentRun, runs, appId, artifactName}) => {
   const LogsBtnComp = () => (
     <div className="run-logs-btn">
@@ -77,6 +68,15 @@ RunLogs.propTypes = {
   runs: PropTypes.array,
   appId: PropTypes.string,
   artifactName: PropTypes.string
+};
+
+const mapStateToProps = (state) => {
+  return {
+    currentRun: state.currentRun,
+    runs: state.runs,
+    appId: state.name,
+    artifactName: state.artifact.name
+  };
 };
 
 const ConnectedRunLogs = connect(mapStateToProps)(RunLogs);
