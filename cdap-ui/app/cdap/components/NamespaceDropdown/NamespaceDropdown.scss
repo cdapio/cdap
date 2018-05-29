@@ -1,5 +1,5 @@
 /*
-* Copyright © 2016-2017 Cask Data, Inc.
+* Copyright © 2016-2018 Cask Data, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -69,23 +69,30 @@ $star-color: #373a3c;
       padding-right: 10px;
     }
     .namespace-text {
-      width: 120px;
-      height: 50px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      display: inline-flex;
-      flex-direction: column;
-      float: left;
+      line-height: 16px;
+      height: 16px;
+      padding-top: 2px;
 
       small {
-        line-height: 0.5;
-        padding-top: 9px;
         color: gray;
         font-size: 10px;
       }
+    }
+
+    .namespace-and-caret {
+      display: flex;
+      align-items: center;
+
       span {
         line-height: 1.5;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .icon-caret-down {
+        margin-left: auto;
+        margin-right: 10px;
       }
     }
   }

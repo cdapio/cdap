@@ -45,10 +45,10 @@ class RunLevelComputeProfile extends Component {
               <span>--</span>
             </button>
           :
-            <span>
+            <div>
               <IconSVG name="icon-cloud" />
-              {extractProfileName(this.props.profileName)}
-            </span>
+              <span>{extractProfileName(this.props.profileName)}</span>
+            </div>
           }
         </div>
       );

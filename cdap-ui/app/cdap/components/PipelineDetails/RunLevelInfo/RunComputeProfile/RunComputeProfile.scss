@@ -25,6 +25,14 @@
       cursor: pointer;
       color: $blue-03;
       user-select: none;
+      display: flex;
+      justify-content: center;
+
+      > div {
+        display: flex;
+        align-items: center;
+      }
+
       .btn.btn-link[disabled] {
         padding: 0;
         color: inherit;

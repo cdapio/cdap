@@ -247,11 +247,13 @@ export default class NamespaceDropdown extends Component {
           >
             <div className="namespace-text">
               <small>{T.translate('features.Navbar.NamespaceDropdown.namespaceLabel')}</small>
-              <span>{currentNamespace}</span>
             </div>
-            <span className="float-xs-right">
+            <div className="namespace-and-caret">
+              <span title={currentNamespace}>
+                {currentNamespace}
+              </span>
               <IconSVG name="icon-caret-down" />
-            </span>
+            </div>
           </div>
           <DropdownMenu>
             {
