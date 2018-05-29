@@ -19,7 +19,7 @@
 #
 
 # Ambari constants
-AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.sh
+AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.py
 AMBARIPORT=8080
 ACTIVEAMBARIHOST=headnodehost
 USERID=$(python -c 'import hdinsight_common.Constants as Constants; print Constants.AMBARI_WATCHDOG_USERNAME')
@@ -48,7 +48,7 @@ checkHostNameAndSetClusterName() {
 validateAmbariConnectivity() {
   local __coreSiteContent
   local __ret
-  __coreSiteContent=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
+  __coreSiteContent=$(${AMBARICONFIGS_SH} ${AMBARICREDS} --action get --host ${ACTIVEAMBARIHOST} --cluster ${CLUSTERNAME} --config-type core-site)
   __ret=$?
   if [[ ${__coreSiteContent} =~ "[ERROR]" && ${__coreSiteContent} =~ "Bad credentials" ]]; then
     die 'Username and password are invalid. Exiting!' 134
@@ -64,7 +64,7 @@ setAmbariConfig() {
   local __name=${2}
   local __value=${3}
   local __updateResult
-  __updateResult=$(${AMBARICONFIGS_SH} ${AMBARICREDS} set ${ACTIVEAMBARIHOST} ${CLUSTERNAME} ${__configtype} ${__name} ${__value})
+  __updateResult=$(${AMBARICONFIGS_SH} ${AMBARICREDS} --action set --host ${ACTIVEAMBARIHOST} --cluster ${CLUSTERNAME} --config-type ${__configtype} --key ${__name} --value ${__value})
 
   if [[ ${__updateResult} =~ "[ERROR]" ]] && [[ ! ${__updateResult} =~ "Tag:version" ]]; then
     die "Failed to update ${__configtype}: ${__updateResult}" 135
@@ -75,7 +75,7 @@ setAmbariConfig() {
 updateFsAzurePageBlobDirForCDAP() {
   local __currentValue
   local __newValue
-  __currentValue=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
+  __currentValue=$(${AMBARICONFIGS_SH} ${AMBARICREDS} --action get --host ${ACTIVEAMBARIHOST} --cluster ${CLUSTERNAME} --config-type core-site | grep 'fs.azure.page.blob.dir' | sed -e 's/.*: "\(.*\)"[, ]*/\1/')
   if [ -n ${__currentValue} ]; then
     if [[ ${__currentValue} =~ "/cdap" ]]; then
       echo "fs.azure.page.blob.dir already contains /cdap"
