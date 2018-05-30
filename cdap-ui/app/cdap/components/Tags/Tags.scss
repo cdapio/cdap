@@ -42,6 +42,13 @@ $input-width: 120px;
 
     &.plus-button-container {
       margin-left: 3px;
+      height: 18px;
+      background-color: $grey-04;
+      border-radius: 4px;
+
+      .icon-plus {
+        font-size: 7px;
+      }
     }
   }
 
@@ -55,12 +62,6 @@ $input-width: 120px;
     margin-right: 3px;
     vertical-align: middle;
     font-size: 12px;
-  }
-
-  .plus-button-container {
-    background-color: $grey-04;
-    border: 2px solid white;
-    border-radius: 4px;
   }
 
   .tags-popover {

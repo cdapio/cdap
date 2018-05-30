@@ -51,10 +51,10 @@ export default class Tag extends Component {
       "user-tag": this.props.scope === 'USER'
     });
     return (
-      <span>
+      <span className={tagClasses}>
         <span
           onClick = {this.toggleSearchModal}
-          className={tagClasses}
+          className="tag-content"
         >
           <span>{this.props.value}</span>
           {

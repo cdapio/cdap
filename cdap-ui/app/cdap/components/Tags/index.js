@@ -306,7 +306,10 @@ export default class Tags extends Component {
         className="btn btn-primary plus-button-container"
         onClick={this.toggleInputField}
       >
-        <span className="text-white">+</span>
+        <IconSVG
+          name="icon-plus"
+          className="text-white"
+        />
       </span>
     );
   }

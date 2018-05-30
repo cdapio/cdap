@@ -21,6 +21,11 @@
     &.tag-btn {
       margin: 3px;
 
+      .tag-content {
+        display: flex;
+        align-items: center;
+      }
+
       .icon-close {
         font-size: 12px;
         margin-left: 5px;
