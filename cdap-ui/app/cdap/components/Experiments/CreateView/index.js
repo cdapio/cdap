@@ -21,7 +21,7 @@ import IconSVG from 'components/IconSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepHome from 'components/DataPrepHome';
 import {Prompt, Link, Redirect} from 'react-router-dom';
-import createExperimentStore from 'components/Experiments/store/createExperimentStore';
+import createExperimentStore, {CREATION_STEPS} from 'components/Experiments/store/createExperimentStore';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import ExperimentPopovers from 'components/Experiments/CreateView/Popovers';
@@ -31,12 +31,14 @@ import {
   setDirectives,
   setSrcPath,
   setWorkspace,
+  updateSchema,
   getExperimentForEdit,
   getExperimentModelSplitForCreate,
   resetCreateExperimentsStore,
   fetchAlgorithmsList,
   setExperimentCreateError,
-  setAlgorithmsListForCreateView
+  setAlgorithmsListForCreateView,
+  updateModel
 } from 'components/Experiments/store/CreateExperimentActionCreator';
 import MLAlgorithmSelection from 'components/Experiments/CreateView/MLAlgorithmSelection';
 import SplitDataStep from 'components/Experiments/CreateView/SplitDataStep';
@@ -45,6 +47,7 @@ import Helmet from 'react-helmet';
 import queryString from 'query-string';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import MyDataPrepApi from 'api/dataprep';
 import Alert from 'components/Alert';
 
@@ -61,6 +64,7 @@ export default class ExperimentCreateView extends Component {
     experimentId: createExperimentStore.getState().experiments_create.name,
     isSplitFinalized: createExperimentStore.getState().model_create.isSplitFinalized,
     loading: createExperimentStore.getState().experiments_create.loading,
+    active_step: createExperimentStore.getState().active_step.step_name,
     redirectToExperimentDetail: false
   };
   componentWillMount() {
@@ -77,14 +81,24 @@ export default class ExperimentCreateView extends Component {
       setSrcPath(workspaceInfo.properties.path);
       setOutcomeColumns(headers);
       setDirectives(directives);
+      let requestBody = directiveRequestBodyCreator(directives);
+      MyDataPrepApi
+        .getSchema({
+          namespace: getCurrentNamespace(),
+          workspaceId
+        }, requestBody)
+        .subscribe(updateSchema);
     });
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
-      let {model_create, experiments_create} = createExperimentStore.getState();
+      let {model_create, experiments_create, active_step} = createExperimentStore.getState();
       let {modelId, isSplitFinalized, isModelTrained} = model_create;
       let {workspaceId, loading, name: experimentId, error: experimentError} = experiments_create;
       let newState = {};
       if (this.state.experimentId !== experimentId) {
         newState = {experimentId};
+      }
+      if (this.state.active_step.step_name !== active_step.step_name) {
+        newState = { ...newState, active_step };
       }
       if (this.state.modelId !== modelId) {
         newState = {...newState, modelId};
@@ -168,24 +182,34 @@ export default class ExperimentCreateView extends Component {
     );
   }
   renderDataPrep() {
-    let popoverElement = (
+    const updateModelBtn = (
+      <div className="btn btn-primary" onClick={updateModel}>
+        Update Model
+      </div>
+    );
+    const popoverElement = (
       <div className="btn btn-primary">
         Add a model
       </div>
+    );
+    const createModelBtn = (
+      <UncontrolledPopover
+        popoverElement={popoverElement}
+        tag="div"
+        tetherOption={{
+          classPrefix: 'create_new_experiment_popover',
+        }}
+      >
+        <ExperimentPopovers />
+      </UncontrolledPopover>
     );
     return (
       <span>
         {this.renderTopPanel('Create a New Experiment')}
         <div className="experiments-model-panel">
-          <UncontrolledPopover
-            popoverElement={popoverElement}
-            tag="div"
-            tetherOption={{
-              classPrefix: 'create_new_experiment_popover',
-            }}
-          >
-            <ExperimentPopovers />
-          </UncontrolledPopover>
+          {
+            this.state.modelId ? updateModelBtn : createModelBtn
+          }
         </div>
         <DataPrepHome
           singleWorkspaceMode={true}
@@ -226,23 +250,18 @@ export default class ExperimentCreateView extends Component {
         />
       );
     }
-    if (!this.state.workspaceId) {
-      return this.renderConnections();
+    switch (this.state.active_step.step_name) {
+      case CREATION_STEPS.DATAPREP_CONNECTIONS:
+        return this.renderConnections();
+      case CREATION_STEPS.DATAPREP:
+        return this.renderDataPrep();
+      case CREATION_STEPS.DATASPLIT:
+        return this.renderSplitDataStep();
+      case CREATION_STEPS.ALGORITHM_SELECTION:
+        return this.renderAlgorithmSelectionStep();
+      default:
+        return null;
     }
-
-    let {algorithm} = createExperimentStore.getState().model_create;
-    if (this.state.workspaceId && !this.state.modelId) {
-      return this.renderDataPrep();
-    }
-
-    if (this.state.modelId && !this.state.isSplitFinalized) {
-      return this.renderSplitDataStep();
-    }
-    if (this.state.isSplitFinalized && !algorithm.length) {
-      return this.renderAlgorithmSelectionStep();
-    }
-
-    return null;
   }
   renderError() {
     if (!this.state.experimentError) {

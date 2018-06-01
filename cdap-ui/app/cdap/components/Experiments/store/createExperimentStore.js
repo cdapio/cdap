@@ -14,8 +14,15 @@
  * the License.
 */
 
-import {createStore, combineReducers} from 'redux';
+import {createStore} from 'redux';
 import {defaultAction, composeEnhancers} from 'services/helpers';
+
+export const CREATION_STEPS = {
+  DATAPREP_CONNECTIONS: 'DATAPREP_CONNECTIONS',
+  DATAPREP: 'DATAPREP',
+  DATASPLIT: 'DATASPLIT',
+  ALGORITHM_SELECTION: 'ALGORITHM_SELECTION'
+};
 
 const ACTIONS = {
   SET_EXPERIMENT_NAME: 'SET_EXPERIMENT_NAME',
@@ -26,6 +33,9 @@ const ACTIONS = {
   SET_EXPERIMENT_METADATA_FOR_EDIT: 'SET_EXPERIMENT_METADATA_FOR_EDIT',
   SET_VISIBLE_POPOVER: 'SET_VISIBLE_POPOVER',
   SET_EXPERIMENT_ERROR: 'SET_EXPERIMENT_ERROR',
+
+  OVERRIDE_CREATION_STEP: 'OVERRIDE_CREATION_STEP',
+  MODEL_UPDATE: 'MODEL_UPDATE',
 
   SET_SPLIT_INFO: 'SET_SPLIT_INFO',
   SET_SCHEMA: 'SET_SCHEMA',
@@ -85,6 +95,11 @@ const DEFAULT_MODEL_CREATE_VALUE = {
   error: null
 };
 
+const DEFAULT_ACTIVE_STEP = {
+  override: false,
+  step_name: CREATION_STEPS.DATAPREP_CONNECTIONS
+};
+
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.SET_EXPERIMENT_NAME:
@@ -115,7 +130,7 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
     case ACTIONS.SET_WORKSPACE_ID:
       return {
         ...state,
-        workspaceId: action.payload.workspaceId
+        workspaceId: action.payload.workspaceId,
       };
     case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT:
     case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
@@ -166,6 +181,11 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
       return {
         ...state,
         splitInfo: action.payload.splitInfo
+      };
+    case ACTIONS.MODEL_UPDATE:
+      return {
+        ...state,
+        splitInfo: DEFAULT_MODEL_CREATE_VALUE.splitInfo
       };
     case ACTIONS.SET_SPLIT_FINALIZED:
       return {
@@ -247,14 +267,123 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
   }
 };
 
+const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
+  const getActiveStep = (state) => {
+    let {override} = state.active_step;
+    if (override) {
+      return state.active_step;
+    }
+    let {name, workspaceId} = state.experiments_create;
+    let {modelId, isSplitFinalized, algorithm} = state.model_create;
+    if (!name) {
+      return {
+        ...state.active_step,
+        step_name: CREATION_STEPS.DATAPREP
+      };
+    }
+    if (!workspaceId) {
+      return {
+        ...state.active_step,
+        step_name: CREATION_STEPS.DATAPREP_CONNECTIONS
+      };
+    }
+    if (workspaceId && !modelId) {
+      return {
+        ...state.active_step,
+        step_name: CREATION_STEPS.DATAPREP
+      };
+    }
+
+    if (modelId && !isSplitFinalized) {
+      return {
+        ...state.active_step,
+        step_name: CREATION_STEPS.DATASPLIT
+      };
+    }
+
+    if (modelId && !algorithm.name.length) {
+      return {
+        ...state.active_step,
+        step_name: CREATION_STEPS.ALGORITHM_SELECTION
+      };
+    }
+    return state.active_step;
+  };
+  switch (action.type) {
+    case ACTIONS.MODEL_UPDATE: {
+      const newState = {
+        ...state,
+        active_step: {
+          override: false,
+          step_name: state.active_step.step_name
+        }
+      };
+      return {
+        override: false,
+        step_name: getActiveStep(newState).step_name
+      };
+    }
+    case ACTIONS.OVERRIDE_CREATION_STEP:
+      return {
+        override: true,
+        step_name: action.payload.active_step
+      };
+    case ACTIONS.SET_SPLIT_FINALIZED: {
+      let newState = {
+        ...state,
+        model_create: {
+          ...state.model_create,
+          isSplitFinalized: action.payload.isSplitFinalized
+        },
+        active_step: {
+          ...state.active_step,
+          override: false
+        }
+      };
+      return getActiveStep(newState);
+    }
+    case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
+      let {name: experimentName, description: experimentDescription, outcome, srcpath, workspaceId} = action.payload.experimentDetails;
+      let {name: modelName, description: modelDescription, id: modelId} = action.payload.modelDetails;
+      const newState = {
+        experiments_create: {
+          ...state.experiments_create,
+          name: experimentName,
+          description: experimentDescription,
+          outcome,
+          srcpath,
+          workspaceId
+        },
+        model_create: {
+          ...state.model_create,
+          name: modelName,
+          description: modelDescription,
+          modelId
+        },
+        active_step: state.active_step
+      };
+      return getActiveStep(newState);
+    }
+
+    default:
+      return getActiveStep(state);
+  }
+};
+
+const rootReducer = (state, action) => {
+  return {
+    experiments_create: experiments_create(state.experiments_create, action),
+    model_create: model_create(state.model_create, action),
+    active_step: active_step(state, action)
+  };
+};
+
 const createExperimentStore = createStore(
-  combineReducers({
-    experiments_create,
-    model_create
-  }),
+  rootReducer,
   {
     experiments_create: DEFAULT_EXPERIMENTS_CREATE_VALUE,
-    model_create: DEFAULT_MODEL_CREATE_VALUE
+    model_create: DEFAULT_MODEL_CREATE_VALUE,
+    active_step: DEFAULT_ACTIVE_STEP
   },
   composeEnhancers('CreateExperimentStore')()
 );

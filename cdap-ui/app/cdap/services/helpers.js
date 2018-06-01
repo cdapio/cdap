@@ -22,6 +22,7 @@ import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import {compose} from 'redux';
 import uuidV4 from 'uuid/v4';
+import round from 'lodash/round';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -337,6 +338,17 @@ const convertKeyValuePairsToMap = (keyValuePairs, ignoreNonNilValues = false) =>
   return map;
 };
 
+const roundDecimalToNDigits = (num, digits = 2) => {
+  let newNum = num;
+  if (typeof num !== 'number') {
+    newNum = parseFloat(num, 10);
+  }
+  if (isNaN(num)) {
+    return num;
+  }
+  return round(newNum, digits);
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -369,5 +381,6 @@ export {
   reverseArrayWithoutMutating,
   convertMapToKeyValuePairs,
   convertKeyValuePairsToMap,
-  isNilOrEmpty
+  isNilOrEmpty,
+  roundDecimalToNDigits
 };

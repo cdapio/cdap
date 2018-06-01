@@ -14,25 +14,15 @@
  * the License.
 */
 
-@import "../../../../styles/variables.scss";
+const MODEL_STATUS = {
+  PREPARING: 'Preparing',
+  SPLITTING: 'Splitting',
+  SPLIT_FAILED: 'Split Failed',
+  DATA_READY: 'Data Ready',
+  TRAINING: 'Training',
+  TRAINED: 'Trained',
+  TRAINING_FAILED: 'Training Failed',
+  DEPLOYED: 'Deployed'
+};
 
-.experiment-metadata {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 20px;
-  border-bottom: 1px solid $grey-05;
-  > div {
-    margin: 0 20px 0 0;
-    &.grayed {
-      color: $grey-05;
-    }
-    > * {
-      margin: 0 5px;
-    }
-  }
-  .btn.btn-link {
-    padding: 0;
-    margin: 0;
-    vertical-align: top;
-  }
-}
+export {MODEL_STATUS};

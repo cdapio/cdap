@@ -23,6 +23,7 @@ import MyDataPrepApi from 'api/dataprep';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import { Observable } from 'rxjs/Observable';
 import {NUMBER_TYPES} from 'services/global-constants';
+import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
 
 function onExperimentNameChange(e) {
   let value = e.target.value;
@@ -238,6 +239,15 @@ function pollForSplitStatus(experimentId, modelId) {
   });
 }
 
+function overrideCreationStep(step) {
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.OVERRIDE_CREATION_STEP,
+    payload: {
+      active_step: step
+    }
+  });
+}
+
 /*
   This is needed when user clicks "Split Data" button in the split step
 
@@ -280,6 +290,30 @@ function createSplitAndUpdateStatus() {
       (err) => setModelCreateError(`Failed to create split for the model '${modelName}' - ${err.response || err}`),
       () => console.log('Split Task complete ', arguments)
     );
+}
+
+function updateModel() {
+  let {experiments_create, model_create} = createExperimentStore.getState();
+  let {directives} = model_create;
+  const params = {
+    namespace: getCurrentNamespace(),
+    experimentId: experiments_create.name,
+    modelId: model_create.modelId
+  };
+  myExperimentsApi
+    .getModelStatus(params)
+    .flatMap((status) => {
+      if (MODEL_STATUS.PREPARING === status) {
+        return Observable.create(observer => observer.next());
+      }
+      return myExperimentsApi.deleteSplitInModel(params);
+    })
+    .flatMap(() => myExperimentsApi.updateDirectivesInModel(params, {directives}))
+    .subscribe(() => {
+      createExperimentStore.dispatch({
+        type: CREATEEXPERIMENTACTIONS.MODEL_UPDATE
+      });
+    });
 }
 
 function createModel() {
@@ -438,9 +472,9 @@ const getExperimentForEdit = (experimentId) => {
   On refresh in this state we need to go back to the same view the user left.
 
   1. Fetch the experiments details
-  2. Get directives and srcpath from the details
+  2. Get the srcpath from the details
   3. Create a workspace with the srcpath
-  4. Once created execute it with the list of directives
+  4. Once created execute it with the list of directives from model
   5. Once the workspace is setup and update the stores.
   6. Check if the model already has a splitid
   7. If yes fetch split details and update the store
@@ -463,21 +497,6 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
     .mergeMap(res => {
       let workspaceId = res.values[0].id;
       experiment.workspaceId = workspaceId;
-      return applyDirectives(workspaceId, experiment.directives);
-    })
-    .mergeMap(() => {
-    // Get schema with workspaceId and directives
-      let {directives} = experiment;
-      setDirectives(directives);
-      let requestBody = directiveRequestBodyCreator(directives);
-      return MyDataPrepApi.getSchema({
-        namespace: getCurrentNamespace(),
-        workspaceId: experiment.workspaceId
-      }, requestBody);
-    })
-    .mergeMap((schema) => {
-      updateSchema(schema);
-    // Get model details
       return myExperimentsApi
         .getModel({
           namespace: getCurrentNamespace(),
@@ -487,8 +506,23 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
     })
     .mergeMap(m => {
       model = m;
+      // Apply the directives from the model
+      return applyDirectives(experiment.workspaceId, m.directives);
+    })
+    .mergeMap(() => {
+    // Get schema with workspaceId and directives
+      let {directives} = model;
+      setDirectives(directives);
+      let requestBody = directiveRequestBodyCreator(directives);
+      return MyDataPrepApi.getSchema({
+        namespace: getCurrentNamespace(),
+        workspaceId: experiment.workspaceId
+      }, requestBody);
+    })
+    .mergeMap((schema) => {
+      updateSchema(schema);
       // The user refreshed before creating the split. So no split info is present in model.
-      if (!m.split) {
+      if (!model.split) {
         return Observable.create((observer) => {
           observer.next(false);
         });
@@ -498,7 +532,7 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
         .getSplitDetails({
           namespace: getCurrentNamespace(),
           experimentId: experiment.name,
-          splitId: m.split
+          splitId: model.split
         });
     })
     .subscribe(
@@ -651,5 +685,7 @@ export {
   updateHyperParam,
   setExperimentCreateError,
   setModelCreateError,
-  setAlgorithmsListForCreateView
+  setAlgorithmsListForCreateView,
+  overrideCreationStep,
+  updateModel
 };

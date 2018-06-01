@@ -20,7 +20,7 @@ import IconSVG from 'components/IconSVG';
 import {Input} from 'reactstrap';
 import {NUMBER_TYPES} from 'services/global-constants';
 import SortableTable from 'components/SortableTable';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, roundDecimalToNDigits} from 'services/helpers';
 import findLast from 'lodash/findLast';
 import classnames from 'classnames';
 
@@ -161,8 +161,8 @@ export default class SplitInfoTable extends Component {
                 <td>{field.numTotal}</td>
                 <td>{field.numEmpty}</td>
                 <td>{field.numZero}</td>
-                <td>{field.mean}</td>
-                <td>{field.stddev}</td>
+                <td>{roundDecimalToNDigits(field.mean, 4)}</td>
+                <td>{roundDecimalToNDigits(field.stddev, 4)}</td>
                 <td>{field.min}</td>
                 <td>{field.max}</td>
               </tr>
