@@ -18,7 +18,6 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import isObject from 'lodash/isObject';
-import upperFirst from 'lodash/upperFirst';
 import orderBy from 'lodash/orderBy';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
@@ -282,12 +281,12 @@ export default class SetPreferenceModal extends Component {
       tooltipID = `${entityWithType}-title`;
     } else {
       entity = this.params.namespace;
-      entityWithType = `Namespace "${entity}"`;
+      entityWithType = `namespace "${entity}"`;
       description = T.translate('features.FastAction.setPreferencesDescriptionLabel.namespace');
       tooltipID = `${entity}-title`;
       if (this.props.entity) {
         entity = this.props.entity.id;
-        entityWithType = `${upperFirst(this.props.entity.type)} "${entity}"`;
+        entityWithType = `${this.props.entity.type} "${entity}"`;
         tooltipID = `${this.props.entity.uniqueId}-title`;
         if (this.props.entity.type === 'application') {
           description = T.translate('features.FastAction.setPreferencesDescriptionLabel.app');
@@ -418,7 +417,7 @@ export default class SetPreferenceModal extends Component {
             </div>
           :
             <div className="text-xs-center">
-              No Inherited Preferences
+              {T.translate('features.FastAction.setPreferencesNoInheritedPrefs')}
             </div>
         }
         </div>
