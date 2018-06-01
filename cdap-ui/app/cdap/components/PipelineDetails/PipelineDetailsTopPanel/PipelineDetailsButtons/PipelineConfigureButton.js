@@ -33,8 +33,18 @@ export default class PipelineConfigureButton extends Component {
   };
 
   state = {
-    showModeless: false
+    showModeless: false,
+    hideSeparator: false
   };
+
+  componentDidUpdate() {
+    const separatorElem = document.getElementById('configure-schedule-separator');
+    if (this.state.showModeless || this.state.hideSeparator) {
+      separatorElem.style.display = 'none';
+    } else {
+      separatorElem.style.display = 'inline-block';
+    }
+  }
 
   getRuntimeArgumentsAndToggleModeless = () => {
     if (!this.state.showModeless) {
@@ -47,6 +57,12 @@ export default class PipelineConfigureButton extends Component {
   toggleModeless = () => {
     this.setState({
       showModeless: !this.state.showModeless
+    });
+  };
+
+  toggleSeparator = (value) => {
+    this.setState({
+      hideSeparator: value
     });
   };
 
@@ -71,7 +87,11 @@ export default class PipelineConfigureButton extends Component {
 
   render() {
     return (
-      <div className={classnames("pipeline-action-container pipeline-configure-container", {"active" : this.state.showModeless})}>
+      <div
+        className={classnames("pipeline-action-container pipeline-configure-container", {"active" : this.state.showModeless})}
+        onMouseEnter={this.toggleSeparator.bind(this, true)}
+        onMouseLeave={this.toggleSeparator.bind(this, false)}
+      >
         {this.renderConfigureButton()}
         {
           this.state.showModeless ?

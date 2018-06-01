@@ -36,8 +36,21 @@ export default class RunConfigs extends Component {
   };
 
   state = {
-    showModeless: false
+    showModeless: false,
+    hideSeparators: false
   };
+
+  componentDidUpdate() {
+    const leftSeparatorElem = document.getElementById('index-configs-separator');
+    const rightSeparatorElem = document.getElementById('configs-logs-separator');
+    if (this.state.showModeless || this.state.hideSeparators) {
+      leftSeparatorElem.style.display = 'none';
+      rightSeparatorElem.style.display = 'none';
+    } else {
+      leftSeparatorElem.style.display = 'inline-block';
+      rightSeparatorElem.style.display = 'inline-block';
+    }
+  }
 
   getRuntimeArgsAndToggleModeless = () => {
     if (!this.state.showModeless) {
@@ -76,6 +89,12 @@ export default class RunConfigs extends Component {
     });
   };
 
+  toggleSeparators = (value) => {
+    this.setState({
+      hideSeparators: value
+    });
+  };
+
   renderRunConfigsButton() {
     return (
       <div
@@ -102,19 +121,28 @@ export default class RunConfigs extends Component {
 
     if (!this.props.runs.length) {
       return (
-        <Popover
-          target={ConfigsBtnComp}
-          showOn='Hover'
-          placement='bottom'
+        <div
           className="run-info-container run-configs-container disabled"
+          onMouseEnter={this.toggleSeparators.bind(this, true)}
+          onMouseLeave={this.toggleSeparators.bind(this, false)}
         >
-          {T.translate(`${PREFIX}.pipelineNeverRun`)}
-        </Popover>
+          <Popover
+            target={ConfigsBtnComp}
+            showOn='Hover'
+            placement='bottom'
+          >
+            {T.translate(`${PREFIX}.pipelineNeverRun`)}
+          </Popover>
+        </div>
       );
     }
 
     return (
-      <div className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}>
+      <div
+        className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}
+        onMouseEnter={this.toggleSeparators.bind(this, true)}
+        onMouseLeave={this.toggleSeparators.bind(this, false)}
+      >
         {this.renderRunConfigsButton()}
         {
           this.state.showModeless ?

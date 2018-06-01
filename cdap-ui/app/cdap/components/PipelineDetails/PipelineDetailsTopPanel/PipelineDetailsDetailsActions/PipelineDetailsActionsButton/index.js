@@ -24,6 +24,7 @@ import {MyAppApi} from 'api/app';
 import PipelineExportModal from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton/PipelineExportModal';
 import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
 import T from 'i18n-react';
+import classnames from 'classnames';
 require('./PipelineDetailsActionsButton.scss');
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
@@ -53,7 +54,30 @@ export default class PipelineDetailsActionsButton extends Component {
 
   state = {
     showExportModal: false,
-    showDeleteConfirmationModal: false
+    showDeleteConfirmationModal: false,
+    showPopover: false,
+    hideSeparator: false
+  };
+
+  componentDidUpdate() {
+    const separatorElem = document.getElementById('details-actions-separator');
+    if (this.state.showPopover || this.state.hideSeparator) {
+      separatorElem.style.display = 'none';
+    } else {
+      separatorElem.style.display = 'inline-block';
+    }
+  }
+
+  togglePopover = () => {
+    this.setState({
+      showPopover: !this.state.showPopover
+    });
+  };
+
+  toggleSeparator = (value) => {
+    this.setState({
+      hideSeparator: value
+    });
   };
 
   pipelineConfig = {
@@ -185,7 +209,10 @@ export default class PipelineDetailsActionsButton extends Component {
   render() {
     const ActionsBtnAndLabel = () => {
       return (
-        <div className="btn pipeline-action-btn pipeline-actions-btn">
+        <div
+          className="btn pipeline-action-btn pipeline-actions-btn"
+          onClick={this.togglePopover}
+        >
           <div className="btn-container">
             <IconSVG name="icon-cog-empty" />
             <div className="button-label">
@@ -197,12 +224,17 @@ export default class PipelineDetailsActionsButton extends Component {
     };
 
     return (
-      <div className="pipeline-action-container pipeline-actions-container">
+      <div
+        className={classnames("pipeline-action-container pipeline-actions-container", {"active" : this.state.showPopover})}
+        onMouseEnter={this.toggleSeparator.bind(this, true)}
+        onMouseLeave={this.toggleSeparator.bind(this, false)}
+      >
         <Popover
           target={ActionsBtnAndLabel}
           placement="bottom"
           bubbleEvent={false}
           className="pipeline-actions-popper"
+          showPopover={this.state.showPopover}
         >
           <ul>
             <li onClick={this.duplicateConfigAndNavigate}>

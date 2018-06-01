@@ -20,6 +20,7 @@
     color: $color;
     font-weight: $font-weight;
 }
+
 @mixin appearance($value: none) {
   appearance: $value;
   -webkit-appearance: $value;
@@ -28,18 +29,6 @@
   ::-ms-expand {
     display: none;  // Need this to hide default select in IE10
   }
-}
-
-@mixin border-element($right: -17px, $top: 28px) {
-  content: "";
-  position: absolute;
-  height: 1px;
-  border-bottom: 1px solid $grey-05;
-  width: 33px;
-  right: $right;
-  top: $top;
-  transform: rotate(90deg);
-  z-index: 1;
 }
 
 @mixin multi-line-ellipsis($max-height: 4.5em) {

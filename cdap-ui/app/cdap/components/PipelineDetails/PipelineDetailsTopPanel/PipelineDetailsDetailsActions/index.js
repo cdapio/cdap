@@ -34,6 +34,10 @@ const PipelineDetailsDetailsActions = ({pipelineName, description, artifact, con
   return (
     <div className="pipeline-details-buttons pipeline-details-details-actions">
       <PipelineDetailsDetailsButton pipelineName={pipelineName} />
+      <div
+        className="pipeline-buttons-separator"
+        id="details-actions-separator"
+      />
       <PipelineDetailsActionsButton
         pipelineName={pipelineName}
         description={description}

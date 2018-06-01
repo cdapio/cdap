@@ -44,7 +44,8 @@ export default class PipelineScheduleButton extends Component {
   state = {
     showScheduler: false,
     showConfigModeless: false,
-    scheduleStatus: this.props.scheduleStatus
+    scheduleStatus: this.props.scheduleStatus,
+    hideSeparators: false
   };
 
   componentWillReceiveProps(nextProps) {
@@ -52,6 +53,18 @@ export default class PipelineScheduleButton extends Component {
     if (scheduleStatus !== this.state.scheduleStatus) {
       this.setState({ scheduleStatus });
       setScheduleButtonLoading(false);
+    }
+  }
+
+  componentDidUpdate() {
+    const leftSeparatorElem = document.getElementById('configure-schedule-separator');
+    const rightSeparatorElem = document.getElementById('schedule-stop-separator');
+    if (this.state.showScheduler || this.state.showConfigModeless || this.state.hideSeparators) {
+      leftSeparatorElem.style.display = 'none';
+      rightSeparatorElem.style.display = 'none';
+    } else {
+      leftSeparatorElem.style.display = 'inline-block';
+      rightSeparatorElem.style.display = 'inline-block';
     }
   }
 
@@ -64,6 +77,12 @@ export default class PipelineScheduleButton extends Component {
   toggleConfigModeless = () => {
     this.setState({
       showConfigModeless: !this.state.showConfigModeless
+    });
+  };
+
+  toggleSeparators = (value) => {
+    this.setState({
+      hideSeparators: value
     });
   };
 
@@ -136,7 +155,7 @@ export default class PipelineScheduleButton extends Component {
     return (
       <div
         onClick={this.toggleScheduler}
-        className={classnames("btn pipeline-action-btn pipeline-scheduler-btn", {"btn-select" : this.state.showScheduler})}
+        className={classnames("btn pipeline-action-btn pipeline-scheduler-btn", {"btn-select" : this.state.showScheduler || this.state.showConfigModeless})}
         disabled={this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULING']}
       >
         <div className="btn-container">
@@ -166,7 +185,11 @@ export default class PipelineScheduleButton extends Component {
     }
 
     return (
-      <div className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler})}>
+      <div
+        className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler || this.state.showConfigModeless})}
+        onMouseEnter={this.toggleSeparators.bind(this, true)}
+        onMouseLeave={this.toggleSeparators.bind(this, false)}
+      >
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
         {

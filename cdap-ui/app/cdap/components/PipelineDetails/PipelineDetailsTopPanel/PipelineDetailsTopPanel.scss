@@ -19,6 +19,7 @@
 $pipeline-type-icon-size: 20px;
 $top-panel-height: 55px;
 $btn-border-color: transparent;
+$btn-separator-color: $grey-05;
 
 .pipeline-details-top-panel {
   height: $top-panel-height;
@@ -85,7 +86,7 @@ $btn-border-color: transparent;
       display: inline-block;
       position: relative;
       height: 100%;
-      border-left: 1px solid white;
+      border-left: 1px solid transparent;
 
       &.active,
       &:hover {
@@ -105,7 +106,7 @@ $btn-border-color: transparent;
       }
 
       &.active {
-        border-bottom-color: white;
+        border-bottom-color: transparent;
       }
 
       .pipeline-action-btn {
@@ -135,10 +136,6 @@ $btn-border-color: transparent;
           }
         }
       }
-
-      &:after {
-        @include border-element(-16px);
-      }
     }
 
     .pipeline-configure-container {
@@ -147,20 +144,12 @@ $btn-border-color: transparent;
           transform: rotate(90deg);
         }
       }
-
-      &:after {
-        @include border-element();
-      }
     }
 
     .pipeline-summary-container {
       .pipeline-summary {
         /* 50px header + 55px detail view top panel */
         top: 105px;
-      }
-
-      &:after {
-        @include border-element(61px);
       }
     }
 
@@ -193,14 +182,14 @@ $btn-border-color: transparent;
           color: $grey-01;
         }
       }
-
-      &:after {
-        @include border-element();
-      }
     }
 
     .pipeline-actions-container {
       border-bottom: 1px solid $btn-border-color;
+
+      &.active {
+        border-bottom-color: $grey-05;
+      }
 
       .pipeline-actions-popper {
         height: 100%;
@@ -222,4 +211,13 @@ $btn-border-color: transparent;
       display: none;
     }
   }
+}
+
+.pipeline-buttons-separator {
+  display: inline-block;
+  height: 35px;
+  top: 60px;
+  width: 1px;
+  background-color: $btn-separator-color;
+  position: absolute;
 }

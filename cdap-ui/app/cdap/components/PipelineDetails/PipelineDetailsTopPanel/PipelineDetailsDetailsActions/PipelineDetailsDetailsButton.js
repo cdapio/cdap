@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import AbsLinkTo from 'components/AbsLinkTo';
@@ -23,26 +23,56 @@ import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
-export default function PipelineDetailsDetailsButton({pipelineName}) {
-  let context = {
-    namespaceId: getCurrentNamespace(),
-    appId: pipelineName
+export default class PipelineDetailsDetailsButton extends Component {
+  static propTypes = {
+    pipelineName: PropTypes.string
   };
 
-  return (
-    <div className="pipeline-action-container pipeline-details-container">
-      <AbsLinkTo context={context}>
-        <div className="btn pipeline-action-btn pipeline-details-btn">
-          <div className="btn-container">
-            <IconSVG name="icon-info-circle"/>
-            <div className="button-label">
-              {T.translate(`${PREFIX}.details`)}
+  state = {
+    hideSeparator: false
+  };
+
+  componentDidUpdate() {
+    const separatorElem = document.getElementById('details-actions-separator');
+    if (this.state.showPopover || this.state.hideSeparator) {
+      separatorElem.style.display = 'none';
+    } else {
+      separatorElem.style.display = 'inline-block';
+    }
+  }
+
+  toggleSeparator = (value) => {
+    this.setState({
+      hideSeparator: value
+    });
+  };
+
+  render() {
+    let context = {
+      namespaceId: getCurrentNamespace(),
+      appId: this.props.pipelineName
+    };
+
+    return (
+      <div
+        className="pipeline-action-container pipeline-details-container"
+        onMouseEnter={this.toggleSeparator.bind(this, true)}
+        onMouseLeave={this.toggleSeparator.bind(this, false)}
+      >
+        <AbsLinkTo context={context}>
+          <div className="btn pipeline-action-btn pipeline-details-btn">
+            <div className="btn-container">
+              <IconSVG name="icon-info-circle"/>
+              <div className="button-label">
+                {T.translate(`${PREFIX}.details`)}
+              </div>
             </div>
           </div>
-        </div>
-      </AbsLinkTo>
-    </div>
-  );
+        </AbsLinkTo>
+      </div>
+    );
+  }
+
 }
 
 PipelineDetailsDetailsButton.propTypes = {

@@ -33,12 +33,28 @@ export default class PipelineSummaryButton extends Component {
   };
 
   state = {
-    showSummary: false
+    showSummary: false,
+    hideSeparator: false
   };
+
+  componentDidUpdate() {
+    const separatorElem = document.getElementById('run-summary-separator');
+    if (this.state.showSummary || this.state.hideSeparator) {
+      separatorElem.style.display = 'none';
+    } else {
+      separatorElem.style.display = 'inline-block';
+    }
+  }
 
   toggleSummary = () => {
     this.setState({
       showSummary: !this.state.showSummary
+    });
+  };
+
+  toggleSeparator = (value) => {
+    this.setState({
+      hideSeparator: value
     });
   };
 
@@ -67,7 +83,11 @@ export default class PipelineSummaryButton extends Component {
     let programId = GLOBALS.programId[pipelineType];
 
     return (
-      <div className={classnames("pipeline-action-container pipeline-summary-container", {"active" : this.state.showSummary})}>
+      <div
+        className={classnames("pipeline-action-container pipeline-summary-container", {"active" : this.state.showSummary})}
+        onMouseEnter={this.toggleSeparator.bind(this, true)}
+        onMouseLeave={this.toggleSeparator.bind(this, false)}
+      >
         {this.renderSummaryButton()}
         {
           this.state.showSummary ?

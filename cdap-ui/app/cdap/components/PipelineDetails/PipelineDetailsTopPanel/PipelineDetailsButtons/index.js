@@ -68,6 +68,10 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           isBatch={isBatch}
           pipelineName={pipelineName}
         />
+        <div
+          className="pipeline-buttons-separator"
+          id="configure-schedule-separator"
+        />
         <ConnectedScheduleButton
           isBatch={isBatch}
           pipelineName={pipelineName}
@@ -76,6 +80,10 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           scheduleStatus={scheduleStatus}
           scheduleButtonLoading={scheduleButtonLoading}
           scheduleError={scheduleError}
+        />
+        <div
+          className="pipeline-buttons-separator"
+          id="schedule-stop-separator"
         />
         <PipelineStopButton
           isBatch={isBatch}
@@ -90,6 +98,10 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           pipelineName={pipelineName}
           runButtonLoading={runButtonLoading}
           runError={runError}
+        />
+        <div
+          className="pipeline-buttons-separator"
+          id="run-summary-separator"
         />
         <PipelineSummaryButton
           isBatch={isBatch}

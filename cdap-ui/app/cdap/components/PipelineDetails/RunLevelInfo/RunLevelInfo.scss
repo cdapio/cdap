@@ -40,10 +40,6 @@ $border-color: $grey-05;
 
     /* Have to do this instead of height: 100% because of issue in Firefox */
     height: 53px;
-
-    &:after {
-      @include border-element();
-    }
   }
 
   div.run-number-container {
@@ -178,5 +174,10 @@ $border-color: $grey-05;
     &:after {
       display: none;
     }
+  }
+
+  .pipeline-buttons-separator {
+    top: 10px;
+    z-index: 999;
   }
 }
