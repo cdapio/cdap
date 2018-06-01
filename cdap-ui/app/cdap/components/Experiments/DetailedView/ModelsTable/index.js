@@ -27,7 +27,7 @@ import {
   getModelStatus
 } from 'components/Experiments/store/ExperimentDetailActionCreator';
 import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
-import {humanReadableDate} from 'services/helpers';
+import {humanReadableDate, roundDecimalToNDigits} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -46,9 +46,15 @@ import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
 import Alert from 'components/Alert';
+import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
 
 require('./DetailedViewModelsTable.scss');
-const MODELSTATES = ['PREPARING', 'SPLITTING', 'DATA_READY'];
+const MODELSTATES = [
+  MODEL_STATUS.PREPARING,
+  MODEL_STATUS.SPLITTING,
+  MODEL_STATUS.DATA_READY,
+  MODEL_STATUS.SPLIT_FAILED
+];
 let tableHeaders = [
   {
     label: 'Model Name',
@@ -132,12 +138,18 @@ const wrapContentWithTitleAttr = (content) => (
     {content}
   </div>
 );
-
+const wrapMetricWithTitleAttr = (content, property) => {
+  const ROUNDABLE_METRIC = regressionMetrics.map(metric => metric.property);
+  if (ROUNDABLE_METRIC.indexOf(property) !== -1) {
+    return wrapContentWithTitleAttr(roundDecimalToNDigits(content, 4));
+  }
+  return wrapContentWithTitleAttr(content);
+};
 const renderMetrics = (newHeaders, model) => {
   let commonHeadersLen = tableHeaders.length;
   let len = newHeaders.length;
   let metrics = newHeaders.slice(commonHeadersLen, len);
-  return metrics.map(t => wrapContentWithTitleAttr(model.evaluationMetrics[t.property] || '--'));
+  return metrics.map(t => wrapMetricWithTitleAttr(model.evaluationMetrics[t.property] || '--', t.property));
 };
 
 const renderFeaturesTable = (features) => {
