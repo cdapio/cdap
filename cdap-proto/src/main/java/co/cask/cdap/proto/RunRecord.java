@@ -43,6 +43,14 @@ public class RunRecord {
   @SerializedName("end")
   private final Long stopTs;
 
+  @Nullable
+  @SerializedName("suspend")
+  private final Long suspendTs;
+
+  @Nullable
+  @SerializedName("resume")
+  private final Long resumeTs;
+
   @SerializedName("status")
   private final ProgramRunStatus status;
 
@@ -57,12 +65,15 @@ public class RunRecord {
    */
   @Deprecated
   public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
+                   @Nullable Long suspendTs, @Nullable Long resumeTs,
                    ProgramRunStatus status, @Nullable Map<String, String> properties,
                    ProgramRunCluster cluster) {
     this.pid = pid;
     this.startTs = startTs;
     this.runTs = runTs;
     this.stopTs = stopTs;
+    this.suspendTs = suspendTs;
+    this.resumeTs = resumeTs;
     this.status = status;
     this.properties = properties == null ? Collections.emptyMap() :
       Collections.unmodifiableMap(new LinkedHashMap<>(properties));
@@ -74,7 +85,8 @@ public class RunRecord {
    */
   public RunRecord(RunRecord otherRunRecord) {
     this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(),
-         otherRunRecord.getStopTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
+         otherRunRecord.getStopTs(), otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(),
+         otherRunRecord.getStatus(), otherRunRecord.getProperties(),
          otherRunRecord.getCluster());
   }
 
@@ -94,6 +106,16 @@ public class RunRecord {
   @Nullable
   public Long getStopTs() {
     return stopTs;
+  }
+
+  @Nullable
+  public Long getSuspendTs() {
+    return suspendTs;
+  }
+
+  @Nullable
+  public Long getResumeTs() {
+    return resumeTs;
   }
 
   public ProgramRunStatus getStatus() {
@@ -124,6 +146,8 @@ public class RunRecord {
       Objects.equals(this.startTs, that.startTs) &&
       Objects.equals(this.runTs, that.runTs) &&
       Objects.equals(this.stopTs, that.stopTs) &&
+      Objects.equals(this.suspendTs, that.suspendTs) &&
+      Objects.equals(this.resumeTs, that.resumeTs) &&
       Objects.equals(this.status, that.status) &&
       Objects.equals(this.properties, that.properties) &&
       Objects.equals(this.cluster, that.cluster);
@@ -131,7 +155,7 @@ public class RunRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pid, startTs, runTs, stopTs, status, properties, cluster);
+    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster);
   }
 
   @Override
@@ -141,6 +165,8 @@ public class RunRecord {
       ", startTs=" + startTs +
       ", runTs=" + runTs +
       ", stopTs=" + stopTs +
+      ", suspendTs=" + suspendTs +
+      ", resumeTs=" + resumeTs +
       ", status=" + status +
       ", properties=" + properties +
       ", cluster=" + cluster +
@@ -174,6 +200,8 @@ public class RunRecord {
     protected Long startTs;
     protected Long runTs;
     protected Long stopTs;
+    protected Long suspendTs;
+    protected Long resumeTs;
     protected Map<String, String> properties;
     protected ProgramRunCluster cluster;
 
@@ -186,6 +214,8 @@ public class RunRecord {
       pid = other.getPid();
       startTs = other.getStartTs();
       runTs = other.getRunTs();
+      suspendTs = other.getSuspendTs();
+      resumeTs = other.getResumeTs();
       stopTs = other.getStopTs();
       properties = new HashMap<>(other.getProperties());
       cluster = other.getCluster();
@@ -216,6 +246,16 @@ public class RunRecord {
       return (T) this;
     }
 
+    public T setSuspendTime(Long suspendTime) {
+      this.suspendTs = suspendTime;
+      return (T) this;
+    }
+
+    public T setResumeTime(Long resumeTs) {
+      this.resumeTs = resumeTs;
+      return (T) this;
+    }
+
     public T setProperties(Map<String, String> properties) {
       this.properties.clear();
       this.properties.putAll(properties);
@@ -240,7 +280,7 @@ public class RunRecord {
       if (status == null) {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
-      return new RunRecord(pid, startTs, runTs, stopTs, status, properties, cluster);
+      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster);
     }
   }
 }

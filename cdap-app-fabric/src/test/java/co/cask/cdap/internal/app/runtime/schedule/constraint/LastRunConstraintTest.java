@@ -92,9 +92,9 @@ public class LastRunConstraintTest {
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // a SUSPENDED workflow started 3 hours ago will also fail the constraint check
-    store.setSuspend(pid1, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(pid1, AppFabricTestHelper.createSourceId(++sourceId), -1);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
-    store.setResume(pid1, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setResume(pid1, AppFabricTestHelper.createSourceId(++sourceId), -1);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow runs completes 2 hours ago, the constraint check will be satisfied

@@ -270,10 +270,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         break;
       case SUSPENDED:
-        recordedRunRecord = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes);
+        long suspendTime = getTimeSeconds(notification.getProperties(),
+                                          ProgramOptionConstants.SUSPEND_TIME);
+        // since we are adding suspend time recently, there might be old suspended notificications for which time
+        // can be -1.
+        recordedRunRecord = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes, suspendTime);
         break;
       case RESUMING:
-        recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes);
+        long resumeTime = getTimeSeconds(notification.getProperties(),
+                                         ProgramOptionConstants.RESUME_TIME);
+        // since we are adding suspend time recently, there might be old suspended notificications for which time
+        // can be -1.
+        recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         break;
       case COMPLETED:
       case KILLED:

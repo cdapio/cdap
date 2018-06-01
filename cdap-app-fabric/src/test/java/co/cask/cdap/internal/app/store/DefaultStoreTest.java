@@ -164,7 +164,7 @@ public class DefaultStoreTest {
     ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
     RunId run1 = RunIds.generate();
     setStartAndRunning(programId1.run(run1.getId()), artifactId);
-    store.setSuspend(programId1.run(run1.getId()), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(programId1.run(run1.getId()), AppFabricTestHelper.createSourceId(++sourceId), -1);
     store.removeApplication(appId1);
     Assert.assertTrue(store.getRuns(programId1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
 
@@ -172,7 +172,7 @@ public class DefaultStoreTest {
     ProgramId programId2 = namespaceId.app("app2").workflow("pgm2");
     RunId run2 = RunIds.generate();
     setStartAndRunning(programId2.run(run2.getId()), artifactId);
-    store.setSuspend(programId2.run(run2.getId()), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(programId2.run(run2.getId()), AppFabricTestHelper.createSourceId(++sourceId), -1);
     store.removeAll(namespaceId);
     nsStore.delete(namespaceId);
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
@@ -306,7 +306,7 @@ public class DefaultStoreTest {
     // record a suspended flow
     RunId run21 = RunIds.generate(now - 7500);
     setStartAndRunning(programId.run(run21.getId()), artifactId);
-    store.setSuspend(programId.run(run21.getId()), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(programId.run(run21.getId()), AppFabricTestHelper.createSourceId(++sourceId), -1);
 
     // record not finished flow
     RunId run3 = RunIds.generate(now);
@@ -415,7 +415,7 @@ public class DefaultStoreTest {
     // Record flow that starts and suspends before it runs
     RunId run8 = RunIds.generate(now);
     setStart(programId.run(run8.getId()), emptyArgs, emptyArgs, artifactId);
-    store.setSuspend(programId.run(run8.getId()), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(programId.run(run8.getId()), AppFabricTestHelper.createSourceId(++sourceId), -1);
     RunRecordMeta expectedRunRecord8 = RunRecordMeta.builder()
       .setProgramRunId(programId.run(run8))
       .setStartTime(startTimeSecs)
@@ -430,7 +430,7 @@ public class DefaultStoreTest {
     // Record flow that is killed while suspended
     RunId run9 = RunIds.generate(now);
     setStartAndRunning(programId.run(run9.getId()), artifactId);
-    store.setSuspend(programId.run(run9.getId()), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(programId.run(run9.getId()), AppFabricTestHelper.createSourceId(++sourceId), -1);
     store.setStop(programId.run(run9.getId()), startTimeSecs + 5, ProgramRunStatus.KILLED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
@@ -1067,7 +1067,7 @@ public class DefaultStoreTest {
   }
 
   private void writeSuspendedRecord(ProgramRunId run) {
-    store.setSuspend(run, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setSuspend(run, AppFabricTestHelper.createSourceId(++sourceId), -1);
     Assert.assertNotNull(store.getRun(run));
   }
 
