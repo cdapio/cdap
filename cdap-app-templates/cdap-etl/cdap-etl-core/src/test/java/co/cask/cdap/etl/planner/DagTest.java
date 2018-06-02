@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -561,7 +562,7 @@ public class DagTest {
   }
 
   @Test
-  public void testSplitByControlNodes() throws Exception {
+  public void testSplitByControlNodes() {
 
     // In following test cases note that Action nodes are named as (a0, a1...) and condition nodes are named
     // as (c0, c1, ..)
@@ -708,6 +709,38 @@ public class DagTest {
     expectedDags.clear();
     expectedDags.add(dag);
     Assert.assertEquals(expectedDags, actual);
+  }
+
+  @Test
+  public void testConditionsOnBranches() {
+    /*
+                        |--> n2
+              |--> c1 --|
+         n1 --|         |--> n3
+              |
+              |                |--> n5
+              |--> n4 --> c2 --|
+                               |--> n6
+     */
+
+    Dag dag = new Dag(ImmutableSet.of(
+      new Connection("n1", "c1"),
+      new Connection("n1", "n4"),
+      new Connection("c1", "n2"),
+      new Connection("c1", "n3"),
+      new Connection("n4", "c2"),
+      new Connection("c2", "n5"),
+      new Connection("c2", "n6")));
+    Set<Dag> actual = dag.splitByControlNodes(ImmutableSet.of("c1", "c2"), Collections.<String>emptySet());
+
+    Set<Dag> expected = ImmutableSet.of(
+      new Dag(ImmutableSet.of(new Connection("n1", "n4"), new Connection("n1", "c1"), new Connection("n4", "c2"))),
+      new Dag(ImmutableSet.of(new Connection("c1", "n2"))),
+      new Dag(ImmutableSet.of(new Connection("c1", "n3"))),
+      new Dag(ImmutableSet.of(new Connection("c2", "n5"))),
+      new Dag(ImmutableSet.of(new Connection("c2", "n6"))));
+
+    Assert.assertEquals(expected, actual);
   }
 
   @Test
