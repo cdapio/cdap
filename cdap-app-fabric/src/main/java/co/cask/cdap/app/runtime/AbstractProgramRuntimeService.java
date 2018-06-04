@@ -73,6 +73,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -149,7 +152,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
                                                   cleanUpTask);
-      monitorProgram(runtimeInfo, cleanUpTask);
+      ScheduledExecutorService scheduledExecutorService =
+          Executors.newSingleThreadScheduledExecutor(
+              Threads.createDaemonThreadFactory("program-heartbeat"));
+      monitorProgram(runtimeInfo, cleanUpTask, scheduledExecutorService);
       return runtimeInfo;
     } catch (Exception e) {
       // Set the program state to an error when an exception is thrown
@@ -409,7 +415,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     lock.lock();
     try {
       if (!runtimeInfos.contains(type, runId)) {
-        monitorProgram(runtimeInfo, createCleanupTask());
+        ScheduledExecutorService scheduledExecutorService =
+            Executors.newSingleThreadScheduledExecutor(
+                Threads.createDaemonThreadFactory("program-heartbeat"));
+        monitorProgram(runtimeInfo, createCleanupTask(), scheduledExecutorService);
       }
     } finally {
       lock.unlock();
@@ -422,9 +431,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @param runtimeInfo information about the running program
    * @param cleanUpTask task to run when program finished
    */
-  private void monitorProgram(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
+  private void monitorProgram(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask,
+      final ScheduledExecutorService scheduledExecutorService) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
+
 
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
@@ -433,20 +444,30 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         } else {
           cleanUpTask.run();
         }
-      }
-
-      @Override
-      public void completed() {
-        remove(runtimeInfo, cleanUpTask);
+        scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+          @Override
+          public void run() {
+            LOG.info("Program : {} is Running at {}", runtimeInfo.getProgramId(),
+                System.currentTimeMillis());
+          }
+        }, 0, 5, TimeUnit.SECONDS);
       }
 
       @Override
       public void killed() {
+        scheduledExecutorService.shutdownNow();
+        remove(runtimeInfo, cleanUpTask);
+      }
+
+      @Override
+      public void completed() {
+        scheduledExecutorService.shutdownNow();
         remove(runtimeInfo, cleanUpTask);
       }
 
       @Override
       public void error(Throwable cause) {
+        scheduledExecutorService.shutdownNow();
         remove(runtimeInfo, cleanUpTask);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
