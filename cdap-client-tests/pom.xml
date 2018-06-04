@@ -36,7 +36,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api-spark</artifactId>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -45,7 +45,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-core_2.11</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -75,7 +75,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test</artifactId>
+      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -90,6 +90,32 @@ the License.
       <artifactId>cdap-standalone</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <!--
+          Exclude jackson from cdap-standalone. That one doesn't work with Spark 2 and we can't exclude it using
+          Classloader isolation like in SDK.
+        -->
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-cbor</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-scala_2.10</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -97,6 +123,32 @@ the License.
       <version>${project.version}</version>
       <scope>test</scope>
       <type>test-jar</type>
+      <exclusions>
+        <!--
+          Exclude jackson from cdap-standalone. That one doesn't work with Spark 2 and we can't exclude it using
+          Classloader isolation like in SDK.
+        -->
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-cbor</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-scala_2.10</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
