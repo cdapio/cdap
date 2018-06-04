@@ -18,6 +18,7 @@ package net.fake.test.app;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
@@ -69,6 +70,8 @@ public class TestBundleJarApp extends TestBase {
 
     // Query the result
     ServiceManager serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
+
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Verify the query result
     String queryResult = callServiceGet(serviceManager.getServiceURL(), "/get/test1");
