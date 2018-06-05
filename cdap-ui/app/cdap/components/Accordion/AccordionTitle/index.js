@@ -20,6 +20,8 @@ import IconSVG from 'components/IconSVG';
 require('./AccordionTitle.scss');
 
 export default class AccordionTitle extends PureComponent {
+  static displayName = 'AccordionTitle';
+
   static propTypes = {
     id: PropTypes.string.isRequired,
     onTabPaneClick: PropTypes.func,
