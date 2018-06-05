@@ -2397,27 +2397,6 @@
     </description>
   </property>
 
-
-  <!-- Operational Statistics Configuration -->
-
-  <property>
-    <name>operational.stats.extensions.dir</name>
-    <value>/opt/cdap/master/ext/operations</value>
-    <description>
-      Semicolon-separated list of local directories on the CDAP Master that
-      are scanned for operational statistics extensions
-    </description>
-  </property>
-
-  <property>
-    <name>operational.stats.refresh.interval.secs</name>
-    <value>60</value>
-    <description>
-      Number of seconds after which operational statistics should be
-      refreshed
-    </description>
-  </property>
-
   <!-- Runtime Configuration -->
 
   <property>

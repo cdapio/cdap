@@ -262,12 +262,6 @@
         </dependency>
         <dependency>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-operational-stats-core</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-runtime-ext-dataproc</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>

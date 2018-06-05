@@ -165,16 +165,6 @@
     </description>
   </property>
 
-  <!-- Operational Stats Configuration -->
-  <property>
-    <name>operational.stats.extensions.dir</name>
-    <value>ext/operations</value>
-    <description>
-      Semicolon-separated list of local directories on the CDAP Master
-      that are scanned for operational statistics extensions
-    </description>
-  </property>
-
   <property>
     <name>runtime.extensions.dir</name>
     <value>ext/runtimeproviders</value>

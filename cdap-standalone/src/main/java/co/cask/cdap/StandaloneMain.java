@@ -71,8 +71,6 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.operations.OperationalStatsService;
-import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -131,7 +129,6 @@ public class StandaloneMain {
   private final WranglerAppCreationService wranglerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final MessagingService messagingService;
-  private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
 
@@ -164,7 +161,6 @@ public class StandaloneMain {
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
-    operationalStatsService = injector.getInstance(OperationalStatsService.class);
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
@@ -273,8 +269,6 @@ public class StandaloneMain {
 
     wranglerAppCreationService.startAndWait();
 
-    operationalStatsService.startAndWait();
-
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -302,8 +296,6 @@ public class StandaloneMain {
 
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
-
-      operationalStatsService.stopAndWait();
 
       // now the stream writer and the explore service (they need tx)
       streamService.stopAndWait();
@@ -500,8 +492,7 @@ public class StandaloneMain {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewHttpModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule().getStandaloneModules(),
-      new OperationalStatsModule()
+      new AppFabricServiceRuntimeModule().getStandaloneModules()
     );
   }
 }

@@ -413,13 +413,6 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
-        <!-- Add dependencies on cdap-operational-stats to make sure it is built before standalone -->
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-operational-stats-core</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
         <!-- Add dependencies on runtime provider extensions to make sure they are built before standalone -->
         <dependency>
           <groupId>co.cask.cdap</groupId>

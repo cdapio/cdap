@@ -68,8 +68,6 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.operations.OperationalStatsService;
-import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -574,8 +572,7 @@ public class MasterServiceMain extends DaemonMain {
       new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new SecureStoreModules().getDistributedModules(),
-      new OperationalStatsModule()
+      new SecureStoreModules().getDistributedModules()
     );
   }
 
@@ -625,7 +622,6 @@ public class MasterServiceMain extends DaemonMain {
       authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
       services.add(getAndStart(injector, KafkaClientService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
-      services.add(getAndStart(injector, OperationalStatsService.class));
       ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);
 
