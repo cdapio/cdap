@@ -252,7 +252,7 @@ public abstract class AppFabricTestBase {
     // Wait for the scheduler to be functional.
     if (programScheduler instanceof CoreSchedulerService) {
       try {
-        ((CoreSchedulerService) programScheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
+        ((CoreSchedulerService) programScheduler).waitUntilFunctional(30, TimeUnit.SECONDS);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -279,6 +279,7 @@ public abstract class AppFabricTestBase {
 
   protected static CConfiguration createBasicCConf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
+    cConf.setLong(Constants.HTTP_CLIENT_READ_TIMEOUT_MS, TimeUnit.MILLISECONDS.convert(120, TimeUnit.SECONDS));
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostname);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));

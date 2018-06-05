@@ -319,7 +319,7 @@ public class TestBase {
       ((Service) scheduler).startAndWait();
     }
     if (scheduler instanceof CoreSchedulerService) {
-      ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
+      ((CoreSchedulerService) scheduler).waitUntilFunctional(30, TimeUnit.SECONDS);
     }
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
@@ -416,6 +416,7 @@ public class TestBase {
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, "");
+    cConf.setLong(Constants.HTTP_CLIENT_READ_TIMEOUT_MS, TimeUnit.MILLISECONDS.convert(120, TimeUnit.SECONDS));
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule

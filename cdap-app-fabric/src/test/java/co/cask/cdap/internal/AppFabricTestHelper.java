@@ -123,6 +123,8 @@ public class AppFabricTestHelper {
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+      configuration.setLong(Constants.HTTP_CLIENT_READ_TIMEOUT_MS,
+                            TimeUnit.MILLISECONDS.convert(120, TimeUnit.SECONDS));
       // Speed up tests
       configuration.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
       configuration.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
@@ -147,7 +149,7 @@ public class AppFabricTestHelper {
       // Wait for the scheduler to be functional.
       if (programScheduler instanceof CoreSchedulerService) {
         try {
-          ((CoreSchedulerService) programScheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
+          ((CoreSchedulerService) programScheduler).waitUntilFunctional(30, TimeUnit.SECONDS);
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
