@@ -38,9 +38,10 @@ public class MapReduceResourcesTest {
     Configuration hConf = new Configuration();
 
     // Nothing is set. It should be using the default.
-    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.<String, String>emptyMap(), null);
+    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.emptyMap(), null);
     int maxHeapSize = org.apache.twill.internal.utils.Resources.computeMaxHeapSize(
-      Job.DEFAULT_MAP_MEMORY_MB, cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB), 0);
+      Job.DEFAULT_MAP_MEMORY_MB, cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB),
+      cConf.getDouble(Configs.Keys.HEAP_RESERVED_MIN_RATIO));
 
     validateResources(cConf, hConf, Job.DEFAULT_MAP_MEMORY_MB, Job.DEFAULT_MAP_CPU_VCORES, maxHeapSize);
 
@@ -58,13 +59,14 @@ public class MapReduceResourcesTest {
   @Test
   public void testContextResources() {
     CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB, 300);
     Configuration hConf = new Configuration();
 
     // Resources is set through context object
     // At runtime time, it is either from spec, from runtime arg of the program
     // or from the context.setResources call in the initialize() method)
     Resources resources = new Resources(2345, 8);
-    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.<String, String>emptyMap(), resources);
+    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.emptyMap(), resources);
     int maxHeapSize = org.apache.twill.internal.utils.Resources.computeMaxHeapSize(
       2345, cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB), 0);
 
@@ -81,13 +83,14 @@ public class MapReduceResourcesTest {
   @Test
   public void testProgrammatic() {
     CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB, 300);
     Configuration hConf = new Configuration();
 
     hConf.setInt(Job.MAP_MEMORY_MB, 3000);
     hConf.setInt(Job.MAP_CPU_VCORES, 5);
 
     // Always use configurations setup programmatically via job conf.
-    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.<String, String>emptyMap(), null);
+    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.emptyMap(), null);
     int maxHeapSize = org.apache.twill.internal.utils.Resources.computeMaxHeapSize(
       3000, cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB), 0);
 
@@ -97,8 +100,7 @@ public class MapReduceResourcesTest {
     hConf = new Configuration();
     hConf.setInt(Job.MAP_MEMORY_MB, 3000);
     hConf.setInt(Job.MAP_CPU_VCORES, 5);
-    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.<String, String>emptyMap(),
-                                                   new Resources(1234));
+    MapReduceRuntimeService.TaskType.MAP.configure(hConf, cConf, Collections.emptyMap(), new Resources(1234));
     maxHeapSize = org.apache.twill.internal.utils.Resources.computeMaxHeapSize(
       3000, cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB), 0);
 
