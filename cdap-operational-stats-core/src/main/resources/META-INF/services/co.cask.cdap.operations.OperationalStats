@@ -18,15 +18,3 @@ co.cask.cdap.operations.cdap.CDAPEntities
 co.cask.cdap.operations.cdap.CDAPInfo
 co.cask.cdap.operations.cdap.CDAPLoad
 co.cask.cdap.operations.cdap.CDAPTransactions
-co.cask.cdap.operations.hbase.HBaseEntities
-co.cask.cdap.operations.hbase.HBaseInfo
-co.cask.cdap.operations.hbase.HBaseLoad
-co.cask.cdap.operations.hbase.HBaseNodes
-co.cask.cdap.operations.hdfs.HDFSInfo
-co.cask.cdap.operations.hdfs.HDFSNodes
-co.cask.cdap.operations.hdfs.HDFSStorage
-co.cask.cdap.operations.yarn.YarnApps
-co.cask.cdap.operations.yarn.YarnInfo
-co.cask.cdap.operations.yarn.YarnNodes
-co.cask.cdap.operations.yarn.YarnQueues
-co.cask.cdap.operations.yarn.YarnResources
