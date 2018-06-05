@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,6 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -81,7 +80,6 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -222,11 +220,7 @@ public abstract class GatewayTestBase {
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
-    Map<String, Integer> serviceMap = Maps.newHashMap();
-    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
-      serviceMap.put(entry.getValue(), entry.getKey());
-    }
-    port = serviceMap.get(Constants.Service.GATEWAY);
+    port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
 
     return injector;
   }

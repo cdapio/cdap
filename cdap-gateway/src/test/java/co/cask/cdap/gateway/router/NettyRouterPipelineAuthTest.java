@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
@@ -41,15 +42,14 @@ public class NettyRouterPipelineAuthTest {
 
   private static final String HOSTNAME = "127.0.0.1";
 
-  private static final String GATEWAY_NAME = Constants.Router.GATEWAY_DISCOVERY_NAME;
   private static final String SERVICE_NAME = Constants.Service.APP_FABRIC_HTTP;
 
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
-  public static final RouterResource ROUTER = new RouterResource(HOSTNAME, DISCOVERY_SERVICE, ImmutableMap.of(
+  private static final RouterResource ROUTER = new RouterResource(HOSTNAME, DISCOVERY_SERVICE, ImmutableMap.of(
     Constants.Security.ENABLED, "true",
     Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, "(/v1/repeat/.*|/v1/echo/dontfail)"
   ));
-  public static final ServerResource GATEWAY_SERVER = new ServerResource(HOSTNAME, DISCOVERY_SERVICE, SERVICE_NAME);
+  private static final ServerResource GATEWAY_SERVER = new ServerResource(HOSTNAME, DISCOVERY_SERVICE, SERVICE_NAME);
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -85,7 +85,8 @@ public class NettyRouterPipelineAuthTest {
   private void testGet(int expectedStatus, String expectedResponse, String path, Map<String, String> headers)
     throws Exception {
 
-    URL url = new URL("http", HOSTNAME, ROUTER.getServiceMap().get(GATEWAY_NAME), path);
+    InetSocketAddress address = ROUTER.getRouterAddress();
+    URL url = new URL("http", address.getHostName(), address.getPort(), path);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod("GET");
     connection.setDoInput(true);

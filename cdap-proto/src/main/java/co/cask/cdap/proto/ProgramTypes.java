@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.webapp.WebappSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 
@@ -40,7 +39,6 @@ public class ProgramTypes {
     specClassToProgramType.put(MapReduceSpecification.class, ProgramType.MAPREDUCE);
     specClassToProgramType.put(SparkSpecification.class, ProgramType.SPARK);
     specClassToProgramType.put(WorkflowSpecification.class, ProgramType.WORKFLOW);
-    specClassToProgramType.put(WebappSpecification.class, ProgramType.WEBAPP);
     specClassToProgramType.put(ServiceSpecification.class, ProgramType.SERVICE);
     specClassToProgramType.put(WorkerSpecification.class, ProgramType.WORKER);
   }

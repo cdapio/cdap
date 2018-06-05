@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -117,15 +117,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       return ImmutableMap.of();
     }
     return args;
-  }
-
-  @Nullable
-  protected ProgramType getProgramType(String programType) {
-    try {
-      return ProgramType.valueOfCategoryName(programType);
-    } catch (Exception e) {
-      return null;
-    }
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,

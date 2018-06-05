@@ -36,10 +36,6 @@ import co.cask.cdap.internal.app.runtime.flow.InMemoryFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.webapp.IntactJarHttpHandler;
-import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
-import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
-import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
@@ -100,7 +96,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramType.FLOW).to(InMemoryFlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramType.WEBAPP).to(WebappProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKER).to(InMemoryWorkerRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.SERVICE).to(InMemoryServiceProgramRunner.class);
 
@@ -122,10 +117,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For binding DataSet transaction stuff
     install(new DataFabricFacadeModule());
-
-    // Create webapp http handler factory.
-    install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
-              .build(WebappHttpHandlerFactory.class));
 
     // Create StreamWriter factory.
     install(new FactoryModuleBuilder().implement(StreamWriter.class, streamWriterClass)

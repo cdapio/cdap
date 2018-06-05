@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -158,14 +158,9 @@ public class ProgramLifecycleService {
    * @return the status of the program
    * @throws NotFoundException if the application to which this program belongs was not found
    */
-  private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec, ProgramId programId)
-    throws Exception {
+  private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec,
+                                                    ProgramId programId) throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
-
-    if (programId.getType() == ProgramType.WEBAPP) {
-      throw new IllegalStateException("Webapp status is not supported");
-    }
-
     ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
     if (spec == null) {
       // program doesn't exist

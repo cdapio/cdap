@@ -81,6 +81,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -111,7 +112,6 @@ public abstract class NettyRouterTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
 
   private static final String HOSTNAME = "127.0.0.1";
-  private static final String DEFAULT_SERVICE = Constants.Router.GATEWAY_DISCOVERY_NAME;
   private static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
   private static final int CHUNK_SIZE = 1024 * 1024;      // NOTE: MAX_UPLOAD_BYTES % CHUNK_SIZE == 0
@@ -127,17 +127,10 @@ public abstract class NettyRouterTestBase {
   protected abstract DefaultHttpClient getHTTPClient() throws Exception;
   protected abstract SocketFactory getSocketFactory() throws Exception;
 
-  protected int lookupService(String serviceName) {
-    return routerService.lookupService(serviceName);
-  }
-
-  private String resolveURI(String serviceName, String path) throws URISyntaxException {
-    return getBaseURI(serviceName).resolve(path).toASCIIString();
-  }
-
-  private URI getBaseURI(String serviceName) throws URISyntaxException {
-    int servicePort = lookupService(serviceName);
-    return new URI(String.format("%s://%s:%d", getProtocol(), HOSTNAME, servicePort));
+  private String resolveURI(String path) throws URISyntaxException {
+    InetSocketAddress address = routerService.getRouterAddress();
+    return new URI(String.format("%s://%s:%d", getProtocol(),
+                                 address.getHostName(), address.getPort())).resolve(path).toASCIIString();
   }
 
   @Before
@@ -195,7 +188,7 @@ public abstract class NettyRouterTestBase {
     for (int i = 0; i < numElements; ++i) {
       final int elem = i;
       final Request request = new RequestBuilder("GET")
-        .setUrl(resolveURI(DEFAULT_SERVICE, String.format("%s/%s-%d", "/v1/echo", "async", i)))
+        .setUrl(resolveURI(String.format("%s/%s-%d", "/v1/echo", "async", i)))
         .build();
       asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
         @Override
@@ -224,7 +217,7 @@ public abstract class NettyRouterTestBase {
 
     Assert.assertEquals(numElements, numSuccessfulRequests.get());
     // we use sticky endpoint strategy so the sum of requests from the two gateways should be NUM_ELEMENTS
-    Assert.assertTrue(numElements == (defaultServer1.getNumRequests() + defaultServer2.getNumRequests()));
+    Assert.assertEquals(numElements, (defaultServer1.getNumRequests() + defaultServer2.getNumRequests()));
   }
 
   @Test
@@ -256,7 +249,7 @@ public abstract class NettyRouterTestBase {
   @Test
   public void testHostForward() throws Exception {
     // Test defaultService
-    HttpResponse response = get(resolveURI(DEFAULT_SERVICE, String.format("%s/%s", "/v1/ping", "sync")));
+    HttpResponse response = get(resolveURI(String.format("%s/%s", "/v1/ping", "sync")));
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(APP_FABRIC_SERVICE, EntityUtils.toString(response.getEntity()));
   }
@@ -271,7 +264,7 @@ public abstract class NettyRouterTestBase {
 
     byte [] requestBody = generatePostData();
     final Request request = new RequestBuilder("POST")
-      .setUrl(resolveURI(DEFAULT_SERVICE, "/v1/upload"))
+      .setUrl(resolveURI("/v1/upload"))
       .setContentLength(requestBody.length)
       .setBody(new ByteEntityWriter(requestBody))
       .build();
@@ -279,7 +272,7 @@ public abstract class NettyRouterTestBase {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
       @Override
-      public Void onCompleted(Response response) throws Exception {
+      public Void onCompleted(Response response) {
         return null;
       }
 
@@ -298,8 +291,8 @@ public abstract class NettyRouterTestBase {
   @Test
   public void testConnectionClose() throws Exception {
     URL[] urls = new URL[] {
-      new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/abc/v1/status")),
-      new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/def/v1/status"))
+      new URL(resolveURI("/abc/v1/status")),
+      new URL(resolveURI("/def/v1/status"))
     };
 
     // Make bunch of requests to one service to 2 difference urls, with the first one keep-alive, second one not.
@@ -330,7 +323,7 @@ public abstract class NettyRouterTestBase {
     defaultServer2.cancelRegistration();
 
     String path = "/v2/ping";
-    URI uri = new URI(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, path));
+    URI uri = new URI(resolveURI(path));
     Socket socket = getSocketFactory().createSocket(uri.getHost(), uri.getPort());
     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
     InputStream inputStream = socket.getInputStream();
@@ -390,7 +383,7 @@ public abstract class NettyRouterTestBase {
   public void testConnectionIdleTimeoutWithMultipleServers() throws Exception {
     defaultServer2.cancelRegistration();
 
-    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/ping"));
+    URL url = new URL(resolveURI("/v2/ping"));
     HttpURLConnection urlConnection = openURL(url);
     Assert.assertEquals(200, urlConnection.getResponseCode());
     urlConnection.getInputStream().close();
@@ -403,7 +396,7 @@ public abstract class NettyRouterTestBase {
     for (int i = 0; i < 4; i++) {
       // this is an assumption that CONNECTION_IDLE_TIMEOUT_SECS is more than 1 second
       TimeUnit.SECONDS.sleep(1);
-      url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/ping/" + i));
+      url = new URL(resolveURI("/v1/ping/" + i));
       urlConnection = openURL(url);
       Assert.assertEquals(200, urlConnection.getResponseCode());
       urlConnection.getInputStream().close();
@@ -421,7 +414,7 @@ public abstract class NettyRouterTestBase {
 
     defaultServer2.registerServer();
     defaultServer1.cancelRegistration();
-    url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/ping"));
+    url = new URL(resolveURI("/v2/ping"));
     urlConnection = openURL(url);
     Assert.assertEquals(200, urlConnection.getResponseCode());
     urlConnection.getInputStream().close();
@@ -430,7 +423,7 @@ public abstract class NettyRouterTestBase {
 
   @Test (timeout = 5000L)
   public void testExpectContinue() throws Exception {
-    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/upload"));
+    URL url = new URL(resolveURI("/v2/upload"));
     HttpURLConnection urlConn = openURL(url);
     urlConn.setRequestMethod("POST");
     urlConn.setRequestProperty(HttpHeaderNames.EXPECT.toString(), HttpHeaderValues.CONTINUE.toString());
@@ -448,7 +441,7 @@ public abstract class NettyRouterTestBase {
 
   @Test (timeout = 5000L)
   public void testNotFound() throws Exception {
-    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/not/exists"));
+    URL url = new URL(resolveURI("/v1/not/exists"));
     HttpURLConnection urlConn = openURL(url);
     Assert.assertEquals(404, urlConn.getResponseCode());
 
@@ -461,7 +454,7 @@ public abstract class NettyRouterTestBase {
     // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
     // is not closed because the http request is in progress
     long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500;
-    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
+    URL url = new URL(resolveURI("/v1/timeout/" + timeoutMillis));
     HttpURLConnection urlConnection = openURL(url);
     Assert.assertEquals(200, urlConnection.getResponseCode());
     urlConnection.disconnect();
@@ -473,7 +466,7 @@ public abstract class NettyRouterTestBase {
     String oldValue = System.getProperty("sun.net.http.retryPost");
     System.setProperty("sun.net.http.retryPost", "false");
     try {
-      URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/sleep"));
+      URL url = new URL(resolveURI("/v1/sleep"));
 
       // Disable the server 2 from discovery
       defaultServer2.cancelRegistration();
@@ -542,8 +535,7 @@ public abstract class NettyRouterTestBase {
   private void testSync(int numRequests) throws Exception {
     for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending sync request " + i);
-      HttpResponse response = get(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME,
-                                             String.format("%s/%s-%d", "/v1/ping", "sync", i)));
+      HttpResponse response = get(resolveURI(String.format("%s/%s-%d", "/v1/ping", "sync", i)));
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     }
   }
@@ -551,7 +543,7 @@ public abstract class NettyRouterTestBase {
   private void testSyncServiceUnavailable() throws Exception {
     for (int i = 0; i < 25; ++i) {
       LOG.trace("Sending sync unavailable request " + i);
-      HttpResponse response = get(resolveURI(DEFAULT_SERVICE, String.format("%s/%s-%d", "/v1/ping", "sync", i)));
+      HttpResponse response = get(resolveURI(String.format("%s/%s-%d", "/v1/ping", "sync", i)));
       Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(), response.getStatusLine().getStatusCode());
     }
   }
@@ -598,7 +590,7 @@ public abstract class NettyRouterTestBase {
    * A server for the router.
    */
   public abstract static class RouterService extends AbstractIdleService {
-    public abstract int lookupService(String serviceName);
+    public abstract InetSocketAddress getRouterAddress();
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,6 @@ import co.cask.cdap.route.store.RouteConfig;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
-import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Iterators;
 import com.google.common.io.ByteStreams;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -95,7 +94,7 @@ public class AuditLogTest {
 
     RouterServiceLookup serviceLookup = new RouterServiceLookup(
       cConf, discoveryService, new RouterPathLookup(),
-      new InMemoryRouteStore(Collections.<ProgramId, RouteConfig>emptyMap()));
+      new InMemoryRouteStore(Collections.emptyMap()));
 
     router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, new SuccessTokenValidator(),
                              new MockAccessTokenTransfomer(), discoveryService);
@@ -107,8 +106,7 @@ public class AuditLogTest {
     cancelDiscovery = discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP,
                                                                  httpService.getBindAddress()));
 
-    int port = ImmutableBiMap.copyOf(router.getServiceLookup().getServiceMap())
-                             .inverse().get(Constants.Service.GATEWAY);
+    int port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
     baseURI = URI.create(String.format("http://%s:%d", cConf.get(Constants.Router.ADDRESS), port));
   }
 

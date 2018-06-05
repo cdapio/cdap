@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
-import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -33,18 +32,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.util.Map;
+import java.net.InetSocketAddress;
 import javax.net.SocketFactory;
 
 /**
  * Tests Netty Router running on HTTP.
  */
 public class NettyRouterHttpTest extends NettyRouterTestBase {
-
-  @Override
-  protected int lookupService(String serviceName) {
-    return super.lookupService(serviceName);
-  }
 
   @Override
   protected RouterService createRouterService(String hostname, DiscoveryService discoveryService) {
@@ -57,19 +51,18 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
   }
 
   @Override
-  protected DefaultHttpClient getHTTPClient() throws Exception {
+  protected DefaultHttpClient getHTTPClient() {
     return new DefaultHttpClient();
   }
 
   @Override
-  protected SocketFactory getSocketFactory() throws Exception {
+  protected SocketFactory getSocketFactory() {
     return new DefaultSocketFactory();
   }
 
   private static class HttpRouterService extends RouterService {
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
 
@@ -97,10 +90,6 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
                                                 new RouterPathLookup(), routeStore),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
-
-      for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
-        serviceMap.put(entry.getValue(), entry.getKey());
-      }
     }
 
     @Override
@@ -108,10 +97,8 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       router.stopAndWait();
     }
 
-    @Override
-    public int lookupService(String serviceName) {
-      return serviceMap.get(serviceName);
+    public InetSocketAddress getRouterAddress() {
+      return router.getBoundAddress().orElseThrow(IllegalStateException::new);
     }
   }
-
 }

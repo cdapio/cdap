@@ -873,7 +873,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                                  ProgramType.WORKFLOW.getCategoryName(),
                                                                  APP_WITH_WORKFLOW_WORKFLOW_NAME));
     // verify invalid program type
-    Assert.assertEquals(405, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+    Assert.assertEquals(400, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                                                  "random", APP_WITH_WORKFLOW_WORKFLOW_NAME));
 
     // verify invalid program type
@@ -914,7 +914,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // test live info
     // send invalid program type to live info
     HttpResponse response = sendLiveInfoRequest(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random", WORDCOUNT_FLOW_NAME);
-    Assert.assertEquals(405, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
 
     // test valid live info
     JsonObject liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),

@@ -56,7 +56,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.Flushable;
-import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -120,7 +119,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         };
         HttpRequest request = (HttpRequest) msg;
         currentMessageSender = getMessageSender(
-          inboundChannel, getDiscoverable(request, (InetSocketAddress) inboundChannel.localAddress())
+          inboundChannel, getDiscoverable(request)
         );
       }
 
@@ -134,7 +133,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+  public void channelReadComplete(ChannelHandlerContext ctx) {
     if (currentMessageSender != null) {
       currentMessageSender.flush();
     }
@@ -142,7 +141,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
     ctx.writeAndFlush(msg, promise);
 
     // When the response for the first request is completed, write N failure responses for pipelining requests (if any).
@@ -160,7 +159,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     HttpResponse response = cause instanceof HandlerException
       ? ((HandlerException) cause).createFailureResponse()
       : createErrorResponse(cause);
@@ -169,7 +168,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+  public void channelInactive(ChannelHandlerContext ctx) {
     if (currentMessageSender != null) {
       currentMessageSender.close();
     }
@@ -185,7 +184,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     if (failureResponseListener == null) {
       failureResponseListener = new ChannelFutureListener() {
         @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
+        public void operationComplete(ChannelFuture future) {
           if (!future.isSuccess()) {
             HttpResponse response = createErrorResponse(future.cause());
             HttpUtil.setKeepAlive(response, false);
@@ -200,8 +199,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   /**
    * Finds the {@link Discoverable} for the given {@link HttpRequest} to route to.
    */
-  private Discoverable getDiscoverable(HttpRequest httpRequest, InetSocketAddress address) {
-    EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
+  private Discoverable getDiscoverable(HttpRequest httpRequest) {
+    EndpointStrategy strategy = serviceLookup.getDiscoverable(httpRequest);
     if (strategy == null) {
       throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                  "No endpoint strategy found for request " + getRequestLine(httpRequest));
@@ -219,12 +218,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
    * {@link Discoverable}.
    */
   private MessageSender getMessageSender(Channel inboundChannel,
-                                         Discoverable discoverable) throws SSLException {
-    Queue<MessageSender> senders = messageSenders.get(discoverable);
-    if (senders == null) {
-      senders = new LinkedList<>();
-      messageSenders.put(discoverable, senders);
-    }
+                                         Discoverable discoverable) {
+    Queue<MessageSender> senders = messageSenders.computeIfAbsent(discoverable, k -> new LinkedList<>());
 
     MessageSender sender = senders.poll();
 
@@ -282,7 +277,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       // A channel listener for resetting the state of this message sender on closing of outbound channel
       final ChannelFutureListener onCloseResetListener = new ChannelFutureListener() {
         @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
+        public void operationComplete(ChannelFuture future) {
           outboundChannel = null;
           connecting = false;
         }
