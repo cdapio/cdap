@@ -70,14 +70,18 @@ page at http://checkstyle.sourceforge.net/config.html -->
   <!-- All Java AST specific tests live under TreeWalker module. -->
   <module name="TreeWalker">
 
-    <!-- required for SupressionCommentFilter and SuppressWithNearbyCommentFilter -->
-    <module name="FileContentsHolder"/>
-
     <!--
 
     IMPORT CHECKS
 
     -->
+
+    <module name="SuppressionCommentFilter">
+      <property name="offCommentFormat" value="CHECKSTYLE OFF: (.+)" />
+      <property name="onCommentFormat" value="CHECKSTYLE ON" />
+      <property name="checkFormat" value="Javadoc.*"/>
+      <property name="messageFormat" value="$1"/>
+    </module>
 
     <module name="AvoidStarImport">
       <property name="allowClassImports" value="false"/>
@@ -393,13 +397,6 @@ page at http://checkstyle.sourceforge.net/config.html -->
   <module name="SuppressionFilter">
     <property name="file" value="suppressions.xml"/>
     <property name="optional" value="true"/>
-  </module>
-
-  <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CHECKSTYLE OFF: (.+)" />
-    <property name="onCommentFormat" value="CHECKSTYLE ON" />
-    <property name="checkFormat" value="Javadoc.*"/>
-    <property name="messageFormat" value="$1"/>
   </module>
 
 </module>
