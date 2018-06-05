@@ -225,7 +225,7 @@ export default class NamespaceDropdown extends Component {
     );
     let preferenceSpecificCardHeader = (
       <div className="preferences-saved-message">
-        <span>{T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'Namespace'})}</span>
+        <span>{T.translate('features.FastAction.SetPreferences.success.default', {entityType: 'Namespace'})}</span>
         <IconSVG
           name='icon-close'
           onClick={(e) => {

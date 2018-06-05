@@ -1218,25 +1218,26 @@ features:
     truncateSuccess: Truncated successfully
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send events
-    setPreferencesModalLabel: Preferences
-    setPreferencesActionLabel: Set preferences
-    setPreferencesDescriptionLabel:
-      app: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
-      namespace: Specify new or override existing system preferences. These preferences will be accessible in all applications within this namespace.
-      program: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
-      system: Specify new or edit existing system preferences. These preferences will be accessible in all namespaces, applications, and programs.
-    setPreferencesButtonLabel:
-      saveAndClose: Save & Close
-      saving: Saving
-    setPreferencesInheritedPrefsLabel: Inherited preferences
-    setPreferencesColumnLabel:
-      key: KEY
-      value: VALUE
-    setPreferencesNoInheritedPrefs: No inherited preferences
-    setPreferencesReset: Reset
-    setPreferencesFailed: Error - Set preferences failed.
-    setPreferencesSuccess:
-      default: "{entityType} preferences saved"
+    SetPreferences:
+      actionLabel: Set preferences
+      buttonLabel:
+        saveAndClose: Save & Close
+        saving: Saving
+      columnLabel:
+        key: KEY
+        value: VALUE
+      descriptionLabel:
+        app: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
+        namespace: Specify new or override existing system preferences. These preferences will be accessible in all applications within this namespace.
+        program: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
+        system: Specify new or edit existing system preferences. These preferences will be accessible in all namespaces, applications, and programs.
+      failed: Error - Set preferences failed.
+      inheritedPrefsLabel: Inherited preferences
+      modalLabel: Preferences
+      noInheritedPrefs: No inherited preferences
+      reset: Reset
+      success:
+        default: "{entityType} preferences saved"
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send

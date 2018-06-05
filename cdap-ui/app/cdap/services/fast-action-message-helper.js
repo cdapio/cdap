@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ import T from 'i18n-react';
 export default function FastActionToMessage(action, options) {
   switch (action) {
     case 'setPreferences':
-      return T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: options.entityType});
+      return T.translate('features.FastAction.SetPreferences.success.default', {entityType: options.entityType});
     case 'truncate':
       return T.translate('features.FastAction.truncateSuccess');
     default:
