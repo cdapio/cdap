@@ -21,11 +21,10 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -49,7 +48,7 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
 
   @Override
   public T start() {
-    return start(ImmutableMap.<String, String>of());
+    return start(Collections.emptyMap());
   }
 
   @Override
@@ -79,18 +78,13 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   @Override
   public void waitForRuns(final ProgramRunStatus status, final int runCount, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return getHistory(status).size() >= runCount;
-      }
-    }, timeout, timeoutUnit);
+    Tasks.waitFor(true, () -> getHistory(status).size() >= runCount, timeout, timeoutUnit);
   }
 
   @Override
   public void waitForStopped(long timeout, TimeUnit timeUnit) throws InterruptedException, TimeoutException,
     ExecutionException {
-    Tasks.waitFor(false, () -> isRunning(), timeout, timeUnit);
+    Tasks.waitFor(true, () -> applicationManager.isStopped(programId), timeout, timeUnit);
   }
 
   @Override
