@@ -20,6 +20,7 @@
 
 # Ambari constants
 AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.sh
+AMBARICONFIGS_PY=/var/lib/ambari-server/resources/scripts/configs.py
 AMBARIPORT=8080
 ACTIVEAMBARIHOST=headnodehost
 USERID=$(python -c 'import hdinsight_common.Constants as Constants; print Constants.AMBARI_WATCHDOG_USERNAME')
@@ -32,6 +33,9 @@ PASSWD=$(python -c 'import hdinsight_common.ClusterManifestParser as ClusterMani
 AMBARICREDS="-u ${USERID} -p ${PASSWD}"
 AMBARICURLCREDS="-u '${USERID}':'${PASSWD}'"
 
+# Get HDP version, catch any errors from hdp-select
+__hdp_version_str=$(hdp-select status hadoop-client) || die "Cannot run hdp-select to determine HDP version"
+__hdp_short_version=$(echo ${__hdp_version_str} | cut -d' ' -f3 | sed -e 's/\([0-9]*\.[0-9]*\).*/\1/g') || die "Cannot determine HDP version from string ${__hdp_version_str}"
 
 # Function definitions
 
@@ -43,12 +47,41 @@ checkHostNameAndSetClusterName() {
   [[ ${CLUSTERNAME} ]] || die "Cannot determine cluster name. Exiting!" 133
 }
 
+# Invokes the Ambari configs.sh script with HDP 2.5 syntax
+_invokeAmbariConfigs25() {
+  local __action=${1}
+  local __configtype=${2}
+  local __key=${3}
+  local __value=${4}
+
+  ${AMBARICONFIGS_SH} ${AMBARICREDS} ${__action} ${ACTIVEAMBARIHOST} ${CLUSTERNAME} ${__configtype} ${__key} ${__value}
+}
+
+# Invokes the Ambari configs.py script with HDP 2.6 syntax
+_invokeAmbariConfigs26() {
+  local __action=${1}
+  local __configtype=${2}
+  local __key=${3}
+  local __value=${4}
+
+  ${AMBARICONFIGS_PY} ${AMBARICREDS} --action ${__action} --host ${ACTIVEAMBARIHOST} --cluster ${CLUSTERNAME} --config-type ${__configtype} --key ${__key} --value ${__value}
+}
+
+# Invokes the appropriate Ambari configs.[py,sh] script, which can silently change across HDInsight/Hortonworks versions
+invokeAmbariConfigs() {
+  case ${__hdp_short_version} in
+    2.5) _invokeAmbariConfigs25 ${@} ;;
+    2.6) _invokeAmbariConfigs26 ${@} ;;
+    *) _invokeAmbariConfigs26 ${@} ;;
+  esac
+}
+
 # Try to perform an Ambari API GET
 # Dies if credentials are bad
 validateAmbariConnectivity() {
   local __coreSiteContent
   local __ret
-  __coreSiteContent=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
+  __coreSiteContent=$(invokeAmbariConfigs get core-site)
   __ret=$?
   if [[ ${__coreSiteContent} =~ "[ERROR]" && ${__coreSiteContent} =~ "Bad credentials" ]]; then
     die 'Username and password are invalid. Exiting!' 134
@@ -64,7 +97,7 @@ setAmbariConfig() {
   local __name=${2}
   local __value=${3}
   local __updateResult
-  __updateResult=$(${AMBARICONFIGS_SH} ${AMBARICREDS} set ${ACTIVEAMBARIHOST} ${CLUSTERNAME} ${__configtype} ${__name} ${__value})
+  __updateResult=$(invokeAmbariConfigs set ${__configtype} ${__name} ${__value})
 
   if [[ ${__updateResult} =~ "[ERROR]" ]] && [[ ! ${__updateResult} =~ "Tag:version" ]]; then
     die "Failed to update ${__configtype}: ${__updateResult}" 135
@@ -75,7 +108,7 @@ setAmbariConfig() {
 updateFsAzurePageBlobDirForCDAP() {
   local __currentValue
   local __newValue
-  __currentValue=$(${AMBARICONFIGS_SH} ${AMBARICREDS} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
+  __currentValue=$(invokeAmbariConfigs get core-site | grep 'fs.azure.page.blob.dir' | sed -e 's/.*: "\(.*\)"[, ]*/\1/')
   if [ -n ${__currentValue} ]; then
     if [[ ${__currentValue} =~ "/cdap" ]]; then
       echo "fs.azure.page.blob.dir already contains /cdap"
