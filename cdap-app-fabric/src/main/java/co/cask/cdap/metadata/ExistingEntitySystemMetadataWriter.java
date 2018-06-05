@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -40,8 +41,10 @@ import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ViewSystemMetadataWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -49,6 +52,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
@@ -77,11 +81,13 @@ public class ExistingEntitySystemMetadataWriter {
   private final LocationFactory locationFactory;
   private final CConfiguration cConf;
   private final Impersonator impersonator;
+  private final PropertiesResolver propertiesResolver;
 
   @Inject
   ExistingEntitySystemMetadataWriter(MetadataStore metadataStore, NamespaceQueryAdmin namespaceQueryAdmin, Store store,
                                      ArtifactStore artifactStore, StreamAdmin streamAdmin, ViewAdmin viewAdmin,
-                                     LocationFactory locationFactory, CConfiguration cConf, Impersonator impersonator) {
+                                     LocationFactory locationFactory, CConfiguration cConf, Impersonator impersonator,
+                                     PropertiesResolver propertiesResolver) {
     this.metadataStore = metadataStore;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
@@ -91,6 +97,7 @@ public class ExistingEntitySystemMetadataWriter {
     this.locationFactory = locationFactory;
     this.cConf = cConf;
     this.impersonator = impersonator;
+    this.propertiesResolver = propertiesResolver;
   }
 
   void write(DatasetFramework dsFramework) throws Exception {
@@ -137,7 +144,11 @@ public class ExistingEntitySystemMetadataWriter {
                                               Collection<? extends ProgramSpecification> programSpecs) {
     for (ProgramSpecification programSpec : programSpecs) {
       ProgramId programId = app.program(programType, programSpec.getName());
-      SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec, true);
+      String scopedProfile =
+        propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId)).get(SystemArguments.PROFILE_NAME);
+      String scopedName = scopedProfile == null ? ProfileId.DEFAULT_SCOPED_NAME : scopedProfile;
+      SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec, true,
+                                                                    scopedName);
       writer.write();
     }
   }

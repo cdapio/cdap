@@ -26,12 +26,15 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.Specifications;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -56,11 +59,13 @@ public class SystemMetadataWriterStageTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static MetadataStore metadataStore;
+  private static PropertiesResolver propertiesResolver;
 
   @BeforeClass
   public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector();
     metadataStore = injector.getInstance(MetadataStore.class);
+    propertiesResolver = injector.getInstance(PropertiesResolver.class);
   }
 
   @Test
@@ -71,7 +76,8 @@ public class SystemMetadataWriterStageTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
     ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
-    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataStore);
+    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataStore,
+                                                                                        propertiesResolver);
     StageContext stageContext = new StageContext(Object.class);
     systemMetadataWriterStage.process(stageContext);
     systemMetadataWriterStage.process(appWithPrograms);
@@ -83,9 +89,13 @@ public class SystemMetadataWriterStageTest {
                         "in the workflow's system tags: " + intersection, intersection.isEmpty());
 
     // verify that metadata was added for the workflow's schedule
-    Map<String, String> metadataProperties = metadataStore.getMetadata(MetadataScope.SYSTEM, appId).getProperties();
+    Map<String, String> appMetadataProperties = metadataStore.getMetadata(MetadataScope.SYSTEM, appId).getProperties();
     Assert.assertEquals(WorkflowAppWithFork.SCHED_NAME + ":testDescription",
-                        metadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
+                        appMetadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
+    Map<String, String> workflowMetadataProperties =
+      metadataStore.getMetadata(MetadataScope.SYSTEM, appId.workflow(workflowName)).getProperties();
+    Assert.assertEquals(ProfileId.DEFAULT_SCOPED_NAME,
+                        workflowMetadataProperties.get(ProgramSystemMetadataWriter.PROFILE_KEY));
   }
 
   @SuppressWarnings("unchecked")

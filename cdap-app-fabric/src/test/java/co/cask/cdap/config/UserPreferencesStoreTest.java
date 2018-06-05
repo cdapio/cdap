@@ -16,13 +16,21 @@
 
 package co.cask.cdap.config;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.id.Id;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -230,14 +238,39 @@ public class UserPreferencesStoreTest extends AppFabricTestBase {
     store.deleteProperties("myspace", "app");
     Assert.assertTrue(store.getProperties("myspace", "app").isEmpty());
     propMap.put("key", "program");
-    store.setProperties("myspace", "app", "type", "prog", propMap);
-    Assert.assertEquals(propMap, store.getProperties("myspace", "app", "type", "prog"));
+    store.setProperties("myspace", "app", "workflow", "prog", propMap);
+    Assert.assertEquals(propMap, store.getProperties("myspace", "app", "workflow", "prog"));
     store.setProperties(ImmutableMap.of("key", "instance"));
-    Assert.assertEquals(propMap, store.getProperties("myspace", "app", "type", "prog"));
-    store.deleteProperties("myspace", "app", "type", "prog");
-    Assert.assertTrue(store.getProperties("myspace", "app", "type", "prog").isEmpty());
-    Assert.assertEquals("instance", store.getResolvedProperties("myspace", "app", "type", "prog").get("key"));
+    Assert.assertEquals(propMap, store.getProperties("myspace", "app", "workflow", "prog"));
+    store.deleteProperties("myspace", "app", "workflow", "prog");
+    Assert.assertTrue(store.getProperties("myspace", "app", "workflow", "prog").isEmpty());
+    Assert.assertEquals("instance", store.getResolvedProperties("myspace", "app", "workflow", "prog").get("key"));
     store.deleteProperties();
-    Assert.assertEquals(ImmutableMap.<String, String>of(), store.getProperties("myspace", "app", "type", "prog"));
+    Assert.assertEquals(ImmutableMap.<String, String>of(), store.getProperties("myspace", "app", "workflow", "prog"));
+  }
+
+  @Test
+  public void testAddProfileInProperties() throws Exception {
+    PreferencesStore prefStore = getInjector().getInstance(PreferencesStore.class);
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+
+    // put a profile unrelated property should not affect the metadata
+    Map<String, String> propMap = new HashMap<>();
+    propMap.put("unRelatedKey", "unRelatedValue");
+    prefStore.setProperties("myspace", "app", "workflow", "prog", propMap);
+    ProgramId programId = new ProgramId("myspace", "app", "workflow", "prog");
+    Assert.assertEquals(Collections.emptyMap(), metadataStore.getProperties(MetadataScope.SYSTEM, programId));
+
+    // put something related to profile
+    propMap.put(SystemArguments.PROFILE_NAME, "userProfile");
+    prefStore.setProperties("myspace", "app", "workflow", "prog", propMap);
+    Assert.assertEquals(Collections.singletonMap(ProgramSystemMetadataWriter.PROFILE_KEY, "userProfile"),
+                        metadataStore.getProperties(MetadataScope.SYSTEM, programId));
+
+    // delete the properties should set the metadata to default profile
+    prefStore.deleteProperties("myspace", "app", "workflow", "prog");
+    Assert.assertEquals(Collections.singletonMap(ProgramSystemMetadataWriter.PROFILE_KEY,
+                                                 ProfileId.DEFAULT_SCOPED_NAME),
+                        metadataStore.getProperties(MetadataScope.SYSTEM, programId));
   }
 }

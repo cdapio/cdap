@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -84,6 +85,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final AuthenticationContext authenticationContext;
   private final co.cask.cdap.scheduler.Scheduler programScheduler;
   private final AuthorizationEnforcer authorizationEnforcer;
+  private final PropertiesResolver propertiesResolver;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -96,7 +98,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           MetadataStore metadataStore,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
                           Scheduler programScheduler,
-                          AuthorizationEnforcer authorizationEnforcer) {
+                          AuthorizationEnforcer authorizationEnforcer,
+                          PropertiesResolver propertiesResolver) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -115,6 +118,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.authenticationContext = authenticationContext;
     this.programScheduler = programScheduler;
     this.authorizationEnforcer = authorizationEnforcer;
+    this.propertiesResolver = propertiesResolver;
   }
 
   @Override
@@ -133,7 +137,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
-    pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
+    pipeline.addLast(new SystemMetadataWriterStage(metadataStore, propertiesResolver));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

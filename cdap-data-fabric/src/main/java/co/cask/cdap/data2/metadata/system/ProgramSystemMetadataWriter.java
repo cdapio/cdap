@@ -38,16 +38,20 @@ import java.util.Set;
  * A {@link AbstractSystemMetadataWriter} for a {@link ProgramId program}.
  */
 public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
+  public static final String PROFILE_KEY = "profile";
+
   private final ProgramId programId;
   private final ProgramSpecification programSpec;
   private final boolean existing;
+  private final String scopedProfileName;
 
   public ProgramSystemMetadataWriter(MetadataStore metadataStore, ProgramId programId,
-                                     ProgramSpecification programSpec, boolean existing) {
+                                     ProgramSpecification programSpec, boolean existing, String scopedProfileName) {
     super(metadataStore, programId);
     this.programId = programId;
     this.programSpec = programSpec;
     this.existing = existing;
+    this.scopedProfileName = scopedProfileName;
   }
 
   @Override
@@ -59,6 +63,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (!Strings.isNullOrEmpty(description)) {
       properties.put(DESCRIPTION_KEY, description);
     }
+    properties.put(PROFILE_KEY, scopedProfileName);
     if (!existing) {
       properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
     }

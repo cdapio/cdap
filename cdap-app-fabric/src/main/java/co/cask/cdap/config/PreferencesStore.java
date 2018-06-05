@@ -17,6 +17,12 @@
 package co.cask.cdap.config;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -34,10 +40,12 @@ public class PreferencesStore {
   private static final String EMPTY_NAMESPACE = "";
 
   private final ConfigStore configStore;
+  private final MetadataStore metadataStore;
 
   @Inject
-  public PreferencesStore(ConfigStore configStore) {
+  public PreferencesStore(ConfigStore configStore, MetadataStore metadataStore) {
     this.configStore = configStore;
+    this.metadataStore = metadataStore;
   }
 
   private Map<String, String> getConfigProperties(String namespace, String id) {
@@ -118,6 +126,7 @@ public class PreferencesStore {
   public void setProperties(String namespace, String appId, String programType, String programId,
                             Map<String, String> propMap) {
     setConfig(namespace, getMultipartKey(namespace, appId, programType, programId), propMap);
+    checkAndUpdateProfileMetaData(new ProgramId(namespace, appId, programType, programId), propMap, false);
   }
 
   public void deleteProperties() {
@@ -134,6 +143,17 @@ public class PreferencesStore {
 
   public void deleteProperties(String namespace, String appId, String programType, String programId) {
     deleteConfig(namespace, getMultipartKey(namespace, appId, programType, programId));
+    checkAndUpdateProfileMetaData(new ProgramId(namespace, appId, programType, programId),
+                                  getResolvedProperties(namespace, appId, programType, programId), true);
+  }
+
+  private void checkAndUpdateProfileMetaData(ProgramId programId, Map<String, String> propMap, boolean usingDefault) {
+    if (!propMap.containsKey(SystemArguments.PROFILE_NAME) && !usingDefault) {
+      return;
+    }
+    String scopedProfile = propMap.get(SystemArguments.PROFILE_NAME);
+    String scopedName = scopedProfile == null ? ProfileId.DEFAULT_SCOPED_NAME : scopedProfile;
+    metadataStore.setProperty(MetadataScope.SYSTEM, programId, ProgramSystemMetadataWriter.PROFILE_KEY, scopedName);
   }
 
   private String getMultipartKey(String... parts) {
