@@ -70,7 +70,6 @@ public class TestBundleJarApp extends TestBase {
 
     // Query the result
     ServiceManager serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
-
     serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Verify the query result
@@ -81,6 +80,7 @@ public class TestBundleJarApp extends TestBase {
     serviceManager.stop();
 
     serviceManager = applicationManager.getServiceManager("PrintService").start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     String helloWorldClassName = "hello.HelloWorld";
     String result = callServiceGet(serviceManager.getServiceURL(), "/load/" + helloWorldClassName);
