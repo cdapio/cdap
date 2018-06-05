@@ -279,27 +279,27 @@ export default class SetPreferenceModal extends Component {
     let entity, entityWithType, description, tooltipID;
     if (this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM) {
       entityWithType = 'CDAP';
-      description = T.translate(`${PREFIX}.descriptionLabel.system`);
+      description = T.translate(`${PREFIX}.DescriptionLabel.system`);
       tooltipID = `${entityWithType}-title`;
     } else {
       entity = this.params.namespace;
       entityWithType = `namespace "${entity}"`;
-      description = T.translate(`${PREFIX}.descriptionLabel.namespace`);
+      description = T.translate(`${PREFIX}.DescriptionLabel.namespace`);
       tooltipID = `${entity}-title`;
       if (this.props.entity) {
         entity = this.props.entity.id;
         entityWithType = `${this.props.entity.type} "${entity}"`;
         tooltipID = `${this.props.entity.uniqueId}-title`;
         if (this.props.entity.type === 'application') {
-          description = T.translate(`${PREFIX}.descriptionLabel.app`);
+          description = T.translate(`${PREFIX}.DescriptionLabel.app`);
         } else {
-          description = T.translate(`${PREFIX}.descriptionLabel.program`);
+          description = T.translate(`${PREFIX}.DescriptionLabel.program`);
         }
       }
     }
     const title = `${actionLabel} for ${entityWithType}`;
-    const keyLabel = T.translate(`${PREFIX}.columnLabel.key`);
-    const valueLabel = T.translate(`${PREFIX}.columnLabel.value`);
+    const keyLabel = T.translate(`${PREFIX}.ColumnLabel.key`);
+    const valueLabel = T.translate(`${PREFIX}.ColumnLabel.value`);
     return (
       <div>
         {
@@ -382,8 +382,8 @@ export default class SetPreferenceModal extends Component {
       return null;
     }
     const titleLabel = T.translate(`${PREFIX}.inheritedPrefsLabel`);
-    const keyLabel = T.translate(`${PREFIX}.columnLabel.key`);
-    const valueLabel = T.translate(`${PREFIX}.columnLabel.value`);
+    const keyLabel = T.translate(`${PREFIX}.ColumnLabel.key`);
+    const valueLabel = T.translate(`${PREFIX}.ColumnLabel.value`);
     let numInheritedPreferences = this.state.inheritedPreferences.length;
     return (
       <div>
@@ -429,8 +429,8 @@ export default class SetPreferenceModal extends Component {
 
   render() {
     const modalLabel = T.translate(`${PREFIX}.modalLabel`);
-    const savingLabel = T.translate(`${PREFIX}.buttonLabel.saving`);
-    const saveAndCloseLabel = T.translate(`${PREFIX}.buttonLabel.saveAndClose`);
+    const savingLabel = T.translate(`${PREFIX}.ButtonLabel.saving`);
+    const saveAndCloseLabel = T.translate(`${PREFIX}.ButtonLabel.saveAndClose`);
     const resetLink = T.translate(`${PREFIX}.reset`);
     return (
       <Modal

@@ -1220,13 +1220,13 @@ features:
     sendEventsLabel: Send events
     SetPreferences:
       actionLabel: Set preferences
-      buttonLabel:
+      ButtonLabel:
         saveAndClose: Save & Close
         saving: Saving
-      columnLabel:
+      ColumnLabel:
         key: KEY
         value: VALUE
-      descriptionLabel:
+      DescriptionLabel:
         app: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
         namespace: Specify new or override existing system preferences. These preferences will be accessible in all applications within this namespace.
         program: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
@@ -1236,8 +1236,7 @@ features:
       modalLabel: Preferences
       noInheritedPrefs: No inherited preferences
       reset: Reset
-      success:
-        default: "{entityType} preferences saved"
+      success: "{entityType} preferences saved"
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send

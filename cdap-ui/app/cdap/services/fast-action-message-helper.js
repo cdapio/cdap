@@ -18,7 +18,7 @@ import T from 'i18n-react';
 export default function FastActionToMessage(action, options) {
   switch (action) {
     case 'setPreferences':
-      return T.translate('features.FastAction.SetPreferences.success.default', {entityType: options.entityType});
+      return T.translate('features.FastAction.SetPreferences.success', {entityType: options.entityType});
     case 'truncate':
       return T.translate('features.FastAction.truncateSuccess');
     default:
