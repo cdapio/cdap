@@ -46,8 +46,6 @@ import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
 import Alert from 'components/Alert';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
-import {preventPropagation} from 'services/helpers';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = ['PREPARING', 'SPLITTING', 'DATA_READY'];
@@ -298,37 +296,15 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel, statu
   }
 
   const modelStatusComp = () => {
-    if (statusIsLoading) {
-      return <IconSVG name="icon-spinner" className="fa-spin" />;
-    }
-    if (statusIsError) {
-      return (
-        <span>
-          <span
-            className="model-status-error text-danger"
-            id={`error-${model.id}`}
-            onClick={(e) => {
-              preventPropagation(e);
-              getModelStatus(experimentId, model.id);
-            }}
-          >
-            <IconSVG
-              className="text-danger"
-              name="icon-exclamation-circle"
-            />
-            Error
-          </span>
-          <UncontrolledTooltip
-            placement="right"
-            delay={0}
-            target={`error-${model.id}`}
-          >
-            {`Failed to get status of model '${model.name}'. Click to try fetching model status again`}
-          </UncontrolledTooltip>
-        </span>
-      );
-    }
-    return <ModelStatusIndicator status={model.status || '--'} />;
+    return (
+      <ModelStatusIndicator
+        status={model.status || '--'}
+        loading={statusIsLoading}
+        error={statusIsError}
+        model={model}
+        getModelStatus={getModelStatus.bind(this, experimentId, model.id)}
+      />
+    );
   };
 
   return (

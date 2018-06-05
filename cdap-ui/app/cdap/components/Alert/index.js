@@ -24,7 +24,7 @@ const SUCCESS_CLOSE_TIMEOUT = 3000;
 
 export default class Alert extends Component {
   state = {
-    showAlert: false || this.props.showAlert,
+    showAlert: this.props.showAlert || false,
     message: this.props.message,
     element: this.props.element,
     type: this.props.type

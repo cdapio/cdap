@@ -23,6 +23,7 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
+import isEmpty from 'lodash/isEmpty';
 
 require('./SplitDataStep.scss');
 const getSplitLogsUrl = (experimentId, splitInfo) => {
@@ -50,30 +51,30 @@ const getSplitFailedElem = (experimentId, splitInfo) => {
 
 class SplitDataStep extends Component {
   state = {
-    shouldShowSplitFailedAlert: false
+    splitFailed: false
   };
 
   static propTypes = {
     splitInfo: PropTypes.object,
-    schema: PropTypes.object,
-    createSplitAndUpdateStatus: PropTypes.func,
-    setSplitFinalized: PropTypes.func,
-    setModelCreateError: PropTypes.func,
     experimentId: PropTypes.string,
     error: PropTypes.string
   };
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.splitInfo.status && ['CREATING', 'Splitting'].indexOf(this.props.splitInfo.status) !== -1 && nextProps.splitInfo.status === 'Failed') {
+    const isValidSplitStatus = this.props.splitInfo.status;
+    const wasSplitting = ['CREATING', 'Splitting'].indexOf(this.props.splitInfo.status) !== -1;
+    const isCurrentSplitStatusFailed = nextProps.splitInfo.status === 'Failed';
+
+    if (isValidSplitStatus && wasSplitting && isCurrentSplitStatusFailed) {
       this.setState({
-        shouldShowSplitFailedAlert: true
+        splitFailed: true
       });
     }
   }
 
   closeSplitFailedAlert = () => {
     this.setState({
-      shouldShowSplitFailedAlert: false
+      splitFailed: false
     });
   }
 
@@ -87,7 +88,7 @@ class SplitDataStep extends Component {
         <div>
           <button
             className="btn btn-primary"
-            onClick={this.props.createSplitAndUpdateStatus}
+            onClick={createSplitAndUpdateStatus}
           >
             Split data Randomly and verify sample
           </button>
@@ -107,52 +108,69 @@ class SplitDataStep extends Component {
     );
   }
 
-  render() {
-    let splitStatus = this.props.splitInfo.status || 'Complete';
+  renderSplitInfo() {
+    if (isEmpty(this.props.splitInfo)) {
+      return null;
+    }
 
+    const splitStatus = this.props.splitInfo.status || 'Complete';
+
+    return (
+      <div className="action-button-group">
+        <SplitInfo />
+        <button
+          className="btn btn-primary"
+          onClick={setSplitFinalized}
+          disabled={splitStatus !== 'Complete'}
+        >
+          Done
+        </button>
+        <span> Next, Select a machine learning algorithm </span>
+      </div>
+    );
+  }
+
+  renderError() {
+    if (!this.props.error && !this.state.splitFailed) {
+      return null;
+    }
+
+    /*
+      We have 2 cases where we want to show an Alert on this page:
+      1. When the split status request returns 200, but status is 'Failed'
+      2. When the split request or split status request returns error code
+    */
+
+    if (this.state.splitFailed) {
+      return (
+        <Alert
+          element={getSplitFailedElem(this.props.experimentId, this.props.splitInfo)}
+          type='error'
+          showAlert={true}
+          onClose={this.closeSplitFailedAlert}
+        />
+      );
+    }
+
+    return (
+      <Alert
+        message={this.props.error}
+        type='error'
+        showAlert={true}
+        onClose={setModelCreateError}
+      />
+    );
+  }
+
+  render() {
     return (
       <div className="split-data-step">
         <h3>Split Data </h3>
         <div>Create test dataset for this model.</div>
         <br />
         {this.renderSplitBtn()}
-        {
-          Object.keys(this.props.splitInfo).length && splitStatus === 'Complete' ? (
-            <div className="action-button-group">
-              <SplitInfo />
-              <button
-                className="btn btn-primary"
-                onClick={this.props.setSplitFinalized}
-                disabled={splitStatus !== 'Complete'}
-              >
-                Done
-              </button>
-              <span> Next, Select a machine learning algorithm </span>
-            </div>
-          ) : null
-        }
-        {
-          this.props.error ?
-            <Alert
-              message={this.props.error}
-              type='error'
-              showAlert={true}
-              onClose={this.props.setModelCreateError}
-            />
-          :
-            null
-        }
-        {
-          this.state.shouldShowSplitFailedAlert ?
-            <Alert
-              element={getSplitFailedElem(this.props.experimentId, this.props.splitInfo)}
-              type='error'
-              showAlert={true}
-              onClose={this.closeSplitFailedAlert}
-            />
-          :
-            null
-        }
+        {this.renderSplitInfo()}
+        {this.renderError()}
       </div>
     );
   }
@@ -163,19 +181,12 @@ const mapStateToSplitDataStepProps = (state) => {
   let {splitInfo = {}, error} = model_create;
   return {
     splitInfo,
-    schema: splitInfo.schema,
     experimentId: experiments_create.name,
     error
   };
 };
-const mapDispatchToSplitDataStepProps = () => {
-  return {
-    createSplitAndUpdateStatus,
-    setSplitFinalized,
-    setModelCreateError
-  };
-};
-const ConnectedSplitDataStep = connect(mapStateToSplitDataStepProps, mapDispatchToSplitDataStepProps)(SplitDataStep);
+const ConnectedSplitDataStep = connect(mapStateToSplitDataStepProps)(SplitDataStep);
+
 function ProvidedSplitDataStep() {
   return (
     <Provider store={createExperimentStore}>
