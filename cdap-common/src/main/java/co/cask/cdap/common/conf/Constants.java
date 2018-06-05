@@ -1348,14 +1348,6 @@ public final class Constants {
   }
 
   /**
-   * Constants for operational stats
-   */
-  public static final class OperationalStats {
-    public static final String EXTENSIONS_DIR = "operational.stats.extensions.dir";
-    public static final String REFRESH_INTERVAL_SECS = "operational.stats.refresh.interval.secs";
-  }
-
-  /**
    * Constants for provisioners
    */
   public static final class Provisioner {
