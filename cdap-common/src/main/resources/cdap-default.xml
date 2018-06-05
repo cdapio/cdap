@@ -191,7 +191,7 @@
 
   <property>
     <name>twill.java.reserved.memory.mb</name>
-    <value>300</value>
+    <value>768</value>
     <description>
       Desired reserved non-heap memory in megabytes for all launched Apache Twill containers.
       The actual value is bounded by the ${twill.java.heap.memory.ratio} setting of the container memory size.
