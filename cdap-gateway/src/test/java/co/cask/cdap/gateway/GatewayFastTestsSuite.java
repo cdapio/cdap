@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,12 @@ package co.cask.cdap.gateway;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import co.cask.cdap.gateway.run.StreamWriterTestRun;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.Files;
 import org.apache.http.Header;
@@ -151,14 +149,6 @@ public class GatewayFastTestsSuite {
                                     File tmpFolder) throws Exception {
 
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), tmpFolder);
-    File expandDir = DirUtils.createTempDir(tmpFolder);
-    BundleJarUtil.unJar(Locations.toLocation(artifactJar), expandDir);
-
-    // Add webapp
-    File webAppFile = new File(expandDir, "webapp/default/netlens/src/1.txt");
-    webAppFile.getParentFile().mkdirs();
-    Files.write("dummy data", webAppFile, Charsets.UTF_8);
-    BundleJarUtil.createJar(expandDir, artifactJar);
 
     HttpEntityEnclosingRequestBase request;
     request = getPost("/v3/namespaces/default/apps");

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,11 @@
  */
 package co.cask.cdap.common.utils;
 
-import com.google.common.base.Charsets;
-
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import javax.annotation.Nullable;
 
@@ -83,35 +79,5 @@ public final class Networks {
   }
 
   private Networks() {
-  }
-
-  /**
-   * Normalizes the name by doing the following:
-   * <ul>
-   *   <li>Remove trailing slashes.</li>
-   *   <li>Remove :80 from end of the host part if any.</li>
-   *   <li>Replace '.', ':', '/' and '-' with '_'.</li>
-   *   <li>URL encode the name.</li>
-   * </ul>
-   * @param name discovery name that needs to be normalized.
-   * @return the normalized discovery name.
-   */
-  public static String normalizeWebappDiscoveryName(String name) throws UnsupportedEncodingException {
-    if (name.endsWith("/")) {
-      name = name.replaceAll("/+$", "");
-    }
-
-    if (name.contains(":80/")) {
-      name = name.replace(":80/", "/");
-    } else if (name.endsWith(":80")) {
-      name = name.substring(0, name.length() - 3);
-    }
-
-    name = name.replace('.', '_');
-    name = name.replace('-', '_');
-    name = name.replace(':', '_');
-    name = name.replace('/', '_');
-
-    return URLEncoder.encode(name, Charsets.UTF_8.name());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,8 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.commons.lang.StringUtils;
+
+import javax.annotation.Nullable;
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
@@ -51,25 +53,17 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   /**
    * Returns the CDAP service which will handle the HttpRequest
    *
-   * @param fallbackService service to which we fall back to if we can't determine the destination from the URI path
    * @param requestPath Normalized (and query string removed) URI path
    * @param httpRequest HttpRequest used to get the Http method and account id
    * @return destination service
    */
-  public RouteDestination getRoutingService(String fallbackService, String requestPath, HttpRequest httpRequest) {
+  @Nullable
+  public RouteDestination getRoutingService(String requestPath, HttpRequest httpRequest) {
     try {
       String method = httpRequest.method().name();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
 
-      //Check if the call should go to webapp
-      //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
-      //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
-      //But stream calls issued by the UI should be routed to the appropriate CDAP service
-      if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-        && !("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)) {
-        return new RouteDestination(fallbackService);
-      }
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
       }
@@ -88,6 +82,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     return false;
   }
 
+  @Nullable
   private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish

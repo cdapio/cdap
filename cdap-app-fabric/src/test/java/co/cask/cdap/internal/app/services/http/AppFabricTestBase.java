@@ -74,7 +74,6 @@ import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -520,12 +519,6 @@ public abstract class AppFabricTestBase {
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
     File expandDir = tmpFolder.newFolder();
     BundleJarUtil.unJar(Locations.toLocation(artifactJar), expandDir);
-
-    // Add webapp
-    File webAppFile = new File(expandDir, "webapp/default/netlens/src/1.txt");
-    webAppFile.getParentFile().mkdirs();
-    Files.write("dummy data", webAppFile, Charsets.UTF_8);
-    BundleJarUtil.createJar(expandDir, artifactJar);
 
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);

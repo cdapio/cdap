@@ -679,7 +679,6 @@ public class DefaultStore implements Store {
       case MAPREDUCE: return appSpec.getMapReduce().containsKey(id.getProgram());
       case SERVICE:   return appSpec.getServices().containsKey(id.getProgram());
       case SPARK:     return appSpec.getSpark().containsKey(id.getProgram());
-      case WEBAPP:    return false;
       case WORKER:    return appSpec.getWorkers().containsKey(id.getProgram());
       case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getProgram());
       default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
