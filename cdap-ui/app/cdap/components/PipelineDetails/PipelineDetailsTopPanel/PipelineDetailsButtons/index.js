@@ -23,6 +23,7 @@ import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsT
 import PipelineStopButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton';
 import PipelineRunButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineRunButton';
 import PipelineSummaryButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineSummaryButton';
+import PipelineButtonsWrapper from 'components/PipelineDetails/PipelineButtonsWrapper';
 
 const mapStateToConfigureButton = (state, ownProps) => {
   return {
@@ -64,27 +65,22 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
-        <ConnectedConfigureButton
-          isBatch={isBatch}
-          pipelineName={pipelineName}
-        />
-        <div
-          className="pipeline-buttons-separator"
-          id="configure-schedule-separator"
-        />
-        <ConnectedScheduleButton
-          isBatch={isBatch}
-          pipelineName={pipelineName}
-          schedule={schedule}
-          maxConcurrentRuns={maxConcurrentRuns}
-          scheduleStatus={scheduleStatus}
-          scheduleButtonLoading={scheduleButtonLoading}
-          scheduleError={scheduleError}
-        />
-        <div
-          className="pipeline-buttons-separator"
-          id="schedule-stop-separator"
-        />
+        <PipelineButtonsWrapper>
+          <ConnectedConfigureButton
+            isBatch={isBatch}
+            pipelineName={pipelineName}
+          />
+          <ConnectedScheduleButton
+            isBatch={isBatch}
+            pipelineName={pipelineName}
+            schedule={schedule}
+            maxConcurrentRuns={maxConcurrentRuns}
+            scheduleStatus={scheduleStatus}
+            scheduleButtonLoading={scheduleButtonLoading}
+            scheduleError={scheduleError}
+            showRightSeparator={true}
+          />
+        </PipelineButtonsWrapper>
         <PipelineStopButton
           isBatch={isBatch}
           pipelineName={pipelineName}
@@ -99,14 +95,13 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           runButtonLoading={runButtonLoading}
           runError={runError}
         />
-        <div
-          className="pipeline-buttons-separator"
-          id="run-summary-separator"
-        />
-        <PipelineSummaryButton
-          isBatch={isBatch}
-          pipelineName={pipelineName}
-        />
+        <PipelineButtonsWrapper>
+          <PipelineSummaryButton
+            isBatch={isBatch}
+            pipelineName={pipelineName}
+            showLeftSeparator={true}
+          />
+        </PipelineButtonsWrapper>
       </div>
     </Provider>
   );

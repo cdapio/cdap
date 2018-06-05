@@ -49,35 +49,35 @@ export default class PipelineDetailsActionsButton extends Component {
     pipelineName: PropTypes.string,
     description: PropTypes.string,
     artifact: PropTypes.object,
-    config: PropTypes.object
+    config: PropTypes.object,
+    setActiveButton: PropTypes.func
   };
 
   state = {
     showExportModal: false,
     showDeleteConfirmationModal: false,
     showPopover: false,
-    hideSeparator: false
+    mouseIsOver: false
   };
 
-  componentDidUpdate() {
-    const separatorElem = document.getElementById('details-actions-separator');
-    if (this.state.showPopover || this.state.hideSeparator) {
-      separatorElem.style.display = 'none';
+  togglePopover = (showPopover = !this.state.showPopover) => {
+    this.setState({
+      showPopover
+    }, this.setActiveButton);
+  };
+
+  setMouseOver = (value) => {
+    this.setState({
+      mouseIsOver: value
+    }, this.setActiveButton);
+  };
+
+  setActiveButton = () => {
+    if (this.state.showPopover || this.state.mouseIsOver) {
+      this.props.setActiveButton(true);
     } else {
-      separatorElem.style.display = 'inline-block';
+      this.props.setActiveButton(false);
     }
-  }
-
-  togglePopover = () => {
-    this.setState({
-      showPopover: !this.state.showPopover
-    });
-  };
-
-  toggleSeparator = (value) => {
-    this.setState({
-      hideSeparator: value
-    });
   };
 
   pipelineConfig = {
@@ -226,15 +226,17 @@ export default class PipelineDetailsActionsButton extends Component {
     return (
       <div
         className={classnames("pipeline-action-container pipeline-actions-container", {"active" : this.state.showPopover})}
-        onMouseEnter={this.toggleSeparator.bind(this, true)}
-        onMouseLeave={this.toggleSeparator.bind(this, false)}
+        onMouseEnter={this.setMouseOver.bind(this, true)}
+        onMouseLeave={this.setMouseOver.bind(this, false)}
       >
         <Popover
           target={ActionsBtnAndLabel}
           placement="bottom"
           bubbleEvent={false}
+          enableInteractionInPopover={true}
           className="pipeline-actions-popper"
           showPopover={this.state.showPopover}
+          onTogglePopover={this.togglePopover}
         >
           <ul>
             <li onClick={this.duplicateConfigAndNavigate}>

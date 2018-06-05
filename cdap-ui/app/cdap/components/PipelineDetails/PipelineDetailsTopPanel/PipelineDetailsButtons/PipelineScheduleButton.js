@@ -38,14 +38,15 @@ export default class PipelineScheduleButton extends Component {
     scheduleStatus: PropTypes.string,
     scheduleButtonLoading: PropTypes.bool,
     scheduleError: PropTypes.string,
-    runtimeArgs: PropTypes.array
+    runtimeArgs: PropTypes.array,
+    setActiveButton: PropTypes.func
   }
 
   state = {
     showScheduler: false,
     showConfigModeless: false,
     scheduleStatus: this.props.scheduleStatus,
-    hideSeparators: false
+    mouseIsOver: false
   };
 
   componentWillReceiveProps(nextProps) {
@@ -56,34 +57,30 @@ export default class PipelineScheduleButton extends Component {
     }
   }
 
-  componentDidUpdate() {
-    const leftSeparatorElem = document.getElementById('configure-schedule-separator');
-    const rightSeparatorElem = document.getElementById('schedule-stop-separator');
-    if (this.state.showScheduler || this.state.showConfigModeless || this.state.hideSeparators) {
-      leftSeparatorElem.style.display = 'none';
-      rightSeparatorElem.style.display = 'none';
-    } else {
-      leftSeparatorElem.style.display = 'inline-block';
-      rightSeparatorElem.style.display = 'inline-block';
-    }
-  }
-
   toggleScheduler = () => {
     this.setState({
       showScheduler: !this.state.showScheduler
-    });
+    }, this.setActiveButton);
   };
 
   toggleConfigModeless = () => {
     this.setState({
       showConfigModeless: !this.state.showConfigModeless
-    });
+    }, this.setActiveButton);
   };
 
-  toggleSeparators = (value) => {
+  setMouseOver = (value) => {
     this.setState({
-      hideSeparators: value
-    });
+      mouseIsOver: value
+    }, this.setActiveButton);
+  };
+
+  setActiveButton = () => {
+    if (this.state.showScheduler || this.state.showConfigModeless || this.state.mouseIsOver) {
+      this.props.setActiveButton(true);
+    } else {
+      this.props.setActiveButton(false);
+    }
   };
 
   schedulePipelineOrToggleConfig = () => {
@@ -187,8 +184,8 @@ export default class PipelineScheduleButton extends Component {
     return (
       <div
         className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler || this.state.showConfigModeless})}
-        onMouseEnter={this.toggleSeparators.bind(this, true)}
-        onMouseLeave={this.toggleSeparators.bind(this, false)}
+        onMouseEnter={this.setMouseOver.bind(this, true)}
+        onMouseLeave={this.setMouseOver.bind(this, false)}
       >
         {this.renderScheduleError()}
         {this.renderScheduleButton()}

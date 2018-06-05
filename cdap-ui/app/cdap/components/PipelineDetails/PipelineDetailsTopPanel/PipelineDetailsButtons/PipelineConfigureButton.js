@@ -29,22 +29,14 @@ export default class PipelineConfigureButton extends Component {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
     resolvedMacros: PropTypes.object,
-    runtimeArgs: PropTypes.array
+    runtimeArgs: PropTypes.array,
+    setActiveButton: PropTypes.func
   };
 
   state = {
     showModeless: false,
-    hideSeparator: false
+    mouseIsOver: false
   };
-
-  componentDidUpdate() {
-    const separatorElem = document.getElementById('configure-schedule-separator');
-    if (this.state.showModeless || this.state.hideSeparator) {
-      separatorElem.style.display = 'none';
-    } else {
-      separatorElem.style.display = 'inline-block';
-    }
-  }
 
   getRuntimeArgumentsAndToggleModeless = () => {
     if (!this.state.showModeless) {
@@ -57,13 +49,22 @@ export default class PipelineConfigureButton extends Component {
   toggleModeless = () => {
     this.setState({
       showModeless: !this.state.showModeless
-    });
+    }, this.setActiveButton);
   };
 
-  toggleSeparator = (value) => {
+  setMouseOver = (value) => {
     this.setState({
-      hideSeparator: value
-    });
+      mouseIsOver: value
+    }, this.setActiveButton);
+  };
+
+
+  setActiveButton = () => {
+    if (this.state.showModeless || this.state.mouseIsOver) {
+      this.props.setActiveButton(true);
+    } else {
+      this.props.setActiveButton(false);
+    }
   };
 
   renderConfigureButton() {
@@ -89,8 +90,8 @@ export default class PipelineConfigureButton extends Component {
     return (
       <div
         className={classnames("pipeline-action-container pipeline-configure-container", {"active" : this.state.showModeless})}
-        onMouseEnter={this.toggleSeparator.bind(this, true)}
-        onMouseLeave={this.toggleSeparator.bind(this, false)}
+        onMouseEnter={this.setMouseOver.bind(this, true)}
+        onMouseLeave={this.setMouseOver.bind(this, false)}
       >
         {this.renderConfigureButton()}
         {

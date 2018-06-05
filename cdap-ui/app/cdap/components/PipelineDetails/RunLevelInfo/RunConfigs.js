@@ -32,25 +32,14 @@ export default class RunConfigs extends Component {
     currentRun: PropTypes.object,
     runs: PropTypes.array,
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string
+    pipelineName: PropTypes.string,
+    setActiveButton: PropTypes.func
   };
 
   state = {
     showModeless: false,
-    hideSeparators: false
+    mouseIsOver: false
   };
-
-  componentDidUpdate() {
-    const leftSeparatorElem = document.getElementById('index-configs-separator');
-    const rightSeparatorElem = document.getElementById('configs-logs-separator');
-    if (this.state.showModeless || this.state.hideSeparators) {
-      leftSeparatorElem.style.display = 'none';
-      rightSeparatorElem.style.display = 'none';
-    } else {
-      leftSeparatorElem.style.display = 'inline-block';
-      rightSeparatorElem.style.display = 'inline-block';
-    }
-  }
 
   getRuntimeArgsAndToggleModeless = () => {
     if (!this.state.showModeless) {
@@ -86,13 +75,21 @@ export default class RunConfigs extends Component {
   toggleModeless = () => {
     this.setState({
       showModeless: !this.state.showModeless
-    });
+    }, this.setActiveButton);
   };
 
-  toggleSeparators = (value) => {
+  setMouseOver = (value) => {
     this.setState({
-      hideSeparators: value
-    });
+      mouseIsOver: value
+    }, this.setActiveButton);
+  };
+
+  setActiveButton = () => {
+    if (this.state.showModeless || this.state.mouseIsOver) {
+      this.props.setActiveButton(true);
+    } else {
+      this.props.setActiveButton(false);
+    }
   };
 
   renderRunConfigsButton() {
@@ -123,8 +120,8 @@ export default class RunConfigs extends Component {
       return (
         <div
           className="run-info-container run-configs-container disabled"
-          onMouseEnter={this.toggleSeparators.bind(this, true)}
-          onMouseLeave={this.toggleSeparators.bind(this, false)}
+          onMouseEnter={this.setMouseOver.bind(this, true)}
+          onMouseLeave={this.setMouseOver.bind(this, false)}
         >
           <Popover
             target={ConfigsBtnComp}
@@ -140,8 +137,8 @@ export default class RunConfigs extends Component {
     return (
       <div
         className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}
-        onMouseEnter={this.toggleSeparators.bind(this, true)}
-        onMouseLeave={this.toggleSeparators.bind(this, false)}
+        onMouseEnter={this.setMouseOver.bind(this, true)}
+        onMouseLeave={this.setMouseOver.bind(this, false)}
       >
         {this.renderRunConfigsButton()}
         {

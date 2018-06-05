@@ -31,29 +31,8 @@ class RunLogs extends Component {
     currentRun: PropTypes.object,
     runs: PropTypes.array,
     appId: PropTypes.string,
-    artifactName: PropTypes.string
-  };
-
-  state = {
-    hideSeparators: false
-  };
-
-  componentDidUpdate() {
-    const leftSeparatorElem = document.getElementById('configs-logs-separator');
-    const rightSeparatorElem = document.getElementById('logs-status-separator');
-    if (this.state.hideSeparators) {
-      leftSeparatorElem.style.display = 'none';
-      rightSeparatorElem.style.display = 'none';
-    } else {
-      leftSeparatorElem.style.display = 'inline-block';
-      rightSeparatorElem.style.display = 'inline-block';
-    }
-  }
-
-  toggleSeparators = (value) => {
-    this.setState({
-      hideSeparators: value
-    });
+    artifactName: PropTypes.string,
+    setActiveButton: PropTypes.func
   };
 
   render() {
@@ -70,8 +49,8 @@ class RunLogs extends Component {
       return (
         <div
           className="run-info-container run-logs-container disabled"
-          onMouseEnter={this.toggleSeparators.bind(this, true)}
-          onMouseLeave={this.toggleSeparators.bind(this, false)}
+          onMouseEnter={this.props.setActiveButton.bind(this, true)}
+          onMouseLeave={this.props.setActiveButton.bind(this, false)}
         >
           <Popover
             target={LogsBtnComp}
@@ -95,8 +74,8 @@ class RunLogs extends Component {
       <a href={path} target="_blank">
         <div
           className="run-info-container run-logs-container"
-          onMouseEnter={this.toggleSeparators.bind(this, true)}
-          onMouseLeave={this.toggleSeparators.bind(this, false)}
+          onMouseEnter={this.props.setActiveButton.bind(this, true)}
+          onMouseLeave={this.props.setActiveButton.bind(this, false)}
         >
           <LogsBtnComp />
         </div>

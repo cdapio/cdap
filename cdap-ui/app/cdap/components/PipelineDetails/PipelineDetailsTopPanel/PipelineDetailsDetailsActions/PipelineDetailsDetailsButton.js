@@ -25,26 +25,8 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineDetailsDetailsButton extends Component {
   static propTypes = {
-    pipelineName: PropTypes.string
-  };
-
-  state = {
-    hideSeparator: false
-  };
-
-  componentDidUpdate() {
-    const separatorElem = document.getElementById('details-actions-separator');
-    if (this.state.showPopover || this.state.hideSeparator) {
-      separatorElem.style.display = 'none';
-    } else {
-      separatorElem.style.display = 'inline-block';
-    }
-  }
-
-  toggleSeparator = (value) => {
-    this.setState({
-      hideSeparator: value
-    });
+    pipelineName: PropTypes.string,
+    setActiveButton: PropTypes.func
   };
 
   render() {
@@ -56,8 +38,8 @@ export default class PipelineDetailsDetailsButton extends Component {
     return (
       <div
         className="pipeline-action-container pipeline-details-container"
-        onMouseEnter={this.toggleSeparator.bind(this, true)}
-        onMouseLeave={this.toggleSeparator.bind(this, false)}
+        onMouseEnter={this.props.setActiveButton.bind(this, true)}
+        onMouseLeave={this.props.setActiveButton.bind(this, false)}
       >
         <AbsLinkTo context={context}>
           <div className="btn pipeline-action-btn pipeline-details-btn">
@@ -72,9 +54,4 @@ export default class PipelineDetailsDetailsButton extends Component {
       </div>
     );
   }
-
 }
-
-PipelineDetailsDetailsButton.propTypes = {
-  pipelineName: PropTypes.string,
-};

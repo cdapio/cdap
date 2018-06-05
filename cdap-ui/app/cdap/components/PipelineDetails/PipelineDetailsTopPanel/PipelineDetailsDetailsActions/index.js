@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import PipelineDetailsDetailsButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsDetailsButton';
 import PipelineDetailsActionsButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton';
+import PipelineButtonsWrapper from 'components/PipelineDetails/PipelineButtonsWrapper';
 require('./PipelineDetailsDetailsActions.scss');
 
 const mapDetailsStateToProps = (state) => {
@@ -33,17 +34,15 @@ const mapDetailsStateToProps = (state) => {
 const PipelineDetailsDetailsActions = ({pipelineName, description, artifact, config}) => {
   return (
     <div className="pipeline-details-buttons pipeline-details-details-actions">
-      <PipelineDetailsDetailsButton pipelineName={pipelineName} />
-      <div
-        className="pipeline-buttons-separator"
-        id="details-actions-separator"
-      />
-      <PipelineDetailsActionsButton
-        pipelineName={pipelineName}
-        description={description}
-        artifact={artifact}
-        config={config}
-      />
+      <PipelineButtonsWrapper>
+        <PipelineDetailsDetailsButton pipelineName={pipelineName} />
+        <PipelineDetailsActionsButton
+          pipelineName={pipelineName}
+          description={description}
+          artifact={artifact}
+          config={config}
+        />
+      </PipelineButtonsWrapper>
     </div>
   );
 };

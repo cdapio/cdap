@@ -30,32 +30,32 @@ export default class PipelineSummaryButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
+    setActiveButton: PropTypes.func
   };
 
   state = {
     showSummary: false,
-    hideSeparator: false
+    mouseIsOver: false
   };
-
-  componentDidUpdate() {
-    const separatorElem = document.getElementById('run-summary-separator');
-    if (this.state.showSummary || this.state.hideSeparator) {
-      separatorElem.style.display = 'none';
-    } else {
-      separatorElem.style.display = 'inline-block';
-    }
-  }
 
   toggleSummary = () => {
     this.setState({
       showSummary: !this.state.showSummary
-    });
+    }, this.setActiveButton);
   };
 
-  toggleSeparator = (value) => {
+  setMouseOver = (value) => {
     this.setState({
-      hideSeparator: value
-    });
+      mouseIsOver: value
+    }, this.setActiveButton);
+  };
+
+  setActiveButton = () => {
+    if (this.state.showSummary || this.state.mouseIsOver) {
+      this.props.setActiveButton(true);
+    } else {
+      this.props.setActiveButton(false);
+    }
   };
 
   renderSummaryButton() {
@@ -85,8 +85,8 @@ export default class PipelineSummaryButton extends Component {
     return (
       <div
         className={classnames("pipeline-action-container pipeline-summary-container", {"active" : this.state.showSummary})}
-        onMouseEnter={this.toggleSeparator.bind(this, true)}
-        onMouseLeave={this.toggleSeparator.bind(this, false)}
+        onMouseEnter={this.setMouseOver.bind(this, true)}
+        onMouseLeave={this.setMouseOver.bind(this, false)}
       >
         {this.renderSummaryButton()}
         {
