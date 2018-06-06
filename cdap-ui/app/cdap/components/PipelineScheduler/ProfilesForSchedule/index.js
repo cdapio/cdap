@@ -21,10 +21,12 @@ import IconSVG from 'components/IconSVG';
 import {DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
-import {preventPropagation} from 'services/helpers';
 import StatusMapper from 'services/StatusMapper';
 import ProfilesListView, {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
-
+import isEmpty from 'lodash/isEmpty';
+import {MyCloudApi} from 'api/cloud';
+import {getCurrentNamespace} from 'services/NamespaceStore';
+import {getProvisionersMap, fetchProvisioners} from 'components/Cloud/Profiles/Store/Provisioners';
 require('./ProfilesForSchedule.scss');
 
 export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';
@@ -42,21 +44,53 @@ class ProfilesForSchedule extends Component {
   }
   state = {
     scheduleDetails: null,
+    provisionersMap: {},
+    profileDetails: {},
     selectedProfile: this.props.selectedProfile,
     profileCustomizations: this.props.profileCustomizations
   };
 
+  componentDidMount() {
+    this.setProvisionersMap();
+    this.setProfileDetails();
+  }
   componentWillReceiveProps(nextProps) {
     this.setState({
       selectedProfile: nextProps.selectedProfile,
       profileCustomizations: nextProps.profileCustomizations
+    }, () => {
+      this.setProfileDetails();
     });
   }
 
-  selectProfile = (profileName, e) => {
-    setSelectedProfile(profileName);
-    preventPropagation(e);
-  };
+  setProfileDetails() {
+    if (this.state.selectedProfile) {
+      MyCloudApi
+        .get({
+          namespace: getCurrentNamespace(),
+          profile: extractProfileName(this.state.selectedProfile)
+        })
+        .subscribe(profileDetails => {
+          this.setState({
+            profileDetails
+          });
+        });
+    }
+  }
+
+  setProvisionersMap() {
+    if (isEmpty(getProvisionersMap().nameToLabelMap)) {
+      fetchProvisioners().subscribe(() => {
+        this.setState({
+          provisionersMap: getProvisionersMap().nameToLabelMap
+        });
+      });
+    } else {
+      this.setState({
+        provisionersMap: getProvisionersMap().nameToLabelMap
+      });
+    }
+  }
 
   renderProfilesTable = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
@@ -78,7 +112,9 @@ class ProfilesForSchedule extends Component {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let provisionerLabel;
     if (this.state.selectedProfile) {
-      let provisionerName = this.state.selectedProfile.provisioner.name;
+      let {profileDetails = {}} = this.state;
+      let {provisioner = {}} = profileDetails;
+      let {name: provisionerName} = provisioner;
       provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
     }
 
@@ -94,7 +130,14 @@ class ProfilesForSchedule extends Component {
         >
           {
             this.state.selectedProfile ?
-              <span> {`${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`}</span>
+              <span>
+              {
+                provisionerLabel ?
+                  `${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`
+                :
+                  `${extractProfileName(this.state.selectedProfile)}`
+              }
+              </span>
             :
               <span>Select a Profile</span>
           }
