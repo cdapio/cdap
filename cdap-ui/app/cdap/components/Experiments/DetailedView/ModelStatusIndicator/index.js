@@ -58,7 +58,7 @@ export default function ModelStatusIndicator({status, loading, error, model, get
     return (
       <span>
         <span
-          className="model-status-error text-danger"
+          className="model-status-error model-status-indicator text-danger"
           id={`error-${model.id}`}
           onClick={(e) => {
             preventPropagation(e);
@@ -69,7 +69,7 @@ export default function ModelStatusIndicator({status, loading, error, model, get
             className="text-danger"
             name="icon-exclamation-circle"
           />
-          Error
+          <span>Error</span>
         </span>
         <UncontrolledTooltip
           placement="right"
