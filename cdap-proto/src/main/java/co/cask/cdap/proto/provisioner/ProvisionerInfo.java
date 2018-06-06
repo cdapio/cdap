@@ -17,7 +17,9 @@
 package co.cask.cdap.proto.provisioner;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Information about a provisioner name and properties.
@@ -28,7 +30,8 @@ public class ProvisionerInfo {
 
   public ProvisionerInfo(String name, Collection<ProvisionerPropertyValue> properties) {
     this.name = name;
-    this.properties = properties;
+    this.properties = Collections.unmodifiableList(
+      properties.stream().filter(Objects::nonNull).collect(Collectors.toList()));
   }
 
   public String getName() {

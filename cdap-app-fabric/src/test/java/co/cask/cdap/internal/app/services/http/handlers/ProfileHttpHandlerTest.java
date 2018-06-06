@@ -26,6 +26,8 @@ import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
@@ -45,6 +47,7 @@ import javax.annotation.Nullable;
  * Unit tests for profile http handler
  */
 public class ProfileHttpHandlerTest extends AppFabricTestBase {
+  private static final Gson GSON = new GsonBuilder().serializeNulls().create();
   private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
   private static final List<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
     ImmutableList.<ProvisionerPropertyValue>builder()
@@ -109,6 +112,35 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     ProvisionerDetail test = new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
                                                    new ArrayList<>());
     putProfile(NamespaceId.DEFAULT, test.getName(), test, 400);
+  }
+
+  @Test
+  public void testNullProvsionerProperty() throws Exception {
+    // provide a profile with null provsioner property, it should still succeed
+    List<ProvisionerPropertyValue> listWithNull = new ArrayList<>();
+    listWithNull.add(null);
+    Profile profile = new Profile("ProfileWithNull", "should succeed",
+      new ProvisionerInfo(MockProvisioner.NAME, listWithNull));
+    putProfile(NamespaceId.DEFAULT, profile.getName(), profile, 200);
+
+    // Get the profile, it should not contain the null value, the property should be an empty list
+    Profile actual = getProfile(NamespaceId.DEFAULT, profile.getName(), 200);
+    Assert.assertNotNull(actual);
+    Assert.assertEquals(Collections.EMPTY_LIST, actual.getProvisioner().getProperties());
+    deleteProfile(NamespaceId.DEFAULT, profile.getName(), 200);
+
+    // provide a profile with mixed properties with null, it should still succeed
+    List<ProvisionerPropertyValue> listMixed = new ArrayList<>(PROPERTY_SUMMARIES);
+    listMixed.addAll(listWithNull);
+    profile = new Profile("ProfileMixed", "should succeed",
+      new ProvisionerInfo(MockProvisioner.NAME, listMixed));
+    putProfile(NamespaceId.DEFAULT, profile.getName(), profile, 200);
+
+    // Get the profile, it should not contain the null value, the property should be all non-null properties in the list
+    actual = getProfile(NamespaceId.DEFAULT, profile.getName(), 200);
+    Assert.assertNotNull(actual);
+    Assert.assertEquals(PROPERTY_SUMMARIES, actual.getProvisioner().getProperties());
+    deleteProfile(NamespaceId.DEFAULT, profile.getName(), 200);
   }
 
   private List<Profile> listProfiles(NamespaceId namespace, boolean includeSystem, int expectedCode) throws Exception {
