@@ -71,7 +71,6 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import com.google.common.base.Charsets;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -85,7 +84,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -102,7 +100,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -343,18 +340,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Make sure they are all running. Otherwise on slow machine, it's possible that the TMS states hasn't
     // been consumed and write to the store before we stop the program and query for STOPPED state.
-    Tasks.waitFor(2, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING).size();
-      }
-    }, 10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(2, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING).size();
-      }
-    }, 10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(2, () -> getProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING).size(),
+                  10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(2, () -> getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING).size(),
+                  10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
     // stop multiple workflow simultaneously
     // This will stop all concurrent runs of the Workflow version 1.0.0
@@ -473,7 +462,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testNonExistingProgramHistory() throws Exception {
-    ProgramId program = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
     deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
                                                    Constants.Gateway.API_VERSION_3_TOKEN,
@@ -523,9 +511,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       waitState(sleepWorkflow1, STOPPED);
       verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
 
-      String url = String.format("apps/%s/%s/%s/runs?status=completed", SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW
-        .getCategoryName(), SLEEP_WORKFLOW_NAME);
-      historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1), 2);
+      historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
 
     } finally {
       Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
@@ -789,10 +775,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     verifyProgramList(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE, 1);
 
     // verify invalid namespace
-    Assert.assertEquals(404, getAppFDetailResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
-                                                       ProgramType.SERVICE.getCategoryName()));
+    Assert.assertEquals(404, getAppFDetailResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID));
     // verify invalid app
-    Assert.assertEquals(404, getAppFDetailResponseCode(TEST_NAMESPACE1, "random", ProgramType.FLOW.getCategoryName()));
+    Assert.assertEquals(404, getAppFDetailResponseCode(TEST_NAMESPACE1, "random"));
   }
 
   /**
@@ -1088,12 +1073,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(service1, 404);
     startProgram(service2);
 
-    Tasks.waitFor(200, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getServiceAvailability(service2).getStatusLine().getStatusCode();
-      }
-    }, 2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(200, () -> getServiceAvailability(service2).getStatusLine().getStatusCode(),
+                  2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     waitState(service2, RUNNING);
 
@@ -1306,30 +1287,30 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     TimeTrigger timeTrigger = new TimeTrigger("0 * * * ?");
     ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                                                    scheduleName, description, programInfo, properties,
-                                                   timeTrigger, Collections.<Constraint>emptyList(),
+                                                   timeTrigger, Collections.emptyList(),
                                                    Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
     PartitionTrigger partitionTrigger =
       new PartitionTrigger(protoPartition.getDataset(), protoPartition.getNumPartitions());
     ScheduleDetail expectedPartitionDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          partitionScheduleName, description, programInfo, properties, partitionTrigger,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestPartitionDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          partitionScheduleName, description, programInfo, properties, protoPartition,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail expectedOrDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          orScheduleName, description, programInfo, properties,
                          new OrTrigger(timeTrigger, partitionTrigger),
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestOrDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          orScheduleName, description, programInfo, properties, protoOr,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName", timeDetail);
@@ -1350,7 +1331,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail nonExistingDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          scheduleName, description, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"),
-                         properties, timeTrigger, Collections.<Constraint>emptyList(),
+                         properties, timeTrigger, Collections.emptyList(),
                          Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, nonExistingDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
@@ -1399,7 +1380,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2,
                                                 null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
-                                                Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6), null);
+                                                Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
@@ -1512,15 +1493,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
     txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer))
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          // write more than one so that we can dequeue multiple times for multiple checks
-          // we only dequeue twice, but ensure that the drop queues call drops the rest of the entries as well
-          int numEntries = 0;
-          while (numEntries++ < 5) {
-            producer.enqueue(queueEntry);
-          }
+      .execute(() -> {
+        // write more than one so that we can dequeue multiple times for multiple checks
+        // we only dequeue twice, but ensure that the drop queues call drops the rest of the entries as well
+        int numEntries = 0;
+        while (numEntries++ < 5) {
+          producer.enqueue(queueEntry);
         }
       });
   }
@@ -1536,12 +1514,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
     return txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) consumer))
-      .execute(new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return !consumer.dequeue(1).isEmpty();
-        }
-      });
+      .execute(() -> !consumer.dequeue(1).isEmpty());
   }
 
   private HttpResponse getServiceAvailability(Id.Service serviceId) throws Exception {
@@ -1684,17 +1657,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     ApplicationDetail appDetail = GSON.fromJson(json, ApplicationDetail.class);
-    Collection<ProgramRecord> programs = Collections2.filter(appDetail.getPrograms(), new Predicate<ProgramRecord>() {
-      @Override
-      public boolean apply(@Nullable ProgramRecord record) {
-        return programType.getCategoryName().equals(record.getType().getCategoryName());
-      }
-    });
+    Collection<ProgramRecord> programs = Collections2.filter(
+      appDetail.getPrograms(), record -> programType.getCategoryName().equals(record.getType().getCategoryName()));
     Assert.assertEquals(expected, programs.size());
   }
 
-  private int getAppFDetailResponseCode(String namespace, @Nullable String appName, String programType)
-    throws Exception {
+  private int getAppFDetailResponseCode(String namespace, @Nullable String appName) throws Exception {
     HttpResponse response = requestAppDetail(namespace, appName);
     return response.getStatusLine().getStatusCode();
   }
@@ -1757,7 +1725,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void verifyProgramHistory(ProgramId program) throws Exception {
-    String namespace = program.getNamespace();
     // first run
     startProgram(program, 200);
     waitState(program, RUNNING);
@@ -1770,45 +1737,41 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program, RUNNING);
 
     // one run should be active
-    String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion()) ?
-      "" : "/versions/" + program.getVersion();
-    String url = String.format("apps/%s%s/%s/%s/runs?status=running", program.getApplication(), urlAppVersionPart,
-                               program.getType().getCategoryName(), program.getProgram());
-    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
+    historyStatusWithRetry(program, ProgramRunStatus.RUNNING, 1);
 
-    // killed runs size should be 1 from the first run
-    url = String.format("apps/%s%s/%s/%s/runs?status=killed", program.getApplication(), urlAppVersionPart,
-                        program.getType().getCategoryName(), program.getProgram());
-    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
+    historyStatusWithRetry(program, ProgramRunStatus.KILLED, 1);
 
     // stop the second run
     stopProgram(program, null, 200, null);
     waitState(program, STOPPED);
 
-    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
+    historyStatusWithRetry(program, ProgramRunStatus.KILLED, 2);
   }
 
-  private void historyStatusWithRetry(String url, int size) throws Exception {
+  private void historyStatusWithRetry(ProgramId program, ProgramRunStatus status, int size) throws Exception {
+    String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion()) ?
+      "" : "/versions/" + program.getVersion();
+    String basePath = String.format("apps/%s%s/%s/%s/runs", program.getApplication(), urlAppVersionPart,
+                                    program.getType().getCategoryName(), program.getProgram());
+    String runsUrl = getVersionedAPIPath(basePath + "?status=" + status.name(),
+                                         Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespace());
     int trials = 0;
     while (trials++ < 5) {
-      HttpResponse response = doGet(url);
+      HttpResponse response = doGet(runsUrl);
       List<RunRecord> result = GSON.fromJson(EntityUtils.toString(response.getEntity()), LIST_OF_RUN_RECORD);
       if (result != null && result.size() >= size) {
         for (RunRecord m : result) {
-          assertRunRecord(String.format("%s/%s", url.substring(0, url.indexOf("?")), m.getPid()),
-                          GSON.fromJson(GSON.toJson(m), RunRecord.class));
+          String runUrl = getVersionedAPIPath(basePath + "/" + m.getPid(), Constants.Gateway.API_VERSION_3_TOKEN,
+                                              program.getNamespace());
+          response = doGet(runUrl);
+          RunRecord actualRunRecord = GSON.fromJson(EntityUtils.toString(response.getEntity()), RunRecord.class);
+          Assert.assertEquals(m.getStatus(), actualRunRecord.getStatus());
         }
         break;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 5);
-  }
-
-  private void assertRunRecord(String url, RunRecord expectedRunRecord) throws Exception {
-    HttpResponse response = doGet(url);
-    RunRecord actualRunRecord = GSON.fromJson(EntityUtils.toString(response.getEntity()), RunRecord.class);
-    Assert.assertEquals(expectedRunRecord, actualRunRecord);
   }
 
   private void testVersionedProgramRuntimeArgs(ProgramId programId) throws Exception {
