@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.lineage.field.EndPoint;
+import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecord;
@@ -26,10 +28,19 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
+import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
+import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
+import co.cask.cdap.proto.metadata.lineage.FieldLineageSummaryRecord;
+import co.cask.cdap.proto.metadata.lineage.FieldOperationInfo;
+import co.cask.cdap.proto.metadata.lineage.FieldOperationInput;
+import co.cask.cdap.proto.metadata.lineage.FieldOperationOutput;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import co.cask.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
+import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.reflect.TypeToken;
@@ -40,11 +51,14 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -91,6 +105,96 @@ public class LineageHandler extends AbstractHttpHandler {
                          TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
                          lineage, getCollapseTypes(collapse)), LineageRecord.class));
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields")
+  public void datasetFields(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("dataset-id") String datasetId,
+                            @QueryParam("start") String startStr,
+                            @QueryParam("end") String endStr,
+                            @QueryParam("prefix") String prefix) {
+
+    List<String> result = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      result.add("field_" + String.valueOf(i));
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}")
+  public void datasetFieldLineageSummary(HttpRequest request, HttpResponder responder,
+                                         @PathParam("namespace-id") String namespaceId,
+                                         @PathParam("dataset-id") String datasetId,
+                                         @PathParam("field-name") String field,
+                                         @QueryParam("direction") @DefaultValue("both") String direction,
+                                         @QueryParam("start") String startStr,
+                                         @QueryParam("end") String endStr) {
+    List<FieldLineageSummaryRecord> backward = new ArrayList<>();
+    List<String> fields = Arrays.asList("id", "ssn", "address");
+    FieldLineageSummaryRecord record = new FieldLineageSummaryRecord("secure_ns", "pii_data",
+                                                                    fields);
+    backward.add(record);
+    fields = Collections.singletonList("id");
+    record = new FieldLineageSummaryRecord("default", "user_data", fields);
+    backward.add(record);
+    FieldLineageSummary summary = new FieldLineageSummary(backward, null);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}/operations")
+  public void datasetFieldLineageDetails(HttpRequest request, HttpResponder responder,
+                                         @PathParam("namespace-id") String namespaceId,
+                                         @PathParam("dataset-id") String datasetId,
+                                         @PathParam("field-name") String field,
+                                         @QueryParam("direction") @DefaultValue("both") String direction,
+                                         @QueryParam("start") String startStr,
+                                         @QueryParam("end") String endStr) {
+    List<ProgramInfo> programInfos = new ArrayList<>();
+    ProgramInfo programInfo = new ProgramInfo(new ProgramId("ns1", "sample_import",
+            ProgramType.WORKFLOW, "DataPipelineWorkflow"), 1528323457);
+    programInfos.add(programInfo);
+    programInfo = new ProgramInfo(new ProgramId("default", "another_sample_import",
+            ProgramType.WORKFLOW, "DataPipelineWorkflow"), 1528313457);
+    programInfos.add(programInfo);
+
+    List<FieldOperationInfo> fieldOperationInfos = new ArrayList<>();
+    EndPoint sourceEndPoint = EndPoint.of("default", "file");
+    EndPoint targetEndPoint = EndPoint.of("default", "another_file");
+    FieldOperationInfo operationInfo = new FieldOperationInfo("sample_pipeline.stage1.read", "read",
+            "reading a file", new FieldOperationInput(Collections.singletonList(sourceEndPoint), null),
+            new FieldOperationOutput(null, Collections.singletonList("body")));
+    fieldOperationInfos.add(operationInfo);
+    operationInfo = new FieldOperationInfo("sample_pipeline.stage2.parse", "parse",
+            "parsing a comma separated field",
+            new FieldOperationInput(null,
+                    Collections.singletonList(InputField.of("sample_pipeline.stage1.read", "body"))),
+            new FieldOperationOutput(null, Collections.singletonList("address")));
+    fieldOperationInfos.add(operationInfo);
+    operationInfo = new FieldOperationInfo("sample_pipeline.stage3.normalize",
+            "normalize", "normalizing field",
+            new FieldOperationInput(null,
+                    Collections.singletonList(InputField.of("sample_pipeline.stage2.parse", "address"))),
+            new FieldOperationOutput(null, Collections.singletonList("address")));
+    fieldOperationInfos.add(operationInfo);
+    operationInfo = new FieldOperationInfo("sample_pipeline.stage4.write", "write",
+            "write to a file",
+            new FieldOperationInput(null,
+                    Collections.singletonList(InputField.of("sample_pipeline.stage3.normalize",
+                            "address"))), new FieldOperationOutput(Collections.singletonList(targetEndPoint),
+            null));
+    fieldOperationInfos.add(operationInfo);
+
+    List<ProgramFieldOperationInfo> programFieldOperationInfos = new ArrayList<>();
+    for (int i = 0; i < 50; i++) {
+      programFieldOperationInfos.add(new ProgramFieldOperationInfo(programInfos, fieldOperationInfos));
+    }
+
+    FieldLineageDetails details = new FieldLineageDetails(programFieldOperationInfos, null);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }
 
   @GET
