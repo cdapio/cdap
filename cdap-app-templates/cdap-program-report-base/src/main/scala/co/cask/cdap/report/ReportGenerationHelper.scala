@@ -26,13 +26,12 @@ import co.cask.cdap.report.util.Constants
 import com.databricks.spark._
 import com.google.gson._
 import org.apache.avro.mapred._
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, max, min}
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.twill.filesystem.Location
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -86,28 +85,27 @@ object ReportGenerationHelper {
     * The final [[org.apache.spark.sql.DataFrame]] will be written to a JSON file at the given output location,
     * accompanied by an empty _SUCCESS file indicating success.
     *
-    * @param spark the spark session to run report generation with
+    * @param sql the SQL context to run report generation with
     * @param request the report generation request
     * @param inputURIs URIs of the avro files containing program run meta records
     * @param reportIdDir location of the directory where the report files directory, COUNT file,
-    *                      and _SUCCESS file will be created.
+    *                    and _SUCCESS file will be created.
     * @throws java.io.IOException when fails to write to the COUNT or _SUCCESS file
     */
   @throws(classOf[IOException])
-  def generateReport(spark: SparkSession, request: ReportGenerationRequest, inputURIs: java.util.List[String],
+  def generateReport(sql: SQLContext, request: ReportGenerationRequest, inputURIs: java.util.List[String],
                      reportIdDir: Location): Unit = {
-    import spark.implicits._
-    val df = spark.read.format("com.databricks.spark.avro").load(inputURIs: _*)
+    val df = SparkCompat.readAvroFiles(sql, inputURIs)
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
-    // Create an aggregator that aggregates grouped data into a column with data type Record.
-    val aggCol = new RecordAggregator().toColumn.alias(RECORD_COL).as[Record]
+
     // TODO: configure partitions. The default number of partitions is 200
-    // Group the program run meta records by program run Id's and aggregate the grouped data with aggCol.
-    // The initial aggregated DataFrame will have two columns:
+    // Group the program run meta records by program runId's and aggregate the grouped data to get an
+    // aggregated DataFrame with two columns: column "run" with runId's and column "record" with aggregation results
+    val initAggDf = SparkCompat.aggregate(sql, df)
     // With every unique field in reportFields and additionalFields, construct and add new columns from record column
     // in aggregated DataFrame, in addition to the two initial columns "run" and "record"
-    val aggDf = (reportFields ++ additionalFields).foldLeft(df.groupBy(Constants.RUN).agg(aggCol))((df, fieldName) =>
+    val aggDf = (reportFields ++ additionalFields).foldLeft(initAggDf)((df, fieldName) =>
       df.withColumn(fieldName, df(RECORD_COL).getField(fieldName)))
     // Filter the aggregated DataFrame
     var resultDf = aggDf.filter(getFilter(request, aggDf))
@@ -182,7 +180,7 @@ object ReportGenerationHelper {
       new NamespaceAggregate(r.getAs[String](Constants.NAMESPACE), r.getAs[Long](COUNT_COL)))
     // group the report details by artifact information including artifact name, version and scope,
     // and then collect the count and the corresponding unique artifact information
-    val artifacts =  ArrayBuffer[ArtifactAggregate]()
+    val artifacts = ArrayBuffer[ArtifactAggregate]()
     df.groupBy(Constants.ARTIFACT_NAME, Constants.ARTIFACT_VERSION, Constants.ARTIFACT_SCOPE).count.collect
       .foreach(r => artifacts += new ArtifactAggregate(r.getAs[String](Constants.ARTIFACT_NAME),
         r.getAs[String](Constants.ARTIFACT_VERSION), r.getAs[String](Constants.ARTIFACT_SCOPE),

@@ -46,7 +46,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.SparkSession;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -114,12 +113,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     private static final long VALID_DURATION_MILLIS = TimeUnit.DAYS.toMillis(2);
 
     private int readLimit;
-    private SparkSession sparkSession;
+    private SQLContext sqlContext;
 
     @Override
     public void initialize(SparkHttpServiceContext context) throws Exception {
       super.initialize(context);
-      sparkSession = new SQLContext(getContext().getSparkContext()).sparkSession();
+      sqlContext = new SQLContext(getContext().getSparkContext());
       String readLimitString = context.getRuntimeArguments().get(READ_LIMIT);
       readLimit = readLimitString == null ? 10000 : Integer.valueOf(readLimitString);
     }
@@ -511,7 +510,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
       // TODO: [CDAP-13290] reports should be in avro format instead of json text;
       // TODO: [CDAP-13291] need to support reading multiple report files
-      Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".json")).findFirst();
+      Optional<Location> reportFile =
+              reportDir.list().stream().filter(l -> l.getName().startsWith("part-r-")).findFirst();
       // TODO: [CDAP-13292] use cache to store content of the reports
       // Read the report file and add lines starting from the position of offset to the result until the result reaches
       // the limit
@@ -661,7 +661,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.debug("Filtered meta files {}", metaFiles);
       // Generate the report with the request and program run meta files
-      ReportGenerationHelper.generateReport(sparkSession, reportRequest, metaFilePaths, reportIdDir);
+      ReportGenerationHelper.generateReport(sqlContext, reportRequest, metaFilePaths, reportIdDir);
     }
 
     /**
