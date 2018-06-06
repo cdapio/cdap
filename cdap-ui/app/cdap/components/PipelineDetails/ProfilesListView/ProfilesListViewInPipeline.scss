@@ -58,7 +58,6 @@
         padding: 3px 0;
         // FIXME: This should be moved to the common styles. We should use the same
         // pattern in all the tables.
-        &:hover,
         &.active {
           background: $yellow-02-lighter;
         }
