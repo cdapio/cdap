@@ -329,9 +329,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     // Suspend the Workflow
     suspendWorkflow(programId, runId, 200);
 
-    // Workflow status should be SUSPENDED
-    waitState(programId, ProgramStatus.STOPPED.name());
-
     // Meta store information for this Workflow should reflect suspended run
     verifyProgramRuns(programId, ProgramRunStatus.SUSPENDED);
 
@@ -367,9 +364,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     // Suspend the Workflow
     suspendWorkflow(programId, runId, 200);
-
-    // Status of the Workflow should be suspended
-    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Store should reflect the suspended status of the Workflow
     verifyProgramRuns(programId, ProgramRunStatus.SUSPENDED);
@@ -420,7 +414,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     suspendWorkflow(Id.Program.fromEntityId(workflow), runId, 200);
 
     // Workflow status should be SUSPENDED
-    waitState(workflow, ProgramStatus.STOPPED.name());
+    verifyProgramRuns(workflow, ProgramRunStatus.SUSPENDED);
 
     stopProgram(Id.Program.fromEntityId(workflow), runId, 200);
     waitState(workflow, ProgramStatus.STOPPED.name());

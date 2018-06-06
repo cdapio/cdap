@@ -65,6 +65,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -167,18 +168,29 @@ public class ProgramLifecycleService {
       throw new NotFoundException(programId);
     }
 
-    // TODO: CDAP-13296 read these runs in a single transaction
-    // A program is RUNNING if there are any RUNNING run records
-    if (!store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
-      return ProgramStatus.RUNNING;
-    }
+    return getProgramStatus(store.getActiveRuns(programId).values());
+  }
 
-    // A program is starting if there are any PENDING or STARTING run records and no RUNNING run records
-    if (!store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty() ||
-      !store.getRuns(programId, ProgramRunStatus.PENDING, 0, Long.MAX_VALUE, 1).isEmpty()) {
-      return ProgramStatus.STARTING;
+  /**
+   * Returns the program status based on the active run records of a program.
+   * A program is RUNNING if there are any RUNNING or SUSPENDED run records.
+   * A program is starting if there are any PENDING or STARTING run records and no RUNNING run records.
+   * Otherwise, it is STOPPED.
+   *
+   * @param runRecords run records for the program
+   * @return the program status
+   */
+  @VisibleForTesting
+  static ProgramStatus getProgramStatus(Collection<RunRecordMeta> runRecords) {
+    boolean hasStarting = false;
+    for (RunRecordMeta runRecord : runRecords) {
+      ProgramRunStatus runStatus = runRecord.getStatus();
+      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED) {
+        return ProgramStatus.RUNNING;
+      }
+      hasStarting = hasStarting || runStatus == ProgramRunStatus.STARTING || runStatus == ProgramRunStatus.PENDING;
     }
-    return ProgramStatus.STOPPED;
+    return hasStarting ? ProgramStatus.STARTING : ProgramStatus.STOPPED;
   }
 
   /**

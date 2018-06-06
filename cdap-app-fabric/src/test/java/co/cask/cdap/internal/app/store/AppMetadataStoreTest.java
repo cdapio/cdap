@@ -45,6 +45,8 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,10 +54,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Test AppMetadataStore.
@@ -477,6 +482,155 @@ public class AppMetadataStoreTest {
       }
       Assert.assertEquals(expectedHalf, actualHalf);
     });
+  }
+
+  @Test
+  public void testGetActiveRuns() throws Exception {
+    AppMetadataStore store = getMetadataStore("testGetActiveRuns");
+    TransactionExecutor txnl = getTxExecutor(store);
+
+    // write a run record for each state for two programs in two apps in two namespaces
+    String app1 = "app1";
+    String app2 = "app2";
+    String program1 = "prog1";
+    String program2 = "prog2";
+
+    Collection<NamespaceId> namespaces = Arrays.asList(new NamespaceId("ns1"), new NamespaceId("ns2"));
+    Collection<ApplicationId> apps = namespaces.stream()
+      .flatMap(ns -> Stream.of(ns.app(app1), ns.app(app2)))
+      .collect(Collectors.toList());
+    Collection<ProgramId> programs = apps.stream()
+      .flatMap(app -> Stream.of(app.mr(program1), app.mr(program2)))
+      .collect(Collectors.toList());
+
+    for (ProgramId programId : programs) {
+      txnl.execute(() -> {
+        // one run in pending state
+        ProgramRunId runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+
+        // one run in starting state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStart(runId, UUID.randomUUID().toString(), Collections.emptyMap(),
+                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+        // one run in running state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        String twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+        // one in suspended state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramSuspend(runId, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                   System.currentTimeMillis());
+
+        // one run in each stopped state
+        for (ProgramRunStatus runStatus : ProgramRunStatus.values()) {
+          if (!runStatus.isEndState()) {
+            continue;
+          }
+          runId = programId.run(RunIds.generate());
+          store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+                                          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+          store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+          twillRunId = UUID.randomUUID().toString();
+          store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+          store.recordProgramStop(runId, System.currentTimeMillis(), runStatus, null,
+                                  AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        }
+      });
+    }
+
+    Set<ProgramRunStatus> activeStates = new HashSet<>();
+    activeStates.add(ProgramRunStatus.PENDING);
+    activeStates.add(ProgramRunStatus.STARTING);
+    activeStates.add(ProgramRunStatus.RUNNING);
+    activeStates.add(ProgramRunStatus.SUSPENDED);
+    // check active runs per namespace
+    for (NamespaceId namespace : namespaces) {
+      txnl.execute(() -> {
+        Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(namespace);
+
+        // we expect 4 runs per program, with 4 programs in each namespace
+        Map<ProgramId, Set<ProgramRunStatus>> expected = new HashMap<>();
+        expected.put(namespace.app(app1).mr(program1), activeStates);
+        expected.put(namespace.app(app1).mr(program2), activeStates);
+        expected.put(namespace.app(app2).mr(program1), activeStates);
+        expected.put(namespace.app(app2).mr(program2), activeStates);
+
+        Map<ProgramId, Set<ProgramRunStatus>> actual = new HashMap<>();
+        actual.put(namespace.app(app1).mr(program1), new HashSet<>());
+        actual.put(namespace.app(app1).mr(program2), new HashSet<>());
+        actual.put(namespace.app(app2).mr(program1), new HashSet<>());
+        actual.put(namespace.app(app2).mr(program2), new HashSet<>());
+        for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
+          ProgramId programId = activeRun.getKey().getParent();
+          Assert.assertTrue("Unexpected program returned: " + programId,
+                            actual.containsKey(activeRun.getKey().getParent()));
+          actual.get(programId).add(activeRun.getValue().getStatus());
+        }
+
+        Assert.assertEquals(expected, actual);
+      });
+    }
+
+    // check active runs per app
+    for (ApplicationId app : apps) {
+      txnl.execute(() -> {
+        Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(app);
+
+        // we expect 3 runs per program, with 2 programs in each app
+        Map<ProgramId, Set<ProgramRunStatus>> expected = new HashMap<>();
+        expected.put(app.mr(program1), activeStates);
+        expected.put(app.mr(program2), activeStates);
+
+        Map<ProgramId, Set<ProgramRunStatus>> actual = new HashMap<>();
+        actual.put(app.mr(program1), new HashSet<>());
+        actual.put(app.mr(program2), new HashSet<>());
+        for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
+          ProgramId programId = activeRun.getKey().getParent();
+          Assert.assertTrue("Unexpected program returned: " + programId,
+                            actual.containsKey(activeRun.getKey().getParent()));
+          actual.get(programId).add(activeRun.getValue().getStatus());
+        }
+
+        Assert.assertEquals(expected, actual);
+      });
+    }
+
+    // check active runs per program
+    for (ProgramId program : programs) {
+      txnl.execute(() -> {
+        Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(program);
+
+        Set<ProgramRunStatus> actual = new HashSet<>();
+        for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
+          Assert.assertEquals(program, activeRun.getKey().getParent());
+          actual.add(activeRun.getValue().getStatus());
+        }
+
+        Assert.assertEquals(activeStates, actual);
+      });
+    }
   }
 
   private static class CountingTicker extends Ticker {
