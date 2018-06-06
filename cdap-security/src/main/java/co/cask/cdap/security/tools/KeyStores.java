@@ -38,6 +38,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
@@ -46,6 +47,7 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.Enumeration;
 
 /**
  * Utility class with methods for generating a X.509 self signed certificate
@@ -82,15 +84,25 @@ public final class KeyStores {
    * @return Java keystore which has a self signed X.509 certificate
    */
   public static KeyStore generatedCertKeyStore(SConfiguration sConf, String password) {
+    return generatedCertKeyStore(sConf.getInt(Constants.Security.SSL.CERT_VALIDITY, VALIDITY), password);
+  }
+
+  /**
+   * Create a Java key store with a stored self-signed certificate.
+   *
+   * @param validityDays number of days that the cert will be valid for
+   * @param password the password to protect the generated key store
+   * @return Java keystore which has a self signed X.509 certificate
+   */
+  public static KeyStore generatedCertKeyStore(int validityDays, String password) {
     try {
       KeyPairGenerator keyGen = KeyPairGenerator.getInstance(KEY_PAIR_ALGORITHM);
       SecureRandom random = SecureRandom.getInstance(SECURE_RANDOM_ALGORITHM, SECURE_RANDOM_PROVIDER);
       keyGen.initialize(KEY_SIZE, random);
       // generate a key pair
       KeyPair pair = keyGen.generateKeyPair();
-      int validity = sConf.getInt(Constants.Security.SSL.CERT_VALIDITY, VALIDITY);
 
-      X509Certificate cert = getCertificate(DISTINGUISHED_NAME, pair, validity, SIGNATURE_ALGORITHM);
+      X509Certificate cert = getCertificate(DISTINGUISHED_NAME, pair, validityDays, SIGNATURE_ALGORITHM);
 
       KeyStore keyStore = KeyStore.getInstance(SSL_KEYSTORE_TYPE);
       keyStore.load(null, password.toCharArray());
@@ -100,6 +112,29 @@ public final class KeyStores {
     } catch (Exception e) {
       throw new RuntimeException("SSL is enabled but a key store file could not be created. A keystore is required " +
                                    "for SSL to be used.", e);
+    }
+  }
+
+  /**
+   * Creates a new trust store that contains all the public certificates from the given {@link KeyStore}.
+   *
+   * @param keyStore the {@link KeyStore} for extracting public certificates
+   * @return a new instance of {@link KeyStore} that only contains public certificates
+   */
+  public static KeyStore createTrustStore(KeyStore keyStore) {
+    try {
+      KeyStore trustStore = KeyStore.getInstance(SSL_KEYSTORE_TYPE);
+      trustStore.load(null);
+
+      Enumeration<String> aliases = keyStore.aliases();
+      while (aliases.hasMoreElements()) {
+        String alias = aliases.nextElement();
+        trustStore.setCertificateEntry(alias, keyStore.getCertificate(alias));
+      }
+
+      return trustStore;
+    } catch (CertificateException | NoSuchAlgorithmException | IOException | KeyStoreException e) {
+      throw new RuntimeException("Failed to create trust store from the given key store", e);
     }
   }
 

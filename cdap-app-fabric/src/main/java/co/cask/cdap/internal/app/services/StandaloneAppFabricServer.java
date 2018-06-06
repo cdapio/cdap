@@ -77,7 +77,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    ProvisioningService provisioningService) {
     super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
-          programNotificationSubscriberService, programLifecycleService, streamCoordinatorClient, servicesNames,
+          programNotificationSubscriberService, streamCoordinatorClient, servicesNames,
           handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, null, routeStore,
           coreSchedulerService, profileStore, provisioningService);
     this.metricStore = metricStore;

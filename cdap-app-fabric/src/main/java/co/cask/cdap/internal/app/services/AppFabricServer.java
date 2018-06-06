@@ -38,8 +38,8 @@ import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
+import co.cask.cdap.security.tools.HttpsEnabler;
 import co.cask.cdap.security.tools.KeyStores;
-import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -108,7 +108,6 @@ public class AppFabricServer extends AbstractIdleService {
                          RunRecordCorrectorService runRecordCorrectorService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
-                         ProgramLifecycleService programLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -192,9 +191,7 @@ public class AppFabricServer extends AbstractIdleService {
 
       String password = KeyStores.generateRandomPassword();
       KeyStore ks = KeyStores.generatedCertKeyStore(sConf, password);
-
-      SSLHandlerFactory sslHandlerFactory = new SSLHandlerFactory(ks, password);
-      httpServiceBuilder.enableSSL(sslHandlerFactory);
+      new HttpsEnabler().setKeyStore(ks, password::toCharArray).enable(httpServiceBuilder);
     } else {
       httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
     }
