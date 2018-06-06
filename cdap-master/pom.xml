@@ -606,7 +606,8 @@
                 </goals>
               </execution>
               <!--
-                Rename cdap-data-pipeline2_2.11 to cdap-data-pipeline and cdap-data-streams2_2.11 to cdap-data-streams
+                Rename cdap-data-pipeline2_2.11 to cdap-data-pipeline, cdap-data-streams2_2.11 to cdap-data-streams,
+                and cdap-program-report2_2.11 to cdap-program-report.
                 This is may be removed if the UI supports different artifacts for each pipeline type.
               -->
               <execution>
@@ -619,6 +620,7 @@
                   <target>
                     <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline-${project.version}.jar" />
                     <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-program-report-2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-program-report-${project.version}.jar" />
                   </target>
                 </configuration>
               </execution>

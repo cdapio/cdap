@@ -510,8 +510,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
       // TODO: [CDAP-13290] reports should be in avro format instead of json text;
       // TODO: [CDAP-13291] need to support reading multiple report files
+      // In Spark1, report file names start with "part-r-", but in Spark 2, report filenames end with ".json"
       Optional<Location> reportFile =
-              reportDir.list().stream().filter(l -> l.getName().startsWith("part-r-")).findFirst();
+              reportDir.list().stream().filter(l -> l.getName().startsWith("part-r-") || l.getName().endsWith(".json"))
+                .findFirst();
       // TODO: [CDAP-13292] use cache to store content of the reports
       // Read the report file and add lines starting from the position of offset to the result until the result reaches
       // the limit
