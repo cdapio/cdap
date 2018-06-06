@@ -362,7 +362,7 @@ public class TestBase {
       // but does not remove it entirely
       namespaceAdmin.create(NamespaceMeta.DEFAULT);
       ProfileStore profileStore = injector.getInstance(ProfileStore.class);
-      profileStore.add(ProfileId.DEFAULT, Profile.DEFAULT);
+      profileStore.saveProfile(ProfileId.DEFAULT, Profile.DEFAULT);
     }
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
