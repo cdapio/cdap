@@ -703,13 +703,13 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-rg</id>
+                <id>copy-program-report-app-spark1_2.10</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/spark1_2.10</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -717,6 +717,26 @@
                       </directory>
                       <includes>
                         <include>cdap-program-report-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-program-report-app-spark2_2.11</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/spark2_2.11</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report2_2.11/target
+                      </directory>
+                      <includes>
+                        <include>cdap-program-report2_2.11-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
