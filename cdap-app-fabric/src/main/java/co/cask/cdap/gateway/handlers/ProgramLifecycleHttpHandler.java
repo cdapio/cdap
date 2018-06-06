@@ -28,7 +28,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
@@ -149,7 +148,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type BATCH_STARTS_TYPE = new TypeToken<List<BatchProgramStart>>() { }.getType();
 
   private static final List<Constraint> NO_CONSTRAINTS = Collections.emptyList();
-  private static final Map<String, String> EMPTY_PROPERTIES = new HashMap<>();
 
   private static final String SCHEDULES = "schedules";
 
@@ -290,12 +288,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOfCategoryName(type);
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e);
-    }
+    ProgramType programType = getProgramType(type);
     ProgramId program = applicationId.program(programType, programId);
     ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
 
@@ -314,12 +307,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
                                   @PathParam("run-id") String runId) throws Exception {
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOfCategoryName(type);
-     } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e);
-    }
+    ProgramType programType = getProgramType(type);
     ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
     lifecycleService.stop(program, runId);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -367,13 +355,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOfCategoryName(type);
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Unknown program type '%s'", type), e);
-    }
-
+    ProgramType programType = getProgramType(type);
     ProgramId program = applicationId.program(programType, programId);
     Map<String, String> args = decodeArguments(request);
     // we have already validated that the action is valid
@@ -432,13 +414,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
-    throws Exception {
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) throws Exception {
     ProgramType programType = getProgramType(type);
-    if (programType == null || programType == ProgramType.WEBAPP) {
-      throw new NotFoundException(String.format("Program history is not supported for program type '%s'.",
-                                                type));
-    }
+
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
 
@@ -459,7 +437,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-name") String appName,
                              @PathParam("program-type") String type,
                              @PathParam("program-name") String programName,
-                             @PathParam("run-id") String runid) throws NotFoundException {
+                             @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
     programRunRecord(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName, runid);
   }
 
@@ -474,12 +452,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-version") String appVersion,
                                @PathParam("program-type") String type,
                                @PathParam("program-name") String programName,
-                               @PathParam("run-id") String runid) throws NotFoundException {
+                               @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
     ProgramType programType = getProgramType(type);
-    if (programType == null || programType == ProgramType.WEBAPP) {
-      throw new NotFoundException(String.format("Program run record is not supported for program type '%s'.",
-                                                programType));
-    }
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     RunRecordMeta runRecordMeta = store.getRun(progId.run(runid));
     if (runRecordMeta != null) {
@@ -555,21 +529,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void getProgramIdRuntimeArgs(ProgramId programId, HttpResponder responder) throws Exception {
-    ProgramType programType = programId.getType();
-    if (programType == null || programType == ProgramType.WEBAPP) {
-      throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +
-                                                  "type '%s'.", programType));
-    }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getRuntimeArgs(programId)));
   }
 
   private void saveProgramIdRuntimeArgs(ProgramId programId, FullHttpRequest request,
                                         HttpResponder responder) throws Exception {
-    ProgramType programType = programId.getType();
-    if (programType == null || programType == ProgramType.WEBAPP) {
-      throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
-                                                  "type '%s'.", programType));
-    }
     lifecycleService.saveRuntimeArgs(programId, decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -592,10 +556,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                    @PathParam("program-type") String type,
                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
-    if (programType == null) {
-      throw new MethodNotAllowedException(request.method(), request.uri());
-    }
-
     ApplicationId application = new ApplicationId(namespaceId, appName, appVersion);
     ProgramId programId = application.program(programType, programName);
     ProgramSpecification specification = lifecycleService.getProgramSpecification(programId);
@@ -644,14 +604,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Must specify trigger-program-name as a query param");
     }
 
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOfCategoryName(triggerProgramType);
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e.getMessage(), e);
-    }
-
-
+    ProgramType programType = getProgramType(triggerProgramType);
     ProgramScheduleStatus programScheduleStatus;
     try {
       programScheduleStatus = scheduleStatus == null ? null : ProgramScheduleStatus.valueOf(scheduleStatus);
@@ -848,7 +801,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
-    Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), EMPTY_PROPERTIES);
+    Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), Collections.emptyMap());
     List<? extends Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
     long timeoutMillis =
       Objects.firstNonNull(scheduleFromRequest.getTimeoutMillis(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
@@ -1519,15 +1472,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @SuppressWarnings("unused")
   public void liveInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                        @PathParam("app-id") String appId, @PathParam("program-category") String programCategory,
-                       @PathParam("program-id") String programId) {
+                       @PathParam("program-id") String programId) throws BadRequestException {
     ProgramType type = getProgramType(programCategory);
-    if (type == null) {
-      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED,
-                           String.format("Live-info not supported for program type '%s'", programCategory));
-      return;
-    }
-    ProgramId program =
-      new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programCategory), programId);
+    ProgramId program = new ProgramId(namespaceId, appId, type, programId);
     getLiveInfo(responder, program, runtimeService);
   }
 
@@ -1614,7 +1561,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("service-type") String serviceType,
                                      @PathParam("program-name") String programName) throws Exception {
     // Currently we only support services and sparks as the service-type
-    ProgramType programType = ProgramType.valueOfCategoryName(serviceType);
+    ProgramType programType = getProgramType(serviceType);
     if (!ServiceDiscoverable.getUserServiceTypes().contains(programType)) {
       throw new BadRequestException("Only service or spark is support for service availability check");
     }
@@ -1851,9 +1798,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                String appVersion, String type, String programName,
                                @Nullable String component, String runId) throws Exception {
     ProgramType programType = getProgramType(type);
-    if (programType == null) {
-      throw new BadRequestException("Invalid program type provided");
-    }
     try {
       // we are decoding the body to Map<String, String> instead of Map<String, LogEntry.Level> here since Gson will
       // serialize invalid enum values to null, which is allowed for log level, instead of throw an Exception.
@@ -1874,9 +1818,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               String appVersion, String type, String programName,
                               @Nullable String component, String runId) throws Exception {
     ProgramType programType = getProgramType(type);
-    if (programType == null) {
-      throw new BadRequestException("Invalid program type provided");
-    }
     try {
       Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
       lifecycleService.resetProgramLogLevels(
@@ -1903,5 +1844,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw Throwables.propagate(e);
     }
     return namespaceId;
+  }
+
+  /**
+   * Parses the give program type into {@link ProgramType} object.
+   *
+   * @param programType the program type to parse.
+   *
+   * @throws BadRequestException if the given program type is not a valid {@link ProgramType}.
+   */
+  private ProgramType getProgramType(String programType) throws BadRequestException {
+    try {
+      return ProgramType.valueOfCategoryName(programType);
+    } catch (Exception e) {
+      throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
+    }
   }
 }

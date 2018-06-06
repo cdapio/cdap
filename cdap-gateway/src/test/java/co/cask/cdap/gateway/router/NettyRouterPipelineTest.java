@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,6 +71,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
@@ -86,12 +87,11 @@ public class NettyRouterPipelineTest {
   private static final String HOSTNAME = "127.0.0.1";
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-  private static final String GATEWAY_NAME = Constants.Router.GATEWAY_DISCOVERY_NAME;
   private static final String SERVICE_NAME = Constants.Service.APP_FABRIC_HTTP;
 
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
-  public static final RouterResource ROUTER = new RouterResource(HOSTNAME, DISCOVERY_SERVICE);
-  public static final ServerResource GATEWAY_SERVER = new ServerResource(HOSTNAME, DISCOVERY_SERVICE, SERVICE_NAME);
+  private static final RouterResource ROUTER = new RouterResource(HOSTNAME, DISCOVERY_SERVICE);
+  static final ServerResource GATEWAY_SERVER = new ServerResource(HOSTNAME, DISCOVERY_SERVICE, SERVICE_NAME);
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -121,8 +121,9 @@ public class NettyRouterPipelineTest {
       configBuilder.build());
 
     byte [] requestBody = generatePostData();
+    InetSocketAddress address = ROUTER.getRouterAddress();
     final Request request = new RequestBuilder("POST")
-      .setUrl(String.format("http://%s:%d%s", HOSTNAME, ROUTER.getServiceMap().get(GATEWAY_NAME), "/v1/upload"))
+      .setUrl(String.format("http://%s:%d%s", address.getHostName(), address.getPort(), "/v1/upload"))
       .setContentLength(requestBody.length)
       .setBody(new ByteEntityWriter(requestBody))
       .build();
@@ -130,13 +131,12 @@ public class NettyRouterPipelineTest {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
       @Override
-      public Void onCompleted(Response response) throws Exception {
+      public Void onCompleted(Response response) {
         return null;
       }
 
       @Override
       public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
-        //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(10));
         content.writeTo(byteArrayOutputStream);
         return super.onBodyPartReceived(content);
       }
@@ -162,13 +162,13 @@ public class NettyRouterPipelineTest {
       .group(eventGroup)
       .handler(new ChannelInitializer<SocketChannel>() {
         @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
+        protected void initChannel(SocketChannel ch) {
           ChannelPipeline pipeline = ch.pipeline();
           pipeline.addLast("codec", new HttpClientCodec());
           pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
           pipeline.addLast("handler", new ChannelInboundHandlerAdapter() {
             @Override
-            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            public void channelRead(ChannelHandlerContext ctx, Object msg) {
               if (msg instanceof HttpResponse) {
                 responseStatuses.add(((HttpResponse) msg).status());
               }
@@ -179,7 +179,8 @@ public class NettyRouterPipelineTest {
       });
 
     // Create a connection and make five consecutive HTTP call without waiting for the first to respond
-    Channel channel = bootstrap.connect(HOSTNAME, ROUTER.getServiceMap().get(GATEWAY_NAME)).sync().channel();
+    InetSocketAddress address = ROUTER.getRouterAddress();
+    Channel channel = bootstrap.connect(address.getHostName(), address.getPort()).sync().channel();
     for (int i = 0; i < 5; i++) {
       HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,
                                                        HttpMethod.GET, "/v1/sleep?sleepMillis=3000");
@@ -205,8 +206,8 @@ public class NettyRouterPipelineTest {
   //Deploy word count app n times.
   private void deploy(int num) throws Exception {
 
-    String path = String.format("http://%s:%d/v1/deploy",
-                                HOSTNAME, ROUTER.getServiceMap().get(GATEWAY_NAME));
+    InetSocketAddress address = ROUTER.getRouterAddress();
+    String path = String.format("http://%s:%d/v1/deploy", address.getHostName(), address.getPort());
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location programJar = AppJarHelper.createDeploymentJar(lf, AppWritingtoStream.class);

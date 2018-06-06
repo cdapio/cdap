@@ -22,12 +22,12 @@ import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import org.apache.hadoop.yarn.webapp.NotFoundException;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 

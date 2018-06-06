@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.common.http.HttpRequests;
-import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -42,9 +41,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.security.SecureRandom;
-import java.util.Map;
 import javax.net.SocketFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -98,7 +97,6 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
   private static class HttpsRouterService extends RouterService {
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
 
@@ -134,10 +132,6 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
                                                 new RouterPathLookup(), routeStore),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
-
-      for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
-        serviceMap.put(entry.getValue(), entry.getKey());
-      }
     }
 
     @Override
@@ -145,10 +139,8 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       router.stopAndWait();
     }
 
-    @Override
-    public int lookupService(String serviceName) {
-      return serviceMap.get(serviceName);
+    public InetSocketAddress getRouterAddress() {
+      return router.getBoundAddress().orElseThrow(IllegalStateException::new);
     }
   }
-
 }

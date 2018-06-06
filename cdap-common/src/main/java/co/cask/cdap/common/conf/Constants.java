@@ -573,16 +573,8 @@ public final class Constants {
     public static final String DEFAULT_ROUTER_PORT = "11015";
 
     public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
-    public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
-  }
-
-  /**
-   * Webapp Configuration.
-   */
-  public static final class Webapp {
-    public static final String WEBAPP_DIR = "webapp";
   }
 
   /**

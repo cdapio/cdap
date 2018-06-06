@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
-import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -32,6 +31,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.rules.ExternalResource;
 
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,12 +39,11 @@ class RouterResource extends ExternalResource {
   private final String hostname;
   private final DiscoveryService discoveryService;
   private final Map<String, String> additionalConfig;
-  private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
   private NettyRouter router;
 
   RouterResource(String hostname, DiscoveryService discoveryService) {
-    this(hostname, discoveryService, new HashMap<String, String>());
+    this(hostname, discoveryService, new HashMap<>());
   }
 
   RouterResource(String hostname, DiscoveryService discoveryService, Map<String, String> additionalConfig) {
@@ -54,7 +53,7 @@ class RouterResource extends ExternalResource {
   }
 
   @Override
-  protected void before() throws Throwable {
+  protected void before() {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
                                              new DiscoveryRuntimeModule().getInMemoryModules(),
@@ -74,10 +73,6 @@ class RouterResource extends ExternalResource {
                                               new RouterPathLookup(), routeStore),
                       new MockTokenValidator("failme"), accessTokenTransformer, discoveryServiceClient);
     router.startAndWait();
-
-    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
-      serviceMap.put(entry.getValue(), entry.getKey());
-    }
   }
 
   @Override
@@ -85,7 +80,7 @@ class RouterResource extends ExternalResource {
     router.stopAndWait();
   }
 
-  public Map<String, Integer> getServiceMap() {
-    return serviceMap;
+  InetSocketAddress getRouterAddress() {
+    return router.getBoundAddress().orElseThrow(IllegalStateException::new);
   }
 }

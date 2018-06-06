@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -115,7 +115,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
 
     // no auto grant now, the list will be empty for all program types
     for (ProgramType type : ProgramType.values()) {
-      if (!type.equals(ProgramType.CUSTOM_ACTION) && !type.equals(ProgramType.WEBAPP)) {
+      if (!type.equals(ProgramType.CUSTOM_ACTION)) {
         Assert.assertTrue(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());
       }
     }
@@ -144,7 +144,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
                      Collections.singleton(Action.EXECUTE));
 
     for (ProgramType type : ProgramType.values()) {
-      if (!type.equals(ProgramType.CUSTOM_ACTION) && !type.equals(ProgramType.WEBAPP)) {
+      if (!type.equals(ProgramType.CUSTOM_ACTION)) {
         Assert.assertFalse(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());
         SecurityRequestContext.setUserId("bob");
         Assert.assertTrue(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());
