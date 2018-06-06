@@ -16,9 +16,7 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -70,13 +68,7 @@ public final class DefaultEntityEnsurer extends AbstractService {
         }
 
         try {
-          try {
-            profileStore.getProfile(ProfileId.DEFAULT);
-          } catch (NotFoundException e) {
-            profileStore.add(ProfileId.DEFAULT, Profile.DEFAULT);
-          }
-        } catch (AlreadyExistsException e) {
-          // don't expect this to happen, but it already exists so we're ok.
+          profileStore.createIfNotExists(ProfileId.DEFAULT, Profile.DEFAULT);
         } catch (Exception e) {
           failed = true;
           if (failureException == null) {

@@ -94,8 +94,8 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expectedList.size(), profiles.size());
     Assert.assertEquals(expectedList, new HashSet<>(profiles));
 
-    // adding the same profile should get a 409
-    putProfile(NamespaceId.DEFAULT, expected.getName(), expected, 409);
+    // adding the same profile should still succeed
+    putProfile(NamespaceId.DEFAULT, expected.getName(), expected, 200);
 
     // get non-existing profile should get a 404
     deleteProfile(NamespaceId.DEFAULT, "nonExisting", 404);
