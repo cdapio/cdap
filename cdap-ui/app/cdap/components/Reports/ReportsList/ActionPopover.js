@@ -75,7 +75,19 @@ export default class ActionPopover extends Component {
         if (request.filters && request.filters.length > 0) {
           request.filters.forEach((filter) => {
             if (filter.fieldName === 'status') {
-              payload.statusSelections = filter.whitelist;
+              // collapse status STOPPED and KILLED to STOPPED
+              let statusSelections = filter.whitelist;
+              let killedIndex = statusSelections.indexOf('KILLED');
+
+              if (killedIndex !== -1) {
+                statusSelections.splice(killedIndex, 1);
+
+                if (statusSelections.indexOf('STOPPED') === -1) {
+                  statusSelections.push('STOPPED');
+                }
+              }
+
+              payload.statusSelections = statusSelections;
             } else if (filter.fieldName === 'artifact') {
               if (filter.whitelist) {
                 payload.selections.pipelines = true;

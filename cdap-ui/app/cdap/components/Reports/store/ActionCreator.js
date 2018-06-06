@@ -87,7 +87,12 @@ function getFilters() {
   }
 
   // status
-  let statusSelections = ReportsStore.getState().status.statusSelections;
+  let statusSelections = [...ReportsStore.getState().status.statusSelections];
+
+  // expand status STOPPED with STOPPED and KILLED
+  if (statusSelections.indexOf('STOPPED') !== -1) {
+    statusSelections.push('KILLED');
+  }
 
   filters.push({
     fieldName: 'status',
