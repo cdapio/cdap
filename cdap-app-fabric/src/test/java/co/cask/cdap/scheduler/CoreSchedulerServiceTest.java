@@ -37,6 +37,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -52,6 +53,7 @@ import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
@@ -77,11 +79,13 @@ import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -424,6 +428,36 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // The value of TRIGGERED_TOKEN_KEY should be ANOTHER_TOKEN_VALUE from the triggering workflow
     Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_TOKEN_VALUE,
                         tokenData.get(AppWithMultipleSchedules.TRIGGERED_TOKEN_KEY).get(0).getValue());
+  }
+
+  @Test
+  public void testAddScheduleWithDisabledProfile() throws Exception {
+    // put my profile and by default it is enabled
+    ProfileId profileId = NS_ID.profile("MyProfile");
+    putProfile(profileId, Profile.DEFAULT, 200);
+
+    // add a schedule, it should succeed since the profile is enabled.
+    ProgramSchedule tsched1 =
+      new ProgramSchedule("tsched1", "one time schedule", PROG1_ID,
+                          ImmutableMap.of("prop1", "nn", SystemArguments.PROFILE_NAME, "USER:MyProfile"),
+                          new TimeTrigger("* * ? * 1"), ImmutableList.<Constraint>of());
+    scheduler.addSchedule(tsched1);
+    Assert.assertEquals(Collections.singletonList(tsched1), scheduler.listSchedules(PROG1_ID));
+
+    // now disable the profile
+    disableProfile(profileId, 200);
+
+    // delete it
+    scheduler.deleteSchedule(TSCHED1_ID);
+    Assert.assertEquals(Collections.emptyList(), scheduler.listSchedules(PROG1_ID));
+
+    // add it again should also fail since the profile is disabled
+    try {
+      scheduler.addSchedule(tsched1);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected
+    }
   }
 
   private WorkflowTokenDetail getWorkflowToken(ProgramId workflowId, String runId,

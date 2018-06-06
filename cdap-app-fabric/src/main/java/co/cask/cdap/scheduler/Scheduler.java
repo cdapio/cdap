@@ -20,6 +20,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -40,25 +41,33 @@ public interface Scheduler {
    *
    * @param schedule the schedule to add
    * @throws AlreadyExistsException if the schedule already exists
+   * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
    */
-  void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException, BadRequestException;
+  void addSchedule(ProgramSchedule schedule)
+    throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException;
 
   /**
    * Add one or more schedules to the store.
    *
    * @param schedules the schedules to add
    * @throws AlreadyExistsException if one of the schedules already exists
+   * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
    */
-  void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException, BadRequestException;
+  void addSchedules(Iterable<? extends ProgramSchedule> schedules)
+    throws AlreadyExistsException, BadRequestException, NotFoundException, ProfileConflictException;
 
   /**
    * Updates a schedule in the store. The schedule with the same {@link ScheduleId}
    * as the given {@code schedule} will be replaced.
    *
    * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
-   * @throws NotFoundException if the schedule with {@link ScheduleId} does not exist in the store
+   * @throws NotFoundException if the schedule with {@link ScheduleId} does not exist in the store or
+   *                           if there is a profile assigned to the schedule and it does not exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
    */
-  void updateSchedule(ProgramSchedule schedule) throws NotFoundException, BadRequestException;
+  void updateSchedule(ProgramSchedule schedule) throws NotFoundException, BadRequestException, ProfileConflictException;
 
   /**
    * Enables a schedule. The schedule must be currently disabled.

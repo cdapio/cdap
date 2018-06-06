@@ -19,36 +19,28 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.provision.MockProvisioner;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Unit tests for profile http handler
  */
 public class ProfileHttpHandlerTest extends AppFabricTestBase {
-  private static final Gson GSON = new GsonBuilder().serializeNulls().create();
-  private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
   private static final List<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
     ImmutableList.<ProvisionerPropertyValue>builder()
       .add(new ProvisionerPropertyValue("1st property", "1st value", false))
@@ -68,11 +60,11 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(Collections.singletonList(Profile.DEFAULT), profiles);
 
     // test get single profile endpoint
-    Profile defaultProfile = getProfile(NamespaceId.SYSTEM, "default", 200);
+    Profile defaultProfile = getProfile(NamespaceId.SYSTEM.profile("default"), 200).get();
     Assert.assertEquals(Profile.DEFAULT, defaultProfile);
 
     // get a nonexisting profile should get a not found code
-    getProfile(NamespaceId.DEFAULT, "nonExisting", 404);
+    getProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
   }
 
   @Test
@@ -80,15 +72,16 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Profile invalidProfile = new Profile("MyProfile", "my profile for testing",
                                          new ProvisionerInfo("nonExisting", PROPERTY_SUMMARIES));
     // adding a profile with non-existing provisioner should get a 400
-    putProfile(NamespaceId.DEFAULT, invalidProfile.getName(), invalidProfile, 400);
+    putProfile(NamespaceId.DEFAULT.profile(invalidProfile.getName()), invalidProfile, 400);
 
     // put a profile with the mock provisioner
     Profile expected = new Profile("MyProfile", "my profile for testing",
                                    new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
-    putProfile(NamespaceId.DEFAULT, expected.getName(), expected, 200);
+    ProfileId expectedProfileId = NamespaceId.DEFAULT.profile(expected.getName());
+    putProfile(expectedProfileId, expected, 200);
 
     // get the profile
-    Profile actual = getProfile(NamespaceId.DEFAULT, expected.getName(), 200);
+    Profile actual = getProfile(expectedProfileId, 200).get();
     Assert.assertEquals(expected, actual);
 
     // list all profiles, should get 2 profiles
@@ -98,20 +91,63 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expectedList, new HashSet<>(profiles));
 
     // adding the same profile should still succeed
-    putProfile(NamespaceId.DEFAULT, expected.getName(), expected, 200);
+    putProfile(expectedProfileId, expected, 200);
 
     // get non-existing profile should get a 404
-    deleteProfile(NamespaceId.DEFAULT, "nonExisting", 404);
+    deleteProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
 
-    // delete the profile
-    deleteProfile(NamespaceId.DEFAULT, expected.getName(), 200);
+    // delete the profile should fail first time since it is by default enabled
+    deleteProfile(expectedProfileId, 409);
+
+    // disable the profile then delete should work
+    disableProfile(expectedProfileId, 200);
+    deleteProfile(expectedProfileId, 200);
+
     Assert.assertEquals(Collections.emptyList(), listProfiles(NamespaceId.DEFAULT, false, 200));
 
     // if given some unrelated json, it should return a 400 instead of 500
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail test = new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
                                                    new ArrayList<>());
-    putProfile(NamespaceId.DEFAULT, test.getName(), test, 400);
+    putProfile(NamespaceId.DEFAULT.profile(test.getName()), test, 400);
+  }
+
+  @Test
+  public void testEnableDisableProfile() throws Exception {
+    Profile expected = new Profile("MyProfile", "my profile for testing",
+      new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
+    ProfileId profileId = NamespaceId.DEFAULT.profile(expected.getName());
+
+    // enable and disable a non-existing profile should give a 404
+    enableProfile(profileId, 404);
+    disableProfile(profileId, 404);
+
+    // put the profile
+    putProfile(profileId, expected, 200);
+
+    // by default the status should be enabled
+    Assert.assertEquals(ProfileStatus.ENABLED, getProfileStatus(profileId, 200).get());
+
+    // enable it again should give a 409
+    enableProfile(profileId, 409);
+
+    // disable should work
+    disableProfile(profileId, 200);
+    Assert.assertEquals(ProfileStatus.DISABLED, getProfileStatus(profileId, 200).get());
+
+    // disable again should give a 409
+    disableProfile(profileId, 409);
+
+    // enable should work
+    enableProfile(profileId, 200);
+    Assert.assertEquals(ProfileStatus.ENABLED, getProfileStatus(profileId, 200).get());
+
+    // now delete should not work since we have the profile enabled
+    deleteProfile(profileId, 409);
+
+    // disable and delete
+    disableProfile(profileId, 200);
+    deleteProfile(profileId, 200);
   }
 
   @Test
@@ -121,59 +157,28 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     listWithNull.add(null);
     Profile profile = new Profile("ProfileWithNull", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listWithNull));
-    putProfile(NamespaceId.DEFAULT, profile.getName(), profile, 200);
+    putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
 
     // Get the profile, it should not contain the null value, the property should be an empty list
-    Profile actual = getProfile(NamespaceId.DEFAULT, profile.getName(), 200);
+    Profile actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200).get();
     Assert.assertNotNull(actual);
     Assert.assertEquals(Collections.EMPTY_LIST, actual.getProvisioner().getProperties());
-    deleteProfile(NamespaceId.DEFAULT, profile.getName(), 200);
+
+    disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
+    deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
 
     // provide a profile with mixed properties with null, it should still succeed
     List<ProvisionerPropertyValue> listMixed = new ArrayList<>(PROPERTY_SUMMARIES);
     listMixed.addAll(listWithNull);
     profile = new Profile("ProfileMixed", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listMixed));
-    putProfile(NamespaceId.DEFAULT, profile.getName(), profile, 200);
+    putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
 
     // Get the profile, it should not contain the null value, the property should be all non-null properties in the list
-    actual = getProfile(NamespaceId.DEFAULT, profile.getName(), 200);
+    actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200).get();
     Assert.assertNotNull(actual);
     Assert.assertEquals(PROPERTY_SUMMARIES, actual.getProvisioner().getProperties());
-    deleteProfile(NamespaceId.DEFAULT, profile.getName(), 200);
-  }
-
-  private List<Profile> listProfiles(NamespaceId namespace, boolean includeSystem, int expectedCode) throws Exception {
-    HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles?includeSystem=%s",
-                                                namespace.getNamespace(), includeSystem));
-    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
-    if (expectedCode == HttpResponseStatus.OK.code()) {
-      return GSON.fromJson(EntityUtils.toString(response.getEntity()), LIST_PROFILE);
-    }
-    return Collections.emptyList();
-  }
-
-  @Nullable
-  private Profile getProfile(NamespaceId namespace, String profileName, int expectedCode) throws Exception {
-    HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles/%s",
-                                                namespace.getNamespace(), profileName));
-    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
-    if (expectedCode == HttpResponseStatus.OK.code()) {
-      return GSON.fromJson(EntityUtils.toString(response.getEntity()), Profile.class);
-    }
-    return null;
-  }
-
-  private void putProfile(NamespaceId namespace, String profileName, Object profile,
-                          int expectedCode) throws Exception {
-    HttpResponse response = doPut(String.format("/v3/namespaces/%s/profiles/%s",
-                                                namespace.getNamespace(), profileName), GSON.toJson(profile));
-    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
-  }
-
-  private void deleteProfile(NamespaceId namespace, String profileName, int expectedCode) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/profiles/%s",
-                                                   namespace.getNamespace(), profileName));
-    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
+    deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
   }
 }

@@ -76,7 +76,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
@@ -361,8 +361,8 @@ public class TestBase {
       // the namespaceAdmin.delete(Id.Namespace.DEFAULT) in finish() only clears the default namespace
       // but does not remove it entirely
       namespaceAdmin.create(NamespaceMeta.DEFAULT);
-      ProfileStore profileStore = injector.getInstance(ProfileStore.class);
-      profileStore.saveProfile(ProfileId.DEFAULT, Profile.DEFAULT);
+      ProfileService profileService = injector.getInstance(ProfileService.class);
+      profileService.saveProfile(ProfileId.DEFAULT, Profile.DEFAULT);
     }
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);

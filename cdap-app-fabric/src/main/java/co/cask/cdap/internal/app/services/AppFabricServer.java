@@ -32,7 +32,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultEntityEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -118,7 +118,7 @@ public class AppFabricServer extends AbstractIdleService {
                          @Nullable AppVersionUpgradeService appVersionUpgradeService,
                          RouteStore routeStore,
                          CoreSchedulerService coreSchedulerService,
-                         ProfileStore profileStore,
+                         ProfileService profileService,
                          ProvisioningService provisioningService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -138,7 +138,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.pluginService = pluginService;
     this.appVersionUpgradeService = appVersionUpgradeService;
     this.routeStore = routeStore;
-    this.defaultEntityEnsurer = new DefaultEntityEnsurer(namespaceAdmin, profileStore);
+    this.defaultEntityEnsurer = new DefaultEntityEnsurer(namespaceAdmin, profileService);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;

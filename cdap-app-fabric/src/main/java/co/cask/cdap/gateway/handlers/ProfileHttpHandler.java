@@ -17,10 +17,10 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -43,10 +43,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -65,12 +63,12 @@ import javax.ws.rs.QueryParam;
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 
-  private final ProfileStore profileStore;
+  private final ProfileService profileService;
   private final ProvisioningService provisioningService;
 
   @Inject
-  public ProfileHttpHandler(ProfileStore profileStore, ProvisioningService provisioningService) {
-    this.profileStore = profileStore;
+  public ProfileHttpHandler(ProfileService profileService, ProvisioningService provisioningService) {
+    this.profileService = profileService;
     this.provisioningService = provisioningService;
   }
 
@@ -81,15 +79,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
-                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) throws IOException {
-    List<Profile> profiles = new ArrayList<>();
+                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) {
     NamespaceId namespace = new NamespaceId(namespaceId);
     boolean include = Boolean.valueOf(includeSystem);
-    if (include && !namespace.equals(NamespaceId.SYSTEM)) {
-      profiles.addAll(profileStore.getProfiles(NamespaceId.SYSTEM));
-    }
-    profiles.addAll(profileStore.getProfiles(namespace));
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
   }
 
   /**
@@ -99,9 +92,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("profile-name") String profileName) throws NotFoundException, IOException {
+                         @PathParam("profile-name") String profileName) throws NotFoundException {
     ProfileId profileId = new ProfileId(namespaceId, profileName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileStore.getProfile(profileId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
   /**
@@ -124,7 +117,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       new Profile(profileName, profileCreateRequest.getDescription(),
                   profileId.getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER,
                   profileCreateRequest.getProvisioner());
-    profileStore.saveProfile(profileId, profile);
+    profileService.saveProfile(profileId, profile);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -135,13 +128,22 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    */
   @DELETE
   @Path("/profiles/{profile-name}")
-  public void deleteProfile(
-    HttpRequest request, HttpResponder responder,
-    @PathParam("namespace-id") String namespaceId,
-    @PathParam("profile-name") String profileName) throws NotFoundException, ConflictException, IOException {
+  public void deleteProfile(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("profile-name") String profileName)
+    throws NotFoundException, ProfileConflictException {
     // TODO: add the check if there is any program or schedule associated with the profile
-    profileStore.deleteProfile(new ProfileId(namespaceId, profileName));
+    profileService.deleteProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @GET
+  @Path("/profiles/{profile-name}/status")
+  public void getProfileStatus(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("profile-name") String profileName) throws NotFoundException {
+    responder.sendJson(HttpResponseStatus.OK,
+      GSON.toJson(profileService.getProfile(new ProfileId(namespaceId, profileName)).getStatus()));
   }
 
   /**
@@ -152,8 +154,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/disable")
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("profile-name") String profileName) throws NotFoundException {
-    // TODO: implement the method
+                             @PathParam("profile-name") String profileName)
+    throws NotFoundException, ProfileConflictException {
+    profileService.disableProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -164,8 +167,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/enable")
   public void enableProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("profile-name") String profileName) throws NotFoundException {
-    // TODO: implement the method
+                            @PathParam("profile-name") String profileName)
+    throws NotFoundException, ProfileConflictException {
+    profileService.enableProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
