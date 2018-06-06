@@ -67,8 +67,12 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
@@ -133,8 +137,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -161,6 +167,7 @@ public abstract class AppFabricTestBase {
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
   protected static final Type SET_TRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  protected static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
 
   protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
 
@@ -657,6 +664,63 @@ public abstract class AppFabricTestBase {
     String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
     HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
+  }
+
+  protected List<Profile> listProfiles(NamespaceId namespace,
+                                       boolean includeSystem, int expectedCode) throws Exception {
+    HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles?includeSystem=%s",
+      namespace.getNamespace(), includeSystem));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    if (expectedCode == HttpResponseStatus.OK.code()) {
+      return GSON.fromJson(EntityUtils.toString(response.getEntity()), LIST_PROFILE);
+    }
+    return Collections.emptyList();
+  }
+
+  protected Optional<Profile> getProfile(ProfileId profileId, int expectedCode) throws Exception {
+    HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles/%s",
+      profileId.getNamespace(), profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    if (expectedCode == HttpResponseStatus.OK.code()) {
+      return Optional.of(GSON.fromJson(EntityUtils.toString(response.getEntity()), Profile.class));
+    }
+    return Optional.empty();
+  }
+
+  protected void putProfile(ProfileId profileId, Object profile,
+                          int expectedCode) throws Exception {
+    HttpResponse response = doPut(String.format("/v3/namespaces/%s/profiles/%s",
+      profileId.getNamespace(),
+      profileId.getProfile()), GSON.toJson(profile));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+  }
+
+  protected void deleteProfile(ProfileId profileId, int expectedCode) throws Exception {
+    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/profiles/%s",
+      profileId.getNamespace(), profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+  }
+
+  protected Optional<ProfileStatus> getProfileStatus(ProfileId profileId, int expectedCode) throws Exception {
+    HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles/%s/status",
+      profileId.getNamespace(), profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    if (expectedCode == HttpResponseStatus.OK.code()) {
+      return Optional.of(GSON.fromJson(EntityUtils.toString(response.getEntity()), ProfileStatus.class));
+    }
+    return Optional.empty();
+  }
+
+  protected void enableProfile(ProfileId profileId, int expectedCode) throws Exception {
+    HttpResponse response = doPost(String.format("/v3/namespaces/%s/profiles/%s/enable", profileId.getNamespace(),
+      profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+  }
+
+  protected void disableProfile(ProfileId profileId, int expectedCode) throws Exception {
+    HttpResponse response = doPost(String.format("/v3/namespaces/%s/profiles/%s/disable",
+      profileId.getNamespace(), profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
   }
 
   /**

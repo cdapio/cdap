@@ -24,6 +24,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -31,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -40,10 +42,13 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.store.profile.ProfileDataset;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -59,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -77,13 +83,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final TimeSchedulerService timeSchedulerService;
 
   @Inject
-  CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
-                       final TimeSchedulerService timeSchedulerService,
-                       final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
-                       final ConstraintCheckerService constraintCheckerService) {
+  CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                       TimeSchedulerService timeSchedulerService,
+                       ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
+                       ConstraintCheckerService constraintCheckerService) {
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
-    final DynamicDatasetCache datasetCache =
+    DynamicDatasetCache datasetCache =
       new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                   txClient, Schedulers.STORE_DATASET_ID.getParent(),
                                   Collections.emptyMap(), null, null);
@@ -185,13 +191,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException, BadRequestException {
+  public void addSchedule(ProgramSchedule schedule)
+    throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
     addSchedules(Collections.singleton(schedule));
   }
 
   @Override
-  public void addSchedules(final Iterable<? extends ProgramSchedule> schedules)
-    throws AlreadyExistsException, BadRequestException {
+  public void addSchedules(Iterable<? extends ProgramSchedule> schedules)
+    throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
     checkStarted();
     for (ProgramSchedule schedule: schedules) {
       if (!schedule.getProgramId().getType().equals(ProgramType.WORKFLOW)) {
@@ -200,26 +207,46 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
       }
     }
-    execute((StoreTxRunnable<Void, AlreadyExistsException>) store -> {
-      store.addSchedules(schedules);
-      for (ProgramSchedule schedule : schedules) {
-        try {
-          // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
-          timeSchedulerService.addProgramSchedule(schedule);
-        } catch (SchedulerException e) {
-          // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
-          // Need better error handling
-          LOG.error("Exception occurs when adding schedule {}", schedule, e);
-          throw new RuntimeException(e);
+    try {
+      execute((StoreAndProfileTxRunnable<Void, Exception>) (store, profileDataset) -> {
+        store.addSchedules(schedules);
+        for (ProgramSchedule schedule : schedules) {
+          if (schedule.getProperties() != null) {
+            Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(
+              schedule.getProgramId().getNamespaceId(), schedule.getProperties());
+            if (profile.isPresent()) {
+              ProfileId profileId = profile.get();
+              if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
+                throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot " +
+                                                                   "be assigned to schedule %s",
+                                                                 profileId.getProfile(), profileId.getNamespace(),
+                                                                 schedule.getName()), profileId);
+              }
+            }
+          }
+          try {
+            // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
+            timeSchedulerService.addProgramSchedule(schedule);
+          } catch (SchedulerException e) {
+            // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
+            // Need better error handling
+            LOG.error("Exception occurs when adding schedule {}", schedule, e);
+            throw new RuntimeException(e);
+          }
         }
-      }
-      return null;
-    }, AlreadyExistsException.class);
+        return null;
+      }, Exception.class);
+    } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
+      throw e;
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
 
   }
 
   @Override
-  public void updateSchedule(final ProgramSchedule schedule) throws NotFoundException, BadRequestException {
+  public void updateSchedule(ProgramSchedule schedule)
+    throws NotFoundException, BadRequestException, ProfileConflictException {
     checkStarted();
     ProgramScheduleStatus previousStatus = getScheduleStatus(schedule.getScheduleId());
     deleteSchedule(schedule.getScheduleId());
@@ -243,7 +270,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void enableSchedule(final ScheduleId scheduleId) throws NotFoundException, ConflictException {
+  public void enableSchedule(ScheduleId scheduleId) throws NotFoundException, ConflictException {
     checkStarted();
     try {
       execute((StoreTxRunnable<Void, Exception>) store -> {
@@ -266,7 +293,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void disableSchedule(final ScheduleId scheduleId) throws NotFoundException, ConflictException {
+  public void disableSchedule(ScheduleId scheduleId) throws NotFoundException, ConflictException {
     checkStarted();
     try {
       execute((StoreAndQueueTxRunnable<Void, Exception>) (store, queue) -> {
@@ -321,7 +348,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void deleteSchedules(final Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException {
+  public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException {
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, NotFoundException>) (store, queue) -> {
       long deleteTime = System.currentTimeMillis();
@@ -335,7 +362,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void deleteSchedules(final ApplicationId appId) {
+  public void deleteSchedules(ApplicationId appId) {
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
       long deleteTime = System.currentTimeMillis();
@@ -349,7 +376,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void deleteSchedules(final ProgramId programId) {
+  public void deleteSchedules(ProgramId programId) {
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
       long deleteTime = System.currentTimeMillis();
@@ -363,7 +390,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void modifySchedulesTriggeredByDeletedProgram(final ProgramId programId) {
+  public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
     checkStarted();
     execute(new StoreAndQueueTxRunnable<Void, RuntimeException>() {
       @Override
@@ -375,41 +402,41 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public ProgramSchedule getSchedule(final ScheduleId scheduleId) throws NotFoundException {
+  public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
     checkStarted();
     return execute(store -> store.getSchedule(scheduleId), NotFoundException.class);
   }
 
   @Override
-  public ProgramScheduleStatus getScheduleStatus(final ScheduleId scheduleId) throws NotFoundException {
+  public ProgramScheduleStatus getScheduleStatus(ScheduleId scheduleId) throws NotFoundException {
     checkStarted();
     return execute(store -> store.getScheduleRecord(scheduleId).getMeta().getStatus(), NotFoundException.class);
   }
 
   @Override
-  public List<ProgramSchedule> listSchedules(final ApplicationId appId) {
+  public List<ProgramSchedule> listSchedules(ApplicationId appId) {
     checkStarted();
     return execute(store -> store.listSchedules(appId), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramSchedule> listSchedules(final ProgramId programId) {
+  public List<ProgramSchedule> listSchedules(ProgramId programId) {
     checkStarted();
     return execute(store -> store.listSchedules(programId), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(final ApplicationId appId) throws NotFoundException {
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException {
     return execute(store -> store.listScheduleRecords(appId), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(final ProgramId programId) throws NotFoundException {
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException {
     return execute(store -> store.listScheduleRecords(programId), RuntimeException.class);
   }
 
   @Override
-  public Collection<ProgramScheduleRecord> findSchedules(final String triggerKey) {
+  public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
     checkStarted();
     return execute(store -> store.findSchedules(triggerKey), RuntimeException.class);
   }
@@ -422,20 +449,33 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     V run(ProgramScheduleStoreDataset store, JobQueueDataset jobQueue) throws T;
   }
 
-  private <V, T extends Exception> V execute(final StoreTxRunnable<V, T> runnable,
-                                             final Class<? extends T> tClass) throws T {
+  private interface StoreAndProfileTxRunnable<V, T extends Throwable> {
+    V run(ProgramScheduleStoreDataset store, ProfileDataset profileDataset) throws T;
+  }
+
+  private <V, T extends Exception> V execute(StoreTxRunnable<V, T> runnable,
+                                             Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
       return runnable.run(store);
     }, tClass);
   }
 
-  private <V, T extends Exception> V execute(final StoreAndQueueTxRunnable<V, T> runnable,
-                                             final Class<? extends T> tClass) throws T {
+  private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, T> runnable,
+                                             Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
       JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework);
       return runnable.run(store, queue);
+    }, tClass);
+  }
+
+  private <V, T extends Exception> V execute(StoreAndProfileTxRunnable<V, T> runnable,
+                                             Class<? extends T> tClass) throws T {
+    return Transactionals.execute(transactional, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
+      ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
+      return runnable.run(store, profileDataset);
     }, tClass);
   }
 }

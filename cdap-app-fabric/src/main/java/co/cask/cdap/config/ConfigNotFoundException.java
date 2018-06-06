@@ -16,17 +16,14 @@
 
 package co.cask.cdap.config;
 
+import co.cask.cdap.common.NotFoundException;
+
 /**
  * Thrown when a Configuration is expected to be present (when get, set of properties) performed.
  */
-public final class ConfigNotFoundException extends ConfigException {
+public final class ConfigNotFoundException extends NotFoundException {
 
   public ConfigNotFoundException(String namespace, String type, String id) {
-    super(namespace, type, id);
-  }
-
-  @Override
-  public String getMessage() {
-    return String.format("Configuration: %s of Type: %s in Namepsace: %s was not found", id, type, namespace);
+    super(String.format("Configuration: %s of Type: %s in Namepsace: %s was not found", id, type, namespace));
   }
 }

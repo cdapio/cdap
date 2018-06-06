@@ -26,6 +26,8 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.http.NettyHttpService;
@@ -38,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -341,6 +344,24 @@ public final class SystemArguments {
       builder.setExecThreadKeepAliveSeconds(keepAliveSecs);
     }
     return builder;
+  }
+
+  /**
+   * Get the profile id from namespace and the argument. Note that the profile name in the args is initially a scoped
+   * name. If it is in system scope, this method will return a profile id which is in SYSTEM namespace, otherwise, it
+   * will be in the given namespace.
+   *
+   * @param namespaceId namespace this profile is in
+   * @param args arguments to look up
+   * @return the profile id if it is present
+   */
+  public static Optional<ProfileId> getProfileIdFromArgs(NamespaceId namespaceId, Map<String, String> args) {
+    if (args.containsKey(PROFILE_NAME)) {
+      String scopedProfile = args.get(SystemArguments.PROFILE_NAME);
+      ProfileId profileId = ProfileId.fromScopedName(namespaceId, scopedProfile);
+      return Optional.of(profileId);
+    }
+    return Optional.empty();
   }
 
   /**

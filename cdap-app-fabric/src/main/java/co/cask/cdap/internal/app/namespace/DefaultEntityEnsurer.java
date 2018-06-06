@@ -20,7 +20,7 @@ import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -44,7 +44,7 @@ public final class DefaultEntityEnsurer extends AbstractService {
   private final Service serviceDelegate;
 
   @Inject
-  public DefaultEntityEnsurer(NamespaceAdmin namespaceAdmin, ProfileStore profileStore) {
+  public DefaultEntityEnsurer(NamespaceAdmin namespaceAdmin, ProfileService profileService) {
     this.serviceDelegate = new RetryOnStartFailureService(() -> new AbstractService() {
       @Override
       protected void doStart() {
@@ -68,7 +68,7 @@ public final class DefaultEntityEnsurer extends AbstractService {
         }
 
         try {
-          profileStore.createIfNotExists(ProfileId.DEFAULT, Profile.DEFAULT);
+          profileService.createIfNotExists(ProfileId.DEFAULT, Profile.DEFAULT);
         } catch (Exception e) {
           failed = true;
           if (failureException == null) {

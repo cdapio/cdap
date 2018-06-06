@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.pipeline.AbstractStage;
@@ -55,7 +53,6 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     ApplicationId appId = input.getApplicationId();
     // Get a set of new schedules from the app spec
     Set<ProgramSchedule> newSchedules = getProgramScheduleSet(appId, input.getSpecification());
-
     for (ProgramSchedule schedule : programScheduler.listSchedules(appId)) {
       if (newSchedules.contains(schedule)) {
         newSchedules.remove(schedule); // Remove the existing schedule from the newSchedules
@@ -66,9 +63,7 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     }
 
     // Add new schedules
-    for (ProgramSchedule schedule : newSchedules) {
-      addSchedule(schedule);
-    }
+    programScheduler.addSchedules(newSchedules);
 
     // Emit the input to next stage.
     emit(input);
@@ -88,9 +83,5 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     return new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
                                scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints(),
                                scheduleCreationSpec.getTimeoutMillis());
-  }
-
-  private void addSchedule(ProgramSchedule programSchedule) throws AlreadyExistsException, BadRequestException {
-    programScheduler.addSchedule(programSchedule);
   }
 }
