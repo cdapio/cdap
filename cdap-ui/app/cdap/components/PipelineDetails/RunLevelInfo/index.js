@@ -57,27 +57,13 @@ export default function RunLevelInfo() {
             showRightSeparator={true}
           />
         </PipelineButtonsWrapper>
-        <RunStatus />
-        <div
-          className="pipeline-buttons-separator"
-          id="status-start-separator"
-        />
-        <RunStartTime />
-        <div
-          className="pipeline-buttons-separator"
-          id="start-duration-separator"
-        />
-        <RunDuration />
-        <div
-          className="pipeline-buttons-separator"
-          id="duration-warnings-separator"
-        />
-        <ConnectedRunNumWarnings />
-        <div
-          className="pipeline-buttons-separator"
-          id="warnings-errors-separator"
-        />
-        <ConnectedRunNumErrors />
+        <div className="run-level-info-buttons-wrapper">
+          <RunStatus />
+          <RunStartTime />
+          <RunDuration />
+          <ConnectedRunNumWarnings />
+          <ConnectedRunNumErrors />
+        </div>
         <RunComputeProfile />
       </div>
     </Provider>

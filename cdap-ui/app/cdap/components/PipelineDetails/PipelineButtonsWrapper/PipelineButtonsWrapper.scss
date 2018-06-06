@@ -14,6 +14,9 @@
  * the License.
 */
 
+@import '../../../styles/variables.scss';
+$btn-separator-color: $grey-05;
+
 .pipeline-buttons-wrapper {
   display: inline-block;
   height: 100%;
@@ -21,5 +24,14 @@
   .button-wrapper {
     display: inline-block;
     height: 100%;
+
+    .pipeline-buttons-separator {
+      display: inline-block;
+      height: 35px;
+      top: 60px;
+      width: 1px;
+      background-color: $btn-separator-color;
+      position: absolute;
+    }
   }
 }

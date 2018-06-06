@@ -19,7 +19,6 @@
 $pipeline-type-icon-size: 20px;
 $top-panel-height: 55px;
 $btn-border-color: transparent;
-$btn-separator-color: $grey-05;
 
 .pipeline-details-top-panel {
   height: $top-panel-height;
@@ -211,13 +210,4 @@ $btn-separator-color: $grey-05;
       display: none;
     }
   }
-}
-
-.pipeline-buttons-separator {
-  display: inline-block;
-  height: 35px;
-  top: 60px;
-  width: 1px;
-  background-color: $btn-separator-color;
-  position: absolute;
 }

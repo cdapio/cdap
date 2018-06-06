@@ -29,6 +29,16 @@ $border-color: $grey-05;
   position: absolute;
   margin-left: 20px;
 
+  .run-level-info-buttons-wrapper {
+    display: inline-block;
+
+    .run-info-container {
+      border-right: 1px solid $border-color;
+      height: 35px;
+      padding-top: 0;
+    }
+  }
+
   .run-info-container {
     display: inline-block;
     padding-left: 15px;
@@ -176,8 +186,12 @@ $border-color: $grey-05;
     }
   }
 
-  .pipeline-buttons-separator {
-    top: 10px;
-    z-index: 999;
+  .pipeline-buttons-wrapper {
+    .button-wrapper {
+      .pipeline-buttons-separator {
+        top: 10px;
+        z-index: 999;
+      }
+    }
   }
 }
