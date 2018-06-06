@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -111,26 +110,35 @@ public class ProfileStore {
   }
 
   /**
-   * Add the profile to the profile store.
+   * Save the profile to the profile store.
+   *
+   * @param profileId the id of the profile to save
+   * @param profile the information of the profile
+   * @throws IOException if there was an IO error saving the profile
+   */
+  public void saveProfile(ProfileId profileId, Profile profile) throws IOException {
+    Transactionals.execute(transactional, context -> {
+      getMDS(context).write(getRowKey(profileId), profile);
+    }, IOException.class);
+  }
+
+  /**
+   * Add a profile if it does not exist in the store
    *
    * @param profileId the id of the profile to add
    * @param profile the information of the profile
    * @throws IOException if there was an IO error adding the profile
-   * @throws AlreadyExistsException if the profile already exists
    */
-  public void add(ProfileId profileId, Profile profile) throws IOException, AlreadyExistsException {
+  public void createIfNotExists(ProfileId profileId, Profile profile) throws IOException {
     Transactionals.execute(transactional, context -> {
       MetadataStoreDataset mds = getMDS(context);
-      // make sure that a profile doesn't exist
       MDSKey rowKey = getRowKey(profileId);
-      Profile value = mds.get(rowKey, Profile.class);
-      if (value != null) {
-        throw new AlreadyExistsException(profileId,
-                                         String.format("Profile '%s' already exists.",
-                                                       profile.getName()));
+      Profile oldProfile = mds.get(rowKey, Profile.class);
+      if (oldProfile != null) {
+        return;
       }
       mds.write(rowKey, profile);
-    }, IOException.class, AlreadyExistsException.class);
+    }, IOException.class);
   }
 
   /**
@@ -140,7 +148,7 @@ public class ProfileStore {
    * @throws IOException if there was an IO error deleting the profile
    * @throws NotFoundException if the profile is not found
    */
-  public void delete(ProfileId profileId) throws IOException, NotFoundException {
+  public void deleteProfile(ProfileId profileId) throws IOException, NotFoundException {
     Transactionals.execute(transactional, context -> {
       MetadataStoreDataset mds = getMDS(context);
       MDSKey rowKey = getRowKey(profileId);
@@ -158,7 +166,7 @@ public class ProfileStore {
    * @param namespaceId the id of the namespace
    * @throws IOException if there was an IO error deleting the profiles
    */
-  public void deleteAll(NamespaceId namespaceId) throws IOException {
+  public void deleteAllProfiles(NamespaceId namespaceId) throws IOException {
     Transactionals.execute(transactional, context -> {
       getMDS(context).deleteAll(getRowKey(namespaceId));
     }, IOException.class);
