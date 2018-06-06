@@ -22,7 +22,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.List;
 
 public class KeyStoresTest {
   private static final String CERTIFICATE_TYPE = "X.509";
@@ -44,5 +49,24 @@ public class KeyStoresTest {
     Assert.assertEquals(KeyStores.SIGNATURE_ALGORITHM, cert.getSigAlgName());
     Assert.assertEquals(KeyStores.DISTINGUISHED_NAME, cert.getIssuerDN().getName());
     Assert.assertEquals(3, cert.getVersion());
+  }
+
+  /**
+   * Testing for trust store creation from key store.
+   */
+  @Test
+  public void testCreateTrustStore() throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+    String password = "xyz";
+    KeyStore keyStore = KeyStores.generatedCertKeyStore(1, password);
+    KeyStore trustStore = KeyStores.createTrustStore(keyStore);
+
+    List<String> aliases = Collections.list(keyStore.aliases());
+    Assert.assertFalse(aliases.isEmpty());
+
+    for (String alias : aliases) {
+      // Should get the cert, but not the key
+      Assert.assertNotNull(trustStore.getCertificate(alias));
+      Assert.assertNull(trustStore.getKey(alias, password.toCharArray()));
+    }
   }
 }

@@ -20,15 +20,14 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.tools.HttpsEnabler;
 import co.cask.cdap.security.tools.KeyStores;
-import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -41,6 +40,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runtime Server which starts netty-http service to expose metadata to {@link RuntimeMonitor}
@@ -48,6 +48,9 @@ import java.util.concurrent.CountDownLatch;
 public class RuntimeMonitorServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorServer.class);
+  // Effectively making the cert not going to expire.
+  // We use max int of seconds to compute number of days to avoid overflow.
+  private static final int CERT_VALIDITY_DAYS = (int) TimeUnit.SECONDS.toDays(Integer.MAX_VALUE);
 
   private final CConfiguration cConf;
   private final MessageFetcher messageFetcher;
@@ -71,20 +74,19 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     // Enable SSL for communication.
     // TODO: CDAP-13252 to add client side authentication via SSL
     String password = KeyStores.generateRandomPassword();
-    KeyStore ks = KeyStores.generatedCertKeyStore(SConfiguration.create(), password);
-    SSLHandlerFactory sslHandlerFactory = new SSLHandlerFactory(ks, password);
+    // Generate a cert that never expires
+    KeyStore ks = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, password);
 
-    httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
       .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, () -> {
         shutdownLatch.countDown();
         stop();
       }))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(address.getHostName())
-      .setPort(address.getPort())
-      .enableSSL(sslHandlerFactory)
-      .build();
+      .setPort(address.getPort());
 
+    httpService = new HttpsEnabler().setKeyStore(ks, password::toCharArray).enable(builder).build();
     httpService.start();
     LOG.info("Runtime monitor server started on {}", httpService.getBindAddress());
   }
