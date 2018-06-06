@@ -91,11 +91,6 @@
                 <configuration combine.self="override">
                   <outputDirectory>${project.build.directory}</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}.sdk</finalName>
-                  <excludes>
-                    <exclude>**/hbase/*.class</exclude>
-                    <exclude>**/hdfs/*.class</exclude>
-                    <exclude>**/yarn/*.class</exclude>
-                  </excludes>
                 </configuration>
                 <goals>
                   <goal>jar</goal>
