@@ -28,6 +28,8 @@ import ProfileCustomizePopover from 'components/PipelineDetails/ProfilesListView
 import {isNilOrEmpty} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
+import isEmpty from 'lodash/isEmpty';
+import {getProvisionersMap, fetchProvisioners} from 'components/Cloud/Profiles/Store/Provisioners';
 require('./ProfilesListViewInPipeline.scss');
 
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
@@ -119,26 +121,17 @@ export default class ProfilesListViewInPipeline extends Component {
   }
 
   componentDidMount() {
-    this.getProvisionersMap();
-  }
-
-  getProvisionersMap() {
-    MyCloudApi
-      .getProvisioners()
-      .subscribe(
-        (provisioners) => {
-          let provisionersMap = {};
-          provisioners.forEach(provisioner => {
-            provisionersMap[provisioner.name] = provisioner.label;
-          });
-          this.setState({
-            provisionersMap
-          });
-        },
-        (err) => {
-          console.log('ERROR in fetching provisioners from backend: ', err);
-        }
-      );
+    if (isEmpty(getProvisionersMap().nameToLabelMap)) {
+      fetchProvisioners().subscribe(() => {
+        this.setState({
+          provisionersMap: getProvisionersMap().nameToLabelMap
+        });
+      });
+    } else {
+      this.setState({
+        provisionersMap: getProvisionersMap().nameToLabelMap
+      });
+    }
   }
 
   onProfileSelect = (profileName, customizations = {}) => {
