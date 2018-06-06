@@ -32,8 +32,6 @@
 
   <properties>
     <app.main.class>co.cask.cdap.report.ReportGenerationApp</app.main.class>
-    <scala.version>2.11.8</scala.version>
-    <spark.version>2.1.0</spark.version>
   </properties>
 
   <repositories>
@@ -53,7 +51,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>${scala.version}</version>
+      <version>${scala2.10.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -64,25 +62,23 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api-spark2_2.11</artifactId>
+      <artifactId>cdap-api-spark</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.11</artifactId>
-      <version>${spark.version}</version>
+      <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.11</artifactId>
-      <version>${spark.version}</version>
+      <artifactId>spark-sql_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
+      <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <exclusions>
@@ -129,8 +125,8 @@
     </dependency>
     <dependency>
       <groupId>com.databricks</groupId>
-      <artifactId>spark-avro_2.11</artifactId>
-      <version>4.0.0</version>
+      <artifactId>spark-avro_2.10</artifactId>
+      <version>2.0.1</version>
     </dependency>
     <!-- Hadoop Dependencies -->
     <dependency>
@@ -206,6 +202,7 @@
       </exclusions>
     </dependency>
   </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -237,12 +234,82 @@
         </plugin>
       </plugins>
     </pluginManagement>
-
     <plugins>
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.3.1</version>
+      </plugin>
+      <!-- copy the source from cdap-program-report-base in order to compile everything as scala 2.10 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-base</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/generated-sources/cdap-program-report-base/src/main</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.parent.basedir}/cdap-program-report-base/src/main</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-base-test</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/generated-test-sources/cdap-program-report-base/src/test</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.parent.basedir}/cdap-program-report-base/src/test</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/cdap-program-report-base/src/main/java</source>
+                <source>${project.build.directory}/generated-sources/cdap-program-report-base/src/main/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-test-sources/cdap-program-report-base/src/test/java</source>
+                <source>${project.build.directory}/generated-test-sources/cdap-program-report-base/src/test/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
@@ -251,4 +318,71 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
+      <id>spark1-dev</id>
+      <properties>
+        <cdap.program.report.base.dir>${project.basedir}/../cdap-program-report-base</cdap.program.report.base.dir>
+      </properties>
+      <build>
+        <plugins>
+          <!-- Disable the copying of files from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-base</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Symlink the source from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+            <executions>
+              <execution>
+                <id>symlink-sources</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <skip>false</skip>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-sources/cdap-program-report-base/src"/>
+                    <symlink link="${project.build.directory}/generated-sources/cdap-program-report-base/src/main" resource="${cdap.program.report.base.dir}/src/main" overwrite="true" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>symlink-test-sources</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <skip>false</skip>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-program-report-base/src"/>
+                    <symlink link="${project.build.directory}/generated-test-sources/cdap-program-report-base/src/test" resource="${cdap.program.report.base.dir}/src/test" overwrite="true" />
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
