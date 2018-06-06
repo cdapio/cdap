@@ -26,12 +26,13 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>cdap-program-report</artifactId>
-  <name>CDAP Program Run Report Artifact</name>
+  <artifactId>cdap-program-report2_2.11</artifactId>
+  <name>CDAP Program Run Report Application Spark2 Scala 2.11</name>
   <packaging>jar</packaging>
 
   <properties>
     <app.main.class>co.cask.cdap.report.ReportGenerationApp</app.main.class>
+    <scala.version>2.11.8</scala.version>
   </properties>
 
   <repositories>
@@ -51,7 +52,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>${scala2.10.version}</version>
+      <version>${scala.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -62,23 +63,25 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api-spark</artifactId>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-core_2.11</artifactId>
+      <version>${spark2.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.10</artifactId>
+      <artifactId>spark-sql_2.11</artifactId>
+      <version>${spark2.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test</artifactId>
+      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <exclusions>
@@ -125,8 +128,8 @@
     </dependency>
     <dependency>
       <groupId>com.databricks</groupId>
-      <artifactId>spark-avro_2.10</artifactId>
-      <version>2.0.1</version>
+      <artifactId>spark-avro_2.11</artifactId>
+      <version>4.0.0</version>
     </dependency>
     <!-- Hadoop Dependencies -->
     <dependency>
@@ -240,7 +243,7 @@
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.3.1</version>
       </plugin>
-      <!-- copy the source from cdap-program-report-base in order to compile everything as scala 2.10 -->
+      <!-- copy the source from cdap-program-report-base in order to compile everything as scala 2.11 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -322,13 +325,13 @@
   <profiles>
     <profile>
       <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
-      <id>spark1-dev</id>
+      <id>spark2-dev</id>
       <properties>
         <cdap.program.report.base.dir>${project.basedir}/../cdap-program-report-base</cdap.program.report.base.dir>
       </properties>
       <build>
         <plugins>
-          <!-- Disable the copying of files from base -->
+          <!-- Disable the copying of files from cdap-program-report-base -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
@@ -336,6 +339,10 @@
             <executions>
               <execution>
                 <id>copy-base</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>copy-base-test</id>
                 <phase>none</phase>
               </execution>
             </executions>

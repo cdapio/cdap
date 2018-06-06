@@ -34,6 +34,7 @@
     <module>cdap-etl</module>
     <module>cdap-data-quality</module>
     <module>cdap-program-report</module>
+    <module>cdap-program-report2_2.11</module>
   </modules>
 
 </project>
