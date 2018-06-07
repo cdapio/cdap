@@ -23,6 +23,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -41,6 +42,7 @@ import com.google.common.io.ByteStreams;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.EventHandlerSpecification;
 import org.apache.twill.api.LocalFile;
@@ -142,6 +144,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
   private final ProgramRunId programRunId;
   private final LocationFactory locationFactory;
   private final MessagingService messagingService;
+  private final DatasetFramework dsFramework;
+  private final TransactionSystemClient txClient;
   private String extraOptions;
   private JvmOptions.DebugOptions debugOptions;
 
@@ -152,7 +156,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
                                ProgramRunId programRunId, TwillSpecification twillSpec,
                                RunId runId, @Nullable String extraOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
-                               MessagingService messagingService) {
+                               MessagingService messagingService, DatasetFramework dsFramework,
+                               TransactionSystemClient txClient) {
     // Check to prevent future mistake
     if (twillSpec.getRunnables().size() != 1) {
       throw new IllegalArgumentException("Only one TwillRunnable is supported");
@@ -171,6 +176,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.locationFactory = locationFactory;
     this.messagingService = messagingService;
     this.extraOptions = cConf.get(co.cask.cdap.common.conf.Constants.AppFabric.PROGRAM_JVM_OPTS);
+    this.dsFramework = dsFramework;
+    this.txClient = txClient;
   }
 
   private void confirmRunnableName(String runnableName) {
@@ -453,7 +460,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
             .setApiVersion("v1")
             .setVerifySSLCert(false)
             .setConnectionConfig(connectionConfig).build();
-          RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, messagingService, clientConfig);
+          RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, messagingService, clientConfig,
+                                                             dsFramework, txClient);
           runtimeMonitor.start();
           return new RemoteExecutionTwillController(runId, runtimeMonitor);
         }
