@@ -61,7 +61,7 @@ export default class PipelineDetailsActionsButton extends Component {
   togglePopover = (showPopover = !this.state.showPopover) => {
     this.setState({
       showPopover
-    }, this.setActiveButton);
+    });
   };
 
   pipelineConfig = {

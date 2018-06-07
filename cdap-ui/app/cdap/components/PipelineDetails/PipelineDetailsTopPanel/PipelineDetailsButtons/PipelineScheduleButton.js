@@ -58,7 +58,7 @@ export default class PipelineScheduleButton extends Component {
   toggleScheduler = () => {
     this.setState({
       showScheduler: !this.state.showScheduler
-    }, );
+    });
   };
 
   toggleConfigModeless = () => {

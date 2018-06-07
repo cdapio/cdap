@@ -85,7 +85,7 @@ $btn-border-color: transparent;
       display: inline-block;
       position: relative;
       height: 100%;
-      border-left: 1px solid transparent;
+      border-left: 1px solid $btn-border-color;
 
       &.active,
       &:hover {
@@ -105,7 +105,7 @@ $btn-border-color: transparent;
       }
 
       &.active {
-        border-bottom-color: transparent;
+        border-bottom-color: $btn-border-color;
       }
 
       .pipeline-action-btn {
