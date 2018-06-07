@@ -46,10 +46,4 @@ const ConnectedViewContainer = connect(
   null
 )(ViewContainerComponent);
 
-export default function ViewContainer({isDetailView}) {
-  return <ConnectedViewContainer isDetailView={isDetailView} />;
-}
-ViewContainer.propTypes = {
-  isDetailView: PropTypes.bool
-};
-
+export default ConnectedViewContainer;

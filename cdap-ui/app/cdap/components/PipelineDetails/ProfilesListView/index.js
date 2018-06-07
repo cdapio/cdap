@@ -35,6 +35,7 @@ require('./ProfilesListViewInPipeline.scss');
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
 export const PROFILE_PROPERTIES_PREFERENCE = 'system.profile.properties';
 export const extractProfileName = (name = '') => name.replace(/(user|system):/g, '');
+export const isSystemProfile = (name = '') => name.indexOf('system:') === 0;
 // NOTE: This is never actually saved to backend. This is hardcoded here until we figure out a 
 // clean way to add `system.profiles.name` to namespace preference. If there is no `system.profiles.name` set
 // at namespace or app level UI show "default" profile selected
@@ -134,7 +135,7 @@ export default class ProfilesListViewInPipeline extends Component {
     }
   }
 
-  onProfileSelect = (profileName, customizations = {}) => {
+  onProfileSelect = (profileName, customizations = {}, e) => {
     if (this.props.disabled) {
       return;
     }
@@ -142,12 +143,12 @@ export default class ProfilesListViewInPipeline extends Component {
       selectedProfile: profileName
     });
     if (this.props.onProfileSelect) {
-      this.props.onProfileSelect(profileName, customizations);
+      this.props.onProfileSelect(profileName, customizations, e);
     }
   };
 
-  onProfileSelectWithoutCustomization = (profileName) => {
-    this.onProfileSelect(profileName, {});
+  onProfileSelectWithoutCustomization = (profileName, e) => {
+    this.onProfileSelect(profileName, {}, e);
   };
 
   renderGridHeader = () => {

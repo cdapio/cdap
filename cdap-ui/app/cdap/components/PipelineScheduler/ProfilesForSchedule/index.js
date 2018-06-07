@@ -16,17 +16,17 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
-import {DropdownToggle, DropdownMenu} from 'reactstrap';
+import {Dropdown, DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
-import ProfilesListView, {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
+import ProfilesListView, {extractProfileName, isSystemProfile} from 'components/PipelineDetails/ProfilesListView';
 import isEmpty from 'lodash/isEmpty';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap, fetchProvisioners} from 'components/Cloud/Profiles/Store/Provisioners';
+import {preventPropagation} from 'services/helpers';
 require('./ProfilesForSchedule.scss');
 
 export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';
@@ -35,7 +35,8 @@ class ProfilesForSchedule extends Component {
   static propTypes = {
     selectedProfile: PropTypes.string,
     scheduleStatus: PropTypes.string,
-    profileCustomizations: PropTypes.object
+    profileCustomizations: PropTypes.object,
+    onSave: PropTypes.func
   };
 
   static defaultProps = {
@@ -47,7 +48,8 @@ class ProfilesForSchedule extends Component {
     provisionersMap: {},
     profileDetails: {},
     selectedProfile: this.props.selectedProfile,
-    profileCustomizations: this.props.profileCustomizations
+    profileCustomizations: this.props.profileCustomizations,
+    openProfilesDropdown: false
   };
 
   componentDidMount() {
@@ -63,11 +65,20 @@ class ProfilesForSchedule extends Component {
     });
   }
 
+  toggleProfileDropdown = (e) => {
+    this.setState({
+      openProfilesDropdown: !this.state.openProfilesDropdown
+    });
+    if (typeof e === 'object') {
+      preventPropagation(e);
+    }
+  };
+
   setProfileDetails() {
     if (this.state.selectedProfile) {
       MyCloudApi
         .get({
-          namespace: getCurrentNamespace(),
+          namespace: isSystemProfile(this.state.selectedProfile) ? 'system' : getCurrentNamespace(),
           profile: extractProfileName(this.state.selectedProfile)
         })
         .subscribe(profileDetails => {
@@ -92,7 +103,21 @@ class ProfilesForSchedule extends Component {
     }
   }
 
+  setSelectedProfile = (selectedProfile, profileCustomizations = {}, e) => {
+    setSelectedProfile(selectedProfile, profileCustomizations);
+    if (Object.keys(profileCustomizations).length) {
+      if (this.props.onSave) {
+        this.props.onSave();
+      }
+    } else {
+      this.toggleProfileDropdown(e);
+    }
+  };
+
   renderProfilesTable = () => {
+    if (!this.state.openProfilesDropdown) {
+      return null;
+    }
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let selectedProfile = {
       name: this.state.selectedProfile,
@@ -101,7 +126,7 @@ class ProfilesForSchedule extends Component {
     return (
       <ProfilesListView
         showProfilesCount={false}
-        onProfileSelect={setSelectedProfile}
+        onProfileSelect={this.setSelectedProfile}
         disabled={isScheduled}
         selectedProfile={selectedProfile}
       />
@@ -119,10 +144,11 @@ class ProfilesForSchedule extends Component {
     }
 
     return (
-      <UncontrolledDropdown
+      <Dropdown
         className={PROFILES_DROPDOWN_DOM_CLASS}
-        tether={{}} /* Apparently this attaches it to the body */
         disabled={isScheduled}
+        isOpen={this.state.openProfilesDropdown}
+        toggle={this.toggleProfileDropdown}
       >
         <DropdownToggle
           disabled={isScheduled}
@@ -146,7 +172,7 @@ class ProfilesForSchedule extends Component {
         <DropdownMenu>
           { this.renderProfilesTable() }
         </DropdownMenu>
-      </UncontrolledDropdown>
+      </Dropdown>
     );
   };
 
@@ -164,11 +190,12 @@ class ProfilesForSchedule extends Component {
   }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
   return {
     selectedProfile: state.profiles.selectedProfile,
     profileCustomizations: state.profiles.profileCustomizations,
-    scheduleStatus: state.scheduleStatus
+    scheduleStatus: state.scheduleStatus,
+    onSave: ownProps.onSave
   };
 };
 
