@@ -28,7 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
-import co.cask.cdap.internal.provision.SSHKeyInfo;
+import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
@@ -152,8 +152,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       if (!systemArgs.hasOption(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
         throw new IllegalStateException("Missing ssh key information for the cluster " + cluster.getName());
       }
-      SSHKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
-                                         SSHKeyInfo.class);
+      SecureKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
+                                            SecureKeyInfo.class);
 
       Location privateKeyLocation = locationFactory.create(keyInfo.getKeyDirectory())
                                                    .append(keyInfo.getPrivateKeyFile());

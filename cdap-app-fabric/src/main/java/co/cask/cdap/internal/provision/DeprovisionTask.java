@@ -94,7 +94,7 @@ public class DeprovisionTask extends ProvisioningTask {
             });
           } finally {
             // Delete the keys. We only delete when the cluster is gone.
-            SSHKeyInfo keyInfo = clusterInfo.getSshKeyInfo();
+            SecureKeyInfo keyInfo = clusterInfo.getSecureKeyInfo();
             if (keyInfo != null) {
               Locations.deleteQuietly(locationFactory.create(keyInfo.getKeyDirectory()), true);
             }
