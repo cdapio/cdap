@@ -19,12 +19,15 @@ import {defaultAction} from 'services/helpers';
 
 const Actions = {
   setFields: 'FLL_SET_FIELDS',
+  setBackwardLineage: 'FLL_SET_BACKWARD_LINEAGE',
   reset: 'FLL_RESET'
 };
 
 const defaultInitialState = {
   datasetId: '',
-  fields: []
+  fields: [],
+  backward: [],
+  activeField: null
 };
 
 const lineage = (state = defaultInitialState, action = defaultAction) => {
@@ -34,6 +37,12 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
         ...state,
         datasetId: action.payload.datasetId,
         fields: action.payload.fields
+      };
+    case Actions.setBackwardLineage:
+      return {
+        ...state,
+        backward: action.payload.backward,
+        activeField: action.payload.activeField
       };
     case Actions.reset:
       return defaultInitialState;
