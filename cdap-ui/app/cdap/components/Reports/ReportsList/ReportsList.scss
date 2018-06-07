@@ -58,6 +58,9 @@ $active-border-color: $green-01;
     }
     .grid.grid-container {
       max-height: 100%;
+      height: 100%;
+      grid-auto-rows: 45px;
+
       .grid-header,
       .grid-body {
         .grid-row {
