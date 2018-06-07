@@ -35,8 +35,7 @@ class ProfilesForSchedule extends Component {
   static propTypes = {
     selectedProfile: PropTypes.string,
     scheduleStatus: PropTypes.string,
-    profileCustomizations: PropTypes.object,
-    onSave: PropTypes.func
+    profileCustomizations: PropTypes.object
   };
 
   static defaultProps = {
@@ -105,13 +104,7 @@ class ProfilesForSchedule extends Component {
 
   setSelectedProfile = (selectedProfile, profileCustomizations = {}, e) => {
     setSelectedProfile(selectedProfile, profileCustomizations);
-    if (Object.keys(profileCustomizations).length) {
-      if (this.props.onSave) {
-        this.props.onSave();
-      }
-    } else {
-      this.toggleProfileDropdown(e);
-    }
+    this.toggleProfileDropdown(e);
   };
 
   renderProfilesTable = () => {
@@ -190,12 +183,11 @@ class ProfilesForSchedule extends Component {
   }
 }
 
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = (state) => {
   return {
     selectedProfile: state.profiles.selectedProfile,
     profileCustomizations: state.profiles.profileCustomizations,
-    scheduleStatus: state.scheduleStatus,
-    onSave: ownProps.onSave
+    scheduleStatus: state.scheduleStatus
   };
 };
 

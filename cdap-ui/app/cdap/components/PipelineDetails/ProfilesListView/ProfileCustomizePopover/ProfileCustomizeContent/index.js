@@ -182,7 +182,7 @@ export default class ProfileCustomizeContent extends PureComponent {
               className="btn btn-primary"
               onClick={this.onSave}
             >
-              Save
+              Done
             </div>
         }
       </div>
