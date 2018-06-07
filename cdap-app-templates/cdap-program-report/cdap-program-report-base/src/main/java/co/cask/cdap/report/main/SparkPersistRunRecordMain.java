@@ -24,12 +24,18 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.report.ReportGenerationApp;
+import co.cask.cdap.report.util.Constants;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
+import javax.crypto.KeyGenerator;
 
 /**
  * spark main class, starts and waits for the tms subscriber thread to read run record meta and write to files
@@ -47,9 +53,11 @@ public class SparkPersistRunRecordMain implements JavaSparkMain {
       admin.createDataset(ReportGenerationApp.RUN_META_FILESET, FileSet.class.getName(),
                           FileSetProperties.builder().build());
     }
-
+    Location reportFileSetLocation = getDatasetBaseLocationWithRetry(sec, ReportGenerationApp.REPORT_FILESET);
+    createSecurityKeyFile(reportFileSetLocation);
     tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
-                                      getDatasetBaseLocationWithRetry(sec), sec.getRuntimeArguments());
+                                      getDatasetBaseLocationWithRetry(sec, ReportGenerationApp.RUN_META_FILESET),
+                                      sec.getRuntimeArguments());
     tmsSubscriber.start();
     try {
       tmsSubscriber.join();
@@ -60,23 +68,49 @@ public class SparkPersistRunRecordMain implements JavaSparkMain {
   }
 
   /**
+   * If the security key file doesn't exist already, security key is generated using AES Algorithm and written
+   * to the location identified by KEY_FILE_NAME under ReportFileSet. Permission is configured such that only
+   * the owner (cdap) can read this file.
+   * @param reportFileSetLocation reporting file set base location
+   * @throws IOException
+   * @throws NoSuchAlgorithmException
+   */
+  private void createSecurityKeyFile(Location reportFileSetLocation) throws IOException, NoSuchAlgorithmException {
+    Location keyLocation = reportFileSetLocation.append(Constants.Security.KEY_FILE_NAME);
+    if (!keyLocation.exists()) {
+      KeyGenerator keyGenerator = KeyGenerator.getInstance(Constants.Security.ENCRYPTION_ALGORITHM);
+      keyGenerator.init(Constants.Security.ENCRYPTION_KEY_BITSIZE);
+      Key key = keyGenerator.generateKey();
+      byte[] encodedKey = key.getEncoded();
+      writeKeyBytes(keyLocation, encodedKey);
+    }
+  }
+
+  private void writeKeyBytes(Location keyLocation, byte[] encodedKey) throws IOException {
+    try (OutputStream outputStream = keyLocation.getOutputStream(Constants.Security.KEY_FILE_PERMISSION)) {
+      outputStream.write(encodedKey);
+    }
+  }
+
+  /**
    * Retry on dataset instantiation exception un-till we get the dataset and return location from the fileset.
    *
    * @return Location base location
    * @throws InterruptedException
    */
-  private Location getDatasetBaseLocationWithRetry(JavaSparkExecutionContext sec) throws InterruptedException {
+  private Location getDatasetBaseLocationWithRetry(JavaSparkExecutionContext sec,
+                                                   String datasetName) throws InterruptedException {
     while (true) {
       try {
         return Transactionals.execute(sec, context -> {
-          FileSet fileSet = context.getDataset(ReportGenerationApp.RUN_META_FILESET);
+          FileSet fileSet = context.getDataset(datasetName);
           return fileSet.getBaseLocation();
         });
       } catch (RuntimeException e) {
         // retry on dataset exception
         if (e instanceof DatasetInstantiationException) {
           SAMPLED_LOGGING.logWarning(
-            String.format("Exception while trying to get dataset %s", ReportGenerationApp.RUN_META_FILESET), e);
+            String.format("Exception while trying to get dataset %s", datasetName), e);
         } else {
           throw e;
         }
