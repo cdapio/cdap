@@ -28,24 +28,14 @@ class StatusPopoverView extends Component {
     onApply: PropTypes.func
   };
 
-  state = {
-    selections: this.props.selections
-  };
-
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      selections: nextProps.selections
-    });
-  }
-
   isSelected = (option) => {
-    return this.state.selections.indexOf(option) !== -1;
+    return this.props.selections.indexOf(option) !== -1;
   };
 
   toggleOption = (option) => {
-    let index = this.state.selections.indexOf(option);
+    let index = this.props.selections.indexOf(option);
 
-    let newArr = [...this.state.selections];
+    let newArr = [...this.props.selections];
 
     if (index === -1) {
       newArr.push(option);
