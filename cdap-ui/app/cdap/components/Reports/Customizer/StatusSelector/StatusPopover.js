@@ -19,15 +19,8 @@ import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
-import {ReportsActions} from 'components/Reports/store/ReportsStore';
+import {ReportsActions, STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
 import StatusViewer from 'components/Reports/Customizer/StatusSelector/StatusViewer';
-
-const OPTIONS = [
-  'FAILED',
-  'COMPLETED',
-  'RUNNING',
-  'STOPPED'
-];
 
 class StatusPopoverView extends Component {
   static propTypes = {
@@ -60,16 +53,7 @@ class StatusPopoverView extends Component {
       newArr.splice(index, 1);
     }
 
-    this.setState({
-      selections: newArr
-    });
-  };
-
-  apply = () => {
-    this.props.onApply(this.state.selections);
-
-    // Closing popover
-    document.body.click();
+    this.props.onApply(newArr);
   };
 
   render() {
@@ -84,7 +68,7 @@ class StatusPopoverView extends Component {
       >
         <div className="options">
           {
-            OPTIONS.map((option) => {
+            STATUS_OPTIONS.map((option) => {
               return (
                 <div
                   className="option"
@@ -100,15 +84,6 @@ class StatusPopoverView extends Component {
               );
             })
           }
-        </div>
-
-        <div className="action">
-          <button
-            className="btn btn-link"
-            onClick={this.apply}
-          >
-            Apply
-          </button>
         </div>
       </Popover>
     );

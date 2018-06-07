@@ -18,12 +18,21 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
+import {STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
 
 function StatusViewerView({selections}) {
   let text = 'Select one';
+  let numSelections = selections.length;
 
-  if (selections.length > 0) {
-    text = selections.join(', ');
+  if (numSelections > 0) {
+    if (numSelections === STATUS_OPTIONS.length) {
+      text = 'All statuses';
+    } else {
+      text = selections.join(', ');
+      if (numSelections > 1) {
+        text = `(${numSelections}) ` + text;
+      }
+    }
   }
 
   return (

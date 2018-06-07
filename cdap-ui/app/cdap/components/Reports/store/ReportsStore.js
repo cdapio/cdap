@@ -33,6 +33,13 @@ const ReportsActions = {
   reset: 'REPORTS_RESET'
 };
 
+const STATUS_OPTIONS = [
+  'FAILED',
+  'COMPLETED',
+  'RUNNING',
+  'STOPPED'
+];
+
 const defaultCustomizerState = {
   pipelines: false,
   customApps: false,
@@ -50,7 +57,7 @@ const defaultCustomizerState = {
 };
 
 const defaultStatusState = {
-  statusSelections: []
+  statusSelections: [STATUS_OPTIONS[0]]
 };
 
 const defaultTimeRangeState = {
@@ -225,4 +232,4 @@ const ReportsStore = createStore(
 );
 
 export default ReportsStore;
-export {ReportsActions};
+export {ReportsActions, STATUS_OPTIONS};
