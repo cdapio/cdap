@@ -155,10 +155,10 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     // Generate the SSH key pair if the provisioner is not YARN
-    SSHKeyInfo sshKeyInfo = null;
+    SecureKeyInfo secureKeyInfo = null;
     if (!YarnProvisioner.SPEC.equals(provisioner.getSpec())) {
       try {
-        sshKeyInfo = generateSSHKey(programRunId);
+        secureKeyInfo = generateSSHKey(programRunId);
       } catch (Exception e) {
         LOG.error("Failed to generate SSH key pair for program run {} with provisioner {}", programRunId, name, e);
         provisionerNotifier.deprovisioning(programRunId);
@@ -168,17 +168,17 @@ public class ProvisioningService extends AbstractIdleService {
 
     Map<String, String> properties = SystemArguments.getProfileProperties(args);
     ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties, sparkCompat,
-                                                               createSSHContext(sshKeyInfo));
+                                                               createSSHContext(secureKeyInfo));
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.PROVISION, ClusterOp.Status.REQUESTING_CREATE);
     ClusterInfo clusterInfo =
       new ClusterInfo(programRunId, provisionRequest.getProgramDescriptor(),
-                      properties, name, provisionRequest.getUser(), clusterOp, sshKeyInfo, null);
+                      properties, name, provisionRequest.getUser(), clusterOp, secureKeyInfo, null);
     ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
     provisionerDataset.putClusterInfo(clusterInfo);
 
     ProvisionTask task = new ProvisionTask(provisionRequest, provisioner, context, provisionerNotifier,
-                                           transactional, datasetFramework, sshKeyInfo);
+                                           transactional, datasetFramework, secureKeyInfo);
     return new ProvisioningTask(programRunId) {
       @Override
       public void run() {
@@ -215,7 +215,7 @@ public class ProvisioningService extends AbstractIdleService {
 
     Map<String, String> properties = existing.getProvisionerProperties();
     ProvisionerContext context = new DefaultProvisionerContext(programRunId, properties, sparkCompat,
-                                                               createSSHContext(existing.getSshKeyInfo()));
+                                                               createSSHContext(existing.getSecureKeyInfo()));
 
     ClusterOp clusterOp = new ClusterOp(ClusterOp.Type.DEPROVISION, ClusterOp.Status.REQUESTING_DELETE);
     ClusterInfo clusterInfo = new ClusterInfo(existing, clusterOp, existing.getCluster());
@@ -289,7 +289,7 @@ public class ProvisioningService extends AbstractIdleService {
   /**
    * Generates a SSH key pair.
    */
-  private SSHKeyInfo generateSSHKey(ProgramRunId programRunId) throws JSchException, IOException {
+  private SecureKeyInfo generateSSHKey(ProgramRunId programRunId) throws JSchException, IOException {
     JSch jsch = new JSch();
     KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
 
@@ -319,11 +319,11 @@ public class ProvisioningService extends AbstractIdleService {
       os.write(privateKey);
     }
 
-    return new SSHKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(), "cdap");
+    return new SecureKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(), "cdap");
   }
 
   @Nullable
-  private SSHContext createSSHContext(@Nullable SSHKeyInfo keyInfo) {
+  private SSHContext createSSHContext(@Nullable SecureKeyInfo keyInfo) {
     return keyInfo == null ? null : new DefaultSSHContext(locationFactory, keyInfo);
   }
 
