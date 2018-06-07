@@ -32,13 +32,11 @@ export default class RunConfigs extends Component {
     currentRun: PropTypes.object,
     runs: PropTypes.array,
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string,
-    setActiveButton: PropTypes.func
+    pipelineName: PropTypes.string
   };
 
   state = {
-    showModeless: false,
-    mouseIsOver: false
+    showModeless: false
   };
 
   getRuntimeArgsAndToggleModeless = () => {
@@ -75,21 +73,7 @@ export default class RunConfigs extends Component {
   toggleModeless = () => {
     this.setState({
       showModeless: !this.state.showModeless
-    }, this.setActiveButton);
-  };
-
-  setMouseOver = (value) => {
-    this.setState({
-      mouseIsOver: value
-    }, this.setActiveButton);
-  };
-
-  setActiveButton = () => {
-    if (this.state.showModeless || this.state.mouseIsOver) {
-      this.props.setActiveButton(true);
-    } else {
-      this.props.setActiveButton(false);
-    }
+    });
   };
 
   renderRunConfigsButton() {
@@ -118,28 +102,19 @@ export default class RunConfigs extends Component {
 
     if (!this.props.runs.length) {
       return (
-        <div
+        <Popover
+          target={ConfigsBtnComp}
+          showOn='Hover'
+          placement='bottom'
           className="run-info-container run-configs-container disabled"
-          onMouseEnter={this.setMouseOver.bind(this, true)}
-          onMouseLeave={this.setMouseOver.bind(this, false)}
         >
-          <Popover
-            target={ConfigsBtnComp}
-            showOn='Hover'
-            placement='bottom'
-          >
-            {T.translate(`${PREFIX}.pipelineNeverRun`)}
-          </Popover>
-        </div>
+          {T.translate(`${PREFIX}.pipelineNeverRun`)}
+        </Popover>
       );
     }
 
     return (
-      <div
-        className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}
-        onMouseEnter={this.setMouseOver.bind(this, true)}
-        onMouseLeave={this.setMouseOver.bind(this, false)}
-      >
+      <div className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}>
         {this.renderRunConfigsButton()}
         {
           this.state.showModeless ?

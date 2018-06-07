@@ -23,7 +23,6 @@ import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsT
 import PipelineStopButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton';
 import PipelineRunButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineRunButton';
 import PipelineSummaryButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineSummaryButton';
-import PipelineButtonsWrapper from 'components/PipelineDetails/PipelineButtonsWrapper';
 
 const mapStateToConfigureButton = (state, ownProps) => {
   return {
@@ -65,22 +64,19 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
-        <PipelineButtonsWrapper>
-          <ConnectedConfigureButton
-            isBatch={isBatch}
-            pipelineName={pipelineName}
-          />
-          <ConnectedScheduleButton
-            isBatch={isBatch}
-            pipelineName={pipelineName}
-            schedule={schedule}
-            maxConcurrentRuns={maxConcurrentRuns}
-            scheduleStatus={scheduleStatus}
-            scheduleButtonLoading={scheduleButtonLoading}
-            scheduleError={scheduleError}
-            showRightSeparator={true}
-          />
-        </PipelineButtonsWrapper>
+        <ConnectedConfigureButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
+        <ConnectedScheduleButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+          schedule={schedule}
+          maxConcurrentRuns={maxConcurrentRuns}
+          scheduleStatus={scheduleStatus}
+          scheduleButtonLoading={scheduleButtonLoading}
+          scheduleError={scheduleError}
+        />
         <PipelineStopButton
           isBatch={isBatch}
           pipelineName={pipelineName}
@@ -95,13 +91,10 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           runButtonLoading={runButtonLoading}
           runError={runError}
         />
-        <PipelineButtonsWrapper>
-          <PipelineSummaryButton
-            isBatch={isBatch}
-            pipelineName={pipelineName}
-            showLeftSeparator={true}
-          />
-        </PipelineButtonsWrapper>
+        <PipelineSummaryButton
+          isBatch={isBatch}
+          pipelineName={pipelineName}
+        />
       </div>
     </Provider>
   );

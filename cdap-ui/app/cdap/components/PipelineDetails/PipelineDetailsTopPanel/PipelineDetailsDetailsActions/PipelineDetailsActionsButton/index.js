@@ -49,35 +49,19 @@ export default class PipelineDetailsActionsButton extends Component {
     pipelineName: PropTypes.string,
     description: PropTypes.string,
     artifact: PropTypes.object,
-    config: PropTypes.object,
-    setActiveButton: PropTypes.func
+    config: PropTypes.object
   };
 
   state = {
     showExportModal: false,
     showDeleteConfirmationModal: false,
-    showPopover: false,
-    mouseIsOver: false
+    showPopover: false
   };
 
   togglePopover = (showPopover = !this.state.showPopover) => {
     this.setState({
       showPopover
     }, this.setActiveButton);
-  };
-
-  setMouseOver = (value) => {
-    this.setState({
-      mouseIsOver: value
-    }, this.setActiveButton);
-  };
-
-  setActiveButton = () => {
-    if (this.state.showPopover || this.state.mouseIsOver) {
-      this.props.setActiveButton(true);
-    } else {
-      this.props.setActiveButton(false);
-    }
   };
 
   pipelineConfig = {
@@ -224,11 +208,7 @@ export default class PipelineDetailsActionsButton extends Component {
     };
 
     return (
-      <div
-        className={classnames("pipeline-action-container pipeline-actions-container", {"active" : this.state.showPopover})}
-        onMouseEnter={this.setMouseOver.bind(this, true)}
-        onMouseLeave={this.setMouseOver.bind(this, false)}
-      >
+      <div className={classnames("pipeline-action-container pipeline-actions-container", {"active" : this.state.showPopover})}>
         <Popover
           target={ActionsBtnAndLabel}
           placement="bottom"

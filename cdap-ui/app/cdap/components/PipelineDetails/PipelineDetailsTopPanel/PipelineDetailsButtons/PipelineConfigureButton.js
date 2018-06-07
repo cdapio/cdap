@@ -29,13 +29,11 @@ export default class PipelineConfigureButton extends Component {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
     resolvedMacros: PropTypes.object,
-    runtimeArgs: PropTypes.array,
-    setActiveButton: PropTypes.func
+    runtimeArgs: PropTypes.array
   };
 
   state = {
-    showModeless: false,
-    mouseIsOver: false
+    showModeless: false
   };
 
   getRuntimeArgumentsAndToggleModeless = () => {
@@ -49,22 +47,7 @@ export default class PipelineConfigureButton extends Component {
   toggleModeless = () => {
     this.setState({
       showModeless: !this.state.showModeless
-    }, this.setActiveButton);
-  };
-
-  setMouseOver = (value) => {
-    this.setState({
-      mouseIsOver: value
-    }, this.setActiveButton);
-  };
-
-
-  setActiveButton = () => {
-    if (this.state.showModeless || this.state.mouseIsOver) {
-      this.props.setActiveButton(true);
-    } else {
-      this.props.setActiveButton(false);
-    }
+    });
   };
 
   renderConfigureButton() {
@@ -88,11 +71,7 @@ export default class PipelineConfigureButton extends Component {
 
   render() {
     return (
-      <div
-        className={classnames("pipeline-action-container pipeline-configure-container", {"active" : this.state.showModeless})}
-        onMouseEnter={this.setMouseOver.bind(this, true)}
-        onMouseLeave={this.setMouseOver.bind(this, false)}
-      >
+      <div className={classnames("pipeline-action-container pipeline-configure-container", {"active" : this.state.showModeless})}>
         {this.renderConfigureButton()}
         {
           this.state.showModeless ?

@@ -38,15 +38,13 @@ export default class PipelineScheduleButton extends Component {
     scheduleStatus: PropTypes.string,
     scheduleButtonLoading: PropTypes.bool,
     scheduleError: PropTypes.string,
-    runtimeArgs: PropTypes.array,
-    setActiveButton: PropTypes.func
+    runtimeArgs: PropTypes.array
   }
 
   state = {
     showScheduler: false,
     showConfigModeless: false,
-    scheduleStatus: this.props.scheduleStatus,
-    mouseIsOver: false
+    scheduleStatus: this.props.scheduleStatus
   };
 
   componentWillReceiveProps(nextProps) {
@@ -60,27 +58,13 @@ export default class PipelineScheduleButton extends Component {
   toggleScheduler = () => {
     this.setState({
       showScheduler: !this.state.showScheduler
-    }, this.setActiveButton);
+    }, );
   };
 
   toggleConfigModeless = () => {
     this.setState({
       showConfigModeless: !this.state.showConfigModeless
-    }, this.setActiveButton);
-  };
-
-  setMouseOver = (value) => {
-    this.setState({
-      mouseIsOver: value
-    }, this.setActiveButton);
-  };
-
-  setActiveButton = () => {
-    if (this.state.showScheduler || this.state.showConfigModeless || this.state.mouseIsOver) {
-      this.props.setActiveButton(true);
-    } else {
-      this.props.setActiveButton(false);
-    }
+    });
   };
 
   schedulePipelineOrToggleConfig = () => {
@@ -182,11 +166,7 @@ export default class PipelineScheduleButton extends Component {
     }
 
     return (
-      <div
-        className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler || this.state.showConfigModeless})}
-        onMouseEnter={this.setMouseOver.bind(this, true)}
-        onMouseLeave={this.setMouseOver.bind(this, false)}
-      >
+      <div className={classnames("pipeline-action-container pipeline-scheduler-container", {"active" : this.state.showScheduler || this.state.showConfigModeless})}>
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
         {

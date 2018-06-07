@@ -29,33 +29,17 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 export default class PipelineSummaryButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string,
-    setActiveButton: PropTypes.func
+    pipelineName: PropTypes.string
   };
 
   state = {
-    showSummary: false,
-    mouseIsOver: false
+    showSummary: false
   };
 
   toggleSummary = () => {
     this.setState({
       showSummary: !this.state.showSummary
-    }, this.setActiveButton);
-  };
-
-  setMouseOver = (value) => {
-    this.setState({
-      mouseIsOver: value
-    }, this.setActiveButton);
-  };
-
-  setActiveButton = () => {
-    if (this.state.showSummary || this.state.mouseIsOver) {
-      this.props.setActiveButton(true);
-    } else {
-      this.props.setActiveButton(false);
-    }
+    });
   };
 
   renderSummaryButton() {
@@ -83,11 +67,7 @@ export default class PipelineSummaryButton extends Component {
     let programId = GLOBALS.programId[pipelineType];
 
     return (
-      <div
-        className={classnames("pipeline-action-container pipeline-summary-container", {"active" : this.state.showSummary})}
-        onMouseEnter={this.setMouseOver.bind(this, true)}
-        onMouseLeave={this.setMouseOver.bind(this, false)}
-      >
+      <div className={classnames("pipeline-action-container pipeline-summary-container", {"active" : this.state.showSummary})}>
         {this.renderSummaryButton()}
         {
           this.state.showSummary ?

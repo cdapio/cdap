@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
@@ -26,63 +26,49 @@ import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
 
-class RunLogs extends Component {
-  static propTypes = {
-    currentRun: PropTypes.object,
-    runs: PropTypes.array,
-    appId: PropTypes.string,
-    artifactName: PropTypes.string,
-    setActiveButton: PropTypes.func
-  };
+const RunLogs = ({currentRun, runs, appId, artifactName}) => {
+  const LogsBtnComp = () => (
+    <div className="run-logs-btn">
+      <IconSVG name="icon-file-text-o" />
+      <div>{T.translate(`${PREFIX}.logs`)}</div>
+    </div>
+  );
 
-  render() {
-    const LogsBtnComp = () => (
-      <div className="run-logs-btn">
-        <IconSVG name="icon-file-text-o" />
-        <div>{T.translate(`${PREFIX}.logs`)}</div>
-      </div>
-    );
-
-    let {runs, artifactName, currentRun, appId} = this.props;
-
-    if (!runs.length) {
-      return (
-        <div
-          className="run-info-container run-logs-container disabled"
-          onMouseEnter={this.props.setActiveButton.bind(this, true)}
-          onMouseLeave={this.props.setActiveButton.bind(this, false)}
-        >
-          <Popover
-            target={LogsBtnComp}
-            showOn='Hover'
-            placement='bottom'
-          >
-            {T.translate(`${PREFIX}.pipelineNeverRun`)}
-          </Popover>
-        </div>
-      );
-    }
-
-    let namespace = getCurrentNamespace(),
-        programType = GLOBALS.programType[artifactName],
-        programId = GLOBALS.programId[artifactName],
-        runId = objectQuery(currentRun, 'runid');
-
-    let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
-
+  if (!runs.length) {
     return (
-      <a href={path} target="_blank">
-        <div
-          className="run-info-container run-logs-container"
-          onMouseEnter={this.props.setActiveButton.bind(this, true)}
-          onMouseLeave={this.props.setActiveButton.bind(this, false)}
-        >
-          <LogsBtnComp />
-        </div>
-      </a>
+      <Popover
+        target={LogsBtnComp}
+        showOn='Hover'
+        placement='bottom'
+        className="run-info-container run-logs-container disabled"
+      >
+        {T.translate(`${PREFIX}.pipelineNeverRun`)}
+      </Popover>
     );
   }
-}
+
+  let namespace = getCurrentNamespace(),
+      programType = GLOBALS.programType[artifactName],
+      programId = GLOBALS.programId[artifactName],
+      runId = objectQuery(currentRun, 'runid');
+
+  let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
+
+  return (
+    <a href={path} target="_blank">
+      <div className="run-info-container run-logs-container">
+        <LogsBtnComp />
+      </div>
+    </a>
+  );
+};
+
+RunLogs.propTypes = {
+  currentRun: PropTypes.object,
+  runs: PropTypes.array,
+  appId: PropTypes.string,
+  artifactName: PropTypes.string
+};
 
 const mapStateToProps = (state) => {
   return {

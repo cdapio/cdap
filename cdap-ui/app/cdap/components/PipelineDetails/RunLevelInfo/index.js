@@ -27,7 +27,6 @@ import RunNumWarnings from 'components/PipelineDetails/RunLevelInfo/RunNumWarnin
 import RunNumErrors from 'components/PipelineDetails/RunLevelInfo/RunNumErrors';
 import RunComputeProfile from 'components/PipelineDetails/RunLevelInfo/RunComputeProfile';
 import {GLOBALS} from 'services/global-constants';
-import PipelineButtonsWrapper from 'components/PipelineDetails/PipelineButtonsWrapper';
 
 require('./RunLevelInfo.scss');
 
@@ -49,21 +48,13 @@ export default function RunLevelInfo() {
     <Provider store={PipelineDetailStore}>
       <div className="pipeline-details-run-level-info">
         <CurrentRunIndex />
-        <PipelineButtonsWrapper>
-          <ConnectedRunConfigs
-            showLeftSeparator={true}
-          />
-          <RunLogs
-            showRightSeparator={true}
-          />
-        </PipelineButtonsWrapper>
-        <div className="run-level-info-buttons-wrapper">
-          <RunStatus />
-          <RunStartTime />
-          <RunDuration />
-          <ConnectedRunNumWarnings />
-          <ConnectedRunNumErrors />
-        </div>
+        <ConnectedRunConfigs />
+        <RunLogs />
+        <RunStatus />
+        <RunStartTime />
+        <RunDuration />
+        <ConnectedRunNumWarnings />
+        <ConnectedRunNumErrors />
         <RunComputeProfile />
       </div>
     </Provider>

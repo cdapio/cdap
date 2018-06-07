@@ -135,6 +135,10 @@ $btn-border-color: transparent;
           }
         }
       }
+
+      &:after {
+        @include border-element(-16px);
+      }
     }
 
     .pipeline-configure-container {
@@ -143,12 +147,20 @@ $btn-border-color: transparent;
           transform: rotate(90deg);
         }
       }
+
+      &:after {
+        @include border-element();
+      }
     }
 
     .pipeline-summary-container {
       .pipeline-summary {
         /* 50px header + 55px detail view top panel */
         top: 105px;
+      }
+
+      &:after {
+        @include border-element(61px);
       }
     }
 
@@ -180,6 +192,10 @@ $btn-border-color: transparent;
         .btn-container {
           color: $grey-01;
         }
+      }
+
+      &:after {
+        @include border-element();
       }
     }
 

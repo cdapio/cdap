@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import AbsLinkTo from 'components/AbsLinkTo';
@@ -23,35 +23,28 @@ import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
-export default class PipelineDetailsDetailsButton extends Component {
-  static propTypes = {
-    pipelineName: PropTypes.string,
-    setActiveButton: PropTypes.func
+export default function PipelineDetailsDetailsButton({pipelineName}) {
+  let context = {
+    namespaceId: getCurrentNamespace(),
+    appId: pipelineName
   };
 
-  render() {
-    let context = {
-      namespaceId: getCurrentNamespace(),
-      appId: this.props.pipelineName
-    };
-
-    return (
-      <div
-        className="pipeline-action-container pipeline-details-container"
-        onMouseEnter={this.props.setActiveButton.bind(this, true)}
-        onMouseLeave={this.props.setActiveButton.bind(this, false)}
-      >
-        <AbsLinkTo context={context}>
-          <div className="btn pipeline-action-btn pipeline-details-btn">
-            <div className="btn-container">
-              <IconSVG name="icon-info-circle"/>
-              <div className="button-label">
-                {T.translate(`${PREFIX}.details`)}
-              </div>
+  return (
+    <div className="pipeline-action-container pipeline-details-container">
+      <AbsLinkTo context={context}>
+        <div className="btn pipeline-action-btn pipeline-details-btn">
+          <div className="btn-container">
+            <IconSVG name="icon-info-circle"/>
+            <div className="button-label">
+              {T.translate(`${PREFIX}.details`)}
             </div>
           </div>
-        </AbsLinkTo>
-      </div>
-    );
-  }
+        </div>
+      </AbsLinkTo>
+    </div>
+  );
 }
+
+PipelineDetailsDetailsButton.propTypes = {
+  pipelineName: PropTypes.string,
+};

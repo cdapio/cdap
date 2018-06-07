@@ -29,16 +29,6 @@ $border-color: $grey-05;
   position: absolute;
   margin-left: 20px;
 
-  .run-level-info-buttons-wrapper {
-    display: inline-block;
-
-    .run-info-container {
-      border-right: 1px solid $border-color;
-      height: 35px;
-      padding-top: 0;
-    }
-  }
-
   .run-info-container {
     display: inline-block;
     padding-left: 15px;
@@ -50,6 +40,10 @@ $border-color: $grey-05;
 
     /* Have to do this instead of height: 100% because of issue in Firefox */
     height: 53px;
+
+    &:after {
+      @include border-element();
+    }
   }
 
   div.run-number-container {
@@ -183,15 +177,6 @@ $border-color: $grey-05;
   .run-errors-container {
     &:after {
       display: none;
-    }
-  }
-
-  .pipeline-buttons-wrapper {
-    .button-wrapper {
-      .pipeline-buttons-separator {
-        top: 10px;
-        z-index: 999;
-      }
     }
   }
 }
