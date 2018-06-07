@@ -18,6 +18,7 @@ import {apiCreator} from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/:entityType/:entityId/metadata';
+let lineagePath = '/namespaces/:namespace/datasets/:entityId/lineage/fields';
 
 export const MyMetadataApi = {
   getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
@@ -26,5 +27,10 @@ export const MyMetadataApi = {
   deleteProperty: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/properties/:key`),
   getTags: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/tags`),
   addTags: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/tags`),
-  deleteTags: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/tags/:key`)
+  deleteTags: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/tags/:key`),
+
+  // Field Level Lineage
+  getFields: apiCreator(dataSrc, 'GET', 'REQUEST', lineagePath),
+  getFieldLineage: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName`),
+  getFieldOperations: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName/operations`)
 };
