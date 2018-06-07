@@ -37,3 +37,27 @@ export function getFields(datasetId) {
       });
     });
 }
+
+export function getLineageSummary(fieldName) {
+  let namespace = getCurrentNamespace();
+  let datasetId = Store.getState().lineage.datasetId;
+
+  let params = {
+    namespace,
+    entityId: datasetId,
+    fieldName,
+    direction: 'backward'
+  };
+
+  MyMetadataApi.getFieldLineage(params)
+    .subscribe((res) => {
+      console.log('res', res);
+      Store.dispatch({
+        type: Actions.setBackwardLineage,
+        payload: {
+          backward: res.backward,
+          activeField: fieldName
+        }
+      });
+    });
+}

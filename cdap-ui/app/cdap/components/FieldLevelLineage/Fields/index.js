@@ -17,12 +17,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
+import FieldRow from 'components/FieldLevelLineage/FieldRow';
 
 require('./Fields.scss');
 
 function FieldsView({datasetId, fields}) {
-  console.log('datasetId', datasetId);
-
   return (
     <div className="fields-list-container">
       <div className="fields-box">
@@ -39,12 +38,10 @@ function FieldsView({datasetId, fields}) {
           {
             fields.map((field) => {
               return (
-                <div
-                  className="field-row"
+                <FieldRow
                   key={field}
-                >
-                  {field}
-                </div>
+                  fieldName={field}
+                />
               );
             })
           }

@@ -15,31 +15,21 @@
  */
 
 @import '../../../styles/variables.scss';
+$border-color: $grey-05;
+$active-bg: $yellow-02-lighter;
+$active-border-color: $orange-01;
 
-$box-border-color: $green-01;
-$header-border-color: $grey-03;
-$count-font-color: $grey-04;
+.field-level-lineage-container {
+  .fields-list {
+    .field-row {
+      cursor: pointer;
+      padding: 3px 10px;
+      border-bottom: 1px solid $border-color;
 
-.fields-list-container {
-  .fields-box {
-    width: 250px;
-    border: 2px solid $box-border-color;
-    background-color: white;
-    margin: 0 auto;
-
-    .header {
-      border-bottom: 2px solid $header-border-color;
-      padding: 15px 10px 5px;
-
-      .dataset-name { font-weight: 600; }
-      .fields-count {
-        color: $count-font-color;
+      &.active {
+        background-color: $active-bg;
+        border: 1px solid $active-border-color;
       }
-    }
-
-    .fields-list {
-      height: 500px;
-      overflow: auto;
     }
   }
 }
