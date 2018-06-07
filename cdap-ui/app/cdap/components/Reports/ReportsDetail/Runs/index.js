@@ -106,7 +106,11 @@ function renderBody(runs, headers) {
                   }
 
                   if (head === 'runtimeArgs') {
-                    value = JSON.stringify(value, null, 2);
+                    let keyValuePairs = Object.entries(value).map(keyValuePair => {
+                      return `${keyValuePair[0]} = ${keyValuePair[1]}`;
+                    });
+
+                    value = keyValuePairs.join(',\n');
 
                     return (
                       <div>
