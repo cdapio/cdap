@@ -17,13 +17,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
+import {STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
 
-function StatusViewerView({selections}) {
+function StatusViewer(selections) {
   let text = 'Select one';
+  let numSelections = selections.length;
 
-  if (selections.length > 0) {
-    text = selections.join(', ');
+  if (numSelections > 0) {
+    if (numSelections === STATUS_OPTIONS.length) {
+      text = 'All statuses';
+    } else {
+      text = selections.join(', ');
+      if (numSelections > 1) {
+        text = `(${numSelections}) ` + text;
+      }
+    }
   }
 
   return (
@@ -39,18 +47,8 @@ function StatusViewerView({selections}) {
   );
 }
 
-StatusViewerView.propTypes = {
+StatusViewer.propTypes = {
   selections: PropTypes.array
 };
-
-const mapStateToProps = (state) => {
-  return {
-    selections: state.status.statusSelections
-  };
-};
-
-const StatusViewer = connect(
-  mapStateToProps
-)(StatusViewerView);
 
 export default StatusViewer;
