@@ -67,6 +67,7 @@ export default class ProfileCustomizeContent extends PureComponent {
       }
     );
   }
+
   componentWillUnmount() {
     this.customization = {};
   }
@@ -85,6 +86,10 @@ export default class ProfileCustomizeContent extends PureComponent {
     if (this.props.onClose) {
       this.props.onClose(false);
     }
+  };
+
+  getProfilePropValue = (property) => {
+    return this.customization[property.name] || property.value;
   };
 
   render() {
@@ -147,7 +152,7 @@ export default class ProfileCustomizeContent extends PureComponent {
                               <div>
                                 <AbstractWidget
                                   type={property['widget-type']}
-                                  value={this.customization[property.name] || property.value}
+                                  value={this.getProfilePropValue.bind(this, property)}
                                   onChange={this.onPropertyUpdate.bind(this, property.name)}
                                   widgetProps={property['widget-attributes']}
                                 />
@@ -177,7 +182,7 @@ export default class ProfileCustomizeContent extends PureComponent {
               className="btn btn-primary"
               onClick={this.onSave}
             >
-              Done
+              Save
             </div>
         }
       </div>
