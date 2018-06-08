@@ -28,8 +28,7 @@ import ProfileCustomizePopover from 'components/PipelineDetails/ProfilesListView
 import {isNilOrEmpty} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
-import isEmpty from 'lodash/isEmpty';
-import {getProvisionersMap, fetchProvisioners} from 'components/Cloud/Profiles/Store/Provisioners';
+import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 require('./ProfilesListViewInPipeline.scss');
 
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
@@ -122,17 +121,11 @@ export default class ProfilesListViewInPipeline extends Component {
   }
 
   componentDidMount() {
-    if (isEmpty(getProvisionersMap().nameToLabelMap)) {
-      fetchProvisioners().subscribe(() => {
-        this.setState({
-          provisionersMap: getProvisionersMap().nameToLabelMap
-        });
-      });
-    } else {
+    getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisionersMap: getProvisionersMap().nameToLabelMap
+        provisionersMap: state.nameToLabelMap
       });
-    }
+    });
   }
 
   onProfileSelect = (profileName, customizations = {}, e) => {

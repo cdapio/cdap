@@ -22,10 +22,9 @@ import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreat
 import {connect} from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
 import ProfilesListView, {extractProfileName, isSystemProfile} from 'components/PipelineDetails/ProfilesListView';
-import isEmpty from 'lodash/isEmpty';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {getProvisionersMap, fetchProvisioners} from 'components/Cloud/Profiles/Store/Provisioners';
+import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {preventPropagation} from 'services/helpers';
 require('./ProfilesForSchedule.scss');
 
@@ -89,17 +88,11 @@ class ProfilesForSchedule extends Component {
   }
 
   setProvisionersMap() {
-    if (isEmpty(getProvisionersMap().nameToLabelMap)) {
-      fetchProvisioners().subscribe(() => {
-        this.setState({
-          provisionersMap: getProvisionersMap().nameToLabelMap
-        });
-      });
-    } else {
+    getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisionersMap: getProvisionersMap().nameToLabelMap
+        provisionersMap: state.nameToLabelMap
       });
-    }
+    });
   }
 
   setSelectedProfile = (selectedProfile, profileCustomizations = {}, e) => {

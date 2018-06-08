@@ -23,8 +23,7 @@ import EntityTopPanel from 'components/EntityTopPanel';
 import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Content';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import isEmpty from 'lodash/isEmpty';
-import {getProvisionersMap, fetchProvisioners} from 'components/Cloud/Profiles/Store/Provisioners';
+import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 
 require('./DetailView.scss');
 
@@ -79,17 +78,11 @@ export default class ProfileDetailView extends Component {
   }
 
   getProvisioners() {
-    if (isEmpty(getProvisionersMap().list)) {
-      fetchProvisioners().subscribe(() => {
-        this.setState({
-          provisioners: getProvisionersMap().list
-        });
-      });
-    } else {
+    getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisioners: getProvisionersMap().list
+        provisioners: state.list
       });
-    }
+    });
   }
 
   render() {

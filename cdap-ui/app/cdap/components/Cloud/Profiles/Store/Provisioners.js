@@ -17,6 +17,8 @@
 import {createStore} from 'redux';
 import {defaultAction, composeEnhancers} from 'services/helpers';
 import {MyCloudApi} from 'api/cloud';
+import isEmpty from 'lodash/isEmpty';
+import {Observable} from 'rxjs/Observable';
 
 const ACTIONS = {
   SAVE_PROVISIONERS: 'SAVE_PROVISIONERS'
@@ -63,7 +65,17 @@ const provisioners = (state = DEFAULT_STATE, action = defaultAction) => {
   }
 };
 
-export const getProvisionersMap = () => store.getState();
+export const getProvisionersMap = () => {
+  let {list} = store.getState();
+  const observableReturn = () => Observable.create(observer => {
+    observer.next(store.getState());
+  });
+  if (isEmpty(list)) {
+    return fetchProvisioners().flatMap(observableReturn);
+  } else {
+    return observableReturn();
+  }
+};
 
 const store = createStore(
   provisioners,
