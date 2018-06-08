@@ -17,7 +17,7 @@ package co.cask.cdap.report
 
 import co.cask.cdap.api.schedule.{TriggerInfo, TriggeringScheduleInfo}
 import co.cask.cdap.report.proto.ProgramRunStartMethod
-import co.cask.cdap.report.util.TriggeringScheduleInfoAdapter
+import co.cask.cdap.report.util.{Constants, TriggeringScheduleInfoAdapter}
 import com.google.gson.{Gson, GsonBuilder}
 import org.slf4j.LoggerFactory
 
@@ -89,7 +89,7 @@ case class RecordBuilder(namespace: String, applicationName: String, application
 
   private def getStartMethod(runtimeArgs: Option[scala.collection.Map[String, String]]): ProgramRunStartMethod = {
     if (runtimeArgs.isEmpty) return ProgramRunStartMethod.MANUAL
-    val scheduleInfoJson = runtimeArgs.get.get(SCHEDULE_INFO_KEY)
+    val scheduleInfoJson = runtimeArgs.get.get(Constants.Notification.SCHEDULE_INFO_KEY)
     if (scheduleInfoJson.isEmpty) return ProgramRunStartMethod.MANUAL
     val scheduleInfo: TriggeringScheduleInfo = GSON.fromJson(scheduleInfoJson.get, classOf[TriggeringScheduleInfo])
     val triggers = scheduleInfo.getTriggerInfos
@@ -121,6 +121,5 @@ case class StartInfo(user: String,
 object RecordBuilder {
   val LOG = LoggerFactory.getLogger(RecordBuilder.getClass)
   val END_STATUSES = Set("COMPLETED", "KILLED", "FAILED")
-  val SCHEDULE_INFO_KEY = "triggeringScheduleInfo"
   val GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder).create()
 }

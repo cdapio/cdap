@@ -54,7 +54,7 @@ import co.cask.cdap.report.util.ReportIds;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestBaseWithSpark2;
+import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import com.databricks.spark.avro.DefaultSource;
 import com.google.common.base.Charsets;
@@ -96,7 +96,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests {@link ReportGenerationApp}.
  */
-public class ReportGenerationAppTest extends TestBaseWithSpark2 {
+public class ReportGenerationAppTest extends TestBase {
+  @ClassRule
+  public static final TestConfiguration SPARK_VERSION_CONFIG =
+    new TestConfiguration("app.program.spark.compat", SparkCompat.getSparkVersion());
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   @ClassRule
@@ -287,7 +290,7 @@ public class ReportGenerationAppTest extends TestBaseWithSpark2 {
       "\"run\":\"randomRunId\",\"entity\": \"PROGRAM\",\"program\": \"wf\",\"programStatus\": \"KILLED\"," +
       "\"type\": \"PROGRAM_STATUS\"}]}";
     ProgramStartInfo startInfo =
-      new ProgramStartInfo(ImmutableMap.of(RecordBuilder.SCHEDULE_INFO_KEY(), scheduleInfo),
+      new ProgramStartInfo(ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo),
                            new ArtifactId("Artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER), "alice");
     long delay = TimeUnit.MINUTES.toMillis(5);
     int mockMessageId = 0;
