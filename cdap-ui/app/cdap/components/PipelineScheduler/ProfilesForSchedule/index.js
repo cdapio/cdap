@@ -73,18 +73,19 @@ class ProfilesForSchedule extends Component {
   };
 
   setProfileDetails() {
-    if (this.state.selectedProfile) {
-      MyCloudApi
-        .get({
-          namespace: isSystemProfile(this.state.selectedProfile) ? 'system' : getCurrentNamespace(),
-          profile: extractProfileName(this.state.selectedProfile)
-        })
-        .subscribe(profileDetails => {
-          this.setState({
-            profileDetails
-          });
-        });
+    if (!this.state.selectedProfile) {
+      return;
     }
+    MyCloudApi
+      .get({
+        namespace: isSystemProfile(this.state.selectedProfile) ? 'system' : getCurrentNamespace(),
+        profile: extractProfileName(this.state.selectedProfile)
+      })
+      .subscribe(profileDetails => {
+        this.setState({
+          profileDetails
+        });
+      });
   }
 
   setProvisionersMap() {
@@ -143,12 +144,12 @@ class ProfilesForSchedule extends Component {
           {
             this.state.selectedProfile ?
               <span>
-              {
-                provisionerLabel ?
-                  `${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`
-                :
-                  `${extractProfileName(this.state.selectedProfile)}`
-              }
+                {
+                  provisionerLabel ?
+                    `${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`
+                  :
+                    `${extractProfileName(this.state.selectedProfile)}`
+                }
               </span>
             :
               <span>Select a Profile</span>
