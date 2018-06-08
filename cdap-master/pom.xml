@@ -298,7 +298,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/spark1_2.10</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/${spark1.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -326,7 +326,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/spark2_2.11</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/${spark2.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -394,7 +394,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/spark2_2.11</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/${spark2.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -438,7 +438,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/spark1_2.10</outputDirectory>
+                  <outputDirectory>${stage.runtime.ext.dir}/${spark1.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -460,7 +460,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/spark2_2.11</outputDirectory>
+                  <outputDirectory>${stage.runtime.ext.dir}/${spark2.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -598,9 +598,9 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-program-report-2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-program-report-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-${project.version}.jar" />
                   </target>
                 </configuration>
               </execution>
