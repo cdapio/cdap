@@ -25,8 +25,11 @@ require('./PropertyLock.scss');
 
 function PropertyLock({isEditable, propertyName}) {
   let iconName = !isEditable ? 'icon-lock_close' : 'icon-lock_open';
-  const getIconTooltip = (locked) => `Property is ${locked} while customizing profile in pipelines`;
-  let title = !isEditable ? getIconTooltip('locked') : getIconTooltip('unlocked');
+  let title = isEditable
+    ?
+      'Click to disallow editing the value of this property after the profile is created'
+    :
+      'Click to allow editing the value of this property before running a program';
   const target = (
     <IconSVG
       className="property-lock"
