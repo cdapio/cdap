@@ -25,7 +25,6 @@ import {MyProgramApi} from 'api/program';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import cloneDeep from 'lodash/cloneDeep';
 import { MyPreferenceApi } from 'api/preference';
-import {Observable} from 'rxjs/Observable';
 import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import {convertKeyValuePairsToMap} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
@@ -137,11 +136,6 @@ const updatePreferences = () => {
   let appId = PipelineDetailStore.getState().name;
   let prefObj = convertKeyValuePairsObjToMap(runtimeArgs);
 
-  if (!Object.keys(prefObj).length) {
-    return Observable.create((observer) => {
-      observer.next();
-    });
-  }
   return MyPreferenceApi.setAppPreferences({
     namespace: getCurrentNamespace(),
     appId
