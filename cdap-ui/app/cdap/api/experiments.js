@@ -39,7 +39,8 @@ export const myExperimentsApi = {
 
   deleteModelInExperiment: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId`),
   deleteExperiment: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basePath}/experiments/:experimentId`),
-
+  updateDirectivesInModel: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/directives`),
+  deleteSplitInModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/split`),
   createExperiment: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basePath}/experiments/:experimentId`),
   createSplit: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models/:modelId/split`),
   createModelInExperiment: apiCreator(dataSrc, 'POST', 'REQUEST', `${basePath}/experiments/:experimentId/models`),
