@@ -24,18 +24,17 @@ const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    isMissingKeyValues: state.isMissingKeyValues,
     pipelineEdited: state.pipelineEdited,
     saveLoading: ownProps.saveLoading,
     saveConfig: ownProps.saveConfig
   };
 };
 
-const ConfigModelessSaveBtn = ({isMissingKeyValues, pipelineEdited, saveLoading, saveConfig}) => {
+const ConfigModelessSaveBtn = ({pipelineEdited, saveLoading, saveConfig}) => {
   return (
     <button
       className="btn btn-secondary"
-      disabled={saveLoading || isMissingKeyValues}
+      disabled={saveLoading}
       onClick={saveConfig.bind(this, pipelineEdited)}
     >
       {
@@ -57,7 +56,6 @@ const ConfigModelessSaveBtn = ({isMissingKeyValues, pipelineEdited, saveLoading,
 };
 
 ConfigModelessSaveBtn.propTypes = {
-  isMissingKeyValues: PropTypes.bool,
   pipelineEdited: PropTypes.bool,
   saveLoading: PropTypes.bool,
   saveConfig: PropTypes.func
