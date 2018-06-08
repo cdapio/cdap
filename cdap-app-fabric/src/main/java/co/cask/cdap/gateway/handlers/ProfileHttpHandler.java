@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
@@ -110,9 +109,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/profiles/{profile-name}")
-  public void writeProfile(
-    FullHttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-    @PathParam("profile-name") String profileName) throws BadRequestException, IOException, AlreadyExistsException {
+  public void writeProfile(FullHttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId,
+                           @PathParam("profile-name") String profileName) throws BadRequestException, IOException {
     ProfileCreateRequest profileCreateRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);
@@ -125,7 +124,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       new Profile(profileName, profileCreateRequest.getDescription(),
                   profileId.getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER,
                   profileCreateRequest.getProvisioner());
-    profileStore.add(profileId, profile);
+    profileStore.saveProfile(profileId, profile);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -141,7 +140,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     @PathParam("namespace-id") String namespaceId,
     @PathParam("profile-name") String profileName) throws NotFoundException, ConflictException, IOException {
     // TODO: add the check if there is any program or schedule associated with the profile
-    profileStore.delete(new ProfileId(namespaceId, profileName));
+    profileStore.deleteProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

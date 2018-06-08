@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.store.profile;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -62,7 +61,7 @@ public class ProfileStoreTest {
 
     // delete non-existing profile
     try {
-      profileStore.delete(NamespaceId.DEFAULT.profile("nonExisting"));
+      profileStore.deleteProfile(NamespaceId.DEFAULT.profile("nonExisting"));
       Assert.fail();
     } catch (NotFoundException e) {
       // expected
@@ -72,37 +71,34 @@ public class ProfileStoreTest {
     Profile expected = new Profile("MyProfile", "my profile for testing",
                                    new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));
     // add a profile
-    profileStore.add(profileId, expected);
+    profileStore.saveProfile(profileId, expected);
 
     // get the profile
     Assert.assertEquals(expected, profileStore.getProfile(profileId));
 
-    // add a profile which already exists
-    try {
-      profileStore.add(profileId, new Profile("MyProfile", "my another profile",
-                                              new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES)));
-      Assert.fail();  
-    } catch (AlreadyExistsException e) {
-      // expected
-    }
+    // add a profile which already exists, should succeed and the profile property should be updated
+    expected = new Profile("MyProfile", "my 2nd profile for updating",
+      new ProvisionerInfo("anotherProvisioner", Collections.emptyList()));
+    profileStore.saveProfile(profileId, expected);
+    Assert.assertEquals(expected, profileStore.getProfile(profileId));
 
     // add another profile to default namespace
     ProfileId profileId2 = NamespaceId.DEFAULT.profile("MyProfile2");
     Profile profile2 = new Profile("MyProfile2", "my 2nd profile for testing",
                                    new ProvisionerInfo("anotherProvisioner", PROPERTY_SUMMARIES));
-    profileStore.add(profileId2, profile2);
+    profileStore.saveProfile(profileId2, profile2);
 
     // get all profiles
     List<Profile> profiles = ImmutableList.of(expected, profile2);
     Assert.assertEquals(profiles, profileStore.getProfiles(NamespaceId.DEFAULT));
 
     // delete the second profile
-    profileStore.delete(profileId2);
+    profileStore.deleteProfile(profileId2);
     Assert.assertEquals(ImmutableList.of(expected), profileStore.getProfiles(NamespaceId.DEFAULT));
 
     // add one and delete all profiles
-    profileStore.add(profileId2, profile2);
-    profileStore.deleteAll(NamespaceId.DEFAULT);
+    profileStore.saveProfile(profileId2, profile2);
+    profileStore.deleteAllProfiles(NamespaceId.DEFAULT);
     Assert.assertEquals(Collections.EMPTY_LIST, profileStore.getProfiles(NamespaceId.DEFAULT));
   }
 }
