@@ -28,14 +28,24 @@ class StatusPopoverView extends Component {
     onApply: PropTypes.func
   };
 
+  state = {
+    selections: this.props.selections
+  };
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      selections: nextProps.selections
+    });
+  }
+
   isSelected = (option) => {
-    return this.props.selections.indexOf(option) !== -1;
+    return this.state.selections.indexOf(option) !== -1;
   };
 
   toggleOption = (option) => {
-    let index = this.props.selections.indexOf(option);
+    let index = this.state.selections.indexOf(option);
 
-    let newArr = [...this.props.selections];
+    let newArr = [...this.state.selections];
 
     if (index === -1) {
       newArr.push(option);
@@ -43,18 +53,37 @@ class StatusPopoverView extends Component {
       newArr.splice(index, 1);
     }
 
-    this.props.onApply(newArr);
+    this.setState({
+      selections: newArr
+    });
+  };
+
+  apply = () => {
+    this.props.onApply(this.state.selections);
+
+    // Closing popover
+    document.body.click();
+  };
+
+  // Setting selections to previous selections when the user clicks outside
+  onTogglePopover = (showPopover) => {
+    if (!showPopover) {
+      this.setState({
+        selections: this.props.selections
+      });
+    }
   };
 
   render() {
     return (
       <Popover
-        target={StatusViewer}
+        target={StatusViewer.bind(null, this.state.selections)}
         className="status-selector-popover"
         placement="bottom"
         bubbleEvent={false}
         enableInteractionInPopover={true}
         injectOnToggle={true}
+        onTogglePopover={this.onTogglePopover}
       >
         <div className="options">
           {
@@ -74,6 +103,14 @@ class StatusPopoverView extends Component {
               );
             })
           }
+        </div>
+        <div className="action">
+          <button
+            className="btn btn-primary"
+            onClick={this.apply}
+          >
+            Apply
+          </button>
         </div>
       </Popover>
     );
