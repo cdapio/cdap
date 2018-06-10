@@ -32,8 +32,7 @@ import Alert from 'components/Alert';
 import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
-import {MyCloudApi} from 'api/cloud';
-
+import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
@@ -114,7 +113,7 @@ class ProfilesListView extends Component {
 
   componentDidMount() {
     getProfiles(this.props.namespace);
-    this.getProvisionersMap();
+    this.getProvisioners();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -125,23 +124,12 @@ class ProfilesListView extends Component {
     }
   }
 
-  getProvisionersMap() {
-    MyCloudApi
-      .getProvisioners()
-      .subscribe(
-        (provisioners) => {
-          let provisionersMap = {};
-          provisioners.forEach(provisioner => {
-            provisionersMap[provisioner.name] = provisioner.label;
-          });
-          this.setState({
-            provisionersMap
-          });
-        },
-        (error) => {
-          setError(error.response || error);
-        }
-      );
+  getProvisioners() {
+    getProvisionersMap().subscribe((state) => {
+      this.setState({
+        provisionersMap: state.nameToLabelMap
+      });
+    });
   }
 
   toggleViewAll = () => {

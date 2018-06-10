@@ -23,6 +23,7 @@ import EntityTopPanel from 'components/EntityTopPanel';
 import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Content';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 
 require('./DetailView.scss');
 
@@ -77,20 +78,11 @@ export default class ProfileDetailView extends Component {
   }
 
   getProvisioners() {
-    MyCloudApi
-      .getProvisioners()
-      .subscribe(
-        (provisioners) => {
-          this.setState({
-            provisioners
-          });
-        },
-        (error) => {
-          this.setState({
-            error: error.response || error
-          });
-        }
-      );
+    getProvisionersMap().subscribe((state) => {
+      this.setState({
+        provisioners: state.list
+      });
+    });
   }
 
   render() {
