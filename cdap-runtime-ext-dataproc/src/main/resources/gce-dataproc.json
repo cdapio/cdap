@@ -41,7 +41,7 @@
           "widget-type": "select",
           "label": "Region",
           "name": "region",
-          "description": "A region is a specific geographical location where you can host resources such as static IP addresses and subnets. E.g. us-west1, us-central1, europe-west1. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/",
+          "description": "A region is a specific geographical location where you can host resources such as static IP addresses and subnets. E.g. us-west1, us-central1, europe-west1. For more information, refer to https://cloud.google.com/dataproc/docs/concepts/regional-endpoints",
           "widget-attributes": {
             "values": [
               "global",
@@ -129,7 +129,7 @@
       "properties": [
         {
           "widget-type": "select",
-          "label": "Number of Masters",
+          "label": "Number of masters",
           "name": "masterNumNodes",
           "description": "Master nodes contain the YARN Resource Manager, HDFS NameNode, and all job drivers",
           "widget-attributes": {
@@ -143,9 +143,9 @@
         },
         {
           "widget-type": "select",
-          "label": "Cores",
+          "label": "Master cores",
           "name": "masterCPUs",
-          "description": "The number of virtual cores to allocate for master nodes",
+          "description": "The number of virtual cores to allocate to a master node",
           "widget-attributes": {
             "values": [
               1,
@@ -163,9 +163,9 @@
         },
         {
           "widget-type": "memory-textbox",
-          "label": "Memory (GB)",
+          "label": "Master memory (GB)",
           "name": "masterMemoryMB",
-          "description": "The amount of memory in GB to allocate for master nodes",
+          "description": "The amount of memory in GB to allocate for a master node",
           "widget-attributes": {
             "default": 15360,
             "min": 256,
@@ -179,7 +179,7 @@
       "properties": [
         {
           "widget-type": "number",
-          "label": "Number of Workers",
+          "label": "Number of workers",
           "name": "workerNumNodes",
           "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
           "widget-attributes": {
@@ -190,7 +190,7 @@
         },
         {
           "widget-type": "select",
-          "label": "Cores",
+          "label": "Worker cores",
           "name": "workerCPUs",
           "description": "The number of virtual cores to allocate for worker nodes",
           "widget-attributes": {
@@ -210,9 +210,9 @@
         },
         {
           "widget-type": "memory-textbox",
-          "label": "Memory (GB)",
+          "label": "Worker memory (GB)",
           "name": "workerMemoryMB",
-          "description": "The amount of memory in GB to allocate for worker nodes",
+          "description": "The amount of memory in GB to allocate for a worker node",
           "widget-attributes": {
             "default": 15360,
             "min": 256,

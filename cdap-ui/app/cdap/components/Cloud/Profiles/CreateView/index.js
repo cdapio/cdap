@@ -257,7 +257,7 @@ class ProfileCreateView extends Component {
       <Provider store={CreateProfileStore}>
         <div className="profile-create-view">
           <EntityTopPanel
-            title="Create a Google Dataproc Profile"
+            title="Create a profile for Google Cloud Dataproc"
             closeBtnAnchorLink={linkObj}
           />
           <div className="create-form-container">
