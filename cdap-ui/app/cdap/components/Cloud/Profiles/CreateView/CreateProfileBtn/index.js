@@ -27,7 +27,7 @@ function CreateProfileBtn({onClick, loading, disabled}) {
       onClick={onClick}
       loading={loading}
       disabled={disabled}
-      label="Create Compute Profile"
+      label="Create"
     />
   );
 }
