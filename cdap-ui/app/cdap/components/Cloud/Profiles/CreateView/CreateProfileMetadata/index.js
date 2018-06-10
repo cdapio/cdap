@@ -28,7 +28,7 @@ function ProfileName({profileName}) {
       aria-labelledby="profile-name"
       value={profileName}
       onChange={(e) => updateProfileName(e.target.value)}
-      placeholder="Add a name for the Compute Profile"
+      placeholder="Name the compute profile"
       autoFocus
     />
   );
@@ -53,7 +53,7 @@ function ProfileDescription({profileDescription}) {
       className="create-profile-description"
       value={profileDescription}
       onChange={(e) => updateProfileDescription(e.target.value)}
-      placeholder="Add a description for the Compute Profile"
+      placeholder="Describe the profile that it is being created"
     />
   );
 }

@@ -437,7 +437,7 @@ function ModelsTableContent({
         <div className="btn-container">
           <Link
             className="btn btn-secondary"
-            to={`/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}`}
+            to={`/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&addModel=true`}
           >
             Add a Model
           </Link>

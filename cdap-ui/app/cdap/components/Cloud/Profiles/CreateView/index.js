@@ -21,7 +21,7 @@ import AbstractWidget from 'components/AbstractWidget';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Link, Redirect} from 'react-router-dom';
 import {MyCloudApi} from 'api/cloud';
-import {objectQuery, preventPropagation} from 'services/helpers';
+import {objectQuery, preventPropagation, isNilOrEmpty} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {connect, Provider} from 'react-redux';
 import ProvisionerInfoStore from 'components/Cloud/Store';
@@ -253,11 +253,14 @@ class ProfileCreateView extends Component {
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : () => history.back();
 
+    const {selectedProvisioner} = this.state;
+    const label = objectQuery(this.props, 'provisionerJsonSpecMap', selectedProvisioner, 'label');
+    const provisionerLabel = isNilOrEmpty(label) ? '' : `for ${label}`;
     return (
       <Provider store={CreateProfileStore}>
         <div className="profile-create-view">
           <EntityTopPanel
-            title="Create a Google Dataproc Profile"
+            title={`Create a profile ${provisionerLabel}`}
             closeBtnAnchorLink={linkObj}
           />
           <div className="create-form-container">
