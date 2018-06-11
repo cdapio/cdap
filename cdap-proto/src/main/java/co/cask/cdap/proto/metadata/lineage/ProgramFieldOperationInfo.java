@@ -16,14 +16,16 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents information about the field operations along with the programs who
- * performed them.
+ * In field lineage details, represents a set of programs that performed the same operations.
  */
+@Beta
 public class ProgramFieldOperationInfo {
   private final List<ProgramInfo> programs;
   private final List<FieldOperationInfo> operations;

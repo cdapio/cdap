@@ -16,29 +16,54 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.InputField;
+import co.cask.cdap.api.lineage.field.ReadOperation;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nullable;
+
 /**
- * Represents input to the field operation.
+ * Represents an input to a field operation: in case of a {@link ReadOperation},
+ * a list of datasets ({@link EndPoint}); otherwise a list of {@link InputField}.
  */
+@Beta
 public class FieldOperationInput {
-  private final List<EndPoint> endPoints;
+  private final EndPoint endPoint;
   private final List<InputField> fields;
 
-  public FieldOperationInput(@Nullable List<EndPoint> endPoints, @Nullable List<InputField> fields) {
-    this.endPoints = endPoints == null ? null : Collections.unmodifiableList(new ArrayList<>(endPoints));
+  private FieldOperationInput(EndPoint endPoint, @Nullable List<InputField> fields) {
+    this.endPoint = endPoint;
     this.fields = fields == null ? null : Collections.unmodifiableList(new ArrayList<>(fields));
   }
 
+  /**
+   * Create an instance of {@link FieldOperationInput} from a given EndPoint.
+   *
+   * @param endPoint an EndPoint representing input to the operation
+   * @return instance of {@link FieldOperationInput}
+   */
+  public static FieldOperationInput of(EndPoint endPoint) {
+    return new FieldOperationInput(endPoint, null);
+  }
+
+  /**
+   * Create an instance of {@link FieldOperationInput} from a given list of InputFields.
+   *
+   * @param fields the list of InputField which represents an input to the operation
+   * @return instance of {@link FieldOperationInput}
+   */
+  public static FieldOperationInput of(List<InputField> fields) {
+    return new FieldOperationInput(null, fields);
+  }
+
   @Nullable
-  public List<EndPoint> getEndPoints() {
-    return endPoints;
+  public EndPoint getEndPoint() {
+    return endPoint;
   }
 
   @Nullable

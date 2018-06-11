@@ -16,27 +16,26 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
- * Represents field lineage operation.
+ * Represents an operation in the lineage for a field. An operation is
+ * given by its name and description, along with the inputs it operates on
+ * and the outputs it emits.
  */
+@Beta
 public class FieldOperationInfo {
-  private final String id;
   private final String name;
   private final String description;
   private final FieldOperationInput inputs;
   private final FieldOperationOutput outputs;
 
-  public FieldOperationInfo(String id, String name, String description, FieldOperationInput inputs,
+  public FieldOperationInfo(String name, String description, FieldOperationInput inputs,
                             FieldOperationOutput outputs) {
-    this.id = id;
     this.name = name;
     this.description = description;
     this.inputs = inputs;
     this.outputs = outputs;
-  }
-
-  public String getId() {
-    return id;
   }
 
   public String getName() {
