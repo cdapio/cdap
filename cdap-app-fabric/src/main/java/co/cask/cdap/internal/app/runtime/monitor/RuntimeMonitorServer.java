@@ -27,7 +27,6 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.tools.HttpsEnabler;
-import co.cask.cdap.security.tools.KeyStores;
 import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -40,7 +39,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Runtime Server which starts netty-http service to expose metadata to {@link RuntimeMonitor}
@@ -48,20 +46,23 @@ import java.util.concurrent.TimeUnit;
 public class RuntimeMonitorServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorServer.class);
-  // Effectively making the cert not going to expire.
-  // We use max int of seconds to compute number of days to avoid overflow.
-  private static final int CERT_VALIDITY_DAYS = (int) TimeUnit.SECONDS.toDays(Integer.MAX_VALUE);
 
   private final CConfiguration cConf;
   private final MessageFetcher messageFetcher;
   private final CountDownLatch shutdownLatch;
+  private final KeyStore keyStore;
+  private final KeyStore trustStore;
   private NettyHttpService httpService;
 
   @Inject
-  RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService) {
+  RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService,
+                       @Constants.AppFabric.KeyStore KeyStore keyStore,
+                       @Constants.AppFabric.TrustStore KeyStore trustStore) {
     this.cConf = cConf;
     this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
     this.shutdownLatch = new CountDownLatch(1);
+    this.keyStore = keyStore;
+    this.trustStore = trustStore;
   }
 
   @Override
@@ -72,11 +73,6 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     InetSocketAddress address = getServerSocketAddress(cConf);
 
     // Enable SSL for communication.
-    // TODO: CDAP-13252 to add client side authentication via SSL
-    String password = KeyStores.generateRandomPassword();
-    // Generate a cert that never expires
-    KeyStore ks = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, password);
-
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
       .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, () -> {
         shutdownLatch.countDown();
@@ -86,7 +82,12 @@ public class RuntimeMonitorServer extends AbstractIdleService {
       .setHost(address.getHostName())
       .setPort(address.getPort());
 
-    httpService = new HttpsEnabler().setKeyStore(ks, password::toCharArray).enable(builder).build();
+    httpService = new HttpsEnabler()
+      .setKeyStore(keyStore, ""::toCharArray)
+      .setTrustStore(trustStore)
+      .enable(builder)
+      .build();
+
     httpService.start();
     LOG.info("Runtime monitor server started on {}", httpService.getBindAddress());
   }

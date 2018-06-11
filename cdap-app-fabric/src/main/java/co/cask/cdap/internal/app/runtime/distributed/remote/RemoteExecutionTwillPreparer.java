@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
@@ -25,9 +23,13 @@ import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
+import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import co.cask.cdap.security.tools.KeyStores;
+import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -80,6 +82,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -88,7 +91,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -96,6 +98,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -140,7 +143,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
   private final Map<String, Integer> maxRetries = new HashMap<>();
   private final Map<String, Map<String, String>> runnableConfigs = new HashMap<>();
   private final Map<String, String> runnableExtraOptions = new HashMap<>();
-  private final SSHConfig sshConfig;
+  private final String remoteHost;
+  private final SecureKeyInfo secureKeyInfo;
   private final ProgramRunId programRunId;
   private final LocationFactory locationFactory;
   private final MessagingService messagingService;
@@ -152,7 +156,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
   private ClassAcceptor classAcceptor;
   private String classLoaderClassName;
 
-  RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf, SSHConfig sshConfig,
+  RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
+                               String remoteHost, SecureKeyInfo secureKeyInfo,
                                ProgramRunId programRunId, TwillSpecification twillSpec,
                                RunId runId, @Nullable String extraOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
@@ -166,7 +171,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.debugOptions = JvmOptions.DebugOptions.NO_DEBUG;
     this.cConf = cConf;
     this.hConf = hConf;
-    this.sshConfig = sshConfig;
+    this.remoteHost = remoteHost;
+    this.secureKeyInfo = secureKeyInfo;
     this.programRunId = programRunId;
     this.twillSpec = twillSpec;
     this.runId = runId;
@@ -188,9 +194,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer withConfiguration(Map<String, String> config) {
-    for (Map.Entry<String, String> entry : config.entrySet()) {
-      this.hConf.set(entry.getKey(), entry.getValue());
-    }
+    config.forEach(hConf::set);
     return this;
   }
 
@@ -247,10 +251,9 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer enableDebugging(boolean doSuspend, String... runnables) {
-    for (String runnableName : runnables) {
-      confirmRunnableName(runnableName);
-    }
-    this.debugOptions = new JvmOptions.DebugOptions(true, doSuspend, Arrays.asList(runnables));
+    List<String> runnableList = Arrays.asList(runnables);
+    runnableList.forEach(this::confirmRunnableName);
+    this.debugOptions = new JvmOptions.DebugOptions(true, doSuspend, runnableList);
     return this;
   }
 
@@ -423,11 +426,14 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
         RuntimeSpecification runtimeSpec = twillRuntimeSpec.getTwillSpecification().getRunnables().values()
           .stream().findFirst().orElseThrow(IllegalStateException::new);
 
-        try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+        try (SSHSession session = createSSHSession()) {
           String targetPath = session.executeAndWait("mkdir -p ./" + runId.getId(),
                                                      "echo `pwd`/" + runId.getId()).trim();
           // Upload files
           localizeFiles(session, localFiles, targetPath, runtimeSpec);
+
+          // Upload key stores
+          localizeKeyStores(session, targetPath);
 
           // Currently we only support one TwillRunnable
           String runnableName = runtimeSpec.getName();
@@ -447,21 +453,17 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
           session.copy(new ByteArrayInputStream(scriptContent),
                        targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
-          LOG.info("Starting runnable {} with SSH on {}", runnableName, sshConfig.getHost());
+          LOG.info("Starting runnable {} with SSH on {}", runnableName, session.getAddress().getHostName());
           session.executeAndWait("sudo " + targetPath + "/launcher.sh");
 
-          ConnectionConfig connectionConfig = ConnectionConfig.builder()
-            .setHostname(sshConfig.getHost())
-            .setPort(cConf.getInt(co.cask.cdap.common.conf.Constants.RuntimeMonitor.SERVER_PORT))
-            .setSSLEnabled(true)
-            .build();
-          ClientConfig clientConfig = ClientConfig.builder()
-            .setDefaultReadTimeout(60000)
-            .setApiVersion("v1")
-            .setVerifySSLCert(false)
-            .setConnectionConfig(connectionConfig).build();
-          RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, messagingService, clientConfig,
-                                                             dsFramework, txClient);
+          RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
+            session.getAddress().getHostName(),
+            cConf.getInt(co.cask.cdap.common.conf.Constants.RuntimeMonitor.SERVER_PORT),
+            HttpRequestConfig.DEFAULT, loadClientKeyStore(secureKeyInfo),
+            KeyStores.createTrustStore(loadServerKeyStore(secureKeyInfo))
+          );
+          RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, messagingService,
+                                                             runtimeMonitorClient, dsFramework, txClient);
           runtimeMonitor.start();
           return new RemoteExecutionTwillController(runId, runtimeMonitor);
         }
@@ -494,7 +496,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
         String fileName = Hashing.md5().hashString(uri.toString()).toString() + "-" + getFileName(uri);
         localizedFile = localizedDir + "/" + fileName;
         try (InputStream inputStream = openURI(uri)) {
-          LOG.debug("Upload file {} to {}@{}:{}", uri, sshConfig.getUser(), sshConfig.getHost(), localizedFile);
+          LOG.debug("Upload file {} to {}@{}:{}", uri, session.getUsername(), session.getAddress(), localizedFile);
           //noinspection OctalInteger
           session.copy(inputStream, localizedDir, fileName, localFile.getSize(), 0644,
                        localFile.getLastModified(), localFile.getLastModified());
@@ -505,7 +507,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
       // If it is an archive, expand it. If is a file, create a hardlink.
       if (localFile.isArchive()) {
         String expandedDir = targetPath + "/" + localFile.getName();
-        LOG.debug("Expanding archive {} on host {} to {}", localizedFile, sshConfig.getHost(), expandedDir);
+        LOG.debug("Expanding archive {} on host {} to {}",
+                  localizedFile, session.getAddress().getHostName(), expandedDir);
         session.executeAndWait(
           "mkdir -p " + expandedDir,
           "cd " + expandedDir,
@@ -513,7 +516,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
         );
       } else {
         LOG.debug("Create hardlink {} on host {} to {}/{}",
-                  localizedFile, sshConfig.getHost(), targetPath, localFile.getName());
+                  localizedFile, session.getAddress().getHostName(), targetPath, localFile.getName());
         session.executeAndWait(String.format("ln %s %s/%s", localizedFile, targetPath, localFile.getName()));
       }
     }
@@ -553,10 +556,6 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
       newLevels.put(entry.getKey(), entry.getValue().name());
     }
     this.logLevels.put(runnableName, newLevels);
-  }
-
-  private LocalFile createLocalFile(String name, Location location) throws IOException {
-    return createLocalFile(name, location, false);
   }
 
   private LocalFile createLocalFile(String name, Location location, boolean archive) throws IOException {
@@ -599,8 +598,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
     // The location name is computed from the MD5 of all the classes names
     // The localized name is always APPLICATION_JAR
-    List<String> classList = classes.stream().map(Class::getName).collect(Collectors.toList());
-    Collections.sort(classList);
+    List<String> classList = classes.stream().map(Class::getName).sorted().collect(Collectors.toList());
     Hasher hasher = Hashing.md5().newHasher();
     for (String name : classList) {
       hasher.putString(name);
@@ -769,7 +767,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
   /**
    * Creates the launcher.jar for launch the main application.
    */
-  private void createLauncherJar(Map<String, LocalFile> localFiles) throws URISyntaxException, IOException {
+  private void createLauncherJar(Map<String, LocalFile> localFiles) throws IOException {
 
     LOG.debug("Create and copy {}", Constants.Files.LAUNCHER_JAR);
 
@@ -802,7 +800,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
     LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
 
-    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location));
+    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
   }
 
   private void saveClassPaths(Path targetDir) throws IOException {
@@ -923,5 +921,92 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
     // Expands the <LOG_DIR> placement holder to the log directory
     return writer.toString().replace(ApplicationConstants.LOG_DIR_EXPANSION_VAR, logsDir);
+  }
+
+  /**
+   * Creates a {@link SSHSession} for SSHing into the remote host.
+   */
+  private SSHSession createSSHSession() throws IOException {
+    Location privateKeyLocation = locationFactory
+      .create(secureKeyInfo.getKeyDirectory())
+      .append(secureKeyInfo.getPrivateKeyFile());
+
+    SSHConfig sshConfig = SSHConfig.builder(remoteHost)
+      .setUser(secureKeyInfo.getUsername())
+      .setPrivateKeySupplier(() -> {
+        try {
+          return ByteStreams.toByteArray(privateKeyLocation::getInputStream);
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to read private key from " + privateKeyLocation, e);
+        }
+      })
+      .build();
+
+    return new DefaultSSHSession(sshConfig);
+  }
+
+  /**
+   * Localize key store files to the remote host.
+   */
+  private void localizeKeyStores(SSHSession session, String targetPath) throws Exception {
+    Location keyDir = locationFactory.create(secureKeyInfo.getKeyDirectory());
+
+    // Copy the keystore for the runtime monitor server
+    Location serverKeyStoreLocation = keyDir.append(secureKeyInfo.getServerKeyStoreFile());
+    try (InputStream is = serverKeyStoreLocation.getInputStream()) {
+      //noinspection OctalInteger
+      session.copy(is, targetPath, serverKeyStoreLocation.getName(), serverKeyStoreLocation.length(), 0600, null, null);
+    }
+
+    // Creates a trust store from the client keystore
+    Location clientKeyStoreLocation = keyDir.append(secureKeyInfo.getClientKeyStoreFile());
+    KeyStore trustStore = loadClientKeyStore(secureKeyInfo);
+
+    // Copy the trust store for the runtime monitor server to use for verifying client connections
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    trustStore.store(bos, "".toCharArray());
+    byte[] serializedTrustStore = bos.toByteArray();
+    //noinspection OctalInteger
+    session.copy(new ByteArrayInputStream(serializedTrustStore), targetPath,
+                 clientKeyStoreLocation.getName(), serializedTrustStore.length, 0600, null, null);
+  }
+
+  /**
+   * Loads the {@link KeyStore} for the runtime monitor server.
+   *
+   * @param keyInfo the {@link SecureKeyInfo} containing the information about the location of the serialized keystore
+   * @return a new instance of {@link KeyStore}
+   * @throws Exception if failed to load the {@link KeyStore}
+   */
+  private KeyStore loadServerKeyStore(SecureKeyInfo keyInfo) throws Exception {
+    Location keyDir = locationFactory.create(secureKeyInfo.getKeyDirectory());
+    return loadKeyStore(keyDir.append(keyInfo.getServerKeyStoreFile()));
+  }
+
+  /**
+   * Loads the {@link KeyStore} for the runtime monitor client.
+   *
+   * @param keyInfo the {@link SecureKeyInfo} containing the information about the location of the serialized keystore
+   * @return a new instance of {@link KeyStore}
+   * @throws Exception if failed to load the {@link KeyStore}
+   */
+  private KeyStore loadClientKeyStore(SecureKeyInfo keyInfo) throws Exception {
+    Location keyDir = locationFactory.create(secureKeyInfo.getKeyDirectory());
+    return loadKeyStore(keyDir.append(keyInfo.getServerKeyStoreFile()));
+  }
+
+  /**
+   * Creates a {@link KeyStore} by loading it from the given location,
+   * serialized in the {@link KeyStores#SSL_KEYSTORE_TYPE} format.
+   *
+   * @param location the {@link Location} of the serialized keystore
+   * @return a new instance of {@link KeyStore}
+   */
+  private KeyStore loadKeyStore(Location location) throws Exception {
+    KeyStore ks = KeyStore.getInstance(KeyStores.SSL_KEYSTORE_TYPE);
+    try (InputStream is = location.getInputStream()) {
+      ks.load(is, "".toCharArray());
+    }
+    return ks;
   }
 }

@@ -17,14 +17,11 @@
 package co.cask.cdap.app.runtime.monitor;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -38,6 +35,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
@@ -46,9 +44,12 @@ import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.security.tools.KeyStores;
+import co.cask.common.http.HttpRequestConfig;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -59,6 +60,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.security.KeyStore;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -78,11 +80,14 @@ public class RuntimeMonitorTest {
   private DatasetFramework datasetFramework;
   private Transactional transactional;
 
+  private KeyStore serverKeyStore;
+  private KeyStore clientKeyStore;
+
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Before
-  public void init() throws IOException, UnsupportedTypeException, TopicAlreadyExistsException {
+  public void init() throws IOException, TopicAlreadyExistsException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "programStatus");
@@ -94,7 +99,20 @@ public class RuntimeMonitorTest {
     cConf.set(Constants.RuntimeMonitor.POLL_TIME_MS, "200");
     cConf.set(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, "1000");
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+
+    serverKeyStore = KeyStores.generatedCertKeyStore(1, "");
+    clientKeyStore = KeyStores.generatedCertKeyStore(1, "");
+
+    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf), new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(serverKeyStore);
+        bind(KeyStore.class).annotatedWith(Constants.AppFabric.TrustStore.class).toInstance(clientKeyStore);
+        bind(RuntimeMonitorServer.class);
+        expose(RuntimeMonitorServer.class);
+      }
+    });
+
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -123,7 +141,7 @@ public class RuntimeMonitorTest {
   }
 
   @After
-  public void stop() throws Exception {
+  public void stop() {
     runtimeServer.stopAndWait();
     datasetService.stopAndWait();
     txManager.stopAndWait();
@@ -140,23 +158,16 @@ public class RuntimeMonitorTest {
     publishProgramStatus(programRunId);
     verifyPublishedMessages(2, cConf, 2, null);
 
-    ConnectionConfig connectionConfig = ConnectionConfig.builder()
-      .setHostname(runtimeServer.getBindAddress().getAddress().getHostAddress())
-      .setPort(runtimeServer.getBindAddress().getPort())
-      .setSSLEnabled(true)
-      .build();
-    ClientConfig.Builder clientConfigBuilder = ClientConfig.builder()
-      .setDefaultReadTimeout(60000)
-      .setApiVersion("v1")
-      .setVerifySSLCert(false)
-      .setConnectionConfig(connectionConfig);
-
     CConfiguration cConfCopy = CConfiguration.copy(cConf);
     // change topic name because cdap config is different than runtime config
     cConfCopy.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "cdap-programStatus");
 
-    RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId,
-                                                       cConfCopy, messagingService, clientConfigBuilder.build(),
+    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
+                                                                  runtimeServer.getBindAddress().getPort(),
+                                                                  HttpRequestConfig.DEFAULT,
+                                                                  clientKeyStore, serverKeyStore);
+
+    RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConfCopy, messagingService, monitorClient,
                                                        datasetFramework, transactionSystemClient);
 
     runtimeMonitor.startAndWait();
@@ -168,7 +179,7 @@ public class RuntimeMonitorTest {
     publishProgramStatus(programRunId);
     verifyPublishedMessages(2, cConf, 2, lastProcessed);
 
-    runtimeMonitor = new RuntimeMonitor(programRunId, cConfCopy, messagingService, clientConfigBuilder.build(),
+    runtimeMonitor = new RuntimeMonitor(programRunId, cConfCopy, messagingService, monitorClient,
                                         datasetFramework, transactionSystemClient);
     runtimeMonitor.startAndWait();
     // use different configuration for verification

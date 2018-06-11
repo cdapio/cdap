@@ -122,15 +122,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     // principal will be null if running on a kerberos distributed cluster
     ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
     Arguments systemArgs = programOptions.getArguments();
-    String principal = systemArgs.getOption(ProgramOptionConstants.PRINCIPAL);
     String runId = systemArgs.getOption(ProgramOptionConstants.RUN_ID);
-    String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
     return Guice.createInjector(
-      DistributedProgramContainerModule
-        .builder(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), instanceId)
-        .setPrincipal(principal)
-        .setClusterMode(ProgramRunners.getClusterMode(programOptions))
-        .build()
+      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), systemArgs)
     );
   }
 }
