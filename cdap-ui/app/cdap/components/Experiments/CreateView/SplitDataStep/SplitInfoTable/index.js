@@ -365,7 +365,7 @@ export default class SplitInfoTable extends Component {
           {
             this.state.collapsed ? <IconSVG name="icon-caret-right" /> : <IconSVG name="icon-caret-down" />
           }
-          <span> Select a row to inspect how Test Data is compared to the Training Data </span>
+          <span> View Features </span>
         </div>
         {
           !this.state.collapsed ?
