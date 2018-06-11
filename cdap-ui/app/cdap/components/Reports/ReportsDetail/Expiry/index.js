@@ -18,6 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import Duration from 'components/Duration';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsDetail';
 
 require('./Expiry.scss');
 
@@ -25,14 +28,14 @@ function ExpiryView({expiry}) {
   if (!expiry) {
     return (
       <span className="expiry-saved">
-        Saved
+        {T.translate(`${PREFIX}.saved`)}
       </span>
     );
   }
 
   return (
     <span className="expiry">
-      <span>Expires in</span>
+      <span>{T.translate(`${PREFIX}.expiresIn`)}</span>
 
       <Duration
         targetTime={expiry}

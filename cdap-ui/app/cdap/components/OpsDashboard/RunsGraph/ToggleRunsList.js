@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.OpsDashboard.RunsGraph.ToggleRunsList';
 
 function ToggleRunsListView({onClick, displayRunsList}) {
   return (
@@ -31,9 +34,9 @@ function ToggleRunsListView({onClick, displayRunsList}) {
         <span>
           {
             displayRunsList ?
-              'Hide runs'
+              T.translate(`${PREFIX}.hideRuns`)
             :
-              'Show runs'
+              T.translate(`${PREFIX}.showRuns`)
           }
         </span>
       </span>

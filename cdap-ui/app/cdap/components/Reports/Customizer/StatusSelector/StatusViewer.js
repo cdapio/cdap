@@ -18,16 +18,20 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
+import {getStatusSelectionsLabels} from 'components/Reports/store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer.StatusSelector';
 
 function StatusViewer(selections) {
-  let text = 'Select one';
+  let text = T.translate(`${PREFIX}.selectOne`);
   let numSelections = selections.length;
 
   if (numSelections > 0) {
     if (numSelections === STATUS_OPTIONS.length) {
-      text = 'All statuses';
+      text = T.translate(`${PREFIX}.allStatuses`);
     } else {
-      text = selections.join(', ');
+      text = getStatusSelectionsLabels(selections).join(', ');
       if (numSelections > 1) {
         text = `(${numSelections}) ` + text;
       }

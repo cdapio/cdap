@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import NamespacesPopover from 'components/NamespacesPicker/NamespacesPopover';
+import T from 'i18n-react';
+
+const PREFIX = 'features.NamespacesPicker';
 
 require('./NamespacesPicker.scss');
 
@@ -28,13 +31,13 @@ function NamespacesPickerView({namespacesPick, setNamespacesPick}) {
   if (namespacesPick.length === 0) {
     monitorTitle = (
       <div className="namespace-list-monitor">
-        Monitor Namespace {`'${getCurrentNamespace()}'`}
+        {T.translate(`${PREFIX}.monitorNamespace`, {namespace: getCurrentNamespace()})}
       </div>
     );
   } else {
     let namespacesList = [getCurrentNamespace()].concat(namespacesPick);
 
-    let text = namespacesList.map((ns) => `'${ns}'`).join('; ');
+    let namespaces = namespacesList.map((ns) => `'${ns}'`).join('; ');
     let title = namespacesList.join('\n');
 
     monitorTitle = (
@@ -42,7 +45,12 @@ function NamespacesPickerView({namespacesPick, setNamespacesPick}) {
         className="namespace-list-monitor"
         title={title}
       >
-        Monitor {namespacesPick.length + 1} Namespaces {text}
+        {
+          T.translate(`${PREFIX}.monitorMultipleNamespaces`, {
+            count: namespacesPick.length + 1,
+            namespaces
+          })
+        }
       </div>
     );
   }

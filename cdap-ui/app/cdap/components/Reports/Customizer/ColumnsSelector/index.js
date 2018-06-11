@@ -49,7 +49,7 @@ function ColumnsSelectorView(props) {
   return (
     <div className="columns-selector">
       <div className="title">
-        Select Columns
+        {T.translate(`${PREFIX}.selectColumns`)}
       </div>
 
       {

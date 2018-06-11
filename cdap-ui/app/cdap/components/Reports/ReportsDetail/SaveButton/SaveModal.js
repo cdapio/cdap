@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import {MyReportsApi} from 'api/reports';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsDetail';
 
 export default class SaveModal extends Component {
   static propTypes = {
@@ -95,7 +98,7 @@ export default class SaveModal extends Component {
       >
         <ModalHeader>
           <span>
-            Save Report
+            {T.translate(`${PREFIX}.saveReport`)}
           </span>
 
           <div
@@ -108,7 +111,7 @@ export default class SaveModal extends Component {
         <ModalBody>
           <div className="field-row">
             <label className="control-label">
-              Report Name
+              {T.translate('features.Reports.reportName')}
             </label>
 
             <input
@@ -126,7 +129,7 @@ export default class SaveModal extends Component {
             onClick={this.save}
             disabled={this.state.name.length === 0}
           >
-            Save
+            {T.translate(`${PREFIX}.save`)}
           </button>
 
           {this.renderError()}

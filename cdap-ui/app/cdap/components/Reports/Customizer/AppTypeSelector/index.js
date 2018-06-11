@@ -40,7 +40,7 @@ function AppTypeSelectorView(props) {
   return (
     <div className="app-type-selector">
       <div className="title">
-        Customize Runs View
+        {T.translate(`${PREFIX}.header`)}
       </div>
 
       {

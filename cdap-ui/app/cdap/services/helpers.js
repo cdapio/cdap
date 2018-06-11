@@ -93,7 +93,7 @@ function humanReadableDate(date, isMilliseconds) {
     return '--';
   }
 
-  const format = 'MM-DD-YYYY HH:mm:ss A';
+  const format = 'MM-DD-YYYY hh:mm:ss A';
   if (isMilliseconds) {
     return moment(date).format(format);
   }

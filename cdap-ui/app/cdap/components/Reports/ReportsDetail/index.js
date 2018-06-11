@@ -27,6 +27,9 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {humanReadableDate} from 'services/helpers';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsDetail';
 
 require('./ReportsDetail.scss');
 
@@ -127,7 +130,9 @@ class ReportsDetailView extends Component {
       <div className="reports-detail-container">
         <div className="action-section clearfix">
           <div className="date-container float-xs-left">
-            Report generated on {humanReadableDate(this.props.created)}
+            {T.translate(`${PREFIX}.generatedTime`, {
+              time: humanReadableDate(this.props.created)
+            })}
             <span className="separator">-</span>
             <Expiry />
           </div>
@@ -136,7 +141,7 @@ class ReportsDetailView extends Component {
             <SaveButton />
 
             <button className="btn btn-link">
-              Export
+              {T.translate(`${PREFIX}.export`)}
             </button>
           </div>
         </div>
@@ -155,7 +160,7 @@ class ReportsDetailView extends Component {
           <div className="reports-view-options">
             <Link to={`/ns/${getCurrentNamespace()}/reports`}>
               <IconSVG name="icon-angle-double-left" />
-              <span>Reports</span>
+              <span>{T.translate('features.Reports.header')}</span>
             </Link>
             <span className="separator">|</span>
             <span>
