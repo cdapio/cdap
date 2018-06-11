@@ -22,6 +22,9 @@ import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import T from 'i18n-react';
+
+const PREFIX = 'features.NamespacesPicker';
 
 class NamespacesPopoverView extends Component {
   static propTypes = {
@@ -77,9 +80,15 @@ class NamespacesPopoverView extends Component {
   };
 
   render() {
+    const targetElem = (
+      <div className="monitor-more text-xs-right">
+        {T.translate(`${PREFIX}.monitorMore`)}
+      </div>
+    );
+
     return (
       <Popover
-        target={() => <div className="monitor-more text-xs-right"> Monitor More </div>}
+        target={() => targetElem}
         className="namespaces-list-popover"
         placement="top"
         bubbleEvent={false}
@@ -87,11 +96,13 @@ class NamespacesPopoverView extends Component {
       >
         <div className="popover-content">
           <div className="title">
-            Select Namespaces to monitor
+            {T.translate(`${PREFIX}.popoverHeader`)}
           </div>
 
           <div className="namespaces-count">
-            {this.state.namespaces.length + 1} namespaces
+            {T.translate(`${PREFIX}.namespacesCount`, {
+              count: this.state.namespaces.length + 1
+            })}
           </div>
 
           <div className="namespaces-list">
@@ -108,20 +119,20 @@ class NamespacesPopoverView extends Component {
                       className="toggle-option"
                       onClick={this.selectAll}
                     >
-                      Select All
+                      {T.translate(`${PREFIX}.selectAll`)}
                     </DropdownItem>
                     <DropdownItem
                       className="toggle-option"
                       onClick={this.clearAll}
                     >
-                      Clear All
+                      {T.translate(`${PREFIX}.clearAll`)}
                     </DropdownItem>
                   </DropdownMenu>
                 </UncontrolledDropdown>
               </div>
 
               <div className="namespace-section">
-                Namespace name
+                {T.translate(`${PREFIX}.namespaceName`)}
               </div>
             </div>
 

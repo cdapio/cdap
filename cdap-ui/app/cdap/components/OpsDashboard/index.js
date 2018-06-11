@@ -22,6 +22,10 @@ import RunsList from 'components/OpsDashboard/RunsList';
 import {getData} from 'components/OpsDashboard/store/ActionCreator';
 import NamespacesPicker from 'components/NamespacesPicker';
 import {setNamespacesPick} from 'components/OpsDashboard/store/ActionCreator';
+import T from 'i18n-react';
+import Helmet from 'react-helmet';
+
+const PREFIX = 'features.OpsDashboard';
 
 require('./OpsDashboard.scss');
 
@@ -40,9 +44,12 @@ export default class OpsDashboard extends Component {
     return (
       <Provider store={DashboardStore}>
         <div className="ops-dashboard">
+          <Helmet
+            title={T.translate(`${PREFIX}.pageTitle`)}
+          />
           <div className="header clearfix">
             <div className="links float-xs-left">
-              <span>Dashboard</span>
+              <span>{T.translate(`${PREFIX}.header`)}</span>
             </div>
 
             <NamespacesPicker setNamespacesPick={setNamespacesPick} />

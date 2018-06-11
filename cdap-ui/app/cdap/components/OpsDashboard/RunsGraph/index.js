@@ -28,6 +28,9 @@ import RunsTable from 'components/OpsDashboard/RunsGraph/RunsTable';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import classnames from 'classnames';
 import {getData} from 'components/OpsDashboard/store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.OpsDashboard.RunsGraph';
 
 require('./RunsGraph.scss');
 
@@ -99,7 +102,7 @@ class RunsGraphView extends Component {
       <div className="runs-graph-container">
         <div className="top-panel">
           <div className="title">
-            Runs Timeline
+            {T.translate(`${PREFIX}.header`)}
           </div>
 
           <TypeSelector />
@@ -107,7 +110,7 @@ class RunsGraphView extends Component {
           <div className="display-picker">
             <div className="time-picker">
               <div onClick={this.last24Hour}>
-                Last 24 hours
+                {T.translate(`${PREFIX}.last24Hours`)}
               </div>
             </div>
 
@@ -118,7 +121,7 @@ class RunsGraphView extends Component {
                 })}
                 onClick={this.props.changeDisplay.bind(this, 'chart')}
               >
-                Chart
+                {T.translate(`${PREFIX}.chart`)}
               </span>
               <span className="separator">|</span>
               <span
@@ -127,7 +130,7 @@ class RunsGraphView extends Component {
                 })}
                 onClick={this.props.changeDisplay.bind(this, 'table')}
               >
-                Table
+                {T.translate(`${PREFIX}.table`)}
               </span>
             </div>
           </div>
