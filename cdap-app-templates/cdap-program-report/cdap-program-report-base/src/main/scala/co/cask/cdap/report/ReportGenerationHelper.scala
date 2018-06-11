@@ -56,11 +56,11 @@ object ReportGenerationHelper {
     * The given program run meta files are first read into a single [[org.apache.spark.sql.DataFrame]].
     * The [[org.apache.spark.sql.DataFrame]] is then grouped by program run ID and aggregated to form
     * a new aggregated [[org.apache.spark.sql.DataFrame]] with a column "run" containing program run ID and a column
-    * "record" containing [[Record]] objects as shown below:
+    * "record" containing fields as shown below:
     * +---------+----------+
     * |   run   |  record  |
     * +---------+----------+
-    * The request is then used to obtain names of the fields in [[Record]] to be included
+    * The request is then used to obtain names of the fields in a record to be included
     * in the final report and the fields that are used for filtering or sorting. New columns containing
     * those fields will be added to the aggregated [[org.apache.spark.sql.DataFrame]] as shown below:
     * +---------+----------+-----------------------------------------------------

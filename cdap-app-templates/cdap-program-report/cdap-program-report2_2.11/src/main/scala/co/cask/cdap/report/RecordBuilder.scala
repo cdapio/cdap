@@ -15,10 +15,7 @@
  */
 package co.cask.cdap.report
 
-import co.cask.cdap.api.schedule.{TriggerInfo, TriggeringScheduleInfo}
-import co.cask.cdap.report.proto.ProgramRunStartMethod
-import co.cask.cdap.report.util.{Constants, TriggeringScheduleInfoAdapter}
-import com.google.gson.{Gson, GsonBuilder}
+import co.cask.cdap.report.util.ProgramStartMethodHelper
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -36,7 +33,9 @@ case class RecordBuilder(namespace: String, applicationName: String, application
                          programType: String, program: String, run: String,
                          statusTimes: Seq[(String, Long)], startInfo: Option[StartInfo],
                          numLogWarnings: Int, numLogErrors: Int, numRecordsOut: Int) {
+
   import RecordBuilder._
+
   /**
     * Merges the contents of this with the other [[RecordBuilder]] by replacing empty values in this with
     * values from the other.
@@ -54,6 +53,7 @@ case class RecordBuilder(namespace: String, applicationName: String, application
     val statusTimes = this.statusTimes ++ other.statusTimes
     val startInfo = if (this.startInfo.isEmpty) other.startInfo else this.startInfo
     val r = RecordBuilder(namespace, applicationName, applicationVersion, programType, program, run,
+      // TODO: [CDAP-13397] Use real data for number of records out, number of errors, number of warnings metrics
       statusTimes, startInfo, 0, 0, 0)
     LOG.trace("Merged this {} with other {} to get a new {}", this, other, r)
     r
@@ -63,12 +63,11 @@ case class RecordBuilder(namespace: String, applicationName: String, application
     * @return a [[Record]] built from the information in this [[RecordBuilder]]
     */
   def build(): Record = {
-    import ReportGenerationHelper._
     // Construct a status to time map from the list of status time tuples, by keeping the earliest time of a status
     // if there exists multiple times for the same status
     val statusTimeMap = statusTimes.groupBy(_._1).map(v => (v._1, v._2.map(_._2).min))
     // get the status with maximum time as the status
-    val status = statusTimeMap.max(Ordering[Long].on[(_,Long)](_._2))._1
+    val status = statusTimeMap.max(Ordering[Long].on[(_, Long)](_._2))._1
     val start = statusTimeMap.get("STARTING")
     val running = statusTimeMap.get("RUNNING")
     // Get the earliest status with one of the ending statuses
@@ -76,28 +75,12 @@ case class RecordBuilder(namespace: String, applicationName: String, application
       .reduceOption(Math.min(_, _)) // avoid compilation error with Math.min(_, _) instead of Math.min
     val duration = end.flatMap(e => start.map(e - _))
     val runtimeArgs = startInfo.map(_.runtimeArgs)
-    val startMethod = getStartMethod(runtimeArgs).name()
-    val r = Record(namespace,
+    val startMethod = ProgramStartMethodHelper.getStartMethod(runtimeArgs).name()
+    Record(namespace,
       startInfo.map(_.artifactName), startInfo.map(_.artifactVersion), startInfo.map(_.artifactScope),
       applicationName, applicationVersion,
       programType, program, run, status, start, running, end, duration, startInfo.map(_.user), startMethod, runtimeArgs,
       numLogWarnings, numLogErrors, numRecordsOut)
-    LOG.trace("RecordBuilder = {}", this)
-    LOG.trace("Record = {}", r)
-    r
-  }
-
-  private def getStartMethod(runtimeArgs: Option[scala.collection.Map[String, String]]): ProgramRunStartMethod = {
-    if (runtimeArgs.isEmpty) return ProgramRunStartMethod.MANUAL
-    val scheduleInfoJson = runtimeArgs.get.get(Constants.Notification.SCHEDULE_INFO_KEY)
-    if (scheduleInfoJson.isEmpty) return ProgramRunStartMethod.MANUAL
-    val scheduleInfo: TriggeringScheduleInfo = GSON.fromJson(scheduleInfoJson.get, classOf[TriggeringScheduleInfo])
-    val triggers = scheduleInfo.getTriggerInfos
-    if (Option(triggers).isEmpty || triggers.isEmpty) return ProgramRunStartMethod.MANUAL
-    triggers.get(0).getType match {
-      case TriggerInfo.Type.TIME => ProgramRunStartMethod.SCHEDULED
-      case _ => ProgramRunStartMethod.TRIGGERED
-    }
   }
 }
 
@@ -121,5 +104,4 @@ case class StartInfo(user: String,
 object RecordBuilder {
   val LOG = LoggerFactory.getLogger(RecordBuilder.getClass)
   val END_STATUSES = Set("COMPLETED", "KILLED", "FAILED")
-  val GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder).create()
 }

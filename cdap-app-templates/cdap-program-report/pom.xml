@@ -31,6 +31,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>cdap-program-report1_2.10</module>
     <module>cdap-program-report2_2.11</module>
   </modules>
 
