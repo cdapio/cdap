@@ -17,8 +17,10 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.plugin.Caller;
@@ -186,5 +188,55 @@ public abstract class AbstractStageContext implements StageContext {
         return pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId);
       }
     });
+  }
+
+  @Override
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+    return null;
+  }
+
+  @Override
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    return null;
+  }
+
+  @Override
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, String... tags) {
+
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
+
+  }
+
+  @Override
+  public void removeMetadata(MetadataEntity metadataEntity) {
+
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity) {
+
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity) {
+
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity, String... tags) {
+
   }
 }
