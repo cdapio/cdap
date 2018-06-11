@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.OpsDashboard.RunsGraph.TypeSelector';
 
 function TypeSelectorView({togglePipeline, toggleCustomApp, pipeline, customApp, pipelineCount, customAppCount}) {
   return (
@@ -28,7 +31,7 @@ function TypeSelectorView({togglePipeline, toggleCustomApp, pipeline, customApp,
         onClick={togglePipeline}
       >
         <IconSVG name={pipeline ? 'icon-check-square' : 'icon-square-o'} />
-        <span>Pipelines ({pipelineCount})</span>
+        <span>{T.translate(`${PREFIX}.pipelinesWithCount`, {count: pipelineCount})}</span>
       </div>
 
       <div
@@ -36,7 +39,7 @@ function TypeSelectorView({togglePipeline, toggleCustomApp, pipeline, customApp,
         onClick={toggleCustomApp}
       >
         <IconSVG name={customApp ? 'icon-check-square' : 'icon-square-o'} />
-        <span>Custom Apps ({customAppCount})</span>
+        <span>{T.translate(`${PREFIX}.customAppsWithCount`, {count: customAppCount})}</span>
       </div>
     </div>
   );

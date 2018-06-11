@@ -20,6 +20,9 @@ import {connect} from 'react-redux';
 import moment from 'moment';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import {humanReadableDuration} from 'services/helpers';
+import T from 'i18n-react';
+
+const PREFIX = 'features.OpsDashboard.RunsGraph.RunsTable';
 
 require('./RunsTable.scss');
 
@@ -28,34 +31,34 @@ const renderHeader = () => {
     <div className="grid-header">
       <div className="grid-row">
         <div>
-          Time
+          {T.translate(`${PREFIX}.time`)}
         </div>
         <div>
-          Date
+          {T.translate(`${PREFIX}.date`)}
         </div>
         <div>
-          Total Runs Started
+          {T.translate(`${PREFIX}.totalRunsStarted`)}
         </div>
         <div>
-          Scheduled / Triggered
+          {T.translate(`${PREFIX}.scheduledTriggered`)}
         </div>
         <div>
-          Manually
+          {T.translate(`${PREFIX}.manually`)}
         </div>
         <div>
-          Total Runs Ended
+          {T.translate(`${PREFIX}.totalRunsEnded`)}
         </div>
         <div>
-          Successful
+          {T.translate(`${PREFIX}.successful`)}
         </div>
         <div>
-          Failed
+          {T.translate(`${PREFIX}.failed`)}
         </div>
         <div>
-          Running
+          {T.translate(`${PREFIX}.running`)}
         </div>
         <div>
-          Total Start Delay
+          {T.translate(`${PREFIX}.totalStartDelay`)}
         </div>
       </div>
     </div>

@@ -24,6 +24,9 @@ import {DefaultSelection} from 'components/Reports/store/ActionCreator';
 import difference from 'lodash/difference';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsList';
 
 export default class ActionPopover extends Component {
   static propTypes = {
@@ -134,7 +137,7 @@ export default class ActionPopover extends Component {
             className="option"
             onClick={this.cloneCriteria}
           >
-            Clone criteria
+            {T.translate(`${PREFIX}.cloneCriteria`)}
           </div>
 
           <hr/>
@@ -143,7 +146,7 @@ export default class ActionPopover extends Component {
             className="option text-danger"
             onClick={this.delete}
           >
-            Delete
+            {T.translate('commons.delete')}
           </div>
         </Popover>
       </span>

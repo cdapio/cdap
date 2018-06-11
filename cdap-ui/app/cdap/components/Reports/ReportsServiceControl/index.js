@@ -21,7 +21,10 @@ import {MyArtifactApi} from 'api/artifact';
 import {MyReportsApi} from 'api/reports';
 import IconSVG from 'components/IconSVG';
 import BtnWithLoading from 'components/BtnWithLoading';
+import T from 'i18n-react';
+import Helmet from 'react-helmet';
 
+const PREFIX = 'features.Reports.ReportsServiceControl';
 const ReportsArtifact = 'cdap-program-report';
 
 export default class ReportsServiceControl extends Component {
@@ -88,13 +91,15 @@ export default class ReportsServiceControl extends Component {
 
   renderAvailableOrEnableBtn = () => {
     if (!this.state.artifactNotAvailable && !this.state.showEnableButton) {
-      return (<span>Checking if Reports is available</span>);
+      return (
+        <span>{T.translate(`${PREFIX}.checking`)}</span>
+      );
     }
     if (this.state.artifactNotAvailable) {
       return (
         <div className="action-container">
           <span className="mail-to-link">
-            contact support@cask.co
+            {T.translate(`${PREFIX}.contact`)}
           </span>
         </div>
       );
@@ -104,7 +109,7 @@ export default class ReportsServiceControl extends Component {
         <div className="action-container">
           <BtnWithLoading
             className="btn-primary"
-            label="Enable Reports"
+            label={T.translate(`${PREFIX}.enable`)}
             loading={this.state.loading}
             onClick={this.enableReports}
           />
@@ -121,7 +126,7 @@ export default class ReportsServiceControl extends Component {
       <div className="experiments-service-control-error">
         <h5 className="text-danger">
           <IconSVG name="icon-exclamation-triangle" />
-          <span>Unable to start Reports service</span>
+          <span>{T.translate(`${PREFIX}.unableToStart`)}</span>
         </h5>
         <p className="text-danger">
           {this.state.error}
@@ -135,6 +140,7 @@ export default class ReportsServiceControl extends Component {
 
     return (
       <div className="reports-service-control text-xs-center">
+        <Helmet title={T.translate('features.Reports.pageTitle')} />
         <br />
         {this.renderAvailableOrEnableBtn()}
         {this.renderError()}

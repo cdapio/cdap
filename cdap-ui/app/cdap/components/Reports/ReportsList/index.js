@@ -29,6 +29,9 @@ import classnames from 'classnames';
 import ActionPopover from 'components/Reports/ReportsList/ActionPopover';
 import NamespacesPicker from 'components/NamespacesPicker';
 import {setNamespacesPick} from 'components/Reports/store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsList';
 
 require('./ReportsList.scss');
 
@@ -56,7 +59,7 @@ class ReportsListView extends Component {
     }
 
     if (report.status === 'FAILED') {
-      return 'Failed';
+      return T.translate(`${PREFIX}.failed`);
     }
 
     return (
@@ -64,7 +67,7 @@ class ReportsListView extends Component {
         <span className="fa fa-spin">
           <IconSVG name="icon-spinner" />
         </span>
-        <span>Generating</span>
+        <span>{T.translate(`${PREFIX}.generating`)}</span>
       </div>
     );
   }
@@ -84,9 +87,9 @@ class ReportsListView extends Component {
     return (
       <div className="grid-header">
         <div className="grid-row">
-          <div>Report Name</div>
-          <div>Created</div>
-          <div>Expiration</div>
+          <div>{T.translate('features.Reports.reportName')}</div>
+          <div>{T.translate(`${PREFIX}.created`)}</div>
+          <div>{T.translate(`${PREFIX}.expiration`)}</div>
           <div></div>
         </div>
       </div>
@@ -155,10 +158,10 @@ class ReportsListView extends Component {
     return (
       <div className="list-container empty">
         <div className="text-xs-center">
-          No reports are available
+          {T.translate(`${PREFIX}.noReports`)}
         </div>
         <div className="text-xs-center">
-          Make a selection to specify your criteria and generate new report.
+          {T.translate(`${PREFIX}.makeSelection`)}
         </div>
       </div>
     );
@@ -184,7 +187,7 @@ class ReportsListView extends Component {
       <div className="reports-container">
         <div className="header">
           <div className="reports-view-options float-xs-left">
-            <span>Reports</span>
+            <span>{T.translate('features.Reports.header')}</span>
           </div>
 
           <NamespacesPicker setNamespacesPick={setNamespacesPick} />
@@ -194,7 +197,7 @@ class ReportsListView extends Component {
 
           <div className="list-view">
             <div className="section-title">
-              Select a report to view
+              {T.translate(`${PREFIX}.selectAReport`)}
             </div>
 
             {this.renderTable()}

@@ -21,6 +21,8 @@ import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {ReportsActions, STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
 import StatusViewer from 'components/Reports/Customizer/StatusSelector/StatusViewer';
+import StatusMapper from 'services/StatusMapper';
+import T from 'i18n-react';
 
 class StatusPopoverView extends Component {
   static propTypes = {
@@ -97,7 +99,7 @@ class StatusPopoverView extends Component {
                   <IconSVG name="icon-circle" className={option.toLowerCase()} />
 
                   <span>
-                    {option}
+                    {StatusMapper.lookupDisplayStatus(option)}
                   </span>
                 </div>
               );
@@ -109,7 +111,7 @@ class StatusPopoverView extends Component {
             className="btn btn-primary"
             onClick={this.apply}
           >
-            Apply
+            {T.translate('commons.apply')}
           </button>
         </div>
       </Popover>

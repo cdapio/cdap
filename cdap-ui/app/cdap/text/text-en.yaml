@@ -2,6 +2,7 @@
 # Please keep this file alphabetically sorted!
 commons:
   application: Application
+  apply: Apply
   as: as
   back: Back
   cask: CASK
@@ -1369,6 +1370,17 @@ features:
       keytabURI: 'Keytab URI: '
       label: Security
       principal: 'Principal: '
+  NamespacesPicker:
+    clearAll: Clear All
+    monitorNamespace: Monitoring namespace '{namespace}'
+    monitorMore: Monitor more
+    monitorMultipleNamespaces: Monitoring {count} namespaces {namespaces}
+    namespaceName: Namespace name
+    namespacesCount:
+      1: "{context} namespace"
+      _: "{context} namespaces"
+    popoverHeader: Select namespaces to monitor
+    selectAll: Select All
   Navbar:
     ControlCenter:
       dashboard: Dashboard
@@ -1405,6 +1417,53 @@ features:
       prodWebsiteLabel: Product Website
       supportLabel: Support
     rulesmgmt: Rules
+  OpsDashboard:
+    header: Dashboard
+    pageTitle: CDAP | Dashboard
+    RunsGraph:
+      chart: Chart
+      header: Runs timeline
+      last24Hours: Last 24 hours
+      Legends:
+        delay: Delay between starting and running
+        failed: Failed runs
+        manuallyStarted: Manually started runs
+        running: Running
+        scheduledTriggered: Scheduled/triggered runs
+        successful: Successful runs
+      RunsTable:
+        date: Date
+        failed: Failed
+        manually: Manually
+        running: Running
+        scheduledTriggered: Scheduled / Triggered
+        successful: Successful
+        time: Time
+        totalRunsEnded: Total runs ended
+        totalRunsStarted: Total runs started
+        totalStartDelay: Total start delay
+      table: Table
+      ToggleRunsList:
+        hideRuns: Hide runs
+        showRuns: Show runs
+      TypeSelector:
+        customAppsWithCount: Custom apps ({count})
+        pipelinesWithCount: Pipelines ({count})
+    RunsList:
+      all: All
+      date: Date
+      duration: Duration
+      name: Name
+      namespace: Namespace
+      noData: No data
+      noRuns: No runs
+      startMethod: Start method
+      status: Status
+      timeRange: Time range
+      type: Type
+      user: User
+      viewAll: View All
+
   Overview:
     DatasetTab:
       title: "Datasets and Streams used by \"{appId}\""
@@ -1815,8 +1874,12 @@ features:
 
   Reports:
     Customizer:
+      clear: Clear Selection
+      generate: Generate Report
+      header: Customize runs view
+      hide: Hide generate a report
       Options:
-        customApps: Custom Apps runs
+        customApps: Custom apps runs
         duration: Duration
         end: End time
         namespace: Namespace
@@ -1829,6 +1892,64 @@ features:
         startMethod: Start method
         status: Status
         user: User
+      selectColumns: Select columns
+      show: Show generate a report
+      StatusSelector:
+        allStatuses: All statuses
+        selectOne: Select one
+        selectStatus: Select status
+      TimeRangeSelector:
+        customRange: Custom range
+        label: Select time range
+        labelWithColon: "Select time range: "
+        last30Min: Last 30 min
+        last30Minutes: Last 30 minutes
+        lastHour: Last 1 hour
+        select: Select time
+        timeRange: "{startTime} to {endTime}"
+    header: Reports
+    pageTitle: CDAP | Reports
+    reportName: Report name
+    ReportsDetail:
+      appTypeLabel: "App type:"
+      batch: Batch Pipeline
+      bySchedule: By schedule
+      byTrigger: By trigger
+      customApp: custom app
+      expiresIn: Expires in
+      export: Export
+      generatedTime: Report generated on {time}
+      getReportName: "{statusLabel} runs - {startDate} to {endDate}"
+      lastStarted: "Newest: {newest}; Oldest: {oldest}"
+      lastStartedLabel: "Last started:"
+      manually: Manually
+      namespaceLabel: "Namespace:"
+      numRuns: " ({num} runs)"
+      ownersLabel: "Owners:"
+      realtime: Realtime Pipeline
+      reportSummary: Report summary
+      runDuration: "Min: {min}; Max: {max}; Average: {average}"
+      runDurationLabel: "Run duration:"
+      save: Save
+      saved: Saved
+      saveReport: Save Report
+      startedLabel: "Started:"
+      timeRange: "{start} to {end}"
+      timeRangeLabel: "Time range:"
+    ReportsList:
+      cloneCriteria: Clone criteria
+      created: Created
+      expiration: Expiration
+      failed: Failed
+      generating: Generating
+      makeSelection: Make a selection to specify your criteria and generate new report.
+      noReports: No reports are available
+      selectAReport: Select a report to view
+    ReportsServiceControl:
+      checking: Checking if Reports is available
+      contact: contact support@cask.co
+      enable: Enable Reports
+      unableToStart: Unable to start Reports service
 
   Resource-Center:
     Application:
