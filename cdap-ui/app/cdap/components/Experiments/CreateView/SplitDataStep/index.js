@@ -90,7 +90,7 @@ class SplitDataStep extends Component {
             className="btn btn-primary"
             onClick={createSplitAndUpdateStatus}
           >
-            Split data Randomly and verify sample
+            Split data and verify sample
           </button>
         </div>
       );
@@ -166,7 +166,6 @@ class SplitDataStep extends Component {
     return (
       <div className="split-data-step">
         <h3>Split Data </h3>
-        <div>Create test dataset for this model.</div>
         <br />
         {this.renderSplitBtn()}
         {this.renderSplitInfo()}
