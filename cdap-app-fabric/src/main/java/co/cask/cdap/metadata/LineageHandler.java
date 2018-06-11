@@ -32,9 +32,9 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
+import co.cask.cdap.proto.metadata.lineage.DatasetField;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
-import co.cask.cdap.proto.metadata.lineage.FieldLineageSummaryRecord;
 import co.cask.cdap.proto.metadata.lineage.FieldOperationInfo;
 import co.cask.cdap.proto.metadata.lineage.FieldOperationInput;
 import co.cask.cdap.proto.metadata.lineage.FieldOperationOutput;
@@ -43,6 +43,7 @@ import co.cask.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -52,7 +53,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -115,7 +115,7 @@ public class LineageHandler extends AbstractHttpHandler {
                             @QueryParam("start") String startStr,
                             @QueryParam("end") String endStr,
                             @QueryParam("prefix") String prefix) {
-
+    // TODO: (CDAP-13269) Just a mock implementation for now
     List<String> result = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       result.add("field_" + String.valueOf(i));
@@ -132,15 +132,14 @@ public class LineageHandler extends AbstractHttpHandler {
                                          @QueryParam("direction") @DefaultValue("both") String direction,
                                          @QueryParam("start") String startStr,
                                          @QueryParam("end") String endStr) {
-    List<FieldLineageSummaryRecord> backward = new ArrayList<>();
-    List<String> fields = Arrays.asList("id", "ssn", "address");
-    FieldLineageSummaryRecord record = new FieldLineageSummaryRecord("secure_ns", "pii_data",
-                                                                    fields);
-    backward.add(record);
-    fields = Collections.singletonList("id");
-    record = new FieldLineageSummaryRecord("default", "user_data", fields);
-    backward.add(record);
-    FieldLineageSummary summary = new FieldLineageSummary(backward, null);
+    // TODO: (CDAP-13269) Just a mock implementation for now
+    List<DatasetField> incoming = new ArrayList<>();
+    DatasetField record = new DatasetField(new DatasetId("secure_ns", "pii_data"),
+                                           ImmutableSet.of("id", "ssn", "address"));
+    incoming.add(record);
+    record = new DatasetField(new DatasetId("default", "user_data"), ImmutableSet.of("id"));
+    incoming.add(record);
+    FieldLineageSummary summary = new FieldLineageSummary(incoming, null);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
   }
 
@@ -153,6 +152,7 @@ public class LineageHandler extends AbstractHttpHandler {
                                          @QueryParam("direction") @DefaultValue("both") String direction,
                                          @QueryParam("start") String startStr,
                                          @QueryParam("end") String endStr) {
+    // TODO: (CDAP-13269) Just a mock implementation for now
     List<ProgramInfo> programInfos = new ArrayList<>();
     ProgramInfo programInfo = new ProgramInfo(new ProgramId("ns1", "sample_import",
             ProgramType.WORKFLOW, "DataPipelineWorkflow"), 1528323457);
@@ -163,29 +163,25 @@ public class LineageHandler extends AbstractHttpHandler {
 
     List<FieldOperationInfo> fieldOperationInfos = new ArrayList<>();
     EndPoint sourceEndPoint = EndPoint.of("default", "file");
-    EndPoint targetEndPoint = EndPoint.of("default", "another_file");
-    FieldOperationInfo operationInfo = new FieldOperationInfo("sample_pipeline.stage1.read", "read",
-            "reading a file", new FieldOperationInput(Collections.singletonList(sourceEndPoint), null),
-            new FieldOperationOutput(null, Collections.singletonList("body")));
+    EndPoint destinationEndPoint = EndPoint.of("default", "another_file");
+
+    FieldOperationInfo operationInfo = new FieldOperationInfo("read", "reading a file",
+            FieldOperationInput.of(sourceEndPoint), FieldOperationOutput.of(Collections.singletonList("body")));
     fieldOperationInfos.add(operationInfo);
-    operationInfo = new FieldOperationInfo("sample_pipeline.stage2.parse", "parse",
-            "parsing a comma separated field",
-            new FieldOperationInput(null,
-                    Collections.singletonList(InputField.of("sample_pipeline.stage1.read", "body"))),
-            new FieldOperationOutput(null, Collections.singletonList("address")));
+
+    operationInfo = new FieldOperationInfo("parse", "parsing a comma separated field",
+            FieldOperationInput.of(Collections.singletonList(InputField.of("read", "body"))),
+            FieldOperationOutput.of(Collections.singletonList("address")));
     fieldOperationInfos.add(operationInfo);
-    operationInfo = new FieldOperationInfo("sample_pipeline.stage3.normalize",
-            "normalize", "normalizing field",
-            new FieldOperationInput(null,
-                    Collections.singletonList(InputField.of("sample_pipeline.stage2.parse", "address"))),
-            new FieldOperationOutput(null, Collections.singletonList("address")));
+
+    operationInfo = new FieldOperationInfo("normalize", "normalizing field",
+            FieldOperationInput.of(Collections.singletonList(InputField.of("parse", "address"))),
+            FieldOperationOutput.of(Collections.singletonList("address")));
     fieldOperationInfos.add(operationInfo);
-    operationInfo = new FieldOperationInfo("sample_pipeline.stage4.write", "write",
-            "write to a file",
-            new FieldOperationInput(null,
-                    Collections.singletonList(InputField.of("sample_pipeline.stage3.normalize",
-                            "address"))), new FieldOperationOutput(Collections.singletonList(targetEndPoint),
-            null));
+
+    operationInfo = new FieldOperationInfo("write", "write to a file",
+            FieldOperationInput.of(Collections.singletonList(InputField.of("normalize", "address"))),
+            FieldOperationOutput.of(destinationEndPoint));
     fieldOperationInfos.add(operationInfo);
 
     List<ProgramFieldOperationInfo> programFieldOperationInfos = new ArrayList<>();
