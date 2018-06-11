@@ -50,12 +50,6 @@
         <version>${guava.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.scala-lang</groupId>
-        <artifactId>scala-library</artifactId>
-        <version>${scala.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-api</artifactId>
         <version>${project.version}</version>

@@ -32,7 +32,6 @@
 
   <properties>
     <app.main.class>co.cask.cdap.report.ReportGenerationApp</app.main.class>
-    <scala.version>2.11.8</scala.version>
   </properties>
 
   <repositories>
@@ -51,6 +50,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
+      <version>${scala2.11.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
