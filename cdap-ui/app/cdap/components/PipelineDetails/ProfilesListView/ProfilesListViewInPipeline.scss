@@ -46,7 +46,7 @@
     grid-auto-rows: 40px;
     max-height: calc(100% - 50px); // 100% - 17px (title) - 30px (profile count)
     .grid-row {
-      grid-template-columns: 30px 1fr 1fr 1fr 50px 1fr;
+      grid-template-columns: 30px 1fr 1.5fr 1fr 50px 1fr;
     }
     .grid-header {
       .grid-row {

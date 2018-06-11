@@ -67,6 +67,7 @@ export default class ExperimentCreateView extends Component {
     active_step: createExperimentStore.getState().active_step.step_name,
     redirectToExperimentDetail: false
   };
+  title = 'Create a New Experiment';
   componentWillMount() {
     setAlgorithmsListForCreateView();
   }
@@ -167,7 +168,7 @@ export default class ExperimentCreateView extends Component {
   renderConnections() {
     return (
       <span>
-        {this.renderTopPanel('Create a New Experiment')}
+        {this.renderTopPanel(this.title)}
         <DataPrepConnections
           sidePanelExpanded={true}
           enableRouting={false}
@@ -203,9 +204,15 @@ export default class ExperimentCreateView extends Component {
         <ExperimentPopovers />
       </UncontrolledPopover>
     );
+
+    const {experimentId, addModel} = queryString.parse(this.props.location.search);
+    let topPanelTitle = 'Create a new experiment';
+    if (addModel) {
+      topPanelTitle = `Add model to '${experimentId}'`;
+    }
     return (
       <span>
-        {this.renderTopPanel('Create a New Experiment')}
+        {this.renderTopPanel(topPanelTitle)}
         <div className="experiments-model-panel">
           {
             this.state.modelId ? updateModelBtn : createModelBtn
@@ -220,20 +227,20 @@ export default class ExperimentCreateView extends Component {
     );
   }
   renderSplitDataStep() {
-    let {name} = createExperimentStore.getState().experiments_create;
+    let {name} = createExperimentStore.getState().model_create;
     return (
       <span className="experiments-split-data-step">
-        {this.renderTopPanel(`Add a Model to '${name}'`)}
+        {this.renderTopPanel(`Split data for model '${name}'`)}
         <ExperimentMetadata />
         <SplitDataStep />
       </span>
     );
   }
   renderAlgorithmSelectionStep() {
-    let {name} = createExperimentStore.getState().experiments_create;
+    let {name} = createExperimentStore.getState().model_create;
     return (
       <span className="experiments-algorithm-selection-step">
-        {this.renderTopPanel(`Add a Model to '${name}'`)}
+        {this.renderTopPanel(`Select an algorithm to train model '${name}'`)}
         <ExperimentMetadata />
         <MLAlgorithmSelection />
       </span>
