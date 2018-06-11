@@ -36,10 +36,10 @@ import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
+import co.cask.cdap.security.tools.KeyStores;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
@@ -50,8 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,7 +67,12 @@ import javax.annotation.Nullable;
  * Service for provisioning related operations
  */
 public class ProvisioningService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningService.class);
+  // Max out the HTTPS certificate validity.
+  // We use max int of seconds to compute number of days to avoid overflow.
+  private static final int CERT_VALIDITY_DAYS = (int) TimeUnit.SECONDS.toDays(Integer.MAX_VALUE);
+
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
@@ -158,7 +163,7 @@ public class ProvisioningService extends AbstractIdleService {
     SecureKeyInfo secureKeyInfo = null;
     if (!YarnProvisioner.SPEC.equals(provisioner.getSpec())) {
       try {
-        secureKeyInfo = generateSSHKey(programRunId);
+        secureKeyInfo = generateSecureKeys(programRunId);
       } catch (Exception e) {
         LOG.error("Failed to generate SSH key pair for program run {} with provisioner {}", programRunId, name, e);
         provisionerNotifier.deprovisioning(programRunId);
@@ -287,9 +292,10 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Generates a SSH key pair.
+   * Generates {@link SecureKeyInfo} for later communication with the cluster.
    */
-  private SecureKeyInfo generateSSHKey(ProgramRunId programRunId) throws JSchException, IOException {
+  private SecureKeyInfo generateSecureKeys(ProgramRunId programRunId) throws Exception {
+    // Generate SSH key pair
     JSch jsch = new JSch();
     KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
 
@@ -319,7 +325,24 @@ public class ProvisioningService extends AbstractIdleService {
       os.write(privateKey);
     }
 
-    return new SecureKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(), "cdap");
+    // Generate KeyStores, one for server, one for client
+    Location serverKeyStoreFile = generateKeyStore(keysDir.append("server.jks"));
+    Location clientKeyStoreFile = generateKeyStore(keysDir.append("client.jks"));
+
+    return new SecureKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(),
+                             serverKeyStoreFile.getName(), clientKeyStoreFile.getName(), "cdap");
+  }
+
+  /**
+   * Generates a {@link KeyStore} that contains a private key and a self-signed public certificate pair and save
+   * it to the given {@link Location}.
+   */
+  private Location generateKeyStore(Location outputLocation) throws Exception {
+    KeyStore serverKeyStore = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, "");
+    try (OutputStream os = outputLocation.getOutputStream("600")) {
+      serverKeyStore.store(os, "".toCharArray());
+    }
+    return outputLocation;
   }
 
   @Nullable

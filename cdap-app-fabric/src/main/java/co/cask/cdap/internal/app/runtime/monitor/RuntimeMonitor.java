@@ -21,8 +21,6 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.retry.RetriesExhaustedException;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -45,19 +43,12 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.gson.Gson;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Deque;
@@ -78,10 +69,8 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     () -> LogSamplers.limitRate(60000)));
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_MESSAGE_TYPE = new TypeToken<Map<String, Deque<MonitorMessage>>>() { }.getType();
 
-  private final RESTClient restClient;
-  private final ClientConfig clientConfig;
+  private final RuntimeMonitorClient monitorClient;
 
   private final int limit;
   private final ProgramRunId programRunId;
@@ -105,12 +94,11 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   private long programFinishTime;
 
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf,
-                        MessagingService messagingService, ClientConfig clientConfig,
+                        MessagingService messagingService, RuntimeMonitorClient monitorClient,
                         DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.programRunId = programRunId;
     this.cConf = cConf;
-    this.clientConfig = clientConfig;
-    this.restClient = new RESTClient(clientConfig);
+    this.monitorClient = monitorClient;
     this.limit = cConf.getInt(Constants.RuntimeMonitor.BATCH_LIMIT);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
@@ -214,8 +202,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
           // First check if we should trigger the remote service to shutdown and also shutting down this monitor.
           // If the triggerRuntimeShutdown() call failed, we'll stay in this loop for the retry.
           if (shutdownRemoteRuntime) {
-            LOG.debug("Program run {} completed at {}, shutting down remote runtime at {}",
-                      programRunId, programFinishTime, clientConfig.resolveURL("runtime"));
+            LOG.debug("Program run {} completed at {}, shutting down remote runtime.", programRunId, programFinishTime);
             triggerRuntimeShutdown();
             break;
           }
@@ -225,16 +212,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
           }
 
           // Next to fetch data from the remote runtime
-          HttpResponse response = restClient
-            .execute(HttpRequest.builder(HttpMethod.POST, clientConfig.resolveURL("runtime/metadata"))
-                       .withBody(GSON.toJson(topicsToRequest)).build());
-
-          if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
-            throw new ServiceUnavailableException(response.getResponseBodyAsString());
-          }
-
-          Map<String, Deque<MonitorMessage>> monitorResponses =
-            GSON.fromJson(response.getResponseBodyAsString(StandardCharsets.UTF_8), MAP_STRING_MESSAGE_TYPE);
+          Map<String, Deque<MonitorMessage>> monitorResponses = monitorClient.fetchMessages(topicsToRequest);
 
           // Update ProgramFinishTime when remote runtime is in terminal state. Also buffer all the program status
           // events. This is done before transactional publishing to avoid refetching same remote runtime status
@@ -439,12 +417,13 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
   /**
    * Calls into the remote runtime to ask for it to terminate itself.
    */
-  private void triggerRuntimeShutdown() throws Exception {
+  private void triggerRuntimeShutdown() {
     try {
-      restClient.execute(HttpRequest.builder(HttpMethod.POST, clientConfig.resolveURL("runtime/shutdown")).build());
-    } catch (ConnectException e) {
-      LOG.trace("Connection refused when attempting to connect to Runtime Http Server. " +
-                  "Assuming that it is not available.");
+      monitorClient.requestShutdown();
+    } catch (ServiceUnavailableException e) {
+      LOG.trace("Runtime monitor server is unavailable on shutting down of program run {}", programRunId);
+    } catch (Exception e) {
+      LOG.warn("Exception raised when attempting to shutdown runtime for program run {}", programRunId);
     }
   }
 

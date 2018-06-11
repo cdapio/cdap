@@ -54,6 +54,9 @@ import java.util.Enumeration;
  * and creating a Java key store with a self signed certificate.
  */
 public final class KeyStores {
+
+  public static final String SSL_KEYSTORE_TYPE = "JKS";
+
   private static final String KEY_PAIR_ALGORITHM = "RSA";
   private static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
   private static final String SECURE_RANDOM_PROVIDER = "SUN";
@@ -71,7 +74,6 @@ public final class KeyStores {
     */
   static final String DISTINGUISHED_NAME = "CN=CDAP, L=Palo Alto, C=US";
   static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
-  static final String SSL_KEYSTORE_TYPE = "JKS";
   static final String CERT_ALIAS = "cert";
   private static final int KEY_SIZE = 2048;
   private static final int VALIDITY = 999;

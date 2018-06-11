@@ -286,6 +286,23 @@ public final class Constants {
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
     @BindingAnnotation
     public @interface ProgramRunner { }
+
+    /**
+     * Annotation for binding {@link KeyStore} that is used for storing encryption keys.
+     */
+    @Retention(RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+    @BindingAnnotation
+    public @interface KeyStore { }
+
+    /**
+     * Annotation for binding {@link KeyStore} that for certificate verification.
+     */
+    @Retention(RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+    @BindingAnnotation
+    public @interface TrustStore { }
+
   }
 
   /**

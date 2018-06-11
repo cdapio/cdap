@@ -321,18 +321,13 @@ public final class SparkRuntimeContextProvider {
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf, Configuration hConf,
                                         ProgramId programId, ProgramOptions programOptions) {
-    String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
-    String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
 
     List<Module> modules = new ArrayList<>();
+    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId),
+                                                      programOptions.getArguments()));
+
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
-
-    modules.add(DistributedProgramContainerModule.builder(cConf, hConf, programId.run(runId), instanceId)
-                  .setPrincipal(principal)
-                  .setClusterMode(clusterMode)
-                  .build());
-
     modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {
       @Override
       protected void configure() {
