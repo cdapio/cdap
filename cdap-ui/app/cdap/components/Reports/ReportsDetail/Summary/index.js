@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {humanReadableDate, humanReadableDuration} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsDetail';
 
 require('./Summary.scss');
 
@@ -27,7 +30,7 @@ function renderNamespaces(summary) {
 
   return summary.namespaces
     .map((ns) => {
-      return `${ns.namespace} (${ns.runs} runs)`;
+      return ns.namespace + T.translate(`${PREFIX}.numRuns`, {num: ns.runs});
     })
     .join(', ');
 }
@@ -35,10 +38,12 @@ function renderNamespaces(summary) {
 function renderAppType(summary) {
   if (!summary.artifacts) { return null; }
 
+  const customAppLabel = T.translate(`${PREFIX}.customApp`);
+
   let counts = {
     batch: 0,
     realtime: 0,
-    'Custom App': 0
+    [customAppLabel]: 0
   };
   // BatchPipeline and RealtimePipeline case should be removed once going to real API
   summary.artifacts.forEach((artifact) => {
@@ -52,7 +57,7 @@ function renderAppType(summary) {
         counts.realtime = artifact.runs;
         break;
       default:
-        counts['Custom App'] += artifact.runs;
+        counts[customAppLabel] += artifact.runs;
     }
   });
 
@@ -71,7 +76,7 @@ function renderDuration(summary) {
   let max = humanReadableDuration(durations.max);
   let average = humanReadableDuration(Math.round(durations.average));
 
-  return `Min: ${min}; Max: ${max}; Average: ${average}`;
+  return T.translate(`${PREFIX}.runDuration`, {min, max, average});
 }
 
 function renderLastStarted(summary) {
@@ -79,7 +84,10 @@ function renderLastStarted(summary) {
 
   if (!starts) { return null; }
 
-  return `Newest: ${humanReadableDate(starts.newest)}; Oldest: ${humanReadableDate(starts.oldest)}`;
+  return T.translate(`${PREFIX}.lastStarted`, {
+    newest: humanReadableDate(starts.newest),
+    oldest: humanReadableDate(starts.oldest)
+  });
 }
 
 function renderOwners(summary) {
@@ -93,9 +101,9 @@ function renderOwners(summary) {
 function renderStartMethod(summary) {
   if (!summary.startMethods) { return null; }
   const labelMap = {
-    MANUAL: 'manually',
-    SCHEDULED: 'by schedule',
-    PROGRAM_STATUS: 'by trigger'
+    MANUAL: T.translate(`${PREFIX}.manually`),
+    SCHEDULED: T.translate(`${PREFIX}.bySchedule`),
+    PROGRAM_STATUS: T.translate(`${PREFIX}.byTrigger`)
   };
 
   return summary.startMethods
@@ -112,13 +120,15 @@ function SummaryView({summary}) {
             <tbody>
               <tr className="no-border">
                 <td colSpan="2">
-                  <strong>Report Summary</strong>
+                  <strong>
+                    {T.translate(`${PREFIX}.reportSummary`)}
+                  </strong>
                 </td>
               </tr>
 
               <tr className="no-border">
                 <td>
-                  Namespace:
+                  {T.translate(`${PREFIX}.namespaceLabel`)}
                 </td>
 
                 <td>
@@ -128,17 +138,20 @@ function SummaryView({summary}) {
 
               <tr>
                 <td>
-                  Time range:
+                  {T.translate(`${PREFIX}.timeRangeLabel`)}
                 </td>
 
                 <td>
-                  {humanReadableDate(summary.start)} to {humanReadableDate(summary.end)}
+                  {T.translate(`${PREFIX}.timeRange`, {
+                    start: humanReadableDate(summary.start),
+                    end: humanReadableDate(summary.end)
+                  })}
                 </td>
               </tr>
 
               <tr>
                 <td>
-                  App Type:
+                  {T.translate(`${PREFIX}.appTypeLabel`)}
                 </td>
 
                 <td>
@@ -154,7 +167,7 @@ function SummaryView({summary}) {
             <tbody>
               <tr className="no-border">
                 <td>
-                  Run Duration:
+                  {T.translate(`${PREFIX}.runDurationLabel`)}
                 </td>
 
                 <td>
@@ -164,7 +177,7 @@ function SummaryView({summary}) {
 
               <tr>
                 <td>
-                  Last Started:
+                  {T.translate(`${PREFIX}.lastStartedLabel`)}
                 </td>
 
                 <td>
@@ -174,7 +187,7 @@ function SummaryView({summary}) {
 
               <tr>
                 <td>
-                  Owners
+                  {T.translate(`${PREFIX}.ownersLabel`)}
                 </td>
 
                 <td>
@@ -184,7 +197,7 @@ function SummaryView({summary}) {
 
               <tr>
                 <td>
-                  Started
+                  {T.translate(`${PREFIX}.startedLabel`)}
                 </td>
 
                 <td>

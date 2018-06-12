@@ -22,7 +22,7 @@ import classnames from 'classnames';
 
 require('./TimeRangePicker.scss');
 
-const format = 'MM-DD-YYYY HH:mm A';
+const format = 'MM-DD-YYYY hh:mm A';
 
 export default class TimeRangePicker extends Component {
   static propTypes = {

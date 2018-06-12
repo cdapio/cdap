@@ -24,6 +24,10 @@ import {MyReportsApi} from 'api/reports';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ReportsServiceControl from 'components/Reports/ReportsServiceControl';
 import ReportsAppDelete from 'components/Reports/ReportsAppDelete';
+import T from 'i18n-react';
+import Helmet from 'react-helmet';
+
+const PREFIX = 'features.Reports';
 
 require('./Reports.scss');
 
@@ -74,11 +78,14 @@ export default class Reports extends Component {
 
     return (
       <Provider store={ReportsStore}>
-        <Switch>
-          <Route exact path="/ns/:namespace/reports" component={ReportsList} />
-          <Route exact path="/ns/:namespace/reports/details/:reportId" component={ReportsDetail} />
-          <Route exact path="/ns/:namespace/reports/delete-app" component={ReportsAppDelete} />
-        </Switch>
+        <div>
+          <Helmet title={T.translate(`${PREFIX}.pageTitle`)} />
+          <Switch>
+            <Route exact path="/ns/:namespace/reports" component={ReportsList} />
+            <Route exact path="/ns/:namespace/reports/details/:reportId" component={ReportsDetail} />
+            <Route exact path="/ns/:namespace/reports/delete-app" component={ReportsAppDelete} />
+          </Switch>
+        </div>
       </Provider>
     );
   }

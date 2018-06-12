@@ -16,6 +16,9 @@
 
 import React from 'react';
 import StatusPopover from 'components/Reports/Customizer/StatusSelector/StatusPopover';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer.StatusSelector';
 
 require('./StatusSelector.scss');
 
@@ -23,7 +26,7 @@ export default function StatusSelector() {
   return (
     <div className="status-selector">
       <div className="title">
-        Select Status
+        {T.translate(`${PREFIX}.selectStatus`)}
       </div>
 
       <StatusPopover />

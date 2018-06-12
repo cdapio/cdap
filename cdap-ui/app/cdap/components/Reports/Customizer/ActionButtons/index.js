@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {ReportsActions} from 'components/Reports/store/ReportsStore';
 import {generateReport} from 'components/Reports/store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer';
 
 function ActionButtonsView({clearSelection, timeRange, customizer, status}) {
   let disabled = (!timeRange.selection) ||
@@ -33,14 +36,14 @@ function ActionButtonsView({clearSelection, timeRange, customizer, status}) {
         onClick={generateReport}
         disabled={disabled}
       >
-        Generate Report
+        {T.translate(`${PREFIX}.generate`)}
       </button>
 
       <button
         className="btn btn-link"
         onClick={clearSelection}
       >
-        Clear Selection
+        {T.translate(`${PREFIX}.clear`)}
       </button>
     </div>
   );

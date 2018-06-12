@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import {connect} from 'react-redux';
 import {humanReadableDuration} from 'services/helpers';
+import T from 'i18n-react';
+
+const PREFIX = 'features.OpsDashboard.RunsList';
 
 require('./RunsList.scss');
 
@@ -26,13 +29,13 @@ function renderHeader() {
   return (
     <div className="grid-header">
       <div className="grid-row">
-        <div>Namespace</div>
-        <div>Name</div>
-        <div>Type</div>
-        <div>Duration</div>
-        <div>User</div>
-        <div>Start Method</div>
-        <div>Status</div>
+        <div>{T.translate(`${PREFIX}.namespace`)}</div>
+        <div>{T.translate(`${PREFIX}.name`)}</div>
+        <div>{T.translate(`${PREFIX}.type`)}</div>
+        <div>{T.translate(`${PREFIX}.duration`)}</div>
+        <div>{T.translate(`${PREFIX}.user`)}</div>
+        <div>{T.translate(`${PREFIX}.startMethod`)}</div>
+        <div>{T.translate(`${PREFIX}.status`)}</div>
       </div>
     </div>
   );
@@ -69,7 +72,9 @@ function renderGrid(data) {
   if (data.length === 0) {
     return (
       <div className="list-view">
-        <h3 className="text-xs-center">No runs</h3>
+        <h3 className="text-xs-center">
+          {T.translate(`${PREFIX}.noRuns`)}
+        </h3>
       </div>
     );
   }
@@ -91,7 +96,9 @@ function RunsListView({bucketInfo, displayRunsList}) {
   if (!bucketInfo) {
     return (
       <div className="runs-list-container">
-        <h3 className="text-xs-center">No data</h3>
+        <h3 className="text-xs-center">
+          {T.translate(`${PREFIX}.noData`)}
+        </h3>
       </div>
     );
   }
@@ -105,28 +112,38 @@ function RunsListView({bucketInfo, displayRunsList}) {
     <div className="runs-list-container">
       <div className="top-panel-data">
         <div className="date">
-          <div className="title">Date</div>
+          <div className="title">
+            {T.translate(`${PREFIX}.date`)}
+          </div>
           <div>{moment(date).format('ddd, MMM D, YYYY')}</div>
         </div>
 
         <div className="time-range">
-          <div className="title">Time range</div>
+          <div className="title">
+            {T.translate(`${PREFIX}.timeRange`)}
+          </div>
           <div>{timeRangeStart} - {timeRangeStop}</div>
         </div>
 
         <div className="type">
-          <div className="title">Type</div>
-          <div>All</div>
+          <div className="title">
+            {T.translate(`${PREFIX}.type`)}
+          </div>
+          <div>{T.translate(`${PREFIX}.all`)}</div>
         </div>
 
         <div className="start-method">
-          <div className="title">Start method</div>
-          <div>View All</div>
+          <div className="title">
+            {T.translate(`${PREFIX}.startMethod`)}
+          </div>
+          <div>{T.translate(`${PREFIX}.viewAll`)}</div>
         </div>
 
         <div className="status">
-          <div className="title">Status</div>
-          <div>All</div>
+          <div className="title">
+            {T.translate(`${PREFIX}.status`)}
+          </div>
+          <div>{T.translate(`${PREFIX}.all`)}</div>
         </div>
       </div>
 

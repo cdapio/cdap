@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.OpsDashboard.RunsGraph.Legends';
 
 function LegendsView({onClick, manual, schedule, running, success, failed, delay}) {
   return (
@@ -33,7 +36,7 @@ function LegendsView({onClick, manual, schedule, running, success, failed, delay
             name="icon-circle"
             className="manual"
           />
-          <span>Manually started runs</span>
+          <span>{T.translate(`${PREFIX}.manuallyStarted`)}</span>
         </div>
 
         <div
@@ -45,7 +48,7 @@ function LegendsView({onClick, manual, schedule, running, success, failed, delay
             name="icon-circle"
             className="schedule"
           />
-          <span>Scheduled/triggered runs</span>
+          <span>{T.translate(`${PREFIX}.scheduledTriggered`)}</span>
         </div>
       </div>
 
@@ -59,7 +62,7 @@ function LegendsView({onClick, manual, schedule, running, success, failed, delay
             name="icon-circle"
             className="running"
           />
-          <span>Running</span>
+          <span>{T.translate(`${PREFIX}.running`)}</span>
         </div>
 
         <div
@@ -71,7 +74,7 @@ function LegendsView({onClick, manual, schedule, running, success, failed, delay
             name="icon-circle"
             className="successful"
           />
-          <span>Successful runs</span>
+          <span>{T.translate(`${PREFIX}.successful`)}</span>
         </div>
 
         <div
@@ -83,7 +86,7 @@ function LegendsView({onClick, manual, schedule, running, success, failed, delay
             name="icon-circle"
             className="failed"
           />
-          <span>Failed runs</span>
+          <span>{T.translate(`${PREFIX}.failed`)}</span>
         </div>
       </div>
 
@@ -97,7 +100,7 @@ function LegendsView({onClick, manual, schedule, running, success, failed, delay
             name="icon-circle"
             className="delay"
           />
-          <span>Delay between starting and running</span>
+          <span>{T.translate(`${PREFIX}.delay`)}</span>
         </div>
       </div>
     </div>

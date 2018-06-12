@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import TimeRangePopover from 'components/Reports/Customizer/TimeRangeSelector/TimeRangePopover';
 import {connect} from 'react-redux';
 import moment from 'moment';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer.TimeRangeSelector';
 
 require('./TimeRangeSelector.scss');
 
@@ -35,13 +38,13 @@ function renderDisplay(selection, start, end) {
 
   switch (selection) {
     case 'last30':
-      return 'Last 30 minutes';
+      return T.translate(`${PREFIX}.last30Minutes`);
     case 'lastHour':
-      return 'Last 1 hour';
+      return T.translate(`${PREFIX}.lastHour`);
     case 'custom':
-      return `${startTime} to ${endTime}`;
+      return T.translate(`${PREFIX}.timeRange`, {startTime, endTime});
     default:
-      return 'Select time';
+      return T.translate(`${PREFIX}.select`);
   }
 }
 
@@ -49,7 +52,7 @@ function TimeRangeSelectorView({selection, start, end}) {
   return (
     <div className="reports-time-range-selector">
       <div className="title">
-        Select Time Range
+        {T.translate(`${PREFIX}.label`)}
       </div>
 
       <div className="time-selector-value">
