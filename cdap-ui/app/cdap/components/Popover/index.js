@@ -55,7 +55,6 @@ export default class Popover extends PureComponent {
     bubbleEvent: true,
     enableInteractionInPopover: false,
     injectOnToggle: false,
-    showPopover: false,
     modifiers: {
       preventOverflow: {
         enabled: true,
@@ -83,7 +82,8 @@ export default class Popover extends PureComponent {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.showPopover !== this.state.showPopover) {
+    if (typeof nextProps.showPopover === 'boolean' &&
+        nextProps.showPopover !== this.state.showPopover) {
       this.togglePopover();
     }
   }

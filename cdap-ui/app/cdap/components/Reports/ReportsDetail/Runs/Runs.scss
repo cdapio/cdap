@@ -58,6 +58,17 @@ $border-color: $grey-03;
 
       .grid-row {
         padding: 3px 0;
+
+        &:hover {
+          background-color: white;
+        }
+
+        .runtime-args-row {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-bottom: 0;
+          margin-top: 0.5rem;
+        }
       }
     }
   }
