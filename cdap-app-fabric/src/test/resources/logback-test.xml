@@ -34,7 +34,7 @@
         </encoder>
     </appender>
 
-    <logger name="co.cask.cdap" level="INFO" />
+    <logger name="co.cask.cdap" level="DEBUG" />
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>

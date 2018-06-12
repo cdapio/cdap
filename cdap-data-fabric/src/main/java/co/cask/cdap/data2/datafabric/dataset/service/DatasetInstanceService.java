@@ -272,6 +272,8 @@ public class DatasetInstanceService {
    *  have {@link Action#WRITE} privilege on the #instance's namespace
    */
   void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
+    LOG.debug("Received request to create dataset {}.{}, type name: {}, properties: {}",
+              namespaceId, name, props.getTypeName(), props.getProperties());
     NamespaceId namespace = ConversionHelpers.toNamespaceId(namespaceId);
     DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     Principal requestingUser = authenticationContext.getPrincipal();
@@ -325,6 +327,9 @@ public class DatasetInstanceService {
 
       // Enable explore
       enableExplore(datasetId, spec, props);
+      LOG.info("Created dataset {}.{}, type name: {}, properties: {}",
+               namespaceId, name, props.getTypeName(), props.getProperties());
+
     } catch (Exception e) {
       // there was a problem in creating the dataset instance so delete the owner if it got added earlier
       ownerAdmin.delete(datasetId); // safe to call for entities which does not have an owner too

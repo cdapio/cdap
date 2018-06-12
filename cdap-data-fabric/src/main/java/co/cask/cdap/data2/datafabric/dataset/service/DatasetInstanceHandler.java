@@ -35,6 +35,8 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -58,6 +60,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private final DatasetInstanceService instanceService;
   private static final Gson GSON = new Gson();
 
@@ -115,6 +118,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void create(FullHttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
 
+    LOG.debug("Received a PUT to dataset {}", name);
     DatasetInstanceConfiguration creationProperties = ConversionHelpers.getInstanceConfiguration(request);
     try {
       instanceService.create(namespaceId, name, creationProperties);
