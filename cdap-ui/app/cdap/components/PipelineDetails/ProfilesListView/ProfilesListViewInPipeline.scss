@@ -61,6 +61,11 @@
         &.active {
           background: $yellow-02-lighter;
         }
+        a {
+          &:hover {
+            text-decoration: underline;
+          }
+        }
       }
     }
     &.disabled {
