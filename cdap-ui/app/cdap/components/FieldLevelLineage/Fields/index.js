@@ -18,12 +18,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import FieldRow from 'components/FieldLevelLineage/FieldRow';
+import LineageSummary from 'components/FieldLevelLineage/LineageSummary';
 
 require('./Fields.scss');
 
 function FieldsView({datasetId, fields}) {
   return (
     <div className="fields-list-container">
+      <LineageSummary />
       <div className="fields-box">
         <div className="header">
           <div className="dataset-name">

@@ -23,7 +23,9 @@ export function getFields(datasetId) {
 
   let params = {
     namespace,
-    entityId: datasetId
+    entityId: datasetId,
+    start: 'now-7d',
+    end: 'now'
   };
 
   MyMetadataApi.getFields(params)
@@ -46,12 +48,13 @@ export function getLineageSummary(fieldName) {
     namespace,
     entityId: datasetId,
     fieldName,
-    direction: 'backward'
+    direction: 'backward',
+    start: 'now-7d',
+    end: 'now'
   };
 
   MyMetadataApi.getFieldLineage(params)
     .subscribe((res) => {
-      console.log('res', res);
       Store.dispatch({
         type: Actions.setBackwardLineage,
         payload: {

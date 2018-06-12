@@ -21,11 +21,15 @@ $header-border-color: $grey-03;
 $count-font-color: $grey-04;
 
 .fields-list-container {
+  position: relative;
+
   .fields-box {
     width: 250px;
     border: 2px solid $box-border-color;
     background-color: white;
-    margin: 0 auto;
+    position: absolute;
+    transform: translateX(-50%);
+    left: 50%;
 
     .header {
       border-bottom: 2px solid $header-border-color;

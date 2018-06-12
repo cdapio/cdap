@@ -23,9 +23,10 @@ import {connect} from 'react-redux';
 require('./FieldRow.scss');
 
 function FieldRowView({fieldName, activeField}) {
+  const isActive = fieldName === activeField;
   return (
     <div
-      className={classnames('field-row', { 'active': fieldName === activeField})}
+      className={classnames('field-row', { 'active': isActive})}
       onClick={getLineageSummary.bind(null, fieldName)}
     >
       {fieldName}

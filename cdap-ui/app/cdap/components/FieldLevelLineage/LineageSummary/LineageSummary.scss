@@ -1,0 +1,104 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../styles/variables.scss';
+$box-border-color: $orange-01;
+$box-bg-color: $cdap-white;
+$secondary-color: $grey-04;
+$section-border-color: $grey-03;
+$field-row-border-color: $grey-05;
+$field-row-hover-bg: $grey-08;
+
+.field-level-lineage-container {
+  .lineage-summary-container {
+    width: 250px;
+    border: 2px solid $box-border-color;
+    background-color: $box-bg-color;
+    position: absolute;
+    transform: translateX(-100%);
+
+    /*
+     * Left offset calculation
+     * 50% (middle of screen) - half of the field list box - margin
+     */
+    left: calc(50% - (250px / 2) - 15px);
+
+    .field-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    > div {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+
+    .field-lineage-info,
+    .summary-row {
+      border-bottom: 2px solid $section-border-color;
+      padding-bottom: 3px;
+    }
+
+    .field-lineage-info {
+      padding-top: 15px;
+
+      .title,
+      .dataset-field {
+        font-weight: 600;
+      }
+
+      .dataset-field { font-size: 14px; }
+      .lineage-count { color: $secondary-color; }
+
+      .close-button {
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+    }
+
+    .summary-row {
+      padding-top: 3px;
+
+      .namespace { color: $secondary-color; }
+      .dataset-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .fields-list {
+        margin-top: 5px;
+
+        .field-row {
+          $padding-border-offset: 10px;
+
+          border-top: 1px solid $field-row-border-color;
+          margin-left: -$padding-border-offset;
+          margin-right: -$padding-border-offset;
+          padding: 3px $padding-border-offset;
+
+          &:hover { background-color: $field-row-hover-bg; }
+        }
+      }
+    }
+
+    .view-operations {
+      padding-top: 15px;
+      padding-bottom: 15px;
+    }
+  }
+}
