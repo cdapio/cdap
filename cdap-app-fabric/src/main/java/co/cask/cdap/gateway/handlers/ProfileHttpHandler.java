@@ -181,6 +181,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     Collection<ProvisionerPropertyValue> provisionerProperties = provisionerInfo.getProperties();
     if (provisionerProperties != null) {
       for (ProvisionerPropertyValue value : provisionerProperties) {
+        if (value == null) {
+          continue;
+        }
         properties.put(value.getName(), value.getValue());
       }
     }
