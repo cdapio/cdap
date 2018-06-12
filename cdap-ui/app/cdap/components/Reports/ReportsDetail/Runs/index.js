@@ -21,6 +21,11 @@ import {GLOBALS} from 'services/global-constants';
 import {humanReadableDate, humanReadableDuration} from 'services/helpers';
 import {DefaultSelection} from 'components/Reports/store/ActionCreator';
 import difference from 'lodash/difference';
+import capitalize from 'lodash/capitalize';
+import StatusMapper from 'services/StatusMapper';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer.Options';
 
 require('./Runs.scss');
 
@@ -50,22 +55,27 @@ function getType(run) {
 }
 
 function renderHeader(headers) {
+  let nameLabel = T.translate('commons.nameLabel');
+  let typeLabel = T.translate('commons.typeLabel');
+
   return (
     <div className="grid-header">
       <div className="grid-row">
-        <div title='Name'>
-          Name
+        <div title={nameLabel}>
+          {nameLabel}
         </div>
 
-        <div title='Type'>
-          Type
+        <div title={typeLabel}>
+          {typeLabel}
         </div>
 
         {
           headers.map((head) => {
+            let headerLabel = T.translate(`${PREFIX}.${head}`);
+
             return (
-              <div title={head}>
-                {head}
+              <div title={headerLabel}>
+                {headerLabel}
               </div>
             );
           })
@@ -103,11 +113,19 @@ function renderBody(runs, headers) {
                     value = humanReadableDate(value);
                   }
 
-                  if (head === 'duration') {
+                  else if (head === 'duration') {
                     value = humanReadableDuration(value);
                   }
 
-                  if (head === 'runtimeArgs') {
+                  else if (head === 'status') {
+                    value = StatusMapper.lookupDisplayStatus(value);
+                  }
+
+                  else if (head === 'startMethod') {
+                    value = capitalize(value);
+                  }
+
+                  else if (head === 'runtimeArgs') {
                     let keyValuePairs = Object.entries(value).map(keyValuePair => {
                       return `${keyValuePair[0]} = ${keyValuePair[1]}`;
                     });

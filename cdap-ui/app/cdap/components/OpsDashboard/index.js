@@ -44,9 +44,7 @@ export default class OpsDashboard extends Component {
     return (
       <Provider store={DashboardStore}>
         <div className="ops-dashboard">
-          <Helmet
-            title={T.translate(`${PREFIX}.pageTitle`)}
-          />
+          <Helmet title={T.translate(`${PREFIX}.pageTitle`)} />
           <div className="header clearfix">
             <div className="links float-xs-left">
               <span>{T.translate(`${PREFIX}.header`)}</span>

@@ -22,6 +22,9 @@ import AppTypeSelector from 'components/Reports/Customizer/AppTypeSelector';
 import ActionButtons from 'components/Reports/Customizer/ActionButtons';
 import StatusSelector from 'components/Reports/Customizer/StatusSelector';
 import classnames from 'classnames';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer';
 
 require('./Customizer.scss');
 
@@ -62,7 +65,13 @@ export default class Customizer extends Component {
             onClick={this.toggleCollapsed}
           >
             <IconSVG name={this.state.isCollapsed ? 'icon-caret-right' : 'icon-caret-down'} />
-            {this.state.isCollapsed ? 'Show generate a report' : 'Hide generate a report'}
+            {
+              this.state.isCollapsed ?
+                T.translate(`${PREFIX}.show`)
+              :
+
+                T.translate(`${PREFIX}.hide`)
+            }
           </div>
         </div>
 

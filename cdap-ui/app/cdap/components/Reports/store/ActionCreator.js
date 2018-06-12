@@ -20,6 +20,10 @@ import {MyReportsApi} from 'api/reports';
 import orderBy from 'lodash/orderBy';
 import {GLOBALS} from 'services/global-constants';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import StatusMapper from 'services/StatusMapper';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsDetail';
 
 export const DefaultSelection = [
   'artifactName',
@@ -63,9 +67,13 @@ function getName(start, end) {
 
   let statusSelections = ReportsStore.getState().status.statusSelections;
 
-  let statusLabel = statusSelections.join(', ');
+  let statusLabel = getStatusSelectionsLabels(statusSelections).join(', ');
 
-  return `${statusLabel} Runs - ${startDate} to ${endDate}`;
+  return T.translate(`${PREFIX}.getReportName`, {
+    statusLabel,
+    startDate,
+    endDate
+  });
 }
 
 function getFilters() {
@@ -177,5 +185,11 @@ export function setNamespacesPick(namespacesPick) {
     payload: {
       namespacesPick
     }
+  });
+}
+
+export function getStatusSelectionsLabels(selections) {
+  return selections.map(selection => {
+    return StatusMapper.lookupDisplayStatus(selection);
   });
 }

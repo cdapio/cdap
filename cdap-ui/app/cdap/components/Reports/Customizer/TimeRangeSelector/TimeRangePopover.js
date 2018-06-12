@@ -21,6 +21,9 @@ import IconSVG from 'components/IconSVG';
 import TimeRangePicker from 'components/TimeRangePicker';
 import {connect} from 'react-redux';
 import {ReportsActions} from 'components/Reports/store/ReportsStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.Customizer.TimeRangeSelector';
 
 class TimeRangePopoverView extends Component {
   static propTypes = {
@@ -103,7 +106,7 @@ class TimeRangePopoverView extends Component {
           disabled={disabled}
           onClick={this.apply}
         >
-          Apply
+          {T.translate('commons.apply')}
         </button>
       </div>
     );
@@ -120,7 +123,7 @@ class TimeRangePopoverView extends Component {
         injectOnToggle={true}
       >
         <div className="title">
-          Select Time Range:
+          {T.translate(`${PREFIX}.labelWithColon`)}
         </div>
 
         <div className="options">
@@ -129,7 +132,7 @@ class TimeRangePopoverView extends Component {
             onClick={this.changeSelection.bind(this, 'last30')}
           >
             <IconSVG name={this.state.selection === 'last30' ? 'icon-circle' : 'icon-circle-o'} />
-            Last 30 min
+            {T.translate(`${PREFIX}.last30Min`)}
           </div>
 
           <div
@@ -137,7 +140,7 @@ class TimeRangePopoverView extends Component {
             onClick={this.changeSelection.bind(this, 'lastHour')}
           >
             <IconSVG name={this.state.selection === 'lastHour' ? 'icon-circle' : 'icon-circle-o'} />
-            Last 1 hour
+            {T.translate(`${PREFIX}.lastHour`)}
           </div>
 
           <div
@@ -145,7 +148,7 @@ class TimeRangePopoverView extends Component {
             onClick={this.changeSelection.bind(this, 'custom')}
           >
             <IconSVG name={this.state.selection === 'custom' ? 'icon-circle' : 'icon-circle-o'} />
-            Custom range
+            {T.translate(`${PREFIX}.customRange`)}
           </div>
         </div>
 

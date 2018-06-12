@@ -2,6 +2,7 @@
 # Please keep this file alphabetically sorted!
 commons:
   application: Application
+  apply: Apply
   as: as
   back: Back
   cask: CASK
@@ -1871,6 +1872,10 @@ features:
 
   Reports:
     Customizer:
+      clear: Clear Selection
+      generate: Generate Report
+      header: Customize runs view
+      hide: Hide generate a report
       Options:
         customApps: Custom Apps runs
         duration: Duration
@@ -1885,6 +1890,62 @@ features:
         startMethod: Start method
         status: Status
         user: User
+      selectColumns: Select columns
+      show: Show generate a report
+      StatusSelector:
+        allStatuses: All statuses
+        selectOne: Select one
+        selectStatus: Select status
+      TimeRangeSelector:
+        customRange: Custom range
+        label: Select time range
+        labelWithColon: "Select time range: "
+        last30Min: Last 30 min
+        last30Minutes: Last 30 minutes
+        lastHour: Last 1 hour
+        select: Select time
+        timeRange: "{startTime} to {endTime}"
+    header: Reports
+    pageTitle: CDAP | Reports
+    reportName: Report name
+    ReportsDetail:
+      appTypeLabel: "App type:"
+      bySchedule: By schedule
+      byTrigger: By trigger
+      expiresIn: Expires in
+      export: Export
+      generatedTime: Report generated on {time}
+      getReportName: "{statusLabel} runs - {startDate} to {endDate}"
+      lastStarted: "Newest: {newest}; Oldest: {oldest}"
+      lastStartedLabel: "Last started:"
+      manually: Manually
+      namespaceLabel: "Namespace:"
+      numRuns: " ({num} runs)"
+      ownersLabel: "Owners:"
+      reportSummary: Report summary
+      runDuration: "Min: {min}; Max: {max}; Average: {average}"
+      runDurationLabel: "Run duration:"
+      save: Save
+      saved: Saved
+      saveReport: Save Report
+      startedLabel: "Started:"
+      timeRange: "{start} to {end}"
+      timeRangeLabel: "Time range:"
+
+    ReportsList:
+      cloneCriteria: Clone criteria
+      created: Created
+      expiration: Expiration
+      failed: Failed
+      generating: Generating
+      makeSelection: Make a selection to specify your criteria and generate new report.
+      noReports: No reports are available
+      selectAReport: Select a report to view
+    ReportsServiceControl:
+      checking: Checking if Reports is available
+      contact: contact support@cask.co
+      enable: Enable Reports
+      unableToStart: Unable to start Reports service
 
   Resource-Center:
     Application:

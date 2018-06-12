@@ -18,6 +18,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import SaveModal from 'components/Reports/ReportsDetail/SaveButton/SaveModal';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports.ReportsDetail';
 
 require('./SaveButton.scss');
 
@@ -59,7 +62,7 @@ class SaveButtonView extends Component {
           className="btn btn-primary"
           onClick={this.toggleModal}
         >
-          Save Report
+          {T.translate(`${PREFIX}.saveReport`)}
         </button>
 
         {this.renderModal()}
