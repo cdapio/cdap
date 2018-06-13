@@ -26,13 +26,10 @@ import javax.annotation.Nullable;
 class MetadataKey {
   private static final byte[] VALUE_ROW_PREFIX = {'v'}; // value row prefix to store metadata value
   private static final byte[] INDEX_ROW_PREFIX = {'i'}; // index row prefix used for metadata search
-  public static final byte[] VALUE_ROW_PREFIX_KEY =
+  private static final byte[] VALUE_ROW_PREFIX_KEY =
     new MDSKey.Builder().add(MetadataKey.VALUE_ROW_PREFIX).build().getKey();
-  public static final byte[] INDEX_ROW_PREFIX_KEY =
+  private static final byte[] INDEX_ROW_PREFIX_KEY =
     new MDSKey.Builder().add(MetadataKey.INDEX_ROW_PREFIX).build().getKey();
-  // if a target type cannot be determined because the MetadataEntity is an unknown CDAP entity then we will store it
-  // as CUSTOM_TYPE.
-  private static final String CUSTOM_TARGET_TYPE = "CUSTOM_TYPE";
 
 
   static String extractMetadataKey(byte[] rowKey) {
@@ -126,7 +123,7 @@ class MetadataKey {
   }
 
   static byte[] getValueRowPrefix() {
-    return VALUE_ROW_PREFIX;
+    return VALUE_ROW_PREFIX_KEY;
   }
 
   static byte[] getIndexRowPrefix() {

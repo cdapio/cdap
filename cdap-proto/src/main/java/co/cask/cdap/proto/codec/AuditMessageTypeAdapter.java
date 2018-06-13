@@ -22,6 +22,7 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -39,8 +40,13 @@ public class AuditMessageTypeAdapter implements JsonDeserializer<AuditMessage> {
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     long timeMillis = jsonObj.get("time").getAsLong();
-    MetadataEntity metadataEntity = context.deserialize(jsonObj.getAsJsonObject("metadataEntity"),
-                                                        MetadataEntity.class);
+    MetadataEntity metadataEntity;
+    EntityId entityId = context.deserialize(jsonObj.getAsJsonObject("entityId"), EntityId.class);
+    if (entityId != null) {
+      metadataEntity = entityId.toMetadataEntity();
+    } else {
+      metadataEntity = context.deserialize(jsonObj.getAsJsonObject("metadataEntity"), MetadataEntity.class);
+    }
     String user = jsonObj.get("user").getAsString();
     AuditType auditType = context.deserialize(jsonObj.getAsJsonPrimitive("type"), AuditType.class);
 

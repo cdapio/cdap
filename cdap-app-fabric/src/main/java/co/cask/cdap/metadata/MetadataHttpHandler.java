@@ -29,6 +29,7 @@ import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.http.AbstractHttpHandler;
@@ -81,10 +82,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     input -> EntityTypeSimpleName.valueOf(input.toUpperCase());
 
   private final MetadataAdmin metadataAdmin;
+  private final LineageAdmin lineageAdmin;
 
   @Inject
-  MetadataHttpHandler(MetadataAdmin metadataAdmin) {
+  MetadataHttpHandler(MetadataAdmin metadataAdmin, LineageAdmin lineageAdmin) {
     this.metadataAdmin = metadataAdmin;
+    this.lineageAdmin = lineageAdmin;
   }
 
   @GET
@@ -100,8 +103,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     throws BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     Set<MetadataRecord> metadata = getMetadata(metadataEntity, scope);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata,
-                                                          SET_METADATA_RECORD_TYPE));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -143,7 +145,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tags for %s added successfully.", metadataEntity));
   }
-
 
   @DELETE
   @Path("/**/metadata")
@@ -297,6 +298,10 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   private Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity,
                                           @Nullable String scope) throws BadRequestException {
+    // the lineage admin handles the metadata call for program runs so delegate the call to that
+    if (metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
+      return lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
+    }
     return (scope == null) ?
       metadataAdmin.getMetadata(metadataEntity) :
       metadataAdmin.getMetadata(validateScope(scope), metadataEntity);

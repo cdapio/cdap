@@ -108,10 +108,12 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return METRICS;
-    } else if (endsWith(uriParts, "metadata") ||
+    } else if ((!matches(uriParts, "v3", "namespaces", null, "securekeys")) && (endsWith(uriParts, "metadata") ||
+      // do no intercept the namespaces/<namespace-name>/securekeys/<key>/metadata as that is handled by the
+      // SecureStoreHandler
       endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", "*") ||
       endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", "*") ||
-      endsWith(uriParts, "metadata", "search") || endsWith(uriParts, "lineage")) {
+      endsWith(uriParts, "metadata", "search") || endsWith(uriParts, "lineage"))) {
       return METADATA_SERVICE;
     } else if (matches(uriParts, "v3", "security", "authorization") ||
       matches(uriParts, "v3", "namespaces", null, "securekeys")) {
@@ -215,9 +217,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   }
 
   private boolean endsWith(String[] actual, String... expectedEnd) {
-    for (int i = expectedEnd.length - 1; i >= 0 && actual.length >= expectedEnd.length; i--) {
+    for (int i = expectedEnd.length - 1; i >= 0; i--) {
       if (!expectedEnd[i].equals("*") &&
-        !actual[actual.length - (expectedEnd.length - i)].equalsIgnoreCase(expectedEnd[i])) {
+        ((actual.length < (expectedEnd.length - i)) ||
+          !actual[actual.length - (expectedEnd.length - i)].equalsIgnoreCase(expectedEnd[i]))) {
         return false;
       }
     }

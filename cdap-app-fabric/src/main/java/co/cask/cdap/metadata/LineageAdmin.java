@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -157,8 +158,14 @@ public class LineageAdmin {
   /**
    * @return metadata associated with a run
    */
-  public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(run);
+  public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) {
+    try {
+      entityExistenceVerifier.ensureExists(run);
+    } catch (NotFoundException e) {
+      // metadata apis does not support not found as they cannot perform existence check for custom entity so just
+      // return an empty set
+      return Collections.emptySet();
+    }
 
     Set<MetadataEntity> runEntities = lineageStoreReader.getEntitiesForRun(run).stream()
       .map(NamespacedEntityId::toMetadataEntity)

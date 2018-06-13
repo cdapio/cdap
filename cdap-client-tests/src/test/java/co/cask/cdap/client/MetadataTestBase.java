@@ -20,7 +20,6 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -130,15 +129,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected Map<String, String> getProperties(EntityId entityId, MetadataScope scope) throws Exception {
     return getProperties(entityId.toMetadataEntity(), scope);
-  }
-
-  protected void getPropertiesFromInvalidEntity(EntityId entityId) throws Exception {
-    try {
-      getProperties(entityId, MetadataScope.USER);
-      Assert.fail("Expected not to be able to get properties from invalid entity: " + entityId);
-    } catch (NotFoundException expected) {
-      // expected
-    }
   }
 
   protected void removeMetadata(MetadataEntity metadataEntity) throws Exception {
@@ -282,16 +272,12 @@ public abstract class MetadataTestBase extends ClientTestBase {
     return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
-  protected Set<MetadataRecord> fetchRunMetadata(ProgramRunId run) throws Exception {
-    return metadataClient.getMetadata(run);
-  }
 
   protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {
-    try {
-      fetchRunMetadata(run);
-      Assert.fail("Excepted not to fetch Metadata for a nonexistent Run.");
-    } catch (NotFoundException expected) {
-      // expected
+    for (MetadataRecord record : getMetadata(run)) {
+      Assert.assertTrue(record.getScope() == MetadataScope.SYSTEM || record.getScope() == MetadataScope.USER);
+      Assert.assertTrue(record.getProperties().isEmpty());
+      Assert.assertTrue(record.getTags().isEmpty());
     }
   }
 

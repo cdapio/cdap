@@ -27,7 +27,8 @@ import java.util.Objects;
  */
 @Beta
 public class AuditMessage {
-  private final int version = 1;
+  // version 1 has consisted of EntityId and version 2 consists of MetadataEntity
+  private final int version = 2;
 
   private final long time;
   private final MetadataEntity metadataEntity;

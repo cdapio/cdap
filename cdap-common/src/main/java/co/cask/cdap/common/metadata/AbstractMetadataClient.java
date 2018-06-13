@@ -75,6 +75,7 @@ public abstract class AbstractMetadataClient {
     map.put(MetadataEntity.ARTIFACT, "artifacts");
     map.put(MetadataEntity.PROGRAM, "programs");
     map.put(MetadataEntity.VIEW, "views");
+    map.put(MetadataEntity.PROGRAM_RUN, "runs");
     ENTITY_TYPE_TO_API_PART = map;
   }
 

@@ -26,7 +26,34 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Entity representation for Metadata
+ * Entity representation for Metadata. This representation support representing any of the existing
+ * CDAP entities which support metadata or any custom CDAP resource/entity. MetadataEntity are just ordered
+ * <p>
+ * key-value pair which represent the resource/entity.
+ * <p>
+ * Example usage:
+ * Creating a MetadataEntity for stream
+ * <pre>
+ *  MetadataEntity metadataEntity = MetadataEntity.ofNamespace("myNamespace").append(MetadataEntity.STREAM, "myStream");
+ * </pre>
+ * <p>
+ * Creating a Metadata for a field in dataset which is a custom resource
+ * <pre>
+ * MetadataEntity metadataEntity = MetadataEntity.ofNamespace("myNamespace")
+ *   .append(MetadataEntity.DATASET, "myDataset").append("field", "myField");
+ * </pre>
+ * <p>
+ * By default the key of the last key-value pair becomes the type of the MetadataEntity but it is also possible to
+ * change the type on demand to represent the MetadataEntity to represent entities/resources whose type are not the key
+ * of last key value pair. An example of this is ApplicationId which ends with "version" although the type is
+ * application.
+ * <pre>
+ * MetadataEntity metadataEntity = MetadataEntity.ofNamespace("myNamespace")
+ *   .append(MetadataEntity.APPLICATION, "myApplication")
+ *   .append(MetadataEntity.VERSION, "appVersion");
+ * metadataEntity = metadataEntity.changeType(MetadataEntity.APPLICATION);
+ * </pre>
+ * </p>
  */
 public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
@@ -38,7 +65,11 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   public static final String STREAM = "stream";
   public static final String VIEW = "stream_view";
   public static final String TYPE = "type";
+  public static final String FLOW = "flow";
+  public static final String FLOWLET = "flowlet";
   public static final String PROGRAM = "program";
+  public static final String SCHEDULE = "schedule";
+  public static final String PROGRAM_RUN = "program_run";
 
   private final LinkedHashMap<String, String> details;
   private String type;
@@ -69,7 +100,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   /**
    * Creates a {@link MetadataEntity} representing the given datasetName in the specified namespace.
    *
-   * @param namespace the name of the namespace
+   * @param namespace   the name of the namespace
    * @param datasetName the name of the dataset
    * @return {@link MetadataEntity} representing the dataset name
    */
@@ -98,7 +129,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
    * Creates a new {@link MetadataEntity} which consists of the given key and values following the key and values of
    * this {@link MetadataEntity} and is of type of the given key.
    *
-   * @param key the key to be added
+   * @param key   the key to be added
    * @param value the value to be added
    * @return a new {@link MetadataEntity} which consists of the given key and values following the key and values of
    * this {@link MetadataEntity}
