@@ -594,14 +594,14 @@
                     <!-- Copy runtime extensions. Currently only has Spark -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
-                      <targetPath>ext/runtimes/spark1_2.10</targetPath>
+                      <targetPath>ext/runtimes/${spark1.artifacts.dir}</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec</directory>
-                      <targetPath>ext/runtimes/spark2_2.11</targetPath>
+                      <targetPath>ext/runtimes/${spark2.artifacts.dir}</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>
@@ -633,7 +633,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/spark1_2.10</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/${spark1.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -661,7 +661,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/spark2_2.11</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/${spark2.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -703,20 +703,20 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-rg</id>
+                <id>copy-program-report-app-spark2_2.11</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}/${spark2.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/cdap-program-report2_2.11/target
                       </directory>
                       <includes>
-                        <include>cdap-program-report-${project.version}.jar</include>
+                        <include>cdap-program-report2_2.11-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -877,8 +877,24 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                  </target>
+                </configuration>
+              </execution>
+              <!--
+                Rename cdap-program-report2_2.11 to cdap-program-report.
+                This is may be removed if the UI supports different artifacts for each pipeline type.
+              -->
+              <execution>
+                <id>rename-program-report-jars</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-${project.version}.jar" />
                   </target>
                 </configuration>
               </execution>

@@ -145,6 +145,8 @@
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
+    <spark1.artifacts.dir>spark1_2.10</spark1.artifacts.dir>
+    <spark2.artifacts.dir>spark2_2.11</spark2.artifacts.dir>
     <spark1.version>1.6.1</spark1.version>
     <spark2.version>2.1.0</spark2.version>
     <sshd.version>1.7.0</sshd.version>

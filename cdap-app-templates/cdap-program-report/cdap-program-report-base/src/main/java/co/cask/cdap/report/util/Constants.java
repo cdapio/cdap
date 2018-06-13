@@ -72,6 +72,7 @@ public final class Constants {
     public static final String END_TIME = "endTime";
     public static final String SUSPEND_TIME = "suspendTime";
     public static final String RESUME_TIME = "resumeTime";
+    public static final String SCHEDULE_INFO_KEY = "triggeringScheduleInfo";
 
     /**
      * Program status options
