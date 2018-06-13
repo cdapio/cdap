@@ -37,7 +37,6 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -74,7 +73,7 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
 
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
-                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+                                   CConfiguration cConf, Configuration hConf, File tempDir) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
 

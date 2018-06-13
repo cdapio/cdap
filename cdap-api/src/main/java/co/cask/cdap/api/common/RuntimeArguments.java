@@ -114,9 +114,7 @@ public final class RuntimeArguments {
     String prefix = scope + DOT + name + DOT;
     String wildCardPrefix = scope + DOT + ASTERISK + DOT;
 
-    Map<String, String> result = new HashMap<>();
-    result.putAll(arguments);
-
+    Map<String, String> result = new HashMap<>(arguments);
     Map<String, String> prefixMatchedArgs = new HashMap<>();
     Map<String, String> wildCardPrefixMatchedArgs = new HashMap<>();
 
