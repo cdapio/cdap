@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import FieldRow from 'components/FieldLevelLineage/FieldRow';
 import LineageSummary from 'components/FieldLevelLineage/LineageSummary';
+import FieldSearch from 'components/FieldLevelLineage/Fields/Search';
 
 require('./Fields.scss');
 
@@ -35,6 +36,8 @@ function FieldsView({datasetId, fields}) {
             {fields.length} fields
           </div>
         </div>
+
+        <FieldSearch />
 
         <div className="fields-list">
           {

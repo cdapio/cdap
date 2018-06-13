@@ -21,6 +21,7 @@ const Actions = {
   setFields: 'FLL_SET_FIELDS',
   setBackwardLineage: 'FLL_SET_BACKWARD_LINEAGE',
   closeSummary: 'FLL_CLOSE_SUMMARY',
+  setSearch: 'FLL_SET_SEARCH',
   reset: 'FLL_RESET'
 };
 
@@ -28,7 +29,8 @@ const defaultInitialState = {
   datasetId: '',
   fields: [],
   backward: [],
-  activeField: null
+  activeField: null,
+  search: ''
 };
 
 const lineage = (state = defaultInitialState, action = defaultAction) => {
@@ -49,6 +51,11 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         activeField: null
+      };
+    case Actions.setSearch:
+      return {
+        ...state,
+        search: action.payload.search
       };
     case Actions.reset:
       return defaultInitialState;
