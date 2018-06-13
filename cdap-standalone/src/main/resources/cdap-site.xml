@@ -253,4 +253,9 @@
     </description>
   </property>
 
+  <property>
+    <name>program.heartbeat.interval.seconds</name>
+    <value>30</value>
+  </property>
+
 </configuration>

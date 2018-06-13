@@ -387,9 +387,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     ProgramOptions programOptions = new SimpleProgramOptions(anotherWorkflowRun.getParent(),
                                                              systemArgs, new BasicArguments(), false);
     programStateWriter.start(anotherWorkflowRun, programOptions, null, programDescriptor);
-    programStateWriter.running(anotherWorkflowRun, null);
+    programStateWriter.running(anotherWorkflowRun, null, programOptions);
     long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    programStateWriter.error(anotherWorkflowRun, null);
+    programStateWriter.error(anotherWorkflowRun, null, programOptions);
     waitUntilProcessed(programEventTopic, lastProcessed);
 
     ProgramRunId someWorkflowRun = SOME_WORKFLOW.run(RunIds.generate());
@@ -397,9 +397,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent(),
                                                                        systemArgs, new BasicArguments()),
                              null, programDescriptor);
-    programStateWriter.running(someWorkflowRun, null);
+    programStateWriter.running(someWorkflowRun, null, programOptions);
     lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    programStateWriter.killed(someWorkflowRun);
+    programStateWriter.killed(someWorkflowRun, programOptions);
     waitUntilProcessed(programEventTopic, lastProcessed);
     Assert.assertEquals(0, getRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.ALL));
 
