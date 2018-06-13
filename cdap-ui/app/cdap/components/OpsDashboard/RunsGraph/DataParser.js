@@ -73,8 +73,10 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
 
     let startIndex = timeArray.indexOf(startTime);
     // if startTime not found, then the program started before the graph
+    // so set start value to start of first bucket
     if (startIndex === -1) {
-      start = parseInt(timeArray[0], 10);
+      startIndex = 0;
+      start = parseInt(timeArray[startIndex], 10);
     }
 
     let endIndex = timeArray.indexOf(endTime);

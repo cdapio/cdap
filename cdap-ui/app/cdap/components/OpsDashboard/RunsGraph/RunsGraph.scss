@@ -21,6 +21,8 @@ $bg-color: $grey-08;
 $top-panel-height: 50px;
 $border-color: $grey-05;
 $date-color: $grey-01;
+$selected-bucket-outline-color: $yellow-02;
+$selected-bucket-fill-color: $grey-04;
 
 // Graph colors
 $manual: $blue-grey04;
@@ -119,30 +121,6 @@ $delay: $grey-04;
     .arrow-right { right: 5px; }
   }
 
-  .legends {
-    padding: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .icon-svg {
-      font-size: 18px;
-      margin-right: 5px;
-    }
-
-    .select-item {
-      display: inline-block;
-      cursor: pointer;
-      user-select: none;
-
-      span { vertical-align: middle; }
-
-      &:not(:last-child) {
-        margin-right: 20px;
-      }
-    }
-  }
-
   .toggle-runs-list {
     padding-left: 25px;
     padding-bottom: 10px;
@@ -202,7 +180,18 @@ $delay: $grey-04;
   }
 
   .delay {
-    @include setColor($delay);
+    margin-right: 5px;
+  }
+
+  .bucket {
+    opacity: 0;
+
+    &.selected {
+      opacity: 0.5;
+      stroke: $selected-bucket-outline-color;
+      stroke-width: 2px;
+      fill: $selected-bucket-fill-color;
+    }
   }
 
   .pointer {
