@@ -55,7 +55,8 @@ export default class FileBrowser extends Component {
 
   static defaultProps = {
     enableRouting: true,
-    scope: false
+    scope: false,
+    browserTitle: T.translate(`${PREFIX}.TopPanel.selectData`)
   };
 
   static propTypes = {
@@ -66,7 +67,8 @@ export default class FileBrowser extends Component {
     toggle: PropTypes.func.isRequired,
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
-    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    browserTitle: PropTypes.string
   };
 
   componentWillMount() {
@@ -518,7 +520,7 @@ export default class FileBrowser extends Component {
               </span>
 
               <span>
-                {T.translate(`${PREFIX}.TopPanel.selectData`)}
+                {this.props.browserTitle}
               </span>
             </h5>
           </div>
