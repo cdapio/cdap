@@ -152,6 +152,47 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .call(d3.axisRight(yRight).tickSizeOuter(-width));
 
 
+  // HOVER AND CLICK HANDLER
+  let stepWidth = x.bandwidth();
+  let handlerGroup = chart.append('g')
+    .attr('class', 'handler');
+
+  let handler = handlerGroup.selectAll('rect')
+    .data(data)
+    .enter();
+
+  handler.append('rect')
+    .attr('class', 'handler-selector pointer')
+    .attr('data', (d) => d.time)
+    .attr('width', stepWidth)
+    .attr('x', (d) => x(d.time))
+    .attr('height', height);
+
+  // Since we always select the first bucket by default, highlights it
+  d3.select('.handler-selector')
+    .classed('selected', true);
+
+  d3.selectAll('.handler-selector')
+    // Need to use normal function callback instead of arrow function here,
+    // so that 'this' is not passed from outer context
+    .on('click', function(data) {
+
+      // Need to do this to unselect previously selected bucket
+      d3.select('.handler-selector.selected')
+        .classed('selected', false);
+
+      d3.select(this)
+        .classed('selected', true);
+
+      DashboardStore.dispatch({
+        type: DashboardActions.setDisplayBucket,
+        payload: {
+          displayBucketInfo: data
+        }
+      });
+    });
+
+
   // RENDER BAR GRAPH
 
   if (viewByOption === ViewByOptions.startMethod) {
@@ -250,35 +291,6 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
       .attr('r', 5)
       .attr('cx', (d) => x(d.time))
       .attr('cy', (d) => yRight(d.delay));
-
-
-  // HOVER AND CLICK HANDLER
-  let stepWidth = x.bandwidth();
-  let handlerGroup = chart.append('g')
-    .attr('class', 'handler');
-
-  let handler = handlerGroup.selectAll('rect')
-    .data(data)
-    .enter();
-
-  handler.append('rect')
-    .attr('class', 'handler-selector pointer')
-    .attr('opacity', 0)
-    .attr('data', (d) => d.time)
-    .attr('width', stepWidth)
-    .attr('x', getXLocation)
-    .attr('height', height);
-
-  d3.selectAll('.handler-selector')
-    .on('click', (data) => {
-      DashboardStore.dispatch({
-        type: DashboardActions.setDisplayBucket,
-        payload: {
-          displayBucketInfo: data
-        }
-      });
-    });
-
 
   // Helper functions
   function getXLocation(d) {

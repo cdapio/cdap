@@ -181,6 +181,18 @@ $delay: $grey-04;
     margin-right: 5px;
   }
 
+  .handler-selector {
+    opacity: 0;
+
+    &.selected {
+      opacity: 0.5;
+      stroke: $yellow-02;
+      stroke-width: 2px;
+      fill: $grey-04;
+      cursor: default;
+    }
+  }
+
   .pointer {
     cursor: pointer;
   }
