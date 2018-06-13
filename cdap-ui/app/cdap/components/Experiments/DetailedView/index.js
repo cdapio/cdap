@@ -35,6 +35,10 @@ import Mousetrap from 'mousetrap';
 import isNil from 'lodash/isNil';
 import queryString from 'query-string';
 import Alert from 'components/Alert';
+import Page404 from 'components/404';
+import T from 'i18n-react';
+import {Link} from 'react-router-dom';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./DetailedView.scss');
 
@@ -42,6 +46,10 @@ export default class ExperimentDetails extends Component {
   static propTypes = {
     match: PropTypes.object,
     location: PropTypes.object
+  };
+
+  state = {
+    pageNotFound: false
   };
 
   modelStatusObservables = [];
@@ -69,12 +77,25 @@ export default class ExperimentDetails extends Component {
     });
   }
 
+  componentDidMount() {
+    this.experimentDetailStoreSubscription = experimentDetailStore.subscribe(() => {
+      let {error} = experimentDetailStore.getState();
+      if (error === 404) {
+        this.setState({
+          pageNotFound: true
+        });
+      }
+    });
+  }
   componentWillUnmount() {
     Mousetrap.unbind('left');
     Mousetrap.unbind('right');
     resetExperimentDetailStore();
     if (this.modelStatusObservables.length) {
       this.modelStatusObservables.forEach(statusObservable$ => statusObservable$.unsubscribe());
+    }
+    if (this.experimentDetailStoreSubscription) {
+      this.experimentDetailStoreSubscription();
     }
   }
 
@@ -138,6 +159,32 @@ export default class ExperimentDetails extends Component {
   };
 
   render() {
+    let {pageNotFound} = this.state;
+    if (pageNotFound) {
+      let namespace = getCurrentNamespace();
+      return (
+        <Page404
+          entityType="experiment"
+          entityName={this.props.match.params.experimentId}
+        >
+          <div className="message-section">
+            <h4>
+              <strong>
+                {T.translate('features.Page404.subtitleMessage1')}
+              </strong>
+            </h4>
+            <div className="navigation-section">
+              <div>
+                {T.translate('features.Page404.manageLabel')}
+                <Link to={`/ns/${namespace}/experiments`}>
+                  experiments
+                </Link>
+              </div>
+            </div>
+          </div>
+        </Page404>
+      );
+    }
     return (
       <Provider store={experimentDetailStore}>
         <div className="experiment-detailed-view">

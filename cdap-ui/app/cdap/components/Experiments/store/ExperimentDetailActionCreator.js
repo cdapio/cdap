@@ -19,6 +19,7 @@ import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'compon
 import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
 import {myExperimentsApi} from 'api/experiments';
 import {getCurrentNamespace} from 'services/NamespaceStore';
+import {objectQuery} from 'services/helpers';
 
 function setExperimentDetailError(error = null) {
   experimentDetailsStore.dispatch({
@@ -45,6 +46,9 @@ function getExperimentDetails(experimentId) {
         }
       });
     }, (err) => {
+      if (objectQuery(err, 'statusCode') === 404) {
+        return setExperimentDetailError(404);
+      }
       setExperimentDetailError(`Failed to get details for the experiment '${experimentId}' - ${err.response || err}`);
     });
 }
@@ -78,6 +82,11 @@ function getModelsInExperiment(experimentId) {
     });
     getSplitsInExperiment(experimentId);
   }, (err) => {
+    // a GET on models under an experiment can get a 404 response
+    // only if the experiment is not found
+    if (objectQuery(err, 'statusCode') === 404) {
+      return setExperimentDetailError(404);
+    }
     setExperimentDetailError(`Failed to get models in the experiment '${experimentId}' - ${err.response || err}`);
   });
   return ModelsObservable$;
