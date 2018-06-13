@@ -44,10 +44,6 @@ const tableHeaders = [
     property: 'numOfModels'
   },
   {
-    label: '#Deployed',
-    property: 'numOfDeployedModels'
-  },
-  {
     label: 'Algorithm Types',
     property: 'algorithmTypes'
   },
@@ -155,7 +151,6 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
                   </h5>
                 </div>
                 <div>{experiment.numOfModels}</div>
-                <div>{experiment.numOfDeployedModels}</div>
                 <div>{!experiment.algorithmTypes.length ? '--' : <PieChart data={experiment.algorithmTypes} />}</div>
                 <div>{experiment.testData}</div>
               </Link>
@@ -178,11 +173,6 @@ const getDataForGroupedChart = (experiments) => {
         name: experiment.name,
         type: 'Models',
         count: Array.isArray(experiment.models) ? experiment.models.length : 0
-      },
-      {
-        name: experiment.name,
-        type: 'Deployed',
-        count: Array.isArray(experiment.models) ? experiment.models.filter(model => model.deploytime).length : 0
       }
     );
   });

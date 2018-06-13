@@ -96,6 +96,20 @@
               .grid-row {
                 grid-template-columns: 1fr;
               }
+              &.directives-list {
+                .grid-header {
+                  .grid-row {
+                    grid-template-columns: 1fr auto;
+                    &:hover {
+                      background: transparent;
+                    }
+                  }
+                  strong {
+                    padding-left: 0;
+                    color: $grey-03;
+                  }
+                }
+              }
             }
           }
           &.loading {
@@ -126,19 +140,6 @@
         color: $grey-03;
         &:hover {
           color: $blue-03;
-        }
-      }
-    }
-    &.directives-list {
-      .grid-header {
-        .grid-row {
-          &:hover {
-            background: transparent;
-          }
-        }
-        strong {
-          padding-left: 0;
-          color: $grey-03;
         }
       }
     }

@@ -52,11 +52,11 @@ const customEncoding = {
 export default function ExperimentsListBarChart({data}) {
   return (
     <div className="experiment-list-chart">
-      <h5>Models Created and Deployed </h5>
+      <h5>Models created</h5>
       <GroupedBarChart
         data={data}
         customEncoding={customEncoding}
-        width={(dimension, data) => ((dimension.width - 290) / (data.length / 2))}
+        width={(dimension, data) => ((dimension.width - 290) / (data.length))}
         heightOffset={70}
       />
     </div>
