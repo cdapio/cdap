@@ -16,23 +16,28 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
+import co.cask.cdap.api.common.Bytes;
+import org.apache.avro.generic.GenericRecord;
+
+import java.nio.ByteBuffer;
+
 /**
  * Message to monitor and collect
  */
 public class MonitorMessage {
   private final String messageId;
-  private final String message;
+  private final byte[] message;
 
-  public MonitorMessage(String messageId, String message) {
-    this.messageId = messageId;
-    this.message = message;
+  public MonitorMessage (GenericRecord record) {
+    this.messageId = record.get("messageId").toString();
+    this.message = Bytes.toBytes((ByteBuffer) record.get("message"));
   }
 
   public String getMessageId() {
     return messageId;
   }
 
-  public String getMessage() {
+  public byte[] getMessage() {
     return message;
   }
 }

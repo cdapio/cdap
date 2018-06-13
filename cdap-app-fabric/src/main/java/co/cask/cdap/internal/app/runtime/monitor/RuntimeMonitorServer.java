@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
-import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -48,7 +47,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorServer.class);
 
   private final CConfiguration cConf;
-  private final MessageFetcher messageFetcher;
+  private final MultiThreadMessagingContext messagingContext;
   private final CountDownLatch shutdownLatch;
   private final KeyStore keyStore;
   private final KeyStore trustStore;
@@ -59,7 +58,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
                        @Constants.AppFabric.KeyStore KeyStore keyStore,
                        @Constants.AppFabric.TrustStore KeyStore trustStore) {
     this.cConf = cConf;
-    this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.shutdownLatch = new CountDownLatch(1);
     this.keyStore = keyStore;
     this.trustStore = trustStore;
@@ -74,7 +73,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
     // Enable SSL for communication.
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
-      .setHttpHandlers(new RuntimeHandler(cConf, messageFetcher, () -> {
+      .setHttpHandlers(new RuntimeHandler(cConf, messagingContext, () -> {
         shutdownLatch.countDown();
         stop();
       }))
