@@ -17,6 +17,8 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -25,8 +27,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.LocalDatasetDeleterRunnable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -129,8 +133,12 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
           String msg = String.format(
             "Fixed RunRecord for program run %s in %s state because it is actually not running",
             programRunId, record.getStatus());
-
-          programStateWriter.error(programRunId, new ProgramRunAbortedException(msg));
+          // TODO - verify if the program options we pass contains required information
+          Arguments systemArguments = new BasicArguments(record.getSystemArgs());
+          Arguments userArguments = new BasicArguments(record.getProperties());
+          ProgramOptions programOptions =
+            new SimpleProgramOptions(programRunId.getParent(), systemArguments, userArguments);
+          programStateWriter.error(programRunId, new ProgramRunAbortedException(msg), programOptions);
           fixedPrograms.add(programRunId);
           LOG.warn(msg);
         }

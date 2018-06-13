@@ -132,28 +132,36 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
+    ProgramOptions runtimeProgramOptions;
+    ProgramOptions optionsWithPlugins;
+    Program executableProgram;
+
     try {
       // Get the artifact details and save it into the program options.
       ArtifactId artifactId = programDescriptor.getArtifactId();
       ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-      ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
+      runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
 
       // Take a snapshot of all the plugin artifacts used by the program
-      ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
-                                                               programDescriptor.getApplicationSpecification());
+      optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
+                                                programDescriptor.getApplicationSpecification());
 
       // Create and run the program
-      Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
+      executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-
-
+    } catch (Exception e) {
+      cleanUpTask.run();
+      LOG.error("Exception while trying to setup running program", e);
+      throw Throwables.propagate(e);
+    }
+    try {
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
-                                                  cleanUpTask);
+                                                  cleanUpTask, runtimeProgramOptions);
       monitorProgram(runtimeInfo, cleanUpTask);
       return runtimeInfo;
     } catch (Exception e) {
       // Set the program state to an error when an exception is thrown
-      programStateWriter.error(programId.run(runId), e);
+      programStateWriter.error(programId.run(runId), e, runtimeProgramOptions);
       cleanUpTask.run();
       LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);
@@ -333,7 +341,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     new BasicArguments(userArguments), options.isDebug());
   }
 
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask,
+                                          ProgramOptions programOptions) {
     return new SimpleRuntimeInfo(controller, programId);
   }
 

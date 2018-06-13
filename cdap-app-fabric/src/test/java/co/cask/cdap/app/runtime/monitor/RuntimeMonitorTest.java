@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -137,7 +138,8 @@ public class RuntimeMonitorTest {
   public void testRunTimeMonitor() throws Exception {
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("myworkflow").run(runId);
-    publishProgramStatus(programRunId);
+    ProgramOptions programOptions = new SimpleProgramOptions(programRunId.getParent());
+    publishProgramStatus(programRunId, programOptions);
     verifyPublishedMessages(2, cConf, 2, null);
 
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
@@ -165,7 +167,7 @@ public class RuntimeMonitorTest {
     runtimeMonitor.stopAndWait();
 
     // publish some more messages to test offset manager
-    publishProgramStatus(programRunId);
+    publishProgramStatus(programRunId, programOptions);
     verifyPublishedMessages(2, cConf, 2, lastProcessed);
 
     runtimeMonitor = new RuntimeMonitor(programRunId, cConfCopy, messagingService, clientConfigBuilder.build(),
@@ -175,7 +177,7 @@ public class RuntimeMonitorTest {
     lastProcessed = verifyPublishedMessages(2, cConfCopy, 2, lastProcessed);
 
     // publish completed status to trigger offset clean up
-    publishCompletedStatus(programRunId);
+    publishCompletedStatus(programRunId, programOptions);
 
     // use different configuration for verification
     verifyPublishedMessages(2, cConfCopy, 1, lastProcessed);
@@ -215,14 +217,14 @@ public class RuntimeMonitorTest {
     return lastProcessed[0];
   }
 
-  private void publishProgramStatus(ProgramRunId programRunId) {
+  private void publishProgramStatus(ProgramRunId programRunId, ProgramOptions programOptions) {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
-    programStateWriter.start(programRunId, new SimpleProgramOptions(programRunId.getParent()), null, null);
-    programStateWriter.running(programRunId, null);
+    programStateWriter.start(programRunId, programOptions, null, null);
+    programStateWriter.running(programRunId, null, programOptions);
   }
 
-  private void publishCompletedStatus(ProgramRunId programRunId) {
+  private void publishCompletedStatus(ProgramRunId programRunId, ProgramOptions programOptions) {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
-    programStateWriter.completed(programRunId);
+    programStateWriter.completed(programRunId, programOptions);
   }
 }

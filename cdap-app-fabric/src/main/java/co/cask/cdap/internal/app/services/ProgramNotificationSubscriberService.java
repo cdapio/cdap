@@ -372,7 +372,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             try {
               programLifecycleService.startInternal(programDescriptor, newProgramOptions, programRunId);
             } catch (Exception e) {
-              programStateWriter.error(programRunId, e);
+              programStateWriter.error(programRunId, e, programOptions);
             }
           } finally {
             SecurityRequestContext.setUserId(oldUser);

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.program;
 
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -82,11 +81,13 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void running(ProgramRunId programRunId, @Nullable String twillRunId) {
+  public void running(ProgramRunId programRunId, @Nullable String twillRunId, ProgramOptions programOptions) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(System.currentTimeMillis()))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name())
+      .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions));
+
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
@@ -94,45 +95,49 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void completed(ProgramRunId programRunId) {
-    stop(programRunId, ProgramRunStatus.COMPLETED, null);
+  public void completed(ProgramRunId programRunId, ProgramOptions programOptions) {
+    stop(programRunId, ProgramRunStatus.COMPLETED, null, programOptions);
   }
 
   @Override
-  public void killed(ProgramRunId programRunId) {
-    stop(programRunId, ProgramRunStatus.KILLED, null);
+  public void killed(ProgramRunId programRunId, ProgramOptions programOptions) {
+    stop(programRunId, ProgramRunStatus.KILLED, null, programOptions);
   }
 
   @Override
-  public void error(ProgramRunId programRunId, Throwable failureCause) {
-    stop(programRunId, ProgramRunStatus.FAILED, failureCause);
+  public void error(ProgramRunId programRunId, Throwable failureCause, ProgramOptions programOptions) {
+    stop(programRunId, ProgramRunStatus.FAILED, failureCause, programOptions);
   }
 
   @Override
-  public void suspend(ProgramRunId programRunId) {
+  public void suspend(ProgramRunId programRunId, ProgramOptions programOptions) {
     publish(
       ImmutableMap.<String, String>builder()
         .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
         .put(ProgramOptionConstants.SUSPEND_TIME, String.valueOf(System.currentTimeMillis()))
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
+        .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions))
     );
   }
 
   @Override
-  public void resume(ProgramRunId programRunId) {
+  public void resume(ProgramRunId programRunId, ProgramOptions programOptions) {
     publish(
       ImmutableMap.<String, String>builder()
         .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
         .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
+        .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions))
     );
   }
 
-  private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+  private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause,
+                    ProgramOptions options) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.END_TIME, String.valueOf(System.currentTimeMillis()))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.name());
+      .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.name())
+      .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(options));
     if (cause != null) {
       properties.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
     }

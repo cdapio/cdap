@@ -49,6 +49,8 @@ public final class ProgramOptionConstants {
 
   public static final String PROGRAM_STATUS = "programStatus";
 
+  public static final String PROGRAM_OPTIONS = "programOptions";
+
   public static final String PROGRAM_RUN_ID = "programRunId";
 
   public static final String INSTANCE_ID = "instanceId";

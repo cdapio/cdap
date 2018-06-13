@@ -22,6 +22,7 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -120,7 +121,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Nullable
   @Override
   protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId,
-                                          final Runnable cleanUpTask) {
+                                          final Runnable cleanUpTask, ProgramOptions programOptions) {
     if (controller instanceof AbstractTwillProgramController) {
       RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
 
@@ -144,7 +145,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
         @Override
         public void killed() {
-          programStateWriter.killed(programId.run(controller.getRunId()));
+          programStateWriter.killed(programId.run(controller.getRunId()), programOptions);
         }
       }, MoreExecutors.sameThreadExecutor());
       return new SimpleRuntimeInfo(controller, programId, twillRunId);
