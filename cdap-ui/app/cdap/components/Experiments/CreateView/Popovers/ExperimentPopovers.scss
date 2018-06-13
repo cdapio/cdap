@@ -75,12 +75,9 @@ $popover_container_border_color: $grey-05;
     width: 100%;
   }
 }
-.popover {
-  &.create_new_experiment_popover-element {
-    margin: 10px;
-    &:before,
-    &after {
-      display: none;
-    }
+.create_new_experiment_popover {
+  .popper {
+    min-width: 270px;
+    text-align: left;
   }
 }

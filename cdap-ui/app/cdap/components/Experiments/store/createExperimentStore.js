@@ -275,13 +275,13 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
     }
     let {name, workspaceId} = state.experiments_create;
     let {modelId, isSplitFinalized, algorithm} = state.model_create;
-    if (!name) {
-      return {
-        ...state.active_step,
-        step_name: CREATION_STEPS.DATAPREP
-      };
-    }
     if (!workspaceId) {
+      if (name) {
+        return {
+          ...state.active_step,
+          step_name: CREATION_STEPS.DATAPREP
+        };
+      }
       return {
         ...state.active_step,
         step_name: CREATION_STEPS.DATAPREP_CONNECTIONS
@@ -339,6 +339,22 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
           ...state.active_step,
           override: false
         }
+      };
+      return getActiveStep(newState);
+    }
+    case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT: {
+      let {name, description, outcome, srcpath, workspaceId} = action.payload.experimentDetails;
+      const newState = {
+        experiments_create: {
+          ...state.experiments_create,
+          name,
+          description,
+          outcome,
+          srcpath,
+          workspaceId
+        },
+        model_create: state.model_create,
+        active_step: state.active_step
       };
       return getActiveStep(newState);
     }

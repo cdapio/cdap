@@ -796,5 +796,6 @@ DataPrepConnections.propTypes = {
   onWorkspaceCreate: PropTypes.func,
   singleWorkspaceMode: PropTypes.bool,
   sidePanelExpanded: PropTypes.bool,
-  scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
+  scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  browserTitle: PropTypes.string
 };
