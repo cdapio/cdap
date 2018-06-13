@@ -21,9 +21,9 @@ package co.cask.cdap.internal.app.runtime.monitor;
  */
 public class MonitorMessage {
   private final String messageId;
-  private final String message;
+  private final byte[] message;
 
-  public MonitorMessage(String messageId, String message) {
+  public MonitorMessage(String messageId, byte[] message) {
     this.messageId = messageId;
     this.message = message;
   }
@@ -32,7 +32,7 @@ public class MonitorMessage {
     return messageId;
   }
 
-  public String getMessage() {
+  public byte[] getMessage() {
     return message;
   }
 }

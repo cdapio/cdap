@@ -1,0 +1,14 @@
+{
+	"type" : "map",
+	"values" : {
+		"type" : "array",
+	  	"items" : {
+	    	"type" : "record",
+	    	"name" : "MonitorMessages",
+	    	"fields" : [
+	      		{ "name" : "messageId", "type" : "string" },
+	      		{ "name" : "message", "type" : "bytes" }
+	    	]
+  		}
+	}
+}

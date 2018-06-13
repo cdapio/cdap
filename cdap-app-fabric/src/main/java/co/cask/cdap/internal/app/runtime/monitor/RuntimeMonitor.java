@@ -48,16 +48,29 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
-import com.google.common.reflect.TypeToken;
+import co.cask.common.io.ByteBufferInputStream;
+import com.google.common.net.HttpHeaders;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.gson.Gson;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Deque;
@@ -78,7 +91,6 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     () -> LogSamplers.limitRate(60000)));
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_MESSAGE_TYPE = new TypeToken<Map<String, Deque<MonitorMessage>>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig clientConfig;
@@ -227,14 +239,14 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
           // Next to fetch data from the remote runtime
           HttpResponse response = restClient
             .execute(HttpRequest.builder(HttpMethod.POST, clientConfig.resolveURL("runtime/metadata"))
-                       .withBody(GSON.toJson(topicsToRequest)).build());
+                    .withBody(encodeRequest(topicsToRequest))
+                    .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary").build());
 
           if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
             throw new ServiceUnavailableException(response.getResponseBodyAsString());
           }
 
-          Map<String, Deque<MonitorMessage>> monitorResponses =
-            GSON.fromJson(response.getResponseBodyAsString(StandardCharsets.UTF_8), MAP_STRING_MESSAGE_TYPE);
+          Map<String, Deque<MonitorMessage>> monitorResponses = decodeResponse(response);
 
           // Update ProgramFinishTime when remote runtime is in terminal state. Also buffer all the program status
           // events. This is done before transactional publishing to avoid refetching same remote runtime status
@@ -318,6 +330,72 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
         }
       }), retryStrategy);
     }
+  }
+
+  private Map<String, Deque<MonitorMessage>> decodeResponse(HttpResponse response) throws IOException {
+    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufferInputStream(
+      ByteBuffer.wrap(response.getResponseBody())), null);
+    Map<String, Deque<MonitorMessage>> map = new HashMap<>();
+
+    GenericRecord record = new GenericData.Record(MonitorSchemas.V1.MonitorResponse.SCHEMA
+                                                    .getValueType().getElementType());
+
+    DatumReader<GenericRecord> messageReader = new GenericDatumReader<>(MonitorSchemas.V1.MonitorResponse.SCHEMA
+                                                                          .getValueType().getElementType());
+
+    long entries = decoder.readMapStart();
+    /*
+    Map<String,Record> m = new HashMap<String,Record>();
+   *   Record reuse = new Record();
+   *   for(long i = in.readMapStart(); i != 0; i = in.readMapNext()) {
+   *     for (long j = 0; j < i; j++) {
+   *       String key = in.readString();
+   *       reuse.intField = in.readInt();
+   *       reuse.boolField = in.readBoolean();
+   *       m.put(key, reuse);
+   *     }
+   *   }
+     */
+    while (entries > 0) {
+      String topicConfig = decoder.readString();
+      map.put(topicConfig, new LinkedList<>());
+
+      long messages = decoder.readArrayStart();
+
+      while (messages > 0) {
+        messageReader.read(record, decoder);
+        String messageId = record.get("messageId").toString();
+        byte[] message = Bytes.toBytes((ByteBuffer) record.get("message"));
+        map.get(topicConfig).add(new MonitorMessage(messageId, message));
+        messages--;
+      }
+      entries--;
+    }
+
+    return map;
+  }
+
+  private ByteBuffer encodeRequest(Map<String, MonitorConsumeRequest> topicsToRequest) throws IOException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    Encoder encoder = EncoderFactory.get().directBinaryEncoder(os, null);
+    encoder.writeMapStart();
+    encoder.setItemCount(topicsToRequest.size());
+
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(MonitorSchemas.V1.MonitorConsumeRequest.SCHEMA
+                                                                        .getValueType());
+    for (Map.Entry<String, MonitorConsumeRequest> requestEntry : topicsToRequest.entrySet()) {
+      encoder.startItem();
+      encoder.writeString(requestEntry.getKey());
+
+      GenericRecord record = new GenericData.Record(MonitorSchemas.V1.MonitorConsumeRequest.SCHEMA.getValueType());
+      record.put("messageId", requestEntry.getValue().getMessageId());
+      record.put("limit", requestEntry.getValue().getLimit());
+      datumWriter.write(record, encoder);
+    }
+
+    encoder.writeMapEnd();
+
+    return ByteBuffer.wrap(os.toByteArray());
   }
 
   /**
@@ -413,7 +491,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     // publish messages to tms
     MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
     messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
-                             messages.stream().map(s -> s.getMessage().getBytes(StandardCharsets.UTF_8)).iterator());
+                             messages.stream().map(MonitorMessage::getMessage).iterator());
 
     // persist the last published message as offset in meta store
     MonitorMessage lastMessage = messages.getLast();
@@ -454,7 +532,8 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
    */
   private long findProgramFinishTime(Deque<MonitorMessage> monitorMessages) {
     for (MonitorMessage message : monitorMessages) {
-      Notification notification = GSON.fromJson(message.getMessage(), Notification.class);
+      Notification notification = GSON.fromJson(new String(message.getMessage(), StandardCharsets.UTF_8),
+                                                Notification.class);
       if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
         continue;
       }

@@ -1,0 +1,11 @@
+{
+	"type" : "map",
+	"values" : {
+		"type" : "record",
+		"name" : "MonitorConsumeRequest",
+		"fields" : [
+      		{ "name" : "messageId", "type" : ["null", "string"], "default": null },
+      		{ "name" : "limit", "type" : "int" }
+     	]
+	}
+}
