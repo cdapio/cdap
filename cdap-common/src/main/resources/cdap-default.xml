@@ -360,7 +360,7 @@
 
   <property>
     <name>app.program.spark.compat</name>
-    <value>spark2_2.11</value>
+    <value>spark1_2.10</value>
     <description>
       The Spark compatibility version, if Spark is available. Must be either 'spark1_2.10'
       or 'spark2_2.11'. In distributed mode, this will be overridden by the detected Spark
