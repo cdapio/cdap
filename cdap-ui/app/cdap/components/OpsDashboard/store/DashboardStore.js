@@ -21,7 +21,6 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
   toggleDisplayRuns: 'DASHBOARD_TOGGLE_DISPLAY_RUNS',
-  toggleLegend: 'DASHBOARD_TOGGLE_LEGEND',
   togglePipeline: 'DASHBOARD_TOGGLE_PIPELINE',
   toggleCustomApp: 'DAHBOARD_TOGGLE_CUSTOM_APP',
   enableLoading: 'DASHBOARD_ENABLE_LOADING',
@@ -51,15 +50,6 @@ const defaultInitialState = {
   customApp: true,
   displayType: 'chart',
   viewByOption: ViewByOptions.runStatus
-};
-
-const legendsInitialState = {
-  manual: true,
-  schedule: true,
-  success: true,
-  failed: true,
-  running: false,
-  delay: true
 };
 
 const namespacesInitialState = {
@@ -126,20 +116,6 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
   }
 };
 
-const legends = (state = legendsInitialState, action = defaultAction) => {
-  switch (action.type) {
-    case DashboardActions.toggleLegend:
-      return {
-        ...state,
-        [action.payload.type]: !state[action.payload.type]
-      };
-    case DashboardActions.reset:
-      return legendsInitialState;
-    default:
-      return state;
-  }
-};
-
 const namespaces = (state = namespacesInitialState, action = defaultAction) => {
   switch (action.type) {
     case DashboardActions.setData:
@@ -157,12 +133,10 @@ const namespaces = (state = namespacesInitialState, action = defaultAction) => {
 const DashboardStore = createStore(
   combineReducers({
     dashboard,
-    legends,
     namespaces
   }),
   {
     dashboard: defaultInitialState,
-    legends: legendsInitialState,
     namespaces: namespacesInitialState
   },
   composeEnhancers('DashboardStore')()

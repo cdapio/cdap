@@ -41,8 +41,8 @@ class RunsGraphView extends Component {
   static propTypes = {
     loading: PropTypes.bool,
     data: PropTypes.array,
-    legends: PropTypes.object,
     displayType: PropTypes.oneOf(['chart', 'table']),
+    viewByOption: PropTypes.string,
     changeDisplay: PropTypes.func
   };
 
@@ -86,7 +86,7 @@ class RunsGraphView extends Component {
     let containerElem = document.getElementById(RUNS_GRAPH_CONTAINER);
 
     let width = containerElem.offsetWidth;
-    renderGraph('#runs-graph', width, GRAPH_HEIGHT, props.data, props.legends);
+    renderGraph('#runs-graph', width, GRAPH_HEIGHT, props.data, props.viewByOption);
   }
 
   render() {
@@ -165,8 +165,8 @@ const mapStateToProps = (state) => {
   return {
     loading: state.dashboard.loading,
     data: state.dashboard.data,
-    legends: state.legends,
-    displayType: state.dashboard.displayType
+    displayType: state.dashboard.displayType,
+    viewByOption: state.dashboard.viewByOption,
   };
 };
 
