@@ -31,7 +31,7 @@ import {humanReadableDate, roundDecimalToNDigits} from 'services/helpers';
 import {NUMBER_TYPES} from 'services/global-constants';
 import classnames from 'classnames';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, humanReadableNumber, HUMANREADABLE_DECIMAL} from 'services/helpers';
 import isEmpty from 'lodash/isEmpty';
 import ModelStatusIndicator from 'components/Experiments/DetailedView/ModelStatusIndicator';
 import {Link} from 'react-router-dom';
@@ -141,7 +141,7 @@ const wrapContentWithTitleAttr = (content) => (
 const wrapMetricWithTitleAttr = (content, property) => {
   const ROUNDABLE_METRIC = regressionMetrics.map(metric => metric.property);
   if (ROUNDABLE_METRIC.indexOf(property) !== -1) {
-    return wrapContentWithTitleAttr(roundDecimalToNDigits(content, 4));
+    return wrapContentWithTitleAttr(humanReadableNumber(roundDecimalToNDigits(content, 4), HUMANREADABLE_DECIMAL));
   }
   return wrapContentWithTitleAttr(content);
 };
