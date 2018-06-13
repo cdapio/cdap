@@ -1,6 +1,6 @@
 {
   "name": "cdap-ui",
-  "version": "4.3.4",
+  "version": "4.3.5-SNAPSHOT",
   "description": "Front-end for CDAP",
   "scripts": {
     "start": "node ./server.js",
