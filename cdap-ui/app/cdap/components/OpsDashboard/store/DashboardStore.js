@@ -16,6 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
+import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
@@ -27,12 +28,13 @@ const DashboardActions = {
   setData: 'DAHBOARD_SET_DATA',
   updateData: 'DASHBOARD_UPDATE_DATA',
   changeDisplayType: 'DASHBOARD_CHANGE_DISPLAY_TYPE',
+  changeViewByOption: 'DASHBOARD_CHANGE_VIEW_BY_OPTION',
   reset: 'DASHBOARD_RESET'
 };
 
-const defaultAction = {
-  action : '',
-  payload : {}
+const ViewByOptions = {
+  runStatus: 'RUN_STATUS',
+  startMethod: 'START_METHOD'
 };
 
 const defaultInitialState = {
@@ -47,7 +49,8 @@ const defaultInitialState = {
   displayBucketInfo: null,
   pipeline: true,
   customApp: true,
-  displayType: 'chart'
+  displayType: 'chart',
+  viewByOption: ViewByOptions.runStatus
 };
 
 const legendsInitialState = {
@@ -111,6 +114,11 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         ...state,
         displayType: action.payload.displayType
       };
+    case DashboardActions.changeViewByOption:
+      return {
+        ...state,
+        viewByOption: action.payload.viewByOption
+      };
     case DashboardActions.reset:
       return defaultInitialState;
     default:
@@ -157,8 +165,8 @@ const DashboardStore = createStore(
     legends: legendsInitialState,
     namespaces: namespacesInitialState
   },
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('DashboardStore')()
 );
 
 export default DashboardStore;
-export {DashboardActions};
+export {DashboardActions, ViewByOptions};

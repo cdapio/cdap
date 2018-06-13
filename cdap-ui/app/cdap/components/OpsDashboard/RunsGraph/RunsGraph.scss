@@ -119,30 +119,6 @@ $delay: $grey-04;
     .arrow-right { right: 5px; }
   }
 
-  .legends {
-    padding: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .icon-svg {
-      font-size: 18px;
-      margin-right: 5px;
-    }
-
-    .select-item {
-      display: inline-block;
-      cursor: pointer;
-      user-select: none;
-
-      span { vertical-align: middle; }
-
-      &:not(:last-child) {
-        margin-right: 20px;
-      }
-    }
-  }
-
   .toggle-runs-list {
     padding-left: 25px;
     padding-bottom: 10px;
@@ -202,7 +178,7 @@ $delay: $grey-04;
   }
 
   .delay {
-    @include setColor($delay);
+    margin-right: 5px;
   }
 
   .pointer {
