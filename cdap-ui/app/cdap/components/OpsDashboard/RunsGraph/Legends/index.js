@@ -12,136 +12,119 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
-import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import {ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
+import ViewByOptionSelector from 'components/OpsDashboard/RunsGraph/Legends/ViewByOptionSelector';
 import T from 'i18n-react';
+
+require('./Legends.scss');
 
 const PREFIX = 'features.OpsDashboard.RunsGraph.Legends';
 
-function LegendsView({onClick, manual, schedule, running, success, failed, delay}) {
+function StartMethodLegends() {
   return (
-    <div className="legends">
-      <div className="start-method-legend">
-        <div
-          className="select-item"
-          onClick={onClick.bind(null, 'manual')}
-        >
-          <IconSVG name={manual ? 'icon-check-square' : 'icon-square-o'} />
-          <IconSVG
-            name="icon-circle"
-            className="manual"
-          />
-          <span>{T.translate(`${PREFIX}.manuallyStarted`)}</span>
-        </div>
-
-        <div
-          className="select-item"
-          onClick={onClick.bind(null, 'schedule')}
-        >
-          <IconSVG name={schedule ? 'icon-check-square' : 'icon-square-o'} />
-          <IconSVG
-            name="icon-circle"
-            className="schedule"
-          />
-          <span>{T.translate(`${PREFIX}.scheduledTriggered`)}</span>
-        </div>
+    <div className="start-method-legends">
+      <div className="legend">
+        <IconSVG
+          name="icon-square-full"
+          className="manual"
+        />
+        <span>{T.translate(`${PREFIX}.manuallyStarted`)}</span>
       </div>
 
-      <div className="status-legend">
-        <div
-          className="select-item"
-          onClick={onClick.bind(null, 'running')}
-        >
-          <IconSVG name={running ? 'icon-check-square' : 'icon-square-o'} />
-          <IconSVG
-            name="icon-circle"
-            className="running"
-          />
-          <span>{T.translate(`${PREFIX}.running`)}</span>
-        </div>
-
-        <div
-          className="select-item"
-          onClick={onClick.bind(null, 'success')}
-        >
-          <IconSVG name={success ? 'icon-check-square' : 'icon-square-o'} />
-          <IconSVG
-            name="icon-circle"
-            className="successful"
-          />
-          <span>{T.translate(`${PREFIX}.successful`)}</span>
-        </div>
-
-        <div
-          className="select-item"
-          onClick={onClick.bind(null, 'failed')}
-        >
-          <IconSVG name={failed ? 'icon-check-square' : 'icon-square-o'} />
-          <IconSVG
-            name="icon-circle"
-            className="failed"
-          />
-          <span>{T.translate(`${PREFIX}.failed`)}</span>
-        </div>
-      </div>
-
-      <div
-        className="delay-legend"
-        onClick={onClick.bind(null, 'delay')}
-      >
-        <div className="select-item">
-          <IconSVG name={delay ? 'icon-check-square' : 'icon-square-o'} />
-          <IconSVG
-            name="icon-circle"
-            className="delay"
-          />
-          <span>{T.translate(`${PREFIX}.delay`)}</span>
-        </div>
+      <div className="legend">
+        <IconSVG
+          name="icon-square-full"
+          className="schedule"
+        />
+        <span>{T.translate(`${PREFIX}.scheduledTriggered`)}</span>
       </div>
     </div>
   );
 }
 
+function StatusLegends() {
+  return (
+    <div className="status-legends">
+      <div className="legend">
+        <IconSVG
+          name="icon-square-full"
+          className="running"
+        />
+        <span>{T.translate(`${PREFIX}.running`)}</span>
+      </div>
+
+      <div className="legend">
+        <IconSVG
+          name="icon-square-full"
+          className="successful"
+        />
+        <span>{T.translate(`${PREFIX}.successful`)}</span>
+      </div>
+
+      <div className="legend">
+        <IconSVG
+          name="icon-square-full"
+          className="failed"
+        />
+        <span>{T.translate(`${PREFIX}.failed`)}</span>
+      </div>
+    </div>
+  );
+}
+
+function renderLegendsByOption(viewByOption) {
+  return (
+    <div className="legends-by-option">
+      {
+        viewByOption === ViewByOptions.startMethod ?
+          <StartMethodLegends />
+        :
+          <StatusLegends />
+      }
+    </div>
+  );
+}
+
+function renderDelayLegend() {
+  return (
+    <div className="delay-legend">
+      <img
+        src="/cdap_assets/img/delay-legend-icon.png"
+        className="delay"
+      />
+      <span>{T.translate(`${PREFIX}.delay`)}</span>
+    </div>
+  );
+}
+
+function LegendsView({viewByOption}) {
+  return (
+    <div className="legends-and-selector">
+      <ViewByOptionSelector />
+      {renderLegendsByOption(viewByOption)}
+      {renderDelayLegend()}
+    </div>
+  );
+}
+
 LegendsView.propTypes = {
-  onClick: PropTypes.func,
-  manual: PropTypes.bool,
-  schedule: PropTypes.bool,
-  running: PropTypes.bool,
-  success: PropTypes.bool,
-  failed: PropTypes.bool,
-  delay: PropTypes.bool
+  viewByOption: PropTypes.string
 };
 
 const mapStateToProps = (state) => {
   return {
-    manual: state.legends.manual,
-    schedule: state.legends.schedule,
-    running: state.legends.running,
-    success: state.legends.success,
-    failed: state.legends.failed,
-    delay: state.legends.delay
-  };
-};
-
-const mapDispatch = (dispatch) => {
-  return {
-    onClick: (type) => {
-      dispatch({
-        type: DashboardActions.toggleLegend,
-        payload: { type }
-      });
-    }
+    viewByOption: state.dashboard.viewByOption
   };
 };
 
 const Legends = connect(
-  mapStateToProps,
-  mapDispatch
+  mapStateToProps
 )(LegendsView);
 
 export default Legends;

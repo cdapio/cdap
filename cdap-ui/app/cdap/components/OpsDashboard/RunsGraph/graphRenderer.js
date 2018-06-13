@@ -15,21 +15,12 @@
  */
 
 import * as d3 from 'd3';
-import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import DashboardStore, {DashboardActions, ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
 import moment from 'moment';
 
 const AXIS_BUFFER = 1.1;
 
-export function renderGraph(selector, containerWidth, containerHeight, data, legends) {
-  let {
-    manual,
-    schedule,
-    running,
-    success,
-    failed,
-    delay
-  } = legends;
-
+export function renderGraph(selector, containerWidth, containerHeight, data, viewByOption) {
   let margin = {
     top: 20,
     right: 50,
@@ -73,7 +64,14 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
 
   dateX.domain(data.map((d) => d.time));
 
-  let yLeftMax = d3.max(data, (d) => Math.max(d.manual + d.schedule, d.running + d.successful + d.failed));
+  let yLeftMax;
+
+  if (viewByOption === ViewByOptions.startMethod) {
+    yLeftMax = d3.max(data, (d) => d.manual + d.schedule);
+  } else {
+    yLeftMax = d3.max(data, (d) => Math.max(d.running, d.successful + d.failed));
+  }
+
   let yRightMax = d3.max(data, (d) => d.delay);
   yLeft.domain([0, yLeftMax * AXIS_BUFFER]);
   yRight.domain([0, yRightMax * AXIS_BUFFER]);
@@ -154,70 +152,89 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
     .call(d3.axisRight(yRight).tickSizeOuter(-width));
 
 
-  // RENDER BAR GRAPH
+  // BUCKETS STYLING LAYER
+  let stepWidth = x.bandwidth();
+  let bottomBucketsLayer = chart.append('g')
+    .attr('class', 'bottom-buckets-layer');
 
-  // Start method
-  let barStartMethod = chart.append('g')
-    .attr('class', 'bar-start-method');
-
-  let startMethod = barStartMethod.selectAll('rect')
+  let bottomLayer = bottomBucketsLayer.selectAll('rect')
     .data(data)
     .enter();
 
-  // Schedule
-  if (schedule) {
+  bottomLayer.append('rect')
+    .attr('class', 'bucket bottom-layer-bucket')
+    .attr('data', (d) => d.time)
+    .attr('width', stepWidth)
+    .attr('x', (d) => x(d.time))
+    .attr('height', height);
+
+  // Since we always select the last bucket by default, highlights it
+  d3.select('.bottom-layer-bucket:last-child')
+    .classed('selected', true);
+
+  // RENDER BAR GRAPH
+
+  if (viewByOption === ViewByOptions.startMethod) {
+    let barStartMethod = chart.append('g')
+      .attr('class', 'bar-start-method');
+
+    let startMethod = barStartMethod.selectAll('rect')
+      .data(data)
+      .enter();
+
+    // Schedule
     startMethod.append('rect')
       .attr('class', 'bar schedule')
-      .attr('width', barWidth)
+      .attr('width', barWidth * 2)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.schedule))
       .attr('height', (d) => height - yLeft(d.schedule));
-  }
 
-  // Manual
-  if (manual) {
+    // Manual
     startMethod.append('rect')
       .attr('class', 'bar manual')
-      .attr('width', barWidth)
+      .attr('width', barWidth * 2)
       .attr('x', getXLocation)
       .attr('y', getManualY)
       .attr('height', (d) => height - yLeft(d.manual));
-  }
 
+  } else {
+    // Running
+    let barRunning = chart.append('g')
+      .attr('class', 'bar-running');
 
-  // Statistics
-  let statisticsOffsetX = barWidth + barPadding;
-  let barStatistics = chart.append('g')
-    .attr('class', 'bar-statistics')
-    .attr('transform', `translate(${statisticsOffsetX}, 0)`);
+    let runningStats = barRunning.selectAll('rect')
+      .data(data)
+      .enter();
 
-
-  let statistics = barStatistics.selectAll('rect')
-    .data(data)
-    .enter();
-
-  // Running
-  if (running) {
-    statistics.append('rect')
+    runningStats.append('rect')
       .attr('class', 'bar running')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.running))
       .attr('height', (d) => height - yLeft(d.running));
-  }
 
-  // Successful
-  if (success) {
+
+    // Statistics
+    let statisticsOffsetX = barWidth + barPadding;
+    let barStatistics = chart.append('g')
+      .attr('class', 'bar-statistics')
+      .attr('transform', `translate(${statisticsOffsetX}, 0)`);
+
+
+    let statistics = barStatistics.selectAll('rect')
+      .data(data)
+      .enter();
+
+    // Successful
     statistics.append('rect')
       .attr('class', 'bar successful')
       .attr('width', barWidth)
       .attr('x', getXLocation)
-      .attr('y', getSuccessY)
+      .attr('y', (d) => yLeft(d.successful))
       .attr('height', (d) => height - yLeft(d.successful));
-  }
 
-  // Failed
-  if (failed) {
+    // Failed
     statistics.append('rect')
       .attr('class', 'bar failed')
       .attr('width', barWidth)
@@ -226,55 +243,34 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
       .attr('height', (d) => height - yLeft(d.failed));
   }
 
-
-  // RENDER LINE GRAPH
-  if (delay) {
-    let line = d3.line()
-      .x((d) => x(d.time))
-      .y((d) => yRight(d.delay));
-
-    let offsetX = barWidth + barPadding * 2;
-
-    let pathGroup = chart.append('g')
-      .attr('class', 'line-graph')
-      .attr('transform', `translate(${offsetX}, 0)`);
-
-    pathGroup.append('path')
-      .datum(data)
-      .attr('class', 'delay-path')
-      .attr('d', line);
-
-    pathGroup.append('g')
-        .attr('class', 'dots')
-      .selectAll('circle')
-        .data(data)
-      .enter().append('circle')
-        .attr('class', 'dot delay-dot')
-        .attr('r', 5)
-        .attr('cx', (d) => x(d.time))
-        .attr('cy', (d) => yRight(d.delay));
-  }
-
-
   // HOVER AND CLICK HANDLER
-  let stepWidth = x.bandwidth();
-  let handlerGroup = chart.append('g')
-    .attr('class', 'handler');
+  let clickHandlersLayer = chart.append('g')
+    .attr('class', 'click-handlers-layer');
 
-  let handler = handlerGroup.selectAll('rect')
+  let handlerLayer = clickHandlersLayer.selectAll('rect')
     .data(data)
     .enter();
 
-  handler.append('rect')
-    .attr('class', 'handler-selector pointer')
-    .attr('opacity', 0)
+  handlerLayer.append('rect')
+    .attr('class', 'bucket handler-bucket pointer')
     .attr('data', (d) => d.time)
+    .attr('opacity', 0)
     .attr('width', stepWidth)
-    .attr('x', getXLocation)
+    .attr('x', (d) => x(d.time))
     .attr('height', height);
 
-  d3.selectAll('.handler-selector')
-    .on('click', (data) => {
+  let bottomLayerBuckets = d3.selectAll('.bottom-layer-bucket').nodes();
+
+  d3.selectAll('.handler-bucket')
+    .on('click', (data, i) => {
+
+      // Need to do this to unselect previously selected bucket
+      d3.select('.selected')
+        .classed('selected', false);
+
+      d3.select(bottomLayerBuckets[i])
+        .classed('selected', true);
+
       DashboardStore.dispatch({
         type: DashboardActions.setDisplayBucket,
         payload: {
@@ -283,6 +279,32 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
       });
     });
 
+  // RENDER LINE GRAPH
+
+  let line = d3.line()
+    .x((d) => x(d.time))
+    .y((d) => yRight(d.delay));
+
+  let offsetX = barWidth + barPadding * 2;
+
+  let pathGroup = chart.append('g')
+    .attr('class', 'line-graph')
+    .attr('transform', `translate(${offsetX}, 0)`);
+
+  pathGroup.append('path')
+    .datum(data)
+    .attr('class', 'delay-path')
+    .attr('d', line);
+
+  pathGroup.append('g')
+      .attr('class', 'dots')
+    .selectAll('circle')
+      .data(data)
+    .enter().append('circle')
+      .attr('class', 'dot delay-dot')
+      .attr('r', 5)
+      .attr('cx', (d) => x(d.time))
+      .attr('cy', (d) => yRight(d.delay));
 
   // Helper functions
   function getXLocation(d) {
@@ -291,28 +313,13 @@ export function renderGraph(selector, containerWidth, containerHeight, data, leg
 
   function getManualY(d) {
     let y = yLeft(d.manual);
-    if (schedule) {
-      y = y - (height - yLeft(d.schedule));
-    }
-    return y;
-  }
-
-  function getSuccessY(d) {
-    let y = yLeft(d.successful);
-    if (running) {
-      y = y - (height - yLeft(d.running));
-    }
+    y = y - (height - yLeft(d.schedule));
     return y;
   }
 
   function getFailedY(d) {
     let y = yLeft(d.failed);
-    if (running) {
-      y = y - (height - yLeft(d.running));
-    }
-    if (success) {
-      y = y - (height - yLeft(d.successful));
-    }
+    y = y - (height - yLeft(d.successful));
     return y;
   }
 }
