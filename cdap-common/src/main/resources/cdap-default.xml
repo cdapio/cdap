@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
   Copyright © 2014-2018 Cask Data, Inc.
@@ -355,16 +355,6 @@
       Additional Java classpath for CDAP programs. These extra classpaths
       must be present on all nodes in the cluster. Supports wildcard suffix
       "*" to include all JAR files under a directory.
-    </description>
-  </property>
-
-  <property>
-    <name>app.program.spark.compat</name>
-    <value>spark1_2.10</value>
-    <description>
-      The Spark compatibility version, if Spark is available. Must be either 'spark1_2.10'
-      or 'spark2_2.11'. In distributed mode, this will be overridden by the detected Spark
-      version. In CDAP Local Sandbox, this can be set to the desired version of Spark.
     </description>
   </property>
 
