@@ -144,6 +144,56 @@ $red-03: #d15668;
 $yellow-01: #ffba01;
 $yellow-02: #ffd500;
 $yellow-02-lighter: transparentize($color: $yellow-02, $amount: 0.7);
+
 $green-01: #01b133;
 $green-02: #3cc801;
 $green-03: #8af302;
+$green-04: #0f9d58;
+$green-05: #0b8043;
+
+:export {
+  green01: $green-01;
+  green02: $green-02;
+  green03: $green-03;
+  green04: $green-04;
+  green05: $green-05;
+
+
+  blue01: $blue-01;
+  blue02: $blue-02;
+  blue03: $blue-03;
+  blue04: $blue-04;
+  blue05: $blue-05;
+  blue06: $blue-06;
+
+  bluegrey01: $blue-grey01;
+  bluegrey02: $blue-grey02;
+  bluegrey03: $blue-grey03;
+  bluegrey04: $blue-grey04;
+  bluegrey05: $blue-grey05;
+  bluegrey06: $blue-grey06;
+
+  orange01: $orange-01;
+  orange02: $orange-02;
+  orange03: $orange-03;
+  orange04: $orange-04;
+  orange05: $orange-05;
+
+  grey01: $grey-01;
+  grey02: $grey-02;
+  grey03: $grey-03;
+  grey04: $grey-04;
+  grey05: $grey-05;
+  grey06: $grey-06;
+  grey07: $grey-07;
+  grey08: $grey-08;
+
+  red01: $red-01;
+  red02: $red-02;
+  red03: $red-03;
+
+  yellow01: $yellow-01;
+  yellow02: $yellow-02;
+  yellow02ligher: $yellow-02-lighter;
+
+}

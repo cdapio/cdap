@@ -158,7 +158,7 @@ const renderFeaturesTable = (features) => {
       <div className="grid grid-container">
         <div className="grid-header">
           <div className="grid-row">
-            <strong> Features </strong>
+            <strong> Features ({features.length})</strong>
           </div>
         </div>
         <div className="grid-body">
@@ -170,12 +170,18 @@ const renderFeaturesTable = (features) => {
 };
 
 const renderDirectivesTables = (directives) => {
+  const copyableDirectives = directives.join('\n');
   return (
     <div className="grid-wrapper">
       <div className="grid grid-container directives-list">
         <div className="grid-header">
           <div className="grid-row">
-            <strong> Directives </strong>
+            <strong> Directives ({directives.length})</strong>
+            <CopyableID
+              label="Copy to Clipboard"
+              id={copyableDirectives}
+              tooltipText={false}
+            />
           </div>
         </div>
         <div className="grid-body">
@@ -260,10 +266,6 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
         </div>
       </div>
       <div>
-        <div>
-          <strong>Deployed on</strong>
-          <div>{model.deploytime === -1 ? '--' : humanReadableDate(model.deploytime)}</div>
-        </div>
         <div>
           <strong> Created on</strong>
           <div>{humanReadableDate(model.createtime, true)}</div>

@@ -22,6 +22,7 @@ import StyledSelectTag from 'components/StyledSelectTag';
 import AlgorithmDistribution from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/AlgorithmDistribution';
 import ModelStatusesDistribution from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/ModelStatusesDistribution';
 import MetricChartWithLegend from 'components/Experiments/DetailedView/MetricChartWithLegend';
+import colorVariables from 'styles/variables.scss';
 
 require('./ExperimentMetricsDropdown.scss');
 
@@ -45,33 +46,82 @@ class ExperimentMetricsDropdown extends Component {
   static regressionKeys = [
     {
       id: 'rmse',
-      value: 'RMSE'
+      value: 'RMSE',
+      colorRange: [
+        colorVariables.bluegrey01,
+        colorVariables.bluegrey02,
+        colorVariables.bluegrey03,
+        colorVariables.bluegrey04,
+        colorVariables.bluegrey05
+      ]
     },
     {
       id: 'mae',
-      value: 'Mean Avg Error'
+      value: 'Mean Avg Error',
+      colorRange: [
+        colorVariables.green01,
+        colorVariables.green02,
+        colorVariables.green03,
+        colorVariables.green04,
+        colorVariables.green05
+      ]
     },
     {
       id: 'r2',
-      value: 'R2'
+      value: 'R2',
+      colorRange: [
+        colorVariables.blue01,
+        colorVariables.blue02,
+        colorVariables.blue03,
+        colorVariables.blue04,
+        colorVariables.blue05
+      ]
     },
     {
       id: 'evariance',
-      value: 'Accuracy'
+      value: 'Accuracy',
+      colorRange: [
+        colorVariables.orange01,
+        colorVariables.orange02,
+        colorVariables.orange03,
+        colorVariables.orange04,
+        colorVariables.orange05
+      ]
     }
   ];
   static categoricalKeys = [
     {
       id: 'precision',
-      value: 'Precision'
+      value: 'Precision',
+       colorRange: [
+        colorVariables.blue01,
+        colorVariables.blue02,
+        colorVariables.blue03,
+        colorVariables.blue04,
+        colorVariables.blue05
+      ]
     },
     {
       id: 'recall',
-      value: 'Recall'
+      value: 'Recall',
+      colorRange: [
+        colorVariables.orange01,
+        colorVariables.orange02,
+        colorVariables.orange03,
+        colorVariables.orange04,
+        colorVariables.orange05
+      ]
     },
     {
       id: 'f1',
-      value: 'F1'
+      value: 'F1',
+      colorRange: [
+        colorVariables.green01,
+        colorVariables.green02,
+        colorVariables.green03,
+        colorVariables.green04,
+        colorVariables.green05
+      ]
     }
   ];
 
@@ -84,7 +134,7 @@ class ExperimentMetricsDropdown extends Component {
       active: e.target.value
     });
   };
-  renderMetricBarChart = (metric, label) => {
+  renderMetricBarChart = ({id: metric, value: label, colorRange}) => {
     if (metric === 'algorithms') {
       return (
         <AlgorithmDistribution algorithms={this.props.algorithms.histo || []}/>
@@ -99,7 +149,9 @@ class ExperimentMetricsDropdown extends Component {
     let {width, height} = this.containerRef.getBoundingClientRect();
     return (
       <MetricChartWithLegend
+        colorRange={colorRange}
         xAxisTitle={label}
+        metric={metric}
         values={values.histo || []}
         width={width}
         height={height}
@@ -116,7 +168,7 @@ class ExperimentMetricsDropdown extends Component {
     return (
       <div className="experiments-metrics-dropdown clearfix" ref={ref => this.containerRef = ref}>
         <StyledSelectTag keys={keys} onChange={this.onSelectChange} />
-        {this.renderMetricBarChart(matchingKey.id, matchingKey.value)}
+        {this.renderMetricBarChart(matchingKey)}
       </div>
     );
   }
