@@ -75,10 +75,10 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
     createDataset(OUTPUT_DATASET, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addLongField("time").addIntField("zip").build())
-        // Properties for file set
+      // Properties for file set
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-        // Properties for Explore (to create a partitioned Hive table)
+      // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")

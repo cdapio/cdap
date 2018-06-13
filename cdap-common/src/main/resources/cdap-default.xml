@@ -2388,6 +2388,14 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.server.consume.chunk.size</name>
+    <value>60000</value>
+    <description>
+      Approximate size in bytes of each chunk streamed back to Runtime Monitor client
+    </description>
+  </property>
+
+  <property>
     <name>system.runtime.monitor.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
