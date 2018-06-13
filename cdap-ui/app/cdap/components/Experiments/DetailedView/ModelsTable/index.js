@@ -225,6 +225,9 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   let directives = objectQuery(model, 'splitDetails', 'directives') || [];
   let splitId = objectQuery(model, 'splitDetails', 'id');
   let modelTrainingLogsUrl;
+  let directivesCount = Array.isArray(directives) ? directives.length : 0;
+  let featuresCount = Array.isArray(model.features) ? model.features.length : 0;
+
   modelTrainingLogsUrl = constructModelTrainingLogs(model, experimentId);
   return (
     <div {...props}>
@@ -235,10 +238,10 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
           <div>{model.description || '--'}</div>
         </div>
         <div>
-          <strong># Directives </strong>
+          <strong> Directives ({directivesCount}) </strong>
           <div>
             <CollapsibleWrapper
-              content={directives.length}
+              content={directivesCount ? `${directives[0]}...` : '--'}
               popoverContent={renderDirectivesTables.bind(null, directives)}
               alwaysShowViewLink={true}
             />
@@ -247,10 +250,10 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
       </div>
       <div>
         <div>
-          <strong>Features ({model.features.length}) </strong>
+          <strong>Features ({featuresCount}) </strong>
           <div>
             <CollapsibleWrapper
-              content={model.features.join(',')}
+              content={featuresCount ? model.features.join(',') : '--'}
               popoverContent={renderFeaturesTable.bind(null, model.features)}
             />
           </div>
