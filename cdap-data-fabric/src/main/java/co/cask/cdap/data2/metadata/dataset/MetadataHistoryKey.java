@@ -17,37 +17,41 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 
 /**
  * Key used to store metadata history.
  */
-public class MdsHistoryKey {
+class MetadataHistoryKey {
   private static final byte[] ROW_PREFIX = {'h'};
 
-  public static MDSKey getMdsKey(NamespacedEntityId targetId, long time) {
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(ROW_PREFIX);
-    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
+  static MDSKey getMDSKey(MetadataEntity targetId, long time) {
+    MDSKey.Builder builder = getKeyPart(targetId);
     builder.add(invertTime(time));
     return builder.build();
   }
 
-  public static MDSKey getMdsScanStartKey(NamespacedEntityId targetId, long time) {
-    return getMdsKey(targetId, time);
+  static MDSKey getMDSScanStartKey(MetadataEntity metadataEntity, long time) {
+    return getMDSKey(metadataEntity, time);
   }
 
-  public static MDSKey getMdsScanEndKey(NamespacedEntityId targetId) {
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(ROW_PREFIX);
-    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
-    byte[] key = builder.build().getKey();
-    return new MDSKey(Bytes.stopKeyForPrefix(key));
+  static MDSKey getMDSScanStopKey(MetadataEntity metadataEntity) {
+    MDSKey.Builder builder = getKeyPart(metadataEntity);
+    return new MDSKey(Bytes.stopKeyForPrefix(builder.build().getKey()));
   }
 
   private static long invertTime(long time) {
     return Long.MAX_VALUE - time;
+  }
+
+  private static MDSKey.Builder getKeyPart(MetadataEntity metadataEntity) {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(ROW_PREFIX);
+    for (MetadataEntity.KeyValue keyValue : metadataEntity) {
+      builder.add(keyValue.getKey());
+      builder.add(keyValue.getValue());
+    }
+    return builder;
   }
 }

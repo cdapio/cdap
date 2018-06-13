@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -39,7 +40,13 @@ public class AuditMessageTypeAdapter implements JsonDeserializer<AuditMessage> {
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     long timeMillis = jsonObj.get("time").getAsLong();
+    MetadataEntity metadataEntity;
     EntityId entityId = context.deserialize(jsonObj.getAsJsonObject("entityId"), EntityId.class);
+    if (entityId != null) {
+      metadataEntity = entityId.toMetadataEntity();
+    } else {
+      metadataEntity = context.deserialize(jsonObj.getAsJsonObject("metadataEntity"), MetadataEntity.class);
+    }
     String user = jsonObj.get("user").getAsString();
     AuditType auditType = context.deserialize(jsonObj.getAsJsonPrimitive("type"), AuditType.class);
 
@@ -55,6 +62,6 @@ public class AuditMessageTypeAdapter implements JsonDeserializer<AuditMessage> {
       default:
         payload = AuditPayload.EMPTY_PAYLOAD;
     }
-    return new AuditMessage(timeMillis, entityId, user, auditType, payload);
+    return new AuditMessage(timeMillis, metadataEntity, user, auditType, payload);
   }
 }

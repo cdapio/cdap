@@ -54,8 +54,8 @@ public class AuditMessageTest {
   @Test
   public void testCreateMessage() throws Exception {
     String dsCreateJson =
-      "{\"version\":1,\"time\":1000,\"entityId\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\",\"entity\":\"DATASET\"}," +
-        "\"user\":\"user1\",\"type\":\"CREATE\",\"payload\":{}}";
+      "{\"version\":2,\"time\":1000,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\"}," +
+        "\"type\":\"dataset\"},\"user\":\"user1\",\"type\":\"CREATE\",\"payload\":{}}";
     AuditMessage dsCreate = new AuditMessage(1000L, new NamespaceId("ns1").dataset("ds1"), "user1",
                                              AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD);
     Assert.assertEquals(jsonToMap(dsCreateJson), jsonToMap(GSON.toJson(dsCreate)));
@@ -65,8 +65,8 @@ public class AuditMessageTest {
   @Test
   public void testAccessMessage() throws Exception {
     String flowAccessJson =
-      "{\"version\":1,\"time\":2000,\"entityId\":{\"namespace\":\"ns1\",\"stream\":\"stream1\"," +
-        "\"entity\":\"STREAM\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"WRITE\"," +
+      "{\"version\":2,\"time\":2000,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"stream\":\"stream1\"}," +
+        "\"type\":\"stream\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"WRITE\"," +
         "\"accessor\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"version\":\"v1\",\"type\":\"Flow\"," +
         "\"program\":\"flow1\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}}}";
     AuditMessage flowAccess =
@@ -77,8 +77,8 @@ public class AuditMessageTest {
     Assert.assertEquals(flowAccess, GSON.fromJson(flowAccessJson, AuditMessage.class));
 
     String exploreAccessJson =
-      "{\"version\":1,\"time\":2500,\"entityId\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\",\"entity\":\"DATASET\"}," +
-        "\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"UNKNOWN\"," +
+      "{\"version\":2,\"time\":2500,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\"}," +
+        "\"type\":\"dataset\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"UNKNOWN\"," +
         "\"accessor\":{\"service\":\"explore\",\"entity\":\"SYSTEM_SERVICE\"}}}";
     AuditMessage exploreAccess =
       new AuditMessage(2500L, new NamespaceId("ns1").dataset("ds1"), "user1", AuditType.ACCESS,
@@ -90,8 +90,9 @@ public class AuditMessageTest {
   @Test
   public void testMetadataChange() throws Exception {
     String metadataJson =
-      "{\"version\":1,\"time\":3000,\"entityId\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"version\":\"v1\"," +
-        "\"entity\":\"APPLICATION\"},\"user\":\"user1\",\"type\":\"METADATA_CHANGE\",\"payload\":{" +
+      "{\"version\":2,\"time\":3000,\"metadataEntity\": { \"details\": { \"namespace\": \"ns1\", \"application\": " +
+        "\"app1\", \"version\": \"v1\" }, \"type\": \"application\" },\"user\":\"user1\",\"type\":" +
+        "\"METADATA_CHANGE\",\"payload\":{" +
         "\"previous\":{\"USER\":{\"properties\":{\"uk\":\"uv\",\"uk1\":\"uv2\"},\"tags\":[\"ut1\",\"ut2\"]}," +
         "\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[]}}," +
         "\"additions\":{\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[\"t1\",\"t2\"]}}," +

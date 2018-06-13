@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.audit;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.id.EntityId;
 
 import java.util.Objects;
@@ -26,17 +27,22 @@ import java.util.Objects;
  */
 @Beta
 public class AuditMessage {
-  private final int version = 1;
+  // version 1 has consisted of EntityId and version 2 consists of MetadataEntity
+  private final int version = 2;
 
   private final long time;
-  private final EntityId entityId;
+  private final MetadataEntity metadataEntity;
   private final String user;
   private final AuditType type;
   private final AuditPayload payload;
 
   public AuditMessage(long time, EntityId entityId, String user, AuditType type, AuditPayload payload) {
+    this(time, entityId.toMetadataEntity(), user, type, payload);
+  }
+
+  public AuditMessage(long time, MetadataEntity metadataEntity, String user, AuditType type, AuditPayload payload) {
     this.time = time;
-    this.entityId = entityId;
+    this.metadataEntity = metadataEntity;
     this.user = user;
     this.type = type;
     this.payload = payload;
@@ -50,8 +56,8 @@ public class AuditMessage {
     return time;
   }
 
-  public EntityId getEntityId() {
-    return entityId;
+  public MetadataEntity getEntity() {
+    return metadataEntity;
   }
 
   public String getUser() {
@@ -77,7 +83,7 @@ public class AuditMessage {
     AuditMessage that = (AuditMessage) o;
     return Objects.equals(version, that.version) &&
       Objects.equals(time, that.time) &&
-      Objects.equals(entityId, that.entityId) &&
+      Objects.equals(metadataEntity, that.metadataEntity) &&
       Objects.equals(user, that.user) &&
       Objects.equals(type, that.type) &&
       Objects.equals(payload, that.payload);
@@ -85,7 +91,7 @@ public class AuditMessage {
 
   @Override
   public int hashCode() {
-    return Objects.hash(version, time, entityId, user, type, payload);
+    return Objects.hash(version, time, metadataEntity, user, type, payload);
   }
 
   @Override
@@ -93,7 +99,7 @@ public class AuditMessage {
     return "AuditMessage{" +
       "version=" + version +
       ", time=" + time +
-      ", entityId=" + entityId +
+      ", metadataEntity=" + metadataEntity +
       ", user='" + user + '\'' +
       ", type=" + type +
       ", payload=" + payload +

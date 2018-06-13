@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -57,6 +58,13 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
     this.application = application;
     this.version = appId.getVersion();
     this.schedule = schedule;
+  }
+
+  @Override
+  public MetadataEntity toMetadataEntity() {
+    return MetadataEntity.ofNamespace(namespace)
+      .append(MetadataEntity.APPLICATION, application).append(MetadataEntity.VERSION, version)
+      .append(MetadataEntity.SCHEDULE, schedule);
   }
 
   public String getApplication() {
