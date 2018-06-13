@@ -48,11 +48,10 @@ public final class Programs {
    * @param programJarLocation the {@link Location} of the program jar file
    * @param unpackedDir a directory that the program jar file was unpacked to
    * @return a new {@link Program} instance.
-   * @throws IOException If failed to create the program
    */
   public static Program create(CConfiguration cConf, @Nullable ProgramRunner programRunner,
                                ProgramDescriptor programDescriptor,
-                               Location programJarLocation, File unpackedDir) throws IOException {
+                               Location programJarLocation, File unpackedDir) {
     ClassLoader parentClassLoader = null;
     if (programRunner instanceof ProgramClassLoaderProvider) {
       parentClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent();
@@ -79,10 +78,9 @@ public final class Programs {
    *                      Otherwise, the {@link ClassLoader} will only have visibility
    *                      to cdap-api and hadoop classes.
    * @return a new {@link Program} instance for the given programId
-   * @throws IOException If failed to create the program
    */
   public static Program create(CConfiguration cConf, Program originalProgram,
-                               ProgramId programId, @Nullable ProgramRunner programRunner) throws IOException {
+                               ProgramId programId, @Nullable ProgramRunner programRunner) {
     ClassLoader classLoader = originalProgram.getClassLoader();
     // The classloader should be ProgramClassLoader
     Preconditions.checkArgument(classLoader instanceof ProgramClassLoader,
