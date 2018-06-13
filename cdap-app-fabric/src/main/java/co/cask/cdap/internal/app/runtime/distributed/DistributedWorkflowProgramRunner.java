@@ -18,12 +18,13 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowConditionNode;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -35,36 +36,47 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} to start a {@link Workflow} program in distributed mode.
  */
 public final class DistributedWorkflowProgramRunner extends DistributedProgramRunner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
 
   private final ProgramRunnerFactory programRunnerFactory;
 
@@ -113,26 +125,33 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
     WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
     List<ClassAcceptor> acceptors = new ArrayList<>();
 
-    // Only interested in MapReduce and Spark nodes
+    // Only interested in MapReduce and Spark nodes.
+    // This is because CUSTOM_ACTION types are running inside the driver
     Set<SchedulableProgramType> runnerTypes = EnumSet.of(SchedulableProgramType.MAPREDUCE,
                                                          SchedulableProgramType.SPARK);
-    for (WorkflowActionNode node : Iterables.filter(spec.getNodeIdMap().values(), WorkflowActionNode.class)) {
-      // For each type, we only need one node to setup the launch context
-      ScheduleProgramInfo programInfo = node.getProgram();
-      if (!runnerTypes.remove(programInfo.getProgramType())) {
+
+    for (WorkflowActionNode actionNode : Iterables.filter(spec.getNodeIdMap().values(), WorkflowActionNode.class)) {
+      ScheduleProgramInfo programInfo = actionNode.getProgram();
+      if (!runnerTypes.contains(programInfo.getProgramType())) {
         continue;
       }
 
-      // Find the ProgramRunner of the given type and setup the launch context
       ProgramType programType = ProgramType.valueOfSchedulableType(programInfo.getProgramType());
       ProgramRunner runner = programRunnerFactory.create(programType);
       try {
         if (runner instanceof DistributedProgramRunner) {
-          // Call setupLaunchConfig with the corresponding program
+          // Call setupLaunchConfig with the corresponding program.
+          // Need to constructs a new ProgramOptions with the scope extracted for the given program
           ProgramId programId = program.getId().getParent().program(programType, programInfo.getProgramName());
+          Map<String, String> programUserArgs = RuntimeArguments.extractScope(programId.getType().getScope(),
+                                                                              programId.getProgram(),
+                                                                              options.getUserArguments().asMap());
+          ProgramOptions programOptions = new SimpleProgramOptions(programId, options.getArguments(),
+                                                                   new BasicArguments(programUserArgs));
+
           ((DistributedProgramRunner) runner).setupLaunchConfig(launchConfig,
                                                                 Programs.create(cConf, program, programId, runner),
-                                                                options, cConf, hConf, tempDir);
+                                                                programOptions, cConf, hConf, tempDir);
           acceptors.add(launchConfig.getClassAcceptor());
         }
       } finally {
@@ -140,57 +159,79 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
           Closeables.closeQuietly((Closeable) runner);
         }
       }
-
     }
 
     // Set the class acceptor
     launchConfig.setClassAcceptor(new AndClassAcceptor(acceptors));
 
-    // Clear and set the runnable for the workflow driver
-    launchConfig.clearRunnables();
-    Resources defaultResources = findDriverResources(program.getApplicationSpecification().getSpark(),
-                                                     program.getApplicationSpecification().getMapReduce(), spec);
+    // Find out the default resources requirements based on the programs inside the workflow
+    // At least gives the Workflow driver 768 mb of container memory
+    Map<String, Resources> runnablesResources = Maps.transformValues(
+      launchConfig.getRunnables(), new Function<RunnableDefinition, Resources>() {
+        @Override
+        public Resources apply(RunnableDefinition runnableDefinition) {
+          return getResources(runnableDefinition);
+        }
+      });
+    Resources defaultResources = maxResources(new Resources(768),
+                                              findDriverResources(spec.getNodes(), runnablesResources));
 
+    // Clear and set the runnable for the workflow driver.
+    launchConfig.clearRunnables();
+    // Extract scoped runtime arguments that only meant for the workflow but not for child nodes
+    Map<String, String> runtimeArgs = RuntimeArguments.extractScope("task", "workflow",
+                                                                    options.getUserArguments().asMap());
     launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), 1,
-                             options.getArguments().asMap(), defaultResources, 0);
+                             runtimeArgs, defaultResources, 0);
   }
 
   /**
    * Returns the {@link Resources} requirement for the workflow runnable deduced by Spark
    * or MapReduce driver resources requirement.
    */
-  private Resources findDriverResources(Map<String, SparkSpecification> sparkSpecs,
-                                        Map<String, MapReduceSpecification> mrSpecs,
-                                        WorkflowSpecification spec) {
-    // Find the resource requirements from the workflow with 768MB as minimum.
-    // It is the largest memory and cores from all Spark and MapReduce programs inside the workflow
-    Resources resources = new Resources(768);
+  private Resources findDriverResources(Collection<WorkflowNode> nodes, Map<String, Resources> runnablesResources) {
+    // Find the resource requirements for the workflow based on the nodes memory requirements
+    Resources resources = new Resources();
 
-    for (WorkflowNode node : spec.getNodeIdMap().values()) {
-      if (WorkflowNodeType.ACTION == node.getType()) {
-        ScheduleProgramInfo programInfo = ((WorkflowActionNode) node).getProgram();
-        SchedulableProgramType programType = programInfo.getProgramType();
-        if (programType == SchedulableProgramType.SPARK || programType == SchedulableProgramType.MAPREDUCE) {
-          // The program spec shouldn't be null, otherwise the Workflow is not valid
-          Resources driverResources;
-          if (programType == SchedulableProgramType.SPARK) {
-            driverResources = sparkSpecs.get(programInfo.getProgramName()).getClientResources();
-          } else {
-            driverResources = mrSpecs.get(programInfo.getProgramName()).getDriverResources();
+    for (WorkflowNode node : nodes) {
+      switch (node.getType()) {
+        case ACTION:
+          String programName = ((WorkflowActionNode) node).getProgram().getProgramName();
+          Resources runnableResources = runnablesResources.get(programName);
+          if (runnableResources != null) {
+            resources = maxResources(resources, runnableResources);
           }
-          if (driverResources != null) {
-            resources = max(resources, driverResources);
+          break;
+        case FORK:
+          Resources forkResources = null;
+          for (List<WorkflowNode> branch : ((WorkflowForkNode) node).getBranches()) {
+            Resources branchResources = findDriverResources(branch, runnablesResources);
+            forkResources = mergeForkResources(branchResources, forkResources);
           }
-        }
+          if (forkResources != null) {
+            resources = maxResources(resources, forkResources);
+          }
+          break;
+        case CONDITION:
+          Resources branchesResources =
+            maxResources(findDriverResources(((WorkflowConditionNode) node).getIfBranch(), runnablesResources),
+                         findDriverResources(((WorkflowConditionNode) node).getElseBranch(), runnablesResources));
+
+          resources = maxResources(resources, branchesResources);
+          break;
+        default:
+          // This shouldn't happen unless we add new node type
+          LOG.warn("Ignoring unsupported Workflow node type {}", node.getType());
       }
     }
+
     return resources;
   }
 
   /**
    * Returns a {@link Resources} that has the maximum of memory and virtual cores among two Resources.
    */
-  private Resources max(Resources r1, Resources r2) {
+  private Resources maxResources(Resources r1, Resources r2) {
     int memory1 = r1.getMemoryMB();
     int memory2 = r2.getMemoryMB();
     int vcores1 = r1.getVirtualCores();
@@ -204,6 +245,25 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
     }
     return new Resources(Math.max(memory1, memory2),
                          Math.max(vcores1, vcores2));
+  }
+
+  /**
+   * Merges resources usage across two branches in a fork. It returns a new {@link Resources} that
+   * sum up the memory and take the max of the vcores.
+   *
+   * @param r1 the first {@link Resources} for the merging
+   * @param r2 the second {@link Resources} for the merging. If it is {@code null}, then {@code r1} will be returned.
+   */
+  private Resources mergeForkResources(Resources r1, @Nullable Resources r2) {
+    if (r2 == null) {
+      return r1;
+    }
+    return new Resources(r1.getMemoryMB() + r2.getMemoryMB(), Math.max(r1.getVirtualCores(), r2.getVirtualCores()));
+  }
+
+  private Resources getResources(RunnableDefinition runnableDefinition) {
+    ResourceSpecification resourceSpec = runnableDefinition.getResources();
+    return new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores());
   }
 
   /**

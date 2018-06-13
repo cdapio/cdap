@@ -83,7 +83,7 @@ public class WorkflowActionNode extends WorkflowNode {
   public String toString() {
     StringBuilder sb = new StringBuilder("WorkflowActionNode{");
     sb.append("nodeId=").append(nodeId);
-    sb.append("program=").append(program);
+    sb.append(", program=").append(program);
     sb.append(", actionSpecification=").append(actionSpecification);
     sb.append(", customActionSpecification=").append(customActionSpecification);
     sb.append('}');
