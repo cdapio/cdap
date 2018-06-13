@@ -17,8 +17,9 @@
 import {MyMetadataApi} from 'api/metadata';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import Store, {Actions} from 'components/FieldLevelLineage/store/Store';
+import debounce from 'lodash/debounce';
 
-export function getFields(datasetId) {
+export function getFields(datasetId, prefix) {
   let namespace = getCurrentNamespace();
 
   let params = {
@@ -27,6 +28,10 @@ export function getFields(datasetId) {
     start: 'now-7d',
     end: 'now'
   };
+
+  if (prefix && prefix.length > 0) {
+    params.prefix = prefix;
+  }
 
   MyMetadataApi.getFields(params)
     .subscribe((res) => {
@@ -63,4 +68,20 @@ export function getLineageSummary(fieldName) {
         }
       });
     });
+}
+
+const debouncedGetFields = debounce(getFields, 500);
+
+export function search(e) {
+  const datasetId = Store.getState().lineage.datasetId;
+  const searchText = e.target.value;
+
+  Store.dispatch({
+    type: Actions.setSearch,
+    payload: {
+      search: searchText
+    }
+  });
+
+  debouncedGetFields(datasetId, searchText);
 }
