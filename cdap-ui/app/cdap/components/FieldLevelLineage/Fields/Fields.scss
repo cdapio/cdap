@@ -31,13 +31,29 @@ $count-font-color: $grey-04;
     transform: translateX(-50%);
     left: 50%;
 
-    .header {
+    .header,
+    .search-container {
       border-bottom: 2px solid $header-border-color;
+    }
+
+    .header {
       padding: 15px 10px 5px;
 
       .dataset-name { font-weight: 600; }
       .fields-count {
         color: $count-font-color;
+      }
+    }
+
+    .search-container {
+      .form-control { border: 0; }
+
+      .input-group-addon {
+        background-color: transparent;
+        border: 0;
+        font-size: 15px;
+
+        .icon-svg { vertical-align: top; }
       }
     }
 
