@@ -81,7 +81,7 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
 
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
-                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+                                   CConfiguration cConf, Configuration hConf, File tempDir) {
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
