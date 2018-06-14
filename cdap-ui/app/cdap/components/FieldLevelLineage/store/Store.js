@@ -22,6 +22,11 @@ const Actions = {
   setBackwardLineage: 'FLL_SET_BACKWARD_LINEAGE',
   closeSummary: 'FLL_CLOSE_SUMMARY',
   setSearch: 'FLL_SET_SEARCH',
+  setBackwardOperations: 'FLL_SET_BACKWARD_OPERATIONS',
+  closeOperations: 'FLL_CLOSE_OPERATIONS',
+  operationsLoading: 'FLL_OPERATIONS_LOADING',
+  nextOperation: 'FLL_NEXT_OPERATION',
+  prevOperation: 'FLL_PREV_OPERATION',
   reset: 'FLL_RESET'
 };
 
@@ -31,6 +36,13 @@ const defaultInitialState = {
   backward: [],
   activeField: null,
   search: ''
+};
+
+const operationsInitialState = {
+  backwardOperations: [],
+  showOperations: false,
+  activeIndex: 0,
+  loading: false
 };
 
 const lineage = (state = defaultInitialState, action = defaultAction) => {
@@ -64,12 +76,54 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
   }
 };
 
+const operations = (state = operationsInitialState, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.operationsLoading:
+      return {
+        ...state,
+        loading: true,
+        showOperations: true
+      };
+    case Actions.setBackwardOperations:
+      return {
+        ...state,
+        backwardOperations: action.payload.backwardOperations,
+        activeIndex: 0,
+        showOperations: true,
+        loading: false
+      };
+    case Actions.setBackwardLineage:
+    case Actions.closeOperations:
+      return {
+        ...state,
+        backwardOperations: [],
+        showOperations: false
+      };
+    case Actions.nextOperation:
+      return {
+        ...state,
+        activeIndex: state.activeIndex + 1
+      };
+    case Actions.prevOperation:
+      return {
+        ...state,
+        activeIndex: state.activeIndex - 1
+      };
+    case Actions.reset:
+      return defaultInitialState;
+    default:
+      return state;
+  }
+};
+
 const Store = createStore(
   combineReducers({
-    lineage
+    lineage,
+    operations
   }),
   {
-    lineage: defaultInitialState
+    lineage: defaultInitialState,
+    operations: operationsInitialState
   },
   composeEnhancers('FieldLevelLineageStore')()
 );
