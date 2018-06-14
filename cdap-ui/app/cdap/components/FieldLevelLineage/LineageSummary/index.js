@@ -20,6 +20,8 @@ import {connect} from 'react-redux';
 import SummaryRow from 'components/FieldLevelLineage/LineageSummary/SummaryRow';
 import IconSVG from 'components/IconSVG';
 import {Actions} from 'components/FieldLevelLineage/store/Store';
+import {getOperations} from 'components/FieldLevelLineage/store/ActionCreator';
+import OperationsModal from 'components/FieldLevelLineage/OperationsModal';
 
 require('./LineageSummary.scss');
 
@@ -55,9 +57,13 @@ function LineageSummaryView({activeField, datasetId, backwardLineage, close}) {
       }
 
       <div className="view-operations">
-        <span>
+        <span
+          onClick={getOperations}
+        >
           View Operations
         </span>
+
+        <OperationsModal />
       </div>
     </div>
   );

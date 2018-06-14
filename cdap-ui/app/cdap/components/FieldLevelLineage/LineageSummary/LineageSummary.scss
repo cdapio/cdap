@@ -99,6 +99,8 @@ $field-row-hover-bg: $grey-08;
     .view-operations {
       padding-top: 15px;
       padding-bottom: 15px;
+
+      span { cursor: pointer; }
     }
   }
 }
