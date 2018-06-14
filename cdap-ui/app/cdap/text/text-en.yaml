@@ -1461,6 +1461,7 @@ features:
       namespace: Namespace
       noData: No data
       noRuns: No runs
+      start: Started
       startMethod: Start method
       status: Status
       timeRange: Time range

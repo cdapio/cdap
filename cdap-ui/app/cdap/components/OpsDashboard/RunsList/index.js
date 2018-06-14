@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {connect} from 'react-redux';
-import {humanReadableDuration} from 'services/helpers';
+import {humanReadableDuration, humanReadableDate} from 'services/helpers';
 import SortableStickyGrid from 'components/SortableStickyGrid';
 import T from 'i18n-react';
 
@@ -36,6 +36,10 @@ const GRID_HEADERS = [
   {
     property: 'type',
     label: T.translate(`${PREFIX}.type`)
+  },
+  {
+    property: 'start',
+    label: T.translate(`${PREFIX}.start`)
   },
   {
     property: (run) => run.end ? run.end - run.start : 0,
@@ -72,6 +76,7 @@ function renderBody(data) {
               <div>{run.namespace}</div>
               <div>{run.application.name}</div>
               <div>{run.type}</div>
+              <div>{humanReadableDate(run.start, false)}</div>
               <div>{duration}</div>
               <div>{run.user || '--'}</div>
               <div>{run.startMethod}</div>
@@ -101,6 +106,7 @@ function renderGrid(data) {
       renderGridBody={renderBody}
       gridHeaders={GRID_HEADERS}
       className="list-view"
+      defaultSortProperty="start"
     />
   );
 }
