@@ -33,7 +33,7 @@ const SORT_ORDERS = {
 export default class SortableStickyGrid extends Component {
   constructor(props) {
     super(props);
-    let sortProperty = objectQuery(props.gridHeaders, 0, 'property');
+    let sortProperty = props.defaultSortProperty || objectQuery(props.gridHeaders, 0, 'property');
     let sortOrder = SORT_ORDERS.asc;
 
     this.state = {
@@ -54,7 +54,8 @@ export default class SortableStickyGrid extends Component {
     renderGridHeader: PropTypes.func,
     renderGridBody: PropTypes.func,
     className: PropTypes.string,
-    cellIsClickable: PropTypes.bool
+    cellIsClickable: PropTypes.bool,
+    defaultSortProperty: PropTypes.string
   };
 
   static defaultProps = {

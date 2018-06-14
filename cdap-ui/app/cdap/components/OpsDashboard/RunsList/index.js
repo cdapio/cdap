@@ -18,28 +18,51 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {connect} from 'react-redux';
-import {humanReadableDuration} from 'services/helpers';
+import {humanReadableDuration, humanReadableDate} from 'services/helpers';
+import SortableStickyGrid from 'components/SortableStickyGrid';
+import capitalize from 'lodash/capitalize';
+import StatusMapper from 'services/StatusMapper';
+import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
 
-require('./RunsList.scss');
+const GRID_HEADERS = [
+  {
+    property: 'namespace',
+    label: T.translate(`${PREFIX}.namespace`)
+  },
+  {
+    property: (run) => run.application.name,
+    label: T.translate(`${PREFIX}.name`)
+  },
+  {
+    property: 'type',
+    label: T.translate(`${PREFIX}.type`)
+  },
+  {
+    property: 'start',
+    label: T.translate(`${PREFIX}.start`)
+  },
+  {
+    property: (run) => run.end ? run.end - run.start : 0,
+    label: T.translate(`${PREFIX}.duration`)
+  },
+  {
+    property: 'user',
+    label: T.translate(`${PREFIX}.user`)
+  },
+  {
+    property: 'startMethod',
+    label: T.translate(`${PREFIX}.startMethod`)
+  },
+  {
+    property: (run) => StatusMapper.lookupDisplayStatus(run.status),
+    label: T.translate(`${PREFIX}.status`)
+  },
+];
 
-function renderHeader() {
-  return (
-    <div className="grid-header">
-      <div className="grid-row">
-        <div>{T.translate(`${PREFIX}.namespace`)}</div>
-        <div>{T.translate(`${PREFIX}.name`)}</div>
-        <div>{T.translate(`${PREFIX}.type`)}</div>
-        <div>{T.translate(`${PREFIX}.duration`)}</div>
-        <div>{T.translate(`${PREFIX}.user`)}</div>
-        <div>{T.translate(`${PREFIX}.startMethod`)}</div>
-        <div>{T.translate(`${PREFIX}.status`)}</div>
-      </div>
-    </div>
-  );
-}
+require('./RunsList.scss');
 
 function renderBody(data) {
   return (
@@ -48,6 +71,8 @@ function renderBody(data) {
         data.map((run, i) => {
           let duration = run.end ? run.end - run.start : '--';
           duration = humanReadableDuration(duration);
+
+          let displayStatus = StatusMapper.lookupDisplayStatus(run.status);
           return (
             <div
               className="grid-row"
@@ -55,11 +80,20 @@ function renderBody(data) {
             >
               <div>{run.namespace}</div>
               <div>{run.application.name}</div>
-              <div>{run.type}</div>
+              <div>{T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}</div>
+              <div>{humanReadableDate(run.start, false)}</div>
               <div>{duration}</div>
               <div>{run.user || '--'}</div>
-              <div>{run.startMethod}</div>
-              <div>{run.status}</div>
+              <div>{capitalize(run.startMethod)}</div>
+              <div>
+                <IconSVG
+                  name="icon-circle"
+                  className={`${displayStatus.toLowerCase()}`}
+                />
+                <span>
+                  {displayStatus}
+                </span>
+              </div>
             </div>
           );
         })
@@ -80,19 +114,18 @@ function renderGrid(data) {
   }
 
   return (
-    <div className="list-view grid-wrapper">
-      <div className="grid grid-container">
-        {renderHeader()}
-        {renderBody(data)}
-      </div>
-    </div>
+    <SortableStickyGrid
+      entities={data}
+      renderGridBody={renderBody}
+      gridHeaders={GRID_HEADERS}
+      className="list-view"
+      defaultSortProperty="start"
+    />
   );
 }
 
 
-function RunsListView({bucketInfo, displayRunsList}) {
-  if (!displayRunsList) { return null; }
-
+function RunsListView({bucketInfo}) {
   if (!bucketInfo) {
     return (
       <div className="runs-list-container">
@@ -154,14 +187,12 @@ function RunsListView({bucketInfo, displayRunsList}) {
 }
 
 RunsListView.propTypes = {
-  bucketInfo: PropTypes.object,
-  displayRunsList: PropTypes.bool
+  bucketInfo: PropTypes.object
 };
 
 const mapStateToProps = (state) => {
   return {
-    bucketInfo: state.dashboard.displayBucketInfo,
-    displayRunsList: state.dashboard.displayRunsList
+    bucketInfo: state.dashboard.displayBucketInfo
   };
 };
 

@@ -20,6 +20,7 @@ import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import T from 'i18n-react';
+require('./TypeSelector.scss');
 
 const PREFIX = 'features.OpsDashboard.RunsGraph.TypeSelector';
 

@@ -14,47 +14,31 @@
  * the License.
 */
 
-@import './OpsDashboardColors.scss';
+@import '../../../../styles/variables.scss';
 
-$header-height: 70px;
+$check-icon-fill-color: $blue-04;
 
-.ops-dashboard {
-  .header {
-    height: $header-height;
+.runs-graph-container {
+  .type-selector {
+    user-select: none;
 
-    .links {
+    .icon-svg {
       font-size: 18px;
-      line-height: $header-height;
-      padding-left: 25px;
+      margin-right: 5px;
+    }
 
-      .active {
-        font-weight: bold;
-        text-decoration: underline;
+    .type-item {
+      display: inline-block;
+      cursor: pointer;
+      span { vertical-align: middle; }
+
+      &:not(:last-child) {
+        margin-right: 30px;
       }
 
-      .separator {
-        margin-right: 10px;
-        margin-left: 10px;
+      .icon-check-square {
+        fill: $check-icon-fill-color;
       }
-    }
-
-    .namespace-picker {
-      padding-right: 15px;
-    }
-  }
-
-  .runs-graph-container,
-  .runs-list-container {
-    .running {
-      @include setColor($running);
-    }
-
-    .succeeded {
-      @include setColor($succeeded);
-    }
-
-    .failed {
-      @include setColor($failed);
     }
   }
 }
