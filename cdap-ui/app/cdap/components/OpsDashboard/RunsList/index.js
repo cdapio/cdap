@@ -19,27 +19,43 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import {connect} from 'react-redux';
 import {humanReadableDuration} from 'services/helpers';
+import SortableStickyGrid from 'components/SortableStickyGrid';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
 
-require('./RunsList.scss');
+const GRID_HEADERS = [
+  {
+    property: 'namespace',
+    label: T.translate(`${PREFIX}.namespace`)
+  },
+  {
+    property: (run) => run.application.name,
+    label: T.translate(`${PREFIX}.name`)
+  },
+  {
+    property: 'type',
+    label: T.translate(`${PREFIX}.type`)
+  },
+  {
+    property: (run) => run.end ? run.end - run.start : 0,
+    label: T.translate(`${PREFIX}.duration`)
+  },
+  {
+    property: 'user',
+    label: T.translate(`${PREFIX}.user`)
+  },
+  {
+    property: 'startMethod',
+    label: T.translate(`${PREFIX}.startMethod`)
+  },
+  {
+    property: 'status',
+    label: T.translate(`${PREFIX}.status`)
+  },
+];
 
-function renderHeader() {
-  return (
-    <div className="grid-header">
-      <div className="grid-row">
-        <div>{T.translate(`${PREFIX}.namespace`)}</div>
-        <div>{T.translate(`${PREFIX}.name`)}</div>
-        <div>{T.translate(`${PREFIX}.type`)}</div>
-        <div>{T.translate(`${PREFIX}.duration`)}</div>
-        <div>{T.translate(`${PREFIX}.user`)}</div>
-        <div>{T.translate(`${PREFIX}.startMethod`)}</div>
-        <div>{T.translate(`${PREFIX}.status`)}</div>
-      </div>
-    </div>
-  );
-}
+require('./RunsList.scss');
 
 function renderBody(data) {
   return (
@@ -80,12 +96,12 @@ function renderGrid(data) {
   }
 
   return (
-    <div className="list-view grid-wrapper">
-      <div className="grid grid-container">
-        {renderHeader()}
-        {renderBody(data)}
-      </div>
-    </div>
+    <SortableStickyGrid
+      entities={data}
+      renderGridBody={renderBody}
+      gridHeaders={GRID_HEADERS}
+      className="list-view"
+    />
   );
 }
 

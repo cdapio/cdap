@@ -49,6 +49,10 @@
           padding: 0;
 
           > div { padding: 10px; }
+
+          &:hover {
+            background-color: white;
+          }
         }
       }
     }
