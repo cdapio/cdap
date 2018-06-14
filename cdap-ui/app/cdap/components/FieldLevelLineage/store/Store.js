@@ -17,6 +17,14 @@
 import {combineReducers, createStore} from 'redux';
 import {defaultAction, composeEnhancers} from 'services/helpers';
 
+export const TIME_OPTIONS = [
+  'last7d',
+  'last14d',
+  'lastMonth',
+  'last6M',
+  'lastYear'
+];
+
 const Actions = {
   setFields: 'FLL_SET_FIELDS',
   setBackwardLineage: 'FLL_SET_BACKWARD_LINEAGE',
@@ -27,6 +35,7 @@ const Actions = {
   operationsLoading: 'FLL_OPERATIONS_LOADING',
   nextOperation: 'FLL_NEXT_OPERATION',
   prevOperation: 'FLL_PREV_OPERATION',
+  setTimeSelection: 'FLL_SET_TIME_SELECTION',
   reset: 'FLL_RESET'
 };
 
@@ -35,7 +44,8 @@ const defaultInitialState = {
   fields: [],
   backward: [],
   activeField: null,
-  search: ''
+  search: '',
+  timeSelection: TIME_OPTIONS[0]
 };
 
 const operationsInitialState = {
@@ -68,6 +78,11 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         search: action.payload.search
+      };
+    case Actions.setTimeSelection:
+      return {
+        ...state,
+        timeSelection: action.payload.timeSelection
       };
     case Actions.reset:
       return defaultInitialState;
