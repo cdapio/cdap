@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2018 Cask Data, Inc.
 
 .. _advanced-configuring-resources:
 
@@ -57,6 +57,7 @@ a prefix can be added to limit the scope of the arguments.
 
 **Workflow**
 
+- Prefix with ``task.workflow.`` to set resources for the Workflow driver only
 - Prefix with ``mapreduce.<workflowNodeName>.`` to set resources for a particular MapReduce node in a workflow
 - Prefix with ``spark.<workflowNodeName>.`` to set resources for a particular MapReduce node in a workflow
 
