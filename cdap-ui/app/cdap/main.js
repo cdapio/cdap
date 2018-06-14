@@ -125,7 +125,7 @@ class CDAP extends Component {
                 </Switch>
               </div>
           }
-          <Footer version={this.state.version} />
+          <Footer />
         </div>
       </BrowserRouter>
     );

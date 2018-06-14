@@ -1414,8 +1414,6 @@ features:
         distributed: Distributed
         localSandbox: Local Sandbox
       olduilink: Switch to Classic View
-      prodWebsiteLabel: Product Website
-      supportLabel: Support
     rulesmgmt: Rules
   OpsDashboard:
     header: Dashboard
