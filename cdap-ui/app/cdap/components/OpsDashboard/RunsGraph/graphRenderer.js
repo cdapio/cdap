@@ -20,6 +20,26 @@ import moment from 'moment';
 
 const AXIS_BUFFER = 1.1;
 
+function addClickHandlers(elementClass, bucketNodes) {
+  d3.selectAll(elementClass)
+    .on('click', (data, i) => {
+
+      // Need to do this to unselect previously selected bucket
+      d3.select('.selected')
+        .classed('selected', false);
+
+      d3.select(bucketNodes[i])
+        .classed('selected', true);
+
+      DashboardStore.dispatch({
+        type: DashboardActions.setDisplayBucket,
+        payload: {
+          displayBucketInfo: data
+        }
+      });
+    });
+}
+
 export function renderGraph(selector, containerWidth, containerHeight, data, viewByOption) {
   let margin = {
     top: 20,
@@ -172,26 +192,9 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   d3.select('.handler-selector')
     .classed('selected', true);
 
-  d3.selectAll('.handler-selector')
-    // Need to use normal function callback instead of arrow function here,
-    // so that 'this' is not passed from outer context
-    .on('click', function(data) {
+  let bucketNodes = d3.selectAll('.handler-selector').nodes();
 
-      // Need to do this to unselect previously selected bucket
-      d3.select('.handler-selector.selected')
-        .classed('selected', false);
-
-      d3.select(this)
-        .classed('selected', true);
-
-      DashboardStore.dispatch({
-        type: DashboardActions.setDisplayBucket,
-        payload: {
-          displayBucketInfo: data
-        }
-      });
-    });
-
+  addClickHandlers('.handler-selector', bucketNodes);
 
   // RENDER BAR GRAPH
 
@@ -205,7 +208,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
     // Schedule
     startMethod.append('rect')
-      .attr('class', 'bar schedule')
+      .attr('class', 'bar schedule pointer')
       .attr('width', barWidth * 2)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.schedule))
@@ -213,7 +216,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
     // Manual
     startMethod.append('rect')
-      .attr('class', 'bar manual')
+      .attr('class', 'bar manual pointer')
       .attr('width', barWidth * 2)
       .attr('x', getXLocation)
       .attr('y', getManualY)
@@ -229,7 +232,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
       .enter();
 
     runningStats.append('rect')
-      .attr('class', 'bar running')
+      .attr('class', 'bar running pointer')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.running))
@@ -249,7 +252,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
     // Successful
     statistics.append('rect')
-      .attr('class', 'bar successful')
+      .attr('class', 'bar successful pointer')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.successful))
@@ -257,13 +260,18 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
     // Failed
     statistics.append('rect')
-      .attr('class', 'bar failed')
+      .attr('class', 'bar failed pointer')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', getFailedY)
       .attr('height', (d) => height - yLeft(d.failed));
   }
 
+  addClickHandlers('.bar.running', bucketNodes);
+  addClickHandlers('.bar.successful', bucketNodes);
+  addClickHandlers('.bar.failed', bucketNodes);
+  addClickHandlers('.bar.schedule', bucketNodes);
+  addClickHandlers('.bar.manual', bucketNodes);
 
   // RENDER LINE GRAPH
 
