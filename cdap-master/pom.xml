@@ -614,7 +614,7 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-${project.version}.jar" />
                   </target>
                 </configuration>
               </execution>
