@@ -18,7 +18,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {renderGraph} from 'components/OpsDashboard/RunsGraph/graphRenderer';
-import ToggleRunsList from 'components/OpsDashboard/RunsGraph/ToggleRunsList';
 import Legends from 'components/OpsDashboard/RunsGraph/Legends';
 import TypeSelector from 'components/OpsDashboard/RunsGraph/TypeSelector';
 import {Observable} from 'rxjs/Observable';
@@ -27,7 +26,7 @@ import {next, prev} from 'components/OpsDashboard/store/ActionCreator';
 import RunsTable from 'components/OpsDashboard/RunsGraph/RunsTable';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import classnames from 'classnames';
-import {getData} from 'components/OpsDashboard/store/ActionCreator';
+import {getData, setLast24Hours} from 'components/OpsDashboard/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsGraph';
@@ -35,7 +34,7 @@ const PREFIX = 'features.OpsDashboard.RunsGraph';
 require('./RunsGraph.scss');
 
 const RUNS_GRAPH_CONTAINER = 'runs-graph-container';
-const GRAPH_HEIGHT = 230;
+const GRAPH_HEIGHT = 265;
 
 class RunsGraphView extends Component {
   static propTypes = {
@@ -43,7 +42,9 @@ class RunsGraphView extends Component {
     data: PropTypes.array,
     displayType: PropTypes.oneOf(['chart', 'table']),
     viewByOption: PropTypes.string,
-    changeDisplay: PropTypes.func
+    changeDisplay: PropTypes.func,
+    isLast24Hours: PropTypes.bool,
+    namespacesPick: PropTypes.array
   };
 
   componentDidMount() {
@@ -79,7 +80,9 @@ class RunsGraphView extends Component {
   }
 
   last24Hour = () => {
+    setLast24Hours(true);
     getData();
+
   };
 
   renderGraph(props = this.props) {
@@ -101,15 +104,27 @@ class RunsGraphView extends Component {
     return (
       <div className="runs-graph-container">
         <div className="top-panel">
-          <div className="title">
-            {T.translate(`${PREFIX}.header`)}
+          <div className="title-and-subtitle">
+            <span className="title">
+              {T.translate(`${PREFIX}.header`)}
+            </span>
+            <div className="subtitle">
+              {T.translate(`${PREFIX}.subtitle`, {
+                context: this.props.namespacesPick.length + 1
+              })}
+            </div>
           </div>
 
           <TypeSelector />
 
           <div className="display-picker">
             <div className="time-picker">
-              <div onClick={this.last24Hour}>
+              <div
+                className={classnames({
+                  'active': this.props.isLast24Hours
+                })}
+                onClick={!this.props.isLast24Hours && this.last24Hour}
+              >
                 {T.translate(`${PREFIX}.last24Hours`)}
               </div>
             </div>
@@ -154,8 +169,6 @@ class RunsGraphView extends Component {
         </div>
 
         {this.props.displayType === 'chart' ? <Legends /> : null}
-
-        <ToggleRunsList />
       </div>
     );
   }
@@ -167,6 +180,8 @@ const mapStateToProps = (state) => {
     data: state.dashboard.data,
     displayType: state.dashboard.displayType,
     viewByOption: state.dashboard.viewByOption,
+    isLast24Hours: state.dashboard.isLast24Hours,
+    namespacesPick: state.namespaces.namespacesPick
   };
 };
 

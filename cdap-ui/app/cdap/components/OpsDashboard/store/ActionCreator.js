@@ -82,6 +82,7 @@ export function next() {
 
   start = Math.round(parseInt(start, 10) / 1000);
 
+  setLast24Hours(false);
   getData(start, state.duration);
 }
 
@@ -98,6 +99,7 @@ export function prev() {
 
   start = Math.round(parseInt(start, 10) / 1000);
 
+  setLast24Hours(false);
   getData(start, state.duration);
 }
 
@@ -105,4 +107,13 @@ export function setNamespacesPick(namespacesPick) {
   let state = DashboardStore.getState().dashboard;
 
   getData(state.startTime, state.duration, namespacesPick);
+}
+
+export function setLast24Hours(value) {
+  DashboardStore.dispatch({
+    type: DashboardActions.setLast24Hours,
+    payload: {
+      isLast24Hours: value
+    }
+  });
 }
