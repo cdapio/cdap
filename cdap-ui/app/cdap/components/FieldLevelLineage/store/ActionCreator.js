@@ -16,17 +16,46 @@
 
 import {MyMetadataApi} from 'api/metadata';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import Store, {Actions} from 'components/FieldLevelLineage/store/Store';
+import Store, {Actions, TIME_OPTIONS} from 'components/FieldLevelLineage/store/Store';
 import debounce from 'lodash/debounce';
 
-export function getFields(datasetId, prefix) {
+const TIME_OPTIONS_MAP = {
+  [TIME_OPTIONS[0]]: {
+    start: 'now-7d',
+    end: 'now'
+  },
+  [TIME_OPTIONS[1]]: {
+    start: 'now-14d',
+    end: 'now'
+  },
+  [TIME_OPTIONS[2]]: {
+    start: 'now-30d',
+    end: 'now'
+  },
+  [TIME_OPTIONS[3]]: {
+    start: 'now-180d',
+    end: 'now'
+  },
+  [TIME_OPTIONS[4]]: {
+    start: 'now-365d',
+    end: 'now'
+  }
+};
+
+function getTimeRange() {
+  const selection = Store.getState().lineage.timeSelection;
+
+  return TIME_OPTIONS_MAP[selection];
+}
+
+export function getFields(datasetId, prefix, start = 'now-7d', end = 'now') {
   const namespace = getCurrentNamespace();
 
   let params = {
     namespace,
     entityId: datasetId,
-    start: 'now-7d',
-    end: 'now'
+    start,
+    end
   };
 
   if (prefix && prefix.length > 0) {
@@ -48,14 +77,15 @@ export function getFields(datasetId, prefix) {
 export function getLineageSummary(fieldName) {
   const namespace = getCurrentNamespace();
   const datasetId = Store.getState().lineage.datasetId;
+  const {start, end} = getTimeRange();
 
   const params = {
     namespace,
     entityId: datasetId,
     fieldName,
     direction: 'backward',
-    start: 'now-7d',
-    end: 'now'
+    start,
+    end
   };
 
   MyMetadataApi.getFieldLineage(params)
@@ -95,13 +125,14 @@ export function getOperations() {
   const entityId = state.datasetId;
   const fieldName = state.activeField;
   const namespace = getCurrentNamespace();
+  const {start, end} = getTimeRange();
 
   const params = {
     namespace,
     entityId,
     fieldName,
-    start: 'now-7d',
-    end: 'now',
+    start,
+    end,
     direction: 'backward'
   };
 
@@ -114,4 +145,18 @@ export function getOperations() {
         }
       });
     });
+}
+
+export function setTimeRange(option) {
+  Store.dispatch({
+    type: Actions.setTimeSelection,
+    payload: {
+      timeSelection: option
+    }
+  });
+
+  const {start, end} = TIME_OPTIONS_MAP[option];
+  const state = Store.getState().lineage;
+
+  getFields(state.datasetId, state.search, start, end);
 }
