@@ -272,6 +272,10 @@ public abstract class MetadataTestBase extends ClientTestBase {
     return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
+  protected void getPropertiesFromInvalidEntity(EntityId entityId) throws Exception {
+    Map<String, String> properties = getProperties(entityId, MetadataScope.USER);
+    Assert.assertTrue(properties.isEmpty());
+  }
 
   protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {
     for (MetadataRecord record : getMetadata(run)) {

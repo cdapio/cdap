@@ -19,7 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -55,17 +55,17 @@ public interface MetadataAdmin {
   void addTags(MetadataEntity metadataEntity, String... tags) throws InvalidMetadataException;
 
   /**
-   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
-   * {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
+   * Returns a set of {@link MetadataRecordV2} representing all metadata (including properties and tags) for the
+   * specified {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
+  Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity);
 
   /**
-   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
-   * {@link MetadataEntity} in the specified {@link MetadataScope}.
+   * Returns a set of {@link MetadataRecordV2} representing all metadata (including properties and tags) for the
+   * specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
   // TODO: Should this return a single metadata record instead or is a set of one record ok?
-  Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  Set<MetadataRecordV2> getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in both

@@ -18,7 +18,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
@@ -54,18 +54,18 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
-    return ImmutableSet.of(new MetadataRecord(metadataEntity, MetadataScope.USER),
-                           new MetadataRecord(metadataEntity, MetadataScope.SYSTEM));
+  public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) {
+    return ImmutableSet.of(new MetadataRecordV2(metadataEntity, MetadataScope.USER),
+                           new MetadataRecordV2(metadataEntity, MetadataScope.SYSTEM));
   }
 
   @Override
-  public MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
-    return new MetadataRecord(metadataEntity, scope);
+  public MetadataRecordV2 getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    return new MetadataRecordV2(metadataEntity, scope);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntities) {
+  public Set<MetadataRecordV2> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntities) {
     return Collections.emptySet();
   }
 
@@ -130,19 +130,19 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntities, long timeMillis) {
-    return ImmutableSet.<MetadataRecord>builder()
+  public Set<MetadataRecordV2> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntities, long timeMillis) {
+    return ImmutableSet.<MetadataRecordV2>builder()
       .addAll(getSnapshotBeforeTime(MetadataScope.USER, metadataEntities, timeMillis))
       .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, metadataEntities, timeMillis))
       .build();
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntities,
-                                                   long timeMillis) {
-    ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
+  public Set<MetadataRecordV2> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntities,
+                                                     long timeMillis) {
+    ImmutableSet.Builder<MetadataRecordV2> builder = ImmutableSet.builder();
     for (MetadataEntity metadataEntity : metadataEntities) {
-      builder.add(new MetadataRecord(metadataEntity, scope));
+      builder.add(new MetadataRecordV2(metadataEntity, scope));
     }
     return builder.build();
   }

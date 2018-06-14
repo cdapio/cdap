@@ -135,6 +135,9 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
    * this {@link MetadataEntity}
    */
   public MetadataEntity append(String key, String value) {
+    if (this.details.containsKey(key)) {
+      throw new IllegalArgumentException(String.format("Key '%s' already exists.", key));
+    }
     MetadataEntity metadataEntity = new MetadataEntity(this);
     metadataEntity.details.put(key, value);
     metadataEntity.type = key;
@@ -154,6 +157,57 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     MetadataEntity metadataEntity = new MetadataEntity(this);
     metadataEntity.type = newType;
     return metadataEntity;
+  }
+
+  /**
+   * Returns a List of {@link KeyValue} from the given splitKey (exclusive) till the end
+   *
+   * @param splitKey the splitKey (exclusive)
+   * @return List of {@link KeyValue}
+   */
+  public List<MetadataEntity.KeyValue> getFrom(String splitKey) {
+    splitKey = splitKey.toLowerCase();
+    if (!containsKey(splitKey)) {
+      throw new IllegalArgumentException(String.format("The given key %s does not exists in %s", splitKey, toString()));
+    }
+    boolean doCopy = false;
+    List<MetadataEntity.KeyValue> subParts = new ArrayList<>();
+    for (KeyValue keyValue : this) {
+      if (doCopy) {
+        subParts.add(keyValue);
+      } else {
+        if (keyValue.getKey().equalsIgnoreCase(splitKey)) {
+          // reach till the parent key part, everything after this is subpart so set the copy flag
+          doCopy = true;
+        }
+      }
+    }
+    return subParts;
+  }
+
+  /**
+   * Returns a List of {@link KeyValue} till the given splitKey (inclusive)
+   *
+   * @param splitKey the splitKey (inclusive)
+   * @return List of {@link KeyValue}
+   */
+  public List<MetadataEntity.KeyValue> getTill(String splitKey) {
+    splitKey = splitKey.toLowerCase();
+    if (!containsKey(splitKey)) {
+      throw new IllegalArgumentException(String.format("The given key %s does not exists in %s", splitKey, toString()));
+    }
+    List<MetadataEntity.KeyValue> subParts = new ArrayList<>();
+    for (KeyValue keyValue : this) {
+      if (!keyValue.getKey().equalsIgnoreCase(splitKey)) {
+        // reach till the parent key part, everything after this is subpart so set the copy flag
+        subParts.add(keyValue);
+      } else {
+        // copy the matched key as the call is inclusive
+        subParts.add(keyValue);
+        break;
+      }
+    }
+    return subParts;
   }
 
   /**
@@ -235,7 +289,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     private final String key;
     private final String value;
 
-    KeyValue(String key, String value) {
+    public KeyValue(String key, String value) {
       this.key = key;
       this.value = value;
     }
@@ -246,6 +300,31 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
     public String getValue() {
       return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      KeyValue keyValue = (KeyValue) o;
+      return Objects.equals(key, keyValue.key) && Objects.equals(value, keyValue.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(key, value);
+    }
+
+    @Override
+    public String toString() {
+      return "KeyValue{" +
+        "key='" + key + '\'' +
+        ", value='" + value + '\'' +
+        '}';
     }
   }
 }

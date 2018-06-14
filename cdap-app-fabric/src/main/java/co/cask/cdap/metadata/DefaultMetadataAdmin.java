@@ -21,7 +21,7 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -89,12 +89,12 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
+  public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) {
     return metadataStore.getMetadata(metadataEntity);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+  public Set<MetadataRecordV2> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
     return ImmutableSet.of(metadataStore.getMetadata(scope, metadataEntity));
   }
 

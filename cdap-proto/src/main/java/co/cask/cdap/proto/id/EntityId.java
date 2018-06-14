@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
@@ -152,21 +153,70 @@ public abstract class EntityId {
    * metadataEntity.
    */
   public static <T extends EntityId> T fromMetadataEntity(MetadataEntity metadataEntity) {
-    EntityType entityType = EntityType.valueOf(metadataEntity.getType().toUpperCase());
-    if ((entityType == EntityType.APPLICATION || entityType == EntityType.PROGRAM) &&
-      metadataEntity.getValue(MetadataEntity.VERSION) == null) {
-      // if the EntityType is application or program and a version is not specified in the MetadataEntity then add it
+    try {
+      EntityType entityType = EntityType.valueOf(metadataEntity.getType().toUpperCase());
+      return getEntityIdOfType(entityType, metadataEntity);
+    } catch (IllegalArgumentException e) {
+      // its a custom entity so find the parent type and create a parent id
+      EntityId parentId = getEntityIdOfType(findParentType(metadataEntity), metadataEntity);
+      return (T) new CustomEntityId(parentId, metadataEntity);
+    }
+  }
+
+  /**
+   * Creates an EntityId of the given EntityType from the given MetadataEntity by using the key-value parts of the
+   * MetadataEntity
+   *
+   * @param entityType of the EntityId to be created
+   * @param metadataEntity from which EntityId will be created
+   * @return {@link EntityId} of the given EntityType
+   */
+  private static <T extends EntityId> T getEntityIdOfType(EntityType entityType, MetadataEntity metadataEntity) {
+    List<String> values = new LinkedList<>();
+    List<MetadataEntity.KeyValue> till = metadataEntity.getTill(entityType.toString());
+    if (entityType == EntityType.APPLICATION || entityType == EntityType.PROGRAM) {
       if (entityType == EntityType.APPLICATION) {
-        metadataEntity = metadataEntity.append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION);
-      } else {
-        metadataEntity = MetadataEntity.ofNamespace(metadataEntity.getValue(MetadataEntity.NAMESPACE))
-          .append(MetadataEntity.APPLICATION, metadataEntity.getValue(MetadataEntity.APPLICATION))
-          .append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION)
-          .append(MetadataEntity.TYPE, metadataEntity.getValue(MetadataEntity.TYPE))
-          .append(MetadataEntity.PROGRAM, metadataEntity.getValue(MetadataEntity.PROGRAM));
+        String version = metadataEntity.containsKey(MetadataEntity.VERSION) ?
+          metadataEntity.getValue(MetadataEntity.VERSION) : ApplicationId.DEFAULT_VERSION;
+        till.add(new MetadataEntity.KeyValue(MetadataEntity.VERSION, version));
+        // application are followed by version so they need some special handling. If version information is missing
+        // then first add that and then pass the key-value pair till version to be able to contrust an ApplicationId
+        till.iterator().forEachRemaining(keyValue -> values.add(keyValue.getValue()));
+        return entityType.fromIdParts(values);
       }
     }
-    return entityType.fromIdParts(metadataEntity.getValues());
+    if (entityType == EntityType.ARTIFACT) {
+      till = metadataEntity.getTill(MetadataEntity.VERSION);
+    }
+    till.iterator().forEachRemaining(keyValue -> values.add(keyValue.getValue()));
+    return entityType.fromIdParts(values);
+  }
+
+  /**
+   * Finds a valid known CDAP entity which can be considered as the parent for the MetadataEntity by walking up the
+   * key-value hierarchy of the MetadataEntity
+   *
+   * @param metadataEntity whose EntityType needs to be determined
+   * @return {@link EntityType} of the given metadataEntity
+   */
+  private static EntityType findParentType(MetadataEntity metadataEntity) {
+    List<String> keys = new ArrayList<>();
+    metadataEntity.getKeys().forEach(keys::add);
+    int curIndex = keys.size() - 1;
+    EntityType entityType = null;
+    while (curIndex >= 0) {
+      try {
+        entityType = EntityType.valueOf(keys.get(curIndex).toUpperCase());
+        // found a valid entity type;
+        break;
+      } catch (IllegalArgumentException e) {
+        // the current key is not a valid cdap entity type so try up in hierarchy
+        curIndex--;
+      }
+    }
+    // if we were not able to find any valid cdap entity type than we will fall back to InstanceId as everything
+    // belong to a cdap instance
+    return entityType == null ? EntityType.INSTANCE : entityType;
   }
 
   public final EntityType getEntityType() {

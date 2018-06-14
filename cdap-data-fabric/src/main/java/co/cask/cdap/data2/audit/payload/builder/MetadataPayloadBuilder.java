@@ -18,7 +18,7 @@ package co.cask.cdap.data2.audit.payload.builder;
 
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 
 import java.util.HashMap;
@@ -38,7 +38,7 @@ public class MetadataPayloadBuilder {
    * @param record previous value of metadata record
    * @return the builder object
    */
-  public MetadataPayloadBuilder addPrevious(MetadataRecord record) {
+  public MetadataPayloadBuilder addPrevious(MetadataRecordV2 record) {
     previous.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
@@ -49,7 +49,7 @@ public class MetadataPayloadBuilder {
    * @param record additions to the metadata
    * @return the builder object
    */
-  public MetadataPayloadBuilder addAdditions(MetadataRecord record) {
+  public MetadataPayloadBuilder addAdditions(MetadataRecordV2 record) {
     additions.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
@@ -60,7 +60,7 @@ public class MetadataPayloadBuilder {
    * @param record deletions to metadata
    * @return the builder object
    */
-  public MetadataPayloadBuilder addDeletions(MetadataRecord record) {
+  public MetadataPayloadBuilder addDeletions(MetadataRecordV2 record) {
     deletions.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }

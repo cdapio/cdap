@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -113,18 +113,18 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void setProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                             final Map<String, String> properties) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(mds -> {
       Map<String, String> existingProperties = mds.getProperties(metadataEntity);
       Set<String> existingTags = mds.getTags(metadataEntity);
-      previousRef.set(new MetadataRecord(metadataEntity, scope, existingProperties, existingTags));
+      previousRef.set(new MetadataRecordV2(metadataEntity, scope, existingProperties, existingTags));
       for (Map.Entry<String, String> entry : properties.entrySet()) {
         mds.setProperty(metadataEntity, entry.getKey(), entry.getValue());
       }
     }, scope);
     final ImmutableMap.Builder<String, String> propAdditions = ImmutableMap.builder();
     final ImmutableMap.Builder<String, String> propDeletions = ImmutableMap.builder();
-    MetadataRecord previousRecord = previousRef.get();
+    MetadataRecordV2 previousRecord = previousRef.get();
     // Iterating over properties all over again, because we want to move the diff calculation outside the transaction.
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       String existingValue = previousRecord.getProperties().get(entry.getKey());
@@ -140,23 +140,23 @@ public class DefaultMetadataStore implements MetadataStore {
       // In both update or new cases, mark a single addition.
       propAdditions.put(entry.getKey(), entry.getValue());
     }
-    publishAudit(previousRecord, new MetadataRecord(metadataEntity, scope, propAdditions.build(), EMPTY_TAGS),
-                 new MetadataRecord(metadataEntity, scope, propDeletions.build(), EMPTY_TAGS));
+    publishAudit(previousRecord, new MetadataRecordV2(metadataEntity, scope, propAdditions.build(), EMPTY_TAGS),
+                 new MetadataRecordV2(metadataEntity, scope, propDeletions.build(), EMPTY_TAGS));
   }
 
   @Override
   public void setProperty(final MetadataScope scope, final MetadataEntity metadataEntity, final String key,
                           final String value) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(mds -> {
       Map<String, String> existingProperties = mds.getProperties(metadataEntity);
       Set<String> existingTags = mds.getTags(metadataEntity);
-      previousRef.set(new MetadataRecord(metadataEntity, scope, existingProperties, existingTags));
+      previousRef.set(new MetadataRecordV2(metadataEntity, scope, existingProperties, existingTags));
       mds.setProperty(metadataEntity, key, value);
     }, scope);
     publishAudit(previousRef.get(),
-                 new MetadataRecord(metadataEntity, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
-                 new MetadataRecord(metadataEntity, scope));
+                 new MetadataRecordV2(metadataEntity, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
+                 new MetadataRecordV2(metadataEntity, scope));
   }
 
   /**
@@ -165,47 +165,47 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void addTags(final MetadataScope scope, final MetadataEntity metadataEntity,
                       final String... tagsToAdd) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(mds -> {
       Map<String, String> existingProperties = mds.getProperties(metadataEntity);
       Set<String> existingTags = mds.getTags(metadataEntity);
-      previousRef.set(new MetadataRecord(metadataEntity, scope, existingProperties, existingTags));
+      previousRef.set(new MetadataRecordV2(metadataEntity, scope, existingProperties, existingTags));
       mds.addTags(metadataEntity, tagsToAdd);
     }, scope);
     publishAudit(previousRef.get(),
-                 new MetadataRecord(metadataEntity, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
-                 new MetadataRecord(metadataEntity, scope));
+                 new MetadataRecordV2(metadataEntity, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
+                 new MetadataRecordV2(metadataEntity, scope));
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
+  public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) {
     return ImmutableSet.of(getMetadata(MetadataScope.USER, metadataEntity), getMetadata(MetadataScope.SYSTEM,
                                                                                             metadataEntity));
   }
 
   @Override
-  public MetadataRecord getMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
+  public MetadataRecordV2 getMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
     return execute(mds -> {
       Map<String, String> properties = mds.getProperties(metadataEntity);
       Set<String> tags = mds.getTags(metadataEntity);
-      return new MetadataRecord(metadataEntity, scope, properties, tags);
+      return new MetadataRecordV2(metadataEntity, scope, properties, tags);
     }, scope);
   }
 
   /**
-   * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
+   * @return a set of {@link MetadataRecordV2}s representing all the metadata (including properties and tags)
    * for the specified set of {@link MetadataEntity}s.
    */
   @Override
-  public Set<MetadataRecord> getMetadata(final MetadataScope scope, final Set<MetadataEntity> metadataEntities) {
+  public Set<MetadataRecordV2> getMetadata(final MetadataScope scope, final Set<MetadataEntity> metadataEntities) {
     return execute(mds -> {
-      Set<MetadataRecord> metadataRecords = new HashSet<>(metadataEntities.size());
+      Set<MetadataRecordV2> metadataRecordV2s = new HashSet<>(metadataEntities.size());
       for (MetadataEntity metadataEntity : metadataEntities) {
         Map<String, String> properties = mds.getProperties(metadataEntity);
         Set<String> tags = mds.getTags(metadataEntity);
-        metadataRecords.add(new MetadataRecord(metadataEntity, scope, properties, tags));
+        metadataRecordV2s.add(new MetadataRecordV2(metadataEntity, scope, properties, tags));
       }
-      return metadataRecords;
+      return metadataRecordV2s;
     }, scope);
   }
 
@@ -256,15 +256,15 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(mds -> {
-      previousRef.set(new MetadataRecord(metadataEntity, scope, mds.getProperties(metadataEntity),
-                                         mds.getTags(metadataEntity)));
+      previousRef.set(new MetadataRecordV2(metadataEntity, scope, mds.getProperties(metadataEntity),
+                                           mds.getTags(metadataEntity)));
       mds.removeProperties(metadataEntity);
       mds.removeTags(metadataEntity);
     }, scope);
-    MetadataRecord previous = previousRef.get();
-    publishAudit(previous, new MetadataRecord(metadataEntity, scope), new MetadataRecord(previous));
+    MetadataRecordV2 previous = previousRef.get();
+    publishAudit(previous, new MetadataRecordV2(metadataEntity, scope), new MetadataRecordV2(previous));
   }
 
   /**
@@ -272,17 +272,17 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeProperties(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(metadataEntity, scope, input.getProperties(metadataEntity),
-                                           input.getTags(metadataEntity)));
+        previousRef.set(new MetadataRecordV2(metadataEntity, scope, input.getProperties(metadataEntity),
+                                             input.getTags(metadataEntity)));
         input.removeProperties(metadataEntity);
       }
     }, scope);
-    publishAudit(previousRef.get(), new MetadataRecord(metadataEntity, scope),
-                 new MetadataRecord(metadataEntity, scope, previousRef.get().getProperties(), EMPTY_TAGS));
+    publishAudit(previousRef.get(), new MetadataRecordV2(metadataEntity, scope),
+                 new MetadataRecordV2(metadataEntity, scope, previousRef.get().getProperties(), EMPTY_TAGS));
   }
 
   /**
@@ -291,13 +291,13 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void removeProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                                final String... keys) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     final ImmutableMap.Builder<String, String> deletesBuilder = ImmutableMap.builder();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(metadataEntity, scope, input.getProperties(metadataEntity),
-                                           input.getTags(metadataEntity)));
+        previousRef.set(new MetadataRecordV2(metadataEntity, scope, input.getProperties(metadataEntity),
+                                             input.getTags(metadataEntity)));
         for (String key : keys) {
           MetadataEntry record = input.getProperty(metadataEntity, key);
           if (record == null) {
@@ -308,8 +308,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.removeProperties(metadataEntity, keys);
       }
     }, scope);
-    publishAudit(previousRef.get(), new MetadataRecord(metadataEntity, scope),
-                 new MetadataRecord(metadataEntity, scope, deletesBuilder.build(), EMPTY_TAGS));
+    publishAudit(previousRef.get(), new MetadataRecordV2(metadataEntity, scope),
+                 new MetadataRecordV2(metadataEntity, scope, deletesBuilder.build(), EMPTY_TAGS));
   }
 
   /**
@@ -317,18 +317,18 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeTags(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(metadataEntity, scope, input.getProperties(metadataEntity),
-                                           input.getTags(metadataEntity)));
+        previousRef.set(new MetadataRecordV2(metadataEntity, scope, input.getProperties(metadataEntity),
+                                             input.getTags(metadataEntity)));
         input.removeTags(metadataEntity);
       }
     }, scope);
-    MetadataRecord previous = previousRef.get();
-    publishAudit(previous, new MetadataRecord(metadataEntity, scope),
-                 new MetadataRecord(metadataEntity, scope, EMPTY_PROPERTIES, previous.getTags()));
+    MetadataRecordV2 previous = previousRef.get();
+    publishAudit(previous, new MetadataRecordV2(metadataEntity, scope),
+                 new MetadataRecordV2(metadataEntity, scope, EMPTY_PROPERTIES, previous.getTags()));
   }
 
   /**
@@ -337,17 +337,17 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void removeTags(final MetadataScope scope, final MetadataEntity metadataEntity,
                          final String... tagsToRemove) {
-    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    final AtomicReference<MetadataRecordV2> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(metadataEntity, scope, input.getProperties(metadataEntity),
-                                           input.getTags(metadataEntity)));
+        previousRef.set(new MetadataRecordV2(metadataEntity, scope, input.getProperties(metadataEntity),
+                                             input.getTags(metadataEntity)));
         input.removeTags(metadataEntity, tagsToRemove);
       }
     }, scope);
-    publishAudit(previousRef.get(), new MetadataRecord(metadataEntity, scope),
-                 new MetadataRecord(metadataEntity, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
+    publishAudit(previousRef.get(), new MetadataRecordV2(metadataEntity, scope),
+                 new MetadataRecordV2(metadataEntity, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
   }
 
   @Override
@@ -512,18 +512,18 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(final Set<MetadataEntity> metadataEntities,
-                                                   final long timeMillis) {
-    return ImmutableSet.<MetadataRecord>builder()
+  public Set<MetadataRecordV2> getSnapshotBeforeTime(final Set<MetadataEntity> metadataEntities,
+                                                     final long timeMillis) {
+    return ImmutableSet.<MetadataRecordV2>builder()
       .addAll(getSnapshotBeforeTime(MetadataScope.USER, metadataEntities, timeMillis))
       .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, metadataEntities, timeMillis))
       .build();
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope,
-                                                   final Set<MetadataEntity> metadataEntities,
-                                                   final long timeMillis) {
+  public Set<MetadataRecordV2> getSnapshotBeforeTime(MetadataScope scope,
+                                                     final Set<MetadataEntity> metadataEntities,
+                                                     final long timeMillis) {
     Set<Metadata> metadataHistoryEntries =
       execute(new TransactionExecutor.Function<MetadataDataset, Set<Metadata>>() {
         @Override
@@ -532,10 +532,10 @@ public class DefaultMetadataStore implements MetadataStore {
         }
       }, scope);
 
-    ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
+    ImmutableSet.Builder<MetadataRecordV2> builder = ImmutableSet.builder();
     for (Metadata metadata : metadataHistoryEntries) {
-      builder.add(new MetadataRecord(metadata.getEntityId(), scope,
-                                     metadata.getProperties(), metadata.getTags()));
+      builder.add(new MetadataRecordV2(metadata.getEntityId(), scope,
+                                       metadata.getProperties(), metadata.getTags()));
     }
     return builder.build();
   }
@@ -574,7 +574,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
-  private void publishAudit(MetadataRecord previous, MetadataRecord additions, MetadataRecord deletions) {
+  private void publishAudit(MetadataRecordV2 previous, MetadataRecordV2 additions, MetadataRecordV2 deletions) {
     MetadataPayloadBuilder builder = new MetadataPayloadBuilder();
     builder.addPrevious(previous);
     builder.addAdditions(additions);

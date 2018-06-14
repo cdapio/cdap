@@ -28,7 +28,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.AllProgramsApp;
@@ -38,6 +37,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
@@ -62,6 +62,7 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.common.http.HttpRequest;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -81,6 +82,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -100,8 +102,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   private final DatasetId myds = NamespaceId.DEFAULT.dataset("myds");
   private final StreamId mystream = NamespaceId.DEFAULT.stream("mystream");
   private final StreamViewId myview = mystream.view("myview");
-  private final MetadataEntity fieldEntity = MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "myds")
-    .append("field", "empname");
+  private final ApplicationId nonExistingApp = new ApplicationId("blah", AppWithDataset.class.getSimpleName());
+  private final ProgramId nonExistingService = nonExistingApp.service("PingService");
+  private final DatasetId nonExistingDataset = new DatasetId("blah", "myds");
+  private final StreamId nonExistingStream = new StreamId("blah", "mystream");
+  private final StreamViewId nonExistingView = nonExistingStream.view("myView");
+  private final ArtifactId nonExistingArtifact = new ArtifactId("blah", "art", "1.0.0");
 
   @Before
   public void before() throws Exception {
@@ -237,10 +243,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Should get empty
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "sKey:s");
-    Assert.assertEquals(0, searchProperties.size());
+    Assert.assertTrue(searchProperties.size() == 0);
 
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "s");
-    Assert.assertEquals(0, searchProperties.size());
+    Assert.assertTrue(searchProperties.size() == 0);
 
     // search non-existent property should return empty set
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "NullKey:s*");
@@ -281,9 +287,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testTags() throws Exception {
     // should fail because we haven't provided any metadata in the request
-    addTags(myds, null, BadRequestException.class);
-    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
-    addTags(myds, datasetTags);
     addTags(application, null, BadRequestException.class);
     Set<String> appTags = ImmutableSet.of("aTag", "aT", "Wow-WOW1", "WOW_WOW2");
     addTags(application, appTags);
@@ -291,6 +294,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(pingService, null, BadRequestException.class);
     Set<String> serviceTags = ImmutableSet.of("sTag", "sT");
     addTags(pingService, serviceTags);
+    addTags(myds, null, BadRequestException.class);
+    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
+    addTags(myds, datasetTags);
     addTags(mystream, null, BadRequestException.class);
     Set<String> streamTags = ImmutableSet.of("stTag", "stT", "Wow-WOW1", "WOW_WOW2");
     addTags(mystream, streamTags);
@@ -299,9 +305,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(myview, viewTags);
     Set<String> artifactTags = ImmutableSet.of("rTag", "rT");
     addTags(artifactId, artifactTags);
-    Set<String> fieldTags = ImmutableSet.of("fTag", "fT");
-    addTags(fieldEntity, fieldTags);
-
     // retrieve tags and verify
     Set<String> tags = getTags(application, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(appTags));
@@ -321,9 +324,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     tags = getTags(artifactId, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(artifactTags));
     Assert.assertTrue(artifactTags.containsAll(tags));
-    tags = getTags(fieldEntity, MetadataScope.USER);
-    Assert.assertTrue(tags.containsAll(fieldTags));
-    Assert.assertTrue(fieldTags.containsAll(tags));
     // test search for stream
     Set<MetadataSearchResultRecord> searchTags =
       searchMetadata(NamespaceId.DEFAULT, "stT", EntityTypeSimpleName.STREAM);
@@ -502,6 +502,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     } catch (NotFoundException e) {
       // expected
     }
+
+    // Now try to get from invalid entity should throw 404.
+    getPropertiesFromInvalidEntity(programId);
   }
 
   @Test
@@ -558,6 +561,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Deploy WordCount App without Flow program. No need to start/stop the flow.
     appClient.deploy(TEST_NAMESPACE1, createAppJarFile(WordCountMinusFlowApp.class));
+
+    // Get properties from deleted (flow) program - should return 404
+    getPropertiesFromInvalidEntity(program);
 
     // Delete the App after stopping the flow
     appClient.delete(TEST_NAMESPACE1.app("WordCountApp"));
@@ -680,7 +686,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ImmutableSet.of(
         new MetadataRecord(artifactId, MetadataScope.SYSTEM,
                            ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, artifactId.getEntityName()),
-                           ImmutableSet.<String>of())
+                           ImmutableSet.of())
       ),
       removeCreationTime(getMetadata(artifactId, MetadataScope.SYSTEM))
     );
@@ -1330,7 +1336,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                                                         new MetadataSearchResultRecord(dataset),
                                                                         new MetadataSearchResultRecord(stream),
                                                                         new MetadataSearchResultRecord(view));
-    List<String> expectedCursors = ImmutableList.of();
+    List<String>  expectedCursors = ImmutableList.of();
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
     Assert.assertEquals(expectedCursors, searchResponse.getCursors());
 
@@ -1377,7 +1383,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   private Set<NamespacedEntityId> getEntities(Set<MetadataSearchResultRecord> results) {
     return Sets.newHashSet(
-      Iterables.transform(results, input -> input.getEntityId())
+      Iterables.transform(results, new Function<MetadataSearchResultRecord, NamespacedEntityId>() {
+        @Override
+        public NamespacedEntityId apply(MetadataSearchResultRecord input) {
+          return input.getEntityId();
+        }
+      })
     );
   }
 
@@ -1821,6 +1832,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertNotNull(systemRecord);
     removeCreationTime(systemRecord.getProperties());
     return original;
+  }
+
+  private Set<MetadataRecord> convertMetadataRecordV2(Set<MetadataRecordV2> metadataRecordV2s) {
+    Set<MetadataRecord> result = new HashSet<>();
+    metadataRecordV2s.forEach(record -> result.add(record.getMetadataRecord()));
+    return result;
   }
 
   private Map<String, String> removeCreationTime(Map<String, String> systemProperties) {

@@ -22,6 +22,7 @@ import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
@@ -44,6 +45,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -52,6 +54,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +79,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
-  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
+  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecordV2>>() { }.getType();
 
   private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
     input -> EntityTypeSimpleName.valueOf(input.toUpperCase());
@@ -297,14 +300,21 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity,
-                                          @Nullable String scope) throws BadRequestException {
+                                            @Nullable String scope) throws BadRequestException {
     // the lineage admin handles the metadata call for program runs so delegate the call to that
+    Set<MetadataRecordV2> metadata;
     if (metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
-      return lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
+      metadata = lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
+    } else {
+      if (scope == null) {
+        metadata = metadataAdmin.getMetadata(metadataEntity);
+      } else {
+        metadata = metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
+      }
     }
-    return (scope == null) ?
-      metadataAdmin.getMetadata(metadataEntity) :
-      metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
+    Set<MetadataRecord> metadataRecords = new HashSet<>();
+    metadata.forEach(record -> metadataRecords.add(record.getMetadataRecord()));
+    return metadataRecords;
   }
 
   private Map<String, String> getProperties(MetadataEntity metadataEntity,
