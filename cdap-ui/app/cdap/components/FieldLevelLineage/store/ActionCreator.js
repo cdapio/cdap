@@ -23,7 +23,9 @@ export function getFields(datasetId) {
 
   let params = {
     namespace,
-    entityId: datasetId
+    entityId: datasetId,
+    start: 'now-7d',
+    end: 'now'
   };
 
   MyMetadataApi.getFields(params)
@@ -33,6 +35,31 @@ export function getFields(datasetId) {
         payload: {
           datasetId,
           fields: res
+        }
+      });
+    });
+}
+
+export function getLineageSummary(fieldName) {
+  let namespace = getCurrentNamespace();
+  let datasetId = Store.getState().lineage.datasetId;
+
+  let params = {
+    namespace,
+    entityId: datasetId,
+    fieldName,
+    direction: 'backward',
+    start: 'now-7d',
+    end: 'now'
+  };
+
+  MyMetadataApi.getFieldLineage(params)
+    .subscribe((res) => {
+      Store.dispatch({
+        type: Actions.setBackwardLineage,
+        payload: {
+          backward: res.backward,
+          activeField: fieldName
         }
       });
     });
