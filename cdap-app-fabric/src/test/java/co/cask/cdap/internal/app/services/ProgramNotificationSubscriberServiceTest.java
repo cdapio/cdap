@@ -45,6 +45,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.reporting.ProgramHeartbeatStore;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -62,7 +63,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ProgramNotificationSubscriberServiceTest {
   private static Table appMetaTable;
+  private static Table heartbeatTable;
   private static AppMetadataStore metadataStoreDataset;
+  private static ProgramHeartbeatStore programHeartbeatStore;
   private static TransactionExecutor txnl;
   private static ProgramStateWriter programStateWriter;
 
@@ -78,6 +81,12 @@ public class ProgramNotificationSubscriberServiceTest {
     appMetaTable = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
                                                    DatasetProperties.EMPTY, Collections.emptyMap());
     metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf);
+
+    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeatStore.TABLE);
+    heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
+                                                     DatasetProperties.EMPTY, Collections.emptyMap());
+    programHeartbeatStore = new ProgramHeartbeatStore(heartbeatTable, cConf);
+
     txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
 
     programStateWriter = injector.getInstance(ProgramStateWriter.class);

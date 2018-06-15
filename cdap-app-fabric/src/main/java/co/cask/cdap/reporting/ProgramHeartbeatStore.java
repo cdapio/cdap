@@ -59,7 +59,7 @@ public class ProgramHeartbeatStore {
   private final Table table;
   private final CConfiguration cConfiguration;
 
-  ProgramHeartbeatStore(Table table, CConfiguration cConfiguration) {
+  public ProgramHeartbeatStore(Table table, CConfiguration cConfiguration) {
     this.table = table;
     this.cConfiguration = cConfiguration;
   }

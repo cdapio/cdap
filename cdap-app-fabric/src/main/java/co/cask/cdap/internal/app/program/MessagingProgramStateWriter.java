@@ -55,9 +55,6 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   // TODO move constant to right location after making it configurable
   private static final int DEFAULT_HEARTBEAT_INTERVAL_MIN = 10;
 
-  private final MessagingService messagingService;
-  private final TopicId topicId;
-  private final RetryStrategy retryStrategy;
   private final ProgramStatePublisher programStatePublisher;
 
   private ScheduledExecutorService scheduledExecutorService;
@@ -66,9 +63,8 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
-    this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
-    this.messagingService = messagingService;
+    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
     this.programStatePublisher = new ProgramStatePublisher(messagingService, topicId, retryStrategy);
   }
 
