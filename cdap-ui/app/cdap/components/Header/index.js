@@ -96,7 +96,7 @@ export default class Header extends Component {
       return true;
     }
     let {selectedNamespace: namespace} = NamespaceStore.getState();
-    let rulesenginepath = `/ns/${namespace}/ruleengine`;
+    let rulesenginepath = `/cdap/ns/${namespace}/rulesengine`;
     return location.pathname.startsWith(rulesenginepath);
   };
 
@@ -105,8 +105,8 @@ export default class Header extends Component {
       return true;
     }
     let {selectedNamespace: namespace} = NamespaceStore.getState();
-    let dataprepBasePath = `/ns/${namespace}/dataprep`;
-    let connectionsBasePath = `/ns/${namespace}/connections`;
+    let dataprepBasePath = `/cdap/ns/${namespace}/dataprep`;
+    let connectionsBasePath = `/cdap/ns/${namespace}/connections`;
 
     if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
       return true;
@@ -119,8 +119,37 @@ export default class Header extends Component {
       return true;
     }
     let {selectedNamespace: namespace} = NamespaceStore.getState();
-    let experimentsBasePath = `/ns/${namespace}/experiments`;
+    let experimentsBasePath = `/cdap/ns/${namespace}/experiments`;
     return location.pathname.startsWith(experimentsBasePath);
+  };
+
+  isCDAPActive = () => {
+    let location = window.location;
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+
+    let basePath = `/cdap/ns/${namespace}`;
+
+    let dataprepBasePath = `${basePath}/dataprep`;
+    let connectionsBasePath = `${basePath}/connections`;
+    let rulesenginepath = `${basePath}/rulesengine`;
+    let analytics = `${basePath}/experiments`;
+    let namespaceDetails = `${basePath}/details`;
+    let createProfile = `${basePath}/profiles/create`;
+    let profileDetails = `${basePath}/profiles/details`;
+
+    if (
+      location.pathname.startsWith(basePath) &&
+      !location.pathname.startsWith(dataprepBasePath) &&
+      !location.pathname.startsWith(connectionsBasePath) &&
+      !location.pathname.startsWith(rulesenginepath) &&
+      !location.pathname.startsWith(analytics) &&
+      !location.pathname.startsWith(namespaceDetails) &&
+      !location.pathname.startsWith(createProfile) &&
+      !location.pathname.startsWith(profileDetails)
+    ) {
+      return true;
+    }
+    return false;
   };
 
   render() {
@@ -161,50 +190,50 @@ export default class Header extends Component {
           </NavLinkWrapper>
         </div>
         <ul className="navbar-list-section control-center">
-          <li className="with-shadow">
+          <li className={classnames({ 'active': this.isCDAPActive() })}>
             <ControlCenterDropdown
               nativeLink={this.props.nativeLink}
               namespace={this.state.currentNamespace}
             />
           </li>
-          <li className="with-shadow">
+          <li className={classnames({
+            'active': this.isDataPrepActive()
+          })}>
             <NavLinkWrapper
               isNativeLink={this.props.nativeLink}
               to={this.props.nativeLink ? `/cdap${dataprepUrl}` : dataprepUrl}
-              isActive={this.isDataPrepActive}
             >
               {T.translate(`features.Navbar.Dataprep`)}
             </NavLinkWrapper>
           </li>
-          <li>
-            <a
-              href={pipelinesListUrl}
-              className={classnames({
-                'active': isPipelinesViewActive
-              })}
-            >
+          <li className={classnames({
+            'active': isPipelinesViewActive
+          })}>
+            <a href={pipelinesListUrl}>
               {T.translate('features.Navbar.pipelinesLabel')}
             </a>
           </li>
-          <li>
+          <li className={classnames({
+            'active': this.isMMDSActive()
+          })}>
             <NavLinkWrapper
               isNativeLink={this.props.nativeLink}
               to={this.props.nativeLink ? `/cdap${mmdsurl}` : mmdsurl}
-              isActive={this.isMMDSActive}
               >
               {T.translate(`features.Navbar.MMDS`)}
             </NavLinkWrapper>
           </li>
-          <li>
+          <li className={classnames({
+            'active': this.isRulesEnginedActive()
+          })}>
               <NavLinkWrapper
                 isNativeLink={this.props.nativeLink}
                 to={this.props.nativeLink ? `/cdap${rulesengineUrl}` : rulesengineUrl}
-                isActive={this.isRulesEnginedActive}
               >
                 {T.translate(`features.Navbar.rulesmgmt`)}
               </NavLinkWrapper>
           </li>
-          <li>
+          <li className={classnames({'active': location.pathname.indexOf('metadata') !== -1})}>
             <MetadataDropdown />
           </li>
         </ul>
@@ -213,15 +242,14 @@ export default class Header extends Component {
           })}>
           <div className="navbar-right-section">
             <ul>
-              <li className="with-shadow">
+              <li className="with-pointer">
                 <CaskMarketButton>
-                  <span className="fa icon-CaskMarket"></span>
-                  <span>{T.translate('commons.market')}</span>
+                  <span className="hub-text-wrapper">{T.translate('commons.market')}</span>
                 </CaskMarketButton>
               </li>
               <li
                 id="header-namespace-dropdown"
-                className="with-shadow namespace-dropdown-holder">
+                className="with-pointer namespace-dropdown-holder">
                 {
                   !this.props.nativeLink ?
                     <NamespaceDropdown />
@@ -229,7 +257,7 @@ export default class Header extends Component {
                     <NamespaceDropdown tag="a"/>
                 }
               </li>
-              <li className="with-shadow cdap-menu clearfix">
+              <li className="with-pointer cdap-menu clearfix">
                 <ProductDropdown
                   nativeLink={this.props.nativeLink}
                 />

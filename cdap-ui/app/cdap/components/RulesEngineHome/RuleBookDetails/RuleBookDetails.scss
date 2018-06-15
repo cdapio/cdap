@@ -17,7 +17,7 @@
 @import '../RulesEngineWrapper.scss';
 @import '../../../styles/variables.scss';
 
-$loading_bar_color: white;
+$loading_bar_color: $blue-06;
 $rule-book-metadata-color: #999999;
 $header-bg-color: #f5f5f5;
 $rule-book-create-fields-required-color: $cdap-red-text;

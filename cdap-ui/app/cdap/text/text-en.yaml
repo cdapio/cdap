@@ -83,7 +83,7 @@ commons:
     reset: Reset
     valueLabel: Value
     valuePlaceholder: value
-  market: Cask Market
+  market: Hub
   milliSecondsShortLabel: ms
   nameLabel: Name
   noLabel: No
@@ -293,7 +293,7 @@ features:
         clear: Clear
         entities: " new entities; or"
         filter: " your filters; or"
-        Market: " Cask Market"
+        Market: " Hub"
         search: " your search; or"
       default: No entities found in namespace "{namespace}"
       filter: No entities found for your selection
@@ -908,15 +908,15 @@ features:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
     PipelineError:
-      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Cask Market.
+      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
       defaultMessage: Error adding to pipeline.
       fileBatch: Unable to find Core Plugins. Please make sure Core Plugins are available.
       fileRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available.
-      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market.
-      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market.
-      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market.
-      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market
+      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Hub.
+      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Hub.
+      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Hub.
+      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Hub
     sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
@@ -995,7 +995,7 @@ features:
         uploadSubTitle: Select the file to be uploaded to the workspace
         uploadBtnLabel: Upload
     Upgrade:
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Hub."
     WorkspaceTabs:
       DeleteModal:
         cancelButton: No, keep tab open
@@ -1054,7 +1054,7 @@ features:
         DatabaseOptions:
           install: "Install Driver: "
           installedLabel: Driver Installed
-          market: Cask Market
+          market: Hub
           optionsTitle: Select the type of database you want to connect to
           upload: Upload
         ModalHeader:
@@ -2108,20 +2108,6 @@ features:
       symbolName: Symbol Name
   ServiceEnableUtility:
     serviceNotFound: Cannot find {artifactName} artifact
-  SplashScreen:
-    buttons:
-      getStarted: Read the Docs
-      introduction: Intro to CDAP
-      register: Register for Updates
-    dontShow: Don't show this again
-    getUpdates: Get Updates
-    intro-message: Unified Integration Platform for Big Data
-    title: Welcome to
-    titleTwo: Cask Data Application Platform
-    registration-zero: I
-    registration-one: would like to receive product updates and
-    registration-two: newsletters from Cask at this email address
-
   SpotlightSearch:
     SpotlightModal:
       headerTagResults: Entities with the tag "{tag}"
@@ -2306,7 +2292,7 @@ features:
       subtitle: You can now create a pipeline using the library.
     licenseStep:
       agreeAndActionBtnLabel: Agree
-      backToCaskBtnLabel: Back to Cask Market
+      backToCaskBtnLabel: Back to Hub
       termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin

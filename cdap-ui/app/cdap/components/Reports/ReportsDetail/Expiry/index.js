@@ -35,12 +35,14 @@ function ExpiryView({expiry}) {
 
   return (
     <span className="expiry">
-      <span>{T.translate(`${PREFIX}.expiresIn`)}</span>
+      <strong>
+        {T.translate(`${PREFIX}.expiresIn`)}
 
-      <Duration
-        targetTime={expiry}
-        isMillisecond={false}
-      />
+        <Duration
+          targetTime={expiry}
+          isMillisecond={false}
+        />
+      </strong>
     </span>
   );
 }

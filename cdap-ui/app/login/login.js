@@ -23,7 +23,7 @@ import Card from './components/Card';
 import CardActionFeedback from './components/CardActionFeedback';
 
 import * as util from './utils';
-import Footer from './components/Footer';
+import Footer from '../cdap/components/Footer';
 
 require('./styles/lib-styles.scss');
 require('./login.scss');

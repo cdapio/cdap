@@ -20,12 +20,11 @@ import React from 'react';
 import {Modal, ModalBody} from 'reactstrap';
 import T from 'i18n-react';
 import {getModeWithCloudProvider} from 'components/Header/ProductDropdown/helper';
+import Footer from 'components/Footer';
 
 require('./AboutPageModal.scss');
 
 export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
-  let termsConditionsUrl = 'http://cask.co/terms/';
-  let privacyPolicyUrl = 'http://cask.co/privacy/';
   let mode = getModeWithCloudProvider();
   return (
     <Modal
@@ -44,8 +43,8 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
         </div>
         <div className="about-title">
           <div className="cdap-logo-with-version">
-            <div>
-              <img src='/cdap_assets/img/CDAP_about_logo.png' />
+            <div className="logo-container">
+              <img src='/cdap_assets/img/CDAP_darkgray.png' />
             </div>
             <span className="cdap-version">
               {T.translate('features.AboutPage.version', {version: cdapVersion})}
@@ -68,27 +67,8 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
               </span>
             </span>
           </div>
-          <div className="cdap-copyright">
-            <p>
-              {T.translate('features.AboutPage.copyright.firstLine')}
-              <br />
-              {T.translate('features.AboutPage.copyright.secondLine.view')}
-              <a
-                href={termsConditionsUrl}
-                target="_blank"
-              >
-                {T.translate('features.AboutPage.copyright.secondLine.termsAndConditions')}
-              </a>
-              {T.translate('features.AboutPage.copyright.secondLine.and')}
-              <a
-                href={privacyPolicyUrl}
-                target="_blank"
-              >
-                {T.translate('features.AboutPage.copyright.secondLine.privacyPolicy')}
-              </a>
-            </p>
-          </div>
         </div>
+        <Footer />
       </ModalBody>
     </Modal>
   );

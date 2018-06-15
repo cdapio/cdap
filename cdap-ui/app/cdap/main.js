@@ -30,7 +30,6 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Home from 'components/Home';
 import Header from 'components/Header';
 import Footer from 'components/Footer';
-import SplashScreen from 'components/SplashScreen';
 import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
@@ -105,7 +104,6 @@ class CDAP extends Component {
         <div className="cdap-container">
           <Helmet title={T.translate('commons.cdap')} />
           <Header />
-          <SplashScreen openVideo={this.openCaskVideo}/>
           <LoadingIndicator />
           <StatusAlertMessage />
           {

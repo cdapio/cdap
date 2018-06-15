@@ -30,6 +30,7 @@ import IconSVG from 'components/IconSVG';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 import {getMode} from 'components/Header/ProductDropdown/helper';
+import classnames from 'classnames';
 
 require('./ProductDropdown.scss');
 
@@ -140,17 +141,14 @@ export default class ProductDropdown extends Component {
           className="product-dropdown"
           toggle={this.toggleCdapMenuDropdown.bind(this)}>
           <DropdownToggle caret>
+            <div className="secure-mode-icon">
+              <IconSVG name={ window.CDAP_CONFIG.securityEnabled ? "icon-lock_close" : "" } />
+              <div className="cdap-mode">{mode}</div>
+            </div>
             <div className="cdap-logo-container">
-              <div className="cdap-logo">
-                <img src="/cdap_assets/img/cdap_logo.png" />
-              </div>
               <div className="caret-down-container">
                 <IconSVG name="icon-caret-down" />
               </div>
-            </div>
-            <div className="secure-mode-icon">
-              <div className="cdap-mode">{mode}</div>
-              <IconSVG name={ window.CDAP_CONFIG.securityEnabled ? "icon-lock_close" : "" } />
             </div>
           </DropdownToggle>
           <CustomDropdownMenu right>
@@ -164,7 +162,12 @@ export default class ProductDropdown extends Component {
             <DropdownItem tag="li">
               {
                 !this.props.nativeLink ?
-                  <Link to={administrationURL}>
+                  <Link
+                    to={administrationURL}
+                    className={classnames({
+                      'active': administrationURL === location.pathname.replace(/\/cdap/, '')
+                    })}
+                  >
                     {T.translate('features.Administration.Title')}
                   </Link>
                 :
