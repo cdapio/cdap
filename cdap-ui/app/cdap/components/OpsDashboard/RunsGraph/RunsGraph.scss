@@ -155,4 +155,12 @@ $last-24-hours-btn-color: $blue-02;
     font-size: 12px;
     fill: $legend-font-color;
   }
+
+  .axis-date {
+    font-size: 13px;
+  }
+
+  .axis-last-updated {
+    text-anchor: end;
+  }
 }

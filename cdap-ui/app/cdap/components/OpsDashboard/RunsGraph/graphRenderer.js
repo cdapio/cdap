@@ -17,6 +17,7 @@
 import * as d3 from 'd3';
 import DashboardStore, {DashboardActions, ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
 import moment from 'moment-timezone';
+import {humanReadableDate} from 'services/helpers';
 
 const AXIS_BUFFER = 1.1;
 
@@ -104,17 +105,20 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .select('line')
     .remove();
 
+  // X Axis Legend
   // need to add some pixels show the legend doesn't appear outside
   // the graph container
   let legendYOffset = margin.top + 2;
+  let localTimeZone = moment.tz(moment.tz.guess()).format('z');
 
   chart.append('g')
     .attr('class', 'legend axis-x-legend')
     .append('text')
       .attr('transform', `translate(${width / 2}, ${containerHeight - legendYOffset})`)
-      .text(`Time (${moment.tz(moment.tz.guess()).format('z')})`);
-      // .text(timeLabel);
+      .text(`Time (${localTimeZone})`);
 
+
+  // Dates axis
   let dateMap = {};
   data.forEach((d) => {
     let time = parseInt(d.time, 10);
@@ -147,10 +151,23 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   dateAxisGroup.select('.domain')
     .remove();
 
+
+  // Last updated axis
+
+  let currentTime = humanReadableDate(Date.now(), true);
+  let lastUpdatedYOffset = -10;
+
+  chart.append('g')
+    .attr('class', 'axis-last-updated')
+    .append('text')
+      .attr('transform', `translate(${width + margin.right}, ${lastUpdatedYOffset})`)
+      .text(`Last updated ${currentTime} ${localTimeZone}`);
+
+
+  // Y Axis Left
   const legendOffset = 30;
   const ticksFontSize = 10;
 
-  // Y Axis Left
   chart.append('g')
     .attr('class', 'axis axis-y-left')
     .attr('font-size', ticksFontSize)
