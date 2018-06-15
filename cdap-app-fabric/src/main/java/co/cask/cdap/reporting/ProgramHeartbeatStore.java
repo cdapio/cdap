@@ -20,13 +20,14 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
@@ -36,8 +37,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+/**
+ * Heartbeat Store that writes heart beat messages and program status messages
+ * to {@linkConstants.ProgramHeartbeatStore.TABLE}. This is used by the program-report system app to efficiently
+ * scan and return results for dashboard status queries
+ */
 public class ProgramHeartbeatStore {
   private static final Gson GSON = new GsonBuilder().create();
   private static final byte[] COLUMN_NAME = Bytes.toBytes("status");
@@ -55,7 +65,7 @@ public class ProgramHeartbeatStore {
   }
 
   /**
-   * Static method for creating an instance of {@link AppMetadataStore}.
+   * Static method for creating an instance of {@link ProgramHeartbeatStore}.
    */
   public static ProgramHeartbeatStore create(CConfiguration cConf,
                                         DatasetContext datasetContext,
@@ -70,45 +80,34 @@ public class ProgramHeartbeatStore {
   }
 
   /**
-   *
    * TODO update javadoc
    * create rowkey based on notification and write the program run id with the rowkey
    * @param notification
-   * @param programRunId
    * Row key design:
    *
-   * <message-timestamp>:<program-status>:<program-run-id>
-   *
-   * where:
-   *
-   * <message-timestamp>: the time when the message is published
-   *
-   *
-   * <program-status>: program status - we also publish status during start, stop, error, etc along with heartbeat during running  (optional ?)
-   *
-   * <program-run-id>: app+program type+program+run
-   *
-   * Value:
-   *
-   * Map of <String, String> or object including ProgramRunId, system arguments, ArtifactId, principal, startTime, runningTime, stopTime.
    */
-  public void writeProgramHeartBeatStatus(Notification notification, ProgramRunId programRunId) {
+  public void writeProgramHeartBeatStatus(Notification notification) {
     String timestamp = notification.getProperties().get(ProgramOptionConstants.HEART_BEAT_TIME);
     String programStatus = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
-    byte[] rowKey = createRowKey(timestamp, programStatus, programRunId);
+    byte[] rowKey = createRowKey(timestamp, programStatus);
     table.put(rowKey, COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
   }
 
-  private byte[] createRowKey(String timestamp, String programStatus, ProgramRunId programRunId) {
-    String rowKey = String.format("%s%s%s%s%s",
-                                  timestamp, ROW_KEY_SEPARATOR, programStatus, ROW_KEY_SEPARATOR,
-                                  GSON.toJson(programRunId));
-
+  /**
+   * create row-key by appending timestamp, programStatus and programRunId separated by separator.
+   * @return row-key byte array
+   */
+  private byte[] createRowKey(String timestamp, String programStatus) {
+    String rowKey = String.format("%s%s%s", timestamp, ROW_KEY_SEPARATOR, programStatus);
     return Bytes.toBytes(rowKey);
   }
 
-
-  public void writeProgramStatus(Notification notification, ProgramRunId programRunId) {
+  /**
+   * find timestamp, timestamp key changes based on the program status and
+   * create rowkey timestamp:program-status:programRunId. perform a put of notification object with the created rowkey.
+   * @param notification
+   */
+  public void writeProgramStatus(Notification notification) {
     String programStatus = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
     ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(programStatus);
     if (programRunStatus.equals(ProgramRunStatus.STARTING)) {
@@ -119,11 +118,12 @@ public class ProgramHeartbeatStore {
       // TODO log an error/warning this shouldn't happen
       return;
     }
-    table.put(createRowKey(timestamp, programStatus, programRunId), COLUMN_NAME,
-              Bytes.toBytes(GSON.toJson(notification)));
-
+    table.put(createRowKey(timestamp, programStatus), COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
   }
 
+  /**
+   * find the timestamp based on program status and return the string representation of the timestamp.
+   */
   private String parseTimestamp(ProgramRunStatus programStatus, Map<String, String> properties) {
     switch (programStatus) {
       case RUNNING:
@@ -141,4 +141,43 @@ public class ProgramHeartbeatStore {
     }
   }
 
+  /**
+   * scan the table for the time range and return collection of completed and actively running runs
+   * @param startTime inclusive start time in milliseconds
+   * @param endTime exclusive end time in milliseconds
+   * @return collection of program runid matching the parameter requirements
+   */
+  Collection<Notification> scan(long startTime, long endTime) {
+    byte[] startRowKey = Bytes.toBytes(startTime);
+    byte[] endRowKey = Bytes.toBytes(endTime);
+    Scanner scanner = table.scan(startRowKey, endRowKey);
+    Row row;
+    List<Notification> result = new ArrayList<>();
+    Map<ProgramRunId, Notification> runningRuns = new HashMap();
+    while ((row = scanner.next()) != null) {
+      Notification notification = GSON.fromJson(Bytes.toString(row.getColumns().get(COLUMN_NAME)), Notification.class);
+      Map<String, String> properties = notification.getProperties();
+      // Required parameters
+      String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
+      ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(properties.get(ProgramOptionConstants.PROGRAM_STATUS));
+      ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
+      if (programRunStatus.equals(ProgramRunStatus.STARTING)) {
+        // this shouldn't happen as we skip writing starting status runs.
+        continue;
+      }
+      if (programRunStatus.equals(ProgramRunStatus.RUNNING)) {
+        if(!runningRuns.containsKey(programRunId)) {
+          runningRuns.put(programRunId, notification);
+        }
+      } else {
+        if (programRunStatus.isEndState() && runningRuns.containsKey(programRunId)) {
+          runningRuns.remove(programRunId);
+        }
+        result.add(notification);
+      }
+    }
+    // finally we merge the actively still running runs into the result list and return
+    result.addAll(runningRuns.values());
+    return result;
+  }
 }

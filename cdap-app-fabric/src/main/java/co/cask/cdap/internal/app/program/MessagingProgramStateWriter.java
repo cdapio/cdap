@@ -39,6 +39,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,8 +58,9 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   private final MessagingService messagingService;
   private final TopicId topicId;
   private final RetryStrategy retryStrategy;
-  private final ScheduledExecutorService scheduledExecutorService;
   private final ProgramStatePublisher programStatePublisher;
+
+  private ScheduledExecutorService scheduledExecutorService;
 
   //private final int heartBeatInterval;
 
@@ -67,8 +69,6 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
     this.messagingService = messagingService;
-    this.scheduledExecutorService =
-      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
     this.programStatePublisher = new ProgramStatePublisher(messagingService, topicId, retryStrategy);
   }
 
@@ -100,9 +100,22 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
-    ProgramRunHeartbeat programRunHeartbeat = new ProgramRunHeartbeat(programStatePublisher, properties.build());
-    scheduledExecutorService.scheduleAtFixedRate(programRunHeartbeat, DEFAULT_HEARTBEAT_INTERVAL_MIN,
-                                                 DEFAULT_HEARTBEAT_INTERVAL_MIN, TimeUnit.MINUTES);
+    scheduleHeartBeatThread(properties.build());
+  }
+
+  /**
+   * if executor service isn't initialized or if its shutdown
+   * create a new exector service and schedule a heartbeat thread
+   * @param properties
+   */
+  private void scheduleHeartBeatThread(Map<String, String> properties) {
+    if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {
+      scheduledExecutorService =
+        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
+      ProgramRunHeartbeat programRunHeartbeat = new ProgramRunHeartbeat(programStatePublisher, properties);
+      scheduledExecutorService.scheduleAtFixedRate(programRunHeartbeat, DEFAULT_HEARTBEAT_INTERVAL_MIN,
+                                                   DEFAULT_HEARTBEAT_INTERVAL_MIN, TimeUnit.MINUTES);
+    }
   }
 
   @Override
@@ -130,17 +143,20 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
                                     .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
                                     .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions)).build()
     );
+    if (scheduledExecutorService != null) {
+      scheduledExecutorService.shutdownNow();
+    }
   }
 
   @Override
   public void resume(ProgramRunId programRunId, ProgramOptions programOptions) {
-    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS,
-                                  ImmutableMap.<String, String>builder()
-                                    .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-                                    .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
-                                    .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
-                                    .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions)).build()
-    );
+    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
+      .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions)).build();
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
+    scheduleHeartBeatThread(properties);
   }
 
   private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause,
@@ -154,5 +170,8 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       properties.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
     }
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
+    if (scheduledExecutorService != null) {
+      scheduledExecutorService.shutdownNow();
+    }
   }
 }

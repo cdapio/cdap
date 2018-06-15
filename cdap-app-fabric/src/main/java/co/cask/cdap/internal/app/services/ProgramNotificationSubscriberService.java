@@ -218,14 +218,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
     if (programRunStatus != null) {
       handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
-                         appMetadataStore);
+                         appMetadataStore, getProgramHeartbeatStore(datasetContext));
     }
 
     if (clusterStatus == null) {
       return Optional.empty();
     }
     if (notification.getNotificationType().equals(Notification.Type.HEART_BEAT)) {
-      getProgramHeartbeatStore(datasetContext).writeProgramHeartBeatStatus(notification, programRunId);
+      getProgramHeartbeatStore(datasetContext).writeProgramHeartBeatStatus(notification);
       // we can skip from recording heartbeat messages in app meta.
       return Optional.empty();
     }
@@ -235,7 +235,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  AppMetadataStore appMetadataStore) throws Exception {
+                                  AppMetadataStore appMetadataStore,
+                                  ProgramHeartbeatStore heartbeatStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
@@ -315,6 +316,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
     if (recordedRunRecord != null) {
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
+      // write the state to heart beat store
+      heartbeatStore.writeProgramStatus(notification);
       if (programRunStatus.isEndState()) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner
