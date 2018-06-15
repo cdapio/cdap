@@ -17,14 +17,10 @@
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
 
+$headerBgColor: $gcp-blue;
+
 .global-navbar {
   height: 50px;
-  background: $navbar-bg;
-  position: fixed;
-  width: 100%;
-  top: 0;
-  z-index: 1000;
-  display: flex;
 
   a,
   button,

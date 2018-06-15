@@ -28,7 +28,7 @@ body {
   min-width: $cdap_body_min_width;
 
   #app-container {
-    margin-top: 50px;
+    margin-top: $height-of-header;
     overflow-y: auto;
     height: calc(100vh - 104px); // Header + footer heights
   }
