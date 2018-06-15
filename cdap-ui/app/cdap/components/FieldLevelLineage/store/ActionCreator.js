@@ -20,7 +20,7 @@ import Store, {Actions} from 'components/FieldLevelLineage/store/Store';
 import debounce from 'lodash/debounce';
 
 export function getFields(datasetId, prefix) {
-  let namespace = getCurrentNamespace();
+  const namespace = getCurrentNamespace();
 
   let params = {
     namespace,
@@ -46,10 +46,10 @@ export function getFields(datasetId, prefix) {
 }
 
 export function getLineageSummary(fieldName) {
-  let namespace = getCurrentNamespace();
-  let datasetId = Store.getState().lineage.datasetId;
+  const namespace = getCurrentNamespace();
+  const datasetId = Store.getState().lineage.datasetId;
 
-  let params = {
+  const params = {
     namespace,
     entityId: datasetId,
     fieldName,
@@ -84,4 +84,34 @@ export function search(e) {
   });
 
   debouncedGetFields(datasetId, searchText);
+}
+
+export function getOperations() {
+  Store.dispatch({
+    type: Actions.operationsLoading
+  });
+
+  const state = Store.getState().lineage;
+  const entityId = state.datasetId;
+  const fieldName = state.activeField;
+  const namespace = getCurrentNamespace();
+
+  const params = {
+    namespace,
+    entityId,
+    fieldName,
+    start: 'now-7d',
+    end: 'now',
+    direction: 'backward'
+  };
+
+  MyMetadataApi.getFieldOperations(params)
+    .subscribe((res) => {
+      Store.dispatch({
+        type: Actions.setBackwardOperations,
+        payload: {
+          backwardOperations: res.backward
+        }
+      });
+    });
 }
