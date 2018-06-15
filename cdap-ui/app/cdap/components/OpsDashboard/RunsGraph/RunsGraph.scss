@@ -23,6 +23,7 @@ $border-color: $grey-05;
 $date-color: $grey-01;
 $selected-bucket-outline-color: $yellow-02;
 $selected-bucket-fill-color: $grey-04;
+$legend-font-color: $grey-02;
 
 // Graph colors
 $manual: $blue-grey04;
@@ -119,14 +120,6 @@ $delay: $grey-04;
 
     .arrow-left { left: 5px; }
     .arrow-right { right: 5px; }
-  }
-
-  .toggle-runs-list {
-    padding-left: 25px;
-    padding-bottom: 10px;
-    font-weight: bold;
-    .toggle-span { cursor: pointer; }
-    .icon-svg { margin-right: 25px; }
   }
 
   .axis {

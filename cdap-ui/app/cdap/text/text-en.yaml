@@ -1447,9 +1447,6 @@ features:
         totalRunsStarted: Total runs started
         totalStartDelay: Total start delay
       table: Table
-      ToggleRunsList:
-        hideRuns: Hide runs
-        showRuns: Show runs
       TypeSelector:
         customAppsWithCount: Custom apps ({count})
         pipelinesWithCount: Pipelines ({count})

@@ -20,7 +20,6 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
-  toggleDisplayRuns: 'DASHBOARD_TOGGLE_DISPLAY_RUNS',
   togglePipeline: 'DASHBOARD_TOGGLE_PIPELINE',
   toggleCustomApp: 'DAHBOARD_TOGGLE_CUSTOM_APP',
   enableLoading: 'DASHBOARD_ENABLE_LOADING',
@@ -44,7 +43,6 @@ const defaultInitialState = {
   pipelineCount: 0,
   customAppCount: 0,
   loading: false,
-  displayRunsList: false,
   displayBucketInfo: null,
   pipeline: true,
   customApp: true,
@@ -67,7 +65,6 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         customAppCount: action.payload.customAppCount,
         startTime: action.payload.startTime,
         duration: action.payload.duration,
-        displayRunsList: true,
         displayBucketInfo: action.payload.data[action.payload.data.length - 1],
         loading: false
       };
@@ -75,12 +72,6 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         displayBucketInfo: action.payload.displayBucketInfo,
-        displayRunsList: true
-      };
-    case DashboardActions.toggleDisplayRuns:
-      return {
-        ...state,
-        displayRunsList: !state.displayRunsList
       };
     case DashboardActions.togglePipeline:
       return {

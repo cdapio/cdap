@@ -18,7 +18,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {renderGraph} from 'components/OpsDashboard/RunsGraph/graphRenderer';
-import ToggleRunsList from 'components/OpsDashboard/RunsGraph/ToggleRunsList';
 import Legends from 'components/OpsDashboard/RunsGraph/Legends';
 import TypeSelector from 'components/OpsDashboard/RunsGraph/TypeSelector';
 import {Observable} from 'rxjs/Observable';
@@ -154,8 +153,6 @@ class RunsGraphView extends Component {
         </div>
 
         {this.props.displayType === 'chart' ? <Legends /> : null}
-
-        <ToggleRunsList />
       </div>
     );
   }

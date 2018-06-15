@@ -112,9 +112,7 @@ function renderGrid(data) {
 }
 
 
-function RunsListView({bucketInfo, displayRunsList}) {
-  if (!displayRunsList) { return null; }
-
+function RunsListView({bucketInfo}) {
   if (!bucketInfo) {
     return (
       <div className="runs-list-container">
@@ -176,14 +174,12 @@ function RunsListView({bucketInfo, displayRunsList}) {
 }
 
 RunsListView.propTypes = {
-  bucketInfo: PropTypes.object,
-  displayRunsList: PropTypes.bool
+  bucketInfo: PropTypes.object
 };
 
 const mapStateToProps = (state) => {
   return {
-    bucketInfo: state.dashboard.displayBucketInfo,
-    displayRunsList: state.dashboard.displayRunsList
+    bucketInfo: state.dashboard.displayBucketInfo
   };
 };
 
