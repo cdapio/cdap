@@ -16,7 +16,7 @@
 
 import * as d3 from 'd3';
 import DashboardStore, {DashboardActions, ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 const AXIS_BUFFER = 1.1;
 
@@ -104,12 +104,16 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .select('line')
     .remove();
 
-  // X Axis Legend
+  // need to add some pixels show the legend doesn't appear outside
+  // the graph container
+  let legendYOffset = margin.top + 2
+
   chart.append('g')
     .attr('class', 'legend axis-x-legend')
     .append('text')
-      .attr('transform', `translate(${width / 2}, ${containerHeight - margin.top})`)
-      .text('Time (PST)');
+      .attr('transform', `translate(${width / 2}, ${containerHeight - legendYOffset})`)
+      .text(`Time (${moment.tz(moment.tz.guess()).format('z')})`);
+      // .text(timeLabel);
 
   let dateMap = {};
   data.forEach((d) => {
@@ -149,12 +153,12 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   // Y Axis Left
   chart.append('g')
     .attr('class', 'axis axis-y-left')
+    .attr('font-size', ticksFontSize)
     .call(d3.axisLeft(yLeft).tickFormat((e) => {
       // showing only integers
       if (Math.floor(e) !== e) { return; }
       return e;
-    }))
-    .attr('font-size', ticksFontSize);
+    }));
 
   // Y Axis Left Legend
   chart.append('g')
@@ -168,8 +172,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   chart.append('g')
     .attr('class', 'axis axis-y-right')
     .attr('transform', `translate(${width}, 0)`)
-    .call(d3.axisRight(yRight).tickSizeOuter(-width))
-    .attr('font-size', ticksFontSize);
+    .attr('font-size', ticksFontSize)
+    .call(d3.axisRight(yRight).tickSizeOuter(-width));
 
   // Y Axis Right Legend
   chart.append('g')
