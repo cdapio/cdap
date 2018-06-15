@@ -24,6 +24,7 @@ $date-color: $grey-01;
 $selected-bucket-outline-color: $yellow-02;
 $selected-bucket-fill-color: $grey-04;
 $legend-font-color: $grey-02;
+$last-24-hours-btn-color: $blue-02;
 
 // Graph colors
 $manual: $blue-grey04;
@@ -88,6 +89,7 @@ $delay: $grey-04;
           border-radius: 4px;
           padding: 3px 15px;
           cursor: pointer;
+          color: $last-24-hours-btn-color;
         }
       }
 

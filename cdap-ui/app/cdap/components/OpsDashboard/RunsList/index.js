@@ -20,6 +20,8 @@ import moment from 'moment';
 import {connect} from 'react-redux';
 import {humanReadableDuration, humanReadableDate} from 'services/helpers';
 import SortableStickyGrid from 'components/SortableStickyGrid';
+import capitalize from 'lodash/capitalize';
+import StatusMapper from 'services/StatusMapper';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
@@ -75,12 +77,12 @@ function renderBody(data) {
             >
               <div>{run.namespace}</div>
               <div>{run.application.name}</div>
-              <div>{run.type}</div>
+              <div>{T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}</div>
               <div>{humanReadableDate(run.start, false)}</div>
               <div>{duration}</div>
               <div>{run.user || '--'}</div>
-              <div>{run.startMethod}</div>
-              <div>{run.status}</div>
+              <div>{capitalize(run.startMethod)}</div>
+              <div>{StatusMapper.lookupDisplayStatus(run.status)}</div>
             </div>
           );
         })
