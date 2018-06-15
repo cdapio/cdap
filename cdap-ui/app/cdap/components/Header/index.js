@@ -161,13 +161,13 @@ export default class Header extends Component {
           </NavLinkWrapper>
         </div>
         <ul className="navbar-list-section control-center">
-          <li className="with-shadow">
+          <li>
             <ControlCenterDropdown
               nativeLink={this.props.nativeLink}
               namespace={this.state.currentNamespace}
             />
           </li>
-          <li className="with-shadow">
+          <li>
             <NavLinkWrapper
               isNativeLink={this.props.nativeLink}
               to={this.props.nativeLink ? `/cdap${dataprepUrl}` : dataprepUrl}

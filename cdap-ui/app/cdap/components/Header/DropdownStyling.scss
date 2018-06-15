@@ -52,7 +52,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
         outline: none;
       }
       &:active {
-        color: $menu_font_color;
+        color: white;
         background: transparent;
       }
       &:hover {
@@ -83,7 +83,9 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       padding: 0;
       line-height: 50px;
       display: block;
-      margin-right: 5px;
+      &.active {
+        color: $cdap-orange;
+      }
     }
     .dropdown-menu {
       background: $dropdown_bg_color;
@@ -95,8 +97,8 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
         line-height: 1;
         float: left;
         width: 160px;
-        padding: 0;
-        margin-left: 0;
+        padding: 2px;
+        margin: 0;
 
         a {
           padding: 10px 16px;
@@ -105,7 +107,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
         }
         &:hover,
         &:focus {
-          background: transparent;
+          background: rgba(0, 0, 0, 0.1);
           outline: none;
         }
       }

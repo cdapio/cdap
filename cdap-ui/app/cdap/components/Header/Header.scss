@@ -19,7 +19,7 @@
 
 .global-navbar {
   height: 50px;
-  background: $navbar-bg;
+  background: $gcp-blue;
   position: fixed;
   width: 100%;
   top: 0;
@@ -49,7 +49,6 @@
     }
   }
   .with-shadow {
-    box-shadow: -18px 0px 24px -9px rgba(0, 0, 0, 0.4);
     height: 50px;
     line-height: 50px;
     padding-left: 10px;
@@ -140,9 +139,11 @@
   ul {
     margin: 0;
     padding: 0;
+    > li {
+      padding: 0 15px;
+    }
     li {
       display: inline-block;
-      margin: 0 15px;
       vertical-align: top;
       line-height: 50px;
       &:focus {
@@ -167,7 +168,6 @@
     &.control-center {
       > li.with-shadow {
         min-width: auto;
-        padding-right: 15px;
         padding-left: 15px;
       }
     }
@@ -176,10 +176,15 @@
   .navbar-right-section {
     .dropdown {
       .dropdown-menu {
-        padding-bottom: 10px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+        color: black;
+        background-color: white;
+        .dropdown-item {
+          color: black;
+        }
         .dropdown-divider {
           height: 1px;
-          margin: 0.5rem 0;
+          margin: 0;
           overflow: hidden;
         }
       }

@@ -115,7 +115,7 @@ $cdap_mode_color: #cccccc;
     }
     .dropdown-menu {
       border-radius: 0;
-      background: #333333;
+      background: $gcp-blue;
       color: white;
       min-width: 160px;
       max-width: 210px;
@@ -175,7 +175,7 @@ $cdap_mode_color: #cccccc;
             padding: 5px 5px;
             background: rgba(255, 205, 128, 1);
             margin-right: 8px;
-            color: $navbar-bg;
+            color: $gcp-blue;
             display: inline-flex;
           }
         }
