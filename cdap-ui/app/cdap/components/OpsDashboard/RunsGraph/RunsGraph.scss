@@ -197,4 +197,10 @@ $delay: $grey-04;
   .pointer {
     cursor: pointer;
   }
+
+  .legend {
+    text-anchor: middle;
+    font-size: 12px;
+    fill: $legend-font-color;
+  }
 }

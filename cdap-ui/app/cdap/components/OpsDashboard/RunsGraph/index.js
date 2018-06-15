@@ -35,7 +35,7 @@ const PREFIX = 'features.OpsDashboard.RunsGraph';
 require('./RunsGraph.scss');
 
 const RUNS_GRAPH_CONTAINER = 'runs-graph-container';
-const GRAPH_HEIGHT = 230;
+const GRAPH_HEIGHT = 240;
 
 class RunsGraphView extends Component {
   static propTypes = {

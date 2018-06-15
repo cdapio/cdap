@@ -24,8 +24,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   let margin = {
     top: 20,
     right: 50,
-    bottom: 30,
-    left: 50
+    bottom: 40,
+    left: 40
   };
   let width = containerWidth - margin.left - margin.right,
       height = containerHeight - margin.top - margin.bottom;
@@ -104,6 +104,13 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .select('line')
     .remove();
 
+  // X Axis Legend
+  chart.append('g')
+    .attr('class', 'legend axis-x-legend')
+    .append('text')
+      .attr('transform', `translate(${width / 2}, ${containerHeight - margin.top})`)
+      .text('Time (PST)');
+
   let dateMap = {};
   data.forEach((d) => {
     let time = parseInt(d.time, 10);
@@ -136,6 +143,9 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   dateAxisGroup.select('.domain')
     .remove();
 
+  const legendOffset = 30;
+  const ticksFontSize = 10;
+
   // Y Axis Left
   chart.append('g')
     .attr('class', 'axis axis-y-left')
@@ -143,13 +153,30 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
       // showing only integers
       if (Math.floor(e) !== e) { return; }
       return e;
-    }));
+    }))
+    .attr('font-size', ticksFontSize);
+
+  // Y Axis Left Legend
+  chart.append('g')
+    .attr('class', 'legend axis-y-left-legend')
+    .append('text')
+      .attr('transform', `translate(-${legendOffset}, ${height/2}) rotate(-90)`)
+      .text('# of runs');
+
 
   // Y Axis Right
   chart.append('g')
     .attr('class', 'axis axis-y-right')
     .attr('transform', `translate(${width}, 0)`)
-    .call(d3.axisRight(yRight).tickSizeOuter(-width));
+    .call(d3.axisRight(yRight).tickSizeOuter(-width))
+    .attr('font-size', ticksFontSize);
+
+  // Y Axis Right Legend
+  chart.append('g')
+    .attr('class', 'legend axis-y-right-legend')
+    .append('text')
+      .attr('transform', `translate(${width + legendOffset + ticksFontSize}, ${height/2}) rotate(-90)`)
+      .text('Delay time');
 
 
   // BUCKETS STYLING LAYER
