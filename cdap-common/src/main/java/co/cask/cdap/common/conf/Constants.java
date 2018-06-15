@@ -328,6 +328,13 @@ public final class Constants {
   }
 
   /**
+   * Program heartbeat store.
+   */
+  public static final class ProgramHeartbeatStore {
+    public static final String TABLE = "program.heartbeat";
+  }
+
+  /**
    * Plugin Artifacts constants.
    */
   public static final class Plugin {

@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,13 +33,15 @@ public class ProgramRunHeartbeat implements Runnable {
   private final ProgramStatePublisher programStatePublisher;
   private final Map<String, String> properties;
 
+
   ProgramRunHeartbeat(ProgramStatePublisher programStatePublisher, Map<String, String> properties) {
     this.programStatePublisher = programStatePublisher;
-    this.properties = properties;
+    this.properties = new HashMap<>(properties);
   }
 
   @Override
   public void run() {
+    properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(System.currentTimeMillis()));
     programStatePublisher.publish(Notification.Type.HEART_BEAT, properties);
   }
 }

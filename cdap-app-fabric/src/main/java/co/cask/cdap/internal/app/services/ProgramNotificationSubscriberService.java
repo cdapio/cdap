@@ -42,6 +42,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.reporting.ProgramHeartbeatStore;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.gson.Gson;
@@ -223,7 +224,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     if (clusterStatus == null) {
       return Optional.empty();
     }
-
+    if (notification.getNotificationType().equals(Notification.Type.HEART_BEAT)) {
+      getProgramHeartbeatStore(datasetContext).writeProgramHeartBeatStatus(notification, programRunId);
+      // we can skip from recording heartbeat messages in app meta.
+      return Optional.empty();
+    }
     return handleClusterEvent(programRunId, clusterStatus, notification,
                               messageIdBytes, datasetContext, appMetadataStore);
   }
@@ -452,5 +457,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private AppMetadataStore getAppMetadataStore(DatasetContext context) {
     return AppMetadataStore.create(cConf, context, datasetFramework);
+  }
+
+  /**
+   * Returns an instance of {@link ProgramHeartbeatStore}.
+   */
+  private ProgramHeartbeatStore getProgramHeartbeatStore(DatasetContext context) {
+    return ProgramHeartbeatStore.create(cConf, context, datasetFramework);
   }
 }
