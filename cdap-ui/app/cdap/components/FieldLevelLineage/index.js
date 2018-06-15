@@ -20,6 +20,9 @@ import {getFields} from 'components/FieldLevelLineage/store/ActionCreator';
 import {Provider} from 'react-redux';
 import Store, {Actions} from 'components/FieldLevelLineage/store/Store';
 import Fields from 'components/FieldLevelLineage/Fields';
+import TimePicker from 'components/FieldLevelLineage/TimePicker';
+
+require('./FieldLevelLineage.scss');
 
 export default class FieldLevelLineage extends Component {
   static propTypes = {
@@ -40,7 +43,7 @@ export default class FieldLevelLineage extends Component {
     return (
       <Provider store={Store}>
         <div className="field-level-lineage-container">
-          <h1 className="text-xs-center">Field Level Lineage</h1>
+          <TimePicker />
 
           <Fields />
         </div>

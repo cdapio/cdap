@@ -1173,6 +1173,14 @@ features:
       errorMessage: Please check logs for more information
       title: Welcome to Model Management and Distribution Service
 
+  FieldLevelLineage:
+    TimeRangeOptions:
+      last14d: Last 14 days
+      last6M: Last 6 months
+      last7d: Last 7 days
+      lastMonth: Last month
+      lastYear: Last 12 months
+
   FileBrowser:
     directory: Directory
     EmptyMessage:
