@@ -703,6 +703,26 @@
                 </configuration>
               </execution>
               <execution>
+                <id>copy-program-report-app-spark1_2.10</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/${spark1.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/cdap-program-report1_2.10/target
+                      </directory>
+                      <includes>
+                        <include>cdap-program-report1_2.10-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
                 <id>copy-program-report-app-spark2_2.11</id>
                 <phase>prepare-package</phase>
                 <goals>
@@ -883,7 +903,7 @@
                 </configuration>
               </execution>
               <!--
-                Rename cdap-program-report2_2.11 to cdap-program-report.
+                Rename cdap-program-report1_2.10 to cdap-program-report, cdap-program-report2_2.11 to cdap-program-report.
                 This is may be removed if the UI supports different artifacts for each pipeline type.
               -->
               <execution>
@@ -894,6 +914,7 @@
                 </goals>
                 <configuration>
                   <target>
+                    <move file="${stage.artifacts.dir}/${spark1.artifacts.dir}/cdap-program-report1_2.10-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark1.artifacts.dir}/cdap-program-report-${project.version}.jar" />
                     <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-${project.version}.jar" />
                   </target>
                 </configuration>
