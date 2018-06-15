@@ -22,6 +22,7 @@ import {humanReadableDuration, humanReadableDate} from 'services/helpers';
 import SortableStickyGrid from 'components/SortableStickyGrid';
 import capitalize from 'lodash/capitalize';
 import StatusMapper from 'services/StatusMapper';
+import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
@@ -70,6 +71,8 @@ function renderBody(data) {
         data.map((run, i) => {
           let duration = run.end ? run.end - run.start : '--';
           duration = humanReadableDuration(duration);
+
+          let displayStatus = StatusMapper.lookupDisplayStatus(run.status);
           return (
             <div
               className="grid-row"
@@ -82,7 +85,15 @@ function renderBody(data) {
               <div>{duration}</div>
               <div>{run.user || '--'}</div>
               <div>{capitalize(run.startMethod)}</div>
-              <div>{StatusMapper.lookupDisplayStatus(run.status)}</div>
+              <div>
+                <IconSVG
+                  name="icon-circle"
+                  className={`${displayStatus.toLowerCase()}`}
+                />
+                <span>
+                  {displayStatus}
+                </span>
+              </div>
             </div>
           );
         })

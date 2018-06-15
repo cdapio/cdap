@@ -106,7 +106,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
   // need to add some pixels show the legend doesn't appear outside
   // the graph container
-  let legendYOffset = margin.top + 2
+  let legendYOffset = margin.top + 2;
 
   chart.append('g')
     .attr('class', 'legend axis-x-legend')
@@ -259,7 +259,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
     // Successful
     statistics.append('rect')
-      .attr('class', 'bar successful')
+      .attr('class', 'bar succeeded')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.successful))

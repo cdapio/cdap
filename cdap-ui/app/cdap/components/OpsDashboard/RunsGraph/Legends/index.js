@@ -62,7 +62,7 @@ function StatusLegends() {
       <div className="legend">
         <IconSVG
           name="icon-square-full"
-          className="successful"
+          className="succeeded"
         />
         <span>{T.translate(`${PREFIX}.successful`)}</span>
       </div>

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 .runs-list-container {
   padding: 10px 25px;
@@ -52,6 +52,10 @@
 
           &:hover {
             background-color: white;
+          }
+
+          .icon-circle {
+            margin-right: 5px;
           }
         }
       }

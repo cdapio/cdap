@@ -15,6 +15,7 @@
  */
 
 @import '../../../styles/variables.scss';
+@import '../OpsDashboardColors.scss';
 
 $axis-color: $grey-04;
 $bg-color: $grey-08;
@@ -25,19 +26,6 @@ $selected-bucket-outline-color: $yellow-02;
 $selected-bucket-fill-color: $grey-04;
 $legend-font-color: $grey-02;
 $last-24-hours-btn-color: $blue-02;
-
-// Graph colors
-$manual: $blue-grey04;
-$schedule: $blue-grey01;
-$running: $blue-02;
-$successful: $green-02;
-$failed: $red-02;
-$delay: $grey-04;
-
-@mixin setColor($color) {
-  fill: $color;
-  color: $color;
-}
 
 .runs-graph-container {
   background-color: $bg-color;
@@ -52,25 +40,6 @@ $delay: $grey-04;
     .title {
       padding-left: 25px;
       font-size: 18px;
-    }
-
-    .type-selector {
-      user-select: none;
-
-      .icon-svg {
-        font-size: 18px;
-        margin-right: 5px;
-      }
-
-      .type-item {
-        display: inline-block;
-        cursor: pointer;
-        span { vertical-align: middle; }
-
-        &:not(:last-child) {
-          margin-right: 30px;
-        }
-      }
     }
 
     .time-picker,
@@ -160,18 +129,6 @@ $delay: $grey-04;
 
   .schedule {
     @include setColor($schedule);
-  }
-
-  .running {
-    @include setColor($running);
-  }
-
-  .successful {
-    @include setColor($successful);
-  }
-
-  .failed {
-    @include setColor($failed);
   }
 
   .delay {
