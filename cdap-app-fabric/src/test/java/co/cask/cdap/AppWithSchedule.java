@@ -30,6 +30,8 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -67,6 +69,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       scheduleProperties.put("oneKey", "oneValue");
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
+      scheduleProperties.putAll(config.scheduleProperties);
 
       if (config.addWorkflow && config.addSchedule1) {
         schedule(
@@ -95,17 +98,22 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
     private final boolean addWorkflow;
     private final boolean addSchedule1;
     private final boolean addSchedule2;
+    private final Map<String, String> scheduleProperties;
 
     public AppConfig() {
-      this.addSchedule1 = true;
-      this.addSchedule2 = false;
-      this.addWorkflow = true;
+      this(true, true, false);
     }
 
     public AppConfig(boolean addWorkflow, boolean addSchedule1, boolean addSchedule2) {
+      this(addWorkflow, addSchedule1, addSchedule2, Collections.emptyMap());
+    }
+
+    public AppConfig(boolean addWorkflow, boolean addSchedule1, boolean addSchedule2,
+                     Map<String, String> scheduleProperties) {
       this.addWorkflow = addWorkflow;
       this.addSchedule1 = addSchedule1;
       this.addSchedule2 = addSchedule2;
+      this.scheduleProperties = scheduleProperties;
     }
   }
 

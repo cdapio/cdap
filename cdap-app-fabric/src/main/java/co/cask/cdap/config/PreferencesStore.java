@@ -16,52 +16,81 @@
 
 package co.cask.cdap.config;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.collect.Maps;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.store.profile.ProfileDataset;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.inject.Inject;
+import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionSystemClient;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * Wrapper around {@link ConfigStore} specifically for Preferences API.
+ * Use config dataset to perform operations around preference.
  */
 public class PreferencesStore {
   private static final String PREFERENCES_CONFIG_TYPE = "preferences";
-
-  // Id for Properties config stored at the instance level
-  private static final String INSTANCE_PROPERTIES = "instance";
   // Namespace where instance level properties are stored
   private static final String EMPTY_NAMESPACE = "";
 
-  private final ConfigStore configStore;
+  // Id for Properties config stored at the instance level
+  private static final String INSTANCE_PROPERTIES = "instance";
+
+  private final DatasetFramework datasetFramework;
+  private final Transactional transactional;
 
   @Inject
-  public PreferencesStore(ConfigStore configStore) {
-    this.configStore = configStore;
+  public PreferencesStore(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+    this.datasetFramework = datasetFramework;
+    this.transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+        txClient, NamespaceId.SYSTEM,
+        Collections.emptyMap(), null, null)),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
   }
 
   private Map<String, String> getConfigProperties(String namespace, String id) {
-    Map<String, String> value = Maps.newHashMap();
-    try {
-      Config config = configStore.get(namespace, PREFERENCES_CONFIG_TYPE, id);
-      value.putAll(config.getProperties());
-    } catch (ConfigNotFoundException e) {
-      //no-op - return empty map
-    }
-    return value;
+    return Transactionals.execute(transactional, context -> {
+      Map<String, String> value = new HashMap<>();
+      try {
+        Config config = ConfigDataset.get(context, datasetFramework).get(namespace, PREFERENCES_CONFIG_TYPE, id);
+        value.putAll(config.getProperties());
+      } catch (ConfigNotFoundException e) {
+        //no-op - return empty map
+      }
+      return value;
+    });
   }
 
-  private void setConfig(String namespace, String id, Map<String, String> propertyMap) {
+  private void setConfig(String namespace, String id,
+                         Map<String, String> propertyMap) throws NotFoundException, ProfileConflictException {
     Config config = new Config(id, propertyMap);
-    configStore.createOrUpdate(namespace, PREFERENCES_CONFIG_TYPE, config);
+    validateAndSetPreferences(namespace, config);
   }
 
   private void deleteConfig(String namespace, String id) {
-    try {
-      configStore.delete(namespace, PREFERENCES_CONFIG_TYPE, id);
-    } catch (ConfigNotFoundException e) {
-      //no-op
-    }
+    Transactionals.execute(transactional, context -> {
+      try {
+        ConfigDataset.get(context, datasetFramework).delete(namespace, PREFERENCES_CONFIG_TYPE, id);
+      } catch (ConfigNotFoundException e) {
+        //no-op
+      }
+    });
   }
 
   public Map<String, String> getProperties() {
@@ -103,20 +132,22 @@ public class PreferencesStore {
     return propMap;
   }
 
-  public void setProperties(Map<String, String> propMap) {
+  public void setProperties(Map<String, String> propMap) throws NotFoundException, ProfileConflictException {
     setConfig(EMPTY_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES), propMap);
   }
 
-  public void setProperties(String namespace, Map<String, String> propMap) {
+  public void setProperties(String namespace,
+                            Map<String, String> propMap) throws NotFoundException, ProfileConflictException {
     setConfig(namespace, getMultipartKey(namespace), propMap);
   }
 
-  public void setProperties(String namespace, String appId, Map<String, String> propMap) {
+  public void setProperties(String namespace, String appId, Map<String, String> propMap)
+    throws NotFoundException, ProfileConflictException {
     setConfig(namespace, getMultipartKey(namespace, appId), propMap);
   }
 
   public void setProperties(String namespace, String appId, String programType, String programId,
-                            Map<String, String> propMap) {
+                            Map<String, String> propMap) throws NotFoundException, ProfileConflictException {
     setConfig(namespace, getMultipartKey(namespace, appId, programType, programId), propMap);
   }
 
@@ -152,5 +183,36 @@ public class PreferencesStore {
       offset += part.length();
     }
     return Bytes.toString(result);
+  }
+
+  /**
+   * Validate the profile status is enabled and set the preferences in same transaction
+   */
+  private void validateAndSetPreferences(String namespace,
+                                         Config config) throws NotFoundException, ProfileConflictException {
+    Transactionals.execute(transactional, context -> {
+      ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
+      ConfigDataset configDataset = ConfigDataset.get(context, datasetFramework);
+      NamespaceId namespaceId =
+        namespace.equals(PreferencesStore.EMPTY_NAMESPACE) ? NamespaceId.SYSTEM : new NamespaceId(namespace);
+      validateProfileProperties(namespaceId, config.getProperties(), profileDataset);
+      configDataset.createOrUpdate(namespace, PreferencesStore.PREFERENCES_CONFIG_TYPE, config);
+    }, NotFoundException.class, ProfileConflictException.class);
+  }
+
+  private void validateProfileProperties(NamespaceId namespaceId, Map<String, String> propertyMap,
+                                         ProfileDataset profileDataset)
+    throws NotFoundException, ProfileConflictException {
+    Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(namespaceId, propertyMap);
+    if (!profile.isPresent()) {
+      return;
+    }
+
+    ProfileId profileId = profile.get();
+    if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
+      throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
+                                                         "assigned to any programs or schedules",
+                                                       profileId.getProfile(), profileId.getNamespace()), profileId);
+    }
   }
 }

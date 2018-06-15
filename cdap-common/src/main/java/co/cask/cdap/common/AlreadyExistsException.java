@@ -27,6 +27,11 @@ public class AlreadyExistsException extends ConflictException {
 
   private final Object objectId;
 
+  public AlreadyExistsException(String errorMsg) {
+    super(errorMsg);
+    this.objectId = null;
+  }
+
   public AlreadyExistsException(EntityId entityId) {
     this(entityId, String.format("'%s' already exists", entityId));
   }

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
 import co.cask.cdap.AppWithNoServices;
+import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
@@ -29,13 +30,17 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.profile.Profile;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -531,6 +536,37 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // cleanup
     deleteNamespace(NamespaceId.DEFAULT.getNamespace());
+  }
+
+  @Test
+  public void testDeployAppWithDisabledProfileInSchedule() throws Exception {
+    // put my profile and disable it
+    ProfileId profileId = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
+    putProfile(profileId, Profile.DEFAULT, 200);
+    disableProfile(profileId, 200);
+
+    // deploy an app with schedule with some disabled profile in the schedule property
+    AppWithSchedule.AppConfig config =
+      new AppWithSchedule.AppConfig(true, true, true,
+                                    ImmutableMap.of(SystemArguments.PROFILE_NAME, "USER:MyProfile"));
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META1.getNamespaceId()),
+      AppWithSchedule.NAME, VERSION1);
+    addAppArtifact(artifactId, AppWithSchedule.class);
+    AppRequest<? extends Config> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
+
+    // deploy should fail with a 409
+    ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME);
+    Assert.assertEquals(409, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    // enable
+    enableProfile(profileId, 200);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    // clean up
+    deleteApp(defaultAppId, 200);
+    deleteArtifact(artifactId, 200);
   }
 
   private static class ExtraConfig extends Config {

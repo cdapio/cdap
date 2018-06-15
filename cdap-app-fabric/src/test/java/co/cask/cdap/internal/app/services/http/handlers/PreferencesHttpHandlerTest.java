@@ -22,8 +22,11 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.internal.app.deploy.Specifications;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.profile.Profile;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
@@ -32,6 +35,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -168,6 +172,35 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(propMap, getProperty(getURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"),
                                              false, 200));
     Assert.assertEquals(propMap, getProperty(getURI(), false, 200));
+  }
+
+  @Test
+  public void testSetPreferenceWithProfiles() throws Exception {
+    // put my profile
+    ProfileId myProfile = new ProfileId(TEST_NAMESPACE1, "MyProfile");
+    putProfile(myProfile, Profile.DEFAULT, 200);
+
+    // put some properties with my profile, it should work fine
+    Map<String, String> properties = new HashMap<>();
+    properties.put("1st key", "1st value");
+    properties.put("2nd key", "2nd value");
+    properties.put(SystemArguments.PROFILE_NAME, "USER:MyProfile");
+    Map<String, String> expected = ImmutableMap.copyOf(properties);
+    setProperty(getURI(TEST_NAMESPACE1), properties, 200);
+    Assert.assertEquals(expected, getProperty(getURI(TEST_NAMESPACE1), false, 200));
+
+    // put some property with non-existing profile, it should fail with 404
+    properties.put(SystemArguments.PROFILE_NAME, "NonExisting");
+    setProperty(getURI(TEST_NAMESPACE1), properties, 404);
+    Assert.assertEquals(expected, getProperty(getURI(TEST_NAMESPACE1), false, 200));
+
+    // disable the profile and put again, it should fail with 409
+    disableProfile(myProfile, 200);
+    properties.put(SystemArguments.PROFILE_NAME, "USER:MyProfile");
+    setProperty(getURI(TEST_NAMESPACE1), properties, 409);
+    Assert.assertEquals(expected, getProperty(getURI(TEST_NAMESPACE1), false, 200));
+
+    deleteProperty(getURI(TEST_NAMESPACE1), 200);
   }
 
   private String getURI() {

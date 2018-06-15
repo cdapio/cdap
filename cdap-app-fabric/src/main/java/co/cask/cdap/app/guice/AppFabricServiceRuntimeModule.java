@@ -92,8 +92,8 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.RunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
@@ -377,7 +377,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(WorkflowStateWriter.class).to(BasicWorkflowStateWriter.class);
 
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
-      bind(ProfileStore.class).in(Scopes.SINGLETON);
+      bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
@@ -387,6 +387,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         .to(DefaultArtifactRepository.class)
         .in(Scopes.SINGLETON);
       bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class).in(Scopes.SINGLETON);
+      bind(ProfileService.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

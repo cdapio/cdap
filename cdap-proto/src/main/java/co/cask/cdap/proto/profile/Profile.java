@@ -18,6 +18,7 @@ package co.cask.cdap.proto.profile;
 
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -33,6 +34,7 @@ public class Profile {
   private final String name;
   private final String description;
   private final EntityScope scope;
+  private final ProfileStatus status;
   private final ProvisionerInfo provisioner;
 
   public Profile(String name, String description, ProvisionerInfo provisioner) {
@@ -41,9 +43,15 @@ public class Profile {
 
   public Profile(String name, String description, EntityScope scope,
                  ProvisionerInfo provisioner) {
+    this(name, description, scope, ProfileStatus.ENABLED, provisioner);
+  }
+
+  public Profile(String name, String description, EntityScope scope, ProfileStatus status,
+                 ProvisionerInfo provisioner) {
     this.name = name;
     this.description = description;
     this.scope = scope;
+    this.status = status;
     this.provisioner = provisioner;
   }
 
@@ -63,6 +71,10 @@ public class Profile {
     return provisioner;
   }
 
+  public ProfileStatus getStatus() {
+    return status;
+  }
+
   public String getDescription() {
     return description;
   }
@@ -80,6 +92,7 @@ public class Profile {
     return Objects.equals(name, profile.name) &&
       Objects.equals(description, profile.description) &&
       Objects.equals(scope, profile.scope) &&
+      Objects.equals(status, profile.status) &&
       Objects.equals(provisioner, profile.provisioner);
   }
 

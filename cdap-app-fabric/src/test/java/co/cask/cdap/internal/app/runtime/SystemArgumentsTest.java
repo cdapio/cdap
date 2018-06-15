@@ -23,6 +23,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.Configs;
 import org.junit.Assert;
@@ -30,6 +32,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -151,5 +154,32 @@ public class SystemArgumentsTest {
       "logger.warn", Level.WARN);
 
     Assert.assertEquals(expected, SystemArguments.getLogLevels(args));
+  }
+
+  @Test
+  public void testGetProfileId() {
+    // should get null profile id if the args is empty
+    Assert.assertFalse(SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, Collections.emptyMap()).isPresent());
+    Map<String, String> args = new HashMap<>();
+    args.put("system.log.level", "DEBUG");
+    args.put("system.log.leveldummyKey", "ERROR");
+
+    // Having other unrelated args should also get null profile id
+    Assert.assertFalse(SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).isPresent());
+
+    // without scope the profile will be considered in user scope
+    args.put("system.profile.name", "MyProfile");
+    ProfileId expected = NamespaceId.DEFAULT.profile("MyProfile");
+    Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
+
+    // put a profile with scope SYSTEM, the profile we get should be in system namespace
+    args.put("system.profile.name", "SYSTEM:MyProfile");
+    expected = NamespaceId.SYSTEM.profile("MyProfile");
+    Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
+
+    // put a profile with scope USER, the profile we get should be in the user namespace
+    args.put("system.profile.name", "USER:MyProfile");
+    expected = NamespaceId.DEFAULT.profile("MyProfile");
+    Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
   }
 }

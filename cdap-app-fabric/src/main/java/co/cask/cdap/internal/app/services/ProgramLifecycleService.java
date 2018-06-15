@@ -33,6 +33,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.id.Id;
@@ -44,7 +45,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.proto.ProgramRecord;
@@ -60,6 +61,7 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -106,7 +108,7 @@ public class ProgramLifecycleService {
     .create();
 
   private final Store store;
-  private final ProfileStore profileStore;
+  private final ProfileService profileService;
   private final ProgramRuntimeService runtimeService;
   private final PropertiesResolver propertiesResolver;
   private final PreferencesStore preferencesStore;
@@ -117,14 +119,14 @@ public class ProgramLifecycleService {
   private final ProgramStateWriter programStateWriter;
 
   @Inject
-  ProgramLifecycleService(Store store, ProfileStore profileStore, ProgramRuntimeService runtimeService,
+  ProgramLifecycleService(Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
                           ProgramStateWriter programStateWriter) {
     this.store = store;
-    this.profileStore = profileStore;
+    this.profileService = profileService;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
     this.preferencesStore = preferencesStore;
@@ -286,16 +288,22 @@ public class ProgramLifecycleService {
    * @return {@link RunId}
    * @throws IOException if there is an error starting the program
    * @throws NotFoundException if the namespace, application, or program is not found
+   * @throws ProfileConflictException if the profile is disabled
    */
   public synchronized RunId runInternal(ProgramId programId, Map<String, String> userArgs,
                                         Map<String, String> sysArgs,
-                                        boolean debug) throws NotFoundException, IOException {
+                                        boolean debug) throws NotFoundException, IOException, ProfileConflictException {
     LOG.info("{} tries to run {} Program {}", authenticationContext.getPrincipal().getName(), programId.getType(),
              programId.getProgram());
-    String scopedProfile = userArgs.get(SystemArguments.PROFILE_NAME);
-    ProfileId profileId = scopedProfile == null ?
-      ProfileId.DEFAULT : ProfileId.fromScopedName(programId.getNamespaceId(), scopedProfile);
-    Profile profile = profileStore.getProfile(profileId);
+    ProfileId profileId =
+      SystemArguments.getProfileIdFromArgs(programId.getNamespaceId(), userArgs).orElse(ProfileId.DEFAULT);
+    Profile profile = profileService.getProfile(profileId);
+    if (profile.getStatus() == ProfileStatus.DISABLED) {
+      throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
+                                                         "used to start the program %s",
+                                                       profileId.getProfile(), profileId.getNamespace(),
+                                                       programId.toString()), profileId);
+    }
     ProvisionerDetail spec = provisioningService.getProvisionerDetail(profile.getProvisioner().getName());
     if (spec == null) {
       throw new NotFoundException(String.format("Provisioner '%s' not found.", profile.getProvisioner().getName()));

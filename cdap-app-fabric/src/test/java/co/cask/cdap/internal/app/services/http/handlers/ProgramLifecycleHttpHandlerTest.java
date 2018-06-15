@@ -45,6 +45,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -66,6 +67,7 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
@@ -1271,6 +1273,37 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                    defaultAppId.getApplication(),
                                    defaultAppId.getVersion());
     Assert.assertEquals(2, actualSchedules.size());
+  }
+
+  @Test
+  public void testStartProgramWithDisabledRuntimeArgs() throws Exception {
+    // We will use default profile now for testing since we treat it as on premise and all other profiles as isolated
+    // See ProgramLifeCycleService runInternal() method for more information
+    disableProfile(ProfileId.DEFAULT, 200);
+
+    // deploy, check the status
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1);
+
+    ProgramId programId =
+      new NamespaceId(TEST_NAMESPACE1).app(APP_WITH_WORKFLOW_APP_ID).workflow(APP_WITH_WORKFLOW_WORKFLOW_NAME);
+
+    // workflow is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(programId));
+
+    // start workflow should give a 409 since we have a runtime argument associated with a disabled profile
+    ImmutableMap<String, String> args = ImmutableMap.of(SystemArguments.PROFILE_NAME, "SYSTEM:default");
+    startProgram(programId, args, 409);
+    Assert.assertEquals(STOPPED, getProgramStatus(programId));
+
+    // enable the profile and flow should be able to start
+    enableProfile(ProfileId.DEFAULT, 200);
+
+    // start a flow and check the status
+    startProgram(programId, args, 200);
+
+    // wait for the workflow to stop and check the status
+    waitState(programId, STOPPED);
   }
 
   private void testAddSchedule(String scheduleName) throws Exception {

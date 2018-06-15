@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.id.ProfileId;
 
 /**
- * Base Class for Configuration related Exceptions.
+ * Thrown when there is a conflict about the profile
  */
-public class ConfigException extends Exception {
-  protected final String namespace;
-  protected final String type;
-  protected final String id;
+public class ProfileConflictException extends ConflictException {
+  private final ProfileId profileId;
 
-  public ConfigException(String namespace, String type, String id) {
-    this.namespace = namespace;
-    this.type = type;
-    this.id = id;
+  public ProfileConflictException(String message, ProfileId profileId) {
+    super(message);
+    this.profileId = profileId;
+  }
+
+  public ProfileId getProfileId() {
+    return profileId;
   }
 }

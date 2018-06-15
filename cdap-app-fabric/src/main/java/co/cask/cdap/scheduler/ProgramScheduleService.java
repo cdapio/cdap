@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -70,7 +71,9 @@ public class ProgramScheduleService {
    * Add the given schedule
    *
    * @param schedule the schedule to add
-   * @throws AlreadyExistsException if the schedule already exists
+   * @throws AlreadyExistsException if one of the schedules already exists
+   * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
    * @throws BadRequestException if the schedule is invalid
    * @throws UnauthorizedException if the principal is not authorized as an admin operations on the schedule app
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
@@ -86,7 +89,9 @@ public class ProgramScheduleService {
    *
    * @param scheduleId the schedule to update
    * @param scheduleDetail the schedule to update it to
-   * @throws NotFoundException if the schedule could not be found
+   * @throws AlreadyExistsException if one of the schedules already exists
+   * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
    * @throws BadRequestException if the update is invalid
    * @throws UnauthorizedException if the principal is not authorized as an admin operations on the schedule program
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
