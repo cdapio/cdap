@@ -1425,12 +1425,16 @@ features:
       header: Runs timeline
       last24Hours: Last 24 hours
       Legends:
-        delay: Delay between starting and running
+        delay: Time delay between starting and running
         failed: Failed runs
         manuallyStarted: Manually started runs
         running: Running
         scheduledTriggered: Scheduled/triggered runs
         successful: Successful runs
+        ViewBy:
+          label: "View by:"
+          runStatus: Run status
+          startMethod: Start method
       RunsTable:
         date: Date
         failed: Failed

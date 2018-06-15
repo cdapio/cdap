@@ -16,23 +16,24 @@
 
 import {combineReducers, createStore} from 'redux';
 import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
+import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
   toggleDisplayRuns: 'DASHBOARD_TOGGLE_DISPLAY_RUNS',
-  toggleLegend: 'DASHBOARD_TOGGLE_LEGEND',
   togglePipeline: 'DASHBOARD_TOGGLE_PIPELINE',
   toggleCustomApp: 'DAHBOARD_TOGGLE_CUSTOM_APP',
   enableLoading: 'DASHBOARD_ENABLE_LOADING',
   setData: 'DAHBOARD_SET_DATA',
   updateData: 'DASHBOARD_UPDATE_DATA',
   changeDisplayType: 'DASHBOARD_CHANGE_DISPLAY_TYPE',
+  changeViewByOption: 'DASHBOARD_CHANGE_VIEW_BY_OPTION',
   reset: 'DASHBOARD_RESET'
 };
 
-const defaultAction = {
-  action : '',
-  payload : {}
+const ViewByOptions = {
+  runStatus: 'RUN_STATUS',
+  startMethod: 'START_METHOD'
 };
 
 const defaultInitialState = {
@@ -47,16 +48,8 @@ const defaultInitialState = {
   displayBucketInfo: null,
   pipeline: true,
   customApp: true,
-  displayType: 'chart'
-};
-
-const legendsInitialState = {
-  manual: true,
-  schedule: true,
-  success: true,
-  failed: true,
-  running: false,
-  delay: true
+  displayType: 'chart',
+  viewByOption: ViewByOptions.runStatus
 };
 
 const namespacesInitialState = {
@@ -75,7 +68,7 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         startTime: action.payload.startTime,
         duration: action.payload.duration,
         displayRunsList: true,
-        displayBucketInfo: action.payload.data[0],
+        displayBucketInfo: action.payload.data[action.payload.data.length - 1],
         loading: false
       };
     case DashboardActions.setDisplayBucket:
@@ -111,22 +104,13 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         ...state,
         displayType: action.payload.displayType
       };
-    case DashboardActions.reset:
-      return defaultInitialState;
-    default:
-      return state;
-  }
-};
-
-const legends = (state = legendsInitialState, action = defaultAction) => {
-  switch (action.type) {
-    case DashboardActions.toggleLegend:
+    case DashboardActions.changeViewByOption:
       return {
         ...state,
-        [action.payload.type]: !state[action.payload.type]
+        viewByOption: action.payload.viewByOption
       };
     case DashboardActions.reset:
-      return legendsInitialState;
+      return defaultInitialState;
     default:
       return state;
   }
@@ -149,16 +133,14 @@ const namespaces = (state = namespacesInitialState, action = defaultAction) => {
 const DashboardStore = createStore(
   combineReducers({
     dashboard,
-    legends,
     namespaces
   }),
   {
     dashboard: defaultInitialState,
-    legends: legendsInitialState,
     namespaces: namespacesInitialState
   },
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('DashboardStore')()
 );
 
 export default DashboardStore;
-export {DashboardActions};
+export {DashboardActions, ViewByOptions};
