@@ -45,6 +45,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.spark.sql.SQLContext;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -52,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -510,25 +514,51 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
       // TODO: [CDAP-13290] reports should be in avro format instead of json text;
       // TODO: [CDAP-13291] need to support reading multiple report files
-      Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".json")).findFirst();
+      Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
       // TODO: [CDAP-13292] use cache to store content of the reports
       // Read the report file and add lines starting from the position of offset to the result until the result reaches
       // the limit
-      if (reportFile.isPresent()) {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(reportFile.get().getInputStream(),
-                                                                          StandardCharsets.UTF_8))) {
-          String line;
-          while ((line = br.readLine()) != null) {
-            // skip lines before the offset
-            if (lineCount++ < offset) {
-              continue;
-            }
-            if (reportRecords.size() == limit) {
-              break;
-            }
-            reportRecords.add(line);
+      if (!reportFile.isPresent()) {
+        LOG.error("No report files is found under directory {}", reportDir.toURI().toString());
+        responder.sendError(500, "No report files is found for report " + reportId);
+        return;
+      }
+      try {
+        Location reportFileLocation = reportFile.get();
+        DataFileReader<GenericRecord> dataFileReader =
+            new DataFileReader<>(new File(reportFileLocation.toURI()), new GenericDatumReader<>());
+        // skip sync points until the end of file is reached or the given offset is surpassed
+        long skipLen = reportFileLocation.length() / 10;
+        long skipPoint = 0;
+        while (skipLen > 0 && dataFileReader.hasNext() && skipPoint < offset) {
+          skipPoint += skipLen;
+          dataFileReader.sync(skipPoint);
+        }
+        // if skipPoint > 0, the current position of the dataFileReader is either at the end of the file or
+        // at the sync point after the given offset, go back to the previous syncpoint before the offset
+        if (skipPoint > 0) {
+          dataFileReader.sync(skipPoint - skipLen);
+          // update the lineCount to the current position of the reader
+          lineCount = dataFileReader.tell();
+        }
+        // add rpeort records to the result after the offset until the given limit is reached
+        while (dataFileReader.hasNext()) {
+          GenericRecord record = dataFileReader.next();
+          // skip lines before the offset
+          if (lineCount++ < offset) {
+            continue;
+          }
+          // add records after the offset to the result
+          reportRecords.add(record.toString());
+          if (reportRecords.size() == limit) {
+            break;
           }
         }
+      } catch (IOException e) {
+        LOG.error("Failed to read report file {}", reportFile.get().toURI().toString(), e);
+        responder.sendError(500, String.format("Failed to read report file %s because of error %s",
+          reportId, e.getMessage()));
+        return;
       }
       // Get the total number of records from the COUNT file
       String total =

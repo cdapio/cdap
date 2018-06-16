@@ -132,7 +132,8 @@ object ReportGenerationHelper {
     val reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR).toURI.toString
     // TODO: [CDAP-13290] output reports as avro instead of json text files
     // TODO: [CDAP-13291] improve how the number of partitions is configured
-    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
+    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ")
+      .format("com.databricks.spark.avro").save(reportDir)
     val count = resultDf.count
     // Create a _COUNT file and write the total number of report records in it
     writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
