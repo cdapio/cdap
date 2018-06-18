@@ -99,9 +99,12 @@ import java.lang.annotation.Target;
  * </p>
  *
  * @see HashPartition
+ *
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Deprecated
 public @interface Batch {
   /**
    * Declare the maximum number of objects that can be processed in a batch.

@@ -33,7 +33,9 @@ import java.util.Set;
 
 /**
  * Class defining the definition for a flowlet.
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
  */
+@Deprecated
 public final class FlowletDefinition {
   public static final String DEFAULT_OUTPUT = "queue";
   public static final String ANY_INPUT = "";

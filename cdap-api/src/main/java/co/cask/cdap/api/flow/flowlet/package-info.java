@@ -16,7 +16,9 @@
 
 /**
  * Interfaces used in flows and flowlets.
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
  */
+@Deprecated
 package co.cask.cdap.api.flow.flowlet;
 
 

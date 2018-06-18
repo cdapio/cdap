@@ -23,7 +23,9 @@ import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 /**
  * This abstract class provides a default implementation of {@link Flow} methods for easy extension.
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
  */
+@Deprecated
 public class AbstractFlow extends AbstractProgramDatasetConfigurable<FlowConfigurer> implements Flow {
   private FlowConfigurer configurer;
 

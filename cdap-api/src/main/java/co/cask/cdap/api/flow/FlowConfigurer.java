@@ -23,7 +23,9 @@ import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 
 /**
  * Configurer for configuring {@link Flow}.
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
  */
+@Deprecated
 public interface FlowConfigurer extends DatasetConfigurer {
 
   /**

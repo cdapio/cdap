@@ -32,6 +32,7 @@ public interface DatasetConfigurer {
    *
    * @param stream {@link Stream}
    */
+  @Deprecated
   void addStream(Stream stream);
 
   /**
@@ -39,6 +40,7 @@ public interface DatasetConfigurer {
    *
    * @param streamName name of the stream
    */
+  @Deprecated
   void addStream(String streamName);
 
   /**

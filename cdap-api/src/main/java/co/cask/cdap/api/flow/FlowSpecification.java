@@ -25,8 +25,9 @@ import java.util.Map;
  * This class provides the specification of a Flow.
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
- *
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
  */
+@Deprecated
 public interface FlowSpecification extends ProgramSpecification {
 
   /**

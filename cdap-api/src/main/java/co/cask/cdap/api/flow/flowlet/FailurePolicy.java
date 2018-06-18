@@ -19,6 +19,7 @@ package co.cask.cdap.api.flow.flowlet;
 /**
  * Enumerates class that defines policy for handling failure.
  */
+@Deprecated
 public enum FailurePolicy {
   /**
    * Resend the input object to the process method again.

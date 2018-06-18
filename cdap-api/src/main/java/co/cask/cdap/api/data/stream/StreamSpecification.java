@@ -21,7 +21,10 @@ import javax.annotation.Nullable;
 
 /**
  * Specification for {@link Stream}.
+ *
+ * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
  */
+@Deprecated
 public final class StreamSpecification {
   private final String name;
   private final String description;

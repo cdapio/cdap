@@ -48,26 +48,14 @@
  *   public void configure() {
  *     setName("myApp");
  *     setDescription("My Sample Application");
- *     addStream(new Stream("myAppStream"));
  *     createDataset("myCounters", "KeyValueTable");
- *     addFlow(new MyAppFlow());
+ *     addSpark(new MySparkJob());
  *     addMapReduce(new MyMapReduceJob());
  *     addWorkflow(new MyAppWorkflow());
  *   }
  * }
  * </code>
  * </pre>
- * </p>
- *
- * <h1>Stream</h1>
- *
- * <p>
- * {@link co.cask.cdap.api.data.stream.Stream}s are the primary means for
- * pushing data into CDAP.
- * </p>
- *
- * <p>
- * See {@link co.cask.cdap.api.data.stream.Stream} for details.
  * </p>
  *
  * <h1>Dataset</h1>
@@ -82,38 +70,25 @@
  * See {@link co.cask.cdap.api.dataset.Dataset} for details.
  * </p>
  *
- * <h1>Flow</h1>
+ * <h1>Spark</h1>
  *
  * <p>
- * {@link co.cask.cdap.api.flow.Flow}s are user-implemented real-time stream
- * processors. A Flow contains one or more
- * {@link co.cask.cdap.api.flow.flowlet.Flowlet}s that are
- * wired into a Directed Acyclic Graph (DAG).
+ *   A {@link co.cask.cdap.api.spark.Spark} program defines the processing
+ *   of data using Spark.
  * </p>
  *
+ * <h1>MapReduce</h1>
+ *
  * <p>
- * In order to define a {@link co.cask.cdap.api.flow.Flow}, implement
- * the {@link co.cask.cdap.api.flow.Flow} interface and implement the
- * {@link co.cask.cdap.api.flow.Flow#configure} method.
+ *   A {@link co.cask.cdap.api.mapreduce.MapReduce} program to process in batch
+ *   using MapReduce
  * </p>
  *
- * <p>
- * See {@link co.cask.cdap.api.flow.Flow} for details.
- * </p>
- *
- * <h2>Flowlet</h2>
+ * <h1>Workflow</h1>
  *
  * <p>
- * A {@link co.cask.cdap.api.flow.flowlet.Flowlet} is a processing unit of a
- * {@link co.cask.cdap.api.flow.Flow} that defines business logic for
- * processing events received on input. Flowlets can also emit new events to the
- * output for downstream processing. In other words, Flowlets pass Data Objects
- * between one another. Each Flowlet is able to perform custom logic and
- * execute data operations for each individual data object processed.
- * </p>
- *
- * <p>
- * See {@link co.cask.cdap.api.flow.flowlet.Flowlet} for details.
+ *   A {@link co.cask.cdap.api.workflow.Workflow} program to orchestrate a series
+ *   of mapreduce or spark jobs.
  * </p>
  */
 package co.cask.cdap.api.app;
