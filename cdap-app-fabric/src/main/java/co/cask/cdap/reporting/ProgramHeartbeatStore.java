@@ -53,7 +53,7 @@ public class ProgramHeartbeatStore {
   private static final byte[] COLUMN_NAME = Bytes.toBytes("status");
 
   static final DatasetId PROGRAM_HEARTBEAT_INSTANCE_ID =
-    NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeatStore.TABLE);
+    NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
   static final String ROW_KEY_SEPARATOR = ":";
 
   private final Table table;

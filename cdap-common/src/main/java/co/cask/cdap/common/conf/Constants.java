@@ -330,8 +330,11 @@ public final class Constants {
   /**
    * Program heartbeat store.
    */
-  public static final class ProgramHeartbeatStore {
+  public static final class ProgramHeartbeat {
     public static final String TABLE = "program.heartbeat";
+    public static final String HEARTBEAT_INTERVAL_SECONDS = "program.heartbeat.interval.seconds";
+    // TODO update cdap-default.xml and remove the following
+    public static final long DEFAULT_HEARTBEAT_INTERVAL_SECONDS = TimeUnit.MINUTES.toSeconds(10);
   }
 
   /**

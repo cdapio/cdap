@@ -32,6 +32,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,19 +54,27 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStateWriter.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   // TODO move constant to right location after making it configurable
-  private static final int DEFAULT_HEARTBEAT_INTERVAL_MIN = 10;
 
   private final ProgramStatePublisher programStatePublisher;
 
   private ScheduledExecutorService scheduledExecutorService;
 
-  //private final int heartBeatInterval;
+  private final long heartBeatIntervalSeconds;
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
-    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
-    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
-    this.programStatePublisher = new ProgramStatePublisher(messagingService, topicId, retryStrategy);
+    this(new ProgramStatePublisher(messagingService,
+                                   NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
+                                   RetryStrategies.fromConfiguration(cConf, "system.program.state.")
+         ),
+         cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS,
+                       Constants.ProgramHeartbeat.DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
+  }
+
+  @VisibleForTesting
+  MessagingProgramStateWriter(ProgramStatePublisher programStatePublisher, long heartBeatIntervalSeconds) {
+    this.programStatePublisher = programStatePublisher;
+    this.heartBeatIntervalSeconds = heartBeatIntervalSeconds;
   }
 
   @Override
@@ -109,8 +118,8 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       scheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
       ProgramRunHeartbeat programRunHeartbeat = new ProgramRunHeartbeat(programStatePublisher, properties);
-      scheduledExecutorService.scheduleAtFixedRate(programRunHeartbeat, DEFAULT_HEARTBEAT_INTERVAL_MIN,
-                                                   DEFAULT_HEARTBEAT_INTERVAL_MIN, TimeUnit.MINUTES);
+      scheduledExecutorService.scheduleAtFixedRate(programRunHeartbeat, heartBeatIntervalSeconds,
+                                                   heartBeatIntervalSeconds, TimeUnit.SECONDS);
     }
   }
 
@@ -169,5 +178,10 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (scheduledExecutorService != null) {
       scheduledExecutorService.shutdownNow();
     }
+  }
+
+  @VisibleForTesting
+  boolean isHeartBeatThreadAlive() {
+    return scheduledExecutorService != null && !scheduledExecutorService.isShutdown();
   }
 }

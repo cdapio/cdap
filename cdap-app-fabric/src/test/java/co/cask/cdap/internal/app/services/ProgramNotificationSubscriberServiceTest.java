@@ -73,7 +73,7 @@ public class ProgramNotificationSubscriberServiceTest {
   public static void setupClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-
+    cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, "1");
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
@@ -82,7 +82,7 @@ public class ProgramNotificationSubscriberServiceTest {
                                                    DatasetProperties.EMPTY, Collections.emptyMap());
     metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf);
 
-    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeatStore.TABLE);
+    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
     heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
                                                      DatasetProperties.EMPTY, Collections.emptyMap());
     programHeartbeatStore = new ProgramHeartbeatStore(heartbeatTable, cConf);
@@ -121,6 +121,40 @@ public class ProgramNotificationSubscriberServiceTest {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     programStateWriter.start(runId, programOptions, null, programDescriptor);
+
+    Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {
+                    RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+                    if (meta == null) {
+                      return null;
+                    }
+                    Assert.assertEquals(artifactId, meta.getArtifactId());
+                    return meta.getStatus();
+                  }),
+                  10, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testHeartBeatStore() throws Exception {
+    ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
+    Map<String, String> systemArguments = new HashMap<>();
+    systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
+                                                             new BasicArguments());
+    ProgramRunId runId = programId.run(RunIds.generate());
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      "name", "1.0.0", "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
+
+    programStateWriter.start(runId, programOptions, null, programDescriptor);
+    programStateWriter.running(runId, null, programOptions);
+    // we are configured to emit
+    TimeUnit.SECONDS.sleep(3);
+    programStateWriter.completed(runId, programOptions);
 
     Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {
                     RunRecordMeta meta = metadataStoreDataset.getRun(runId);
