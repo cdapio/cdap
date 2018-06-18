@@ -81,9 +81,10 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
 
   @Override
   public MetadataEntity toMetadataEntity() {
-    return MetadataEntity.ofNamespace(namespace)
+    return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
       .append(MetadataEntity.APPLICATION, application).append(MetadataEntity.VERSION, version)
-      .append(MetadataEntity.FLOW, flow).appendAsType(MetadataEntity.FLOWLET, flowlet);
+      .append(MetadataEntity.FLOW, flow).appendAsType(MetadataEntity.FLOWLET, flowlet)
+      .build();
   }
 
   @Override

@@ -81,10 +81,13 @@ public class  MetadataDatasetTest {
   private final MetadataEntity stream1 = new StreamId("ns1", "s1").toMetadataEntity();
   private final MetadataEntity view1 = new StreamViewId("ns1", "s1", "v1").toMetadataEntity();
   private final MetadataEntity artifact1 = new ArtifactId("ns1", "a1", "1.0.0").toMetadataEntity();
-  private final MetadataEntity fileEntity = MetadataEntity.ofDataset("ns1", "ds1").append("file", "f1");
-  private final MetadataEntity partitionFileEntity = MetadataEntity.ofDataset("ns1", "ds1").append("partition", "p1")
-    .append("file", "f1");
-  private final MetadataEntity jarEntity = MetadataEntity.ofNamespace("ns1").append("jar", "jar1");
+  private final MetadataEntity fileEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns1")
+    .append(MetadataEntity.DATASET, "ds1").appendAsType("file", "f1").build();
+  private final MetadataEntity partitionFileEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns1")
+    .append(MetadataEntity.DATASET, "ds1").append("partition", "p1")
+    .appendAsType("file", "f1").build();
+  private final MetadataEntity jarEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns1")
+    .appendAsType("jar", "jar1").build();
 
   @Before
   public void before() throws Exception {
@@ -414,10 +417,10 @@ public class  MetadataDatasetTest {
 
   @Test
   public void testSearchOnTypes() throws Exception {
-    MetadataEntity myField1 = MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(),
-                                                       "myDs").appendAsType("field", "myField1");
-    MetadataEntity myField2 = MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(),
-                                                       "myDs").appendAsType("field", "myField2");
+    MetadataEntity myField1 = MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(),
+                                                       "myDs")).appendAsType("field", "myField1").build();
+    MetadataEntity myField2 = MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(),
+                                                       "myDs")).appendAsType("field", "myField2").build();
     final MetadataEntry myFieldEntry1 = new MetadataEntry(myField1, "testKey1", "testValue1");
     final MetadataEntry myFieldEntry2 = new MetadataEntry(myField2, "testKey2", "testValue2");
     txnl.execute(() -> {

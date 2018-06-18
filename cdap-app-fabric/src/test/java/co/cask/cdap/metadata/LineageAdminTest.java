@@ -22,7 +22,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
@@ -117,14 +117,14 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  new NoOpEntityExistenceVerifier());
 
     // Define metadata
-    MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
-                                                    toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
+    MetadataRecordV2 run1AppMeta = new MetadataRecordV2(program1.getParent(), MetadataScope.USER,
                                                         toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
-                                                      toMap("dk1", "dk1"), toSet("dt1"));
-    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
-                                                      toMap("dk2", "dk2"), toSet("dt2"));
+    MetadataRecordV2 run1ProgramMeta = new MetadataRecordV2(program1, MetadataScope.USER,
+                                                            toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecordV2 run1Data1Meta = new MetadataRecordV2(dataset1, MetadataScope.USER,
+                                                          toMap("dk1", "dk1"), toSet("dt1"));
+    MetadataRecordV2 run1Data2Meta = new MetadataRecordV2(dataset2, MetadataScope.USER,
+                                                          toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
     metadataStore.setProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
@@ -583,14 +583,14 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  new NoOpEntityExistenceVerifier());
 
     // Define metadata
-    MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
-                                                    toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
+    MetadataRecordV2 run1AppMeta = new MetadataRecordV2(program1.getParent(), MetadataScope.USER,
                                                         toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
-                                                      toMap("dk1", "dk1"), toSet("dt1"));
-    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
-                                                      toMap("dk2", "dk2"), toSet("dt2"));
+    MetadataRecordV2 run1ProgramMeta = new MetadataRecordV2(program1, MetadataScope.USER,
+                                                            toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecordV2 run1Data1Meta = new MetadataRecordV2(dataset1, MetadataScope.USER,
+                                                          toMap("dk1", "dk1"), toSet("dt1"));
+    MetadataRecordV2 run1Data2Meta = new MetadataRecordV2(dataset2, MetadataScope.USER,
+                                                          toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
     metadataStore.setProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),

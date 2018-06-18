@@ -22,7 +22,7 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -95,9 +95,9 @@ public class AbstractSystemMetadataWriterTest {
                                       123456L, null, null, "description1");
     datasetSystemMetadataWriter.write();
 
-    MetadataRecord expected =
-      new MetadataRecord(dsInstance, MetadataScope.SYSTEM,
-                         ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
+    MetadataRecordV2 expected =
+      new MetadataRecordV2(dsInstance, MetadataScope.SYSTEM,
+                           ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
                                          AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description1",
                                          AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
                                          AbstractSystemMetadataWriter.TTL_KEY, "100"), ImmutableSet.of());
@@ -109,8 +109,8 @@ public class AbstractSystemMetadataWriterTest {
     datasetSystemMetadataWriter.write();
 
     expected =
-      new MetadataRecord(dsInstance, MetadataScope.SYSTEM,
-                         ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
+      new MetadataRecordV2(dsInstance, MetadataScope.SYSTEM,
+                           ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
                                          AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description2",
                                          AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
                                          DatasetSystemMetadataWriter.TYPE, "dsType"), ImmutableSet.of());

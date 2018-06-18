@@ -32,8 +32,9 @@ public class MetadataTest {
     Metadata metadata1 = new Metadata(myDs);
     Assert.assertEquals(myDs, metadata1.getEntityId());
 
-    MetadataEntity metadataEntity = MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(), "myDs")
-      .append("field", "myField");
+    MetadataEntity metadataEntity =
+      MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(), "myDs"))
+        .appendAsType("field", "myField").build();
     Metadata metadata2 = new Metadata(metadataEntity);
     try {
       metadata2.getEntityId();

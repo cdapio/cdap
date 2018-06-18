@@ -19,7 +19,6 @@ package co.cask.cdap.cli.command.metadata;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -34,7 +33,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -67,12 +65,8 @@ public class SearchMetadataCommand extends AbstractCommand {
     Set<MetadataSearchResultRecord> searchResults = metadataSearchResponse.getResults();
     Table table = Table.builder()
       .setHeader("Entity")
-      .setRows(Lists.newArrayList(searchResults), new RowMaker<MetadataSearchResultRecord>() {
-        @Override
-        public List<?> makeRow(MetadataSearchResultRecord searchResult) {
-          return Lists.newArrayList(searchResult.getEntityId().toString());
-        }
-      }).build();
+      .setRows(Lists.newArrayList(searchResults), searchResult ->
+        Lists.newArrayList(searchResult.getEntityId().toString())).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

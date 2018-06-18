@@ -39,7 +39,7 @@ import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
@@ -155,8 +155,8 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testDeletingArtifact() throws Exception {
-    MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM,
-                                                      APP_ARTIFACT_ID.toEntityId().toMetadataEntity());
+    MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.SYSTEM,
+                                                        APP_ARTIFACT_ID.toEntityId().toMetadataEntity());
     Assert.assertFalse(record.getProperties().isEmpty());
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
     record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId().toMetadataEntity());

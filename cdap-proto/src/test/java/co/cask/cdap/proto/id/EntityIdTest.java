@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import com.google.gson.Gson;
@@ -266,6 +267,68 @@ public class EntityIdTest {
     for (Map.Entry<? extends EntityId, String> toJsonEntry : idsToJson.entrySet()) {
       Assert.assertEquals(jsonToMap(toJsonEntry.getValue()), jsonToMap(GSON.toJson(toJsonEntry.getKey())));
     }
+  }
+
+  @Test
+  public void testFromMetadataEntity() {
+    ApplicationId applicationId = new ApplicationId("testNs", "app1");
+    Assert.assertEquals(applicationId, EntityId.fromMetadataEntity(applicationId.toMetadataEntity()));
+
+    MetadataEntity metadataEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "testNs")
+      .appendAsType(MetadataEntity.APPLICATION, "app1").build();
+    Assert.assertEquals(applicationId, EntityId.fromMetadataEntity(metadataEntity));
+
+    metadataEntity = MetadataEntity.builder(MetadataEntity.ofDataset("testNs", "testDs"))
+      .appendAsType("field", "testField").build();
+    try {
+      EntityId.fromMetadataEntity(metadataEntity);
+      Assert.fail("Should have failed to get create an EntityId from MetadataEntity");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    ProgramId programId = new ProgramId(applicationId, ProgramType.WORKER, "testWorker");
+    Assert.assertEquals(programId, EntityId.fromMetadataEntity(programId.toMetadataEntity()));
+
+    ArtifactId artifactId = new ArtifactId("testNs", "testArtifact-1.0.0.jar");
+    Assert.assertEquals(artifactId, EntityId.fromMetadataEntity(artifactId.toMetadataEntity()));
+  }
+
+  @Test
+  public void testGetSelfOrParentEntityId() {
+    // entity is a known entityId
+    MetadataEntity metadataEntity = MetadataEntity.ofDataset("testNs", "testDs");
+    Assert.assertEquals(new DatasetId("testNs", "testDs"), EntityId.getSelfOrParentEntityId(metadataEntity));
+
+    // entity's parent is not a known entity
+    metadataEntity = MetadataEntity.builder().append("ab", "cd").appendAsType("unkonwType", "value")
+      .append("ef", "gh").build();
+    try {
+      EntityId.getSelfOrParentEntityId(metadataEntity);
+      Assert.fail("Should have failed to get a parent entity id");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    metadataEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "testNs")
+      .append(MetadataEntity.DATASET, "testDs").appendAsType("field", "testField").build();
+    Assert.assertEquals(new DatasetId("testNs", "testDs"), EntityId.getSelfOrParentEntityId(metadataEntity));
+
+    metadataEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "testNs")
+      .append(MetadataEntity.APPLICATION, "testApp")
+      .appendAsType("custom", "custValue").build();
+    Assert.assertEquals(new ApplicationId("testNs", "testApp"), EntityId.getSelfOrParentEntityId(metadataEntity));
+
+    metadataEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "testNs")
+      .append(MetadataEntity.APPLICATION, "testApp")
+      .append(MetadataEntity.TYPE, ProgramType.WORKER.getPrettyName()).append(MetadataEntity.PROGRAM, "testProg")
+      .appendAsType("subType", "realtime").build();
+    Assert.assertEquals(new ProgramId("testNs", "testApp", ProgramType.WORKER, "testProg"),
+                        EntityId.getSelfOrParentEntityId(metadataEntity));
+
+    ArtifactId artifactId = new ArtifactId("testNs", "testArtifact-1.0.0.jar");
+    metadataEntity = MetadataEntity.builder(artifactId.toMetadataEntity()).appendAsType("time", "t2").build();
+    Assert.assertEquals(artifactId, EntityId.getSelfOrParentEntityId(metadataEntity));
   }
 
   @Test
