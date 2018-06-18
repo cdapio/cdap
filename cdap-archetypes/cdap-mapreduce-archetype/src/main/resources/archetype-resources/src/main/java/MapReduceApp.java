@@ -51,7 +51,7 @@ public class MapReduceApp extends AbstractApplication {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
       // TODO: whatever is necessary after job finishes
     }
   }
