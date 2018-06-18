@@ -34,19 +34,6 @@
   .with-shadow,
   .dropdown-item {
     color: white;
-    &:hover,
-    &:active {
-      color: $cdap-light-orange;
-
-    }
-    .active {
-      color: $cdap-orange;
-      &:focus,
-      &:hover {
-        outline: none;
-        color: $cdap-orange;
-      }
-    }
   }
   .with-shadow {
     height: 50px;
@@ -139,13 +126,8 @@
   ul {
     margin: 0;
     padding: 0;
-    > li {
-      padding: 0 15px;
-    }
     li {
       display: inline-block;
-      vertical-align: top;
-      line-height: 50px;
       &:focus {
         outline: none;
       }
@@ -163,12 +145,24 @@
     min-width: 300px;
     align-items: baseline;
     flex: 1;
-    align-items: flex-start;
+    align-items: center;
 
     &.control-center {
       > li.with-shadow {
         min-width: auto;
         padding-left: 15px;
+      }
+      > li {
+        padding: 5px;
+        border-radius: 4px;
+        margin: 0 5px;
+
+        &:hover,
+        &:active,
+        &.active {
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+        }
       }
     }
   }
@@ -179,6 +173,7 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
         color: black;
         background-color: white;
+
         .dropdown-item {
           color: black;
         }
@@ -195,7 +190,7 @@
         color: inherit;
         &.active {
           &:hover {
-            color: $cdap-light-orange;
+            color: white;
           }
         }
       }

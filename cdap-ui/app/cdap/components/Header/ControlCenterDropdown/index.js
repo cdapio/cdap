@@ -21,7 +21,6 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import classnames from 'classnames';
 
 require('./ControlCenterDropdown.scss');
 
@@ -119,10 +118,7 @@ export default class ControlCenterDropdown extends Component {
       <UncontrolledDropdown
         className="header-dropdown control-center"
       >
-        <DropdownToggle
-          caret
-          className={classnames({ 'active': this.isCDAPActive(null, undefined, true) })}
-        >
+        <DropdownToggle caret>
           {T.translate(`${PREFIX}.label`)}
         </DropdownToggle>
         <CustomDropdownMenu>

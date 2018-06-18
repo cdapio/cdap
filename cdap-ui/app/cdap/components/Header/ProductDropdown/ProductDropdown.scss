@@ -62,9 +62,8 @@ $cdap_mode_color: #cccccc;
       color: inherit;
       margin-right: 5px;
       display: inline-flex;
-      flex-direction: column;
       line-height: 1;
-      justify-content: center;
+      align-items: center;
       padding-top: 4px;
       text-align: left;
 
@@ -72,7 +71,8 @@ $cdap_mode_color: #cccccc;
       &:focus {
         background: transparent;
         outline: none;
-        .cdap-secure-mode-icon {
+        .cdap-secure-mode-icon,
+        .cdap-mode {
           color: $cdap_mode_color;
         }
       }
@@ -81,13 +81,6 @@ $cdap_mode_color: #cccccc;
       }
       .cdap-logo-container {
         position: relative;
-        width: inherit;
-      }
-      .caret-down-container {
-        display: inline-block;
-        position: absolute;
-        right: 3px;
-        top: 7px;
       }
       .cdap-logo {
         display: inline-block;
@@ -97,27 +90,23 @@ $cdap_mode_color: #cccccc;
         }
       }
       .cdap-mode {
-        font-size: 10px;
-        font-weight: 500;
         color: $cdap_mode_color;
-        line-height: 1;
-        display: inline-block;
-        margin-right: 5px;
+        margin: 0 5px;
         vertical-align: bottom;
       }
       .secure-mode-icon {
-        display: inline-block;
-        line-height: 1;
-        font-size: 10px;
-        color: $cdap_mode_color;
-        padding-top: 5px;
+        display: inline-flex;
+        align-items: center;
+        .icon-svg {
+          font-size: 11px;
+        }
       }
     }
     .dropdown-menu {
       border-radius: 0;
       background: $gcp-blue;
       color: white;
-      min-width: 160px;
+      min-width: 180px;
       max-width: 210px;
 
       .dropdown-item,
@@ -132,15 +121,16 @@ $cdap_mode_color: #cccccc;
 
         &:hover,
         &:focus {
-          background: transparent;
+          background: rgba(0, 0, 0, 0.1);
+          outline: none;
         }
         a {
           text-decoration: none;
           padding: 10px 16px;
           background: transparent;
 
-          &:hover {
-            color: $cdap-light-orange;
+          &.active {
+            color: $gcp-blue;
           }
         }
       }

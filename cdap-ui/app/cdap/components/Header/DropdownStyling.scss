@@ -51,19 +51,16 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       &:focus {
         outline: none;
       }
-      &:active {
-        color: white;
-        background: transparent;
-      }
+      &:active,
       &:hover {
-        color: $cdap-light-orange;
+        color: white;
         background: transparent;
       }
       &.active {
         &:hover,
         &:focus,
         &:active {
-          color: $cdap-orange;
+          color: white;
         }
       }
       &:after {
@@ -81,11 +78,9 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       border: 0;
       background: transparent;
       padding: 0;
-      line-height: 50px;
       display: block;
-      &.active {
-        color: $cdap-orange;
-      }
+      color: white;
+      box-shadow: none;
     }
     .dropdown-menu {
       background: $dropdown_bg_color;
@@ -104,6 +99,9 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
           padding: 10px 16px;
           text-decoration: none;
           background: transparent;
+          &.active {
+            color: $gcp-blue;
+          }
         }
         &:hover,
         &:focus {
@@ -119,6 +117,8 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       .dropdown-menu {
         display: flex;
         flex-direction: column;
+        top: 33px;
+        left: -10px;
       }
     }
   }
