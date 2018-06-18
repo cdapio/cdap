@@ -105,19 +105,17 @@ class MetadataKey {
   private static MetadataEntity getTargetIdIdFromKey(MDSKey.Splitter keySplitter) {
     // get the type
     String targetType = keySplitter.getString();
-    MetadataEntity metadataEntity = null;
     String key = keySplitter.getString();
     String value = keySplitter.getString();
+    MetadataEntity.Builder builder = MetadataEntity.builder();
     while (keySplitter.hasRemaining()) {
       // add the last read key and value in metadata entity and read the ones ahead for next loop
       // we do this since we don't want the last part as its metadata info ([key] or [key][index])
       if (key.equalsIgnoreCase(targetType)) {
-        metadataEntity = metadataEntity == null ? new MetadataEntity(key, value) :
-          metadataEntity.appendAsType(key, value);
         // if the current key is the targetType then append it as the type for MetadataEntity
-        metadataEntity = metadataEntity.appendAsType(key, value);
+        builder = builder.appendAsType(key, value);
       } else {
-        metadataEntity = metadataEntity == null ? new MetadataEntity(key, value) : metadataEntity.append(key, value);
+        builder = builder.append(key, value);
       }
       key = keySplitter.getString();
       if (keySplitter.hasRemaining()) {
@@ -126,7 +124,7 @@ class MetadataKey {
         break;
       }
     }
-    return metadataEntity;
+    return builder.build();
   }
 
   static byte[] getValueRowPrefix() {

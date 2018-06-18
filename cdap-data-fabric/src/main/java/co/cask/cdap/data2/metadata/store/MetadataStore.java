@@ -19,13 +19,13 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
+import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 
 import java.io.IOException;
 import java.util.Map;
@@ -72,22 +72,22 @@ public interface MetadataStore {
   void addTags(MetadataScope scope, MetadataEntity metadataEntity, String... tagsToAdd);
 
   /**
-   * @return a set of {@link MetadataRecord} representing all the metadata (including properties and tags) for the
+   * @return a set of {@link MetadataRecordV2} representing all the metadata (including properties and tags) for the
    * specified {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
+  Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity);
 
   /**
-   * @return a {@link MetadataRecord} representing all the metadata (including properties and tags) for the specified
+   * @return a {@link MetadataRecordV2} representing all the metadata (including properties and tags) for the specified
    * {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
-  MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  MetadataRecordV2 getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
+   * @return a set of {@link MetadataRecordV2}s representing all the metadata (including properties and tags)
    * for the specified set of {@link MetadataEntity}s in the specified {@link MetadataScope}.
    */
-  Set<MetadataRecord> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntitys);
+  Set<MetadataRecordV2> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntitys);
 
   /**
    * @return the properties for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
@@ -181,13 +181,13 @@ public interface MetadataStore {
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
    * @param entityScope a set which specifies which scope of entities to display.
-   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
+   * @return the {@link MetadataSearchResponseV2} containing search results for the specified search query and filters
    */
-  MetadataSearchResponse search(String namespaceId, String searchQuery,
-                                Set<EntityTypeSimpleName> types,
-                                SortInfo sortInfo, int offset, int limit,
-                                int numCursors, String cursor, boolean showHidden,
-                                Set<EntityScope> entityScope);
+  MetadataSearchResponseV2 search(String namespaceId, String searchQuery,
+                                  Set<EntityTypeSimpleName> types,
+                                  SortInfo sortInfo, int offset, int limit,
+                                  int numCursors, String cursor, boolean showHidden,
+                                  Set<EntityScope> entityScope);
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}
@@ -197,7 +197,7 @@ public interface MetadataStore {
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  Set<MetadataRecord> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis);
+  Set<MetadataRecordV2> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis);
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in the specified
@@ -208,8 +208,8 @@ public interface MetadataStore {
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
-                                            long timeMillis);
+  Set<MetadataRecordV2> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
+                                              long timeMillis);
 
   /**
    * Rebuild stale metadata indexes.

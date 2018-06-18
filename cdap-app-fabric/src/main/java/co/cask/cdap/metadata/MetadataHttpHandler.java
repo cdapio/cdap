@@ -21,7 +21,9 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataCompat;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
@@ -32,6 +34,7 @@ import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
+import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
@@ -76,6 +79,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type SET_METADATA_RECORD_V2_TYPE = new TypeToken<Set<MetadataRecordV2>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
   private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
@@ -99,11 +103,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
-                          @QueryParam("scope") String scope, @QueryParam("type") String type)
+                          @QueryParam("scope") String scope, @QueryParam("type") String type,
+                          @QueryParam("showCustom") boolean showCustom)
     throws BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
-    Set<MetadataRecord> metadata = getMetadata(metadataEntity, scope);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_TYPE));
+    Set<MetadataRecordV2> metadata = getMetadata(metadataEntity, scope);
+    if (showCustom) {
+      // if user has specified to show custom entity resources then no need to make the result compatible
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_V2_TYPE));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.filterForCompatibility(metadata),
+                                                            SET_METADATA_RECORD_TYPE));
+    }
   }
 
   @GET
@@ -211,6 +222,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("numCursors") @DefaultValue("0") int numCursors,
                              @QueryParam("cursor") @DefaultValue("") String cursor,
                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
+                             @QueryParam("showCustom") boolean showCustom,
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     if (searchQuery == null || searchQuery.isEmpty()) {
       throw new BadRequestException("query is not specified");
@@ -225,16 +237,23 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
         throw new BadRequestException("Cursors are not supported when sort info is not specified.");
       }
     }
-    MetadataSearchResponse response =
+
+    MetadataSearchResponseV2 response =
       metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
                            sortInfo, offset, limit, numCursors, cursor, showHidden, validateEntityScope(entityScope));
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponse.class));
+    if (showCustom) {
+      // if user has specified to show custom entity/resource then there is no need to filter them
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponseV2.class));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.makeCompatible(response),
+                                                            MetadataSearchResponse.class));
+    }
   }
 
   private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable  String entityType, String suffix) {
     String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3) +
       Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
-    MetadataEntity metadataEntity = null;
+    MetadataEntity.Builder builder = MetadataEntity.builder();
 
     int curIndex = 0;
     while (curIndex < parts.length - 1) {
@@ -242,34 +261,35 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       // ../apps/appName/programType/ProgramName so handle that correctly
       if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps") && !parts[curIndex].equalsIgnoreCase
         ("versions")) {
-        metadataEntity = appendHelper(metadataEntity, entityType, MetadataEntity.TYPE,
+        builder = appendHelper(builder, entityType, MetadataEntity.TYPE,
                                       ProgramType.valueOfCategoryName(parts[curIndex]).name());
-        metadataEntity = appendHelper(metadataEntity, entityType, MetadataEntity.PROGRAM, parts[curIndex + 1]);
+        builder = appendHelper(builder, entityType, MetadataEntity.PROGRAM, parts[curIndex + 1]);
       } else {
         if (MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().containsKey(parts[curIndex])) {
-          metadataEntity = appendHelper(metadataEntity, entityType,
+          builder = appendHelper(builder, entityType,
                                         MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().get(parts[curIndex]),
                                         parts[curIndex + 1]);
         } else {
-          metadataEntity = appendHelper(metadataEntity, entityType, parts[curIndex], parts[curIndex + 1]);
+          builder = appendHelper(builder, entityType, parts[curIndex], parts[curIndex + 1]);
         }
       }
       curIndex += 2;
     }
-    return metadataEntity;
+    return builder.build();
   }
 
-  private MetadataEntity appendHelper(MetadataEntity metadataEntity, @Nullable String entityType,
+  private MetadataEntity.Builder appendHelper(MetadataEntity.Builder builder, @Nullable String entityType,
                                       String key, String value) {
+
     if (entityType == null || entityType.isEmpty()) {
       // if a type is not provided then keep appending as type to update the type on every append
-      return metadataEntity == null ? new MetadataEntity(key, value) : metadataEntity.appendAsType(key, value);
+      return builder.appendAsType(key, value);
     } else {
       if (entityType.equalsIgnoreCase(key)) {
         // if a type was provided and this key is the type then appendAsType
-        return metadataEntity == null ? new MetadataEntity(key, value) : metadataEntity.appendAsType(key, value);
+        return builder.appendAsType(key, value);
       } else {
-        return metadataEntity == null ? new MetadataEntity(key, value) : metadataEntity.append(key, value);
+        return builder.append(key, value);
       }
     }
   }
@@ -312,15 +332,20 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     return toReturn.toArray(new String[toReturn.size()]);
   }
 
-  private Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity,
+  private Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity,
                                           @Nullable String scope) throws BadRequestException {
     // the lineage admin handles the metadata call for program runs so delegate the call to that
+    Set<MetadataRecordV2> metadata;
     if (metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
-      return lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
+      metadata = lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
+    } else {
+      if (scope == null) {
+        metadata = metadataAdmin.getMetadata(metadataEntity);
+      } else {
+        metadata = metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
+      }
     }
-    return (scope == null) ?
-      metadataAdmin.getMetadata(metadataEntity) :
-      metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
+    return metadata;
   }
 
   private Map<String, String> getProperties(MetadataEntity metadataEntity,

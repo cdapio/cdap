@@ -21,14 +21,15 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -89,12 +90,12 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
+  public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) {
     return metadataStore.getMetadata(metadataEntity);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+  public Set<MetadataRecordV2> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
     return ImmutableSet.of(metadataStore.getMetadata(scope, metadataEntity));
   }
 
@@ -144,11 +145,11 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public MetadataSearchResponse search(String namespaceId, String searchQuery,
-                                       Set<EntityTypeSimpleName> types,
-                                       SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor, boolean showHidden,
-                                       Set<EntityScope> entityScope) throws Exception {
+  public MetadataSearchResponseV2 search(String namespaceId, String searchQuery,
+                                         Set<EntityTypeSimpleName> types,
+                                         SortInfo sortInfo, int offset, int limit,
+                                         int numCursors, String cursor, boolean showHidden,
+                                         Set<EntityScope> entityScope) throws Exception {
     return filterAuthorizedSearchResult(
       metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
                            entityScope)
@@ -156,17 +157,20 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   /**
-   * Filter a list of {@link MetadataSearchResultRecord} that ensures the logged-in user has a privilege on
+   * Filter a list of {@link MetadataSearchResultRecordV2} that ensures the logged-in user has a privilege on
    *
-   * @param results the {@link MetadataSearchResponse} to filter
-   * @return filtered {@link MetadataSearchResponse}
+   * @param results the {@link MetadataSearchResponseV2} to filter
+   * @return filtered {@link MetadataSearchResponseV2}
    */
-  private MetadataSearchResponse filterAuthorizedSearchResult(final MetadataSearchResponse results) throws Exception {
-    return new MetadataSearchResponse(
+  private MetadataSearchResponseV2 filterAuthorizedSearchResult(final MetadataSearchResponseV2 results)
+    throws Exception {
+    return new MetadataSearchResponseV2(
       results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
+      // For authorization either use the known entity and if it is custom entity do enforcement on the parent.
+      // TODO CDAP-13574 Support authorization for custom entities/resources
       ImmutableSet.copyOf(
         AuthorizationUtil.isVisible(results.getResults(), authorizationEnforcer, authenticationContext.getPrincipal(),
-                                    MetadataSearchResultRecord::getEntityId, null)),
+                                    input -> EntityId.getSelfOrParentEntityId(input.getMetadataEntity()), null)),
       results.getCursors(), results.isShowHidden(), results.getEntityScope());
   }
 

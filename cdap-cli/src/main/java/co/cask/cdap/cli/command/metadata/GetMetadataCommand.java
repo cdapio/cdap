@@ -64,7 +64,7 @@ public class GetMetadataCommand extends AbstractCommand {
           @Override
           public List<String> apply(MetadataRecord record) {
             return Lists.newArrayList(
-              record.getMetadataEntity().toString(),
+              record.toString(),
               Joiner.on("\n").join(record.getTags()),
               Joiner.on("\n").withKeyValueSeparator(":").join(record.getProperties()),
               record.getScope().name());

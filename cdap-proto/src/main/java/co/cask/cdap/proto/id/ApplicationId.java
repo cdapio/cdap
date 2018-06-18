@@ -65,9 +65,10 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
 
   @Override
   public MetadataEntity toMetadataEntity() {
-    return MetadataEntity.ofNamespace(namespace)
+    return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
       .appendAsType(MetadataEntity.APPLICATION, application)
-      .append(MetadataEntity.VERSION, version);
+      .append(MetadataEntity.VERSION, version)
+      .build();
   }
 
   @Override

@@ -62,9 +62,10 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
 
   @Override
   public MetadataEntity toMetadataEntity() {
-    return MetadataEntity.ofNamespace(namespace)
+    return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
       .append(MetadataEntity.APPLICATION, application).append(MetadataEntity.VERSION, version)
-      .appendAsType(MetadataEntity.SCHEDULE, schedule);
+      .appendAsType(MetadataEntity.SCHEDULE, schedule)
+      .build();
   }
 
   public String getApplication() {
