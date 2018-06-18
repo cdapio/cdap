@@ -181,24 +181,6 @@ export default class ProductDropdown extends Component {
             <DropdownItem divider />
             <DropdownItem tag="li">
               <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="http://cask.co/products/cdap/"
-              >
-                {T.translate('features.Navbar.ProductDropdown.prodWebsiteLabel')}
-              </a>
-            </DropdownItem>
-            <DropdownItem tag="li">
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="http://cask.co/community"
-              >
-                {T.translate('features.Navbar.ProductDropdown.supportLabel')}
-              </a>
-            </DropdownItem>
-            <DropdownItem tag="li">
-              <a
                 href={docsUrl}
                 target="_blank"
                 rel="noopener noreferrer"

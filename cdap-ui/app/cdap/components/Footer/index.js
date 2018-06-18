@@ -14,28 +14,19 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
 require('./Footer.scss');
 
-export default class Footer extends Component {
-  constructor(props) {
-    super(props);
-    var {copyrightYear, version} = props;
-    this.copyrightYear = copyrightYear || new Date().getFullYear();
-    this.version = version || '--unknown--';
-    this.props = props;
-  }
+export default class Footer extends PureComponent {
   render() {
     return (
       <footer>
         <div className="container">
           <div className="row text-muted">
-            <div className="text-uppercase">
+            <div>
               <p className="text-xs-center">
-                <span>Copyright &copy; {this.copyrightYear} Cask Data, Inc.</span>
+                <span>Licensed under the Apache License, Version 2.0</span>
               </p>
             </div>
           </div>
@@ -44,7 +35,3 @@ export default class Footer extends Component {
     );
   }
 }
-Footer.propTypes = {
-  version: PropTypes.string,
-  copyrightYear: PropTypes.string
-};
