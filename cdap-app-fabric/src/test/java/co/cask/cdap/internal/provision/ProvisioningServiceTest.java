@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
@@ -46,6 +47,7 @@ import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.security.FakeSecureStore;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -263,6 +265,21 @@ public class ProvisioningServiceTest {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programRunId.getParent(), appSpec);
 
     return new TaskFields(programDescriptor, programOptions, programRunId);
+  }
+
+  @Test
+  public void testSecureMacroEvaluation() {
+    String key = "key";
+    String keycontent = "somecontent";
+    Map<String, String> properties = ImmutableMap.of("x", "${secure(" + key + ")}");
+
+    SecureStore secureStore = FakeSecureStore.builder()
+      .putValue(NamespaceId.DEFAULT.getNamespace(), key, keycontent)
+      .build();
+
+    Map<String, String> evaluated = ProvisioningService.evaluateMacros(secureStore, "Bob",
+                                                                       NamespaceId.DEFAULT.getNamespace(), properties);
+    Assert.assertEquals(keycontent, evaluated.get("x"));
   }
 
   /**

@@ -21,6 +21,10 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -33,14 +37,17 @@ public class MacroParser {
 
   private final MacroEvaluator macroEvaluator;
   private final boolean escapingEnabled;
+  private final boolean lookupsEnabled;
+  private final boolean functionsEnabled;
+  private final Set<String> functionWhitelist;
 
-  public MacroParser(MacroEvaluator macroEvaluator) {
-    this(macroEvaluator, true);
-  }
-
-  public MacroParser(MacroEvaluator macroEvaluator, boolean escapingEnabled) {
+  private MacroParser(MacroEvaluator macroEvaluator, boolean escapingEnabled, boolean evaluateLookups,
+                      boolean functionsEnabled, Set<String> functionWhitelist) {
     this.macroEvaluator = macroEvaluator;
     this.escapingEnabled = escapingEnabled;
+    this.lookupsEnabled = evaluateLookups;
+    this.functionsEnabled = functionsEnabled;
+    this.functionWhitelist = functionWhitelist;
   }
 
   /**
@@ -72,31 +79,40 @@ public class MacroParser {
                                                     str, MAX_SUBSTITUTION_DEPTH));
     }
 
-    MacroMetadata macroPosition = findRightmostMacro(str);
+    MacroMetadata macroPosition = findRightmostMacro(str, str.length());
     while (macroPosition != null) {
       // in the case that the MacroEvaluator does not internally handle unspecified macros
       if (macroPosition.substitution == null) {
         throw new InvalidMacroException(String.format("Unable to substitute macro in string %s.", str));
       }
-      str = str.substring(0, macroPosition.startIndex) +
-            parse(macroPosition.substitution, depth + 1) +
-            str.substring(macroPosition.endIndex + 1);
-      macroPosition = findRightmostMacro(str);
+      String left = str.substring(0, macroPosition.startIndex);
+      String right = str.substring(macroPosition.endIndex + 1);
+      String middle = macroPosition.substitution;
+      if (macroPosition.evaluateRecursively) {
+        middle = parse(macroPosition.substitution, depth + 1);
+      }
+      str = left + middle + right;
+      // if we need to evaluate recursively, we need to search from the end of the string
+      // otherwise, we only need to start searching from where the previous macro began
+      int startPos = macroPosition.evaluateRecursively ? str.length() : macroPosition.startIndex - 1;
+      macroPosition = findRightmostMacro(str, startPos);
     }
     return str;
   }
 
   /**
    * Find the rightmost macro in the specified string. If no macro is found, returns null.
+   * Macros to the right of the specified position will be ignored.
+   *
    * @param str the string to find a macro in
+   * @param pos the position in the string to begin search for a macro.
    * @return the rightmost macro and its position in the string
    * @throws InvalidMacroException if invalid macro syntax was found.
    */
   @Nullable
-  private MacroMetadata findRightmostMacro(String str)
-    throws InvalidMacroException {
+  private MacroMetadata findRightmostMacro(String str, int pos) throws InvalidMacroException {
     // find opening "${" skipping escaped syntax "\${" and allowing doubly-escaping "\\${"
-    int startIndex = getStartIndex(str);
+    int startIndex = getStartIndex(str, pos);
     if (startIndex < 0) {
       return null;
     }
@@ -119,7 +135,11 @@ public class MacroParser {
       return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex);
     } else {
       macroStr = replaceEscapedSyntax(macroStr);
-      return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex);
+      if (lookupsEnabled) {
+        return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex, true);
+      } else {
+        return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+      }
     }
   }
 
@@ -139,11 +159,16 @@ public class MacroParser {
     String macroFunction = replaceEscapedSyntax(macroStr.substring(0, argsStartIndex));
 
     String[] args = Iterables.toArray(Splitter.on(ARGUMENT_DELIMITER).split(arguments), String.class);
-    return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex);
+    // if function evaluation is disabled, or this is not a whitelisted function, don't perform any evaluation.
+    if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(macroFunction))) {
+      return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+    } else {
+      return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+    }
   }
 
-  private int getStartIndex(String str) {
-    int startIndex = str.lastIndexOf("${");
+  private int getStartIndex(String str, int pos) {
+    int startIndex = str.lastIndexOf("${", pos);
     while (isEscaped(startIndex, str)) {
       startIndex = str.substring(0, startIndex - 1).lastIndexOf("${");
     }
@@ -207,11 +232,81 @@ public class MacroParser {
     private final String substitution;
     private final int startIndex;
     private final int endIndex;
+    private final boolean evaluateRecursively;
 
-    private MacroMetadata(String substitution, int startIndex, int endIndex) {
+    private MacroMetadata(String substitution, int startIndex, int endIndex, boolean evaluateRecursively) {
       this.substitution = substitution;
       this.startIndex = startIndex;
       this.endIndex = endIndex;
+      this.evaluateRecursively = evaluateRecursively;
     }
   }
+
+  /**
+   * @return builder for a MacroParser.
+   */
+  public static Builder builder(MacroEvaluator macroEvaluator) {
+    return new Builder(macroEvaluator);
+  }
+
+  /**
+   * Builds a {@link MacroParser}.
+   */
+  public static class Builder {
+    private final MacroEvaluator macroEvaluator;
+    private boolean escapingEnabled;
+    private boolean lookupsEnabled;
+    private boolean functionsEnabled;
+    private Set<String> functionWhitelist;
+
+    private Builder(MacroEvaluator macroEvaluator) {
+      this.macroEvaluator = macroEvaluator;
+      this.escapingEnabled = true;
+      this.lookupsEnabled = true;
+      this.functionsEnabled = true;
+      this.functionWhitelist = new HashSet<>();
+    }
+
+    public Builder disableEscaping() {
+      return setEscapingEnabled(false);
+    }
+
+    public Builder setEscapingEnabled(boolean escapingEnabled) {
+      this.escapingEnabled = escapingEnabled;
+      return this;
+    }
+
+    public Builder disableLookups() {
+      return setLookupsEnabled(false);
+    }
+
+    public Builder setLookupsEnabled(boolean lookupsEnabled) {
+      this.lookupsEnabled = lookupsEnabled;
+      return this;
+    }
+
+    public Builder disableFunctions() {
+      return setFunctionsEnabled(false);
+    }
+
+    public Builder setFunctionsEnabled(boolean functionsEnabled) {
+      this.functionsEnabled = functionsEnabled;
+      return this;
+    }
+
+    public Builder whitelistFunctions(Collection<String> functions) {
+      this.functionWhitelist.addAll(functions);
+      return this;
+    }
+
+    public Builder whitelistFunctions(String... functions) {
+      Collections.addAll(functionWhitelist, functions);
+      return this;
+    }
+
+    public MacroParser build() {
+      return new MacroParser(macroEvaluator, escapingEnabled, lookupsEnabled, functionsEnabled, functionWhitelist);
+    }
+  }
+
 }
