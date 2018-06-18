@@ -21,6 +21,9 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 
 import java.util.Map;
 
+/**
+ * Test macro evaluator that supports lookups and test(key) and t(key) functions.
+ */
 public class TestMacroEvaluator implements MacroEvaluator {
 
   private final Map<String, String> propertySubstitutions;
@@ -45,7 +48,7 @@ public class TestMacroEvaluator implements MacroEvaluator {
 
   @Override
   public String evaluate(String macroFunction, String... arguments) {
-    if (!macroFunction.equals("test")) {
+    if (!macroFunction.equals("test") && !macroFunction.equals("t")) {
       throw new InvalidMacroException(String.format("Macro function '%s' not defined.", macroFunction));
     } else if (arguments.length > 1) {
       throw new InvalidMacroException("Test macro function only takes 1 argument.");

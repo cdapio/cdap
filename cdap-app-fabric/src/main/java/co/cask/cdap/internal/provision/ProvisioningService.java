@@ -19,6 +19,9 @@ package co.cask.cdap.internal.provision;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.async.KeyedExecutor;
@@ -34,6 +37,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.plugin.MacroParser;
 import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.internal.provision.task.DeprovisionTask;
 import co.cask.cdap.internal.provision.task.ProvisionTask;
@@ -47,6 +51,7 @@ import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.tools.KeyStores;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -102,6 +107,7 @@ public class ProvisioningService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final SparkCompat sparkCompat;
+  private final SecureStore secureStore;
   private final Consumer<ProgramRunId> taskStateCleanup;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
 
@@ -109,7 +115,8 @@ public class ProvisioningService extends AbstractIdleService {
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
                       ProvisionerConfigProvider provisionerConfigProvider,
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
-                      DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+                      DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                      SecureStore secureStore) {
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
@@ -124,6 +131,7 @@ public class ProvisioningService extends AbstractIdleService {
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.sparkCompat = SparkCompatReader.get(cConf);
+    this.secureStore = secureStore;
     this.taskStateCleanup = programRunId -> Transactionals.execute(transactional, dsContext -> {
       ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
       provisionerDataset.deleteTaskInfo(programRunId);
@@ -300,7 +308,6 @@ public class ProvisioningService extends AbstractIdleService {
       runWithProgramLogging(programRunId, Collections.emptyMap(),
                             () -> LOG.error("No task state found while deprovisioning the cluster. "
                                               + "The cluster will be marked as orphaned."));
-
       provisionerNotifier.orphaned(programRunId);
       return () -> { };
     }
@@ -381,9 +388,16 @@ public class ProvisioningService extends AbstractIdleService {
 
   private Runnable createProvisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner) {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
-    ProvisionerContext context =
-      new DefaultProvisionerContext(programRunId, taskInfo.getProvisionerProperties(),
-                                    sparkCompat, createSSHContext(taskInfo.getSecureKeyInfo()));
+
+    ProvisionerContext context;
+    try {
+      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
+                              createSSHContext(taskInfo.getSecureKeyInfo()));
+    } catch (InvalidMacroException e) {
+      LOG.error("Could not evaluate macros while provisioning. The run will be marked as failed.", e);
+      provisionerNotifier.deprovisioned(taskInfo.getProgramRunId());
+      return () -> { };
+    }
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
     ProvisioningTask task = new ProvisionTask(taskInfo, transactional, datasetFramework, provisioner, context,
@@ -404,9 +418,15 @@ public class ProvisioningService extends AbstractIdleService {
   private Runnable createDeprovisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner,
                                          Consumer<ProgramRunId> taskCleanup) {
     Map<String, String> properties = taskInfo.getProvisionerProperties();
-    ProvisionerContext context =
-      new DefaultProvisionerContext(taskInfo.getProgramRunId(), properties,
-                                    sparkCompat, createSSHContext(taskInfo.getSecureKeyInfo()));
+    ProvisionerContext context;
+    try {
+      context = createContext(taskInfo.getProgramRunId(), taskInfo.getUser(), properties,
+                              createSSHContext(taskInfo.getSecureKeyInfo()));
+    } catch (InvalidMacroException e) {
+      LOG.error("Could not evaluate macros while deprovisoning. The cluster will be marked as orphaned.", e);
+      provisionerNotifier.orphaned(taskInfo.getProgramRunId());
+      return () -> { };
+    }
     DeprovisionTask task = new DeprovisionTask(taskInfo, transactional, datasetFramework, 300,
                                                provisioner, context, provisionerNotifier, locationFactory);
     return () -> runWithProgramLogging(
@@ -515,6 +535,38 @@ public class ProvisioningService extends AbstractIdleService {
   @Nullable
   private SSHContext createSSHContext(@Nullable SecureKeyInfo keyInfo) {
     return keyInfo == null ? null : new DefaultSSHContext(locationFactory, keyInfo);
+  }
+
+  private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
+                                           @Nullable SSHContext sshContext) {
+    Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
+    return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
+  }
+
+  @VisibleForTesting
+  static Map<String, String> evaluateMacros(SecureStore secureStore, String user, String namespace,
+                                            Map<String, String> properties) {
+    // evaluate macros in the provisioner properties
+    MacroEvaluator evaluator = new ProvisionerMacroEvaluator(namespace, secureStore);
+    MacroParser macroParser = MacroParser.builder(evaluator)
+      .disableEscaping()
+      .whitelistFunctions(ProvisionerMacroEvaluator.SECURE_FUNCTION)
+      .build();
+    Map<String, String> evaluated = new HashMap<>();
+
+    // do secure store lookups as the user that will run the program
+    String oldUser = SecurityRequestContext.getUserId();
+    try {
+      SecurityRequestContext.setUserId(user);
+      for (Map.Entry<String, String> property : properties.entrySet()) {
+        String key = property.getKey();
+        String val = property.getValue();
+        evaluated.put(key, macroParser.parse(val));
+      }
+    } finally {
+      SecurityRequestContext.setUserId(oldUser);
+    }
+    return evaluated;
   }
 
   /**
