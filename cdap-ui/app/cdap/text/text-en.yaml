@@ -83,7 +83,7 @@ commons:
     reset: Reset
     valueLabel: Value
     valuePlaceholder: value
-  market: CDAP Repository
+  market: Repository
   milliSecondsShortLabel: ms
   nameLabel: Name
   noLabel: No
