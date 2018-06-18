@@ -34,9 +34,9 @@ import java.util.Set;
 public class CollectMacroEvaluatorTest {
 
   @Test
-  public void testMacrosCollected() throws Exception {
+  public void testMacrosCollected() {
     CollectMacroEvaluator collectMacroEvaluator = new CollectMacroEvaluator();
-    MacroParser parser = new MacroParser(collectMacroEvaluator);
+    MacroParser parser = MacroParser.builder(collectMacroEvaluator).build();
     List<String> macros = new ArrayList<>();
     macros.add("${hello}${world}");
     macros.add("${secure2(password)}");
