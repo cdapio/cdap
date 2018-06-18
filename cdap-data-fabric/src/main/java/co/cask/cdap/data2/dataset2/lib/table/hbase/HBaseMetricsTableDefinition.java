@@ -23,6 +23,9 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSampler;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -30,15 +33,31 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * HBase based implementation for {@link MetricsTable}.
  */
 // todo: re-use HBase table based dataset instead of having separate classes hierarchies, see CDAP-1193
 public class HBaseMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseMetricsTableDefinition.class);
+
+  // A logger for logging the incompatible config change for number of splits.
+  // We only log it once per message (hence per table).
+  private static final Logger CONFIG_CHANGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(() -> new LogSampler() {
+    private final AtomicBoolean logged = new AtomicBoolean(false);
+
+    @Override
+    public boolean accept(String message, int logLevel) {
+      return logged.compareAndSet(false, true);
+    }
+  }));
 
   @Inject
   private Configuration hConf;
@@ -72,6 +91,18 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    int datasetSplits = spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16);
+
+    // Detect if there is a cdap-site change on the number of splits, which we don't support.
+    // Log a warning if that's the case.
+    if (cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS) != datasetSplits) {
+      CONFIG_CHANGE_LOG.warn(
+        "Ignoring configuration {} with value {} from cdap-site.xml. " +
+          "The system table {} already has a splits value {}, which can not be changed.",
+        Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS),
+        spec.getName(), datasetSplits);
+    }
+
     return new HBaseMetricsTable(datasetContext, spec, hConf, hBaseTableUtil, cConf);
   }
 

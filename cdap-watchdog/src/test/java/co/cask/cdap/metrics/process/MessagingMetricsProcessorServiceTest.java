@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.MetricsProcessorStatus;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -42,31 +43,27 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Testing possible race condition of the {@link MessagingMetricsProcessorService}
  */
 public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServiceTestBase {
 
-  private static final int PARTITION_SIZE = 2;
-
   @Test
-  public void persistMetricsTests()
-    throws Exception {
+  public void persistMetricsTests() throws Exception {
 
     injector.getInstance(TransactionManager.class).startAndWait();
     injector.getInstance(DatasetOpExecutor.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
 
-    Set<Integer> partitions = new HashSet<>();
-    for (int i = 0; i < PARTITION_SIZE; i++) {
-      partitions.add(i);
-    }
+    Set<Integer> partitions = IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM))
+      .boxed().collect(Collectors.toSet());
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
@@ -86,11 +83,12 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       // Create new MessagingMetricsProcessorService instance every time because the same instance cannot be started
       // again after it's stopped
       MessagingMetricsProcessorService messagingMetricsProcessorService =
-        new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                             messagingService, injector.getInstance(SchemaGenerator.class),
+        new MessagingMetricsProcessorService(cConf, injector.getInstance(DatasetFramework.class),
+                                             injector.getInstance(MetricDatasetFactory.class), messagingService,
+                                             injector.getInstance(SchemaGenerator.class),
                                              injector.getInstance(DatumReaderFactory.class), metricStore,
-                                             1000L, 5, partitions, new NoopMetricsContext(), 50, 0,
-                                             injector.getInstance(DatasetFramework.class), cConf, true);
+                                             partitions, new NoopMetricsContext(), 50, 0,
+                                             true);
       messagingMetricsProcessorService.startAndWait();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore
@@ -99,7 +97,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
         public Integer call() throws Exception {
           return metricStore.getAllMetrics().size();
         }
-      }, 15, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+      }, 15, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       assertMetricsResult(expected, metricStore.getAllMetrics());
 
@@ -154,12 +152,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
             continue;
           }
           // Increment the metric's value if it already exists, or insert the metric value
-          Long currentValue = userMetricsMap.get(metricValue.getName());
-          if (currentValue == null) {
-            userMetricsMap.put(metricValue.getName(), metricValue.getValue());
-          } else {
-            userMetricsMap.put(metricValue.getName(), currentValue + metricValue.getValue());
-          }
+          userMetricsMap.merge(metricValue.getName(), metricValue.getValue(), (a, b) -> a + b);
         }
       }
     }
@@ -181,7 +174,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     }
 
     public boolean isMetricsProcessorDelayEmitted() {
-      for (int i = 0; i < PARTITION_SIZE; i++) {
+      for (int i = 0; i < cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM); i++) {
         if (!systemMetricsMap.containsKey(
           String.format(
             "metrics.processor.0.topic.metrics%s.oldest.delay.ms", i)) &&

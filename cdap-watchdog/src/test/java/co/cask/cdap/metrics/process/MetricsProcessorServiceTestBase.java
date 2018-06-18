@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,30 +61,31 @@ import java.util.Map;
 abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorServiceTestBase.class);
 
-  protected static final String COUNTER_METRIC_NAME = "counter_metric";
-  protected static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
-  protected static final int PARTITION_SIZE = 2;
-  protected static final Map<String, String> METRICS_CONTEXT = ImmutableMap.<String, String>builder()
+  static final String COUNTER_METRIC_NAME = "counter_metric";
+  static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
+
+  static final Map<String, String> METRICS_CONTEXT = ImmutableMap.<String, String>builder()
     .put(Constants.Metrics.Tag.NAMESPACE, "NS_1")
     .put(Constants.Metrics.Tag.APP, "APP_1")
     .put(Constants.Metrics.Tag.FLOW, "FLOW_1")
     .put(Constants.Metrics.Tag.RUN_ID, "RUN_1")
     .put(Constants.Metrics.Tag.FLOWLET, "FLOWLET_1").build();
 
-  protected final ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
+  private final ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
   // Map containing expected metrics' names and values
   protected final Map<String, Long> expected = new HashMap<>();
   private final Encoder encoder = new BinaryEncoder(encoderOutputStream);
 
-  protected void publishMessagingMetrics(int metricIndex, long startTimeSecs, Map<String, String> metricsContext,
-                                         Map<String, Long> expected, String expectedMetricPrefix,
-                                         MetricType metricType) {
+  void publishMessagingMetrics(int metricIndex, long startTimeSecs, Map<String, String> metricsContext,
+                               Map<String, Long> expected, String expectedMetricPrefix,
+                               MetricType metricType) {
 
     try {
       getMetricValuesAddToExpected(metricIndex, startTimeSecs,
                                    metricsContext, expected, expectedMetricPrefix, metricType);
+      int numOfTopics = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
       messagingService.publish(
-        StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % PARTITION_SIZE)))
+        StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % numOfTopics)))
           .addPayloads(encoderOutputStream.toByteArray()).build());
     } catch (Exception e) {
       LOG.error("Failed to publish metric with index {} to messaging service", metricIndex, e);
@@ -100,9 +101,9 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
    *
    * @param expectedMetricPrefix The prefix added to metric names by {@link MetricStore}
    */
-  protected MetricValues getMetricValuesAddToExpected(int i, long startTimeSecs, Map<String, String> metricsContext,
-                                                      Map<String, Long> expected, String expectedMetricPrefix,
-                                                      MetricType metricType)
+  private MetricValues getMetricValuesAddToExpected(int i, long startTimeSecs, Map<String, String> metricsContext,
+                                                    Map<String, Long> expected, String expectedMetricPrefix,
+                                                    MetricType metricType)
     throws TopicNotFoundException, IOException {
     MetricValues metric;
     if (MetricType.GAUGE.equals(metricType)) {

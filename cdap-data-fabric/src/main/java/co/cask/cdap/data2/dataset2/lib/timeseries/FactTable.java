@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,18 +61,11 @@ public final class FactTable implements Closeable {
   private static final int MAX_RECORDS_TO_SCAN_DURING_SEARCH = 10 * 1000 * 1000;
   private static final int MAX_SCANS_DURING_SEARCH = 10 * 1000;
 
-  private static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
-    @Override
-    public Long apply(byte[] input) {
-      return Bytes.toLong(input);
-    }
-  };
-
   private static final Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>
     TRANSFORM_MAP_BYTE_ARRAY_TO_LONG = new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
     @Override
     public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
-      return Maps.transformValues(input, BYTES_TO_LONG);
+      return Maps.transformValues(input, Bytes::toLong);
     }
   };
 
@@ -176,7 +169,7 @@ public final class FactTable implements Closeable {
       measureToEntityMap.put(measureName, codec.getMeasureEntityId(measureName));
     }
     // sort the list
-    Collections.sort(measureNames, new MeasureNameComparator(measureToEntityMap));
+    measureNames.sort(new MeasureNameComparator(measureToEntityMap));
     return measureNames;
   }
 
@@ -208,7 +201,8 @@ public final class FactTable implements Closeable {
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
-                timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
+                timeSeriesTable, scan, Bytes.toHexString(startRow),
+                endRow == null ? null : Bytes.toHexString(endRow), fuzzyRowFilter);
     }
 
     return timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
@@ -273,7 +267,6 @@ public final class FactTable implements Closeable {
     // Thus we find all results.
 
     List<DimensionValue> allDimensions = Lists.newArrayList();
-    List<DimensionValue> filledDimension = Lists.newArrayList();
     List<Integer> dimToFillIndexes = Lists.newArrayList();
     for (int i = 0; i < allDimensionNames.size(); i++) {
       String dimensionName = allDimensionNames.get(i);
@@ -282,7 +275,6 @@ public final class FactTable implements Closeable {
         allDimensions.add(new DimensionValue(dimensionName, null));
       } else {
         DimensionValue dimensionValue = new DimensionValue(dimensionName, dimensionSlice.get(dimensionName));
-        filledDimension.add(dimensionValue);
         allDimensions.add(dimensionValue);
       }
     }
@@ -301,7 +293,7 @@ public final class FactTable implements Closeable {
     byte[] endRow = codec.createEndRowKey(allDimensions, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter =
-      createFuzzyRowFilter(new FactScan(startTs, endTs, ImmutableList.<String>of(), allDimensions), startRow);
+      createFuzzyRowFilter(new FactScan(startTs, endTs, Collections.emptyList(), allDimensions), startRow);
     Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
     scans++;
     try {
@@ -384,7 +376,7 @@ public final class FactTable implements Closeable {
     byte[] endRow = codec.createEndRowKey(allDimensions, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter =
-      createFuzzyRowFilter(new FactScan(startTs, endTs, ImmutableList.<String>of(), allDimensions), startRow);
+      createFuzzyRowFilter(new FactScan(startTs, endTs, Collections.emptyList(), allDimensions), startRow);
 
     Set<String> measureNames = Sets.newHashSet();
     int scannedRecords = 0;
@@ -478,22 +470,7 @@ public final class FactTable implements Closeable {
 
   private static void set(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table,
                           byte[] row, byte[] column, byte[] value) {
-    NavigableMap<byte[], byte[]> rowMap = table.get(row);
-    if (rowMap == null) {
-      rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      table.put(row, rowMap);
-    }
-
+    NavigableMap<byte[], byte[]> rowMap = table.computeIfAbsent(row, k -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR));
     rowMap.put(column, value);
-  }
-
-  private String toPrettyLog(byte[] key) {
-    StringBuilder sb = new StringBuilder("{");
-    for (byte b : key) {
-      String enc = String.valueOf((int) b) + "    ";
-      sb.append(enc.substring(0, 5));
-    }
-    sb.append("}");
-    return sb.toString();
   }
 }

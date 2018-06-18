@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,11 +62,13 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   private final Map<Integer, TopicPayload> topicPayloads;
 
   @Inject
-  MessagingMetricsCollectionService(@Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                    @Named(Constants.Metrics.MESSAGING_TOPIC_NUM) int totalTopicNum,
-                                    CConfiguration cConf,
+  MessagingMetricsCollectionService(CConfiguration cConf,
                                     MessagingService messagingService,
                                     DatumWriter<MetricValues> recordWriter) {
+
+    String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    int totalTopicNum = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
+
     Preconditions.checkArgument(totalTopicNum > 0, "Constants.Metrics.MESSAGING_TOPIC_NUM must be a positive integer");
     this.messagingService = messagingService;
     this.recordWriter = recordWriter;

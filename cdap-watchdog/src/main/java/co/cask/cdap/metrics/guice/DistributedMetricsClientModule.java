@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,6 @@ package co.cask.cdap.metrics.guice;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.DatumWriter;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -29,7 +27,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.name.Named;
 
 /**
  * Guice module for binding classes for metrics client in distributed runtime mode.
@@ -44,18 +41,6 @@ final class DistributedMetricsClientModule extends PrivateModule {
   protected void configure() {
     bind(MetricsCollectionService.class).to(MessagingMetricsCollectionService.class).in(Scopes.SINGLETON);
     expose(MetricsCollectionService.class);
-  }
-
-  @Provides
-  @Named(Constants.Metrics.TOPIC_PREFIX)
-  public String providesTopicPrefix(CConfiguration cConf) {
-    return cConf.get(Constants.Metrics.TOPIC_PREFIX);
-  }
-
-  @Provides
-  @Named(Constants.Metrics.MESSAGING_TOPIC_NUM)
-  public int providesMessagingTopicPartition(CConfiguration cConf) {
-    return cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
   }
 
   @Provides

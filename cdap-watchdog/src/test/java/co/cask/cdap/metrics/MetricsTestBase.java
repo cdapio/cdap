@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,6 +68,12 @@ public abstract class MetricsTestBase {
   public void init() throws IOException, UnsupportedTypeException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.Metrics.TOPIC_PREFIX, TOPIC_PREFIX);
+    cConf.setInt(Constants.Metrics.MESSAGING_TOPIC_NUM, 10);
+    cConf.setInt(Constants.Metrics.QUEUE_SIZE, 1000);
+    // Set it to really short delay for faster test
+    cConf.setLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS, 5);
+
     injector = Guice.createInjector(getModules());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -80,7 +86,7 @@ public abstract class MetricsTestBase {
   }
 
   @After
-  public void stop() throws Exception {
+  public void stop() {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
