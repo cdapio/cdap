@@ -71,8 +71,8 @@ function objectQuery(obj) {
   return obj;
 }
 export const HUMANREADABLESTORAGE = 'STORAGE';
-export const HUMANREADABLESTORAGE_NODECIMAL = "NODECIMAL";
-
+export const HUMANREADABLESTORAGE_NODECIMAL = 'NODECIMAL';
+export const HUMANREADABLE_DECIMAL = 'DECIMAL';
 function humanReadableNumber(num, type) {
   if (typeof num !== 'number') {
     return num;
@@ -83,6 +83,8 @@ function humanReadableNumber(num, type) {
       return convertBytesToHumanReadable(num);
     case HUMANREADABLESTORAGE_NODECIMAL:
       return convertBytesToHumanReadable(num, HUMANREADABLESTORAGE_NODECIMAL);
+    case HUMANREADABLE_DECIMAL:
+      return numeral(num).format('0,0[.]0000');
     default:
       return numeral(num).format('0,0');
   }
