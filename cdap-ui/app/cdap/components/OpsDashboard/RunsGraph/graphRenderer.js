@@ -16,16 +16,17 @@
 
 import * as d3 from 'd3';
 import DashboardStore, {DashboardActions, ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
-import moment from 'moment';
+import moment from 'moment-timezone';
+import {humanReadableDate} from 'services/helpers';
 
 const AXIS_BUFFER = 1.1;
 
 export function renderGraph(selector, containerWidth, containerHeight, data, viewByOption) {
   let margin = {
-    top: 20,
+    top: 45,
     right: 50,
-    bottom: 30,
-    left: 50
+    bottom: 40,
+    left: 40
   };
   let width = containerWidth - margin.left - margin.right,
       height = containerHeight - margin.top - margin.bottom;
@@ -79,7 +80,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
   // RENDER AXIS
   let barPadding = 2;
-  let barWidth = (x.bandwidth() - barPadding * 6) / 2;
+  let stepWidth = x.bandwidth();
+  let barWidth = (stepWidth - barPadding * 6) / 2;
 
   // X Axis
   let xAxis = d3.axisBottom(x)
@@ -104,6 +106,20 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .select('line')
     .remove();
 
+  // X Axis Legend
+  // need to add some pixels show the legend doesn't appear outside
+  // the graph container
+  let legendYOffset = margin.top + 2;
+  let localTimeZone = moment.tz(moment.tz.guess()).format('z');
+
+  chart.append('g')
+    .attr('class', 'legend axis-x-legend')
+    .append('text')
+      .attr('transform', `translate(${width / 2}, ${containerHeight - legendYOffset})`)
+      .text(`Time (${localTimeZone})`);
+
+
+  // Dates axis
   let dateMap = {};
   data.forEach((d) => {
     let time = parseInt(d.time, 10);
@@ -125,35 +141,85 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
   let dateAxisGroup = chart.append('g')
     .attr('class', 'axis axis-date')
-    .call(dateAxis)
-      .selectAll('.tick text')
-      .attr('class', 'date-axis-tick')
-      .filter((d, i) => {
-        return i !== firstDateIndex && i !== secondDateIndex;
-      })
-      .text(null);
+    .call(dateAxis);
+
+  dateAxisGroup
+    .selectAll('.tick text')
+    .attr('class', 'date-axis-tick')
+    .filter((d, i) => {
+      return i !== firstDateIndex && i !== secondDateIndex;
+    })
+    .text(null);
 
   dateAxisGroup.select('.domain')
     .remove();
 
+
+  // Separator between two dates
+  let datesSeparatorIndex = dateMap[dates[0]];
+
+  xAxisGroup.select(`.tick:nth-child(${datesSeparatorIndex})`)
+    .select('line')
+    .attr('stroke-width', '2');
+
+  let tickOffset = (stepWidth / 2) - barPadding;
+
+  dateAxisGroup.select(`.tick:nth-child(${datesSeparatorIndex})`)
+    .select('line')
+    .attr('stroke-width', '2')
+    .attr('x1', tickOffset)
+    .attr('x2', tickOffset)
+    .attr('y2', -30);
+
+
+  // Last updated axis
+  let currentTime = humanReadableDate(Date.now(), true);
+  let lastUpdatedYOffset = -35;
+
+  chart.append('g')
+    .attr('class', 'axis-last-updated')
+    .append('text')
+      .attr('transform', `translate(${width + margin.right}, ${lastUpdatedYOffset})`)
+      .text(`Last updated ${currentTime} ${localTimeZone}`);
+
+
   // Y Axis Left
+  const legendOffset = 30;
+  const ticksFontSize = 10;
+
   chart.append('g')
     .attr('class', 'axis axis-y-left')
+    .attr('font-size', ticksFontSize)
     .call(d3.axisLeft(yLeft).tickFormat((e) => {
       // showing only integers
       if (Math.floor(e) !== e) { return; }
       return e;
     }));
 
+  // Y Axis Left Legend
+  chart.append('g')
+    .attr('class', 'legend axis-y-left-legend')
+    .append('text')
+      .attr('transform', `translate(-${legendOffset}, ${height/2}) rotate(-90)`)
+      .text('# of runs');
+
+
   // Y Axis Right
   chart.append('g')
     .attr('class', 'axis axis-y-right')
     .attr('transform', `translate(${width}, 0)`)
+    .attr('font-size', ticksFontSize)
     .call(d3.axisRight(yRight).tickSizeOuter(-width));
+
+  // Y Axis Right Legend
+  chart.append('g')
+    .attr('class', 'legend axis-y-right-legend')
+    .append('text')
+      .attr('transform', `translate(${width + legendOffset + ticksFontSize}, ${height/2}) rotate(-90)`)
+      .text('Delay time');
 
 
   // BUCKETS STYLING LAYER
-  let stepWidth = x.bandwidth();
   let bottomBucketsLayer = chart.append('g')
     .attr('class', 'bottom-buckets-layer');
 
@@ -228,7 +294,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
     // Successful
     statistics.append('rect')
-      .attr('class', 'bar successful')
+      .attr('class', 'bar succeeded')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.successful))

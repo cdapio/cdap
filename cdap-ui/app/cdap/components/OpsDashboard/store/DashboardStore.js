@@ -20,7 +20,6 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
-  toggleDisplayRuns: 'DASHBOARD_TOGGLE_DISPLAY_RUNS',
   togglePipeline: 'DASHBOARD_TOGGLE_PIPELINE',
   toggleCustomApp: 'DAHBOARD_TOGGLE_CUSTOM_APP',
   enableLoading: 'DASHBOARD_ENABLE_LOADING',
@@ -28,6 +27,7 @@ const DashboardActions = {
   updateData: 'DASHBOARD_UPDATE_DATA',
   changeDisplayType: 'DASHBOARD_CHANGE_DISPLAY_TYPE',
   changeViewByOption: 'DASHBOARD_CHANGE_VIEW_BY_OPTION',
+  setLast24Hours: 'DASHBOARD_SET_LAST_24_HOURS',
   reset: 'DASHBOARD_RESET'
 };
 
@@ -44,12 +44,12 @@ const defaultInitialState = {
   pipelineCount: 0,
   customAppCount: 0,
   loading: false,
-  displayRunsList: false,
   displayBucketInfo: null,
   pipeline: true,
   customApp: true,
   displayType: 'chart',
-  viewByOption: ViewByOptions.runStatus
+  viewByOption: ViewByOptions.runStatus,
+  isLast24Hours: true
 };
 
 const namespacesInitialState = {
@@ -67,7 +67,6 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         customAppCount: action.payload.customAppCount,
         startTime: action.payload.startTime,
         duration: action.payload.duration,
-        displayRunsList: true,
         displayBucketInfo: action.payload.data[action.payload.data.length - 1],
         loading: false
       };
@@ -75,12 +74,6 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         displayBucketInfo: action.payload.displayBucketInfo,
-        displayRunsList: true
-      };
-    case DashboardActions.toggleDisplayRuns:
-      return {
-        ...state,
-        displayRunsList: !state.displayRunsList
       };
     case DashboardActions.togglePipeline:
       return {
@@ -108,6 +101,11 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         viewByOption: action.payload.viewByOption
+      };
+    case DashboardActions.setLast24Hours:
+      return {
+        ...state,
+        isLast24Hours: action.payload.isLast24Hours
       };
     case DashboardActions.reset:
       return defaultInitialState;
