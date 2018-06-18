@@ -23,7 +23,7 @@ import DataPrepHome from 'components/DataPrepHome';
 import {Prompt, Link, Redirect} from 'react-router-dom';
 import createExperimentStore, {CREATION_STEPS} from 'components/Experiments/store/createExperimentStore';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
+import Popover from 'components/Popover';
 import ExperimentPopovers from 'components/Experiments/CreateView/Popovers';
 import DataPrepStore from 'components/DataPrep/store';
 import {
@@ -67,7 +67,7 @@ export default class ExperimentCreateView extends Component {
     active_step: createExperimentStore.getState().active_step.step_name,
     redirectToExperimentDetail: false
   };
-  title = 'Create a New Experiment';
+  title = 'Create a new experiment';
   componentWillMount() {
     setAlgorithmsListForCreateView();
   }
@@ -170,7 +170,7 @@ export default class ExperimentCreateView extends Component {
       <span>
         {this.renderTopPanel(this.title)}
         <DataPrepConnections
-          sidePanelExpanded={true}
+          sidePanelExpanded={false}
           enableRouting={false}
           singleWorkspaceMode={true}
           onWorkspaceCreate={(workspaceId) => {
@@ -178,6 +178,7 @@ export default class ExperimentCreateView extends Component {
             this.setState({workspaceId});
           }}
           scope={true}
+          browserTitle="Select a file to use in your experiment"
         />
       </span>
     );
@@ -188,35 +189,46 @@ export default class ExperimentCreateView extends Component {
         Update Model
       </div>
     );
+    const {experimentId, addModel} = queryString.parse(this.props.location.search);
+    let popoverElementLabel = 'Create experiment';
+
+    if (addModel) {
+      popoverElementLabel = 'Add model';
+    }
     const popoverElement = (
       <div className="btn btn-primary">
-        Add a model
+        {popoverElementLabel}
       </div>
     );
     const createModelBtn = (
-      <UncontrolledPopover
-        popoverElement={popoverElement}
-        tag="div"
-        tetherOption={{
-          classPrefix: 'create_new_experiment_popover',
-        }}
+      <Popover
+        target={() => popoverElement}
+        enableInteractionInPopover={true}
+        targetDimension={{ width: "auto" }}
+        placement="bottom"
+        className="create_new_experiment_popover"
+        showPopover={!experimentId ? true : false}
       >
         <ExperimentPopovers />
-      </UncontrolledPopover>
+      </Popover>
     );
 
-    const {experimentId, addModel} = queryString.parse(this.props.location.search);
+
     let topPanelTitle = 'Create a new experiment';
     if (addModel) {
       topPanelTitle = `Add model to '${experimentId}'`;
     }
+    const renderAddBtn = () => {
+      if (!this.state.workspaceId) {
+        return null;
+      }
+      return this.state.modelId ? updateModelBtn : createModelBtn;
+    };
     return (
       <span>
         {this.renderTopPanel(topPanelTitle)}
         <div className="experiments-model-panel">
-          {
-            this.state.modelId ? updateModelBtn : createModelBtn
-          }
+          {renderAddBtn()}
         </div>
         <DataPrepHome
           singleWorkspaceMode={true}
