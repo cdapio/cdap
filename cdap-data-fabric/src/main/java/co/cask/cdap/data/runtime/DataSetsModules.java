@@ -29,6 +29,7 @@ import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.registry.BasicUsageRegistry;
@@ -71,6 +72,9 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(FieldLineageWriter.class).to(BasicLineageWriter.class);
+        expose(FieldLineageWriter.class);
 
         bind(UsageRegistry.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);
@@ -119,6 +123,9 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
+
+        bind(FieldLineageWriter.class).to(BasicLineageWriter.class);
+        expose(FieldLineageWriter.class);
 
         bind(UsageRegistry.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);

@@ -16,15 +16,18 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.proto.codec.OperationTypeAdapter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -32,16 +35,19 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
- * An implementation of {@link LineageWriter} that publish lineage information to TMS.
+ * An implementation of {@link LineageWriter} and {@link FieldLineageWriter} that publish lineage information to TMS.
  */
-public class MessagingLineageWriter implements LineageWriter {
+public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+    .create();
 
   private final TopicId topic;
   private final MessagingService messagingService;
@@ -66,13 +72,25 @@ public class MessagingLineageWriter implements LineageWriter {
     publishLineage(programRunId, new DataAccessLineage(accessType, streamId, componentId));
   }
 
+  @Override
+  public void write(ProgramRunId programRunId, FieldLineageInfo info) {
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.FIELD_LINEAGE, programRunId,
+                                                  GSON.toJsonTree(info));
+    publish(message);
+  }
+
+
   private void publishLineage(ProgramRunId programRunId, DataAccessLineage lineage) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, programRunId, GSON.toJsonTree(lineage));
+    publish(message);
+  }
+
+  private void publish(MetadataMessage message) {
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to publish data access lineage: " + lineage, e);
+      throw new RuntimeException("Failed to publish metadata message: " + message, e);
     }
   }
 }
