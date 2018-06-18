@@ -19,8 +19,6 @@ package co.cask.cdap.metrics.process;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
@@ -34,8 +32,6 @@ import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.DatumReader;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -52,7 +48,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import com.google.inject.name.Named;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +70,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -116,45 +112,41 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private volatile boolean stopping;
 
   @Inject
-  public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
-                                          @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                          MessagingService messagingService,
-                                          SchemaGenerator schemaGenerator,
-                                          DatumReaderFactory readerFactory,
-                                          MetricStore metricStore,
-                                          @Named(Constants.Metrics.PROCESSOR_MAX_DELAY_MS) long maxDelayMillis,
-                                          @Named(Constants.Metrics.QUEUE_SIZE) int queueSize,
-                                          @Assisted Set<Integer> topicNumbers,
-                                          @Assisted MetricsContext metricsContext,
-                                          @Assisted Integer instanceId, DatasetFramework datasetFramework,
-                                          CConfiguration cConf) {
-    this(metricDatasetFactory, topicPrefix, messagingService, schemaGenerator, readerFactory, metricStore,
-         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId,
-         datasetFramework, cConf,
-         cConf.getBoolean(Constants.MetricsProcessor.METRICS_DATA_MIGRATION_SKIP, false));
-  }
-
-  @VisibleForTesting
-  MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
-                                   String topicPrefix,
+  MessagingMetricsProcessorService(CConfiguration cConf,
+                                   DatasetFramework datasetFramework,
+                                   MetricDatasetFactory metricDatasetFactory,
                                    MessagingService messagingService,
                                    SchemaGenerator schemaGenerator,
                                    DatumReaderFactory readerFactory,
                                    MetricStore metricStore,
-                                   long maxDelayMillis,
-                                   int queueSize,
+                                   @Assisted Set<Integer> topicNumbers,
+                                   @Assisted MetricsContext metricsContext,
+                                   @Assisted Integer instanceId) {
+    this(cConf, datasetFramework, metricDatasetFactory, messagingService,
+         schemaGenerator, readerFactory, metricStore, topicNumbers, metricsContext, 1000, instanceId,
+         cConf.getBoolean(Constants.MetricsProcessor.METRICS_DATA_MIGRATION_SKIP, false));
+  }
+
+  @VisibleForTesting
+  MessagingMetricsProcessorService(CConfiguration cConf,
+                                   DatasetFramework datasetFramework,
+                                   MetricDatasetFactory metricDatasetFactory,
+                                   MessagingService messagingService,
+                                   SchemaGenerator schemaGenerator,
+                                   DatumReaderFactory readerFactory,
+                                   MetricStore metricStore,
                                    Set<Integer> topicNumbers,
                                    MetricsContext metricsContext,
                                    int metricsProcessIntervalMillis,
-                                   int instanceId, DatasetFramework datasetFramework, CConfiguration cConf,
+                                   int instanceId,
                                    boolean skipMigration) {
     this.metricDatasetFactory = metricDatasetFactory;
-    this.metricsTopics = new ArrayList<>();
     this.metricsPrefixForDelayMetrics = String.format("metrics.processor.%s", instanceId);
-    for (int topicNum : topicNumbers) {
-      TopicId topicId = NamespaceId.SYSTEM.topic(topicPrefix + topicNum);
-      this.metricsTopics.add(topicId);
-    }
+
+    String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    this.metricsTopics = topicNumbers.stream()
+      .map(n -> NamespaceId.SYSTEM.topic(topicPrefix + n))
+      .collect(Collectors.toList());
     this.messagingService = messagingService;
     try {
       this.metricSchema = schemaGenerator.generate(MetricValues.class);
@@ -165,9 +157,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     }
     this.metricStore = metricStore;
     this.metricStore.setMetricsContext(metricsContext);
+    this.maxDelayMillis = cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
+    this.queueSize = cConf.getInt(Constants.Metrics.QUEUE_SIZE);
     this.fetcherLimit = Math.max(1, queueSize / topicNumbers.size()); // fetcherLimit is at least one
-    this.maxDelayMillis = maxDelayMillis;
-    this.queueSize = queueSize;
     this.metricsContextMap = metricsContext.getTags();
     this.processMetricsThreads = new ArrayList<>();
     this.metricsFromAllTopics = new LinkedBlockingDeque<>(queueSize);
@@ -176,34 +168,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
     this.instanceId = instanceId;
     this.cConfiguration = cConf;
-    processMetricName = String.format("metrics.%s.process.count", instanceId);
+    this.processMetricName = String.format("metrics.%s.process.count", instanceId);
     this.datasetFramework = datasetFramework;
-    // Validate metrics table splits after creation.
-    // TODO CDAP-12366 Make metrics table splits configurable
-    String metricsTable = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                    Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX + ".ts.1");
-    DatasetId metricsTableId = NamespaceId.SYSTEM.dataset(metricsTable);
-    try {
-      DatasetSpecification spec = getDatasetSpecWithRetry(datasetFramework, metricsTableId);
-      // If v3 metrics table is already exists, we will ignore splits value from cConf to avoid modifying splits
-      // after creation
-      if (spec != null && cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS) !=
-        spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)) {
-        LOG.warn("Ignoring {} value of property {} from cdap-site.xml because splits value can not be changed for " +
-                   "system table {}", cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS),
-                 Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, spec.getName());
-      }
-    } catch (DatasetManagementException e) {
-      LOG.error("Got exception while accessing dataset {}", metricsTable, e);
-    }
     this.skipMigration = skipMigration;
-  }
-
-  @Nullable
-  private DatasetSpecification getDatasetSpecWithRetry(final DatasetFramework datasetFramework,
-                                               final DatasetId datasetId) throws DatasetManagementException {
-    return Retries.callWithRetries(() -> stopping ? null : datasetFramework.getDatasetSpec(datasetId),
-                                   RetryStrategies.fixDelay(1, TimeUnit.SECONDS));
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
@@ -412,11 +379,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                                 metricsPrefixForDelayMetrics, topicIdMetaKey.getTopicId().getTopic());
       latestTsMetricName = String.format("%s.topic.%s.latest.delay.ms",
                                                 metricsPrefixForDelayMetrics, topicIdMetaKey.getTopicId().getTopic());
-      byte[] persistedMessageId = null;
       if (topicProcessMeta != null && topicProcessMeta.getMessageId() != null) {
         // message-id already for this topic in metaTable, we create a new TopicProcessMeta with existing values,
         // add metric names and put it in map
-        persistedMessageId = topicProcessMeta.getMessageId();
+        byte[] persistedMessageId = topicProcessMeta.getMessageId();
         topicProcessMetaMap.put(topicIdMetaKey,
                                 new TopicProcessMeta(persistedMessageId, topicProcessMeta.getOldestMetricsTimestamp(),
                                                      topicProcessMeta.getLatestMetricsTimestamp(),
@@ -465,12 +431,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         }
 
         if (lastMessageId != null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Start fetching from lastMessageId = {}", Bytes.toStringBinary(lastMessageId));
-          }
           fetcher.setStartMessage(lastMessageId, false);
         } else {
-          LOG.debug("Start fetching from beginning");
           fetcher.setStartTime(0L);
         }
 

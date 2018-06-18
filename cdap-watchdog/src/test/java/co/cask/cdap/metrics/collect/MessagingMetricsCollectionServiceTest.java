@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,13 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.messaging.data.RawMessage;
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -53,15 +53,10 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionServiceTest.class);
 
-  private static final int PARTITION_SIZE = 10;
-
   @Test
-  public void testMessagingPublish()
-    throws UnsupportedTypeException, InterruptedException, TopicNotFoundException, IOException {
+  public void testMessagingPublish() throws TopicNotFoundException {
 
-    MetricsCollectionService collectionService = new MessagingMetricsCollectionService(TOPIC_PREFIX,
-                                                                                       PARTITION_SIZE,
-                                                                                       CConfiguration.create(),
+    MetricsCollectionService collectionService = new MessagingMetricsCollectionService(CConfiguration.create(),
                                                                                        messagingService,
                                                                                        recordWriter);
     collectionService.startAndWait();
@@ -85,13 +80,12 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
   private void assertMetricsFromMessaging(final Schema schema,
                                           ReflectionDatumReader recordReader,
-                                          Table<String, String, Long> expected)
-    throws InterruptedException, TopicNotFoundException, IOException {
+                                          Table<String, String, Long> expected) throws TopicNotFoundException {
 
     // Consume from kafka
     final Map<String, MetricValues> metrics = Maps.newHashMap();
     ByteBufferInputStream is = new ByteBufferInputStream(null);
-    for (int i = 0; i < PARTITION_SIZE; i++) {
+    for (int i = 0; i < cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM); i++) {
     TopicId topicId = NamespaceId.SYSTEM.topic(TOPIC_PREFIX + i);
       try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(topicId).fetch()) {
         while (iterator.hasNext()) {
@@ -120,7 +114,7 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
     checkReceivedMetrics(expected, metrics);
   }
 
-  protected void checkReceivedMetrics(Table<String, String, Long> expected, Map<String, MetricValues> actual) {
+  private void checkReceivedMetrics(Table<String, String, Long> expected, Map<String, MetricValues> actual) {
     for (String expectedContext : expected.rowKeySet()) {
       MetricValues metricValues = actual.get(expectedContext);
       Assert.assertNotNull("Missing expected value for " + expectedContext, metricValues);
@@ -141,6 +135,6 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
   @Override
   protected List<Module> getAdditionalModules() {
-    return new ArrayList<>();
+    return Collections.emptyList();
   }
 }

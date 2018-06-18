@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -36,11 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,12 +53,8 @@ import java.util.concurrent.TimeoutException;
  * Testing the basic properties of the {@link MessagingMetricsProcessorService}
  */
 public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorServiceTest.class);
 
   private static final String SYSTEM_METRIC_PREFIX = "system.";
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder1 = new TemporaryFolder();
 
   @Test
   public void testMetricsProcessor() throws Exception {
@@ -72,7 +65,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     final MetricStore metricStore = injector.getInstance(MetricStore.class);
 
     Set<Integer> partitions = new HashSet<>();
-    for (int i = 0; i < PARTITION_SIZE; i++) {
+    for (int i = 0; i < cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM); i++) {
       partitions.add(i);
     }
 
@@ -81,11 +74,11 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     // Intentionally set queue size to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
     MessagingMetricsProcessorService messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
+      new MessagingMetricsProcessorService(cConf, injector.getInstance(DatasetFramework.class),
+                                           injector.getInstance(MetricDatasetFactory.class),
                                            messagingService, injector.getInstance(SchemaGenerator.class),
-                                           injector.getInstance(DatumReaderFactory.class),
-                                           metricStore, 1000L, 5, partitions, new NoopMetricsContext(), 50, 0,
-                                           injector.getInstance(DatasetFramework.class), cConf, true);
+                                           injector.getInstance(DatumReaderFactory.class), metricStore,
+                                           partitions, new NoopMetricsContext(), 50, 0, true);
     messagingMetricsProcessorService.startAndWait();
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -100,11 +93,11 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     // Intentionally set queue size to a large value, so that MessagingMetricsProcessorService
     // internally only persists metrics during terminating.
     messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
+      new MessagingMetricsProcessorService(cConf, injector.getInstance(DatasetFramework.class),
+                                           injector.getInstance(MetricDatasetFactory.class),
                                            messagingService, injector.getInstance(SchemaGenerator.class),
-                                           injector.getInstance(DatumReaderFactory.class),
-                                           metricStore, 500L, 100, partitions, new NoopMetricsContext(), 50, 0,
-                                           injector.getInstance(DatasetFramework.class), cConf, true);
+                                           injector.getInstance(DatumReaderFactory.class), metricStore,
+                                           partitions, new NoopMetricsContext(), 50, 0, true);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics

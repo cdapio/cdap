@@ -225,7 +225,9 @@ public class DefaultPreviewManager implements PreviewManager {
       new PreviewDataModules().getDataFabricModule(transactionManager),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new DataSetServiceModules().getStandaloneModules(),
-      new MetricsClientRuntimeModule().getStandaloneModules(),
+      // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
+      // save threads for reading metrics from TMS, as there won't be metrics in TMS.
+      new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
