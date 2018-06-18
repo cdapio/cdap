@@ -96,7 +96,7 @@ import java.lang.annotation.Target;
  * @see Batch
  * @see RoundRobin
  * @see ProcessInput
- * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for stream processing.
+ * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for realtime processing.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
