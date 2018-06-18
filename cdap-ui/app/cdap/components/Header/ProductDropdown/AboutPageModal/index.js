@@ -24,8 +24,6 @@ import {getModeWithCloudProvider} from 'components/Header/ProductDropdown/helper
 require('./AboutPageModal.scss');
 
 export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
-  let termsConditionsUrl = 'http://cask.co/terms/';
-  let privacyPolicyUrl = 'http://cask.co/privacy/';
   let mode = getModeWithCloudProvider();
   return (
     <Modal
@@ -67,26 +65,6 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
                 {window.CDAP_CONFIG.securityEnabled ? 'Enabled' : 'Disabled'}
               </span>
             </span>
-          </div>
-          <div className="cdap-copyright">
-            <p>
-              {T.translate('features.AboutPage.copyright.firstLine')}
-              <br />
-              {T.translate('features.AboutPage.copyright.secondLine.view')}
-              <a
-                href={termsConditionsUrl}
-                target="_blank"
-              >
-                {T.translate('features.AboutPage.copyright.secondLine.termsAndConditions')}
-              </a>
-              {T.translate('features.AboutPage.copyright.secondLine.and')}
-              <a
-                href={privacyPolicyUrl}
-                target="_blank"
-              >
-                {T.translate('features.AboutPage.copyright.secondLine.privacyPolicy')}
-              </a>
-            </p>
           </div>
         </div>
       </ModalBody>

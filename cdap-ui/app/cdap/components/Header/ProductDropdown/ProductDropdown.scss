@@ -15,8 +15,6 @@
  */
 @import '../../../styles/variables.scss';
 
-$cdap_mode_color: #cccccc;
-
 .product-dropdown {
   display: inline-block;
   background: transparent;
@@ -40,9 +38,6 @@ $cdap_mode_color: #cccccc;
   .btn.btn-secondary {
     background: transparent;
     border: 0;
-    &:focus {
-      color: $cdap-light-orange;
-    }
   }
   &.dropdown,
   &.dropdown.open {
@@ -53,6 +48,7 @@ $cdap_mode_color: #cccccc;
   &.dropdown {
     .dropdown-toggle {
       background: transparent;
+      box-shadow: none;
       border: 0;
       vertical-align: top;
       height: 50px;
@@ -73,7 +69,7 @@ $cdap_mode_color: #cccccc;
         outline: none;
         .cdap-secure-mode-icon,
         .cdap-mode {
-          color: $cdap_mode_color;
+          color: white;
         }
       }
       &:after {
@@ -90,7 +86,7 @@ $cdap_mode_color: #cccccc;
         }
       }
       .cdap-mode {
-        color: $cdap_mode_color;
+        color: white;
         margin: 0 5px;
         vertical-align: bottom;
       }
