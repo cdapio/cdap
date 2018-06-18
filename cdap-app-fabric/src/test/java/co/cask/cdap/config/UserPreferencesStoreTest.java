@@ -198,7 +198,7 @@ public class UserPreferencesStoreTest extends AppFabricTestBase {
     // should not throw any exception if try to delete properties without storing anything
     store.deleteProperties();
     store.deleteProperties(Id.Namespace.DEFAULT.getId());
-    store.deleteProperties("a", "x", "y", "z");
+    store.deleteProperties("a", "x", "workflow", "z");
   }
 
   @Test

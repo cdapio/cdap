@@ -615,13 +615,13 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {
-    MetadataDataset metadataDataset = newMetadataDataset(scope);
+    MetadataDataset metadataDataset = getMetadataDataset(dsFramework, scope);
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
     return txExecutor.executeUnchecked(func, metadataDataset);
   }
 
   private void execute(TransactionExecutor.Procedure<MetadataDataset> func, MetadataScope scope) {
-    MetadataDataset metadataDataset = newMetadataDataset(scope);
+    MetadataDataset metadataDataset = getMetadataDataset(dsFramework, scope);
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
     txExecutor.executeUnchecked(func, metadataDataset);
   }
@@ -644,7 +644,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
   }
 
-  private MetadataDataset newMetadataDataset(MetadataScope scope) {
+  public static MetadataDataset getMetadataDataset(DatasetFramework dsFramework, MetadataScope scope) {
     try {
       return DatasetsUtil.getOrCreateDataset(
         dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
@@ -683,7 +683,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
-  private DatasetId getMetadataDatasetInstance(MetadataScope scope) {
+  private static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 

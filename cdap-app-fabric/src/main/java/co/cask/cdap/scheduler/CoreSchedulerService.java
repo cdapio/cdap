@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.profile.ProfileDataset;
+import co.cask.cdap.internal.profile.ProfileMetadataPublisher;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -81,12 +82,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final Service internalService;
   private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeSchedulerService;
+  private final ProfileMetadataPublisher profileMetadataPublisher;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                        TimeSchedulerService timeSchedulerService,
                        ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
-                       ConstraintCheckerService constraintCheckerService) {
+                       ConstraintCheckerService constraintCheckerService,
+                       ProfileMetadataPublisher profileMetadataPublisher) {
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
     DynamicDatasetCache datasetCache =
@@ -120,6 +123,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         LOG.info("Stopped core scheduler service.");
       }
     }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
+    this.profileMetadataPublisher = profileMetadataPublisher;
   }
 
   // Attempts to remove all jobs that are in PENDING_LAUNCH state.
@@ -242,6 +246,9 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       Throwables.propagate(e);
     }
 
+    for (ProgramSchedule schedule : schedules) {
+      profileMetadataPublisher.updateProfileMetadata(schedule.getScheduleId());
+    }
   }
 
   @Override
@@ -359,6 +366,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       store.deleteSchedules(scheduleIds);
       return null;
     }, NotFoundException.class);
+
+    for (ScheduleId scheduleId : scheduleIds) {
+      profileMetadataPublisher.removeProfileMetadata(scheduleId, Collections.singleton(scheduleId));
+    }
   }
 
   @Override

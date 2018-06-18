@@ -93,12 +93,7 @@ public class MetadataDataset extends AbstractDataset {
 
   // Fuzzy key is of form <row key, key mask>. We want to compare row keys.
   private static final Comparator<ImmutablePair<byte[], byte[]>> FUZZY_KEY_COMPARATOR =
-    new Comparator<ImmutablePair<byte[], byte[]>>() {
-      @Override
-      public int compare(ImmutablePair<byte[], byte[]> o1, ImmutablePair<byte[], byte[]> o2) {
-        return Bytes.compareTo(o1.getFirst(), o2.getFirst());
-      }
-    };
+    (o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst());
 
   private static final Set<Indexer> DEFAULT_INDEXERS = Collections.<Indexer>singleton(new DefaultValueIndexer());
   private static final Map<String, Set<Indexer>> SYSTEM_METADATA_KEY_TO_INDEXERS = ImmutableMap.of(

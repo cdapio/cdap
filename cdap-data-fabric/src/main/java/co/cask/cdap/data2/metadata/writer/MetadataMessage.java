@@ -17,12 +17,9 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-
-import javax.annotation.Nullable;
 
 /**
  * A container for messages in the metadata topic configured by {@link Constants.Metadata#MESSAGING_TOPIC}.
@@ -37,41 +34,25 @@ public final class MetadataMessage {
     LINEAGE,
     USAGE,
     WORKFLOW_TOKEN,
-    WORKFLOW_STATE
+    WORKFLOW_STATE,
+    PROFILE_UPDATE,
+    PROILE_REMOVE
   }
 
   private final Type type;
-  private final ProgramId programId;
-  @Nullable
-  private final String runId;
+  private final EntityId entityId;
   private final JsonElement payload;
 
   /**
-   * Creates an instance for a program.
+   * Creates an instance for an entity.
    *
    * @param type type of the message
-   * @param programId the {@link ProgramId} of the program emitting this message
+   * @param entityId the {@link EntityId} of the entity emitting this message
    * @param payload the payload
    */
-  public MetadataMessage(Type type, ProgramId programId, JsonElement payload) {
-    this(type, programId, null, payload);
-  }
-
-  /**
-   * Creates an instance for a program run
-   *
-   * @param type type of the message
-   * @param programRunId the {@link ProgramRunId} of the program run that is emitting this message
-   * @param payload the payload
-   */
-  public MetadataMessage(Type type, ProgramRunId programRunId, JsonElement payload) {
-    this(type, programRunId.getParent(), programRunId.getRun(), payload);
-  }
-
-  private MetadataMessage(Type type, ProgramId programId, @Nullable String runId, JsonElement payload) {
+  public MetadataMessage(Type type, EntityId entityId, JsonElement payload) {
     this.type = type;
-    this.programId = programId;
-    this.runId = runId;
+    this.entityId = entityId;
     this.payload = payload;
   }
 
@@ -83,19 +64,10 @@ public final class MetadataMessage {
   }
 
   /**
-   * Returns the {@link ProgramId} of the program who emit this message.
+   * Returns the {@link EntityId} of the entity who emit this message.
    */
-  public ProgramId getProgramId() {
-    return programId;
-  }
-
-  /**
-   * Returns the runId of the program run who emit this message or {@code null} if the run information
-   * is not available.
-   */
-  @Nullable
-  public String getRunId() {
-    return runId;
+  public EntityId getEntityId() {
+    return entityId;
   }
 
   /**
@@ -121,8 +93,7 @@ public final class MetadataMessage {
   public String toString() {
     return "MetadataMessage{" +
       "type=" + type +
-      ", programId=" + programId +
-      ", runId='" + runId + '\'' +
+      ", entityId=" + entityId +
       ", payload=" + payload +
       '}';
   }
