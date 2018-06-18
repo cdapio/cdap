@@ -77,7 +77,7 @@ public class ProvisionerNotifier {
   }
 
   public void provisioned(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
-                          String userId, Cluster cluster, @Nullable SSHKeyInfo clusterKeyInfo) {
+                          String userId, Cluster cluster, @Nullable SecureKeyInfo clusterKeyInfo) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))

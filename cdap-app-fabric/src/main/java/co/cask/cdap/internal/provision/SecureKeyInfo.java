@@ -21,17 +21,22 @@ import java.net.URI;
 /**
  * A container for key pair information.
  */
-public final class SSHKeyInfo {
+public final class SecureKeyInfo {
 
   private final URI keyDirectory;
   private final String publicKeyFile;
   private final String privateKeyFile;
+  private final String serverKeyStoreFile;
+  private final String clientKeyStoreFile;
   private final String username;
 
-  SSHKeyInfo(URI keyDirectory, String publicKeyFile, String privateKeyFile, String username) {
+  SecureKeyInfo(URI keyDirectory, String publicKeyFile, String privateKeyFile,
+                String serverKeyStoreFile, String clientKeyStoreFile, String username) {
     this.keyDirectory = keyDirectory;
     this.publicKeyFile = publicKeyFile;
     this.privateKeyFile = privateKeyFile;
+    this.serverKeyStoreFile = serverKeyStoreFile;
+    this.clientKeyStoreFile = clientKeyStoreFile;
     this.username = username;
   }
 
@@ -45,6 +50,14 @@ public final class SSHKeyInfo {
 
   public String getPrivateKeyFile() {
     return privateKeyFile;
+  }
+
+  public String getServerKeyStoreFile() {
+    return serverKeyStoreFile;
+  }
+
+  public String getClientKeyStoreFile() {
+    return clientKeyStoreFile;
   }
 
   public String getUsername() {

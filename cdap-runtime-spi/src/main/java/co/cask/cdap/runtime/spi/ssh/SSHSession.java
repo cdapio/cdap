@@ -18,6 +18,7 @@ package co.cask.cdap.runtime.spi.ssh;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +28,20 @@ import javax.annotation.Nullable;
  * This interface represents an SSH session, which allow performing remote ssh commands and scp.
  */
 public interface SSHSession extends AutoCloseable {
+
+  /**
+   * Returns the remote host and port that this session is connected to.
+   *
+   * @return a {@link InetSocketAddress} containing the target host and port of this session
+   */
+  InetSocketAddress getAddress();
+
+  /**
+   * Returns the remote user name that this session used to connect to the remote host.
+   *
+   * @return the remote user name
+   */
+  String getUsername();
 
   /**
    * Executes a sequence of commands on the remote host.

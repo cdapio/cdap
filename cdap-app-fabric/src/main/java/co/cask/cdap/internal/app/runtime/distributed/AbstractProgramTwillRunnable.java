@@ -99,7 +99,6 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -413,27 +412,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
-
-    Arguments systemArgs = programOptions.getArguments();
-    ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
-
-    DistributedProgramContainerModule.Builder builder = DistributedProgramContainerModule.builder(
-      cConf, hConf, programRunId, systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID));
-
-    // If kerberos is enabled we expect the principal to be provided in the program options.
-    // If kerberos is disabled this will be null
-    Optional.ofNullable(systemArgs.getOption(ProgramOptionConstants.PRINCIPAL)).ifPresent(builder::setPrincipal);
-    Optional.ofNullable(getServiceAnnouncer()).ifPresent(builder::setServiceAnnouncer);
-
-    builder.setClusterMode(clusterMode);
-
-    Module module = builder.build();
+    Module module = new DistributedProgramContainerModule(cConf, hConf, programRunId,
+                                                          programOptions.getArguments(), getServiceAnnouncer());
 
     // In isolated mode, TMS runs in the "launcher" container.
     // We don't do this in the DistributedProgramContainerModule
     // because that is used in both launcher and task containers
-
-    if (clusterMode == ClusterMode.ISOLATED) {
+    if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ISOLATED) {
       module = Modules.override(module).with(new MessagingServerRuntimeModule().getStandaloneModules());
     }
 

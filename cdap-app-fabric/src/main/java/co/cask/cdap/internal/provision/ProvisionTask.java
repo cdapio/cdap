@@ -40,12 +40,12 @@ public class ProvisionTask extends ProvisioningTask {
   private final ProvisionerNotifier provisionerNotifier;
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
-  private final SSHKeyInfo sshKeyInfo;
+  private final SecureKeyInfo secureKeyInfo;
 
   public ProvisionTask(ProvisionRequest provisionRequest, Provisioner provisioner,
                        ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
                        Transactional transactional, DatasetFramework datasetFramework,
-                       @Nullable SSHKeyInfo sshKeyInfo) {
+                       @Nullable SecureKeyInfo secureKeyInfo) {
     super(provisionRequest.getProgramRunId());
     this.provisionRequest = provisionRequest;
     this.provisioner = provisioner;
@@ -53,7 +53,7 @@ public class ProvisionTask extends ProvisioningTask {
     this.provisionerNotifier = provisionerNotifier;
     this.transactional = transactional;
     this.datasetFramework = datasetFramework;
-    this.sshKeyInfo = sshKeyInfo;
+    this.secureKeyInfo = secureKeyInfo;
   }
 
   @Override
@@ -106,7 +106,7 @@ public class ProvisionTask extends ProvisioningTask {
           });
           provisionerNotifier.provisioned(programRunId, provisionRequest.getProgramOptions(),
                                           provisionRequest.getProgramDescriptor(), provisionRequest.getUser(),
-                                          cluster, sshKeyInfo);
+                                          cluster, secureKeyInfo);
           break;
       }
     } catch (Throwable t) {

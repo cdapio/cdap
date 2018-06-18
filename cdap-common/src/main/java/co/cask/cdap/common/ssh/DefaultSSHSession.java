@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,6 +49,8 @@ import javax.annotation.Nullable;
  */
 public class DefaultSSHSession implements SSHSession {
 
+  private final InetSocketAddress remoteAddress;
+  private final String user;
   private final Session session;
 
   /**
@@ -73,6 +76,19 @@ public class DefaultSSHSession implements SSHSession {
     } catch (JSchException e) {
       throw new IOException(e);
     }
+
+    this.remoteAddress = new InetSocketAddress(config.getHost(), config.getPort());
+    this.user = config.getUser();
+  }
+
+  @Override
+  public InetSocketAddress getAddress() {
+    return remoteAddress;
+  }
+
+  @Override
+  public String getUsername() {
+    return user;
   }
 
   @Override

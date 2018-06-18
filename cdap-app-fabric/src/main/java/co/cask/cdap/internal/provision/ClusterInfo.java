@@ -33,25 +33,25 @@ public class ClusterInfo {
   private final Map<String, String> provisionerProperties;
   private final String user;
   private final String provisionerName;
-  private final SSHKeyInfo sshKeyInfo;
+  private final SecureKeyInfo secureKeyInfo;
   private final Cluster cluster;
 
   public ClusterInfo(ProgramRunId programRunId, ProgramDescriptor programDescriptor,
                      Map<String, String> provisionerProperties, String provisionerName, String user,
-                     ClusterOp op, @Nullable SSHKeyInfo sshKeyInfo, @Nullable Cluster cluster) {
+                     ClusterOp op, @Nullable SecureKeyInfo secureKeyInfo, @Nullable Cluster cluster) {
     this.programRunId = programRunId;
     this.provisionerProperties = provisionerProperties;
     this.programDescriptor = programDescriptor;
     this.user = user;
     this.provisionerName = provisionerName;
     this.op = op;
-    this.sshKeyInfo = sshKeyInfo;
+    this.secureKeyInfo = secureKeyInfo;
     this.cluster = cluster;
   }
 
   public ClusterInfo(ClusterInfo existing, ClusterOp op, @Nullable Cluster cluster) {
     this(existing.getProgramRunId(), existing.getProgramDescriptor(), existing.getProvisionerProperties(),
-         existing.getProvisionerName(), existing.getUser(), op, existing.getSshKeyInfo(), cluster);
+         existing.getProvisionerName(), existing.getUser(), op, existing.getSecureKeyInfo(), cluster);
   }
 
   public ProgramRunId getProgramRunId() {
@@ -79,8 +79,8 @@ public class ClusterInfo {
   }
 
   @Nullable
-  public SSHKeyInfo getSshKeyInfo() {
-    return sshKeyInfo;
+  public SecureKeyInfo getSecureKeyInfo() {
+    return secureKeyInfo;
   }
 
   @Nullable

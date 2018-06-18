@@ -36,45 +36,42 @@ import java.util.Map;
 public class DefaultSSHContext implements SSHContext {
 
   private final LocationFactory locationFactory;
-  private final SSHKeyInfo sshKeyInfo;
+  private final SecureKeyInfo keyInfo;
 
-  public DefaultSSHContext(LocationFactory locationFactory, SSHKeyInfo sshKeyInfo) {
+  DefaultSSHContext(LocationFactory locationFactory, SecureKeyInfo keyInfo) {
     this.locationFactory = locationFactory;
-    this.sshKeyInfo = sshKeyInfo;
+    this.keyInfo = keyInfo;
   }
 
   @Override
   public SSHPublicKey getSSHPublicKey() {
     try {
-      Location location = locationFactory.create(sshKeyInfo.getKeyDirectory()).append(sshKeyInfo.getPublicKeyFile());
+      Location location = locationFactory.create(keyInfo.getKeyDirectory()).append(keyInfo.getPublicKeyFile());
       try (InputStream is = location.getInputStream()) {
-        return new SSHPublicKey(sshKeyInfo.getUsername(),
+        return new SSHPublicKey(keyInfo.getUsername(),
                                 new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to read public key from "
-                                   + sshKeyInfo.getKeyDirectory() + "/" + sshKeyInfo.getPublicKeyFile(), e);
+                                   + keyInfo.getKeyDirectory() + "/" + keyInfo.getPublicKeyFile(), e);
     }
   }
 
   @Override
   public SSHSession createSSHSession(String host, int port, Map<String, String> configs) throws IOException {
-    byte[] privateKey;
-    try {
-      Location location = locationFactory.create(sshKeyInfo.getKeyDirectory()).append(sshKeyInfo.getPrivateKeyFile());
-      try (InputStream is = location.getInputStream()) {
-        privateKey = ByteStreams.toByteArray(is);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to read private key from "
-                                   + sshKeyInfo.getKeyDirectory() + "/" + sshKeyInfo.getPrivateKeyFile(), e);
-    }
+    Location location = locationFactory.create(keyInfo.getKeyDirectory()).append(keyInfo.getPrivateKeyFile());
 
     SSHConfig config = SSHConfig.builder(host)
       .setPort(port)
       .addConfigs(configs)
-      .setUser(sshKeyInfo.getUsername())
-      .setPrivateKey(privateKey)
+      .setUser(keyInfo.getUsername())
+      .setPrivateKeySupplier(() -> {
+        try {
+          return ByteStreams.toByteArray(location::getInputStream);
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to read private key from " + location, e);
+        }
+      })
       .build();
 
     return new DefaultSSHSession(config);

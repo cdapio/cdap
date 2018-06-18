@@ -16,8 +16,10 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -41,8 +43,11 @@ import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
+import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -59,14 +64,25 @@ import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.tools.KeyStores;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,31 +94,34 @@ import javax.annotation.Nullable;
  */
 public class DistributedProgramContainerModule extends AbstractModule {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramContainerModule.class);
+  private static final Gson GSON = new Gson();
+
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final ProgramRunId programRunId;
-  private final String instanceId;
-  private final ClusterMode clusterMode;
-  @Nullable
-  private final String principal;
+  private final Arguments systemArgs;
   @Nullable
   private final ServiceAnnouncer serviceAnnouncer;
 
-  private DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf, ProgramRunId programRunId,
-                                            String instanceId, ClusterMode clusterMode,
-                                            @Nullable String principal, @Nullable ServiceAnnouncer serviceAnnouncer) {
+  public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf,
+                                           ProgramRunId programRunId, Arguments systemArgs) {
+    this(cConf, hConf, programRunId, systemArgs, null);
+  }
+
+  public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf, ProgramRunId programRunId,
+                                           Arguments systemArgs, @Nullable ServiceAnnouncer serviceAnnouncer) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.programRunId = programRunId;
-    this.instanceId = instanceId;
-    this.clusterMode = clusterMode;
-    this.principal = principal;
+    this.systemArgs = systemArgs;
     this.serviceAnnouncer = serviceAnnouncer;
   }
 
   @Override
   protected void configure() {
     List<Module> modules = getCoreModules(programRunId.getParent());
+    String principal = systemArgs.getOption(ProgramOptionConstants.PRINCIPAL);
 
     AuthenticationContextModules authModules = new AuthenticationContextModules();
     modules.add(principal == null
@@ -120,6 +139,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private List<Module> getCoreModules(final ProgramId programId) {
+    ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
+      ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
+      : ClusterMode.ON_PREMISE;
+
     List<Module> modules = new ArrayList<>();
 
     modules.add(new ConfigModule(cConf, hConf));
@@ -167,6 +190,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
+    String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
+
     modules.add(new LocationRuntimeModule().getDistributedModules());
     modules.add(new KafkaClientModule());
     modules.add(new LoggingModules().getDistributedModules());
@@ -215,75 +240,78 @@ public class DistributedProgramContainerModule extends AbstractModule {
         // This is just for Dataset Service to check if a namespace exists
         bind(NamespaceQueryAdmin.class).toInstance(new NamespaceQueryAdmin() {
           @Override
-          public List<NamespaceMeta> list() throws Exception {
+          public List<NamespaceMeta> list() {
             return Collections.singletonList(get(programRunId.getNamespaceId()));
           }
 
           @Override
-          public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
+          public NamespaceMeta get(NamespaceId namespaceId) {
             return new NamespaceMeta.Builder().setName(namespaceId).build();
           }
 
           @Override
-          public boolean exists(NamespaceId namespaceId) throws Exception {
+          public boolean exists(NamespaceId namespaceId) {
             return programRunId.getNamespaceId().equals(namespaceId);
           }
         });
+
+        bindRuntimeMonitorServer(binder());
       }
     });
   }
 
+  /**
+   * Optionally adds {@link RuntimeMonitorServer} binding.
+   */
+  private void bindRuntimeMonitorServer(Binder binder) {
+    if (!systemArgs.hasOption(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
+      return;
+    }
+
+    SecureKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
+                                          SecureKeyInfo.class);
+    try {
+      Path keyStorePath = Paths.get(keyInfo.getServerKeyStoreFile());
+      Path trustStorePath = Paths.get(keyInfo.getClientKeyStoreFile());
+
+      // If there is no key store or trust store, don't add the binding.
+      // The reason is that this module is used in all containers, but only the driver container would have the
+      // key store files.
+      if (!Files.isReadable(keyStorePath) || !Files.isReadable(trustStorePath)) {
+        return;
+      }
+
+      KeyStore keyStore = loadKeyStore(keyStorePath);
+      KeyStore trustStore = loadKeyStore(trustStorePath);
+
+      binder.install(new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(keyStore);
+          bind(KeyStore.class).annotatedWith(Constants.AppFabric.TrustStore.class).toInstance(trustStore);
+          bind(RuntimeMonitorServer.class);
+          expose(RuntimeMonitorServer.class);
+        }
+      });
+
+    } catch (Exception e) {
+      // Just log if failed to load the KeyStores. It will fail when RuntimeMonitorServer is needed.
+      LOG.error("Failed to load key store and/or trust store", e);
+    }
+  }
+
+  /**
+   * Loads a {@link KeyStore} by reading the given file path.
+   */
+  private KeyStore loadKeyStore(Path keyStorePath) throws Exception {
+    KeyStore keyStore = KeyStore.getInstance(KeyStores.SSL_KEYSTORE_TYPE);
+    try (InputStream is = Files.newInputStream(keyStorePath)) {
+      keyStore.load(is, "".toCharArray());
+      return keyStore;
+    }
+  }
+
   private static String generateClientId(ProgramRunId programRunId, String instanceId) {
     return String.format("%s.%s.%s", programRunId.getParent(), programRunId.getRun(), instanceId);
-  }
-
-  /**
-   * Creates a {@link Builder} for building {@link DistributedProgramContainerModule}.
-   */
-  public static Builder builder(CConfiguration cConf, Configuration hConf,
-                                ProgramRunId programRunId, String instanceId) {
-    return new Builder(cConf, hConf, programRunId, instanceId);
-  }
-
-  /**
-   * Builder for the {@link DistributedProgramContainerModule}. By default it builds the module used for
-   * {@link ClusterMode#ON_PREMISE}, unless changed via the {@link #setClusterMode(ClusterMode)} method.
-   */
-  public static final class Builder {
-
-    private final CConfiguration cConf;
-    private final Configuration hConf;
-    private final ProgramRunId programRunId;
-    private final String instanceId;
-    private String principal;
-    private ServiceAnnouncer serviceAnnouncer;
-    private ClusterMode clusterMode = ClusterMode.ON_PREMISE;
-
-    private Builder(CConfiguration cConf, Configuration hConf, ProgramRunId programRunId, String instanceId) {
-      this.cConf = cConf;
-      this.hConf = hConf;
-      this.programRunId = programRunId;
-      this.instanceId = instanceId;
-    }
-
-    public Builder setPrincipal(String principal) {
-      this.principal = principal;
-      return this;
-    }
-
-    public Builder setServiceAnnouncer(ServiceAnnouncer serviceAnnouncer) {
-      this.serviceAnnouncer = serviceAnnouncer;
-      return this;
-    }
-
-    public Builder setClusterMode(ClusterMode clusterMode) {
-      this.clusterMode = clusterMode;
-      return this;
-    }
-
-    public DistributedProgramContainerModule build() {
-      return new DistributedProgramContainerModule(cConf, hConf, programRunId, instanceId,
-                                                   clusterMode, principal, serviceAnnouncer);
-    }
   }
 }

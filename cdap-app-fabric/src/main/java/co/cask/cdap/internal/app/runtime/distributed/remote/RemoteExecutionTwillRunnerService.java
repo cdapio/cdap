@@ -22,18 +22,16 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
-import co.cask.cdap.internal.provision.SSHKeyInfo;
+import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.Node;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -48,7 +46,6 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.security.SecureStoreRenewer;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.SingleRunnableApplication;
 import org.apache.twill.internal.io.BasicLocationCache;
@@ -139,37 +136,25 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     ProgramRunId programRunId = programTwillApp.getProgramRunId();
     ProgramOptions programOptions = programTwillApp.getProgramOptions();
 
-    try {
-      // Get the SSH information provided by the provisioner.
-      Arguments systemArgs = programOptions.getArguments();
-      Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
+    // Get the SSH information provided by the provisioner.
+    Arguments systemArgs = programOptions.getArguments();
+    Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
 
-      Node masterNode = cluster.getNodes().stream()
-        .filter(node -> "master".equals(node.getProperties().get("type")))
-        .findFirst().orElseThrow(
-        () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
+    Node masterNode = cluster.getNodes().stream()
+      .filter(node -> "master".equals(node.getProperties().get("type")))
+      .findFirst().orElseThrow(
+      () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
 
-      if (!systemArgs.hasOption(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
-        throw new IllegalStateException("Missing ssh key information for the cluster " + cluster.getName());
-      }
-      SSHKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
-                                         SSHKeyInfo.class);
-
-      Location privateKeyLocation = locationFactory.create(keyInfo.getKeyDirectory())
-                                                   .append(keyInfo.getPrivateKeyFile());
-      byte[] privateKey = ByteStreams.toByteArray(Locations.newInputSupplier(privateKeyLocation));
-
-      SSHConfig sshConfig = SSHConfig.builder(masterNode.getProperties().get("ip.external"))
-        .setUser(keyInfo.getUsername())
-        .setPrivateKey(privateKey).build();
-
-      return new RemoteExecutionTwillPreparer(cConf, config, sshConfig, programRunId,
-                                              application.configure(), RunIds.generate(),
-                                              null, locationCache, locationFactory, messagingService,
-                                              dsFramework, txClient);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    if (!systemArgs.hasOption(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
+      throw new IllegalStateException("Missing ssh key information for the cluster " + cluster.getName());
     }
+    SecureKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
+                                          SecureKeyInfo.class);
+
+    return new RemoteExecutionTwillPreparer(cConf, config, masterNode.getProperties().get("ip.external"), keyInfo,
+                                            programRunId, application.configure(), RunIds.generate(),
+                                            null, locationCache, locationFactory, messagingService,
+                                            dsFramework, txClient);
   }
 
   @Override
