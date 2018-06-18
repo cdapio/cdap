@@ -41,8 +41,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -291,9 +291,9 @@ public class MetadataStoreTest {
     store.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), datasetUserProps);
 
     // Test score and metadata match
-    MetadataSearchResponse response = search("ns1", "value1 multiword:av2");
+    MetadataSearchResponseV2 response = search("ns1", "value1 multiword:av2");
     Assert.assertEquals(2, response.getTotal());
-    List<MetadataSearchResultRecord> actual = Lists.newArrayList(response.getResults());
+    List<MetadataSearchResultRecordV2> actual = Lists.newArrayList(response.getResults());
 
     Map<MetadataScope, Metadata> expectedFlowMetadata =
       ImmutableMap.of(MetadataScope.USER, new Metadata(flowUserProps, flowUserTags),
@@ -302,12 +302,12 @@ public class MetadataStoreTest {
       ImmutableMap.of(MetadataScope.USER, new Metadata(streamUserProps, Collections.<String>emptySet()));
     Map<MetadataScope, Metadata> expectedDatasetMetadata =
       ImmutableMap.of(MetadataScope.USER, new Metadata(datasetUserProps, Collections.<String>emptySet()));
-    List<MetadataSearchResultRecord> expected =
+    List<MetadataSearchResultRecordV2> expected =
       Lists.newArrayList(
-        new MetadataSearchResultRecord(flow1,
-                                       expectedFlowMetadata),
-        new MetadataSearchResultRecord(stream1,
-                                       expectedStreamMetadata)
+        new MetadataSearchResultRecordV2(flow1,
+                                         expectedFlowMetadata),
+        new MetadataSearchResultRecordV2(stream1,
+                                         expectedStreamMetadata)
       );
     Assert.assertEquals(expected, actual);
 
@@ -315,12 +315,12 @@ public class MetadataStoreTest {
     Assert.assertEquals(3, response.getTotal());
     actual = Lists.newArrayList(response.getResults());
     expected = Lists.newArrayList(
-      new MetadataSearchResultRecord(stream1,
-                                     expectedStreamMetadata),
-      new MetadataSearchResultRecord(dataset1,
-                                     expectedDatasetMetadata),
-      new MetadataSearchResultRecord(flow1,
-                                     expectedFlowMetadata)
+      new MetadataSearchResultRecordV2(stream1,
+                                       expectedStreamMetadata),
+      new MetadataSearchResultRecordV2(dataset1,
+                                       expectedDatasetMetadata),
+      new MetadataSearchResultRecordV2(flow1,
+                                       expectedFlowMetadata)
     );
     Assert.assertEquals(expected, actual);
 
@@ -348,15 +348,15 @@ public class MetadataStoreTest {
     // add bunch of tags to ensure higher weight to this entity in search result
     store.addTags(MetadataScope.USER, trackerDataset, "tag9", "tag10", "tag11", "tag12", "tag13");
 
-    MetadataSearchResultRecord flowSearchResult = new MetadataSearchResultRecord(flow);
-    MetadataSearchResultRecord streamSearchResult = new MetadataSearchResultRecord(stream);
-    MetadataSearchResultRecord datasetSearchResult = new MetadataSearchResultRecord(dataset);
-    MetadataSearchResultRecord trackerDatasetSearchResult = new MetadataSearchResultRecord(trackerDataset);
+    MetadataSearchResultRecordV2 flowSearchResult = new MetadataSearchResultRecordV2(flow);
+    MetadataSearchResultRecordV2 streamSearchResult = new MetadataSearchResultRecordV2(stream);
+    MetadataSearchResultRecordV2 datasetSearchResult = new MetadataSearchResultRecordV2(dataset);
+    MetadataSearchResultRecordV2 trackerDatasetSearchResult = new MetadataSearchResultRecordV2(trackerDataset);
 
     // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, flow
     // (this depends on how many tags got matched with the search query)
     // trackerDataset entity should not be part
-    MetadataSearchResponse response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);
+    MetadataSearchResponseV2 response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
@@ -404,7 +404,7 @@ public class MetadataStoreTest {
     response = search(nsId.getNamespace(), "tag*", 4, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.<MetadataSearchResultRecord>of(),
+      ImmutableList.<MetadataSearchResultRecordV2>of(),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
@@ -422,23 +422,23 @@ public class MetadataStoreTest {
     txManager.stopAndWait();
   }
 
-  private MetadataSearchResponse search(String ns, String searchQuery) throws BadRequestException {
+  private MetadataSearchResponseV2 search(String ns, String searchQuery) throws BadRequestException {
     return search(ns, searchQuery, 0, Integer.MAX_VALUE, 0);
   }
 
-  private MetadataSearchResponse search(String ns, String searchQuery,
-                                        int offset, int limit, int numCursors) throws BadRequestException {
+  private MetadataSearchResponseV2 search(String ns, String searchQuery,
+                                          int offset, int limit, int numCursors) throws BadRequestException {
     return search(ns, searchQuery, offset, limit, numCursors, false);
   }
 
-  private MetadataSearchResponse search(String ns, String searchQuery,
-                                        int offset, int limit, int numCursors, boolean showHidden)
+  private MetadataSearchResponseV2 search(String ns, String searchQuery,
+                                          int offset, int limit, int numCursors, boolean showHidden)
     throws BadRequestException {
     return search(ns, searchQuery, offset, limit, numCursors, showHidden, SortInfo.DEFAULT);
   }
 
-  private MetadataSearchResponse search(String ns, String searchQuery,
-                                        int offset, int limit, int numCursors, boolean showHidden, SortInfo sortInfo)
+  private MetadataSearchResponseV2 search(String ns, String searchQuery,
+                                          int offset, int limit, int numCursors, boolean showHidden, SortInfo sortInfo)
     throws BadRequestException {
     return store.search(
       ns, searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
@@ -459,10 +459,10 @@ public class MetadataStoreTest {
     store.removeMetadata(MetadataScope.USER, app.toMetadataEntity());
   }
 
-  private Set<MetadataSearchResultRecord> stripMetadata(Set<MetadataSearchResultRecord> searchResultsWithMetadata) {
-    Set<MetadataSearchResultRecord> metadataStrippedResults = new LinkedHashSet<>(searchResultsWithMetadata.size());
-    for (MetadataSearchResultRecord searchResultWithMetadata : searchResultsWithMetadata) {
-      metadataStrippedResults.add(new MetadataSearchResultRecord(searchResultWithMetadata.getEntityId()));
+  private Set<MetadataSearchResultRecordV2> stripMetadata(Set<MetadataSearchResultRecordV2> searchResultsWithMetadata) {
+    Set<MetadataSearchResultRecordV2> metadataStrippedResults = new LinkedHashSet<>(searchResultsWithMetadata.size());
+    for (MetadataSearchResultRecordV2 searchResultWithMetadata : searchResultsWithMetadata) {
+      metadataStrippedResults.add(new MetadataSearchResultRecordV2(searchResultWithMetadata.getEntityId()));
     }
     return metadataStrippedResults;
   }

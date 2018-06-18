@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
@@ -152,21 +153,77 @@ public abstract class EntityId {
    * metadataEntity.
    */
   public static <T extends EntityId> T fromMetadataEntity(MetadataEntity metadataEntity) {
-    EntityType entityType = EntityType.valueOf(metadataEntity.getType().toUpperCase());
-    if ((entityType == EntityType.APPLICATION || entityType == EntityType.PROGRAM) &&
-      metadataEntity.getValue(MetadataEntity.VERSION) == null) {
-      // if the EntityType is application or program and a version is not specified in the MetadataEntity then add it
-      if (entityType == EntityType.APPLICATION) {
-        metadataEntity = metadataEntity.append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION);
-      } else {
-        metadataEntity = MetadataEntity.ofNamespace(metadataEntity.getValue(MetadataEntity.NAMESPACE))
-          .append(MetadataEntity.APPLICATION, metadataEntity.getValue(MetadataEntity.APPLICATION))
-          .append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION)
-          .append(MetadataEntity.TYPE, metadataEntity.getValue(MetadataEntity.TYPE))
-          .append(MetadataEntity.PROGRAM, metadataEntity.getValue(MetadataEntity.PROGRAM));
+    // check that the type of teh metadata entity is known type
+    EntityType.valueOf(metadataEntity.getType().toUpperCase());
+    return getSelfOrParentEntityId(metadataEntity);
+  }
+
+  /**
+   * Creates a valid known CDAP entity which can be considered as the parent for the MetadataEntity by walking up the
+   * key-value hierarchy of the MetadataEntity till a known CDAP {@link EntityType} is found. If the last node itself
+   * is known type then that will be considered as the parent.
+   *
+   * @param metadataEntity whose parent entityId needs to be found
+   * @return {@link EntityId} of the given metadataEntity
+   * @throws IllegalArgumentException if the metadataEntity does not have any know entity type in it's hierarchy or if
+   * it does not have all the required key-value pairs to construct the identified EntityId.
+   */
+  public static <T extends EntityId> T getSelfOrParentEntityId(MetadataEntity metadataEntity) {
+    EntityType entityType = findParentType(metadataEntity);
+    if (entityType == null) {
+      throw new IllegalArgumentException(String.format("No known type found in the hierarchy of %s", metadataEntity));
+    }
+    List<String> values = new LinkedList<>();
+    // get the key-value pair till the known entity-type. Note: for application the version comes after application
+    // key-value pair and needs to be included too
+    List<MetadataEntity.KeyValue> extractedParts = metadataEntity.head(entityType.toString());
+    // if a version was specified extract that else use the default version
+    String version = metadataEntity.containsKey(MetadataEntity.VERSION) ?
+      metadataEntity.getValue(MetadataEntity.VERSION) : ApplicationId.DEFAULT_VERSION;
+    if (entityType == EntityType.APPLICATION) {
+      // if the entity is an application our extractParts will not contain the version info since we extracted till
+      // application so append it
+      extractedParts.add(new MetadataEntity.KeyValue(MetadataEntity.VERSION, version));
+    }
+    if (entityType == EntityType.PROGRAM) {
+      // if the entity is program the add the version information at its correct position i.e. 2
+      // (namespace, application, version) if the version information is not present
+      if (!metadataEntity.containsKey(MetadataEntity.VERSION)) {
+        extractedParts.add(2, new MetadataEntity.KeyValue(MetadataEntity.VERSION, version));
       }
     }
-    return entityType.fromIdParts(metadataEntity.getValues());
+    // for artifacts get till version (artifacts always have version
+    if (entityType == EntityType.ARTIFACT) {
+      extractedParts = metadataEntity.head(MetadataEntity.VERSION);
+    }
+    extractedParts.iterator().forEachRemaining(keyValue -> values.add(keyValue.getValue()));
+    return entityType.fromIdParts(values);
+  }
+
+  /**
+   * Finds a valid known CDAP entity which can be considered as the parent for the MetadataEntity by walking up the
+   * key-value hierarchy of the MetadataEntity
+   *
+   * @param metadataEntity whose EntityType needs to be determined
+   * @return {@link EntityType} of the given metadataEntity
+   */
+  @Nullable
+  private static EntityType findParentType(MetadataEntity metadataEntity) {
+    List<String> keys = new ArrayList<>();
+    metadataEntity.getKeys().forEach(keys::add);
+    int curIndex = keys.size() - 1;
+    EntityType entityType = null;
+    while (curIndex >= 0) {
+      try {
+        entityType = EntityType.valueOf(keys.get(curIndex).toUpperCase());
+        // found a valid entity type;
+        break;
+      } catch (IllegalArgumentException e) {
+        // the current key is not a valid cdap entity type so try up in hierarchy
+        curIndex--;
+      }
+    }
+    return entityType;
   }
 
   public final EntityType getEntityType() {

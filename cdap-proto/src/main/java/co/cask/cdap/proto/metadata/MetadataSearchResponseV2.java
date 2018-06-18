@@ -23,24 +23,21 @@ import java.util.Set;
 
 /**
  * Denotes the response of the metadata search API.
- *
- * @deprecated As of release 5.0, replaced by {@link MetadataSearchResponseV2}
  */
-@Deprecated
-public class MetadataSearchResponse {
+public class MetadataSearchResponseV2 {
   private final String sort;
   private final int offset;
   private final int limit;
   private final int numCursors;
   private final int total;
-  private final Set<MetadataSearchResultRecord> results;
+  private final Set<MetadataSearchResultRecordV2> results;
   private final List<String> cursors;
   private final boolean showHidden;
   private final Set<EntityScope> entityScope;
 
-  public MetadataSearchResponse(String sort, int offset, int limit, int numCursors, int total,
-                                Set<MetadataSearchResultRecord> results, List<String> cursors, boolean showHidden,
-                                Set<EntityScope> entityScope) {
+  public MetadataSearchResponseV2(String sort, int offset, int limit, int numCursors, int total,
+                                  Set<MetadataSearchResultRecordV2> results, List<String> cursors, boolean showHidden,
+                                  Set<EntityScope> entityScope) {
     this.sort = sort;
     this.offset = offset;
     this.limit = limit;
@@ -72,7 +69,7 @@ public class MetadataSearchResponse {
     return total;
   }
 
-  public Set<MetadataSearchResultRecord> getResults() {
+  public Set<MetadataSearchResultRecordV2> getResults() {
     return results;
   }
 

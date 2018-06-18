@@ -21,6 +21,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -29,6 +30,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
+import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -106,11 +108,11 @@ public abstract class MetadataTestBase extends ClientTestBase {
     }, expectedExceptionClass);
   }
 
-  protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) throws Exception {
+  protected Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) throws Exception {
     return getMetadata(metadataEntity, null);
   }
 
-  protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
+  protected Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws Exception {
     return metadataClient.getMetadata(metadataEntity, scope);
   }
@@ -120,7 +122,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected Set<MetadataRecord> getMetadata(EntityId entityId, @Nullable MetadataScope scope) throws Exception {
-    return getMetadata(entityId.toMetadataEntity(), scope);
+    return metadataClient.getMetadata(entityId, scope);
   }
 
   protected Map<String, String> getProperties(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
@@ -203,6 +205,15 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                          cursor, showHiddden);
   }
 
+  protected MetadataSearchResponseV2 searchMetadata(NamespaceId namespaceId, String query,
+                                                    Set<EntityTypeSimpleName> targets,
+                                                    @Nullable String sort, int offset, int limit, int numCursors,
+                                                    @Nullable String cursor, boolean showHiddden,
+                                                    boolean showCustom) throws Exception {
+    return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,
+                                         cursor, showHiddden, showCustom);
+  }
+
   protected Set<String> getTags(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
     return metadataClient.getTags(metadataEntity, scope);
   }
@@ -272,6 +283,10 @@ public abstract class MetadataTestBase extends ClientTestBase {
     return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
+  protected void getPropertiesFromInvalidEntity(EntityId entityId) throws Exception {
+    Map<String, String> properties = getProperties(entityId, MetadataScope.USER);
+    Assert.assertTrue(properties.isEmpty());
+  }
 
   protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {
     Set<MetadataRecord> metadataRecords = getMetadata(run);

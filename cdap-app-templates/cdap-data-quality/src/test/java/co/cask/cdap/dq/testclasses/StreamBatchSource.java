@@ -132,12 +132,11 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     propogateMetadata(context, sourceEntity, sinkEntity);
 
     // Propagate metadata of some fields
-    MetadataEntity sourceFieldEntity = sourceEntity.append("field", "empName");
-    MetadataEntity sinkFieldEntity = sinkEntity.append("field", "empName");
+    MetadataEntity sourceFieldEntity = MetadataEntity.builder(sourceEntity).appendAsType("field", "empName").build();
+    MetadataEntity sinkFieldEntity = MetadataEntity.builder(sinkEntity).appendAsType("field", "empName").build();
     propogateMetadata(context, sourceFieldEntity, sinkFieldEntity);
 
     for (Schema.Field field : context.getInputSchema().getFields()) {
-      sourceFieldEntity = sourceEntity.append("field", field.getName());
       Metadata metadata = context.getMetadata(MetadataScope.USER, sourceFieldEntity);
       if (metadata.getTags().contains("confidential")) {
         // do some thing
