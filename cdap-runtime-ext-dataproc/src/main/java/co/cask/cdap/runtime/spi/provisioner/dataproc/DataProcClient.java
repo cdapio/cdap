@@ -246,11 +246,11 @@ public class DataProcClient implements AutoCloseable {
           requiredPorts.clear();
           addTag = true;
         } else if ("tcp".equals(protocol)) {
-          if (allowed.getPorts() != null && allowed.getPorts().contains(String.valueOf(FirewallPort.HTTPS.port))) {
+          if (allowed.getPorts() != null || allowed.getPorts().contains(String.valueOf(FirewallPort.HTTPS.port))) {
             requiredPorts.remove(FirewallPort.HTTPS);
             addTag = true;
           }
-          if (allowed.getPorts() != null && allowed.getPorts().contains(String.valueOf(FirewallPort.SSH.port))) {
+          if (allowed.getPorts() != null || allowed.getPorts().contains(String.valueOf(FirewallPort.SSH.port))) {
             requiredPorts.remove(FirewallPort.SSH);
             addTag = true;
           }
