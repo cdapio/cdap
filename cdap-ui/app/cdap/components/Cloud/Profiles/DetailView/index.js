@@ -54,7 +54,7 @@ export default class ProfileDetailView extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
-  getProfile() {
+  getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
     MyCloudApi
       .get({
@@ -75,7 +75,7 @@ export default class ProfileDetailView extends Component {
           });
         }
       );
-  }
+  };
 
   getProvisioners() {
     getProvisionersMap().subscribe((state) => {
@@ -119,6 +119,7 @@ export default class ProfileDetailView extends Component {
               profile={this.state.profile}
               provisioners={this.state.provisioners}
               isSystem={this.state.isSystem}
+              toggleProfileStatusCallback={this.getProfile}
             />
         }
       </div>

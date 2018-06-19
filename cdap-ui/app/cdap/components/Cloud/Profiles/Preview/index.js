@@ -21,6 +21,8 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import IconSVG from 'components/IconSVG';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import T from 'i18n-react';
 require('./Preview.scss');
 
 export default class ProfilePreview extends Component {
@@ -94,6 +96,7 @@ export default class ProfilePreview extends Component {
     let profileNamespace = this.state.profileDetails.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
     let profileProvisionerLabel = getProvisionerLabel(this.state.profileDetails, this.state.provisioners);
+    const profileStatus = PROFILE_STATUSES[this.state.profileDetails.status];
 
     return (
       <div className="profile-preview text-xs-left">
@@ -111,6 +114,7 @@ export default class ProfilePreview extends Component {
               <div>Last 24hr # runs</div>
               <div>Last 24hr node hr</div>
               <div>Creation Date</div>
+              <div>Current Status</div>
             </div>
           </div>
           <div className="grid-body">
@@ -127,6 +131,9 @@ export default class ProfilePreview extends Component {
               <div />
               <div />
               <div />
+              <div className={`profile-status ${profileStatus}`}>
+                {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}
+              </div>
             </div>
           </div>
         </div>

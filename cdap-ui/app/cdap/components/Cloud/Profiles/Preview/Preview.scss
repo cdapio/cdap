@@ -17,6 +17,9 @@
 @import "../../../../styles/variables.scss";
 @import "../../../../styles/mixins.scss";
 
+$enabled-color: $green-02;
+$disabled-color: $red-02;
+
 .profile-preview {
   width: inherit;
   padding: 20px;
@@ -41,6 +44,7 @@
         > div {
           display: flex;
           align-items: flex-end;
+          font-weight: bold;
         }
       }
     }
@@ -59,7 +63,7 @@
     .grid-header,
     .grid-body {
       .grid-row {
-        grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
       }
       .grid-row,
       .grid-row > div {
@@ -69,6 +73,16 @@
         &:hover {
           background: inherit;
           cursor: default;
+        }
+
+        &.profile-status {
+          &.enabled {
+            color: $enabled-color;
+          }
+
+          &.disabled {
+            color: $disabled-color;
+          }
         }
       }
     }

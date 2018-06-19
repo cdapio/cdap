@@ -33,7 +33,7 @@ import {
 import {createStore} from 'redux';
 import range from 'lodash/range';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
-import {PROFILE_NAME_PREFERENCE_PROPERTY} from  'components/PipelineDetails/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const INTERVAL_OPTIONS = {
@@ -100,7 +100,7 @@ const DEFAULT_SCHEDULE_OPTIONS = {
   maxConcurrentRuns: MAX_CONCURRENT_RUNS_OPTIONS[0],
   scheduleView: Object.values(SCHEDULE_VIEWS)[0],
   profiles: {
-    selectedProfile: null,
+    selectedProfile: DEFAULT_PROFILE_NAME,
     profileCustomizations: {}
   },
   currentBackendSchedule: null,
@@ -231,7 +231,7 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
         cron: cronFromBackend,
         maxConcurrentRuns: maxConcurrencyFromBackend,
         profiles: {
-          selectedProfile: profileFromBackend,
+          selectedProfile: profileFromBackend || DEFAULT_PROFILE_NAME,
           profileCustomizations
         }
       };
