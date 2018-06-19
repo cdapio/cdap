@@ -2108,20 +2108,6 @@ features:
       symbolName: Symbol Name
   ServiceEnableUtility:
     serviceNotFound: Cannot find {artifactName} artifact
-  SplashScreen:
-    buttons:
-      getStarted: Read the Docs
-      introduction: Intro to CDAP
-      register: Register for Updates
-    dontShow: Don't show this again
-    getUpdates: Get Updates
-    intro-message: Unified Integration Platform for Big Data
-    title: Welcome to
-    titleTwo: Cask Data Application Platform
-    registration-zero: I
-    registration-one: would like to receive product updates and
-    registration-two: newsletters from Cask at this email address
-
   SpotlightSearch:
     SpotlightModal:
       headerTagResults: Entities with the tag "{tag}"
