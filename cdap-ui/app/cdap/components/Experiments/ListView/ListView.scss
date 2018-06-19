@@ -82,7 +82,7 @@
     }
 
     .grid-row {
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       grid-template-rows: 50px;
       > div {
         padding: 0;

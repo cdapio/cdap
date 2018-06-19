@@ -24,7 +24,7 @@ import ExperimentMetricsDropdown from 'components/Experiments/DetailedView/Exper
 require('./DetailedViewTopPanel.scss');
 
 
-const Metadata = ({name, description, srcpath, total, deployed, outcome}) => {
+const Metadata = ({name, description, srcpath, total, outcome}) => {
   return (
     <div className="experiment-metadata">
       <div>
@@ -40,10 +40,6 @@ const Metadata = ({name, description, srcpath, total, deployed, outcome}) => {
         <strong>
           <div> # Models </div>
           <h1>{total}</h1>
-        </strong>
-        <strong>
-          <div> # Deployed </div>
-          <h1>{deployed}</h1>
         </strong>
       </div>
       <div>
@@ -65,7 +61,6 @@ Metadata.propTypes = {
   description: PropTypes.string,
   srcpath: PropTypes.string,
   total: PropTypes.number,
-  deployed: PropTypes.number,
   outcome: PropTypes.string
 };
 
@@ -76,7 +71,6 @@ const mapStateToMetadataProps = (state) => {
     srcpath: state.srcpath,
     models: state.models,
     total: state.modelsTotalCount,
-    deployed: state.models.filter(model => model.deployTime).length,
     outcome: state.outcome
   };
 };

@@ -16,12 +16,25 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import * as d3Lib from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
+import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
+import colorVariables from 'styles/variables.scss';
 
 const HEIGHT_OF_PIE_CHART = 190;
-const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
+export const MODEL_STATUS_TO_COLOR_MAP = {
+  [MODEL_STATUS.PREPARING]: colorVariables.blue01,
+  [MODEL_STATUS.SPLITTING]: colorVariables.blue03,
+  [MODEL_STATUS.TRAINING]: colorVariables.blue05,
+
+  [MODEL_STATUS.DEPLOYED]: colorVariables.green02,
+  [MODEL_STATUS.DATA_READY]: colorVariables.green05,
+  [MODEL_STATUS.TRAINED]: colorVariables.green03,
+
+  [MODEL_STATUS.SPLIT_FAILED]: colorVariables.red01,
+  [MODEL_STATUS.TRAINING_FAILED]: colorVariables.red03
+};
+
 const ModelStatusesDistribution = ({modelStatuses}) => {
   if (!modelStatuses.length) {
     return (
@@ -35,7 +48,7 @@ const ModelStatusesDistribution = ({modelStatuses}) => {
     return {
       ...status,
       value: status.bin,
-      color: colorScale(status.bin)
+      color: MODEL_STATUS_TO_COLOR_MAP[status.bin]
     };
   });
   return (

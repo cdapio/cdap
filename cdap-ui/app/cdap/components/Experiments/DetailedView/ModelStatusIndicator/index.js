@@ -20,7 +20,8 @@ import IconSVG from 'components/IconSVG';
 import capitalize from 'lodash/capitalize';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import {preventPropagation} from 'services/helpers';
-
+import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
+import {MODEL_STATUS_TO_COLOR_MAP} from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/ModelStatusesDistribution';
 
 require('./ModelStatusIndicator.scss');
 
@@ -30,21 +31,40 @@ const DEFAULT_STATUS_MAP = {
 };
 
 const STATUS_ICON_MAP = {
-  TRAINING: {
-    className: 'spin fa-spin',
-    icon: 'icon-spinner'
+  [MODEL_STATUS.SPLITTING]: {
+    className: 'fa-spin ',
+    icon: 'icon-spinner',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.SPLITTING]
   },
-  SPLITTING: {
-    className: 'spin fa-spin',
-    icon: 'icon-spinner'
+  [MODEL_STATUS.SPLIT_FAILED]: {
+    className: '',
+    icon: 'icon-circle-o',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.SPLIT_FAILED]
   },
-  TRAINED: {
-    className: 'text-success',
-    icon: 'icon-circle-o'
+  [MODEL_STATUS.DATA_READY]: {
+    className: '',
+    icon: 'icon-circle-o',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.DATA_READY]
   },
-  TRAINING_FAILED: {
-    className: 'text-danger',
-    icon: 'icon-circle-o'
+  [MODEL_STATUS.TRAINING]: {
+    className: 'fa-spin',
+    icon: 'icon-spinner',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINING]
+  },
+  [MODEL_STATUS.TRAINED]: {
+    className: '',
+    icon: 'icon-circle-o',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINED]
+  },
+  [MODEL_STATUS.TRAINING_FAILED]: {
+    className: '',
+    icon: 'icon-circle-o',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINING_FAILED]
+  },
+  [MODEL_STATUS.PREPARING]: {
+    className: 'fa-spin',
+    icon: 'icon-spinner',
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.PREPARING]
   }
 };
 const getIconMap = (status) => status in STATUS_ICON_MAP ? STATUS_ICON_MAP[status] : DEFAULT_STATUS_MAP;
@@ -85,7 +105,13 @@ export default function ModelStatusIndicator({status, loading, error, model, get
   let iconMap = getIconMap(status);
   return (
     <span className="model-status-indicator" title={status}>
-      <IconSVG name={iconMap.icon} className={iconMap.className} />
+      <IconSVG
+        name={iconMap.icon}
+        className={iconMap.className}
+        style={{
+          color: iconMap.color
+        }}
+      />
       <span>{capitalize(status)}</span>
     </span>
   );

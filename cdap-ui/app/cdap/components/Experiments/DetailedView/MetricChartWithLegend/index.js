@@ -37,7 +37,7 @@ var chartSpec = {
       "field": "count",
       "type": "quantitative",
       "axis": {
-          "title": "#Of Models"
+        "title": "#Of Models"
       }
     },
     "color": {
@@ -55,9 +55,25 @@ var chartSpec = {
   }
 };
 
-export default function MetricChartWithLegend({xAxisTitle, values, height, width}) {
+export default function MetricChartWithLegend({xAxisTitle, values, height, width, colorRange}) {
+  let newChartSpec = {};
+  if (Array.isArray(colorRange) && colorRange.length) {
+    newChartSpec = {
+      ...chartSpec,
+      "config": {
+        ...chartSpec.config,
+        "range": {
+          "ordinal": colorRange
+        }
+      }
+    };
+  } else {
+    newChartSpec = chartSpec;
+  }
+
+
   let spec = {
-    ...chartSpec,
+    ...newChartSpec,
     height,
     width
   };
@@ -82,6 +98,7 @@ export default function MetricChartWithLegend({xAxisTitle, values, height, width
 }
 
 MetricChartWithLegend.propTypes = {
+  colorRange: PropTypes.arrayOf(PropTypes.string),
   xAxisTitle: PropTypes.string,
   values: PropTypes.arrayOf(PropTypes.object),
   height: PropTypes.number,
