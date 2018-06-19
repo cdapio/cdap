@@ -109,9 +109,6 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
           outline: none;
         }
       }
-      .dropdown-divider {
-        background-color: $dropdown_divider_bg_color;
-      }
     }
     &.open {
       .dropdown-menu {
