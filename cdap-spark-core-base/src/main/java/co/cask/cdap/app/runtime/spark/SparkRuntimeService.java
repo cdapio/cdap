@@ -35,6 +35,8 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
@@ -43,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -140,13 +143,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final BasicSparkClientContext context;
   private final boolean isLocal;
   private final ProgramLifecycle<SparkRuntimeContext> programLifecycle;
+  private final FieldLineageWriter fieldLineageWriter;
 
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
 
   SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
-                      LocationFactory locationFactory, boolean isLocal) {
+                      LocationFactory locationFactory, boolean isLocal, FieldLineageWriter fieldLineageWriter) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
@@ -172,6 +176,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
       }
     };
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -441,6 +446,30 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       : defaultTxControl;
 
     runtimeContext.destroyProgram(programLifecycle, txControl, false);
+    if (emitFieldLineage()) {
+      try {
+        FieldLineageInfo info = new FieldLineageInfo(runtimeContext.getFieldLineageOperations());
+        fieldLineageWriter.write(runtimeContext.getProgramRunId(), info);
+      } catch (Throwable t) {
+        LOG.warn("Failed to emit the field lineage operations for Spark {}", runtimeContext.getProgramRunId(), t);
+      }
+    }
+  }
+
+  private boolean emitFieldLineage() {
+    if (runtimeContext.getFieldLineageOperations().isEmpty()) {
+      // no operations to emit
+      return false;
+    }
+
+    ProgramStatus status = context.getState().getStatus();
+    if (ProgramStatus.COMPLETED != status) {
+      // Spark program failed, so field operations wont be emitted
+      return false;
+    }
+
+    WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
+    return workflowInfo == null || !workflowInfo.fieldLineageConsolidationEnabled();
   }
 
   /**

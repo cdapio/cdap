@@ -27,6 +27,7 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -53,6 +54,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -337,5 +339,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return delegate.getMetadata(scope, metadataEntity);
+  }
+
+  @Override
+  public void record(Collection<? extends Operation> operations) {
+    throw new UnsupportedOperationException("Recording field lineage operations is not supported in " +
+            "                                 MapReduce task-level context");
   }
 }

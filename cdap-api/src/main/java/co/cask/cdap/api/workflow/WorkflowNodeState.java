@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,13 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.lineage.field.Operation;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -28,11 +33,13 @@ public class WorkflowNodeState {
 
   private final String nodeId;
   private final NodeStatus nodeStatus;
+  private final Set<Operation> fieldLineageOperations;
   private final String runId;
   private final Throwable failureCause;
 
   /**
    * Create a new instance.
+   *
    * @param nodeId id of the node inside the Workflow
    * @param nodeStatus status of the node
    * @param runId run id assigned to the node, null if current node represents custom action or predicate
@@ -40,8 +47,23 @@ public class WorkflowNodeState {
    */
   public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
                            @Nullable Throwable failureCause) {
+    this(nodeId, nodeStatus, new HashSet<>(), runId, failureCause);
+  }
+
+  /**
+   * Create a new instance.
+   *
+   * @param nodeId  id of the node inside the Workflow
+   * @param nodeStatus status of the node
+   * @param fieldLineageOperations the set of field operations emitted from this node
+   * @param runId run id assigned to the node, null if current node represents custom action or predicate
+   * @param failureCause cause of failure, null if execution of the node succeeded
+   */
+  public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, Set<Operation> fieldLineageOperations,
+                           @Nullable String runId, @Nullable Throwable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
+    this.fieldLineageOperations = Collections.unmodifiableSet(new HashSet<>(fieldLineageOperations));
     this.runId = runId;
     this.failureCause = failureCause;
   }
@@ -58,6 +80,14 @@ public class WorkflowNodeState {
    */
   public NodeStatus getNodeStatus() {
     return nodeStatus;
+  }
+
+  /**
+   * Return the field operations recorded by this node. Field operations will only be available
+   * for the node if it was {@link ProgramStatus#COMPLETED} successfully.
+   */
+  public Set<Operation> getFieldLineageOperations() {
+    return fieldLineageOperations;
   }
 
   /**

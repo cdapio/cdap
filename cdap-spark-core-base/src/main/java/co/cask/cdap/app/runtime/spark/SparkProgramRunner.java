@@ -38,6 +38,7 @@ import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
@@ -104,6 +105,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final ServiceAnnouncer serviceAnnouncer;
   private final PluginFinder pluginFinder;
   private final MetadataReader metadataReader;
+  private final FieldLineageWriter fieldLineageWriter;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -113,7 +115,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
-                     PluginFinder pluginFinder, MetadataReader metadataReader) {
+                     PluginFinder pluginFinder, MetadataReader metadataReader,
+                     FieldLineageWriter fieldLineageWriter) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -131,6 +134,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.serviceAnnouncer = serviceAnnouncer;
     this.pluginFinder = pluginFinder;
     this.metadataReader = metadataReader;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -198,7 +202,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter, locationFactory, isLocal);
+                                                            runtimeContext, submitter, locationFactory, isLocal,
+                                                            fieldLineageWriter);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);

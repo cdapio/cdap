@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -29,7 +30,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.runtime.WorkflowTokenProvider;
+import co.cask.cdap.app.runtime.WorkflowDataProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -51,7 +52,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -164,8 +167,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     }
     blockForCompletion(closeable, controller);
 
-    if (controller instanceof WorkflowTokenProvider) {
-      updateWorkflowToken(((WorkflowTokenProvider) controller).getWorkflowToken());
+    if (controller instanceof WorkflowDataProvider) {
+      updateWorkflowToken(((WorkflowDataProvider) controller).getWorkflowToken());
     } else {
       // This shouldn't happen
       throw new IllegalStateException("No WorkflowToken available after program completed: " + program.getId());
@@ -202,8 +205,12 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       @Override
       public void completed() {
         Closeables.closeQuietly(closeable);
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, controller.getRunId().getId(),
-                                                     null));
+        Set<Operation> fieldLineageOperations = new HashSet<>();
+        if (controller instanceof WorkflowDataProvider) {
+          fieldLineageOperations.addAll(((WorkflowDataProvider) controller).getFieldLineageOperations());
+        }
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, fieldLineageOperations,
+                                                     controller.getRunId().getId(), null));
         completion.set(null);
       }
 

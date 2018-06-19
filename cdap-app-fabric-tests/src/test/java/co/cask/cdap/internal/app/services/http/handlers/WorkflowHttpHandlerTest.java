@@ -783,6 +783,19 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     WorkflowNodeStateDetail oneActionNodeState = nodeStates.get(WorkflowAppWithScopedParameters.ONE_ACTION);
     Assert.assertNotNull(oneActionNodeState);
     Assert.assertEquals(WorkflowAppWithScopedParameters.ONE_ACTION, oneActionNodeState.getNodeId());
+
+    // destroy method of the Workflow checks for field lineage operations and then add in the token
+    // make sure the value in the token exists which means all checks in the destroy succeeded
+    Id.Application applicationId = Id.Application.from(TEST_NAMESPACE2, WorkflowAppWithScopedParameters.APP_NAME);
+    Id.Workflow workflowId = Id.Workflow.from(applicationId, WorkflowAppWithScopedParameters.ONE_WORKFLOW);
+    WorkflowTokenDetail successToken = getWorkflowToken(workflowId, workflowHistoryRuns.get(0).getPid(),
+                                                        WorkflowToken.Scope.USER,
+                                                        WorkflowAppWithScopedParameters.SUCCESS_TOKEN_KEY);
+
+    List<WorkflowTokenDetail.NodeValueDetail> nodeValue = successToken.getTokenData().values().iterator().next();
+
+    Assert.assertEquals(nodeValue.get(0).getNode(), WorkflowAppWithScopedParameters.ONE_WORKFLOW);
+    Assert.assertEquals(nodeValue.get(0).getValue(), WorkflowAppWithScopedParameters.SUCCESS_TOKEN_VALUE);
   }
 
   @Ignore
