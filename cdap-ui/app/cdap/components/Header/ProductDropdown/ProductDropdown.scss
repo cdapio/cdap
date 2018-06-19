@@ -56,7 +56,7 @@
       position: relative;
       width: 120px;
       color: inherit;
-      margin-right: 5px;
+      margin-right: 15px;
       display: inline-flex;
       line-height: 1;
       align-items: center;
@@ -67,6 +67,7 @@
       &:focus {
         background: transparent;
         outline: none;
+        color: white;
         .cdap-secure-mode-icon,
         .cdap-mode {
           color: white;

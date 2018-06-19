@@ -242,14 +242,14 @@ export default class Header extends Component {
           })}>
           <div className="navbar-right-section">
             <ul>
-              <li className="with-shadow">
+              <li className="with-pointer">
                 <CaskMarketButton>
                   <span>{T.translate('commons.market')}</span>
                 </CaskMarketButton>
               </li>
               <li
                 id="header-namespace-dropdown"
-                className="with-shadow namespace-dropdown-holder">
+                className="with-pointer namespace-dropdown-holder">
                 {
                   !this.props.nativeLink ?
                     <NamespaceDropdown />
@@ -257,7 +257,7 @@ export default class Header extends Component {
                     <NamespaceDropdown tag="a"/>
                 }
               </li>
-              <li className="with-shadow cdap-menu clearfix">
+              <li className="with-pointer cdap-menu clearfix">
                 <ProductDropdown
                   nativeLink={this.props.nativeLink}
                 />

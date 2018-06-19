@@ -31,17 +31,12 @@
   i,
   li,
   li a,
-  .with-shadow,
+  .with-pointer,
   .dropdown-item {
     color: white;
   }
-  .with-shadow {
-    height: 50px;
-    line-height: 50px;
+  .with-pointer {
     padding-left: 10px;
-    margin-left: 0;
-    margin-right: 0;
-    min-width: 120px;
     cursor: pointer;
   }
 
@@ -148,10 +143,6 @@
     align-items: center;
 
     &.control-center {
-      > li.with-shadow {
-        min-width: auto;
-        padding-left: 15px;
-      }
       > li {
         padding: 5px;
         border-radius: 4px;
