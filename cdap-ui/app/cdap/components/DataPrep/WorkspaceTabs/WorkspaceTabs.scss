@@ -14,12 +14,14 @@
  * the License.
  */
 
+@import '../../../styles/variables.scss';
+
 $tabs-bg-color: #efefef;
 $border-color: #cccccc;
 $tab-bg-color: #dddddd;
 $tab-active-bg-color: white;
 $dropdown-font-color: #333333;
-$workspace-link-active-color: #ff6600;
+$workspace-link-active-color: $gcp-blue;
 
 .workspace-tabs {
   height: 50px;

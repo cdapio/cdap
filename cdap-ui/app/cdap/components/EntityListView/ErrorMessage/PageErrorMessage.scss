@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '../../../styles/variables.scss';
+
 .page-error-message {
   h2 {
     border-bottom: 1px solid;
@@ -27,7 +29,7 @@
   a:hover,
   a:focus,
   a:active {
-    color: #ff6600;
+    color: $gcp-blue;
     margin: 0 5px;
     cursor: pointer;
   }

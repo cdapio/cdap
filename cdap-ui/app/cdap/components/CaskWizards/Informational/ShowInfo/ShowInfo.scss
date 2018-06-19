@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '../../../../styles/variables.scss';
+
 .info-list {
   font-size: 14px;
   height: calc(100% - 45px);
@@ -29,10 +31,10 @@
   }
 
   .step-number {
-    border: 1px solid #ff6600;
+    border: 1px solid $gcp-blue;
     padding: 3px 5px;
     border-radius: 6px;
-    background-color: #ff6600;
+    background-color: $gcp-blue;
     color: white;
     width: 20px;
     display: inline-block;

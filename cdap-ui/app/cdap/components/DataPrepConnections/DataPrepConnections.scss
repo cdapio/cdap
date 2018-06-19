@@ -14,9 +14,11 @@
  * the License.
  */
 
+@import '../../styles/variables.scss';
+
 $connections-panel-bg-color: #efefef;
 $connections-panel-border-color: #cccccc;
-$connections-menu-active-color: #ff6600;
+$connections-menu-active-color: $gcp-blue;
 $connections-menu-item-color: #333333;
 $top-panel-bg-color: #efefef;
 $info-font-color: #999999;

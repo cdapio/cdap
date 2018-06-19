@@ -17,8 +17,8 @@
 @import '../../styles/variables.scss';
 $splash-font-color: #ffffff;
 $card-font-color: #ffffff;
-$button-background-color: $cdap-orange;
-$card-background-color: $cdap-orange;
+$button-background-color: $gcp-blue;
+$card-background-color: $gcp-blue;
 
 @keyframes topTransition {
   from { top: 0%; }
@@ -154,14 +154,14 @@ $card-background-color: $cdap-orange;
       justify-content: center;
     }
     .btn-secondary {
-      background-color: $cdap-orange;
+      background-color: $gcp-blue;
       color: $splash-font-color;
       border-color: $splash-font-color;
       width: 132px;
     }
     .btn-secondary:hover {
       background-color: $splash-font-color;
-      color: $cdap-orange;
+      color: $gcp-blue;
       border-color: $splash-font-color;
     }
   }
@@ -172,7 +172,7 @@ $card-background-color: $cdap-orange;
   }
 
   .cask-card {
-    background-color: $cdap-orange;
+    background-color: $gcp-blue;
     border-radius: 10px;
     border: 1px solid #993300;
     padding-top: 0;
@@ -185,7 +185,7 @@ $card-background-color: $cdap-orange;
     &.card-LG { width: 100%; }
 
     .card-header {
-      background-color: $cdap-orange;
+      background-color: $gcp-blue;
       padding: 0;
       border-bottom: 0;
       border-radius: inherit;

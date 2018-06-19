@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '../../../styles/variables.scss';
+
 .overview-tab {
   .nav-tabs {
     background: white;
@@ -21,12 +23,12 @@
     .nav-item {
       .active.nav-link {
         border: 0;
-        border-bottom: 2px solid #ff6600;
+        border-bottom: 2px solid $gcp-blue;
         font-weight: bold;
 
         &:hover {
           border: 0;
-          border-bottom: 2px solid #ff6600;
+          border-bottom: 2px solid $gcp-blue;
         }
       }
       .nav-link {

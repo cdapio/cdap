@@ -14,8 +14,10 @@
  * the License.
  */
 
+@import '../../styles/variables.scss';
+
 $row-bg-color: #efefef;
-$active-color: #ff6600;
+$active-color: $gcp-blue;
 $disabled-color: #cccccc;
 $status-code-color: #dedede;
 

@@ -14,6 +14,7 @@
  * the License.
  */
 @import '../../WizardModal/WizardModal.scss';
+@import '../../../styles/variables.scss';
 
 body {
   .modal {
@@ -43,8 +44,8 @@ body {
               overflow-y: auto;
             }
             .agree-btn {
-              background: #ff6600;
-              border-color: #ff6600;
+              background: $gcp-blue;
+              border-color: $gcp-blue;
               display: inline-block;
               padding-right: 30px;
               padding-left: 30px;
@@ -52,7 +53,7 @@ body {
             .back-to-cdap-link {
               display: inline-block;
               margin-left: 10px;
-              color: #ff6600;
+              color: $gcp-blue;
               cursor: pointer;
             }
           }

@@ -13,6 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+@import '../../styles/variables.scss';
+
 .bread-crumb {
   padding: 5px;
   border: 1px solid #dbdbdb;
@@ -22,12 +25,12 @@
   align-items: center;
 
   a {
-    color: #ff6600;
+    color: $gcp-blue;
     padding: 0 5px;
     border-right: 1px solid darkgray;
 
     &:hover {
-      color: #ff6600;
+      color: $gcp-blue;
     }
     &:before {
       content: '< ';

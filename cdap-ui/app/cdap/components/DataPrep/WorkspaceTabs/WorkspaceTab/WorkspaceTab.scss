@@ -14,11 +14,13 @@
  * the License.
  */
 
+@import '../../../../styles/variables.scss';
+
 $tabs-bg-color: #efefef;
 $border-color: #cccccc;
 $tab-bg-color: #dddddd;
 $tab-active-bg-color: white;
-$tab-active-color: #ff6600;
+$tab-active-color: $gcp-blue;
 
 .workspace-tab {
   position: relative;
