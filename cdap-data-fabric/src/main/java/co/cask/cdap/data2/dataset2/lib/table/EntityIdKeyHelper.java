@@ -25,6 +25,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
@@ -53,6 +54,7 @@ public final class EntityIdKeyHelper {
       .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
       .put(StreamId.class, EntityTypeSimpleName.STREAM.getSerializedForm())
       .put(StreamViewId.class, EntityTypeSimpleName.VIEW.getSerializedForm())
+      .put(ScheduleId.class, EntityTypeSimpleName.SCHEDULE.getSerializedForm())
       .build();
 
   public static void addTargetIdToKey(MDSKey.Builder builder, NamespacedEntityId namespacedEntityId) {
@@ -104,6 +106,16 @@ public final class EntityIdKeyHelper {
       builder.add(namespaceId);
       builder.add(name);
       builder.add(version);
+    } else if (type.equals(TYPE_MAP.get(ScheduleId.class))) {
+      ScheduleId scheduleId = (ScheduleId) namespacedEntityId;
+      String namespaceId = scheduleId.getNamespace();
+      String appId = scheduleId.getApplication();
+      String version = scheduleId.getVersion();
+      String scheduleName = scheduleId.getSchedule();
+      builder.add(namespaceId);
+      builder.add(appId);
+      builder.add(version);
+      builder.add(scheduleName);
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
@@ -141,6 +153,12 @@ public final class EntityIdKeyHelper {
       String streamId  = keySplitter.getString();
       String viewId = keySplitter.getString();
       return new StreamViewId(namespaceId, streamId, viewId);
+    } else if (type.equals(TYPE_MAP.get(ScheduleId.class))) {
+      String namespaceId = keySplitter.getString();
+      String appId = keySplitter.getString();
+      String version = keySplitter.getString();
+      String scheduleName = keySplitter.getString();
+      return new ScheduleId(namespaceId, appId, version, scheduleName);
     }
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }

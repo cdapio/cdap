@@ -22,7 +22,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
@@ -74,19 +74,19 @@ public class PreviewRunnerModule extends PrivateModule {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
   private final StreamCoordinatorClient streamCoordinatorClient;
-  private final PreferencesStore preferencesStore;
+  private final PreferencesService preferencesService;
 
   public PreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
                              AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
                              PrivilegesManager privilegesManager,
-                             StreamCoordinatorClient streamCoordinatorClient, PreferencesStore preferencesStore) {
+                             StreamCoordinatorClient streamCoordinatorClient, PreferencesService preferencesService) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.privilegesManager = privilegesManager;
     this.streamCoordinatorClient = streamCoordinatorClient;
-    this.preferencesStore = preferencesStore;
+    this.preferencesService = preferencesService;
   }
 
   @Override
@@ -105,7 +105,7 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(StreamConsumerFactory.class);
     bind(StreamCoordinatorClient.class).toInstance(streamCoordinatorClient);
     expose(StreamCoordinatorClient.class);
-    bind(PreferencesStore.class).toInstance(preferencesStore);
+    bind(PreferencesService.class).toInstance(preferencesService);
     // bind explore client to mock.
     bind(ExploreClient.class).to(MockExploreClient.class);
     expose(ExploreClient.class);
