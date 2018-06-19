@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2014-2017 Cask Data, Inc.
+  Copyright © 2014-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -250,6 +250,21 @@
     <value>false</value>
     <description>
       Determines if Kerberos authentication is enabled
+    </description>
+  </property>
+
+  <!-- Secure Storage Configuration -->
+  <property>
+    <name>security.store.provider</name>
+    <value>file</value>
+    <description>
+      The secure store provider that defines the actual storage system backing the CDAP secure
+      store APIs. Secure store APIs are used by custom programs that need to write or look up
+      sensitive information, such as password. It is also used to look up values whenever the
+      ${secure(my-key)} macro is used in pipelines or compute profiles.
+      The 'file' provider is only used in the sandbox. In distributed environments, this should
+      be set to 'kms', presuming your cluster has been configured to use KMS. The 'file' provider
+      will not work in distributed environments.
     </description>
   </property>
 
