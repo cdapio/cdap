@@ -27,6 +27,8 @@ export const MyCloudApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${profilesPath}/:profile`),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${profilesPath}/:profile`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${profilesPath}/:profile`),
+  toggleProfileStatus: apiCreator(dataSrc, 'POST', 'REQUEST', `${profilesPath}/:profile/:action`),
+
   getProvisioners: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}`),
   getProvisionerDetailSpec: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}/:provisioner`)
 };

@@ -24,6 +24,7 @@ import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Conte
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
+import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 
 require('./DetailView.scss');
 
@@ -85,6 +86,28 @@ export default class ProfileDetailView extends Component {
     });
   }
 
+  toggleProfileStatus = (profile) => {
+    const {namespace} = this.props.match.params;
+    const action = PROFILE_STATUSES[profile.status] === 'enabled' ? 'disable' : 'enable';
+
+    MyCloudApi
+      .toggleProfileStatus({
+        namespace,
+        profile: profile.name,
+        action
+      })
+      .subscribe(
+        () => {
+          this.getProfile();
+        },
+        (error) => {
+          this.setState({
+            error: error.response || error
+          });
+        }
+      );
+  };
+
   render() {
     if (this.state.loading) {
       return <LoadingSVGCentered />;
@@ -119,6 +142,7 @@ export default class ProfileDetailView extends Component {
               profile={this.state.profile}
               provisioners={this.state.provisioners}
               isSystem={this.state.isSystem}
+              toggleProfileStatus={this.toggleProfileStatus}
             />
         }
       </div>

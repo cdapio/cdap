@@ -26,6 +26,8 @@ import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import ToggleSwitch from 'components/ToggleSwitch';
 
 require('./BasicInfo.scss');
 
@@ -44,7 +46,8 @@ export default class ProfileDetailViewBasicInfo extends Component {
   static propTypes = {
     profile: PropTypes.object,
     provisioners: PropTypes.array,
-    isSystem: PropTypes.bool
+    isSystem: PropTypes.bool,
+    toggleProfileStatus: PropTypes.func
   };
 
   componentWillReceiveProps(nextProps) {
@@ -155,6 +158,8 @@ export default class ProfileDetailViewBasicInfo extends Component {
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
     let namespace = this.props.isSystem ? 'system' : getCurrentNamespace();
+    const profileStatus = PROFILE_STATUSES[profile.status];
+    const profileIsEnabled = profileStatus === 'enabled';
 
     const actionsElem = () => {
       return (
@@ -167,10 +172,17 @@ export default class ProfileDetailViewBasicInfo extends Component {
 
     return (
       <div className="detail-view-basic-info">
-        <div className="profile-name-delete">
+        <div className="profile-detail-top-panel">
           <h2 className="profile-name">
             {profile.name}
           </h2>
+          <ToggleSwitch
+            isOn={profileIsEnabled}
+            onToggle={this.props.toggleProfileStatus.bind(null, profile)}
+            onLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
+            offLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
+          />
+          <span className="divider"></span>
           <ActionsPopover
             target={actionsElem}
             namespace={namespace}

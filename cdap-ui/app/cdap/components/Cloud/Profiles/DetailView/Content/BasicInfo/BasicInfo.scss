@@ -19,7 +19,7 @@
 .profile-detail-view {
   .detail-view-content {
     .detail-view-basic-info {
-      .profile-name-delete {
+      .profile-detail-top-panel {
         display: flex;
         align-items: center;
 
@@ -27,8 +27,20 @@
           display: inline-block;
         }
 
-        .profile-actions-popover {
+        .toggle-switch-container {
           margin-left: auto;
+        }
+
+        .divider:after {
+          content: "";
+          display: block;
+          height: 1px;
+          border-bottom: 1px solid $grey-05;
+          width: 33px;
+          transform: rotate(90deg);
+        }
+
+        .profile-actions-popover {
           text-align: center;
 
           &:hover {

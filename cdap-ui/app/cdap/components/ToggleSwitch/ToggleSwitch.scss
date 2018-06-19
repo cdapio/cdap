@@ -15,11 +15,13 @@
  */
 
 @import '../../styles/variables.scss';
+$container-width: 70px;
+$switch-btn-width: 14px;
 
 .toggle-switch-container {
   display: inline-block;
   height: 32px;
-  width: 65px;
+  width: $container-width;
 
   .toggle-switch {
     height: 100%;
@@ -33,20 +35,24 @@
     cursor: pointer;
 
     .switch-button {
-      position: absolute;
       top: 2px;
-      display: block;
-      width: 14px;
+      width: $switch-btn-width;
       height: 28px;
       background-color: white;
       border-radius: 5px;
+      position: absolute;
+    }
 
-      &:after,
-      &:before {
-        display: block;
-        font-size: 11px;
-        position: absolute;
-        top: 5px;
+    .label {
+      height: 100%;
+      width: $container-width - $switch-btn-width;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &.off-label {
+        margin-left: $switch-btn-width;
       }
     }
 
@@ -54,20 +60,13 @@
       background-color: $brand-success;
       .switch-button {
         right: 2px;
-        &:after {
-          content: 'On';
-          right: 32px;
-        }
       }
     }
+
     &.off {
       background-color: $blue-02;
       .switch-button {
         left: 2px;
-        &:before {
-          content: 'Off';
-          left: 32px;
-        }
       }
     }
   }
