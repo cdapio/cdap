@@ -14,8 +14,10 @@
  * the License.
  */
 
+@import "../../styles/variables.scss";
+
 .loading-bar {
   rect {
-    fill: #ff6600;
+    fill: $gcp-blue;
   }
 }
