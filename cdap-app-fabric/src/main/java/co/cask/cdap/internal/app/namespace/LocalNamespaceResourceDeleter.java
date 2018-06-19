@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.config.DashboardStore;
-import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -43,7 +43,7 @@ public class LocalNamespaceResourceDeleter extends AbstractNamespaceResourceDele
   private final StreamHandler streamHandler;
 
   @Inject
-  LocalNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
+  LocalNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
                                 DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
                                 MetricStore metricStore,
                                 ApplicationLifecycleService applicationLifecycleService,
@@ -51,7 +51,7 @@ public class LocalNamespaceResourceDeleter extends AbstractNamespaceResourceDele
                                 StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
                                 MessagingService messagingService, StreamAdmin streamAdmin,
                                 StreamHandler streamHandler) {
-    super(impersonator, store, preferencesStore, dashboardStore, dsFramework, queueAdmin, metricStore,
+    super(impersonator, store, preferencesService, dashboardStore, dsFramework, queueAdmin, metricStore,
           applicationLifecycleService, artifactRepository, storageProviderNamespaceAdmin, messagingService);
     this.streamAdmin = streamAdmin;
     this.streamHandler = streamHandler;

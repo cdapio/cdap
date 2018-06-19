@@ -44,13 +44,18 @@ import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
+import co.cask.cdap.metadata.profile.ProfileMetadataMessageProcessor;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
@@ -71,7 +76,9 @@ import javax.annotation.Nullable;
 public class MetadataSubscriberService extends AbstractMessagingSubscriberService<MetadataMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetadataSubscriberService.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
@@ -179,6 +186,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new WorkflowProcessor(datasetContext);
           case METADATA_OPERATION:
             return new MetadataOperationProcessor();
+          case PROFILE_ASSIGNMENT:
+          case PROFILE_UNASSIGNMENT:
+          case ENTITY_CREATION:
+          case ENTITY_DELETION:
+            return new ProfileMetadataMessageProcessor(cConf, datasetContext, datasetFramework);
           default:
             return null;
         }
@@ -190,18 +202,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       }
 
       processor.processMessage(message);
+
+      // if this message is time consuming, return to end the transaction to avoid tx timeout
+      if (processor.isTimeConsumingMessage(message)) {
+        return;
+      }
     }
-  }
-
-  /**
-   * Private interface to help dispatch and process different types of {@link MetadataMessage}.
-   */
-  private interface MetadataMessageProcessor {
-
-    /**
-     * Processes one {@link MetadataMessage}.
-     */
-    void processMessage(MetadataMessage message);
   }
 
   /**
@@ -217,13 +223,13 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     @Override
     public void processMessage(MetadataMessage message) {
-      if (message.getRunId() == null) {
+      if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", message);
         return;
       }
 
       DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
-      ProgramRunId programRunId = message.getProgramId().run(message.getRunId());
+      ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
 
       if (lineage.getDatasetId() != null) {
         lineageDataset.addAccess(programRunId, lineage.getDatasetId(),
@@ -251,11 +257,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     @Override
     public void processMessage(MetadataMessage message) {
+      if (!(message.getEntityId() instanceof ProgramId)) {
+        LOG.warn("Missing program id from the usage information. Ignoring the message {}", message);
+        return;
+      }
       DatasetUsage usage = message.getPayload(GSON, DatasetUsage.class);
+      ProgramId programId = (ProgramId) message.getEntityId();
       if (usage.getDatasetId() != null) {
-        usageDataset.register(message.getProgramId(), usage.getDatasetId());
+        usageDataset.register(programId, usage.getDatasetId());
       } else if (usage.getStreamId() != null) {
-        usageDataset.register(message.getProgramId(), usage.getStreamId());
+        usageDataset.register(programId, usage.getStreamId());
       } else {
         // This shouldn't happen
         LOG.warn("Missing dataset id from the usage information. Ignoring the message {}", message);
@@ -276,12 +287,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     @Override
     public void processMessage(MetadataMessage message) {
-      if (message.getRunId() == null) {
+      if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
         return;
       }
 
-      ProgramRunId programRunId = message.getProgramId().run(message.getRunId());
+      ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
 
       switch (message.getType()) {
         case WORKFLOW_TOKEN:
