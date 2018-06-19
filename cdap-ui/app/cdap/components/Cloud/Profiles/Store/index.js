@@ -30,6 +30,11 @@ const DEFAULT_PROFILES_STATE = {
   error: null,
 };
 
+const PROFILE_STATUSES = {
+  ENABLED: 'enabled',
+  DISABLED: 'disabled'
+};
+
 const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
   switch (action.type) {
     case PROFILES_ACTIONS.SET_PROFILES:
@@ -65,4 +70,4 @@ const ProfilesStore = createStore(
 );
 
 export default ProfilesStore;
-export {PROFILES_ACTIONS};
+export {PROFILES_ACTIONS, PROFILE_STATUSES};

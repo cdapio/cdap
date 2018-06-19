@@ -25,7 +25,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import orderBy from 'lodash/orderBy';
 import ViewAllLabel from 'components/ViewAllLabel';
 import ConfirmationModal from 'components/ConfirmationModal';
-import ProfilesStore from 'components/Cloud/Profiles/Store';
+import ProfilesStore, {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 import {getProfiles, deleteProfile, setError} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import Alert from 'components/Alert';
@@ -78,7 +78,8 @@ const PROFILES_TABLE_HEADERS = [
     label: T.translate(`${PREFIX}.ListView.triggers`)
   },
   {
-    label: ''
+    property: 'status',
+    label: 'Status'
   },
   {
     label: ''
@@ -293,6 +294,7 @@ class ProfilesListView extends Component {
             let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
             let provisionerName = profile.provisioner.name;
             profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
+            let profileStatus = PROFILE_STATUSES[profile.status];
 
             return (
               <Link
@@ -312,7 +314,9 @@ class ProfilesListView extends Component {
                 <div />
                 <div />
                 <div />
-                <div />
+                <div className={`${profileStatus}-label`}>
+                  {T.translate(`${PREFIX}.common.${profileStatus}`)}
+                </div>
                 <div>
                   <ActionsPopover
                     target={actionsElem}

@@ -22,11 +22,11 @@ import T from 'i18n-react';
 
 require('./ActionsPopover.scss');
 
-export default function ProfileActionsPopover({target, namespace, profile, onDeleteClick}) {
+export default function ProfileActionsPopover({target, namespace, profile, onDeleteClick, className}) {
   return (
     <Popover
       target={target}
-      className="profile-actions-popover"
+      className={`profile-actions-popover ${className}`}
       placement="bottom"
       bubbleEvent={false}
       enableInteractionInPopover={true}
@@ -51,5 +51,6 @@ ProfileActionsPopover.propTypes = {
   target: PropTypes.element,
   namespace: PropTypes.string,
   profile: PropTypes.string,
-  onDeleteClick: PropTypes.func
+  onDeleteClick: PropTypes.func,
+  className: PropTypes.string
 };
