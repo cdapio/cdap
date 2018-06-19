@@ -15,11 +15,13 @@
  */
 @import '../../../../styles/variables.scss';
 
+$modal-padding-left-right: 45px;
+
 .about-page-modal {
   &.modal-dialog { margin-top: 100px; }
 
   .modal-body {
-    padding: 50px 45px;
+    padding: 50px $modal-padding-left-right;
 
     .close-section {
       position: absolute;
@@ -41,11 +43,25 @@
     }
 
     .about-content {
-      margin-top: 2rem;
+      margin: 2rem 0;
 
       .cdap-mode-security {
         font-size: 14px;
       }
     }
+    footer {
+      margin-left: -$modal-padding-left-right;
+      margin-right: -$modal-padding-left-right;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      // For bootstrap 3
+      > .container {
+        width: 100%;
+      }
+    }
   }
+}
+
+body.theme-cdap.state-hydrator .about-page-modal .modal-body > footer {
+  position: absolute;
 }

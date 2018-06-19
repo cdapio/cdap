@@ -20,6 +20,7 @@ import React from 'react';
 import {Modal, ModalBody} from 'reactstrap';
 import T from 'i18n-react';
 import {getModeWithCloudProvider} from 'components/Header/ProductDropdown/helper';
+import Footer from 'components/Footer';
 
 require('./AboutPageModal.scss');
 
@@ -67,6 +68,7 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
             </span>
           </div>
         </div>
+        <Footer />
       </ModalBody>
     </Modal>
   );
