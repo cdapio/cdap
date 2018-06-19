@@ -19,10 +19,9 @@
 @import '../styles/themes/cdap/mixins.less';
 
 @hydrator-blue: #098cf9;
-@cdap-orange: #ff6600;
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
-@search-font-color: #66666;
+@search-font-color: #666666;
 @title-font-color: #333333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
@@ -208,7 +207,7 @@ body.state-tracker-home.state-tracker {
       font-size: 13px;
       color: @tracker-grey;
 
-      span { color: @cdap-orange; }
+      span { color: @gcp-blue; }
     }
   }
   div.tracker-search {
@@ -331,7 +330,7 @@ body.state-tracker {
       .tracker-filters {
         .filter-show-all,
         .only-button {
-          color: @cdap-orange;
+          color: @gcp-blue;
           text-decoration: underline;
         }
 
@@ -625,7 +624,7 @@ body.state-tracker-detail-entity {
 
         &.active {
           a { color: @title-font-color; }
-          border-bottom: 4px solid @cdap-orange;
+          border-bottom: 4px solid @gcp-blue;
         }
         a {
           color: @tracker-grey;
@@ -815,7 +814,7 @@ body.state-tracker-detail-entity {
     .table {
       td:last-child { width: 15%; }
       td:first-child { width: 45%; }
-      td.nth-child(2) { width: 40%; }
+      td:nth-child(2) { width: 40%; }
     }
 
     .complex-type {
@@ -893,7 +892,7 @@ body.state-tracker-detail-entity {
           border-radius: 0;
 
           &:focus {
-            border: 1px solid @cdap-orange;
+            border: 1px solid @gcp-blue;
             box-shadow: none;
           }
         }
@@ -1009,7 +1008,7 @@ body.state-tracker-detail-entity-compliance {
     color: #666666;
   }
   .check {
-    background-color: @cdap-orange;
+    background-color: @gcp-blue;
     padding: 5px;
     border-radius: 15px;
     color: black;
@@ -1020,7 +1019,7 @@ body.state-tracker-detail-entity-compliance {
     }
   }
   .not-exist {
-    color: @cdap-orange;
+    color: @gcp-blue;
   }
   .not-matched {
     color: #fa4347;
@@ -1407,7 +1406,7 @@ body.state-tracker-tags {
               font-size: 16px;
             }
             &.action-link {
-              color: @cdap-orange;
+              color: @gcp-blue;
               font-size: 13px;
             }
             &:not(.tagged-entities) {
