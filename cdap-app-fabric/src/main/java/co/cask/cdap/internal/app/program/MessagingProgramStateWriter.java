@@ -22,7 +22,6 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
@@ -31,7 +30,6 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -63,10 +61,10 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
-    this(new ProgramStatePublisher(messagingService,
-                                   NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
-                                   RetryStrategies.fromConfiguration(cConf, "system.program.state.")
-         ),
+    this(new MessagingProgramStatePublisher(messagingService,
+                                            NamespaceId.SYSTEM.topic(cConf.get(
+                                              Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
+                                            RetryStrategies.fromConfiguration(cConf, "system.program.state.")),
          cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS,
                        Constants.ProgramHeartbeat.DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
   }

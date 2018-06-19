@@ -68,8 +68,8 @@ public class ProgramHeartbeatStore {
    * Static method for creating an instance of {@link ProgramHeartbeatStore}.
    */
   public static ProgramHeartbeatStore create(CConfiguration cConf,
-                                        DatasetContext datasetContext,
-                                        DatasetFramework datasetFramework) {
+                                             DatasetContext datasetContext,
+                                             DatasetFramework datasetFramework) {
     try {
       Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, PROGRAM_HEARTBEAT_INSTANCE_ID,
                                                     Table.class.getName(), DatasetProperties.EMPTY);
@@ -159,14 +159,15 @@ public class ProgramHeartbeatStore {
       Map<String, String> properties = notification.getProperties();
       // Required parameters
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-      ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(properties.get(ProgramOptionConstants.PROGRAM_STATUS));
+      ProgramRunStatus programRunStatus =
+        ProgramRunStatus.valueOf(properties.get(ProgramOptionConstants.PROGRAM_STATUS));
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
       if (programRunStatus.equals(ProgramRunStatus.STARTING)) {
         // this shouldn't happen as we skip writing starting status runs.
         continue;
       }
       if (programRunStatus.equals(ProgramRunStatus.RUNNING)) {
-        if(!runningRuns.containsKey(programRunId)) {
+        if (!runningRuns.containsKey(programRunId)) {
           runningRuns.put(programRunId, notification);
         }
       } else {

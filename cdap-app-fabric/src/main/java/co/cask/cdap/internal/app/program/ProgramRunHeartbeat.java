@@ -34,8 +34,8 @@ public class ProgramRunHeartbeat implements Runnable {
   private final Map<String, String> properties;
 
 
-  ProgramRunHeartbeat(ProgramStatePublisher programStatePublisher, Map<String, String> properties) {
-    this.programStatePublisher = programStatePublisher;
+  ProgramRunHeartbeat(ProgramStatePublisher messagingProgramStatePublisher, Map<String, String> properties) {
+    this.programStatePublisher = messagingProgramStatePublisher;
     this.properties = new HashMap<>(properties);
   }
 
