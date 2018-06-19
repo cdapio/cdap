@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
@@ -60,16 +61,15 @@ public class ProgramStore {
   /**
    * Returns run record for a given run.
    *
-   * @param id program id
-   * @param runId run id
+   * @param programRunId program run id
    * @return run record for runid
    */
-  public RunRecordMeta getRun(final ProgramId id, final String runId) {
+  public RunRecordMeta getRun(ProgramRunId programRunId) {
     return Transactionals.execute(transactional, context -> {
       Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
                                                     Table.class.getName(), DatasetProperties.EMPTY);
       AppMetadataStore metaStore = new AppMetadataStore(table);
-      return metaStore.getRun(id, runId);
+      return metaStore.getRun(programRunId.getParent(), programRunId.getRun());
 
     });
   }

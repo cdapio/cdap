@@ -96,15 +96,11 @@ public class ProvisionTask extends ProvisioningTask {
 
   @Override
   protected void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Exception e) {
-    LOG.warn("Error executing {} subtask while provisioning cluster for program run {}",
-             taskInfo.getProvisioningOp().getStatus(), programRunId, e);
     provisionerNotifier.deprovisioning(programRunId);
   }
 
   @Override
   protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e) {
-    LOG.warn("Error saving provision task state for program run {}", programRunId, e);
-
     if (taskInfo.getProvisioningOp().getStatus() == ProvisioningOp.Status.REQUESTING_CREATE) {
       // if we failed to write that we're requesting a cluster create, it means no cluster was created yet,
       // so we can transition directly to deprovisioned
@@ -120,8 +116,8 @@ public class ProvisionTask extends ProvisioningTask {
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.
-        LOG.error("Provisioner returned an invalid null cluster for program run {}. " +
-                    "Sending notification to de-provision it.", programRunId);
+        LOG.warn("Provisioner {} returned an invalid null cluster. " +
+                    "Sending notification to de-provision it.", provisioner.getSpec().getName());
         provisionerNotifier.deprovisioning(programRunId);
         // RequestingCreate --> Failed
         return Optional.of(ProvisioningOp.Status.FAILED);

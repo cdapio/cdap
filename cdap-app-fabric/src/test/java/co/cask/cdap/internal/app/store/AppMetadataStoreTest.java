@@ -218,7 +218,7 @@ public class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramProvisioning(programRunId2, Collections.emptyMap(), Collections.emptyMap(),
                                                      AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                      ARTIFACT_ID);
-      metadataStoreDataset.recordProgramDeprovisioned(programRunId2,
+      metadataStoreDataset.recordProgramDeprovisioned(programRunId2, System.currentTimeMillis(),
                                                       AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
 
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);

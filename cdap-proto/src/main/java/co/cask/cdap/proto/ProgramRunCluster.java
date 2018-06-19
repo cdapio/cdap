@@ -12,6 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
 package co.cask.cdap.proto;
@@ -24,14 +25,12 @@ import javax.annotation.Nullable;
  */
 public class ProgramRunCluster {
   private final ProgramRunClusterStatus status;
-  private final Long expiresAt;
+  private final Long end;
   private final Integer numNodes;
 
-  public ProgramRunCluster(ProgramRunClusterStatus status,
-                           @Nullable Long expiresAt,
-                           @Nullable Integer numNodes) {
+  public ProgramRunCluster(ProgramRunClusterStatus status, @Nullable Long endTs, @Nullable Integer numNodes) {
     this.status = status;
-    this.expiresAt = expiresAt;
+    this.end = endTs;
     this.numNodes = numNodes;
   }
 
@@ -40,11 +39,11 @@ public class ProgramRunCluster {
   }
 
   /**
-   * @return timestamp that the cluster expires at. Only applicable if the cluster is in the waiting state.
+   * @return timestamp in seconds when the cluster was deprovisioned or orphaned, or null if it is not in an end state
    */
   @Nullable
-  public Long getExpiresAt() {
-    return expiresAt;
+  public Long getEnd() {
+    return end;
   }
 
   /**
@@ -68,20 +67,20 @@ public class ProgramRunCluster {
     ProgramRunCluster that = (ProgramRunCluster) o;
 
     return Objects.equals(status, that.status) &&
-      Objects.equals(expiresAt, that.expiresAt) &&
+      Objects.equals(end, that.end) &&
       Objects.equals(numNodes, that.numNodes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(status, expiresAt, numNodes);
+    return Objects.hash(status, end, numNodes);
   }
 
   @Override
   public String toString() {
     return "ProgramRunCluster{" +
       "status=" + status +
-      ", expiresAt=" + expiresAt +
+      ", end=" + end +
       ", numNodes=" + numNodes +
       '}';
   }
