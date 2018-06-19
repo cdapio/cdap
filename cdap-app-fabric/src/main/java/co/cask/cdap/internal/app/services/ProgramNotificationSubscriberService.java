@@ -318,7 +318,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           Boolean.parseBoolean(recordedRunRecord.getSystemArgs().get(ProgramOptionConstants.SKIP_PROVISIONING));
         if (isInWorkflow || skipProvisioning) {
           appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
-          appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
+          appMetadataStore.recordProgramDeprovisioned(programRunId, null, messageIdBytes);
         } else {
           // TODO: CDAP-13295 remove once runtime monitor emits this message
           provisionerNotifier.deprovisioning(programRunId);
@@ -335,6 +335,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
 
+    long endTs = getTimeSeconds(properties, ProgramOptionConstants.CLUSTER_END_TIME);
     ProgramDescriptor programDescriptor =
       GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
     switch (clusterStatus) {
@@ -382,10 +383,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
         return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
       case DEPROVISIONED:
-        appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
+        appMetadataStore.recordProgramDeprovisioned(programRunId, endTs, messageIdBytes);
         break;
       case ORPHANED:
-        appMetadataStore.recordProgramOrphaned(programRunId, messageIdBytes);
+        appMetadataStore.recordProgramOrphaned(programRunId, endTs, messageIdBytes);
         break;
     }
 

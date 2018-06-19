@@ -43,6 +43,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -102,15 +103,25 @@ public class ProvisionerNotifier {
   }
 
   public void deprovisioned(ProgramRunId programRunId) {
+    deprovisioned(programRunId, System.currentTimeMillis());
+  }
+
+  public void deprovisioned(ProgramRunId programRunId, long endTimestamp) {
     publish(ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
-      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONED.name()));
+      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONED.name(),
+      ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp)));
   }
 
   public void orphaned(ProgramRunId programRunId) {
+    orphaned(programRunId, System.currentTimeMillis());
+  }
+
+  public void orphaned(ProgramRunId programRunId, long endTimestamp) {
     publish(ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
-      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.ORPHANED.name()));
+      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.ORPHANED.name(),
+      ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp)));
   }
 
   private void publish(Map<String, String> properties) {

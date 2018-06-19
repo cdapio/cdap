@@ -239,7 +239,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   public RunRecordMeta getRunRecord() {
-    return programStore.getRun(programId, runId.getRun());
+    return programStore.getRun(runId);
   }
 
   @Override

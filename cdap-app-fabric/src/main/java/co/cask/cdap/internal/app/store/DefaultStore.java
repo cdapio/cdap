@@ -194,9 +194,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setDeprovisioned(ProgramRunId id, byte[] sourceId) {
+  public void setDeprovisioned(ProgramRunId id, long endTs, byte[] sourceId) {
     Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).recordProgramDeprovisioned(id, sourceId);
+      getAppMetadataStore(context).recordProgramDeprovisioned(id, endTs, sourceId);
     });
   }
 

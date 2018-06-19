@@ -30,6 +30,7 @@ import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -182,10 +183,10 @@ public final class LoggingContextHelper {
     return getLoggingContext(namespaceId, applicationId, entityId, programType, null, null);
   }
 
-  public static LoggingContext getLoggingContextWithRunId(String namespaceId, String applicationId, String entityId,
-                                                          ProgramType programType, String runId,
-                                                          Map<String, String> systemArgs) {
-    return getLoggingContext(namespaceId, applicationId, entityId, programType, runId, systemArgs);
+
+  public static LoggingContext getLoggingContextWithRunId(ProgramRunId programRun, Map<String, String> systemArgs) {
+    return getLoggingContext(programRun.getNamespace(), programRun.getApplication(), programRun.getProgram(),
+                             programRun.getType(), programRun.getRun(), systemArgs);
   }
 
   public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,

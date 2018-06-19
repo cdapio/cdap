@@ -178,8 +178,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     ProgramRunId runId = getProgramRunId(namespaceId, previewId);
     RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
     LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, previewId, runId.getProgram(), runId.getType(),
-                                                      runId.getRun(), runRecord.getSystemArgs());
+      LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
 
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord, format,
               suppress);
@@ -199,8 +198,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     ProgramRunId runId = getProgramRunId(namespaceId, previewId);
     RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
     LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, previewId, runId.getProgram(), runId.getType(),
-                                                      runId.getRun(), runRecord.getSystemArgs());
+      LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
   }
 
@@ -218,8 +216,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     ProgramRunId runId = getProgramRunId(namespaceId, previewId);
     RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
     LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, previewId, runId.getProgram(), runId.getType(),
-                                                      runId.getRun(), runRecord.getSystemArgs());
+      LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
   }
 
