@@ -384,6 +384,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, messageIdBytes);
         break;
+      case ORPHANED:
+        appMetadataStore.recordProgramOrphaned(programRunId, messageIdBytes);
+        break;
     }
 
     return Optional.empty();

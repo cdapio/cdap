@@ -96,18 +96,22 @@ public class ProvisionerNotifier {
   }
 
   public void deprovisioning(ProgramRunId programRunId) {
-    publish(ImmutableMap.<String, String>builder()
-              .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-              .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONING.name())
-              .build());
+    publish(ImmutableMap.of(
+      ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
+      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONING.name()));
   }
 
   public void deprovisioned(ProgramRunId programRunId) {
-    publish(ImmutableMap.<String, String>builder()
-              .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-              .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONED.name()).build());
+    publish(ImmutableMap.of(
+      ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
+      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONED.name()));
   }
 
+  public void orphaned(ProgramRunId programRunId) {
+    publish(ImmutableMap.of(
+      ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
+      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.ORPHANED.name()));
+  }
 
   private void publish(Map<String, String> properties) {
     final StoreRequest storeRequest = StoreRequestBuilder.of(topic)

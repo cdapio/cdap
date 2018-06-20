@@ -20,6 +20,7 @@ import co.cask.cdap.api.retry.RetriesExhaustedException;
 import co.cask.cdap.api.retry.RetryableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Int;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -91,7 +92,7 @@ public final class Retries {
    *   If the call was interrupted while waiting between retries, the {@link InterruptedException} will be added
    *   as a suppressed exception
    */
-  public static <V> V supplyWithRetries(final Supplier<V> supplier, RetryStrategy retryStrategy,
+  public static <V> V supplyWithRetries(Supplier<V> supplier, RetryStrategy retryStrategy,
                                         Predicate<Throwable> isRetryable) {
     return callWithRetries(supplier::get, retryStrategy, isRetryable);
   }
@@ -202,6 +203,36 @@ public final class Retries {
           throw t;
         }
       }
+    }
+  }
+
+  /**
+   * Executes a {@link Callable}, retrying the call if it throws something retryable.
+   *
+   * @param callable the callable to run
+   * @param retryStrategy the retry strategy to use if the callable fails in a retryable way
+   * @param isRetryable predicate to determine whether the callable failure is retryable or not
+   * @param <V> the type of return value
+   * @param <T> the type of throwable
+   * @return the return value of the callable
+   * @throws InterruptedException if the call was interrupted between retries. The last Throwable that triggered the
+   *   retry will be added as a suppressed exception.
+   * @throws T if the callable failed in a way that is not retryable, or the retries were exhausted.
+   *   If retries were exhausted, a {@link RetriesExhaustedException} will be added as a suppressed exception.
+   */
+  public static <V, T extends Throwable> V callWithInterruptibleRetries(Callable<V, T> callable,
+                                                                        RetryStrategy retryStrategy,
+                                                                        Predicate<Throwable> isRetryable)
+    throws T, InterruptedException {
+    try {
+      return callWithRetries(callable, retryStrategy, isRetryable);
+    } catch (Throwable t) {
+      for (Throwable suppressed : t.getSuppressed()) {
+        if (suppressed instanceof InterruptedException) {
+          throw (InterruptedException) suppressed;
+        }
+      }
+      throw t;
     }
   }
 }

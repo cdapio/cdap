@@ -370,11 +370,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     RunRecordMeta existing = getRun(programRunId);
     // for some reason, there is an existing run record.
     if (existing != null) {
-      // TODO:  Don't expect this to happen, but update the start time,
-      // runtime args, and system args of the existing run record.
-      if (!isValid(existing, sourceId, "provisioning")) {
-        return null;
-      }
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
+                  + "run record in run state {} and cluster state {}.",
+                existing.getStatus(), existing.getCluster().getStatus());
       return null;
     }
 
@@ -432,15 +430,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
       LOG.warn("Ignoring unexpected request to transition program run {} from non-existent state to cluster state {}.",
                 programRunId, ProgramRunClusterStatus.PROVISIONED);
       return null;
-    } else if (!isValid(existing, sourceId, "provisioned")) {
-      return null;
     }
-
-    ProgramRunClusterStatus clusterState = existing.getCluster().getStatus();
-    if (clusterState != ProgramRunClusterStatus.PROVISIONING) {
-      LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
-               programRunId, existing.getCluster().getStatus(),
-               ProgramRunClusterStatus.PROVISIONED);
+    if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.PROVISIONED, sourceId)) {
       return null;
     }
 
@@ -474,25 +465,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONING);
       return null;
-    } else if (!isValid(existing, sourceId, "deprovisioning")) {
+    }
+    if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONING, sourceId)) {
       return null;
     }
 
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
-    // can come from provisioning if there was an error while provisioning,
-    // such as some resources could be provisioned but other could not
-    // for example, if 3 out of 5 nodes were provisioned, but the other 2 could not due to quota restrictions
-    if (clusterStatus != ProgramRunClusterStatus.PROVISIONED && clusterStatus != ProgramRunClusterStatus.PROVISIONING) {
-      LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
-               programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONING);
-      return null;
-    }
-    if (clusterStatus == ProgramRunClusterStatus.PROVISIONED && !existing.getStatus().isEndState()) {
-      LOG.warn("Ignoring unexpected request to transition program run {} from program state {} to cluster state {}.",
-               programRunId, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONING);
-      return null;
-    }
-
     delete(existing);
     key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
 
@@ -531,26 +509,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONED);
       return null;
-    } else if (!isValid(existing, sourceId, "deprovisioned")) {
+    }
+    if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONED, sourceId)) {
       return null;
     }
 
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
-    // existing cluster status must be provisioning or deprovisioning.
-    // can come from provisioning if there was an error during the provisioning state,
-    // before the provisioner could be called
-    if (clusterStatus != ProgramRunClusterStatus.DEPROVISIONING &&
-      clusterStatus != ProgramRunClusterStatus.PROVISIONING) {
-      LOG.warn("Ignoring unexpected request to transition program run {} from cluster state {} to cluster state {}.",
-               programRunId, clusterStatus, ProgramRunClusterStatus.DEPROVISIONED);
-      return null;
-    }
-    if (clusterStatus == ProgramRunClusterStatus.DEPROVISIONING && !existing.getStatus().isEndState()) {
-      LOG.warn("Ignoring unexpected request to transition program run {} from program state {} to cluster state {}.",
-               programRunId, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONED);
-      return null;
-    }
-
     delete(existing);
     key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
 
@@ -566,6 +530,52 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .build();
     write(key.build(), meta);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONED, programRunId);
+    return meta;
+  }
+
+  /**
+   * Record that the program run has been orphaned. If the current status has a higher source id,
+   * this call will be ignored.
+   *
+   * @param programRunId program run
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   */
+  @Nullable
+  public RunRecordMeta recordProgramOrphaned(ProgramRunId programRunId, byte[] sourceId) {
+    MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
+
+    RunRecordMeta existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
+                programRunId, ProgramRunClusterStatus.DEPROVISIONED);
+      return null;
+    }
+    if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.ORPHANED, sourceId)) {
+      return null;
+    }
+
+    ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
+
+    delete(existing);
+    key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+
+    // if the previous state was provisioning, that means we've transitioned here from a failure
+    ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
+      ProgramRunStatus.FAILED : existing.getStatus();
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ORPHANED,
+                                                      existing.getCluster().getExpiresAt(),
+                                                      existing.getCluster().getNumNodes());
+    RunRecordMeta meta = RunRecordMeta.builder(existing)
+      .setCluster(cluster)
+      .setSourceId(sourceId)
+      .setStatus(newStatus)
+      .build();
+    write(key.build(), meta);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.ORPHANED, programRunId);
     return meta;
   }
 
@@ -596,12 +606,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                programRunId, ProgramRunStatus.STARTING);
       return null;
     }
-    if (!isValid(existing, sourceId, "start")) {
-      return null;
-    }
-    if (existing.getStatus() != ProgramRunStatus.PENDING) {
-      LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
-               programRunId, existing.getStatus(), ProgramRunStatus.STARTING);
+    if (!isValid(existing, ProgramRunStatus.STARTING, existing.getCluster().getStatus(), sourceId)) {
       return null;
     }
 
@@ -654,14 +659,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                programRunId, ProgramRunStatus.RUNNING);
       return null;
     }
-    if (!isValid(existing, sourceId, "running")) {
+    if (!isValid(existing, ProgramRunStatus.RUNNING, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording running if the existing records are not valid
-      return null;
-    }
-    ProgramRunStatus status = existing.getStatus();
-    if (status == null || status.isEndState()) {
-      LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
-               programRunId, status, ProgramRunStatus.RUNNING);
       return null;
     }
     Map<String, String> systemArgs = existing.getSystemArgs();
@@ -702,7 +701,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                programRunId, ProgramRunStatus.SUSPENDED);
       return null;
     }
-    if (!isValid(existing, sourceId, "suspend")) {
+    if (!isValid(existing, ProgramRunStatus.SUSPENDED, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording suspend if the existing record is not valid
       return null;
     }
@@ -726,7 +725,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                programRunId, ProgramRunStatus.RUNNING);
       return null;
     }
-    if (!isValid(existing, sourceId, "resume")) {
+    if (!isValid(existing, ProgramRunStatus.RUNNING, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording resumed if the existing records are not valid
       return null;
     }
@@ -743,6 +742,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                 programRunId.getParent(), programRunId.getRun());
       return null;
     }
+
+
     return recordProgramSuspendResume(programRunId, sourceId, existing, "resume", timestamp);
   }
 
@@ -808,13 +809,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                programRunId, runStatus);
       return null;
     }
-    if (!isValid(existing, sourceId, runStatus.name().toLowerCase())) {
+    if (!isValid(existing, runStatus, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording stop if the existing records are not valid
-      return null;
-    }
-    if (existing.getStatus().isEndState()) {
-      LOG.warn("Ignoring unexpected transition of program run {} from program state {} to program state {}.",
-               programRunId, existing.getStatus(), runStatus);
       return null;
     }
     // Delete the old run record
@@ -846,19 +842,32 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * once it is already running.
    *
    * @param existing the existing run record meta of the given program run
+   * @param nextProgramState the program state to transition to
+   * @param nextClusterState the cluster state to transition to
    * @param sourceId unique id representing the source of program run status, such as the message id of the program
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @param recordType the type of record corresponding to the current status
    * @return {@code true} if the program run is allowed to persist the given status, {@code false} otherwise
    */
-  private boolean isValid(RunRecordMeta existing, byte[] sourceId, String recordType) {
+  private boolean isValid(RunRecordMeta existing, ProgramRunStatus nextProgramState,
+                          ProgramRunClusterStatus nextClusterState, byte[] sourceId) {
     byte[] existingSourceId = existing.getSourceId();
     if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) < 0) {
       LOG.debug("Current source id '{}' is not larger than the existing source id '{}' in the existing " +
-                  "run record meta '{}'. Skip recording program {}.",
-                Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing, recordType);
+                  "run record meta '{}'. Skip recording state transition to program state {} and cluster state {}.",
+                Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing,
+                nextProgramState, nextClusterState);
+      return false;
+    }
+    if (!existing.getStatus().canTransitionTo(nextProgramState)) {
+      LOG.warn("Ignoring unexpected transition of program run {} from run state {} to {}.",
+               existing.getProgramRunId(), existing.getStatus(), nextProgramState);
+      return false;
+    }
+    if (!existing.getCluster().getStatus().canTransitionTo(nextClusterState)) {
+      LOG.warn("Ignoring unexpected transition of program run {} from cluster state {} to {}.",
+               existing.getProgramRunId(), existing.getCluster().getStatus(), nextClusterState);
       return false;
     }
     return true;

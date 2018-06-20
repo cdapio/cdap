@@ -18,20 +18,44 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.proto.id.ProgramRunId;
 
-/**
- * A Provisioning related operation.
- */
-public abstract class ProvisioningTask implements Runnable {
-  protected final ProgramRunId programRunId;
+import java.util.Objects;
 
-  public ProvisioningTask(ProgramRunId programRunId) {
+/**
+ * Key to identify a provisioning task.
+ */
+public class ProvisioningTaskKey {
+  private final ProgramRunId programRunId;
+  private final ProvisioningOp.Type type;
+
+  public ProvisioningTaskKey(ProgramRunId programRunId, ProvisioningOp.Type type) {
     this.programRunId = programRunId;
+    this.type = type;
   }
 
-  /**
-   * @return the program run this is for.
-   */
   public ProgramRunId getProgramRunId() {
     return programRunId;
+  }
+
+  public ProvisioningOp.Type getType() {
+    return type;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ProvisioningTaskKey that = (ProvisioningTaskKey) o;
+
+    return Objects.equals(programRunId, that.programRunId) && Objects.equals(type, that.type);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(programRunId, type);
   }
 }
