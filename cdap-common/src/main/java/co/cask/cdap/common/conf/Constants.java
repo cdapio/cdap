@@ -832,6 +832,7 @@ public final class Constants {
     public static final String BATCH_LIMIT = "app.program.runtime.monitor.batch.limit";
     public static final String TOPICS_CONFIGS = "app.program.runtime.monitor.topics.configs";
     public static final String GRACEFUL_SHUTDOWN_MS = "app.program.runtime.monitor.graceful.shutdown.ms";
+    public static final String THREADS = "app.program.runtime.monitor.threads";
 
     // Configuration keys for the runtime monitor server
     public static final String SERVER_HOST = "app.program.runtime.monitor.server.host";

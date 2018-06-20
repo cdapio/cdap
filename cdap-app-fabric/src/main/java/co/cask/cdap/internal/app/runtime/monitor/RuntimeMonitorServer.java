@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -26,18 +27,36 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.tools.HttpsEnabler;
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 /**
  * Runtime Server which starts netty-http service to expose metadata to {@link RuntimeMonitor}
@@ -49,17 +68,20 @@ public class RuntimeMonitorServer extends AbstractIdleService {
   private final CConfiguration cConf;
   private final MultiThreadMessagingContext messagingContext;
   private final CountDownLatch shutdownLatch;
+  private final Cancellable programRunCancellable;
   private final KeyStore keyStore;
   private final KeyStore trustStore;
   private NettyHttpService httpService;
 
   @Inject
   RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService,
+                       Cancellable programRunCancellable,
                        @Constants.AppFabric.KeyStore KeyStore keyStore,
                        @Constants.AppFabric.TrustStore KeyStore trustStore) {
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.shutdownLatch = new CountDownLatch(1);
+    this.programRunCancellable = programRunCancellable;
     this.keyStore = keyStore;
     this.trustStore = trustStore;
   }
@@ -73,10 +95,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
     // Enable SSL for communication.
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
-      .setHttpHandlers(new RuntimeHandler(cConf, messagingContext, () -> {
-        shutdownLatch.countDown();
-        stop();
-      }))
+      .setHttpHandlers(new RuntimeHandler(cConf, messagingContext))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(address.getHostName())
       .setPort(address.getPort());
@@ -98,6 +117,13 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    // Cancel the program run if it is running. The implementation of the cancellable should handle the details.
+    try {
+      programRunCancellable.cancel();
+    } catch (Exception e) {
+      LOG.error("Exception raised when stopping program run.", e);
+    }
+
     // Wait for the shutdown signal from the runtime monitor before shutting off the http server.
     // This allows the runtime monitor still able to talk to this service until all data are fetched.
     Uninterruptibles.awaitUninterruptibly(shutdownLatch);
@@ -115,5 +141,63 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     }
     int port = cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT);
     return new InetSocketAddress(host, port);
+  }
+
+  /**
+   * {@link co.cask.http.HttpHandler} for exposing metadata of a runtime.
+   */
+  @Path("/v1/runtime")
+  public final class RuntimeHandler extends AbstractHttpHandler {
+
+    private final CConfiguration cConf;
+    private final MessagingContext messagingContext;
+
+    RuntimeHandler(CConfiguration cConf, MessagingContext messagingContext) {
+      this.cConf = cConf;
+      this.messagingContext = messagingContext;
+    }
+
+    /**
+     * Gets list of topics along with offsets and limit as request and returns list of messages
+     */
+    @POST
+    @Path("/metadata")
+    public void metadata(FullHttpRequest request, HttpResponder responder) throws Exception {
+      Map<String, GenericRecord> consumeRequests = decodeConsumeRequest(request);
+      MessagesBodyProducer messagesBodyProducer = new MessagesBodyProducer(cConf, consumeRequests, messagingContext);
+      responder.sendContent(HttpResponseStatus.OK, messagesBodyProducer,
+                            new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
+    }
+
+    /**
+     * Shuts down the runtime monitor server.
+     */
+    @POST
+    @Path("/shutdown")
+    public void shutdown(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "Triggering shutdown down Runtime Http Server.");
+      shutdownLatch.countDown();
+      stop();
+    }
+
+    /**
+     * Kills the running program.
+     */
+    @POST
+    @Path("/kill")
+    public void kill(HttpRequest request, HttpResponder responder) {
+      programRunCancellable.cancel();
+      responder.sendString(HttpResponseStatus.OK, "Program killed.");
+    }
+
+    /**
+     * Decode consume request from avro binary format
+     */
+    private Map<String, GenericRecord> decodeConsumeRequest(FullHttpRequest request) throws IOException {
+      Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
+      DatumReader<Map<String, GenericRecord>> datumReader = new GenericDatumReader<>(
+        MonitorSchemas.V1.MonitorConsumeRequest.SCHEMA);
+      return datumReader.read(null, decoder);
+    }
   }
 }

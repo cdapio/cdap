@@ -55,6 +55,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -102,6 +103,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
@@ -376,8 +378,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Give some time for the program to stop
       controller.stop().get(maxStopSeconds == 0L ? Constants.APPLICATION_MAX_STOP_SECONDS : maxStopSeconds,
                             TimeUnit.SECONDS);
-    } catch (Exception e) {
-      LOG.error("Failed to stop runnable: {}.", name, e);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -415,11 +416,19 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     Module module = new DistributedProgramContainerModule(cConf, hConf, programRunId,
                                                           programOptions.getArguments(), getServiceAnnouncer());
 
-    // In isolated mode, TMS runs in the "launcher" container.
-    // We don't do this in the DistributedProgramContainerModule
-    // because that is used in both launcher and task containers
     if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ISOLATED) {
-      module = Modules.override(module).with(new MessagingServerRuntimeModule().getStandaloneModules());
+      // In isolated mode, TMS runs in the "launcher" container.
+      // We don't do this in the DistributedProgramContainerModule
+      // because that module is used in both launcher and task containers
+      module = Modules.override(module).with(
+        new MessagingServerRuntimeModule().getStandaloneModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // Bind a Cancellable for the RuntimeMonitor to stop this program run.
+            bind(Cancellable.class).toInstance(() -> stop());
+          }
+      });
     }
 
     return module;

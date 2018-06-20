@@ -19,6 +19,7 @@ package co.cask.cdap.security.tools;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.twill.filesystem.Location;
 import sun.security.x509.AlgorithmId;
 import sun.security.x509.CertificateAlgorithmId;
 import sun.security.x509.CertificateIssuerName;
@@ -32,8 +33,10 @@ import sun.security.x509.X509CertImpl;
 import sun.security.x509.X509CertInfo;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -48,6 +51,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.function.Supplier;
 
 /**
  * Utility class with methods for generating a X.509 self signed certificate
@@ -138,6 +142,23 @@ public final class KeyStores {
     } catch (CertificateException | NoSuchAlgorithmException | IOException | KeyStoreException e) {
       throw new RuntimeException("Failed to create trust store from the given key store", e);
     }
+  }
+
+  /**
+   * Loads a {@link KeyStore} from the given {@link Location} with keystore type {@link KeyStores#SSL_KEYSTORE_TYPE}.
+   *
+   * @param location the {@link Location} to read the serialized {@link KeyStore}
+   * @return a new instance of {@link KeyStore}.
+   * @throws IOException if failed to read from the given {@link Location}.
+   * @throws GeneralSecurityException if failed to construct the {@link KeyStore}.
+   */
+  public static KeyStore load(Location location,
+                              Supplier<String> keystorePassSupplier) throws IOException, GeneralSecurityException {
+    KeyStore ks = KeyStore.getInstance(KeyStores.SSL_KEYSTORE_TYPE);
+    try (InputStream is = location.getInputStream()) {
+      ks.load(is, keystorePassSupplier.get().toCharArray());
+    }
+    return ks;
   }
 
   /**

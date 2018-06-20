@@ -2386,6 +2386,14 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.threads</name>
+    <value>20</value>
+    <description>
+      Maximum number of threads being used by runtime monitor for runtime monitoring
+    </description>
+  </property>
+
+  <property>
     <name>system.runtime.monitor.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
@@ -2403,7 +2411,7 @@
 
   <property>
     <name>system.runtime.monitor.retry.policy.max.retries</name>
-    <value>1000</value>
+    <value>2147483647</value>
     <description>
       The maximum number of retries to attempt before aborting
     </description>
@@ -2411,7 +2419,7 @@
 
   <property>
     <name>system.runtime.monitor.retry.policy.max.time.secs</name>
-    <value>120</value>
+    <value>2147483647</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
     </description>
@@ -2419,7 +2427,7 @@
 
   <property>
     <name>system.runtime.monitor.retry.policy.type</name>
-    <value>fixed.delay</value>
+    <value>exponential.backoff</value>
     <description>
       The type of retry policy for log processing. Allowed options: "none",
       "fixed.delay", or "exponential.backoff".
