@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -48,7 +49,7 @@ import java.util.Map;
  * to {@linkConstants.ProgramHeartbeatStore.TABLE}. This is used by the program-report system app to efficiently
  * scan and return results for dashboard status queries
  */
-public class ProgramHeartbeatStore {
+public class ProgramHeartbeatStore extends AbstractDataset {
   private static final Gson GSON = new GsonBuilder().create();
   private static final byte[] COLUMN_NAME = Bytes.toBytes("status");
 
@@ -60,6 +61,7 @@ public class ProgramHeartbeatStore {
   private final CConfiguration cConfiguration;
 
   public ProgramHeartbeatStore(Table table, CConfiguration cConfiguration) {
+    super("ignored", table);
     this.table = table;
     this.cConfiguration = cConfiguration;
   }
