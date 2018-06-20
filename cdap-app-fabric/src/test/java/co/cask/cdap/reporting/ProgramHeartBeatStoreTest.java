@@ -17,6 +17,7 @@
 package co.cask.cdap.reporting;
 
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -102,7 +103,8 @@ public class ProgramHeartBeatStoreTest {
 
     // write heart beat messages for 10 minutes for this program run.
     for (long time = startTime1; time <= endTime; time += TimeUnit.MINUTES.toMillis(1)) {
-      properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(time));
+      System.out.println("Program 1 time : " + time);
+      properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(time));
       Notification notification = new Notification(Notification.Type.HEART_BEAT, properties);
       txnl.execute(() -> {
         programHeartbeatStore.writeProgramHeartBeatStatus(notification);
@@ -113,7 +115,8 @@ public class ProgramHeartBeatStoreTest {
     long startTime2 = endTime - TimeUnit.MINUTES.toMillis(5);
     // write heart beat messages for 10 minutes for this program run.
     for (long time = startTime2; time <= endTime; time += TimeUnit.MINUTES.toMillis(1)) {
-      properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(time));
+      System.out.println("Program 2 time : " + time);
+      properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(time));
       Notification notification = new Notification(Notification.Type.HEART_BEAT, properties);
       txnl.execute(() -> {
         programHeartbeatStore.writeProgramHeartBeatStatus(notification);
@@ -125,9 +128,13 @@ public class ProgramHeartBeatStoreTest {
     // lets perform scan to verify results
 
     txnl.execute(() -> {
-      Assert.assertEquals(1 , programHeartbeatStore.scan(startTime1, startTime2).size());
-      Assert.assertEquals(2 , programHeartbeatStore.scan(startTime1, endTime).size());
-      Assert.assertEquals(2 , programHeartbeatStore.scan(startTime2, endTime).size());
+      byte[] startRowKey1 = Bytes.toBytes(startTime1);
+      byte[] startRowKey2 = Bytes.toBytes(startTime2);
+      byte[] endRowKey = Bytes.toBytes(endTime);
+      Assert.assertEquals(1 , programHeartbeatStore.scan(startRowKey1, startRowKey2).size());
+      Assert.assertEquals(2 , programHeartbeatStore.scan(startRowKey1, endRowKey).size());
+      System.out.println("Scanning range start : " + startTime2 + " end time : " + endTime);
+      Assert.assertEquals(2 , programHeartbeatStore.scan(startRowKey2, endRowKey).size());
     });
   }
 

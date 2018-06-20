@@ -90,19 +90,11 @@ public class ProgramHeartbeatStore extends AbstractDataset {
    */
   public void writeProgramHeartBeatStatus(Notification notification) {
     String timestamp = notification.getProperties().get(ProgramOptionConstants.HEART_BEAT_TIME);
-    String programStatus = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
-    byte[] rowKey = createRowKey(timestamp, programStatus);
+    byte[] rowKey = Bytes.toBytes(Long.parseLong(timestamp));
     table.put(rowKey, COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
   }
 
-  /**
-   * create row-key by appending timestamp, programStatus and programRunId separated by separator.
-   * @return row-key byte array
-   */
-  private byte[] createRowKey(String timestamp, String programStatus) {
-    String rowKey = String.format("%s%s%s", timestamp, ROW_KEY_SEPARATOR, programStatus);
-    return Bytes.toBytes(rowKey);
-  }
+
 
   /**
    * find timestamp, timestamp key changes based on the program status and
@@ -120,7 +112,7 @@ public class ProgramHeartbeatStore extends AbstractDataset {
       // TODO log an error/warning this shouldn't happen
       return;
     }
-    table.put(createRowKey(timestamp, programStatus), COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
+    table.put(Bytes.toBytes(Long.parseLong(timestamp)), COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
   }
 
   /**
@@ -145,13 +137,10 @@ public class ProgramHeartbeatStore extends AbstractDataset {
 
   /**
    * scan the table for the time range and return collection of completed and actively running runs
-   * @param startTime inclusive start time in milliseconds
-   * @param endTime exclusive end time in milliseconds
+   *
    * @return collection of program runid matching the parameter requirements
    */
-  Collection<Notification> scan(long startTime, long endTime) {
-    byte[] startRowKey = Bytes.toBytes(startTime);
-    byte[] endRowKey = Bytes.toBytes(endTime);
+  Collection<Notification> scan(byte[] startRowKey, byte[] endRowKey) {
     Scanner scanner = table.scan(startRowKey, endRowKey);
     Row row;
     List<Notification> result = new ArrayList<>();
