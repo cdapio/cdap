@@ -16,7 +16,6 @@
 package co.cask.cdap.report
 
 import co.cask.cdap.report.util.Constants
-import org.apache.hadoop.util.StringUtils
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
@@ -41,11 +40,7 @@ object SparkCompat {
     * @param inputURIs URIs of the avro files to read
     */
   def readAvroFiles(sql: SQLContext, inputURIs: Seq[String]): DataFrame = {
-    sql.read.format("com.databricks.spark.avro")
-      // this is copied from DataFrameReader#load(paths: String*) in Spark 1.6 to avoid incompatibility with Spark 1.5,
-      // since DataFrameReader#load(paths: String*) doesn't exist in Spark 1.5
-      .option("paths", inputURIs.map(StringUtils.escapeString(_, '\\', ',')).mkString(","))
-      .load()
+    sql.read.format("com.databricks.spark.avro").load(inputURIs: _*)
   }
 
   /**
