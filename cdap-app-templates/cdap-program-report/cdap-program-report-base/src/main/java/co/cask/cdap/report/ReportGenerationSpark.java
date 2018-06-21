@@ -510,6 +510,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
       // TODO: [CDAP-13290] reports should be in avro format instead of json text;
       // TODO: [CDAP-13291] need to support reading multiple report files
+      // Spark1 creates filenames with the format "part-r-xxxx", but Spark1 creates filenames with the format
+      // "part-xxxx.json". The common prefix "part-" in Spark1 and Spark2 is used here for filtering report files.
       Optional<Location> reportFile = reportDir.list().stream()
         .filter(l -> l.getName().startsWith("part-")).findFirst();
       // TODO: [CDAP-13292] use cache to store content of the reports
