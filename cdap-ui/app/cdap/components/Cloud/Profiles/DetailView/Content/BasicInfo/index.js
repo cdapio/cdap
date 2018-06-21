@@ -28,6 +28,7 @@ import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 import ToggleSwitch from 'components/ToggleSwitch';
+import classnames from 'classnames';
 
 require('./BasicInfo.scss');
 
@@ -151,6 +152,28 @@ export default class ProfileDetailViewBasicInfo extends Component {
     );
   }
 
+  renderToggleSwitch(profile, profileIsDefault, profileIsEnabled, profileStatus) {
+    if (profileIsDefault) {
+      return null;
+    }
+
+    return (
+      <ToggleSwitch
+        isOn={profileIsEnabled}
+        onToggle={this.props.toggleProfileStatus.bind(null, profile)}
+        onLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
+        offLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
+      />
+    );
+  }
+
+  renderDivider(profileIsDefault) {
+    if (profileIsDefault) {
+      return null;
+    }
+    return <span className="divider"></span>;
+  }
+
   render() {
     let profile = this.props.profile;
     let redirectToObj = this.props.isSystem ? {
@@ -160,6 +183,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
     let namespace = this.props.isSystem ? 'system' : getCurrentNamespace();
     const profileStatus = PROFILE_STATUSES[profile.status];
     const profileIsEnabled = profileStatus === 'enabled';
+    const profileIsDefault = profile.name === 'default';
 
     const actionsElem = () => {
       return (
@@ -176,18 +200,14 @@ export default class ProfileDetailViewBasicInfo extends Component {
           <h2 className="profile-name">
             {profile.name}
           </h2>
-          <ToggleSwitch
-            isOn={profileIsEnabled}
-            onToggle={this.props.toggleProfileStatus.bind(null, profile)}
-            onLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
-            offLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
-          />
-          <span className="divider"></span>
+          {this.renderToggleSwitch(profile, profileIsDefault, profileIsEnabled, profileStatus)}
+          {this.renderDivider(profileIsDefault)}
           <ActionsPopover
             target={actionsElem}
             namespace={namespace}
             profile={profile}
             onDeleteClick={this.toggleDeleteModal}
+            className={classnames({"float-right": profileIsDefault})}
           />
         </div>
         <div className="profile-description">

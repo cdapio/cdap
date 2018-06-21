@@ -34,7 +34,6 @@ $grey-font-color: $grey-03;
 
         .toggle-switch-container {
           margin-left: auto;
-
           .toggle-switch.off {
             background-color: $disabled-switch-color;
           }
@@ -54,6 +53,10 @@ $grey-font-color: $grey-03;
 
           &:hover {
             color: $popover-hover-color;
+          }
+
+          &.float-right {
+            margin-left: auto;
           }
         }
       }
