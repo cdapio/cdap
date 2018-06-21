@@ -29,13 +29,16 @@ import {isNilOrEmpty} from 'services/helpers';
 import isEqual from 'lodash/isEqual';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
+import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import T from 'i18n-react';
+
 require('./ProfilesListViewInPipeline.scss');
 
 export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
 export const PROFILE_PROPERTIES_PREFERENCE = 'system.profile.properties';
 export const extractProfileName = (name = '') => name.replace(/(user|system):/g, '');
 export const isSystemProfile = (name = '') => name.indexOf('system:') === 0;
-// NOTE: This is never actually saved to backend. This is hardcoded here until we figure out a 
+// NOTE: This is never actually saved to backend. This is hardcoded here until we figure out a
 // clean way to add `system.profiles.name` to namespace preference. If there is no `system.profiles.name` set
 // at namespace or app level UI show "default" profile selected
 export const DEFAULT_PROFILE_NAME = 'system:default';
@@ -89,16 +92,30 @@ export default class ProfilesListViewInPipeline extends Component {
     )
       .subscribe(
         ([profiles = [], systemProfiles = [], preferences = {}]) => {
-          let selectedProfile = this.state.selectedProfile || preferences[PROFILE_NAME_PREFERENCE_PROPERTY] || DEFAULT_PROFILE_NAME;
           let profileCustomizations = isNilOrEmpty(this.state.profileCustomizations) ?
             getCustomizationMap(preferences)
           :
             this.state.profileCustomizations;
 
           let allProfiles = profiles.concat(systemProfiles);
+
+          let selectedProfile = this.state.selectedProfile || preferences[PROFILE_NAME_PREFERENCE_PROPERTY] || DEFAULT_PROFILE_NAME;
+          let selectedProfileName = extractProfileName(selectedProfile);
+
+          // If currently selected profile has been disabled,
+          // then select 'default' profile
+          let selectedProfileIsDisabled = allProfiles.some(profile => {
+            return profile.name === selectedProfileName
+              && PROFILE_STATUSES[profile.status] === 'disabled';
+          });
+          if (selectedProfileIsDisabled) {
+            selectedProfile = DEFAULT_PROFILE_NAME;
+            selectedProfileName = extractProfileName(selectedProfile);
+            this.onProfileSelectWithoutCustomization(selectedProfile);
+          }
+
           // This is to surface the selected profile to the top
           // instead of hiding somewhere in the bottom.
-          let selectedProfileName = extractProfileName(selectedProfile);
           let sortedProfiles = [];
           allProfiles.forEach(profile => {
             if (profile.name === selectedProfileName) {
@@ -152,6 +169,7 @@ export default class ProfilesListViewInPipeline extends Component {
           <strong>Profile Name</strong>
           <strong>Provisioner</strong>
           <strong>Scope</strong>
+          <strong>Status</strong>
           <strong />
           <strong />
         </div>
@@ -167,32 +185,15 @@ export default class ProfilesListViewInPipeline extends Component {
     selectedProfile = extractProfileName(selectedProfile);
     let provisionerName = profile.provisioner.name;
     let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
-    return (
-      <div
-        key={profileName}
-        className={classnames("grid-row grid-link", {
-          "active": this.state.selectedProfile === profileName
-        })}
-      >
-        {
-          /*
-            There is an onClick handler on each cell except the last one.
-            This is to prevent the user from selecting a profile while trying to click on the details link
-          */
-        }
-        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>
-          {
-            this.state.selectedProfile === profileName ? (
-              <IconSVG name="icon-check" className="text-success" />
-            ) : null
-          }
-        </div>
-        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.name}</div>
-        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{provisionerLabel}</div>
-        <div onClick={this.onProfileSelectWithoutCustomization.bind(this, profileName)}>{profile.scope}</div>
-        <div>
-          <a href={profileDetailsLink}> View </a>
-        </div>
+    const onProfileSelectHandler = this.onProfileSelectWithoutCustomization.bind(this, profileName);
+    const profileStatus = PROFILE_STATUSES[profile.status];
+    const profileIsEnabled = profileStatus === 'enabled';
+
+    const CustomizeLabel = () => {
+      if (!profileIsEnabled) {
+        return <div>Customize</div>;
+      }
+      return (
         <ProfileCustomizePopover
           profile={profile}
           onProfileSelect={this.onProfileSelect}
@@ -204,6 +205,49 @@ export default class ProfilesListViewInPipeline extends Component {
               {}
           }
         />
+      );
+    };
+
+    return (
+      <div
+        key={profileName}
+        className={classnames(`grid-row grid-link ${profileStatus}`, {
+          "active": this.state.selectedProfile === profileName,
+          profileStatus
+        })}
+      >
+        {
+          /*
+            There is an onClick handler on each cell except the last one.
+            This is to prevent the user from selecting a profile while trying to click on the details link
+          */
+        }
+        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+          {
+            this.state.selectedProfile === profileName ? (
+              <IconSVG name="icon-check" className="text-success" />
+            ) : null
+          }
+        </div>
+        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+          {profile.name}
+        </div>
+        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+          {provisionerLabel}
+        </div>
+        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+          {profile.scope}
+        </div>
+        <div
+          className="profile-status"
+          onClick={profileIsEnabled && onProfileSelectHandler}
+        >
+          {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}
+        </div>
+        <CustomizeLabel />
+        <div>
+          <a href={profileDetailsLink}> View </a>
+        </div>
       </div>
     );
   }
