@@ -17,10 +17,14 @@
 @import '../../styles/variables.scss';
 $container-width: 70px;
 $switch-btn-width: 14px;
+$widget-height: 25px;
+$switch-button-margin-top: 2px;
+$on-color: $green-02;
+$off-color: $blue-02;
 
 .toggle-switch-container {
   display: inline-block;
-  height: 32px;
+  height: $widget-height;
   width: $container-width;
 
   .toggle-switch {
@@ -35,9 +39,9 @@ $switch-btn-width: 14px;
     cursor: pointer;
 
     .switch-button {
-      top: 2px;
+      top: $switch-button-margin-top;
       width: $switch-btn-width;
-      height: 28px;
+      height: $widget-height - ($switch-button-margin-top * 2);
       background-color: white;
       border-radius: 5px;
       position: absolute;
@@ -57,14 +61,14 @@ $switch-btn-width: 14px;
     }
 
     &.on {
-      background-color: $brand-success;
+      background-color: $on-color;
       .switch-button {
         right: 2px;
       }
     }
 
     &.off {
-      background-color: $blue-02;
+      background-color: $off-color;
       .switch-button {
         left: 2px;
       }

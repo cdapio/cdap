@@ -16,6 +16,11 @@
 
 @import "../../../../../../styles/variables.scss";
 
+$disabled-switch-color: $red-02;
+$divider-color: $grey-05;
+$popover-hover-color: $blue-03;
+$grey-font-color: $grey-03;
+
 .profile-detail-view {
   .detail-view-content {
     .detail-view-basic-info {
@@ -29,13 +34,17 @@
 
         .toggle-switch-container {
           margin-left: auto;
+
+          .toggle-switch.off {
+            background-color: $disabled-switch-color;
+          }
         }
 
         .divider:after {
           content: "";
           display: block;
           height: 1px;
-          border-bottom: 1px solid $grey-05;
+          border-bottom: 1px solid $divider-color;
           width: 33px;
           transform: rotate(90deg);
         }
@@ -44,14 +53,14 @@
           text-align: center;
 
           &:hover {
-            color: $blue-03;
+            color: $popover-hover-color;
           }
         }
       }
 
       .profile-description {
         padding-top: 10px;
-        color: $grey-03;
+        color: $grey-font-color;
       }
 
       .profile-info-grid {
@@ -74,7 +83,7 @@
           .grid-header {
             .grid-row {
               strong {
-                color: $grey-03;
+                color: $grey-font-color;
                 font-weight: 600;
               }
             }
@@ -87,7 +96,7 @@
               .icon-cloud {
                 font-size: 1.5rem;
                 margin-right: 5px;
-                color: $grey-03;
+                color: $grey-font-color;
               }
             }
           }
