@@ -164,7 +164,7 @@ public class ProgramHeartbeatStore extends AbstractDataset {
    *
    * @return collection of program runid matching the parameter requirements
    */
-  Collection<Notification> scan ( byte[] startRowKey, byte[] endRowKey) {
+  public Collection<Notification> scan ( byte[] startRowKey, byte[] endRowKey) {
     try (Scanner scanner = table.scan(startRowKey, endRowKey)) {
       Row row;
       Map<ProgramRunId, Notification> result = new HashMap<>();
