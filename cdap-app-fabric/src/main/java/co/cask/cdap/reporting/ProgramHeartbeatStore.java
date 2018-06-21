@@ -38,10 +38,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,7 +53,7 @@ public class ProgramHeartbeatStore extends AbstractDataset {
 
   static final DatasetId PROGRAM_HEARTBEAT_INSTANCE_ID =
     NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
-  static final String ROW_KEY_SEPARATOR = ":";
+  static final byte[] ROW_KEY_SEPARATOR = Bytes.toBytes(":");
 
   private final Table table;
   private final CConfiguration cConfiguration;
@@ -84,21 +82,26 @@ public class ProgramHeartbeatStore extends AbstractDataset {
   /**
    * TODO update javadoc
    * create rowkey based on notification and write the program run id with the rowkey
-   * @param notification
-   * Row key design:
    *
+   * @param notification Row key design:
    */
   public void writeProgramHeartBeatStatus(Notification notification) {
-    String timestamp = notification.getProperties().get(ProgramOptionConstants.HEART_BEAT_TIME);
-    byte[] rowKey = Bytes.toBytes(Long.parseLong(timestamp));
-    table.put(rowKey, COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
+    Map<String, String> properties = notification.getProperties();
+    long timestamp = Long.parseLong(properties.get(ProgramOptionConstants.HEART_BEAT_TIME));
+    table.put(createRowKey(timestamp, properties), COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
   }
 
-
+  private byte[] createRowKey(long timestamp, Map<String, String> properties) {
+    ProgramRunId programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
+                                              ProgramRunId.class);
+    // TODO should we just use RunId or the entire programRunId
+    return Bytes.add(Bytes.toBytes(timestamp), ROW_KEY_SEPARATOR, Bytes.toBytes(programRunId.toString()));
+  }
 
   /**
    * find timestamp, timestamp key changes based on the program status and
    * create rowkey timestamp:program-status:programRunId. perform a put of notification object with the created rowkey.
+   *
    * @param notification
    */
   public void writeProgramStatus(Notification notification) {
@@ -112,7 +115,8 @@ public class ProgramHeartbeatStore extends AbstractDataset {
       // TODO log an error/warning this shouldn't happen
       return;
     }
-    table.put(Bytes.toBytes(Long.parseLong(timestamp)), COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
+    table.put(createRowKey(Long.parseLong(timestamp), notification.getProperties()),
+              COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
   }
 
   /**
@@ -135,41 +139,53 @@ public class ProgramHeartbeatStore extends AbstractDataset {
     }
   }
 
+  // TODO remove this - just used for debugging
+ /* void printAll() {
+    try (Scanner scanner = table.scan(null, null)) {
+      Row row;
+      List<Notification> result = new ArrayList<>();
+      Map<ProgramRunId, Notification> runningRuns = new HashMap();
+      while ((row = scanner.next()) != null) {
+        Notification notification = GSON.fromJson(Bytes.toString(row.getColumns().get(COLUMN_NAME)),
+                                                  Notification.class);
+        Map<String, String> properties = notification.getProperties();
+        // Required parameters
+        ProgramRunId programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
+                                                  ProgramRunId.class);
+        String time = properties.get(ProgramOptionConstants.HEART_BEAT_TIME);
+        System.out.println(String.format(" Program runId %s Heartbeat time %s",
+                                         programRunId.toString(), new Date(Long.parseLong(time)).toString()));
+      }
+    }
+  }*/
+
   /**
    * scan the table for the time range and return collection of completed and actively running runs
    *
    * @return collection of program runid matching the parameter requirements
    */
-  Collection<Notification> scan(byte[] startRowKey, byte[] endRowKey) {
-    Scanner scanner = table.scan(startRowKey, endRowKey);
-    Row row;
-    List<Notification> result = new ArrayList<>();
-    Map<ProgramRunId, Notification> runningRuns = new HashMap();
-    while ((row = scanner.next()) != null) {
-      Notification notification = GSON.fromJson(Bytes.toString(row.getColumns().get(COLUMN_NAME)), Notification.class);
-      Map<String, String> properties = notification.getProperties();
-      // Required parameters
-      String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-      ProgramRunStatus programRunStatus =
-        ProgramRunStatus.valueOf(properties.get(ProgramOptionConstants.PROGRAM_STATUS));
-      ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
-      if (programRunStatus.equals(ProgramRunStatus.STARTING)) {
-        // this shouldn't happen as we skip writing starting status runs.
-        continue;
-      }
-      if (programRunStatus.equals(ProgramRunStatus.RUNNING)) {
-        if (!runningRuns.containsKey(programRunId)) {
-          runningRuns.put(programRunId, notification);
+  Collection<Notification> scan ( byte[] startRowKey, byte[] endRowKey) {
+    try (Scanner scanner = table.scan(startRowKey, endRowKey)) {
+      Row row;
+      Map<ProgramRunId, Notification> result = new HashMap<>();
+      while ((row = scanner.next()) != null) {
+        Notification notification = GSON.fromJson(Bytes.toString(row.getColumns().get(COLUMN_NAME)),
+                                                  Notification.class);
+        Map<String, String> properties = notification.getProperties();
+        // Required parameters
+        ProgramRunId programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
+                                                  ProgramRunId.class);
+        ProgramRunStatus programRunStatus =
+          ProgramRunStatus.valueOf(properties.get(ProgramOptionConstants.PROGRAM_STATUS));
+        if (programRunStatus.equals(ProgramRunStatus.STARTING)) {
+          // this shouldn't happen as we skip writing starting status runs.
+          continue;
         }
-      } else {
-        if (programRunStatus.isEndState() && runningRuns.containsKey(programRunId)) {
-          runningRuns.remove(programRunId);
-        }
-        result.add(notification);
+        // this ensures we return the most recent status of the program for this time range.
+        result.put(programRunId, notification);
       }
+      return result.values();
     }
-    // finally we merge the actively still running runs into the result list and return
-    result.addAll(runningRuns.values());
-    return result;
   }
 }
+
