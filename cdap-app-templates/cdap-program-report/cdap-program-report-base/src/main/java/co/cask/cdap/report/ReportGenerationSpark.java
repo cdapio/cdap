@@ -510,7 +510,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
           return;
       }
       List<String> reportRecords = new ArrayList<>();
-      long lineCount = 0;
+      long recordCount = 0;
       Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
       // TODO: [CDAP-13290] reports should be in avro format instead of json text;
       // TODO: [CDAP-13291] need to support reading multiple report files
@@ -527,30 +527,16 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         Location reportFileLocation = reportFile.get();
         DataFileReader<GenericRecord> dataFileReader =
             new DataFileReader<>(new File(reportFileLocation.toURI()), new GenericDatumReader<>());
-        // skip sync points until the end of file is reached or the given offset is surpassed
-        long skipLen = reportFileLocation.length() / 10;
-        long skipPoint = 0;
-        while (skipLen > 0 && dataFileReader.hasNext() && skipPoint < offset) {
-          skipPoint += skipLen;
-          dataFileReader.sync(skipPoint);
-        }
-        // if skipPoint > 0, the current position of the dataFileReader is either at the end of the file or
-        // at the sync point after the given offset, go back to the previous syncpoint before the offset
-        if (skipPoint > 0) {
-          dataFileReader.sync(skipPoint - skipLen);
-          // update the lineCount to the current position of the reader
-          lineCount = dataFileReader.tell();
-        }
         // add rpeort records to the result after the offset until the given limit is reached
         while (dataFileReader.hasNext()) {
           GenericRecord record = dataFileReader.next();
-          // skip lines before the offset
-          if (lineCount++ < offset) {
+          // skip records before the offset
+          if (recordCount++ < offset) {
             continue;
           }
           // add records after the offset to the result
           reportRecords.add(record.toString());
-          if (reportRecords.size() == limit) {
+          if (reportRecords.size() >= limit) {
             break;
           }
         }

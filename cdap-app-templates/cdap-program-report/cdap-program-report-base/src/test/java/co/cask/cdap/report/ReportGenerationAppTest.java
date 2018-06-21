@@ -209,10 +209,10 @@ public class ReportGenerationAppTest extends TestBase {
     Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
                         new HashSet<>(summary.getStartMethods()));
     // assert the number of report details is correct
-    URL reportRunsURL = reportIdURL.toURI().resolve("details").toURL();
+    URL reportRunsURL = reportIdURL.toURI().resolve("details?offset=1").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
     Assert.assertEquals(2, reportContent.getTotal());
-    Assert.assertEquals(2, reportContent.getDetails().size());
+    Assert.assertEquals(1, reportContent.getDetails().size());
     // Assert that all the records in the report contain startMethod TRIGGERED
     boolean startMethodIsCorrect =
       reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
