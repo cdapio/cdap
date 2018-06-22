@@ -31,7 +31,10 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.*;
+
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.base.Charsets;
@@ -89,7 +92,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   public void testScheduledRuns() throws Exception {
     WorkflowSpecification scheduledWorfklow1 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG1_ID.getProgram(), "scheduled workflow",
-        Collections.EMPTY_MAP,Collections.EMPTY_LIST, Collections.EMPTY_MAP);
+        Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
     ApplicationSpecification dummyAppSpec1 =
       new DefaultApplicationSpecification(APP1_ID.getApplication(), "dummy app", null,
         ARTIFACT1_ID, Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
@@ -99,7 +102,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     store.addApplication(APP1_ID, dummyAppSpec1);
     WorkflowSpecification scheduledWorfklow2 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
-        Collections.EMPTY_MAP,Collections.EMPTY_LIST, Collections.EMPTY_MAP);
+        Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
     ApplicationSpecification dummyAppSpec2 =
       new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
         ARTIFACT2_ID, Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
