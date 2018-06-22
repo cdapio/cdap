@@ -19,9 +19,11 @@ import PropTypes from 'prop-types';
 import {MyReportsApi} from 'api/reports';
 import Summary from 'components/Reports/ReportsDetail/Summary';
 import Runs from 'components/Reports/ReportsDetail/Runs';
+import RunsPagination from 'components/Reports/ReportsDetail/RunsPagination';
 import SaveButton from 'components/Reports/ReportsDetail/SaveButton';
 import Expiry from 'components/Reports/ReportsDetail/Expiry';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
+import {fetchRuns} from 'components/Reports/store/ActionCreator';
 import { Link } from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
@@ -69,33 +71,9 @@ class ReportsDetailView extends Component {
         });
 
         if (res.status === 'COMPLETED') {
-          this.fetchDetails();
+          fetchRuns(this.props.match.params.reportId);
         }
       }, (err) => {
-        ReportsStore.dispatch({
-          type: ReportsActions.setDetailsError,
-          payload: {
-            error: err.response
-          }
-        });
-      });
-  };
-
-  fetchDetails = () => {
-    let params = {
-      reportId: this.props.match.params.reportId
-    };
-
-    MyReportsApi.getDetails(params)
-      .subscribe((res) => {
-        ReportsStore.dispatch({
-          type: ReportsActions.setRuns,
-          payload: {
-            runs: res.details
-          }
-        });
-      }, (err) => {
-        console.log('err', err);
         ReportsStore.dispatch({
           type: ReportsActions.setDetailsError,
           payload: {
@@ -147,6 +125,8 @@ class ReportsDetailView extends Component {
         </div>
 
         <Summary />
+
+        <RunsPagination />
 
         <Runs />
       </div>
