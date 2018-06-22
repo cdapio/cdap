@@ -17,9 +17,13 @@
 package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Notification;
@@ -39,7 +43,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class MessagingProgramStatePublisher implements ProgramStatePublisher {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStatePublisher.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON =
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
   private final MessagingService messagingService;
   private final TopicId topicId;
   private final RetryStrategy retryStrategy;

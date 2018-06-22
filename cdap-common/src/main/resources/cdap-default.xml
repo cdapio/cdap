@@ -3668,4 +3668,12 @@
     </description>
   </property>
 
+  <property>
+    <name>program.heartbeat.interval.seconds</name>
+    <value>1800</value>
+    <description>
+      Interval of heartbeat sent from program while its running, default 30 minutes.
+    </description>
+  </property>
+
 </configuration>

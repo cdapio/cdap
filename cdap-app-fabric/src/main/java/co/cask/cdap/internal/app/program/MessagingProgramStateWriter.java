@@ -57,7 +57,6 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
       .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
       .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
-  // TODO move constant to right location after making it configurable
 
   private final ProgramStatePublisher programStatePublisher;
 
@@ -71,8 +70,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
                                             NamespaceId.SYSTEM.topic(cConf.get(
                                               Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
                                             RetryStrategies.fromConfiguration(cConf, "system.program.state.")),
-         cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS,
-                       Constants.ProgramHeartbeat.DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
+         cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS));
   }
 
   @VisibleForTesting
@@ -113,7 +111,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   /**
-   * if executor service isn't initialized or if its shutdown
+   * If executor service isn't initialized or if its shutdown
    * create a new exector service and schedule a heartbeat thread
    * @param properties
    */
@@ -184,6 +182,10 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     }
   }
 
+  /**
+   * This method is only used for testing {@link MessagingProgramStateWriter}
+   * @return
+   */
   @VisibleForTesting
   boolean isHeartBeatThreadAlive() {
     return scheduledExecutorService != null && !scheduledExecutorService.isShutdown();

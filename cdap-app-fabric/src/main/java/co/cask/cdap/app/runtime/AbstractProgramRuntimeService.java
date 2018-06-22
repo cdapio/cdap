@@ -146,7 +146,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                 programDescriptor.getApplicationSpecification());
 
-      // Create and run the program
+      // Create program and cleanup task
       executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
     } catch (Exception e) {
@@ -155,6 +155,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       throw Throwables.propagate(e);
     }
     try {
+      // run the program
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
                                                   cleanUpTask, runtimeProgramOptions);
       monitorProgram(runtimeInfo, cleanUpTask);

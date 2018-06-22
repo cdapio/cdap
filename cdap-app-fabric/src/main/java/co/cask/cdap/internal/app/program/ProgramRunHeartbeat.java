@@ -33,18 +33,22 @@ public class ProgramRunHeartbeat implements Runnable {
 
   private final ProgramStatePublisher programStatePublisher;
   private final Map<String, String> properties;
+  private final String programRunId;
 
 
   ProgramRunHeartbeat(ProgramStatePublisher messagingProgramStatePublisher, Map<String, String> properties) {
     this.programStatePublisher = messagingProgramStatePublisher;
     this.properties = new HashMap<>(properties);
+    // could be called from RESUMING state, so update status to running for heartbeat
+    properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
+    this.programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
   }
 
   @Override
   public void run() {
-    LOG.info("Sending HeartBeat");
-    properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
+    LOG.trace("Recording heartbeat for program {}", programRunId);
     properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(System.currentTimeMillis()));
+    // publish as heart_beat type, so it can be handled appropriately at receiver
     programStatePublisher.publish(Notification.Type.HEART_BEAT, properties);
   }
 }
